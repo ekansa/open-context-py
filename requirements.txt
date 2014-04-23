@@ -1,0 +1,4 @@
+﻿Python==3.3
+Django==1.6
+MySQL==5.1
+PyMySQL==0.6
