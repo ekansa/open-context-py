@@ -1,5 +1,8 @@
 *.ini
+*.log
+*.pot
 opencontext_py/settings.py
+__pycache__/
 testing.txt
 
 
