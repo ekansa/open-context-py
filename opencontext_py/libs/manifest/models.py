@@ -5,5 +5,3 @@ class Manifest(models.Model):
     label = models.CharField(max_length=200)
     class Meta:
         db_table = 'oc_manifest'
-    def __str__(self):
-        return self.label
