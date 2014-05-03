@@ -1,8 +1,20 @@
 from django.db import models
 from opencontext_py.apps.itemapps.manifest.models import Manifest as Manifest
+from opencontext_py.apps.itemapps.assertions.models import Assertion as Assertion
 
-class OCitem(models.Model):
-    uuid = models.CharField(max_length=50, primary_key=True)
-    manifest = models.ForeignKey(Manifest, db_column = 'uuid', to_field='uuid', unique=True)
-    class Meta:
-        db_table = 'oc_manifest'
+# OCitem is a very general class for all Open Context items.
+# This class is used to make a JSON-LD output from data returned from the database via other apps
+class OCitem():
+    def getItem(self, actUUID):
+        self.uuid = actUUID
+        self.getManifest()
+        self.getAssertions()
+        return self
+    def getManifest(self):
+        self.manifest = Manifest.objects.get(uuid = self.uuid)
+        self.label = self.manifest.label
+        self.itemType = self.manifest.itemType
+        return self.manifest
+    def getAssertions(self):
+        self.assertions = Assertion.objects.filter(uuid = self.uuid)
+        return self.assertions
