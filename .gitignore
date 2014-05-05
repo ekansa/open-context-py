@@ -1,6 +1,7 @@
 *.ini
 *.log
 *.pot
+*.pyc
 opencontext_py/settings.py
 __pycache__/
 testing.txt
