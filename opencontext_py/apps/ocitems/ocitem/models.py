@@ -1,6 +1,7 @@
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion as Assertion
+from opencontext_py.apps.ocitems.assertions.models import Containment as Containment
 from collections import OrderedDict
 
 
@@ -17,6 +18,7 @@ class OCitem():
         self.uuid = actUUID
         self.getManifest()
         self.getAssertions()
+        self.getParentItems()
         self.constructJSONld()
         return self
 
@@ -32,6 +34,12 @@ class OCitem():
     def getAssertions(self):
         self.assertions = Assertion.objects.filter(uuid=self.uuid)
         return self.assertions
+
+    # get item descriptions and linking relations for the item from the Assertion app
+    def getParentItems(self):
+        actContain = Containment()
+        self.parentUUID = actContain.getParentsByChildUUID(self.uuid)
+        return self.parentUUID
 
     # this will be the function for creating JSON-LD documents for an item
     # currently, it's just here to make some initial JSON while we learn python
@@ -53,6 +61,7 @@ class OCitem():
         jsonLD['label'] = self.label
         jsonLD[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         jsonLD['assertions'] = assertionList
+        jsonLD['parentUUID'] = self.parentUUID
         self.jsonLD = jsonLD
         return self.jsonLD
 
