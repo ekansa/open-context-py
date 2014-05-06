@@ -1,6 +1,7 @@
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion as Assertion
+from collections import OrderedDict
 
 
 # OCitem is a very general class for all Open Context items.
@@ -35,7 +36,7 @@ class OCitem():
     # this will be the function for creating JSON-LD documents for an item
     # currently, it's just here to make some initial JSON while we learn python
     def constructJSONld(self):
-        jsonLD = {}
+        jsonLD = LastUpdatedOrderedDict()
         jsonLD['@context'] = {"id": "@id",
                               "type": "@type"}
 
@@ -50,6 +51,16 @@ class OCitem():
 
         jsonLD['id'] = self.uuid
         jsonLD['label'] = self.label
+        jsonLD[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         jsonLD['assertions'] = assertionList
         self.jsonLD = jsonLD
         return self.jsonLD
+
+
+class LastUpdatedOrderedDict(OrderedDict):
+    'Store items in the order the keys were last added'
+
+    def __setitem__(self, key, value):
+        if key in self:
+            del self[key]
+        OrderedDict.__setitem__(self, key, value)

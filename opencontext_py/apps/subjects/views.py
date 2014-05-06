@@ -23,7 +23,7 @@ def jsonView(request, uuid):
     try:
         actItem = Subject.objects.get(uuid=uuid)
         actItem.getItem()
-        jsonOutput = json.dumps(actItem.ocitem.jsonLD, indent=4, sort_keys=True)
+        jsonOutput = json.dumps(actItem.ocitem.jsonLD, indent=4)
         return HttpResponse(jsonOutput, mimetype='application/json')
     except Subject.DoesNotExist:
         raise Http404

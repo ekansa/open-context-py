@@ -2,6 +2,7 @@
 *.log
 *.pot
 *.pyc
+*.py[cod]
 opencontext_py/settings.py
 __pycache__/
 testing.txt
