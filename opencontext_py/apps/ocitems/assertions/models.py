@@ -8,7 +8,7 @@ class Assertion(models.Model):
     PREDICATE_CONTAINS = "oc-gen:contains"
     #stored in the database
     hash_id = models.CharField(max_length=50, primary_key=True)
-    uuid = models.CharField(max_length=50)
+    uuid = models.CharField(max_length=50, db_index=True)
     subject_type = models.CharField(max_length=50)
     project_uuid = models.CharField(max_length=50)
     source_id = models.CharField(max_length=50)
@@ -16,8 +16,8 @@ class Assertion(models.Model):
     obs_num = models.IntegerField()
     sort = models.DecimalField(max_digits=8, decimal_places=3)
     visibility = models.IntegerField()
-    predicate_uuid = models.CharField(max_length=50)
-    object_uuid = models.CharField(max_length=50)
+    predicate_uuid = models.CharField(max_length=50, db_index=True)
+    object_uuid = models.CharField(max_length=50, db_index=True)
     object_type = models.CharField(max_length=50)
     data_num = models.DecimalField(max_digits=19, decimal_places=10)
     data_date = models.DateTimeField()

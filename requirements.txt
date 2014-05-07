@@ -2,3 +2,7 @@
 Django==1.6
 MySQL==5.1
 PyMySQL==0.6
+Postgres==9.3
+psycopg2==2.5.2
+djangorestframework==2.3.13
+requests==2.2.1
