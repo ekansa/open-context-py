@@ -12,9 +12,9 @@ class Subject(models.Model):
     class Meta:
         db_table = 'oc_manifest'
 
-    def getItem(self):
+    def get_item(self):
         actItem = OCitem()
-        self.ocitem = actItem.getItem(self.uuid)
+        self.ocitem = actItem.get_item(self.uuid)
         self.label = self.ocitem.label
-        self.itemType = self.ocitem.itemType
+        self.item_type = self.ocitem.item_type
         return self.ocitem

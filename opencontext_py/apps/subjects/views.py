@@ -11,7 +11,7 @@ def index(request):
     return HttpResponse("Hello, world. You're at the subjects index.")
 
 
-def htmlView(request, uuid):
+def html_view(request, uuid):
     try:
         actItem = Subject.objects.get(uuid=uuid)
         return HttpResponse("Hello, world. You're at the subjects htmlView of " + str(uuid))
@@ -19,11 +19,11 @@ def htmlView(request, uuid):
         raise Http404
 
 
-def jsonView(request, uuid):
+def json_view(request, uuid):
     try:
         actItem = Subject.objects.get(uuid=uuid)
         actItem.getItem()
-        jsonOutput = json.dumps(actItem.ocitem.jsonLD, indent=4)
-        return HttpResponse(jsonOutput, mimetype='application/json')
+        json_output = json.dumps(actItem.ocitem.json_ld, indent=4)
+        return HttpResponse(json_output, mimetype='application/json')
     except Subject.DoesNotExist:
         raise Http404

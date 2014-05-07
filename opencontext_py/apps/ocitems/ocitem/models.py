@@ -13,62 +13,73 @@ class OCitem():
     PREDICATES_DCTERMS_CONTRIBUTOR = "dc-terms:contributor"
     PREDICATES_DCTERMS_ISPARTOF = "dc-terms:isPartOf"
 
-    # get data for an item
-    def getItem(self, actUUID):
+    def get_item(self, actUUID):
+        """
+        gets data for an item
+        """
         self.uuid = actUUID
-        self.getManifest()
-        self.getAssertions()
-        self.getParentItems()
-        self.constructJSONld()
+        self.get_manifest()
+        self.get_assertions()
+        self.get_parent_context()
+        self.construct_json_ld()
         return self
 
-    # get basic metadata about the item from the Manifest app
-    def getManifest(self):
+    def get_manifest(self):
+        """
+        gets basic metadata about the item from the Manifest app
+        """
         self.manifest = Manifest.objects.get(uuid=self.uuid)
         self.label = self.manifest.label
-        self.itemType = self.manifest.itemType
+        self.item_type = self.manifest.item_type
         self.published = self.manifest.published
         return self.manifest
 
-    # get item descriptions and linking relations for the item from the Assertion app
-    def getAssertions(self):
+    def get_assertions(self):
+        """
+        gets item descriptions and linking relations for the item from the Assertion app
+        """
         self.assertions = Assertion.objects.filter(uuid=self.uuid)
         return self.assertions
 
-    # get item descriptions and linking relations for the item from the Assertion app
-    def getParentItems(self):
-        actContain = Containment()
-        self.parentUUID = actContain.getParentsByChildUUID(self.uuid)
-        return self.parentUUID
+    def get_parent_context(self):
+        """
+        gets item parent context
+        """
+        _act_contain = Containment()
+        self.contexts = _act_contain.get_parents_by_child_uuid(self.uuid)
+        return self.contexts
 
-    # this will be the function for creating JSON-LD documents for an item
-    # currently, it's just here to make some initial JSON while we learn python
-    def constructJSONld(self):
-        jsonLD = LastUpdatedOrderedDict()
-        jsonLD['@context'] = {"id": "@id",
-                              "type": "@type"}
+    def construct_json_ld(self):
+        """
+        creates JSON-LD documents for an item
+        currently, it's just here to make some initial JSON while we learn python
+        """
+        json_ld = LastUpdatedOrderedDict()
+        json_ld['@context'] = {"id": "@id",
+                               "type": "@type"}
 
         # this is just temporary, just to play with list handling in Python
         # it is not part of the planned final json-ld output
-        assertionList = list()
+        assertion_list = list()
         for assertion in self.assertions:
-            propAssertion = {'hashID': assertion.hashID,
-                             'sourceID': assertion.sourceID,
-                             'obsNum': assertion.obsNum}
-            assertionList.append(propAssertion)
+            prop_assertion = {'hash_id': assertion.hash_id,
+                              'source_id': assertion.source_id,
+                              'obs_num': assertion.obs_num}
+            assertion_list.append(prop_assertion)
 
-        jsonLD['id'] = self.uuid
-        jsonLD['label'] = self.label
-        jsonLD[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
-        jsonLD['assertions'] = assertionList
-        jsonLD['parentUUID'] = self.parentUUID
-        self.jsonLD = jsonLD
-        return self.jsonLD
+        json_ld['id'] = self.uuid
+        json_ld['label'] = self.label
+        json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
+        json_ld['assertions'] = assertion_list
+        json_ld['parentUUID'] = self.contexts
+        self.json_ld = json_ld
+        return self.json_ld
 
 
 class LastUpdatedOrderedDict(OrderedDict):
-    'Store items in the order the keys were last added'
-
+    """
+    Stores items in the order the keys were last added'
+    """
     def __setitem__(self, key, value):
         if key in self:
             del self[key]
