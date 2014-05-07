@@ -36,6 +36,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'opencontext_py.apps.subjects',
+    'opencontext_py.apps.ocitems.ocitem',
+    'opencontext_py.apps.ocitems.manifest',
+    'opencontext_py.apps.ocitems.assertions',
+    'opencontext_py.apps.imports.ocmysql'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,10 +62,10 @@ WSGI_APPLICATION = 'opencontext_py.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': '',
-        'USER': '',
-        'PASSWORD': '',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'opencontext',
+        'USER': 'postgres',
+        'PASSWORD': 'change-me',
         'HOST': 'localhost'
     }
 }
