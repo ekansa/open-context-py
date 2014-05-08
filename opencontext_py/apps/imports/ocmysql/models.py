@@ -1,7 +1,8 @@
 import requests
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
-from opencontext_py.apps.ldata.linkhierarchies.models import LinkHierarchy as LinkHierarchy
+from opencontext_py.apps.ocitems.chronology.models import Chronology as Chronology
+from opencontext_py.apps.ocitems.geodata.models import Geodata as Geodata
 
 # OCmysql requests JSON-data from the MySQL datastore.
 # This is useful for synching the postgres and mysql databases as a temporary measure
@@ -44,6 +45,12 @@ class OCmysql():
                 le.save()
             elif(act_table == 'link_hierarchies'):
                 lh = LinkHierarchy(**record)
+                lh.save()
+            elif(act_table == 'oc_chronology'):
+                lh = Chronology(**record)
+                lh.save()
+            elif(act_table == 'oc_geodata'):
+                lh = Geodata(**record)
                 lh.save()
 
     def process_table(self, act_table, after):

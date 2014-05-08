@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '=umqak6o9f82vzxj-cd1y2=5n(cakp5z^bi!p)=ijk19sn+42-'
+SECRET_KEY = 'change-this'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.manifest',
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.chronology',
+    'opencontext_py.apps.ocitems.geodata',
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
