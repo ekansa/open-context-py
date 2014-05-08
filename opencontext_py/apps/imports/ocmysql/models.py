@@ -46,7 +46,7 @@ class OCmysql():
                 lh = LinkHierarchy(**record)
                 lh.save()
 
-    def process_table(self, act_table, after=self.DEFAULT_EARLY):
+    def process_table(self, act_table, after):
         """
         iterates through a data table to get records after a certain time
         """
