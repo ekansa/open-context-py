@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
     'opencontext_py.apps.ocitems.assertions',
+    'opencontext_py.apps.ocitems.chronology',
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
