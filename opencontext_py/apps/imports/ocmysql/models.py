@@ -5,7 +5,7 @@ from opencontext_py.apps.ocitems.chronology.models import Chronology as Chronolo
 from opencontext_py.apps.ocitems.geodata.models import Geodata as Geodata
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person as Person
-from opencontext_py.apps.ocitems.projects.model import Project as Project
+from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument as OCdocument
 from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
 from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
