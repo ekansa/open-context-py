@@ -3,6 +3,14 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as L
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
 from opencontext_py.apps.ocitems.chronology.models import Chronology as Chronology
 from opencontext_py.apps.ocitems.geodata.models import Geodata as Geodata
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
+from opencontext_py.apps.ocitems.persons.models import Person as Person
+from opencontext_py.apps.ocitems.projects.model import Project as Project
+from opencontext_py.apps.ocitems.documents.models import OCdocument as OCdocument
+from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
+from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
+from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
+
 
 # OCmysql requests JSON-data from the MySQL datastore.
 # This is useful for synching the postgres and mysql databases as a temporary measure
@@ -38,20 +46,41 @@ class OCmysql():
         """
         for rkey, record in recs.items():
             if(act_table == 'link_annotations'):
-                la = LinkAnnotation(**record)
-                la.save()
+                newr = LinkAnnotation(**record)
+                newr.save()
             elif(act_table == 'link_entities'):
-                le = LinkEntity(**record)
-                le.save()
+                newr = LinkEntity(**record)
+                newr.save()
             elif(act_table == 'link_hierarchies'):
-                lh = LinkHierarchy(**record)
-                lh.save()
+                newr = LinkHierarchy(**record)
+                newr.save()
             elif(act_table == 'oc_chronology'):
-                lh = Chronology(**record)
-                lh.save()
+                newr = Chronology(**record)
+                newr.save()
             elif(act_table == 'oc_geodata'):
-                lh = Geodata(**record)
-                lh.save()
+                newr = Geodata(**record)
+                newr.save()
+            elif(act_table == 'oc_mediafiles'):
+                newr = Mediafile(**record)
+                newr.save()
+            elif(act_table == 'oc_documents'):
+                newr = OCdocument(**record)
+                newr.save()
+            elif(act_table == 'oc_persons'):
+                newr = Person(**record)
+                newr.save()
+            elif(act_table == 'oc_projects'):
+                newr = Project(**record)
+                newr.save()
+            elif(act_table == 'oc_strings'):
+                newr = OCstring(**record)
+                newr.save()
+            elif(act_table == 'oc_types'):
+                newr = OCtype(**record)
+                newr.save()
+            elif(act_table == 'oc_predicates'):
+                newr = Predicate(**record)
+                newr.save()
 
     def process_table(self, act_table, after):
         """

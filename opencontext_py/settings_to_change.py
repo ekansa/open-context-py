@@ -17,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'change-this'
+SECRET_KEY = 'change-me'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -42,6 +42,13 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.chronology',
     'opencontext_py.apps.ocitems.geodata',
+    'opencontext_py.apps.ocitems.mediafiles',
+    'opencontext_py.apps.ocitems.documents',
+    'opencontext_py.apps.ocitems.persons',
+    'opencontext_py.apps.ocitems.projects',
+    'opencontext_py.apps.ocitems.strings',
+    'opencontext_py.apps.ocitems.octypes',
+    'opencontext_py.apps.ocitems.predicates',
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
@@ -64,7 +71,6 @@ WSGI_APPLICATION = 'opencontext_py.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -74,6 +80,18 @@ DATABASES = {
         'HOST': 'localhost'
     }
 }
+
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'oc_new_use',
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost'
+    }
+}
+"""
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
