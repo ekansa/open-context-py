@@ -36,7 +36,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'opencontext_py.apps.subjects',
+    'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
     'opencontext_py.apps.ocitems.assertions',
@@ -111,3 +111,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+import socket
+
+#get the local host server name
+try:
+    HOSTNAME = socket.gethostname()
+except:
+    HOSTNAME = 'localhost'
+
+CANONICAL_HOST = "http://opencontext.org"

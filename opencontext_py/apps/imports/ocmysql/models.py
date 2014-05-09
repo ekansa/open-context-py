@@ -1,6 +1,8 @@
 import requests
+from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
+from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.chronology.models import Chronology as Chronology
 from opencontext_py.apps.ocitems.geodata.models import Geodata as Geodata
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
@@ -97,3 +99,62 @@ class OCmysql():
             else:
                 loop_ok = False
         return start
+
+    def add_predicates_manifest(self):
+        """
+        adds predicate items to the manifest
+        """
+        predicates = Predicate.objects.all()
+        for predicate in predicates:
+            record = {'uuid': predicate.uuid,
+                      'project_uuid': predicate.project_uuid,
+                      'source_id': predicate.source_id,
+                      'item_type': 'predicates',
+                      'repo': '',
+                      'class_uri': predicate.archaeoml_type,
+                      'label': predicate.label,
+                      'des_predicate_uuid': '',
+                      'views': 0,
+                      'published': predicate.created,
+                      'revised': predicate.updated}
+            newr = Manifest(**record)
+            newr.save()
+        return len(predicates)
+
+    def add_octypes_manifest(self):
+        """
+        adds octype items to the manifest
+        """
+        octypes = OCtype.objects.all()
+        proj_dates = self.get_manifest_project_dates()
+        for octype in octypes:
+            record = {'uuid': octype.uuid,
+                      'project_uuid': octype.project_uuid,
+                      'source_id': octype.source_id,
+                      'item_type': 'types',
+                      'repo': '',
+                      'class_uri': '',
+                      'label': octype.label,
+                      'des_predicate_uuid': '',
+                      'views': 0,
+                      'published': proj_dates[octype.project_uuid]['earliest'],
+                      'revised': octype.updated}
+            newr = Manifest(**record)
+            newr.save()
+        return len(octypes)
+
+    def get_manifest_project_dates(self):
+        """
+        gets initial publication date for items in the manifest
+        """
+        projs = Manifest.objects.values_list('project_uuid').distinct()
+        proj_dates = {}
+        from django.utils import timezone
+        start_date = timezone.now()
+        for proj in projs:
+            early_date = Manifest.objects.filter(project_uuid=proj[0],
+                                                 published__isnull=False,
+                                                 published__lte=start_date).aggregate(earliest=Min('published'),
+                                                                                      last=Max('published'))
+            proj_dates[proj[0]] = early_date
+        return proj_dates

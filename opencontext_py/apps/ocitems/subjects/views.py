@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from opencontext_py.apps.subjects.models import Subject
+from opencontext_py.apps.ocitems.subjects.models import Subject
 import json
 
 
@@ -21,9 +21,9 @@ def html_view(request, uuid):
 
 def json_view(request, uuid):
     try:
-        actItem = Subject.objects.get(uuid=uuid)
-        actItem.getItem()
-        json_output = json.dumps(actItem.ocitem.json_ld, indent=4)
+        act_item = Subject.objects.get(uuid=uuid)
+        act_item.get_item()
+        json_output = json.dumps(act_item.ocitem.json_ld, indent=4)
         return HttpResponse(json_output, mimetype='application/json')
     except Subject.DoesNotExist:
         raise Http404

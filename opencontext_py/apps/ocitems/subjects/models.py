@@ -14,12 +14,13 @@ class Subject(models.Model):
     context = models.CharField(max_length=200)
     updated = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        db_table = 'oc_subjects'
-
     def get_item(self):
         actItem = OCitem()
         self.ocitem = actItem.get_item(self.uuid)
         self.label = self.ocitem.label
         self.item_type = self.ocitem.item_type
         return self.ocitem
+
+    class Meta:
+        db_table = 'oc_subjects'
+
