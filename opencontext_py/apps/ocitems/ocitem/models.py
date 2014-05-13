@@ -21,7 +21,8 @@ class OCitem():
         self.uuid = actUUID
         self.get_manifest()
         self.get_assertions()
-        self.get_parent_context()
+        self.get_parent_contexts()
+        self.get_contained()
         self.construct_json_ld()
         return self
 
@@ -40,16 +41,24 @@ class OCitem():
         """
         gets item descriptions and linking relations for the item from the Assertion app
         """
-        self.assertions = Assertion.objects.filter(uuid=self.uuid)
+        act_contain = Containment()
+        self.assertions = Assertion.objects.filter(uuid=self.uuid).exclude(predicate_uuid=act_contain.PREDICATE_CONTAINS)
         return self.assertions
 
-    def get_parent_context(self):
+    def get_parent_contexts(self):
         """
         gets item parent context
         """
         _act_contain = Containment()
         self.contexts = _act_contain.get_parents_by_child_uuid(self.uuid)
         return self.contexts
+
+    def get_contained(self):
+        """
+        gets item containment children
+        """
+        _act_contain = Containment()
+        self.children = _act_contain.get_children_by_parent_uuid(self.uuid)
 
     def construct_json_ld(self):
         """
