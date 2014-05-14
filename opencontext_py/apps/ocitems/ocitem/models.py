@@ -1,9 +1,9 @@
+from collections import OrderedDict
 from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion as Assertion
-from opencontext_py.apps.ocitems.assertions.models import Containment as Containment
-from collections import OrderedDict
+from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
+from opencontext_py.apps.ocitems.predicates.models import Predicate
 
 
 # OCitem is a very general class for all Open Context items.
@@ -74,21 +74,10 @@ class OCitem():
         currently, it's just here to make some initial JSON while we learn python
         """
         item_con = ItemConstruction()
-        json_ld = item_con.intialize_json_ld()
-
-        # this is just temporary, just to play with list handling in Python
-        # it is not part of the planned final json-ld output
-        assertion_list = list()
-        for assertion in self.assertions:
-            prop_assertion = {'hash_id': assertion.hash_id,
-                              'source_id': assertion.source_id,
-                              'obs_num': assertion.obs_num}
-            assertion_list.append(prop_assertion)
-
+        json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
         json_ld['label'] = self.label
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
-        json_ld['assertions'] = assertion_list
         if(len(self.contexts) > 0):
             act_context = LastUpdatedOrderedDict()
             for parent_uuid in self.contexts:
@@ -132,33 +121,74 @@ class ItemConstruction():
     add_media_thumnails = True
     add_subject_class = True
     cannonical_uris = True
+    var_list = list()
+    link_list = list()
 
     def __init__(self):
         add_item_labels = True
         add_media_thumnails = True
         add_subject_class = True
         cannonical_uris = True
+        var_list = list()
+        link_list = list()
 
-    def intialize_json_ld(self):
+    def intialize_json_ld(self, assertions):
         """
         creates a json_ld (ordered) dictionary with a context
         """
         json_ld = LastUpdatedOrderedDict()
-        json_ld['@context'] = {"id": "@id",
-                               "type": "@type",
-                               "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-                               "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-                               "label": "rdfs:label",
-                               "xsd": "http://www.w3.org/2001/XMLSchema#",
-                               "skos": "http://www.w3.org/2004/02/skos/core#",
-                               "owl": "http://www.w3.org/2002/07/owl#",
-                               "dc-terms": "http://purl.org/dc/terms/",
-                               "uuid": "dc-terms:identifier",
-                               "bibo": "http://purl.org/ontology/bibo/",
-                               "foaf": "http://xmlns.com/foaf/0.1/",
-                               "cidoc-crm": "http://www.cidoc-crm.org/cidoc-crm/",
-                               "oc-gen": "http://opencontext.org/vocabularies/oc-general/"
-                               }
+        context = LastUpdatedOrderedDict()
+        context['id'] = '@id'
+        context['type'] = '@type'
+        context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
+        context['label'] = 'rdfs:label'
+        context['xsd'] = 'http://www.w3.org/2001/XMLSchema#'
+        context['skos'] = 'http://www.w3.org/2004/02/skos/core#'
+        context['owl'] = 'http://www.w3.org/2002/07/owl#'
+        context['dc-terms'] = 'dc-terms:identifier'
+        context['uuid'] = '@id'
+        context['bibo'] = 'http://purl.org/ontology/bibo/'
+        context['foaf'] = 'http://xmlns.com/foaf/0.1/'
+        context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
+        context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
+        context['oc-pred'] = 'http://opencontext.org/predicates/'
+        pred_list = list()
+        for assertion in assertions:
+            if(assertion.predicate_uuid not in pred_list):
+                pred_list.append(assertion.predicate_uuid)
+        for pred_uuid in pred_list:
+            pmeta = self.get_item_metadata(pred_uuid)
+            if(pmeta is not False):
+                p_data = LastUpdatedOrderedDict()
+                p_data['id'] = self.make_oc_uri(pred_uuid, pmeta.item_type)
+                p_data['label'] = pmeta.label
+                p_data['slug'] = pmeta.slug
+                p_data['owl:sameAs'] = self.make_oc_uri(pmeta.slug, pmeta.item_type)
+                p_data['@type'] = pmeta.class_uri
+                if(pmeta.class_uri == 'variable'):
+                    self.var_list.append(p_data)
+                elif(pmeta.class_uri == 'link'):
+                    self.link_list.append(p_data)
+                else:
+                    self.link_list.append(p_data)
+        v = 1
+        for v_data in self.var_list:
+            if(v_data['slug'] is None):
+                key = 'var-' + str(v)
+            else:
+                key = 'oc-pred:' + v_data['slug']
+            context[key] = v_data
+            v += 1
+        l = 1
+        for l_data in self.link_list:
+            if(l_data['slug'] is None):
+                key = 'link-' + str(l)
+            else:
+                key = 'oc-pred:' + l_data['slug']
+            context[key] = l_data
+            l += 1
+        json_ld['@context'] = context
         return json_ld
 
     def add_descriptive_assertions(self, act_dict, assertions):
@@ -166,13 +196,6 @@ class ItemConstruction():
         adds descriptive assertions (descriptive properties, non spatial containment links)
         to items
         """
-        variable_list = list()
-        link_list = list()
-        for assertion in self.assertions:
-            prop_assertion = {'hash_id': assertion.hash_id,
-                              'source_id': assertion.source_id,
-                              'obs_num': assertion.obs_num}
-            assertion_list.append(prop_assertion)
         return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, uuid, item_type):

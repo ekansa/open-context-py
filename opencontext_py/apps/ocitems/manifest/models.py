@@ -47,7 +47,7 @@ class ManifestGeneration():
         """
         gets the most recently updated Subject date
         """
-        raw_slug = slugify(unidecode(label))
+        raw_slug = slugify(unidecode(label[:52]))
         slug = raw_slug
         try:
             slug_in = Manifest.objects.get(item_type=item_type, slug=raw_slug)
