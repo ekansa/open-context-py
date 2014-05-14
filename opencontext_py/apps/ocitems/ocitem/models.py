@@ -9,10 +9,14 @@ from collections import OrderedDict
 # OCitem is a very general class for all Open Context items.
 # This class is used to make a JSON-LD output from data returned from the database via other apps
 class OCitem():
-    PREDICATES_DCTERMS_PUBLISHED = "dc-terms:published"
-    PREDICATES_DCTERMS_CREATOR = "dc-terms:creator"
-    PREDICATES_DCTERMS_CONTRIBUTOR = "dc-terms:contributor"
-    PREDICATES_DCTERMS_ISPARTOF = "dc-terms:isPartOf"
+    PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:published'
+    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
+    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
+    PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
+    PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
+    PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
+    PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
+    PREDICATES_OCGEN_CONTAINS = 'oc-gen:contains'
 
     def get_item(self, actUUID):
         """
@@ -31,6 +35,7 @@ class OCitem():
         gets basic metadata about the item from the Manifest app
         """
         self.manifest = Manifest.objects.get(uuid=self.uuid)
+        self.slug = self.manifest.slug
         self.label = self.manifest.label
         self.project_uuid = self.manifest.project_uuid
         self.item_type = self.manifest.item_type
@@ -42,23 +47,26 @@ class OCitem():
         gets item descriptions and linking relations for the item from the Assertion app
         """
         act_contain = Containment()
-        self.assertions = Assertion.objects.filter(uuid=self.uuid).exclude(predicate_uuid=act_contain.PREDICATE_CONTAINS)
+        self.assertions = Assertion.objects.filter(uuid=self.uuid) \
+                                           .exclude(predicate_uuid=act_contain.PREDICATE_CONTAINS)
         return self.assertions
 
     def get_parent_contexts(self):
         """
         gets item parent context
         """
-        _act_contain = Containment()
-        self.contexts = _act_contain.get_parents_by_child_uuid(self.uuid)
+        act_contain = Containment()
+        r_contexts = act_contain.get_parents_by_child_uuid(self.uuid)
+        # now reverse the list of contexts, so top most context is first, followed by children contexts
+        self.contexts = r_contexts[::-1]
         return self.contexts
 
     def get_contained(self):
         """
         gets item containment children
         """
-        _act_contain = Containment()
-        self.children = _act_contain.get_children_by_parent_uuid(self.uuid)
+        act_contain = Containment()
+        self.children = act_contain.get_children_by_parent_uuid(self.uuid)
 
     def construct_json_ld(self):
         """
@@ -81,8 +89,27 @@ class OCitem():
         json_ld['label'] = self.label
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld['assertions'] = assertion_list
-        json_ld['parentUUID'] = self.contexts
-        json_ld = item_con.add_json_predicate_list_ocitem(json_ld, self.PREDICATES_DCTERMS_ISPARTOF, self.project_uuid, 'projects')
+        if(len(self.contexts) > 0):
+            act_context = LastUpdatedOrderedDict()
+            for parent_uuid in self.contexts:
+                act_context = item_con.add_json_predicate_list_ocitem(act_context,
+                                                                      self.PREDICATES_OCGEN_HASPATHITEMS,
+                                                                      parent_uuid, 'subjects')
+            json_ld[self.PREDICATES_OCGEN_HASCONTEXTPATH] = act_context
+        if(len(self.children) > 0):
+            act_children = LastUpdatedOrderedDict()
+            for child_uuid in self.children:
+                act_children = item_con.add_json_predicate_list_ocitem(act_children,
+                                                                       self.PREDICATES_OCGEN_CONTAINS,
+                                                                       child_uuid, 'subjects')
+            json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
+        json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
+                                                          self.PREDICATES_DCTERMS_ISPARTOF,
+                                                          self.project_uuid, 'projects')
+        item_con.add_item_labels = False
+        json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
+                                                          'owl:sameAs',
+                                                          self.slug, self.item_type)
         self.json_ld = json_ld
         return self.json_ld
 
@@ -106,6 +133,12 @@ class ItemConstruction():
     add_subject_class = True
     cannonical_uris = True
 
+    def __init__(self):
+        add_item_labels = True
+        add_media_thumnails = True
+        add_subject_class = True
+        cannonical_uris = True
+
     def intialize_json_ld(self):
         """
         creates a json_ld (ordered) dictionary with a context
@@ -127,6 +160,20 @@ class ItemConstruction():
                                "oc-gen": "http://opencontext.org/vocabularies/oc-general/"
                                }
         return json_ld
+
+    def add_descriptive_assertions(self, act_dict, assertions):
+        """
+        adds descriptive assertions (descriptive properties, non spatial containment links)
+        to items
+        """
+        variable_list = list()
+        link_list = list()
+        for assertion in self.assertions:
+            prop_assertion = {'hash_id': assertion.hash_id,
+                              'source_id': assertion.source_id,
+                              'obs_num': assertion.obs_num}
+            assertion_list.append(prop_assertion)
+        return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, uuid, item_type):
         """

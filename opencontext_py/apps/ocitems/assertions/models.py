@@ -52,6 +52,11 @@ class Containment():
     contexts = []
     children = []
 
+    def __init__(self):
+        self.children = []
+        self.contexts = []
+        recurse_count = 0
+
     def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
         """
         creates a list of parent uuids from the containment predicate, is defaults to a recursive function
