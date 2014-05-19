@@ -49,12 +49,12 @@ class Assertion(models.Model):
 class Containment():
     PREDICATE_CONTAINS = "oc-gen:contains"
     recurse_count = 0
-    contexts = []
-    children = []
+    contexts = {}
+    contents = {}
 
     def __init__(self):
-        self.children = []
-        self.contexts = []
+        self.contents = {}
+        self.contexts = {}
         recurse_count = 0
 
     def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
@@ -66,13 +66,16 @@ class Containment():
         try:
             parents = Assertion.objects.filter(object_uuid=child_uuid, predicate_uuid=self.PREDICATE_CONTAINS)
             for parent in parents:
+                if(parent.obs_node not in self.contexts):
+                    self.contexts[parent.obs_node] = []
+            for parent in parents:
                 parent_uuid = parent.uuid
-                self.contexts.append(parent_uuid)
+                self.contexts[parent.obs_node].append(parent_uuid)
+                if(recursive and (self.recurse_count < 20)):
+                    self.contexts = self.get_parents_by_child_uuid(parent_uuid, recursive, visibile_only)
             self.recurse_count += 1
         except Assertion.DoesNotExist:
             parent_uuid = False
-        if(recursive and (parent_uuid is not False) and (self.recurse_count < 20)):
-            self.contexts = self.get_parents_by_child_uuid(parent_uuid, recursive, visibile_only)
         return self.contexts
 
     def get_children_by_parent_uuid(self, parent_uuid, recursive=False, visibile_only=True):
@@ -83,11 +86,14 @@ class Containment():
         try:
             children = Assertion.objects.filter(uuid=parent_uuid, predicate_uuid=self.PREDICATE_CONTAINS)
             for child in children:
+                if(child.obs_node not in self.contents):
+                    self.contents[child.obs_node] = []
+            for child in children:
                 child_uuid = child.object_uuid
-                self.children.append(child_uuid)
+                self.contents[child.obs_node].append(child_uuid)
                 if(recursive and (self.recurse_count < 20)):
-                    self.children = self.get_children_by_parent_uuid(child_uuid, recursive, visibile_only)
+                    self.contents = self.get_children_by_parent_uuid(child_uuid, recursive, visibile_only)
             self.recurse_count += 1
         except Assertion.DoesNotExist:
             child_uuid = False
-        return self.children
+        return self.contents

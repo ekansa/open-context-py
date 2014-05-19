@@ -1,3 +1,4 @@
+import hashlib
 from django.db import models
 
 
@@ -9,6 +10,22 @@ class OCstring(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     updated = models.DateTimeField(auto_now=True)
     content = models.TextField()
+
+    def make_hash_id(self):
+        """
+        creates a hash-id to insure unique combinations of project_uuids and contexts
+        """
+        hash_obj = hashlib.sha1()
+        concat_string = self.project_uuid + " " + self.content
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def save(self):
+        """
+        creates the hash-id on saving to insure a unique assertion
+        """
+        self.hash_id = self.make_hash_id()
+        super(OCstring, self).save()
 
     class Meta:
         db_table = 'oc_strings'

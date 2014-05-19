@@ -1,6 +1,8 @@
 from unidecode import unidecode
+from django.utils import timezone
 from django.db import models
 from django.template.defaultfilters import slugify
+from opencontext_py.apps.ocitems.projects.models import Project as Project
 
 
 # Manifest provides basic item metadata for all open context items that get a URI
@@ -11,7 +13,7 @@ class Manifest(models.Model):
     item_type = models.CharField(max_length=50)
     repo = models.CharField(max_length=200)
     class_uri = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=60, blank=True, null=True)
+    slug = models.SlugField(max_length=70, blank=True, null=True, db_index=True)
     label = models.CharField(max_length=200)
     des_predicate_uuid = models.CharField(max_length=50)
     views = models.IntegerField()
@@ -27,7 +29,7 @@ class Manifest(models.Model):
         creates a unique slug for a label with a given type
         """
         man_gen = ManifestGeneration()
-        slug = man_gen.make_manifest_slug(self.label, self.item_type)
+        slug = man_gen.make_manifest_slug(self.label, self.item_type, self.project_uuid)
         return slug
 
     def save(self):
@@ -39,28 +41,40 @@ class Manifest(models.Model):
 
     class Meta:
         db_table = 'oc_manifest'
+        unique_together = (("item_type", "slug"),)
 
 
 class ManifestGeneration():
 
-    def make_manifest_slug(self, label, item_type):
+    def make_manifest_slug(self, label, item_type, project_uuid):
         """
         gets the most recently updated Subject date
         """
-        raw_slug = slugify(unidecode(label[:52]))
+        raw_slug = slugify(unidecode(label[:55]))
+        act_proj_short_id = False
+        if(project_uuid != '0'):
+            try:
+                act_proj = Project.objects.get(uuid=project_uuid)
+                act_proj_short_id = act_proj.short_id
+            except Project.DoesNotExist:
+                act_proj_short_id = False
+        if(act_proj_short_id is not False):
+            raw_slug = raw_slug + '--' + str(act_proj_short_id)
         slug = raw_slug
         try:
-            slug_in = Manifest.objects.get(item_type=item_type, slug=raw_slug)
+            slug_in = Manifest.objects.get(item_type=item_type, project_uuid=project_uuid, slug=raw_slug)
             slug_exists = True
         except Manifest.DoesNotExist:
             slug_exists = False
         if(slug_exists):
             try:
-                slug_count = Manifest.objects.filter(item_type=item_type, slug__startswith=raw_slug).count()
+                slug_count = Manifest.objects.filter(item_type=item_type,
+                                                     project_uuid=project_uuid,
+                                                     slug__startswith=raw_slug).count()
             except Manifest.DoesNotExist:
                 slug_count = 0
             if(slug_count > 0):
-                slug = raw_slug + "--" + item_type[:3] + "-" + str(slug_count + 1)
+                slug = raw_slug + "-" + str(slug_count + 1)
         return slug
 
     def fix_blank_slugs(self):

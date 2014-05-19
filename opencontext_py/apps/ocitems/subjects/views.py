@@ -23,7 +23,9 @@ def json_view(request, uuid):
     try:
         act_item = Subject.objects.get(uuid=uuid)
         act_item.get_item()
-        json_output = json.dumps(act_item.ocitem.json_ld, indent=4)
-        return HttpResponse(json_output, mimetype='application/json')
+        json_output = json.dumps(act_item.ocitem.json_ld,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output, mimetype='application/json; charset=utf8')
     except Subject.DoesNotExist:
         raise Http404

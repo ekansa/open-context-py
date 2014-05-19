@@ -12,6 +12,7 @@ from opencontext_py.apps.ocitems.documents.models import OCdocument as OCdocumen
 from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
 from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
 from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
+from opencontext_py.apps.ocitems.projects.models import Project as Project
 
 
 # OCmysql requests JSON-data from the MySQL datastore.
@@ -142,6 +143,28 @@ class OCmysql():
             newr = Manifest(**record)
             newr.save()
         return len(octypes)
+
+    def add_ocprojects_manifest(self):
+        """
+        adds ocproject items to the manifest
+        """
+        ocprojects = Project.objects.all()
+        proj_dates = self.get_manifest_project_dates()
+        for ocproj in ocprojects:
+            record = {'uuid': ocproj.uuid,
+                      'project_uuid': ocproj.project_uuid,
+                      'source_id': ocproj.source_id,
+                      'item_type': 'projects',
+                      'repo': '',
+                      'class_uri': '',
+                      'label': ocproj.label,
+                      'des_predicate_uuid': '',
+                      'views': 0,
+                      'published': ocproj.updated,
+                      'revised': ocproj.updated}
+            newr = Manifest(**record)
+            newr.save()
+        return len(ocprojects)
 
     def get_manifest_project_dates(self):
         """

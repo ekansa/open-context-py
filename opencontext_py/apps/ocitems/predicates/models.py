@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # Predicate stores a predicate (decriptive property or linking relation)
 # that is contributed by open context data contributors
 class Predicate(models.Model):

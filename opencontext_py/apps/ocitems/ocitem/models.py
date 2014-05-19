@@ -4,6 +4,9 @@ from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 
 # OCitem is a very general class for all Open Context items.
@@ -17,6 +20,20 @@ class OCitem():
     PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
     PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
     PREDICATES_OCGEN_CONTAINS = 'oc-gen:contains'
+    PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
+    PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
+    PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
+
+    def __init__(self):
+        self.uuid = False
+        self.slug = False
+        self.label = False
+        self.item_type = False
+        self.published = False
+        self.manifest = False
+        self.assertions = False
+        self.contexts = False
+        self.contents = False
 
     def get_item(self, actUUID):
         """
@@ -56,9 +73,7 @@ class OCitem():
         gets item parent context
         """
         act_contain = Containment()
-        r_contexts = act_contain.get_parents_by_child_uuid(self.uuid)
-        # now reverse the list of contexts, so top most context is first, followed by children contexts
-        self.contexts = r_contexts[::-1]
+        self.contexts = act_contain.get_parents_by_child_uuid(self.uuid)
         return self.contexts
 
     def get_contained(self):
@@ -66,7 +81,8 @@ class OCitem():
         gets item containment children
         """
         act_contain = Containment()
-        self.children = act_contain.get_children_by_parent_uuid(self.uuid)
+        self.contents = act_contain.get_children_by_parent_uuid(self.uuid)
+        return self.contents
 
     def construct_json_ld(self):
         """
@@ -77,29 +93,46 @@ class OCitem():
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
         json_ld['label'] = self.label
-        json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         if(len(self.contexts) > 0):
+            #adds parent contents, with different treenodes
             act_context = LastUpdatedOrderedDict()
-            for parent_uuid in self.contexts:
-                act_context = item_con.add_json_predicate_list_ocitem(act_context,
-                                                                      self.PREDICATES_OCGEN_HASPATHITEMS,
-                                                                      parent_uuid, 'subjects')
+            for tree_node, r_parents in self.contexts.items():
+                act_context = LastUpdatedOrderedDict()
+                # change the parent node to context not contents
+                tree_node = tree_node.replace('contents', 'context')
+                act_context['id'] = tree_node
+                 # now reverse the list of parent contexts, so top most parent context is first, followed by children contexts
+                parents = r_parents[::-1]
+                for parent_uuid in parents:
+                    act_context = item_con.add_json_predicate_list_ocitem(act_context,
+                                                                          self.PREDICATES_OCGEN_HASPATHITEMS,
+                                                                          parent_uuid, 'subjects')
             json_ld[self.PREDICATES_OCGEN_HASCONTEXTPATH] = act_context
-        if(len(self.children) > 0):
-            act_children = LastUpdatedOrderedDict()
-            for child_uuid in self.children:
-                act_children = item_con.add_json_predicate_list_ocitem(act_children,
-                                                                       self.PREDICATES_OCGEN_CONTAINS,
-                                                                       child_uuid, 'subjects')
+        if(len(self.contents) > 0):
+            #adds child contents, with different treenodes
+            for tree_node, children in self.contents.items():
+                act_children = LastUpdatedOrderedDict()
+                act_children['id'] = tree_node
+                for child_uuid in children:
+                    act_children = item_con.add_json_predicate_list_ocitem(act_children,
+                                                                           self.PREDICATES_OCGEN_CONTAINS,
+                                                                           child_uuid, 'subjects')
             json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
+        # add predicate - object (descriptions) to the item
+        json_ld = item_con.add_descriptive_assertions(json_ld, self.assertions)
+        json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
                                                           self.project_uuid, 'projects')
         item_con.add_item_labels = False
-        json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
-                                                          'owl:sameAs',
-                                                          self.slug, self.item_type)
+        if(self.item_type in settings.SLUG_TYPES):
+            json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
+                                                              'owl:sameAs',
+                                                              self.slug, self.item_type)
+        # add linked data annotations
+        json_ld = item_con.add_linked_data_graph(json_ld)
         self.json_ld = json_ld
+        item_con.__del__()
         return self.json_ld
 
 
@@ -120,17 +153,30 @@ class ItemConstruction():
     add_item_labels = True
     add_media_thumnails = True
     add_subject_class = True
+    add_linked_data_labels = True
     cannonical_uris = True
+    predicates = {}
+    obs_list = list()
     var_list = list()
     link_list = list()
+    type_list = list()
 
     def __init__(self):
-        add_item_labels = True
-        add_media_thumnails = True
-        add_subject_class = True
-        cannonical_uris = True
-        var_list = list()
-        link_list = list()
+        self.add_item_labels = True
+        self.add_linked_data_labels = True
+        self.add_media_thumnails = True
+        self.add_subject_class = True
+        self.cannonical_uris = True
+        self.obs_list = list()
+        self.predicates = {}
+        self.var_list = list()
+        self.link_list = list()
+        self.type_list = list()
+
+    def __del__(self):
+        self.var_list = list()
+        self.link_list = list()
+        self.type_list = list()
 
     def intialize_json_ld(self, assertions):
         """
@@ -146,46 +192,62 @@ class ItemConstruction():
         context['xsd'] = 'http://www.w3.org/2001/XMLSchema#'
         context['skos'] = 'http://www.w3.org/2004/02/skos/core#'
         context['owl'] = 'http://www.w3.org/2002/07/owl#'
-        context['dc-terms'] = 'dc-terms:identifier'
-        context['uuid'] = '@id'
+        context['dc-terms'] = 'http://purl.org/dc/terms/'
+        context['uuid'] = 'dc-terms:identifier'
         context['bibo'] = 'http://purl.org/ontology/bibo/'
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
-        pred_list = list()
+        raw_pred_list = list()
+        pred_types = {}
         for assertion in assertions:
-            if(assertion.predicate_uuid not in pred_list):
-                pred_list.append(assertion.predicate_uuid)
-        for pred_uuid in pred_list:
+            if(assertion.obs_num not in self.obs_list):
+                self.obs_list.append(assertion.obs_num)
+            if(assertion.predicate_uuid not in raw_pred_list):
+                raw_pred_list.append(assertion.predicate_uuid)
+                if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+                    pred_types[assertion.predicate_uuid] = '@id'
+                else:
+                    pred_types[assertion.predicate_uuid] = assertion.object_type
+        # prepares dictionary objects for each predicate
+        for pred_uuid in raw_pred_list:
             pmeta = self.get_item_metadata(pred_uuid)
             if(pmeta is not False):
                 p_data = LastUpdatedOrderedDict()
-                p_data['id'] = self.make_oc_uri(pred_uuid, pmeta.item_type)
+                p_data['owl:sameAs'] = self.make_oc_uri(pred_uuid, pmeta.item_type)
                 p_data['label'] = pmeta.label
                 p_data['slug'] = pmeta.slug
-                p_data['owl:sameAs'] = self.make_oc_uri(pmeta.slug, pmeta.item_type)
-                p_data['@type'] = pmeta.class_uri
+                p_data['uuid'] = pmeta.uuid
+                # p_data['owl:sameAs'] = self.make_oc_uri(pmeta.slug, pmeta.item_type)
+                p_data['oc-gen:predType'] = pmeta.class_uri
+                p_data['@type'] = pred_types[pred_uuid]
                 if(pmeta.class_uri == 'variable'):
                     self.var_list.append(p_data)
                 elif(pmeta.class_uri == 'link'):
                     self.link_list.append(p_data)
                 else:
                     self.link_list.append(p_data)
+        # adds variable predicates to the item context
         v = 1
         for v_data in self.var_list:
             if(v_data['slug'] is None):
                 key = 'var-' + str(v)
             else:
                 key = 'oc-pred:' + v_data['slug']
+            self.predicates[v_data['uuid']] = key
+            del v_data['uuid']
             context[key] = v_data
             v += 1
+        # adds link predicates to the item context
         l = 1
         for l_data in self.link_list:
             if(l_data['slug'] is None):
                 key = 'link-' + str(l)
             else:
                 key = 'oc-pred:' + l_data['slug']
+            self.predicates[l_data['uuid']] = key
+            del l_data['uuid']
             context[key] = l_data
             l += 1
         json_ld['@context'] = context
@@ -196,9 +258,62 @@ class ItemConstruction():
         adds descriptive assertions (descriptive properties, non spatial containment links)
         to items
         """
+        observations = list()
+        for act_obs_num in self.obs_list:
+            add_obs_def = True
+            act_obs = LastUpdatedOrderedDict()
+            for assertion in assertions:
+                if(assertion.obs_num == act_obs_num):
+                    if(add_obs_def):
+                        if(assertion.obs_node[:1] == '#'):
+                            act_obs['id'] = str(assertion.obs_node)
+                        else:
+                            act_obs['id'] = "#" + str(assertion.obs_node)
+                        act_obs[OCitem.PREDICATES_OCGEN_SOURCEID] = assertion.source_id
+                        if(act_obs_num >= 0 and act_obs_num != 100):
+                            act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'active'
+                        else:
+                            act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'not active'
+                        add_obs_def = False
+                    if(assertion.predicate_uuid in self.predicates):
+                        act_pred_key = self.predicates[assertion.predicate_uuid]
+                        act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
+            observations.append(act_obs)
+        act_dict[OCitem.PREDICATES_OCGEN_HASOBS] = observations
         return act_dict
 
-    def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, uuid, item_type):
+    def add_predicate_value(self, act_dict, act_pred_key, assertion):
+        """
+        creates an object value for a predicate assertion
+        """
+        if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+            if(assertion.object_uuid not in self.type_list):
+                self.type_list.append(assertion.object_uuid)
+            return self.add_json_predicate_list_ocitem(act_dict, act_pred_key,
+                                                       assertion.object_uuid,
+                                                       assertion.object_type)
+        else:
+            if act_pred_key in act_dict:
+                act_list = act_dict[act_pred_key]
+            else:
+                act_list = []
+            if (assertion.object_type == 'xsd:string'):
+                new_object_item = LastUpdatedOrderedDict()
+                new_object_item['id'] = '#string-' + str(assertion.object_uuid)
+                try:
+                    string_item = OCstring.objects.get(uuid=assertion.object_uuid)
+                    new_object_item[assertion.object_type] = string_item.content
+                except OCstring.DoesNotExist:
+                    new_object_item[assertion.object_type] = 'string content missing'
+                act_list.append(new_object_item)
+            elif (assertion.object_type == 'xsd:date'):
+                act_list.append(assertion.data_date.date().isoformat())
+            else:
+                act_list.append(assertion.data_num)
+            act_dict[act_pred_key] = act_list
+            return act_dict
+
+    def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, object_id, item_type):
         """
         creates a list for an act_predicate of the json_ld dictionary object if it doesn't exist
         adds a list item of a dictionary object for a linked Open Context item
@@ -208,16 +323,81 @@ class ItemConstruction():
         else:
             act_list = []
         new_object_item = LastUpdatedOrderedDict()
-        new_object_item['id'] = self.make_oc_uri(uuid, item_type)
-        if self.add_item_labels:
-            manifest_item = self.get_item_metadata(uuid)
-            if(manifest_item is not False):
-                new_object_item['label'] = manifest_item.label
-            else:
-                new_object_item['label'] = 'item not in manifest'
+        if(item_type != 'uri' and object_id[:7] != 'http://' and object_id[:8] != 'https://'):
+            new_object_item['id'] = self.make_oc_uri(object_id, item_type)
+            if self.add_item_labels:
+                manifest_item = self.get_item_metadata(object_id)
+                if(manifest_item is not False):
+                    new_object_item['label'] = manifest_item.label
+                else:
+                    new_object_item['label'] = 'Item not in manifest'
+            if(item_type in settings.SLUG_TYPES):
+                new_object_item['owl:sameAs'] = self.make_oc_uri(manifest_item.slug, item_type)
+        else:
+            new_object_item['id'] = object_id
+            if(self.add_linked_data_labels):
+                try:
+                    link_item = LinkEntity.objects.get(uri=object_id)
+                    new_object_item['label'] = link_item.label
+                except LinkEntity.DoesNotExist:
+                    new_object_item['label'] = 'Label not known'
         act_list.append(new_object_item)
         act_dict[act_pred_key] = act_list
         return act_dict
+
+    def add_linked_data_graph(self, act_dict):
+        """
+        adds graph of linked data annotations
+        """
+        graph_list = []
+        #add linked data annotations for predicates
+        for (predicate_uuid, slug) in self.predicates.items():
+            graph_list = self.get_annotations_for_ocitem(act_dict, graph_list, predicate_uuid, 'predicates', slug)
+        #add linked data annotations for types
+        for type_uuid in self.type_list:
+            graph_list = self.get_annotations_for_ocitem(act_dict, graph_list, type_uuid, 'types')
+        if(len(graph_list) > 0):
+            act_dict['@graph'] = graph_list
+        return act_dict
+
+    def get_annotations_for_ocitem(self, act_dict, graph_list, subject_uuid, subject_type, slug=False):
+        """
+        adds linked data annotations to a given subject_uuid
+        """
+        la_count = 0
+        try:
+            link_annotations = LinkAnnotation.objects.filter(uuid=subject_uuid)
+            la_count = len(link_annotations)
+        except LinkAnnotation.DoesNotExist:
+            la_count = 0
+        if(la_count > 0):
+            act_annotation = LastUpdatedOrderedDict()
+            if(slug is not False):
+                act_annotation['@id'] = self.make_oc_uri(slug, subject_type)
+            else:
+                act_annotation['@id'] = self.make_oc_uri(subject_uuid, subject_type)
+            for link_anno in link_annotations:
+                # shorten the predicate uri if it's namespace is defined in the context
+                predicate_uri = self.shorten_context_namespace(act_dict, link_anno.predicate_uri)
+                act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
+                                                                     predicate_uri,
+                                                                     link_anno.object_uri,
+                                                                     'uri')
+            graph_list.append(act_annotation)
+        return graph_list
+
+    def shorten_context_namespace(self, act_dict, uri):
+        """
+        checks to see if a name space has been defined, and if so, use its prefix
+        """
+        if('@context' in act_dict):
+            context = act_dict['@context']
+            for prefix in context:
+                namespace = str(context[prefix])
+                if(uri.find(namespace) == 0):
+                    uri = uri.replace(namespace, (prefix + ":"))
+                    break
+        return uri
 
     def make_oc_uri(self, uuid, item_type):
         """
@@ -236,6 +416,7 @@ class ItemConstruction():
         """
         gets metadata about an item from the manifest table
         """
+        manifest_item = False
         try:
             manifest_item = Manifest.objects.get(uuid=uuid)
             return manifest_item
