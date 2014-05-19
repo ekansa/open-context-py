@@ -150,6 +150,7 @@ class ItemConstruction():
     """
     General purpose functions for building Open Context items
     """
+    base_context = False
     add_item_labels = True
     add_media_thumnails = True
     add_subject_class = True
@@ -172,17 +173,6 @@ class ItemConstruction():
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
-
-    def __del__(self):
-        self.var_list = list()
-        self.link_list = list()
-        self.type_list = list()
-
-    def intialize_json_ld(self, assertions):
-        """
-        creates a json_ld (ordered) dictionary with a context
-        """
-        json_ld = LastUpdatedOrderedDict()
         context = LastUpdatedOrderedDict()
         context['id'] = '@id'
         context['type'] = '@type'
@@ -199,6 +189,19 @@ class ItemConstruction():
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
+        self.base_context = context
+
+    def __del__(self):
+        self.var_list = list()
+        self.link_list = list()
+        self.type_list = list()
+
+    def intialize_json_ld(self, assertions):
+        """
+        creates a json_ld (ordered) dictionary with a context
+        """
+        json_ld = LastUpdatedOrderedDict()
+        context = self.base_context
         raw_pred_list = list()
         pred_types = {}
         for assertion in assertions:
@@ -352,15 +355,15 @@ class ItemConstruction():
         graph_list = []
         #add linked data annotations for predicates
         for (predicate_uuid, slug) in self.predicates.items():
-            graph_list = self.get_annotations_for_ocitem(act_dict, graph_list, predicate_uuid, 'predicates', slug)
+            graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
         #add linked data annotations for types
         for type_uuid in self.type_list:
-            graph_list = self.get_annotations_for_ocitem(act_dict, graph_list, type_uuid, 'types')
+            graph_list = self.get_annotations_for_ocitem(graph_list, type_uuid, 'types')
         if(len(graph_list) > 0):
             act_dict['@graph'] = graph_list
         return act_dict
 
-    def get_annotations_for_ocitem(self, act_dict, graph_list, subject_uuid, subject_type, slug=False):
+    def get_annotations_for_ocitem(self, graph_list, subject_uuid, subject_type, slug=False):
         """
         adds linked data annotations to a given subject_uuid
         """
@@ -378,7 +381,7 @@ class ItemConstruction():
                 act_annotation['@id'] = self.make_oc_uri(subject_uuid, subject_type)
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
-                predicate_uri = self.shorten_context_namespace(act_dict, link_anno.predicate_uri)
+                predicate_uri = self.shorten_context_namespace(link_anno.predicate_uri)
                 act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
                                                                      predicate_uri,
                                                                      link_anno.object_uri,
@@ -386,17 +389,16 @@ class ItemConstruction():
             graph_list.append(act_annotation)
         return graph_list
 
-    def shorten_context_namespace(self, act_dict, uri):
+    def shorten_context_namespace(self, uri):
         """
         checks to see if a name space has been defined, and if so, use its prefix
         """
-        if('@context' in act_dict):
-            context = act_dict['@context']
-            for prefix in context:
-                namespace = str(context[prefix])
-                if(uri.find(namespace) == 0):
-                    uri = uri.replace(namespace, (prefix + ":"))
-                    break
+        context = self.base_context
+        for prefix in context:
+            namespace = str(context[prefix])
+            if(uri.find(namespace) == 0):
+                uri = uri.replace(namespace, (prefix + ":"))
+                break
         return uri
 
     def make_oc_uri(self, uuid, item_type):
