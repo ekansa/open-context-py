@@ -26,6 +26,8 @@ class OCitem():
     PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
     PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
     PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
+    PREDICATES_OCGEN_HASGEOREFSOURCE = 'oc-gen:has-geo-ref-source'
+    PREDICATES_OCGEN_HASCHRONOREFSOURCE = 'oc-gen:has-chrono-ref-source'
 
     def __init__(self):
         self.uuid = False
@@ -220,6 +222,10 @@ class ItemConstruction():
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
+        context['location-inferred-uri'] = 'oc-gen:geojson-location-inferred-uri'
+        context['location-inferred-label'] = 'oc-gen:geojson-location-inferred-label'
+        context['location-precision'] = 'oc-gen:geojson-location-precision'
+        context['location-note'] = 'oc-gen:geojson-location-note'
         self.base_context = context
 
     def __del__(self):
@@ -425,9 +431,18 @@ class ItemConstruction():
         adds geospatial and chronological data
         """
         if(geo is not False):
+            item_features = False
+            geo_props = LastUpdatedOrderedDict()
+            if(uuid != geo.uuid):
+                geo_props['location-inferred-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
+                rel_meta = self.get_item_metadata(uuid)
+                if(rel_meta is not False):
+                    geo_props['location-inferred-label'] = rel_meta.label
             if(geo.specificity < 0):
                 # case where we've got reduced precision geospatial data
                 # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
+                geo_props['location-precision'] = abs(geo.specificity)
+                geo_props['location-note'] = 'Location data has intentionally reduced spatial precision'
                 gmt = GlobalMercator()
                 geotile = gmt.lat_lon_to_quadtree(geo.latitude, geo.longitude, abs(geo.specificity))
                 tile_bounds = gmt.quadtree_to_lat_lon(geotile)
@@ -441,8 +456,19 @@ class ItemConstruction():
                 item_f_poly.id = '#tile-' + geotile
                 item_point = Point((float(geo.longitude), float(geo.latitude)))
                 item_f_point = Feature(geometry=item_point)
-                item_fc = FeatureCollection([item_f_poly, item_f_point])
-                dump = geojson.dumps(item_fc, sort_keys=True)
+                item_f_point.id = '#geopoint-1'
+                item_features = [item_f_poly, item_f_point]
+            elif(len(geo.geo_json) > 1):
+                # here we have geo_json expressed features and geometries to use
+                #do something
+            else:
+                # case where the item only has a point for geo-spatial reference
+                item_point = Point((float(geo.longitude), float(geo.latitude)))
+                item_f_point = Feature(geometry=item_point)
+                item_f_point.id = '#geopoint-1'
+                item_features = [item_f_point]
+            if(item_features is not False):
+                item_fc = FeatureCollection(item_features)
                 act_dict.update(item_fc)
         return act_dict
 
