@@ -7,3 +7,4 @@ psycopg2==2.5.2
 djangorestframework==2.3.13
 requests==2.2.1
 unidecode==0.04.16
+geojson==1.0.7

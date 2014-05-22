@@ -46,6 +46,7 @@ class Subject(models.Model):
         db_table = 'oc_subjects'
 
 
+# Some functions for processing subject items
 class SubjectGeneration():
     error_uuids = dict()
 

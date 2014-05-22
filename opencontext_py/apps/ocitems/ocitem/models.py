@@ -1,6 +1,9 @@
+import geojson
+from geojson import Feature, Point, Polygon, FeatureCollection
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
+from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -34,6 +37,8 @@ class OCitem():
         self.assertions = False
         self.contexts = False
         self.contents = False
+        self.geo = False
+        self.chrono = False
 
     def get_item(self, actUUID):
         """
@@ -44,6 +49,7 @@ class OCitem():
         self.get_assertions()
         self.get_parent_contexts()
         self.get_contained()
+        self.get_geochrono_metadata()
         self.construct_json_ld()
         return self
 
@@ -65,7 +71,7 @@ class OCitem():
         """
         act_contain = Containment()
         self.assertions = Assertion.objects.filter(uuid=self.uuid) \
-                                           .exclude(predicate_uuid=act_contain.PREDICATE_CONTAINS)
+                                           .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)
         return self.assertions
 
     def get_parent_contexts(self):
@@ -74,7 +80,26 @@ class OCitem():
         """
         act_contain = Containment()
         self.contexts = act_contain.get_parents_by_child_uuid(self.uuid)
+        if(self.item_type == 'subjects'):
+            # get item geospatial and chronological metadata if subject item
+            # will do it differently if not a subject item
+            subject_list = act_contain.contexts_list
+            subject_list.insert(0, self.uuid)
+            self.geo = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
+            self.chrono = act_contain.get_geochron_from_subject_list(subject_list, 'chrono')
         return self.contexts
+
+    def get_geochrono_metadata(self):
+        """
+        gets item geo and chronological metadata
+        """
+        if(self.geo is False and self.chrono is False):
+            act_contain = Containment()
+            self.geo = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
+            self.chrono = act_contain.get_related_geochron(self.uuid, self.item_type, 'chrono')
+            return True
+        else:
+            return False
 
     def get_contained(self):
         """
@@ -93,6 +118,7 @@ class OCitem():
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
         json_ld['label'] = self.label
+        json_ld['@type'] = [{'id': self.manifest.class_uri}]
         if(len(self.contexts) > 0):
             #adds parent contents, with different treenodes
             act_context = LastUpdatedOrderedDict()
@@ -120,6 +146,11 @@ class OCitem():
             json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
         # add predicate - object (descriptions) to the item
         json_ld = item_con.add_descriptive_assertions(json_ld, self.assertions)
+        json_ld = item_con.add_spacetime_metadata(json_ld,
+                                                  self.uuid,
+                                                  self.item_type,
+                                                  self.geo,
+                                                  self.chrono)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -388,6 +419,32 @@ class ItemConstruction():
                                                                      'uri')
             graph_list.append(act_annotation)
         return graph_list
+
+    def add_spacetime_metadata(self, act_dict, uuid, item_type, geo, chrono):
+        """
+        adds geospatial and chronological data
+        """
+        if(geo is not False):
+            if(geo.specificity < 0):
+                # case where we've got reduced precision geospatial data
+                # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
+                gmt = GlobalMercator()
+                geotile = gmt.lat_lon_to_quadtree(geo.latitude, geo.longitude, abs(geo.specificity))
+                tile_bounds = gmt.quadtree_to_lat_lon(geotile)
+                item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
+                                         (tile_bounds[1], tile_bounds[2]),
+                                         (tile_bounds[3], tile_bounds[2]),
+                                         (tile_bounds[3], tile_bounds[0]),
+                                         (tile_bounds[1], tile_bounds[0])
+                                         ]])
+                item_f_poly = Feature(geometry=item_polygon)
+                item_f_poly.id = '#tile-' + geotile
+                item_point = Point((float(geo.longitude), float(geo.latitude)))
+                item_f_point = Feature(geometry=item_point)
+                item_fc = FeatureCollection([item_f_poly, item_f_point])
+                dump = geojson.dumps(item_fc, sort_keys=True)
+                act_dict.update(item_fc)
+        return act_dict
 
     def shorten_context_namespace(self, uri):
         """

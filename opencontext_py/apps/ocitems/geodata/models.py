@@ -6,8 +6,6 @@ from django.db import models
 class Geodata(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
-    item_type = models.CharField(max_length=50)
-    path = models.CharField(max_length=200)
     ftype = models.CharField(max_length=200)
     latitude = models.DecimalField(max_digits=24, decimal_places=21)
     longitude = models.DecimalField(max_digits=24, decimal_places=21)
