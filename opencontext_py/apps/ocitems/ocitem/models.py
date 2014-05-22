@@ -1,5 +1,5 @@
 import geojson
-from geojson import Feature, Point, Polygon, FeatureCollection
+from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
@@ -194,6 +194,7 @@ class ItemConstruction():
     var_list = list()
     link_list = list()
     type_list = list()
+    item_metadata = {}
 
     def __init__(self):
         self.add_item_labels = True
@@ -206,6 +207,7 @@ class ItemConstruction():
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
+        self.item_metadata = {}
         context = LastUpdatedOrderedDict()
         context['id'] = '@id'
         context['type'] = '@type'
@@ -452,24 +454,30 @@ class ItemConstruction():
                                          (tile_bounds[3], tile_bounds[0]),
                                          (tile_bounds[1], tile_bounds[0])
                                          ]])
-                item_f_poly = Feature(geometry=item_polygon)
-                item_f_poly.id = '#tile-' + geotile
                 item_point = Point((float(geo.longitude), float(geo.latitude)))
-                item_f_point = Feature(geometry=item_point)
-                item_f_point.id = '#geopoint-1'
-                item_features = [item_f_poly, item_f_point]
+                item_f_geocol = GeometryCollection([item_polygon, item_point])
+                item_f_geocol.id = '#geo-' + geotile
+                item_f_geocol.properties = geo_props
+                item_features = [item_f_geocol]
             elif(len(geo.geo_json) > 1):
                 # here we have geo_json expressed features and geometries to use
                 #do something
             else:
                 # case where the item only has a point for geo-spatial reference
+                geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
                 item_point = Point((float(geo.longitude), float(geo.latitude)))
                 item_f_point = Feature(geometry=item_point)
                 item_f_point.id = '#geopoint-1'
+                item_f_point.properties = geo_props
                 item_features = [item_f_point]
             if(item_features is not False):
-                item_fc = FeatureCollection(item_features)
-                act_dict.update(item_fc)
+                if(len(item_features)>1):
+                    # more than one feature, bundle them in a feature collection
+                    item_fc = FeatureCollection(item_features)
+                    act_dict.update(item_fc)
+                else:
+                    # only one feature, make a geo_json feature
+                    act_dict.update(item_features[0])
         return act_dict
 
     def shorten_context_namespace(self, uri):
@@ -501,9 +509,14 @@ class ItemConstruction():
         """
         gets metadata about an item from the manifest table
         """
-        manifest_item = False
-        try:
-            manifest_item = Manifest.objects.get(uuid=uuid)
-            return manifest_item
-        except Manifest.DoesNotExist:
-            return False
+        if(uuid in self.item_metadata):
+            # check first to see if the manifest item is already in memory
+            manifest_item = self.item_metadata[uuid]
+        else:    
+            manifest_item = False
+            try:
+                manifest_item = Manifest.objects.get(uuid=uuid)
+                self.item_metadata[uuid] = manifest_item
+            except Manifest.DoesNotExist:
+                return False
+        return maniifest_item
