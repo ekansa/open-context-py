@@ -467,7 +467,7 @@ class ItemConstruction():
                 geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
                 item_point = Point((float(geo.longitude), float(geo.latitude)))
                 item_f_point = Feature(geometry=item_point)
-                item_f_point.id = '#geopoint-1'
+                item_f_point.id = '#geo-1'
                 item_f_point.properties = geo_props
                 item_features = [item_f_point]
             if(item_features is not False):
