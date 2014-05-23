@@ -40,8 +40,8 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
     'opencontext_py.apps.ocitems.assertions',
-    'opencontext_py.apps.ocitems.chronology',
-    'opencontext_py.apps.ocitems.geodata',
+    'opencontext_py.apps.ocitems.chrono',
+    'opencontext_py.apps.ocitems.geospace',
     'opencontext_py.apps.ocitems.mediafiles',
     'opencontext_py.apps.ocitems.documents',
     'opencontext_py.apps.ocitems.persons',
@@ -120,4 +120,21 @@ try:
 except:
     HOSTNAME = 'localhost'
 
+# canonical host for composing URIs
 CANONICAL_HOST = "http://opencontext.org"
+
+# types of items published by open cotext
+ITEM_TYPES = (
+    ('subjects', 'subjects'),
+    ('media', 'media'),
+    ('documents', 'documents'),
+    ('projects', 'projects'),
+    ('persons', 'persons'),
+    ('types', 'types'),
+    ('predicates', 'predicates'),
+    ('tables', 'tables'),
+    ('vocabularies', 'vocabularies'),
+)
+
+# types of items where slugs are published
+SLUG_TYPES = ['predicates', 'projects']

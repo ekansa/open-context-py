@@ -1,10 +1,9 @@
+import json
 import requests
 from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
-from opencontext_py.apps.ocitems.chronology.models import Chronology as Chronology
-from opencontext_py.apps.ocitems.geodata.models import Geodata as Geodata
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person as Person
 from opencontext_py.apps.ocitems.projects.models import Project as Project
@@ -13,6 +12,8 @@ from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
 from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
 from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
 from opencontext_py.apps.ocitems.projects.models import Project as Project
+from opencontext_py.apps.ocitems.chrono.models import Chrono
+from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 # OCmysql requests JSON-data from the MySQL datastore.
@@ -181,3 +182,42 @@ class OCmysql():
                                                                                       last=Max('published'))
             proj_dates[proj[0]] = early_date
         return proj_dates
+"""
+    def update_geo_chrono(self):
+        geos = Geodataold.objects.all()
+        for geo in geos:
+            ftype = geo.ftype
+            coordinates = ''
+            if(len(geo.geo_json) > 5):
+                geo_obj = json.loads(geo.geo_json)
+                ftype = geo_obj["geometry"]["type"]
+                coords = geo_obj["geometry"]["coordinates"]
+                coordinates = json.dumps(coords)
+            record = {'uuid': geo.uuid,
+                      'project_uuid': geo.project_uuid,
+                      'meta_type': 'oc-gen:discovey-location',
+                      'ftype': ftype,
+                      'latitude': geo.latitude,
+                      'longitude': geo.longitude,
+                      'specificity': geo.specificity,
+                      'coordinates': coordinates,
+                      'note': geo.note}
+            newr = Geospace(**record)
+            newr.save()
+        geo_count = len(geos)
+        geos = []
+        chronos = Chronologyold.objects.all()
+        for chrono in chronos:
+            record = {'uuid': chrono.uuid,
+                      'project_uuid': chrono.project_uuid,
+                      'meta_type': 'oc-gen:use-life',
+                      'start_lc': chrono.start_lc,
+                      'start_c': chrono.start_c,
+                      'end_c': chrono.end_c,
+                      'end_lc': chrono.end_lc,
+                      'note': chrono.note}
+            newr = Chrono(**record)
+            newr.save()
+        chrono_count = len(chronos)
+        return 'Geospace records: ' + geo_count + ', chrono records: ' + chrono_count
+"""

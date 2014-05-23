@@ -1,8 +1,8 @@
 import hashlib
 from django.conf import settings
 from django.db import models
-from opencontext_py.apps.ocitems.geodata.models import Geodata
-from opencontext_py.apps.ocitems.chronology.models import Chronology
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.chrono.models import Chrono
 
 
 # Assertions store descriptions and linking relations for Open Context items
@@ -128,11 +128,11 @@ class Containment():
         gets the most specific geospatial or chronology metadata related to a list of subject items
         if not found, looks up parent items
         """
-        metadata_item = False
+        metadata_items = False
         if(len(subject_list) < 1):
             # can't find a related subject uuid
             # print(" Sad, an empty list! \n")
-            return  metadata_item
+            return  metadata_items
         else:
             if(do_parents):
                 self.contexts = {}
@@ -141,29 +141,31 @@ class Containment():
                 # print(" trying: " + search_uuid + "\n")
                 if(metadata_type == 'geo'):
                     try:
-                        metadata_item = Geodata.objects.get(uuid=search_uuid)
+                        metadata_items = Geospace.objects.filter(uuid=search_uuid)
                         break
                     except Geodata.DoesNotExist:
                         # can't find any geodata, build a list of parent uuids to search
-                        metadata_item = False
+                        metadata_items = False
                 else:
                     try:
-                        metadata_item = Chronology.objects.get(uuid=search_uuid)
+                        metadata_items = Chrono.objects.filter(uuid=search_uuid)
                         break
                     except Chronology.DoesNotExist:
                         # can't find any geodata, build a list of parent uuids to search
-                        metadata_item = False
-                if(do_parents and metadata_item is False):
+                        metadata_items = False
+                if(len(metadata_items) < 1):
+                    metadata_items = False
+                if(do_parents and metadata_items is False):
                     self.recurse_count = 0
                     self.get_parents_by_child_uuid(search_uuid)
-            if(metadata_item is False and do_parents):
+            if(metadata_items is False and do_parents):
                 # print(" going for parents: " + str(self.contexts_list) + "\n")
                 # use the list of parent uuid's from the context_list. It's in order of more
                 # specific to more general
-                metadata_item = self.get_geochron_from_subject_list(self.contexts_list,
-                                                                    metadata_type,
-                                                                    False)
-        return metadata_item
+                metadata_items = self.get_geochron_from_subject_list(self.contexts_list,
+                                                                     metadata_type,
+                                                                     False)
+        return metadata_items
 
     def get_related_geochron(self, uuid, item_type, metadata_type):
         """
@@ -175,5 +177,5 @@ class Containment():
         else:
             subject_list = []
             subject_list.append(uuid)
-        metadata_item = self.get_geochron_from_subject_list(subject_list, metadata_type)
-        return metadata_item
+        metadata_items = self.get_geochron_from_subject_list(subject_list, metadata_type)
+        return metadata_items

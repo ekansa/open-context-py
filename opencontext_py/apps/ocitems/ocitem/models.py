@@ -1,3 +1,4 @@
+import json
 import geojson
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from collections import OrderedDict
@@ -39,8 +40,8 @@ class OCitem():
         self.assertions = False
         self.contexts = False
         self.contents = False
-        self.geo = False
-        self.chrono = False
+        self.geo_meta = False
+        self.chrono_meta = False
 
     def get_item(self, actUUID):
         """
@@ -87,18 +88,18 @@ class OCitem():
             # will do it differently if not a subject item
             subject_list = act_contain.contexts_list
             subject_list.insert(0, self.uuid)
-            self.geo = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
-            self.chrono = act_contain.get_geochron_from_subject_list(subject_list, 'chrono')
+            self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
+            self.chrono_meta = act_contain.get_geochron_from_subject_list(subject_list, 'chrono')
         return self.contexts
 
     def get_geochrono_metadata(self):
         """
         gets item geo and chronological metadata
         """
-        if(self.geo is False and self.chrono is False):
+        if(self.geo_meta is False and self.chrono_meta is False):
             act_contain = Containment()
-            self.geo = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
-            self.chrono = act_contain.get_related_geochron(self.uuid, self.item_type, 'chrono')
+            self.geo_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
+            self.chrono_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'chrono')
             return True
         else:
             return False
@@ -151,8 +152,8 @@ class OCitem():
         json_ld = item_con.add_spacetime_metadata(json_ld,
                                                   self.uuid,
                                                   self.item_type,
-                                                  self.geo,
-                                                  self.chrono)
+                                                  self.geo_meta,
+                                                  self.chrono_meta)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -428,56 +429,82 @@ class ItemConstruction():
             graph_list.append(act_annotation)
         return graph_list
 
-    def add_spacetime_metadata(self, act_dict, uuid, item_type, geo, chrono):
+    def add_spacetime_metadata(self, act_dict, uuid, item_type, geo_meta, chrono_meta):
         """
         adds geospatial and chronological data
         """
-        if(geo is not False):
-            item_features = False
-            geo_props = LastUpdatedOrderedDict()
-            if(uuid != geo.uuid):
-                geo_props['location-inferred-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
-                rel_meta = self.get_item_metadata(uuid)
-                if(rel_meta is not False):
-                    geo_props['location-inferred-label'] = rel_meta.label
-            if(geo.specificity < 0):
-                # case where we've got reduced precision geospatial data
-                # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
-                geo_props['location-precision'] = abs(geo.specificity)
-                geo_props['location-note'] = 'Location data has intentionally reduced spatial precision'
-                gmt = GlobalMercator()
-                geotile = gmt.lat_lon_to_quadtree(geo.latitude, geo.longitude, abs(geo.specificity))
-                tile_bounds = gmt.quadtree_to_lat_lon(geotile)
-                item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
-                                         (tile_bounds[1], tile_bounds[2]),
-                                         (tile_bounds[3], tile_bounds[2]),
-                                         (tile_bounds[3], tile_bounds[0]),
-                                         (tile_bounds[1], tile_bounds[0])
-                                         ]])
-                item_point = Point((float(geo.longitude), float(geo.latitude)))
-                item_f_geocol = GeometryCollection([item_polygon, item_point])
-                item_f_geocol.id = '#geo-' + geotile
-                item_f_geocol.properties = geo_props
-                item_features = [item_f_geocol]
-            elif(len(geo.geo_json) > 1):
-                # here we have geo_json expressed features and geometries to use
-                #do something
-            else:
-                # case where the item only has a point for geo-spatial reference
-                geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
-                item_point = Point((float(geo.longitude), float(geo.latitude)))
-                item_f_point = Feature(geometry=item_point)
-                item_f_point.id = '#geo-1'
-                item_f_point.properties = geo_props
-                item_features = [item_f_point]
-            if(item_features is not False):
-                if(len(item_features)>1):
-                    # more than one feature, bundle them in a feature collection
-                    item_fc = FeatureCollection(item_features)
-                    act_dict.update(item_fc)
+        if(geo_meta is not False):
+            item_features = []
+            geo_id = 0
+            for geo in geo_meta:
+                geo_id += 1
+                geo_props = LastUpdatedOrderedDict()
+                geo_props['href'] = self.make_oc_uri(uuid, item_type)
+                geo_props['location-type'] = geo.meta_type
+                if(uuid != geo.uuid):
+                    geo_props['location-inferred-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
+                    rel_meta = self.get_item_metadata(uuid)
+                    if(rel_meta is not False):
+                        geo_props['location-inferred-label'] = rel_meta.label
+                if(geo.specificity < 0):
+                    # case where we've got reduced precision geospatial data
+                    # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
+                    geo_props['location-precision'] = abs(geo.specificity)
+                    geo_props['location-precision-note'] = 'Location data approximated as a security precaution'
+                    gmt = GlobalMercator()
+                    geotile = gmt.lat_lon_to_quadtree(geo.latitude, geo.longitude, abs(geo.specificity))
+                    tile_bounds = gmt.quadtree_to_lat_lon(geotile)
+                    item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
+                                             (tile_bounds[1], tile_bounds[2]),
+                                             (tile_bounds[3], tile_bounds[2]),
+                                             (tile_bounds[3], tile_bounds[0]),
+                                             (tile_bounds[1], tile_bounds[0])
+                                             ]])
+                    item_f_poly = Feature(geometry=item_polygon)
+                    item_f_poly.id = '#geopoly-' + str(geo_id) + '-' + geotile
+                    item_f_poly.properties.update(geo_props)
+                    item_f_poly.properties['location-note'] = 'This region defines the \
+                                                               approximate location for this item'
+                    item_f_poly.properties['id'] = '#geopoly-props-' + str(geo_id)
+                    item_point = Point((float(geo.longitude), float(geo.latitude)))
+                    item_f_point = Feature(geometry=item_point)
+                    item_f_point.id = '#geopoint-' + str(geo_id)
+                    item_f_point.properties.update(geo_props)
+                    item_f_point.properties['location-note'] = 'This point defines the center of the \
+                                                                region approximating the location for this item'
+                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
+                    item_features = [item_f_poly, item_f_point]
+                elif(len(geo.coordinates) > 1):
+                    # here we have geo_json expressed features and geometries to use
+                    #do something
+                    geo_props['location-precision-note'] = 'Location data available with no intentional reduction in precision'
+                    if(geo.ftype == 'Polygon'):
+                        coord_obj = json.loads(geo.coordinates)
+                        item_db = Polygon(coord_obj)
+                    item_point = Point((float(geo.longitude), float(geo.latitude)))
+                    item_f_db = Feature(geometry=item_db)
+                    item_f_db.id = '#geopoly-' + str(geo_id)
+                    item_f_db.properties.update(geo_props)
+                    item_f_db.properties['id'] = '#geodata-props-' + str(geo_id)
+                    item_f_point = Feature(geometry=item_point)
+                    item_f_point.id = '#geopoint-' + str(geo_id)
+                    item_f_point.properties.update(geo_props)
+                    item_f_point.properties['location-region-note'] = 'This point represents the center of the \
+                                                                       region defining the location of this item'
+                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
+                    item_features = [item_f_db, item_f_point]
                 else:
-                    # only one feature, make a geo_json feature
-                    act_dict.update(item_features[0])
+                    # case where the item only has a point for geo-spatial reference
+                    geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
+                    item_point = Point((float(geo.longitude), float(geo.latitude)))
+                    item_f_point = Feature(geometry=item_point)
+                    item_f_point.id = '#geopoint-' + str(geo_id)
+                    item_f_point.properties.update(geo_props)
+                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
+                    item_features = [item_f_point]
+            if(item_features is not False):
+                item_fc = FeatureCollection(item_features)
+                act_dict.update(item_fc)
         return act_dict
 
     def shorten_context_namespace(self, uri):
@@ -509,14 +536,14 @@ class ItemConstruction():
         """
         gets metadata about an item from the manifest table
         """
+        manifest_item = False
         if(uuid in self.item_metadata):
             # check first to see if the manifest item is already in memory
             manifest_item = self.item_metadata[uuid]
-        else:    
-            manifest_item = False
+        else:
             try:
                 manifest_item = Manifest.objects.get(uuid=uuid)
                 self.item_metadata[uuid] = manifest_item
             except Manifest.DoesNotExist:
-                return False
-        return maniifest_item
+                manifest_item = False
+        return manifest_item
