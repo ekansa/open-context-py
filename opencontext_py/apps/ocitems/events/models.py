@@ -33,10 +33,32 @@ class Event(models.Model):
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
+    def validate_times(self):
+        """
+        makes sure time data is properly validated
+        """
+        time_list = [self.earliest, self.start, self.start, self.latest]
+        time_list.sort()
+        self.earliest = time_list[0]
+        self.start = time_list[1]
+        self.start = time_list[2]
+        self.latest = time_list[3]
+
+    def early_late_validate(self, need_early, need_late):
+        """
+        makes a pair of times in the proper order
+        """
+        if(need_late < need_early):
+            temp = need_early
+            need_early = need_late
+            need_late = temp
+        return need_early, need_late
+
     def save(self):
         """
         creates the hash-id on saving to insure a unique event
         """
+        self.validate_times()
         self.hash_id = self.make_hash_id()
         super(Event, self).save()
 
