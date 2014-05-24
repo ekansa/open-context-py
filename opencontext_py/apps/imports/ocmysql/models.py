@@ -12,7 +12,6 @@ from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
 from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
 from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
 from opencontext_py.apps.ocitems.projects.models import Project as Project
-from opencontext_py.apps.ocitems.chrono.models import Chrono
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
