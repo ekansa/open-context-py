@@ -41,7 +41,7 @@ class OCitem():
         self.contexts = False
         self.contents = False
         self.geo_meta = False
-        self.chrono_meta = False
+        self.event_meta = False
 
     def get_item(self, actUUID):
         """
@@ -52,7 +52,7 @@ class OCitem():
         self.get_assertions()
         self.get_parent_contexts()
         self.get_contained()
-        self.get_geochrono_metadata()
+        self.get_geoevent_metadata()
         self.construct_json_ld()
         return self
 
@@ -89,17 +89,17 @@ class OCitem():
             subject_list = act_contain.contexts_list
             subject_list.insert(0, self.uuid)
             self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
-            self.chrono_meta = act_contain.get_geochron_from_subject_list(subject_list, 'chrono')
+            self.event_meta = act_contain.get_geochron_from_subject_list(subject_list, 'event')
         return self.contexts
 
-    def get_geochrono_metadata(self):
+    def get_geoevent_metadata(self):
         """
         gets item geo and chronological metadata
         """
-        if(self.geo_meta is False and self.chrono_meta is False):
+        if(self.geo_meta is False and self.event_meta is False):
             act_contain = Containment()
             self.geo_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
-            self.chrono_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'chrono')
+            self.event_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'event')
             return True
         else:
             return False
@@ -121,7 +121,7 @@ class OCitem():
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
         json_ld['label'] = self.label
-        json_ld['@type'] = [{'id': self.manifest.class_uri}]
+        json_ld['@type'] = [self.manifest.class_uri]
         if(len(self.contexts) > 0):
             #adds parent contents, with different treenodes
             act_context = LastUpdatedOrderedDict()
@@ -153,7 +153,7 @@ class OCitem():
                                                   self.uuid,
                                                   self.item_type,
                                                   self.geo_meta,
-                                                  self.chrono_meta)
+                                                  self.event_meta)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -211,7 +211,6 @@ class ItemConstruction():
         self.item_metadata = {}
         context = LastUpdatedOrderedDict()
         context['id'] = '@id'
-        context['type'] = '@type'
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
         context['label'] = 'rdfs:label'
@@ -225,10 +224,26 @@ class ItemConstruction():
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
-        context['location-inferred-uri'] = 'oc-gen:geojson-location-inferred-uri'
-        context['location-inferred-label'] = 'oc-gen:geojson-location-inferred-label'
+        context['type'] = 'oc-gen:geojson-type'
+        context['FeatureCollection'] = 'oc-gen:geojson-feature-col'
+        context['Feature'] = 'oc-gen:geojson-feature'
+        context['Point'] = 'oc-gen:geojson-point'
+        context['Polygon'] = 'oc-gen:geojson-polygon'
+        context['features'] = 'oc-gen:geojson-features'
+        context['geometry'] = 'oc-gen:geojson-geometry'
+        context['coordinates'] = 'oc-gen:geojson-coordinates'
+        context['properties'] = 'oc-gen:geojson-properties'
+        context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
+        context['inferred'] = 'oc-gen:inferred'
+        context['specified'] = 'oc-gen:specified'
+        context['reference-uri'] = 'oc-gen:reference-uri'
+        context['reference-label'] = 'oc-gen:reference-label'
         context['location-precision'] = 'oc-gen:geojson-location-precision'
         context['location-note'] = 'oc-gen:geojson-location-note'
+        context['where'] = {'@id': 'oc-gen:event-where', '@type': '@id'}
+        context['when'] = 'oc-gen:event-when'
+        context['start'] = {'@id': 'http://www.w3.org/2006/time#hasBeginning'}
+        context['stop'] = {'@id': 'http://www.w3.org/2006/time#hasEnding'}
         self.base_context = context
 
     def __del__(self):
@@ -403,7 +418,7 @@ class ItemConstruction():
             act_dict['@graph'] = graph_list
         return act_dict
 
-    def get_annotations_for_ocitem(self, graph_list, subject_uuid, subject_type, slug=False):
+    def get_annotations_for_ocitem(self, graph_list, subject_uuid, subject_type, prefix_slug=False):
         """
         adds linked data annotations to a given subject_uuid
         """
@@ -415,8 +430,8 @@ class ItemConstruction():
             la_count = 0
         if(la_count > 0):
             act_annotation = LastUpdatedOrderedDict()
-            if(slug is not False):
-                act_annotation['@id'] = self.make_oc_uri(slug, subject_type)
+            if(prefix_slug is not False):
+                act_annotation['@id'] = prefix_slug
             else:
                 act_annotation['@id'] = self.make_oc_uri(subject_uuid, subject_type)
             for link_anno in link_annotations:
@@ -429,23 +444,26 @@ class ItemConstruction():
             graph_list.append(act_annotation)
         return graph_list
 
-    def add_spacetime_metadata(self, act_dict, uuid, item_type, geo_meta, chrono_meta):
+    def add_spacetime_metadata(self, act_dict, uuid, item_type, geo_meta, event_meta):
         """
-        adds geospatial and chronological data
+        adds geospatial and event data that links time and space information
         """
         if(geo_meta is not False):
             item_features = []
-            geo_id = 0
+            feature_ids = {}
             for geo in geo_meta:
-                geo_id += 1
+                geo_id = geo.fid
                 geo_props = LastUpdatedOrderedDict()
                 geo_props['href'] = self.make_oc_uri(uuid, item_type)
                 geo_props['location-type'] = geo.meta_type
                 if(uuid != geo.uuid):
-                    geo_props['location-inferred-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
-                    rel_meta = self.get_item_metadata(uuid)
+                    geo_props['reference-type'] = 'inferred'
+                    geo_props['referece-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
+                    rel_meta = self.get_item_metadata(geo.uuid)
                     if(rel_meta is not False):
-                        geo_props['location-inferred-label'] = rel_meta.label
+                        geo_props['referece-label'] = rel_meta.label
+                else:
+                    geo_props['reference-type'] = 'specified'
                 if(geo.specificity < 0):
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
@@ -461,50 +479,112 @@ class ItemConstruction():
                                              (tile_bounds[1], tile_bounds[0])
                                              ]])
                     item_f_poly = Feature(geometry=item_polygon)
-                    item_f_poly.id = '#geopoly-' + str(geo_id) + '-' + geotile
+                    item_f_poly.id = '#geo-derived-' + str(geo_id)
+                    item_f_poly.geometry.id = '#geo-derived-geom-' + str(geo_id)
                     item_f_poly.properties.update(geo_props)
                     item_f_poly.properties['location-note'] = 'This region defines the \
                                                                approximate location for this item'
-                    item_f_poly.properties['id'] = '#geopoly-props-' + str(geo_id)
+                    item_f_poly.properties['id'] = '#geo-derived-props-' + str(geo_id)
+                    item_features.append(item_f_poly)
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
-                    item_f_point.id = '#geopoint-' + str(geo_id)
+                    item_f_point.id = '#geo-' + str(geo_id)
+                    item_f_point.geometry.id = '#geo-geom-' + str(geo_id)
+                    feature_ids[geo_id] = item_f_point.id
                     item_f_point.properties.update(geo_props)
                     item_f_point.properties['location-note'] = 'This point defines the center of the \
                                                                 region approximating the location for this item'
-                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
-                    item_features = [item_f_poly, item_f_point]
+                    item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
+                    item_features.append(item_f_point)
                 elif(len(geo.coordinates) > 1):
                     # here we have geo_json expressed features and geometries to use
-                    #do something
                     geo_props['location-precision-note'] = 'Location data available with no intentional reduction in precision'
-                    if(geo.ftype == 'Polygon'):
-                        coord_obj = json.loads(geo.coordinates)
-                        item_db = Polygon(coord_obj)
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
-                    item_f_db = Feature(geometry=item_db)
-                    item_f_db.id = '#geopoly-' + str(geo_id)
-                    item_f_db.properties.update(geo_props)
-                    item_f_db.properties['id'] = '#geodata-props-' + str(geo_id)
                     item_f_point = Feature(geometry=item_point)
-                    item_f_point.id = '#geopoint-' + str(geo_id)
                     item_f_point.properties.update(geo_props)
-                    item_f_point.properties['location-region-note'] = 'This point represents the center of the \
-                                                                       region defining the location of this item'
-                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
-                    item_features = [item_f_db, item_f_point]
+                    if(uuid == geo.uuid):
+                        #the item itself has the polygon as it's feature
+                        if(geo.ftype == 'Polygon'):
+                            coord_obj = json.loads(geo.coordinates)
+                            item_db = Polygon(coord_obj)
+                        elif(geo.ftype == 'MultiPolygon'):
+                            coord_obj = json.loads(geo.coordinates)
+                            item_db = MultiPolygon(coord_obj)
+                        item_f_db = Feature(geometry=item_db)
+                        item_f_db.id = '#geo-' + str(geo_id)
+                        item_f_db.geometry.id = '#geo-geom-' + str(geo_id)
+                        feature_ids[geo_id] = item_f_db.id
+                        item_f_db.properties.update(geo_props)
+                        item_f_db.properties['id'] = '#geo-props-' + str(geo_id)
+                        item_features.append(item_f_db)
+                        item_f_point.id = '#geo-derived-' + str(geo_id)
+                        item_f_point.geometry.id = '#geo-derived-geom-' + str(geo_id)
+                        item_f_point.properties['location-region-note'] = 'This point represents the center of the \
+                                                                           region defining the location of this item'
+                    else:
+                        #the item is contained within another item with a polygon or multipolygon feature
+                        item_f_point.id = '#geo-' + str(geo_id)
+                        item_f_point.geometry.id = '#geo-geom-' + str(geo_id)
+                        feature_ids[geo_id] = item_f_point.id
+                        item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
+                        item_f_point.properties['location-region-note'] = 'This point represents the center of the \
+                                                                           region containing this item'
+                    item_features.append(item_f_point)
                 else:
                     # case where the item only has a point for geo-spatial reference
                     geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
-                    item_f_point.id = '#geopoint-' + str(geo_id)
+                    item_f_point.id = '#geo-' + str(geo_id)
+                    feature_ids[geo_id] = item_f_point.id
                     item_f_point.properties.update(geo_props)
-                    item_f_point.properties['id'] = '#geopoint-props-' + str(geo_id)
+                    item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
                     item_features = [item_f_point]
             if(item_features is not False):
                 item_fc = FeatureCollection(item_features)
                 act_dict.update(item_fc)
+            if(event_meta is not False):
+                item_events = []
+                for event in event_meta:
+                    act_event_obj = LastUpdatedOrderedDict()
+                    # default to the first geospatial feature for where the event happened
+                    rel_feature_num = 1
+                    rel_feature_id = False
+                    if(event.feature_id > 0):
+                        rel_feature_num = event.feature_id
+                    if(rel_feature_num in feature_ids):
+                        rel_feature_id = feature_ids[rel_feature_num]
+                    act_event_obj['id'] = '#event-' + str(event.event_id)
+                    act_event_obj['@type'] = event.meta_type
+                    if(rel_feature_id is not False):
+                        act_event_obj['where'] = rel_feature_id
+                    act_event_obj = self.add_when_json(act_event_obj, uuid, item_type, event)
+                    item_events.append(act_event_obj)
+                act_dict['oc-gen:has-events'] = item_events
+        return act_dict
+
+    def add_when_json(self, act_dict, uuid, item_type, event):
+        """
+        adds when (time interval or instant) data
+        """
+        when = LastUpdatedOrderedDict()
+        when['id'] = '#event-when-' + str(event.event_id)
+        when['@type'] = event.when_type
+        if(event.earliest != event.start):
+            when['earliest'] = int(event.earliest)
+        when['start'] = int(event.start)
+        when['stop'] = int(event.stop)
+        if(event.latest != event.stop):
+            when['latest'] = int(event.latest)
+        if(event.uuid != uuid):
+            when['reference-type'] = 'inferred'
+            when['referece-uri'] = self.make_oc_uri(event.uuid, 'subjects')
+            rel_meta = self.get_item_metadata(event.uuid)
+            if(rel_meta is not False):
+                when['referece-label'] = rel_meta.label
+        else:
+            when['reference-type'] = 'specified'
+        act_dict['when'] = when
         return act_dict
 
     def shorten_context_namespace(self, uri):

@@ -14,7 +14,7 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
 from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.chrono.models import Chrono
 from opencontext_py.apps.ocitems.geospace.models import Geospace
-
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 # OCmysql requests JSON-data from the MySQL datastore.
 # This is useful for synching the postgres and mysql databases as a temporary measure
@@ -84,6 +84,9 @@ class OCmysql():
                 newr.save()
             elif(act_table == 'oc_predicates'):
                 newr = Predicate(**record)
+                newr.save()
+            elif(act_table == 'oc_identifiers'):
+                newr = StableIdentifer(**record)
                 newr.save()
 
     def process_table(self, act_table, after):

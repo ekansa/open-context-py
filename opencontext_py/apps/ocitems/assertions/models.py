@@ -2,7 +2,7 @@ import hashlib
 from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.chrono.models import Chrono
+from opencontext_py.apps.ocitems.events.models import Event
 
 
 # Assertions store descriptions and linking relations for Open Context items
@@ -132,7 +132,7 @@ class Containment():
         if(len(subject_list) < 1):
             # can't find a related subject uuid
             # print(" Sad, an empty list! \n")
-            return  metadata_items
+            return metadata_items
         else:
             if(do_parents):
                 self.contexts = {}
@@ -142,15 +142,17 @@ class Containment():
                 if(metadata_type == 'geo'):
                     try:
                         metadata_items = Geospace.objects.filter(uuid=search_uuid)
-                        break
+                        if(len(metadata_items) >= 1):
+                            break
                     except Geodata.DoesNotExist:
                         # can't find any geodata, build a list of parent uuids to search
                         metadata_items = False
                 else:
                     try:
-                        metadata_items = Chrono.objects.filter(uuid=search_uuid)
-                        break
-                    except Chronology.DoesNotExist:
+                        metadata_items = Event.objects.filter(uuid=search_uuid)
+                        if(len(metadata_items) >= 1):
+                            break
+                    except Event.DoesNotExist:
                         # can't find any geodata, build a list of parent uuids to search
                         metadata_items = False
                 if(len(metadata_items) < 1):
