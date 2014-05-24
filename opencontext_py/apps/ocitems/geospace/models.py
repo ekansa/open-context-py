@@ -7,6 +7,7 @@ from django.db import models
 class Geospace(models.Model):
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
+    fid = models.IntegerField()
     project_uuid = models.CharField(max_length=50, db_index=True)
     meta_type = models.CharField(max_length=50)
     ftype = models.CharField(max_length=200)
@@ -22,7 +23,7 @@ class Geospace(models.Model):
         creates a hash-id to insure unique combinations of uuids and location types
         """
         hash_obj = hashlib.sha1()
-        concat_string = self.uuid + " " + str(self.meta_type)
+        concat_string = self.uuid + " " + str(self.meta_type) + " " + str(self.fid)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
