@@ -23,6 +23,9 @@ class ChronoTile():
         self.path_max_bp = DEFAULT_MAXIMUM_BP
 
     def encode_path(self, latest_bp, earliest_bp, new_path=''):
+        """
+        encodes a path from latest and ealiest BP dates
+        """
         bp_list = [latest_bp, earliest_bp]
         bp_list.sort()
         latest_bp = bp_list[0]
