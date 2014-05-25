@@ -16,28 +16,57 @@ class ChronoTile():
     def __init__(self):
         self.DEFAULT_MAXIMUM_BP = 10000000  # 10 million years ago
         self.MAX_TILE_DEPTH = 30
-        self.MIN_INTERVAL_SPAN = 1
+        self.MIN_INTERVAL_SPAN = .5
         self.PREFIX_DELIM = '-'
         self.block_latest = 0
         self.block_earliest = DEFAULT_MAXIMUM_BP
         self.path_max_bp = DEFAULT_MAXIMUM_BP
 
+    def encode_path(self, latest_bp, earliest_bp, new_path=''):
+        bp_list = [latest_bp, earliest_bp]
+        bp_list.sort()
+        latest_bp = bp_list[0]
+        earliest_bp = bp_list[1]
+        level_interval = self.decode_path(new_path)
+        if(level_interval > self.MIN_INTERVAL_SPAN):
+            half_interval = level_iterval / 2
+            if(earlist_bp > self.path_max_bp):
+                # out of bound date, too early
+                return False
+            if(latest_bp < (self.block_latest + half_interval)):
+                n_path = '0'
+                if(earliest_bp >= (self.block_earliest - half_interval)):
+                    n_path = '1'
+            else:
+                n_path = '2'
+                if(earliest_bp >= (self.block_earliest - half_interval)):
+                    n_path = '3'
+            new_path += n_path
+            if(self.raw_path_depth(new_path) < self.MAX_TILE_DEPTH):
+                new_path = self.encode_path(latest_bp, earliest_bp, new_path)
+        return new_path
+
     def decode_path(self, raw_path):
         """
         decodes a path to return start and end dates
         """
-        self.get_path_maximum(raw_path)
         if(self.PREFIX_DELIM in raw_path):
             path_ex = raw_path.split(self.PREFIX_DELIM)
+            prefix = path_ex[0]
+            self.get_prefix_maximum(prefix)
             path = path_ex[1]
         else:
             path = raw_path
-        t_path = re.sub('[^0-3]', '', path)
-        if(t_path != path):
-            # path contains invalid characters, return False
-            return False
+        if(len(path) < 1):
+            # the path is empty, return the maximum BP value
+            return self.path_max_bp
         else:
-            return self.get_path_interval(path)
+            t_path = re.sub('[^0-3]', '', path)
+            if(t_path != path):
+                # path contains invalid characters, return False
+                return False
+            else:
+                return self.get_path_interval(path)
     
     def get_path_interval(self, path):
         """
@@ -67,30 +96,38 @@ class ChronoTile():
             i += 1
         return level_interval
 
-    def get_path_maximum(self, raw_path):
+    def get_prefix_maximum(self, prefix):
         """
-        Reads a path and checks for a prefix to indicate what the maximum value can be
+        gets the maximum BP from a path prefix
         """
         exp_dict = {'k': 3,
                     'm': 6,
                     'g': 9}
-        if(len(raw_path) > 3):
-            if(self.PREFIX_DELIM in raw_path):
-                path_ex = raw_path.split(self.PREFIX_DELIM)
-                prefix = path_ex[0]
-                exp_char = prefix[-1:]
-                if(exp_char is not None):
-                    exp_char = exp_char.lower()
-                numeric_prefix = self.number_cast(prefix)
-                print(str(exp_char) + " " + str(numeric_prefix))
-                if(isinstance(numeric_prefix, (int, float, numbers.Number))):
-                    print('\n oh yeah \n')
-                    if(exp_char in exp_dict):
-                        self.path_max_bp = numeric_prefix * pow(10, exp_dict[exp_char])
-                    else:
-                        self.path_max_bp = numeric_prefix
+        exp_char = prefix[-1:]
+        if(exp_char is not None):
+            exp_char = exp_char.lower()
+        numeric_prefix = self.number_cast(prefix)
+        print(str(exp_char) + " " + str(numeric_prefix))
+        if(isinstance(numeric_prefix, (int, float, numbers.Number))):
+            # print('\n oh yeah \n')
+            if(exp_char in exp_dict):
+                self.path_max_bp = numeric_prefix * pow(10, exp_dict[exp_char])
+            else:
+                self.path_max_bp = numeric_prefix
         return self.path_max_bp
-
+    
+    def raw_path_depth(self, raw_path):
+        """
+        gets the depth of a raw_path string
+        """
+        if(self.PREFIX_DELIM in raw_path):
+            path_ex = raw_path.split(self.PREFIX_DELIM)
+            prefix = path_ex[0]
+            self.get_prefix_maximum(prefix)
+            return len(path_ex[1])
+        else:
+            return len(raw_path)
+    
     def number_cast(self, test_string):
         """
         Spits out a number from a string if numeric characters returned
