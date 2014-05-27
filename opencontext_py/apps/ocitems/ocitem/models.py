@@ -130,7 +130,8 @@ class OCitem():
                 # change the parent node to context not contents
                 tree_node = tree_node.replace('contents', 'context')
                 act_context['id'] = tree_node
-                 # now reverse the list of parent contexts, so top most parent context is first, followed by children contexts
+                # now reverse the list of parent contexts, so top most parent context is first,
+                # followed by children contexts
                 parents = r_parents[::-1]
                 for parent_uuid in parents:
                     act_context = item_con.add_json_predicate_list_ocitem(act_context,
@@ -448,20 +449,29 @@ class ItemConstruction():
         """
         adds geospatial and event data that links time and space information
         """
+        features_dict = False  # dict of all features to be added
+        feature_events = False  # mappings between features and time periods
         if(geo_meta is not False):
-            item_features = []
-            feature_ids = {}
+            features_dict = LastUpdatedOrderedDict()
+            feature_events = LastUpdatedOrderedDict()
             for geo in geo_meta:
                 geo_id = geo.fid
+                geo_node = '#geo-' + str(geo_id)  # the node id for database rec of the feature
+                geo_node_geom = '#geo-geom-' + str(geo_id)
+                geo_node_props = '#geo-props-' + str(geo_id)
+                geo_node_derived = '#geo-derived-' + str(geo_id)  # node id for a derived feature
+                geo_node_derived_geom = '#geo-derived-geom-' + str(geo_id)
+                geo_node_derived_props = '#geo-derived-props-' + str(geo_id)
+                feature_events[geo_node] = []
                 geo_props = LastUpdatedOrderedDict()
                 geo_props['href'] = self.make_oc_uri(uuid, item_type)
                 geo_props['location-type'] = geo.meta_type
                 if(uuid != geo.uuid):
                     geo_props['reference-type'] = 'inferred'
-                    geo_props['referece-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
+                    geo_props['reference-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
                     rel_meta = self.get_item_metadata(geo.uuid)
                     if(rel_meta is not False):
-                        geo_props['referece-label'] = rel_meta.label
+                        geo_props['reference-label'] = rel_meta.label
                 else:
                     geo_props['reference-type'] = 'specified'
                 if(geo.specificity < 0):
@@ -479,26 +489,26 @@ class ItemConstruction():
                                              (tile_bounds[1], tile_bounds[0])
                                              ]])
                     item_f_poly = Feature(geometry=item_polygon)
-                    item_f_poly.id = '#geo-derived-' + str(geo_id)
-                    item_f_poly.geometry.id = '#geo-derived-geom-' + str(geo_id)
+                    item_f_poly.id = geo_node_derived
+                    item_f_poly.geometry.id = geo_node_derived_geom
                     item_f_poly.properties.update(geo_props)
                     item_f_poly.properties['location-note'] = 'This region defines the \
                                                                approximate location for this item'
-                    item_f_poly.properties['id'] = '#geo-derived-props-' + str(geo_id)
-                    item_features.append(item_f_poly)
+                    item_f_poly.properties['id'] = geo_node_derived_props
+                    features_dict[geo_node_derived] = item_f_poly
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
-                    item_f_point.id = '#geo-' + str(geo_id)
-                    item_f_point.geometry.id = '#geo-geom-' + str(geo_id)
-                    feature_ids[geo_id] = item_f_point.id
+                    item_f_point.id = geo_node
+                    item_f_point.geometry.id = geo_node_geom
                     item_f_point.properties.update(geo_props)
                     item_f_point.properties['location-note'] = 'This point defines the center of the \
                                                                 region approximating the location for this item'
-                    item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
-                    item_features.append(item_f_point)
+                    item_f_point.properties['id'] = geo_node_props
+                    features_dict[geo_node] = item_f_point
                 elif(len(geo.coordinates) > 1):
                     # here we have geo_json expressed features and geometries to use
-                    geo_props['location-precision-note'] = 'Location data available with no intentional reduction in precision'
+                    geo_props['location-precision-note'] = 'Location data available with no \
+                                                            intentional reduction in precision'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
                     item_f_point.properties.update(geo_props)
@@ -511,56 +521,83 @@ class ItemConstruction():
                             coord_obj = json.loads(geo.coordinates)
                             item_db = MultiPolygon(coord_obj)
                         item_f_db = Feature(geometry=item_db)
-                        item_f_db.id = '#geo-' + str(geo_id)
-                        item_f_db.geometry.id = '#geo-geom-' + str(geo_id)
-                        feature_ids[geo_id] = item_f_db.id
+                        item_f_db.id = geo_node
+                        item_f_db.geometry.id = geo_node_geom
                         item_f_db.properties.update(geo_props)
-                        item_f_db.properties['id'] = '#geo-props-' + str(geo_id)
-                        item_features.append(item_f_db)
-                        item_f_point.id = '#geo-derived-' + str(geo_id)
-                        item_f_point.geometry.id = '#geo-derived-geom-' + str(geo_id)
+                        item_f_db.properties['id'] = geo_node_props
+                        features_dict[geo_node] = item_f_db
+                        item_f_point.id = geo_node_derived
+                        item_f_point.geometry.id = geo_node_derived_geom
                         item_f_point.properties['location-region-note'] = 'This point represents the center of the \
                                                                            region defining the location of this item'
+                        item_f_point.properties['id'] = geo_node_derived_props
+                        features_dict[geo_node_derived] = item_f_point
                     else:
                         #the item is contained within another item with a polygon or multipolygon feature
-                        item_f_point.id = '#geo-' + str(geo_id)
-                        item_f_point.geometry.id = '#geo-geom-' + str(geo_id)
-                        feature_ids[geo_id] = item_f_point.id
-                        item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
+                        item_f_point.id = geo_node
+                        item_f_point.geometry.id = geo_node_geom
+                        item_f_point.properties['id'] = geo_node_props
                         item_f_point.properties['location-region-note'] = 'This point represents the center of the \
                                                                            region containing this item'
-                    item_features.append(item_f_point)
+                        features_dict[geo_node] = item_f_point
                 else:
                     # case where the item only has a point for geo-spatial reference
                     geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
-                    item_f_point.id = '#geo-' + str(geo_id)
-                    feature_ids[geo_id] = item_f_point.id
+                    item_f_point.id = geo_node
+                    item_f_point.geometry.id = geo_node_geom
                     item_f_point.properties.update(geo_props)
-                    item_f_point.properties['id'] = '#geo-props-' + str(geo_id)
-                    item_features = [item_f_point]
-            if(item_features is not False):
-                item_fc = FeatureCollection(item_features)
-                act_dict.update(item_fc)
+                    item_f_point.properties['id'] = geo_node_props
+                    features_dict[geo_node] = item_f_point
             if(event_meta is not False):
-                item_events = []
+                # events provide chrological information, tied to geo features
+                # sometimes there are more than 1 time period for each geo feature
+                # in such cases, we duplicate geo features and add the different time event
+                # information to the new features
                 for event in event_meta:
-                    act_event_obj = LastUpdatedOrderedDict()
-                    # default to the first geospatial feature for where the event happened
-                    rel_feature_num = 1
-                    rel_feature_id = False
+                    rel_feature_num = 1  # default to the first geospatial feature for where the event happened
+                    rel_feature_node = False
                     if(event.feature_id > 0):
                         rel_feature_num = event.feature_id
-                    if(rel_feature_num in feature_ids):
-                        rel_feature_id = feature_ids[rel_feature_num]
-                    act_event_obj['id'] = '#event-' + str(event.event_id)
-                    act_event_obj['@type'] = event.meta_type
-                    if(rel_feature_id is not False):
-                        act_event_obj['where'] = rel_feature_id
+                    if(rel_feature_num >= 1):
+                        rel_feature_node = '#geo-' + str(rel_feature_num)
+                    act_event_obj = LastUpdatedOrderedDict()
                     act_event_obj = self.add_when_json(act_event_obj, uuid, item_type, event)
-                    item_events.append(act_event_obj)
-                act_dict['oc-gen:has-events'] = item_events
+                    if(rel_feature_node is not False and feature_events is not False):
+                        feature_events[rel_feature_node].append(act_event_obj)
+            if(features_dict is not False):
+                if(feature_events is not False):
+                    for node_key, event_list in feature_events.items():
+                        # update the feature with the first event "when" information
+                        if(len(event_list) > 0):
+                            features_dict[node_key].update(event_list[0])
+                            event_i = 1
+                            for event in event_list:
+                                if(event_i <= 1):
+                                    # add the time info to the feature
+                                    features_dict[node_key].update(event)
+                                else:
+                                    act_feature = features_dict[node_key]
+                                    act_feature.update(event)  # add the time info to the new feature
+                                    # now add new node ids for the new features created to for the event
+                                    new_node = node_key + '-event-' + str(event_i)
+                                    act_feature.id = new_node
+                                    act_feature.geometry.id += '-event-' + str(event_i)
+                                    act_feature.properties.id += '-event-' + str(event_i)
+                                    features_dict[new_node] = act_feature
+                                event_i += 1
+                feature_keys = list(features_dict.keys())
+                if(len(feature_keys) == 1):
+                    del features_dict[feature_keys[0]]['id']  # remove the conflicting id
+                    # only 1 feature, so item is not a feature collection
+                    act_dict.update(features_dict[feature_keys[0]])
+                else:
+                    feature_list = []  # multiple features, so item has a feature collection
+                    for node_key, feature in features_dict.items():
+                        feature_list.append(feature)
+                    item_fc = FeatureCollection(feature_list)
+                    act_dict.update(item_fc)
         return act_dict
 
     def add_when_json(self, act_dict, uuid, item_type, event):
@@ -569,7 +606,7 @@ class ItemConstruction():
         """
         when = LastUpdatedOrderedDict()
         when['id'] = '#event-when-' + str(event.event_id)
-        when['@type'] = event.when_type
+        when['@type'] = [event.meta_type, event.when_type]
         if(event.earliest != event.start):
             when['earliest'] = int(event.earliest)
         when['start'] = int(event.start)
@@ -578,10 +615,10 @@ class ItemConstruction():
             when['latest'] = int(event.latest)
         if(event.uuid != uuid):
             when['reference-type'] = 'inferred'
-            when['referece-uri'] = self.make_oc_uri(event.uuid, 'subjects')
+            when['reference-uri'] = self.make_oc_uri(event.uuid, 'subjects')
             rel_meta = self.get_item_metadata(event.uuid)
             if(rel_meta is not False):
-                when['referece-label'] = rel_meta.label
+                when['reference-label'] = rel_meta.label
         else:
             when['reference-type'] = 'specified'
         act_dict['when'] = when
