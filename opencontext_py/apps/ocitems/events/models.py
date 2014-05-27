@@ -11,6 +11,7 @@ class Event(models.Model):
     uuid = models.CharField(max_length=50, db_index=True)
     item_type = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
+    source_id = models.CharField(max_length=50, db_index=True)
     event_id = models.IntegerField()
     meta_type = models.CharField(max_length=50)
     when_type = models.CharField(max_length=50)

@@ -9,6 +9,7 @@ class Geospace(models.Model):
     uuid = models.CharField(max_length=50, db_index=True)
     fid = models.IntegerField()
     project_uuid = models.CharField(max_length=50, db_index=True)
+    source_id = models.CharField(max_length=50, db_index=True)
     meta_type = models.CharField(max_length=50)
     ftype = models.CharField(max_length=200)
     latitude = models.DecimalField(max_digits=24, decimal_places=21)

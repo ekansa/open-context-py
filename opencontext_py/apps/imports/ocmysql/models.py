@@ -15,6 +15,7 @@ from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
+
 # OCmysql requests JSON-data from the MySQL datastore.
 # This is useful for synching the postgres and mysql databases as a temporary measure
 class OCmysql():
@@ -163,11 +164,33 @@ class OCmysql():
                       'label': ocproj.label,
                       'des_predicate_uuid': '',
                       'views': 0,
-                      'published': ocproj.updated,
+                      'published': proj_dates[ocproj.project_uuid]['earliest'],
                       'revised': ocproj.updated}
             newr = Manifest(**record)
             newr.save()
         return len(ocprojects)
+
+    def add_ocpersons_manifest(self):
+        """
+        adds ocproject items to the manifest
+        """
+        ocpersons = Person.objects.all()
+        proj_dates = self.get_manifest_project_dates()
+        for ocper in ocpersons:
+            record = {'uuid': ocper.uuid,
+                      'project_uuid': ocper.project_uuid,
+                      'source_id': ocper.source_id,
+                      'item_type': 'persons',
+                      'repo': '',
+                      'class_uri': '',
+                      'label': ocper.combined_name,
+                      'des_predicate_uuid': '',
+                      'views': 0,
+                      'published': proj_dates[ocper.project_uuid]['earliest'],
+                      'revised': ocper.updated}
+            newr = Manifest(**record)
+            newr.save()
+        return len(ocpersons)
 
     def get_manifest_project_dates(self):
         """
