@@ -601,7 +601,7 @@ class ItemConstruction():
                                     del(act_feature)
                                 event_i += 1
                 feature_keys = list(features_dict.keys())
-                if(len(feature_keys) == 1):
+                if(len(feature_keys) < 1):
                     del features_dict[feature_keys[0]]['id']  # remove the conflicting id
                     # only 1 feature, so item is not a feature collection
                     act_dict.update(features_dict[feature_keys[0]])

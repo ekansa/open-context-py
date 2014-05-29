@@ -1041,34 +1041,40 @@
             ]
         }
     ],
-    "properties": {
-        "location-type": "oc-gen:discovey-location",
-        "id": "#geo-props-1",
-        "reference-uri": "http://opencontext.org/subjects/A4D8DDA4-44C6-4EAE-4EF6-685BA2A3D7F6",
-        "href": "http://opencontext.org/subjects/2DA33D4B-D502-420E-EC2D-97D95E45F751",
-        "location-note": "Location data available with no intentional reduction in precision",
-        "reference-type": "inferred",
-        "reference-label": "Mound East"
-    },
-    "when": {
-        "id": "#event-when-1",
-        "type": "Interval",
-        "@type": "oc-gen:formation-use-life",
-        "start": -6200,
-        "stop": -6000,
-        "reference-type": "inferred",
-        "reference-uri": "http://opencontext.org/subjects/845F877B-3A3F-4810-E6F3-C8D6FEA3AECA",
-        "reference-label": "Area TP"
-    },
-    "type": "Feature",
-    "geometry": {
-        "id": "#geo-geom-1",
-        "coordinates": [
-            32.827191,
-            37.668196
-        ],
-        "type": "Point"
-    },
+    "features": [
+        {
+            "id": "#geo-1",
+            "properties": {
+                "reference-uri": "http://opencontext.org/subjects/A4D8DDA4-44C6-4EAE-4EF6-685BA2A3D7F6",
+                "id": "#geo-props-1",
+                "location-type": "oc-gen:discovey-location",
+                "href": "http://opencontext.org/subjects/2DA33D4B-D502-420E-EC2D-97D95E45F751",
+                "reference-label": "Mound East",
+                "reference-type": "inferred",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "when": {
+                "id": "#event-when-1",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": -6200,
+                "stop": -6000,
+                "reference-type": "inferred",
+                "reference-uri": "http://opencontext.org/subjects/845F877B-3A3F-4810-E6F3-C8D6FEA3AECA",
+                "reference-label": "Area TP"
+            },
+            "geometry": {
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    32.827191,
+                    37.668196
+                ],
+                "type": "Point"
+            },
+            "type": "Feature"
+        }
+    ],
+    "type": "FeatureCollection",
     "dc-terms:published": "2013-03-02",
     "dc-terms:isPartOf": [
         {
@@ -1094,84 +1100,6 @@
             ]
         },
         {
-            "@id": "oc-pred:element--35",
-            "skos:closeMatch": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0079",
-                    "label": "Has anatomical identification"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:greatest-breadth-of-the-proximal-end-trochleastanda--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:taxon--35",
-            "skos:closeMatch": [
-                {
-                    "id": "http://purl.org/NET/biol/ns#term_hasTaxonomy",
-                    "label": "Has Biological Taxonomy"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:gllstandard-measurement--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ],
-            "skos:related": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0029",
-                    "label": "GLl"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:fusion--35",
-            "skos:closeMatch": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0077",
-                    "label": "Has fusion character"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-diagnostic-zones--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-elements--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:length-cm--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/centimeter",
-                    "label": "centimeter"
-                }
-            ]
-        },
-        {
             "@id": "oc-pred:dlstandard-measurement--35",
             "rdfs:range": [
                 {
@@ -1187,35 +1115,17 @@
             ]
         },
         {
-            "@id": "oc-pred:bdstandard-measurement--35",
-            "skos:related": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0009",
-                    "label": "Bd"
-                }
-            ],
+            "@id": "oc-pred:gllstandard-measurement--35",
             "rdfs:range": [
                 {
                     "id": "http://www.freebase.com/view/en/millimeter",
                     "label": "millimeter"
                 }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-pieces--35",
-            "rdfs:range": [
+            ],
+            "skos:related": [
                 {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:weight-g--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/gram",
-                    "label": "gram"
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0029",
+                    "label": "GLl"
                 }
             ]
         },
@@ -1240,6 +1150,102 @@
                 {
                     "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0078",
                     "label": "Has physiological sex determination"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:fusion--35",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0077",
+                    "label": "Has fusion character"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-pieces--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-elements--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-diagnostic-zones--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:bdstandard-measurement--35",
+            "skos:related": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0009",
+                    "label": "Bd"
+                }
+            ],
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "label": "millimeter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:length-cm--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/centimeter",
+                    "label": "centimeter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:greatest-breadth-of-the-proximal-end-trochleastanda--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "label": "millimeter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:taxon--35",
+            "skos:closeMatch": [
+                {
+                    "id": "http://purl.org/NET/biol/ns#term_hasTaxonomy",
+                    "label": "Has Biological Taxonomy"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:weight-g--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/gram",
+                    "label": "gram"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:element--35",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0079",
+                    "label": "Has anatomical identification"
                 }
             ]
         },

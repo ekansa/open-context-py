@@ -872,22 +872,28 @@
             ]
         }
     ],
-    "properties": {
-        "href": "http://opencontext.org/subjects/A86A6578-069F-4997-E70C-56A5F2BFA8EB",
-        "location-note": "Location data available with no intentional reduction in precision",
-        "reference-type": "specified",
-        "id": "#geo-props-1",
-        "location-type": "oc-gen:discovey-location"
-    },
-    "geometry": {
-        "id": "#geo-geom-1",
-        "coordinates": [
-            33.706000976063,
-            34.981809886288
-        ],
-        "type": "Point"
-    },
-    "type": "Feature",
+    "features": [
+        {
+            "id": "#geo-1",
+            "geometry": {
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    33.706000976063,
+                    34.981809886288
+                ],
+                "type": "Point"
+            },
+            "type": "Feature",
+            "properties": {
+                "id": "#geo-props-1",
+                "location-type": "oc-gen:discovey-location",
+                "location-note": "Location data available with no intentional reduction in precision",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/subjects/A86A6578-069F-4997-E70C-56A5F2BFA8EB"
+            }
+        }
+    ],
+    "type": "FeatureCollection",
     "dc-terms:published": "2013-10-25",
     "dc-terms:isPartOf": [
         {
@@ -898,15 +904,6 @@
     ],
     "@graph": [
         {
-            "@id": "oc-pred:ceramics--42",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
             "@id": "oc-pred:area-walked--42",
             "rdfs:range": [
                 {
@@ -916,34 +913,7 @@
             ]
         },
         {
-            "@id": "oc-pred:tiles--42",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:sherds--42",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-bags--42",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:lithics--42",
+            "@id": "oc-pred:ceramics--42",
             "rdfs:range": [
                 {
                     "id": "http://www.freebase.com/view/en/counting_measure",
@@ -961,6 +931,15 @@
             ]
         },
         {
+            "@id": "oc-pred:sherds--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
             "@id": "oc-pred:unit-area--42",
             "rdfs:range": [
                 {
@@ -971,6 +950,33 @@
         },
         {
             "@id": "oc-pred:total-object-count--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:tiles--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:lithics--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-bags--42",
             "rdfs:range": [
                 {
                     "id": "http://www.freebase.com/view/en/counting_measure",
