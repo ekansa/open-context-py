@@ -1,0 +1,2491 @@
+﻿{
+    "@context": {
+        "id": "@id",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "label": "rdfs:label",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "uuid": "dc-terms:identifier",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://www.cidoc-crm.org/cidoc-crm/",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "type": "oc-gen:geojson-type",
+        "FeatureCollection": "oc-gen:geojson-feature-col",
+        "Feature": "oc-gen:geojson-feature",
+        "Point": "oc-gen:geojson-point",
+        "Polygon": "oc-gen:geojson-polygon",
+        "features": "oc-gen:geojson-features",
+        "geometry": "oc-gen:geojson-geometry",
+        "coordinates": "oc-gen:geojson-coordinates",
+        "properties": "oc-gen:geojson-properties",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:geojson-location-precision",
+        "location-note": "oc-gen:geojson-location-note",
+        "where": {
+            "@type": "@id",
+            "@id": "oc-gen:event-where"
+        },
+        "when": "oc-gen:event-when",
+        "start": {
+            "@id": "http://www.w3.org/2006/time#hasBeginning"
+        },
+        "stop": {
+            "@id": "http://www.w3.org/2006/time#hasEnding"
+        },
+        "oc-pred:culture--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/6C9781E9-D3CF-422C-51FB-FAF7A91ABAE0",
+            "label": "Culture",
+            "slug": "culture--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:site-type--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/40878093-F9A8-4FC9-0FF9-CB4846BAF4B7",
+            "label": "Site Type",
+            "slug": "site-type--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:site-name--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/33FD173F-6C7A-4267-BEAB-D5A37BDDE4F7",
+            "label": "Site Name",
+            "slug": "site-name--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:shpo-evaluation-of-nr-eligibility--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/1065421B-CD7C-478F-3612-67017A7307C1",
+            "label": "SHPO evaluation of NR eligibility",
+            "slug": "shpo-evaluation-of-nr-eligibility--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:date-of-shpo-evaluation--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/EBBEDF7D-46FD-4C44-2C94-A337D4A3B4F1",
+            "label": "Date of SHPO evaluation",
+            "slug": "date-of-shpo-evaluation--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:date"
+        },
+        "oc-pred:form-number--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/DA9851A5-3A81-450E-2954-27464879D921",
+            "label": "Form Number",
+            "slug": "form-number--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:artifact-category-1--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B21D9D87-2F28-4B64-B98C-0FA718E4A291",
+            "label": "Artifact Category (1)",
+            "slug": "artifact-category-1--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-1--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/C97E778B-A29E-4884-FFDD-332010E21E8F",
+            "label": "Artifact Disposition (1)",
+            "slug": "artifact-disposition-1--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-2--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/04E96765-666A-484B-99E3-7A03D4561A6C",
+            "label": "Artifact Category (2)",
+            "slug": "artifact-category-2--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-2--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/C2943458-780A-4EAF-87D3-B9C3EABCAB68",
+            "label": "Artifact Disposition (2)",
+            "slug": "artifact-disposition-2--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-3--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/D82B0C78-0EBF-4515-0788-A9A7501D7DF8",
+            "label": "Artifact Category (3)",
+            "slug": "artifact-category-3--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-3--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/18CF6244-022D-4F22-F518-13F7206CEE52",
+            "label": "Artifact Disposition (3)",
+            "slug": "artifact-disposition-3--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-4--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/661525B9-9F21-482A-F677-8BBCC6DEAD83",
+            "label": "Artifact Category (4)",
+            "slug": "artifact-category-4--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-4--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A38EB7CE-E75F-4617-5B02-9A8826A27368",
+            "label": "Artifact Disposition (4)",
+            "slug": "artifact-disposition-4--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-5--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9DE683DF-3090-4538-BEF4-4E063E8FB474",
+            "label": "Artifact Category (5)",
+            "slug": "artifact-category-5--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-5--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/480CCDAF-0E3C-412E-FC38-77B26C9DC097",
+            "label": "Artifact Disposition (5)",
+            "slug": "artifact-disposition-5--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-6--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/513C8D9D-8D8D-486B-0A61-2223FDA36F1C",
+            "label": "Artifact Category (6)",
+            "slug": "artifact-category-6--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-6--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/456F1B4F-5D36-4BE5-5CBB-9AE249F8F1B7",
+            "label": "Artifact Disposition (6)",
+            "slug": "artifact-disposition-6--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-7--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/68A3E492-3085-4BA6-9C2E-4D690A34BD0B",
+            "label": "Artifact Category (7)",
+            "slug": "artifact-category-7--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-7--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0C91870F-B275-4A1C-A61F-416E845AE505",
+            "label": "Artifact Disposition (7)",
+            "slug": "artifact-disposition-7--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-8--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/8946354A-2933-4F1E-2984-B1D8BE418DC4",
+            "label": "Artifact Category (8)",
+            "slug": "artifact-category-8--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-8--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/D59231A1-AE2D-4A35-63FF-C2BAF816FA9E",
+            "label": "Artifact Disposition (8)",
+            "slug": "artifact-disposition-8--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-9--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/98581069-970B-4B96-9813-042195EADC2C",
+            "label": "Artifact Category (9)",
+            "slug": "artifact-category-9--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-9--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E9D3FD57-824C-46E4-2FF2-8E58AFBF35DC",
+            "label": "Artifact Disposition (9)",
+            "slug": "artifact-disposition-9--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-10--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/083A0A88-7FC6-49C8-074B-630E7E16A92A",
+            "label": "Artifact Category (10)",
+            "slug": "artifact-category-10--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-10--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/2E014EA3-6692-41D5-0F2A-6EA2463514CB",
+            "label": "Artifact Disposition (10)",
+            "slug": "artifact-disposition-10--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-11--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/5952A6A5-423F-46D9-8A76-4F9D29720085",
+            "label": "Artifact Category (11)",
+            "slug": "artifact-category-11--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-11--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/74F37671-B5CC-4C09-FB98-9AFDF7D27730",
+            "label": "Artifact Disposition (11)",
+            "slug": "artifact-disposition-11--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-12--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A8376110-490B-4AE5-1628-27A11428096A",
+            "label": "Artifact Category (12)",
+            "slug": "artifact-category-12--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-12--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/16CE37BA-711D-45E2-902E-DC9756A3D0CB",
+            "label": "Artifact Disposition (12)",
+            "slug": "artifact-disposition-12--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-13--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/4A32908E-817F-427D-9FF4-4640B9DF6768",
+            "label": "Artifact Category (13)",
+            "slug": "artifact-category-13--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-13--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/DC9A05CB-AD95-4EF8-D7E3-B8050B220413",
+            "label": "Artifact Disposition (13)",
+            "slug": "artifact-disposition-13--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-14--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A2CCEBD3-2049-47A6-4587-D4AB8EF59AF0",
+            "label": "Artifact Category (14)",
+            "slug": "artifact-category-14--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-14--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/5CC56265-0370-43DB-23BB-2E06FECB66B4",
+            "label": "Artifact Disposition (14)",
+            "slug": "artifact-disposition-14--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-15--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/FD5C3C66-C527-4453-40E3-CD58912F91C9",
+            "label": "Artifact Category (15)",
+            "slug": "artifact-category-15--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-15--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/CF107A4F-A41C-4938-8142-DDE422467ADC",
+            "label": "Artifact Disposition (15)",
+            "slug": "artifact-disposition-15--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-16--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E2DD2D93-2D94-410E-AEBF-96D83E999F51",
+            "label": "Artifact Category (16)",
+            "slug": "artifact-category-16--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-16--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0F21D372-44A9-497A-4A96-6B36329E04D2",
+            "label": "Artifact Disposition (16)",
+            "slug": "artifact-disposition-16--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-17--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0B494BA6-F1A4-45A4-AFA6-7E56466A093E",
+            "label": "Artifact Category (17)",
+            "slug": "artifact-category-17--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-17--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/2EC04FAA-EB87-4F74-792D-4B66D00E303F",
+            "label": "Artifact Disposition (17)",
+            "slug": "artifact-disposition-17--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-18--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/CBDE493D-58BE-4593-EF3A-C5E6B88AEBEF",
+            "label": "Artifact Category (18)",
+            "slug": "artifact-category-18--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-18--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A8A043D0-4DB0-4335-06B5-7A74245C9400",
+            "label": "Artifact Disposition (18)",
+            "slug": "artifact-disposition-18--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-19--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/271A9A0C-2F30-4E53-6EAA-73A3E3090DCD",
+            "label": "Artifact Category (19)",
+            "slug": "artifact-category-19--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-19--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B82A1610-C51F-4EA4-5CE8-DFB95DFF473E",
+            "label": "Artifact Disposition (19)",
+            "slug": "artifact-disposition-19--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-20--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/12F367D4-E913-49EB-29BB-D717DF42A47A",
+            "label": "Artifact Category (20)",
+            "slug": "artifact-category-20--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-20--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/CC8EAEAB-8BCB-40F5-1E0A-A5E31BDCE1E7",
+            "label": "Artifact Disposition (20)",
+            "slug": "artifact-disposition-20--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-21--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/DE7296AC-2C45-44FB-5292-2CB3EF30C17B",
+            "label": "Artifact Category (21)",
+            "slug": "artifact-category-21--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-21--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/2312D704-BA37-4F6B-DAAD-F4F83F680141",
+            "label": "Artifact Disposition (21)",
+            "slug": "artifact-disposition-21--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-22--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/74693E0A-C6AB-4E3A-95E0-ADFE386AECD1",
+            "label": "Artifact Category (22)",
+            "slug": "artifact-category-22--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-22--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0FFD0255-61F1-43DE-0449-524703FD35C6",
+            "label": "Artifact Disposition (22)",
+            "slug": "artifact-disposition-22--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-23--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E71179CC-0C32-4C1D-91E3-371B0120CFE0",
+            "label": "Artifact Category (23)",
+            "slug": "artifact-category-23--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-23--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A7D4CDC5-BD3B-4542-E660-E80BD392142A",
+            "label": "Artifact Disposition (23)",
+            "slug": "artifact-disposition-23--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-24--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A1C29C83-C768-4FF4-7A3F-70E893E6A349",
+            "label": "Artifact Category (24)",
+            "slug": "artifact-category-24--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-24--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/6BFC45FD-D867-4A57-AFD5-1E41111AA6E0",
+            "label": "Artifact Disposition (24)",
+            "slug": "artifact-disposition-24--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-25--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/6E2DEFA9-26AE-465A-3FAC-42494E80AA37",
+            "label": "Artifact Category (25)",
+            "slug": "artifact-category-25--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-25--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/39FD92E5-9A9D-43D5-31F9-4D59D6D6990C",
+            "label": "Artifact Disposition (25)",
+            "slug": "artifact-disposition-25--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-26--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9B96CFCC-6EC3-420B-1321-5DA20D594C31",
+            "label": "Artifact Category (26)",
+            "slug": "artifact-category-26--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-26--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/03F65080-0ECC-4D9A-77D4-1AEB27B775FB",
+            "label": "Artifact Disposition (26)",
+            "slug": "artifact-disposition-26--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-27--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/86553FFD-2FE2-4D28-0573-1A452D38DB0A",
+            "label": "Artifact Category (27)",
+            "slug": "artifact-category-27--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-27--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B525FF08-DA42-4E2B-7D9A-FB5DA9B4580C",
+            "label": "Artifact Disposition (27)",
+            "slug": "artifact-disposition-27--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-28--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/721E4638-28A5-4714-89DC-76F385BFCC8E",
+            "label": "Artifact Category (28)",
+            "slug": "artifact-category-28--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-28--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/3278DDFF-7E26-4AAF-A2F8-9DF3D9CD5CCE",
+            "label": "Artifact Disposition (28)",
+            "slug": "artifact-disposition-28--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-29--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/400DF8D0-A4BC-4915-FCBA-E5E4A36EC435",
+            "label": "Artifact Category (29)",
+            "slug": "artifact-category-29--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-29--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/16CEA51B-7203-432A-C8C4-8A1DF63829F3",
+            "label": "Artifact Disposition (29)",
+            "slug": "artifact-disposition-29--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-category-30--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7541AC4F-D83B-4F96-CF16-DEB2EC9AC905",
+            "label": "Artifact Category (30)",
+            "slug": "artifact-category-30--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:artifact-disposition-30--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/3D48FABA-FA24-4201-7F32-5BE33DC10819",
+            "label": "Artifact Disposition (30)",
+            "slug": "artifact-disposition-30--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-1--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/57957BBF-B906-430F-CB25-EB5A001DD3BA",
+            "label": "Diagnostic Type (1)",
+            "slug": "diagnostic-type-1--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-1--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7000BDEA-DEC9-4674-0631-B8A7E56EA4BB",
+            "label": "Diagnostic Type Count (1)",
+            "slug": "diagnostic-type-count-1--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-2--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/CFDE1EE2-AAD2-45BC-580F-415C0585D8CA",
+            "label": "Diagnostic Type (2)",
+            "slug": "diagnostic-type-2--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-2--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/02511160-F647-49EC-7DC7-ADDB3B33E4A7",
+            "label": "Diagnostic Type Count (2)",
+            "slug": "diagnostic-type-count-2--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-3--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/885F23D1-96F1-4291-3376-BE70A681CDF9",
+            "label": "Diagnostic Type (3)",
+            "slug": "diagnostic-type-3--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-3--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/3093CC63-05EB-48E7-26D1-9EC675679F65",
+            "label": "Diagnostic Type Count (3)",
+            "slug": "diagnostic-type-count-3--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-4--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/DC04F08F-A9D0-4E27-D5D0-5DC6E8BAB419",
+            "label": "Diagnostic Type (4)",
+            "slug": "diagnostic-type-4--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-4--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9517DBB9-593C-45F9-F0E0-DE35DF89245D",
+            "label": "Diagnostic Type Count (4)",
+            "slug": "diagnostic-type-count-4--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-5--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/48A9DA48-FE78-4627-E764-3E4BEA646068",
+            "label": "Diagnostic Type (5)",
+            "slug": "diagnostic-type-5--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-5--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9992CBEE-4870-457B-228A-2B20992879D6",
+            "label": "Diagnostic Type Count (5)",
+            "slug": "diagnostic-type-count-5--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-6--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/F21CB950-97C5-429B-DAED-B20F3B1586CC",
+            "label": "Diagnostic Type (6)",
+            "slug": "diagnostic-type-6--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-6--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/CC4BD10C-5C47-48DD-5EAD-BA9ECD453525",
+            "label": "Diagnostic Type Count (6)",
+            "slug": "diagnostic-type-count-6--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-7--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/AB4BE484-E69F-46B4-C9E0-8729E5ED8BDD",
+            "label": "Diagnostic Type (7)",
+            "slug": "diagnostic-type-7--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-7--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/6F11CC08-FF82-428F-35E1-96D6C8B35BA5",
+            "label": "Diagnostic Type Count (7)",
+            "slug": "diagnostic-type-count-7--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-8--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/214A1E3C-6F68-4E29-B183-2DC22A860942",
+            "label": "Diagnostic Type (8)",
+            "slug": "diagnostic-type-8--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-8--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/EF775034-ADD7-4BEA-984B-FCD4E5BC140D",
+            "label": "Diagnostic Type Count (8)",
+            "slug": "diagnostic-type-count-8--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-9--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A0A8ADCB-6F3F-415A-DB91-C1F91F068185",
+            "label": "Diagnostic Type (9)",
+            "slug": "diagnostic-type-9--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-9--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/C4465C95-F750-4BAA-B727-007CB5C0E514",
+            "label": "Diagnostic Type Count (9)",
+            "slug": "diagnostic-type-count-9--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-10--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A36E0B25-FE5F-44F7-8C3A-6613F6F77DE8",
+            "label": "Diagnostic Type (10)",
+            "slug": "diagnostic-type-10--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-10--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/D043C735-26E4-41A3-CEA8-8347DA93B97D",
+            "label": "Diagnostic Type Count (10)",
+            "slug": "diagnostic-type-count-10--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-11--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/85568296-36A0-4BB5-C456-B36E57A0EAF8",
+            "label": "Diagnostic Type (11)",
+            "slug": "diagnostic-type-11--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-11--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/687887D5-8B92-4DA0-1062-54465DB83E0C",
+            "label": "Diagnostic Type Count (11)",
+            "slug": "diagnostic-type-count-11--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-12--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/38E21836-7401-4417-917C-91182D6222D7",
+            "label": "Diagnostic Type (12)",
+            "slug": "diagnostic-type-12--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-12--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/FF812268-19E5-46E4-F7FE-52A24FBAC287",
+            "label": "Diagnostic Type Count (12)",
+            "slug": "diagnostic-type-count-12--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-13--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/59513D41-170A-4030-6740-EBDCE8704ACF",
+            "label": "Diagnostic Type (13)",
+            "slug": "diagnostic-type-13--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-13--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/37FBEF6B-6DA9-4218-4AC6-F66438CB6015",
+            "label": "Diagnostic Type Count (13)",
+            "slug": "diagnostic-type-count-13--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-14--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A308A36C-DFF4-4138-C515-7608AF71B17D",
+            "label": "Diagnostic Type (14)",
+            "slug": "diagnostic-type-14--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-14--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B7735C2A-4960-4D10-0EF6-88171DFCC321",
+            "label": "Diagnostic Type Count (14)",
+            "slug": "diagnostic-type-count-14--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-15--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/3AAE17E8-0356-4922-AF94-34B7E996CF1D",
+            "label": "Diagnostic Type (15)",
+            "slug": "diagnostic-type-15--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-15--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7F3E0D27-F785-4FD0-AFF8-1186EB227CB7",
+            "label": "Diagnostic Type Count (15)",
+            "slug": "diagnostic-type-count-15--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-16--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/F211801F-7959-4F47-7FFD-635E4979BFDE",
+            "label": "Diagnostic Type (16)",
+            "slug": "diagnostic-type-16--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-16--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/C69F756D-1B94-49CF-1147-E2B3A6F7B0DE",
+            "label": "Diagnostic Type Count (16)",
+            "slug": "diagnostic-type-count-16--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-17--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/45553076-4CAE-453F-1E9F-10132693F5B3",
+            "label": "Diagnostic Type (17)",
+            "slug": "diagnostic-type-17--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-17--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/8C2C3240-33D7-4CC9-817F-3234272668BA",
+            "label": "Diagnostic Type Count (17)",
+            "slug": "diagnostic-type-count-17--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-18--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/75B7BCF0-50B2-45B7-70BB-4ACDB22AC442",
+            "label": "Diagnostic Type (18)",
+            "slug": "diagnostic-type-18--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-18--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/287FE1DF-FF17-493D-C787-10C9079E2221",
+            "label": "Diagnostic Type Count (18)",
+            "slug": "diagnostic-type-count-18--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-19--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/59D3FBE9-6C1B-4EE1-7F5F-41F89B470175",
+            "label": "Diagnostic Type (19)",
+            "slug": "diagnostic-type-19--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-19--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A90210F8-AD8B-4471-3676-870A75476F66",
+            "label": "Diagnostic Type Count (19)",
+            "slug": "diagnostic-type-count-19--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-20--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/12BC23DC-424F-4B0D-BEDE-ABE3DE4CCCCF",
+            "label": "Diagnostic Type (20)",
+            "slug": "diagnostic-type-20--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-20--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B94040B2-0034-4829-07DE-58D345CDE37B",
+            "label": "Diagnostic Type Count (20)",
+            "slug": "diagnostic-type-count-20--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-21--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0D9A8251-CBB8-4D98-2D71-7079685AC7A9",
+            "label": "Diagnostic Type (21)",
+            "slug": "diagnostic-type-21--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-21--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/173949A0-56EC-499F-6F7F-29515C8DC7AA",
+            "label": "Diagnostic Type Count (21)",
+            "slug": "diagnostic-type-count-21--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-22--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/99F0BE1B-05EF-4B6F-5E24-36C428D76959",
+            "label": "Diagnostic Type (22)",
+            "slug": "diagnostic-type-22--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-22--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/942EE32D-C326-4E0C-84F5-8D5D374240B0",
+            "label": "Diagnostic Type Count (22)",
+            "slug": "diagnostic-type-count-22--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-23--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/6AF04763-F22C-40EF-EA02-3FE0A74E811E",
+            "label": "Diagnostic Type (23)",
+            "slug": "diagnostic-type-23--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-23--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/790A972A-4D22-493D-9B89-F494741E6B0F",
+            "label": "Diagnostic Type Count (23)",
+            "slug": "diagnostic-type-count-23--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-24--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0E625AA6-6DC7-4AE0-B782-FA25AA5FCD85",
+            "label": "Diagnostic Type (24)",
+            "slug": "diagnostic-type-24--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-24--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/29C6A650-1E87-40FC-F65A-D67C52CEB433",
+            "label": "Diagnostic Type Count (24)",
+            "slug": "diagnostic-type-count-24--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-25--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/ACF17B96-54EF-4461-4EE0-A961E3427A3B",
+            "label": "Diagnostic Type (25)",
+            "slug": "diagnostic-type-25--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-25--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/805D850C-2231-41F9-B02F-3867E3B0B662",
+            "label": "Diagnostic Type Count (25)",
+            "slug": "diagnostic-type-count-25--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-26--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/B02EF0C3-EAD3-4269-C1AB-2CB0FDC195AD",
+            "label": "Diagnostic Type (26)",
+            "slug": "diagnostic-type-26--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-26--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/79646520-DA68-4346-2EBD-2223CA72B9CE",
+            "label": "Diagnostic Type Count (26)",
+            "slug": "diagnostic-type-count-26--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-27--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7EE07D41-4B24-438D-BD1C-9CA8793AA849",
+            "label": "Diagnostic Type (27)",
+            "slug": "diagnostic-type-27--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-27--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E4B800A7-73A7-4CD5-18BF-E0A3F6BD7126",
+            "label": "Diagnostic Type Count (27)",
+            "slug": "diagnostic-type-count-27--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-28--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/25FD107B-5957-41DC-1EC1-7337670226F3",
+            "label": "Diagnostic Type (28)",
+            "slug": "diagnostic-type-28--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-28--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/10CCF868-5B2D-4FC3-8F0A-8EFA1615E9BA",
+            "label": "Diagnostic Type Count (28)",
+            "slug": "diagnostic-type-count-28--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-29--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/ADDB9E8F-135D-4916-739C-425723205C88",
+            "label": "Diagnostic Type (29)",
+            "slug": "diagnostic-type-29--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-29--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/3F46C73A-54B0-4B5B-1D81-5D3ADF7024E2",
+            "label": "Diagnostic Type Count (29)",
+            "slug": "diagnostic-type-count-29--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-30--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A51E5717-2FBB-4EF0-918A-E15A71C886CB",
+            "label": "Diagnostic Type (30)",
+            "slug": "diagnostic-type-30--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-30--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/EE31E161-5410-436A-34A9-75CD5606C82E",
+            "label": "Diagnostic Type Count (30)",
+            "slug": "diagnostic-type-count-30--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-31--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E833F434-6594-4EAB-7692-91271265C3C6",
+            "label": "Diagnostic Type (31)",
+            "slug": "diagnostic-type-31--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-31--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/65BBF7E6-57DF-48A0-8E25-0EDA1168EC6A",
+            "label": "Diagnostic Type Count (31)",
+            "slug": "diagnostic-type-count-31--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-32--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/265A2DE9-A941-4FF8-0EE1-1B65F5B20C71",
+            "label": "Diagnostic Type (32)",
+            "slug": "diagnostic-type-32--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-32--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/69B8ADA1-F552-4A0A-F6E8-456F810D22FA",
+            "label": "Diagnostic Type Count (32)",
+            "slug": "diagnostic-type-count-32--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-33--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/05053C17-9D4D-4641-FC4C-964853B9D9D8",
+            "label": "Diagnostic Type (33)",
+            "slug": "diagnostic-type-33--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-33--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/FD24EA88-6408-4499-A382-496BB52E71BA",
+            "label": "Diagnostic Type Count (33)",
+            "slug": "diagnostic-type-count-33--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-34--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/F384932D-00D6-40D4-05F2-B2C81EA7DD6B",
+            "label": "Diagnostic Type (34)",
+            "slug": "diagnostic-type-34--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-34--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9533D1D3-BC99-4818-F757-F22D0A06F3E6",
+            "label": "Diagnostic Type Count (34)",
+            "slug": "diagnostic-type-count-34--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-35--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/1C7A3BF6-2DDB-48AE-4136-32A2AC5FDDA5",
+            "label": "Diagnostic Type (35)",
+            "slug": "diagnostic-type-35--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-35--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7CE9A5A2-040C-4238-E20A-F3C0687ABFF5",
+            "label": "Diagnostic Type Count (35)",
+            "slug": "diagnostic-type-count-35--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-36--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0363F1DF-66DF-4F28-F1CD-087AEA23A4CC",
+            "label": "Diagnostic Type (36)",
+            "slug": "diagnostic-type-36--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-36--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/63B1792C-C2E9-4455-B580-1275354C0F6A",
+            "label": "Diagnostic Type Count (36)",
+            "slug": "diagnostic-type-count-36--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-37--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A40A28FA-3105-4D60-2411-77609D59896F",
+            "label": "Diagnostic Type (37)",
+            "slug": "diagnostic-type-37--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-37--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/A48E61AF-AD18-4C0B-D154-6BB494A6EC0A",
+            "label": "Diagnostic Type Count (37)",
+            "slug": "diagnostic-type-count-37--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-38--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/FA4C7DC2-710D-4330-E545-0413DEEE0369",
+            "label": "Diagnostic Type (38)",
+            "slug": "diagnostic-type-38--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-38--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/65BE534C-2480-435F-DFC9-97AF7C5D82AE",
+            "label": "Diagnostic Type Count (38)",
+            "slug": "diagnostic-type-count-38--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-39--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/C1CCE686-EC3F-4CC8-F528-26D2BBF68492",
+            "label": "Diagnostic Type (39)",
+            "slug": "diagnostic-type-39--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-39--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/90178002-9308-4063-591E-2BA23C77F478",
+            "label": "Diagnostic Type Count (39)",
+            "slug": "diagnostic-type-count-39--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-40--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/28BE132D-2367-4D46-3961-DFC981600CE5",
+            "label": "Diagnostic Type (40)",
+            "slug": "diagnostic-type-40--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-40--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/82F3933F-FB3B-4C5A-F797-970D3F30AACF",
+            "label": "Diagnostic Type Count (40)",
+            "slug": "diagnostic-type-count-40--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-41--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/DD1BD97D-4F78-410C-1A4F-DFA12921E8CF",
+            "label": "Diagnostic Type (41)",
+            "slug": "diagnostic-type-41--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-41--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/EF67EB97-AC84-447F-56B5-4EEB7D41B0ED",
+            "label": "Diagnostic Type Count (41)",
+            "slug": "diagnostic-type-count-41--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-42--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/FB947D4B-6667-4A9E-9F94-06065DA617EB",
+            "label": "Diagnostic Type (42)",
+            "slug": "diagnostic-type-42--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-42--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/9DFDA2EB-1C42-4F27-6638-163A82D3BC76",
+            "label": "Diagnostic Type Count (42)",
+            "slug": "diagnostic-type-count-42--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-43--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/99F935E5-E524-4DA4-CD96-3D36E76B0FF6",
+            "label": "Diagnostic Type (43)",
+            "slug": "diagnostic-type-43--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-43--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/EA59DD40-AB5E-4D88-BB5C-3EB61C48D295",
+            "label": "Diagnostic Type Count (43)",
+            "slug": "diagnostic-type-count-43--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-44--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/E65C3A8A-0161-42A9-EAA7-CFA0E27110BD",
+            "label": "Diagnostic Type (44)",
+            "slug": "diagnostic-type-44--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-44--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/163F4A0B-4E8B-468C-1939-C5FA786FF41C",
+            "label": "Diagnostic Type Count (44)",
+            "slug": "diagnostic-type-count-44--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-45--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/7B5A5F7D-7208-4A52-CFED-A951C8712836",
+            "label": "Diagnostic Type (45)",
+            "slug": "diagnostic-type-45--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-45--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/73513015-420A-4614-E0A4-FFD1FB10AA70",
+            "label": "Diagnostic Type Count (45)",
+            "slug": "diagnostic-type-count-45--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:diagnostic-type-46--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/0D14574D-D084-4178-2290-9F1D0E9F579D",
+            "label": "Diagnostic Type (46)",
+            "slug": "diagnostic-type-46--44",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:diagnostic-type-count-46--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/5E64747B-D09E-421F-6047-6A4A1B2902FE",
+            "label": "Diagnostic Type Count (46)",
+            "slug": "diagnostic-type-count-46--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:remarks-on-collection-strategies-or-artifacts--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/2EA1741F-DC18-44F8-2993-5A4DBE1EC1F0",
+            "label": "Remarks on collection strategies or artifacts",
+            "slug": "remarks-on-collection-strategies-or-artifacts--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:un-coded-culture-description--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/4432E9F6-4322-4CDF-4702-5106BB19415F",
+            "label": "Un-coded culture description",
+            "slug": "un-coded-culture-description--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:comments-primarily-temporal-or-functional-interpretati--44": {
+            "owl:sameAs": "http://opencontext.org/predicates/1A2779EF-C372-4A73-0A01-426EF242F3AA",
+            "label": "Comments (Primarily temporal or functional interpretations)",
+            "slug": "comments-primarily-temporal-or-functional-interpretati--44",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        }
+    },
+    "id": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+    "label": "WL00101",
+    "@type": [
+        "oc-gen:cat-0022"
+    ],
+    "oc-gen:has-context-path": {
+        "id": "#context-1",
+        "oc-gen:has-path-items": [
+            {
+                "id": "http://opencontext.org/subjects/2A1B75E6-8C79-49B9-873A-A2E006669691",
+                "label": "United States"
+            },
+            {
+                "id": "http://opencontext.org/subjects/B3E3DAA9-4D41-48AE-ADF8-5494AA087E86",
+                "label": "Florida"
+            },
+            {
+                "id": "http://opencontext.org/subjects/BAB208EE-29F5-4042-3856-A6D08A773C91",
+                "label": "Walton"
+            }
+        ]
+    },
+    "oc-gen:has-obs": [
+        {
+            "id": "#obs-1",
+            "oc-gen:sourceID": "z_3_489edaa4d",
+            "oc-gen:obsStatus": "active",
+            "oc-pred:culture--44": [
+                {
+                    "id": "http://opencontext.org/types/4398A89B-2A59-4C2F-49EB-C574434B926E",
+                    "label": "Prehistoric-Aceramic"
+                },
+                {
+                    "id": "http://opencontext.org/types/A472FE17-4E58-437B-DB03-D46BB8B2D086",
+                    "label": "Prehistoric-Unspecified"
+                },
+                {
+                    "id": "http://opencontext.org/types/BC6A2BC6-8A7C-42FD-B58B-D9A7E00F4F66",
+                    "label": "Weeden Island 1"
+                },
+                {
+                    "id": "http://opencontext.org/types/986388EB-BF21-4D1F-EDF2-48000CAFAE83",
+                    "label": "Ft. Walton A.D. 1000-1500"
+                },
+                {
+                    "id": "http://opencontext.org/types/3A754B8A-5139-4987-B8E0-A90F40EE1EF1",
+                    "label": "Weeden Island A.D. 450-1000"
+                },
+                {
+                    "id": "http://opencontext.org/types/56F6D705-4AEC-4117-D486-2673C59FE727",
+                    "label": "Archaic-Late"
+                },
+                {
+                    "id": "http://opencontext.org/types/D3931474-E652-4C83-AE1F-4FA4018E22B1",
+                    "label": "Twentieth C American"
+                },
+                {
+                    "id": "http://opencontext.org/types/34D19695-ECF1-4436-0C1F-B68261CAC9E9",
+                    "label": "Weeden Island II"
+                },
+                {
+                    "id": "http://opencontext.org/types/8A27AE27-ADDC-4837-4564-DE132531ACEA",
+                    "label": "Pensacola"
+                }
+            ],
+            "oc-pred:site-type--44": [
+                {
+                    "id": "http://opencontext.org/types/59DCAB77-8F90-4074-AFE1-9EC6E9CE05B2",
+                    "label": "Cemetery-historic"
+                },
+                {
+                    "id": "http://opencontext.org/types/94568151-89D1-4B86-A991-E95038C52E52",
+                    "label": "Refuse (historic)"
+                },
+                {
+                    "id": "http://opencontext.org/types/3D369FC1-A663-409E-939B-30ECF7D55649",
+                    "label": "Artifact scatter-low density"
+                },
+                {
+                    "id": "http://opencontext.org/types/30E14642-C18F-4D96-BDCE-C5AAED1F875E",
+                    "label": "Features-subsurface"
+                },
+                {
+                    "id": "http://opencontext.org/types/3D642039-B44E-49E8-776F-C14F14265AE7",
+                    "label": "Prehistoric shell works"
+                },
+                {
+                    "id": "http://opencontext.org/types/6594B8A2-8E19-43EA-F3FB-BEACF1878CFC",
+                    "label": "Extractive site"
+                },
+                {
+                    "id": "http://opencontext.org/types/9A4C5B02-1038-4848-4354-EADD8C1D35C9",
+                    "label": "Prehistoric midden(s)"
+                },
+                {
+                    "id": "http://opencontext.org/types/663FAFFB-2241-426F-5346-653A28034509",
+                    "label": "Village (prehistoric)"
+                },
+                {
+                    "id": "http://opencontext.org/types/72E4B1AF-739A-4454-596C-5DDE915F999B",
+                    "label": "Shell midden (prehistoric)"
+                },
+                {
+                    "id": "http://opencontext.org/types/89AE1904-81E2-48DA-218E-D856A6B04B41",
+                    "label": "Land-terrestrial"
+                },
+                {
+                    "id": "http://opencontext.org/types/4FB045F6-CDCF-4840-10D3-17D3043329D0",
+                    "label": "Marine/saltwater low energy"
+                },
+                {
+                    "id": "http://opencontext.org/types/C9BF3E84-25DE-4BCC-83AB-6B194E40B14E",
+                    "label": "Limited activity (prehistoric)"
+                }
+            ],
+            "oc-pred:site-name--44": [
+                {
+                    "id": "#string-AE7D5315-776E-4E3F-C43A-EAA6CD5C7CAE",
+                    "xsd:string": "FOURMILE MIDDEN/FOURMILE POINT"
+                }
+            ],
+            "oc-pred:shpo-evaluation-of-nr-eligibility--44": [
+                {
+                    "id": "http://opencontext.org/types/1E5DB49D-2137-46E6-7E58-437F7EB80DF8",
+                    "label": "eligible"
+                }
+            ],
+            "oc-pred:date-of-shpo-evaluation--44": [
+                "2011-10-24"
+            ]
+        },
+        {
+            "id": "#obs-2",
+            "oc-gen:sourceID": "z_3_22f80063a",
+            "oc-gen:obsStatus": "active",
+            "oc-pred:form-number--44": [
+                200502.0,
+                200507.0,
+                200506.0,
+                201107.0,
+                {
+                    "id": "#string-592FF967-C2AC-43CB-6388-F522CEED7D70",
+                    "xsd:string": "BARC"
+                }
+            ],
+            "oc-pred:artifact-category-1--44": [
+                {
+                    "id": "http://opencontext.org/types/F677E23D-F277-4F79-876D-72C3223E3E23",
+                    "label": "Brick/building materials"
+                }
+            ],
+            "oc-pred:artifact-disposition-1--44": [
+                {
+                    "id": "http://opencontext.org/types/61B45E23-C4B0-4C24-4A64-17D3341AE89F",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-2--44": [
+                {
+                    "id": "http://opencontext.org/types/80DB4336-5D00-4CF9-584F-E5B27622583B",
+                    "label": "Bone-animal or unidentif"
+                }
+            ],
+            "oc-pred:artifact-disposition-2--44": [
+                {
+                    "id": "http://opencontext.org/types/4ACEDF73-96F2-41FD-1DEE-178EB5232D68",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-3--44": [
+                {
+                    "id": "http://opencontext.org/types/BC564F76-9044-4328-D198-6A4BB9160A1A",
+                    "label": "Worked bone"
+                }
+            ],
+            "oc-pred:artifact-disposition-3--44": [
+                {
+                    "id": "http://opencontext.org/types/B38F16FD-934A-44A2-660E-E56541519F3A",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-4--44": [
+                {
+                    "id": "http://opencontext.org/types/14DF9C73-6370-4025-DBB4-0B31EF8515E4",
+                    "label": "Aboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-4--44": [
+                {
+                    "id": "http://opencontext.org/types/BDF80630-4D33-46E9-C133-2CFFBEC41249",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-5--44": [
+                {
+                    "id": "http://opencontext.org/types/479509DD-7A6C-439F-52D3-406491F95A31",
+                    "label": "Nonaboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-5--44": [
+                {
+                    "id": "http://opencontext.org/types/0BBA8D1C-FEEC-4870-6E2B-8FB84FCC67A1",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-6--44": [
+                {
+                    "id": "http://opencontext.org/types/6D96CBF7-B8E2-4899-136C-31463ACC6613",
+                    "label": "Glass"
+                }
+            ],
+            "oc-pred:artifact-disposition-6--44": [
+                {
+                    "id": "http://opencontext.org/types/BD349A53-955D-4C7C-4BD6-F94AB8AD9693",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-7--44": [
+                {
+                    "id": "http://opencontext.org/types/FB5F261B-6501-4DF4-9D7B-5803EA28577B",
+                    "label": "Lithics"
+                }
+            ],
+            "oc-pred:artifact-disposition-7--44": [
+                {
+                    "id": "http://opencontext.org/types/C9E966D9-6301-4A6E-54F8-C9879CF1BB64",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-8--44": [
+                {
+                    "id": "http://opencontext.org/types/A803D407-5C42-44C7-014D-8ABADCC80B59",
+                    "label": "Metal"
+                }
+            ],
+            "oc-pred:artifact-disposition-8--44": [
+                {
+                    "id": "http://opencontext.org/types/95FC5BDC-5D46-4660-FBFA-78C98F4959B3",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-9--44": [
+                {
+                    "id": "http://opencontext.org/types/917B6E03-AC27-4C6E-B81E-D3F439E465DB",
+                    "label": "Unworked Shell"
+                }
+            ],
+            "oc-pred:artifact-disposition-9--44": [
+                {
+                    "id": "http://opencontext.org/types/9ACAF73D-5278-4682-F681-48234D0BA355",
+                    "label": "category reported second hand"
+                }
+            ],
+            "oc-pred:artifact-category-10--44": [
+                {
+                    "id": "http://opencontext.org/types/0E14E3EB-BD9B-46CD-CC57-C01CF32132B6",
+                    "label": "Shell-worked"
+                }
+            ],
+            "oc-pred:artifact-disposition-10--44": [
+                {
+                    "id": "http://opencontext.org/types/F27E59E8-9EB6-4FB6-559B-DDD7E9DF7E7B",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-11--44": [
+                {
+                    "id": "http://opencontext.org/types/85868297-4801-4FA0-12B1-2689336704F0",
+                    "label": "Brick/building materials"
+                }
+            ],
+            "oc-pred:artifact-disposition-11--44": [
+                {
+                    "id": "http://opencontext.org/types/F3F4F50B-D6B4-4D8A-7EA9-9C1C21ACF8EB",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-12--44": [
+                {
+                    "id": "http://opencontext.org/types/9F16B9BF-7143-4F97-0E23-D84CE6FB0D24",
+                    "label": "Bone-animal or unidentif"
+                }
+            ],
+            "oc-pred:artifact-disposition-12--44": [
+                {
+                    "id": "http://opencontext.org/types/FE98E782-36C0-4464-4E3A-D751E83974D4",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-13--44": [
+                {
+                    "id": "http://opencontext.org/types/9A0321E2-069E-43FE-5EDF-30DB91220A50",
+                    "label": "Bone-animal or unidentif"
+                }
+            ],
+            "oc-pred:artifact-disposition-13--44": [
+                {
+                    "id": "http://opencontext.org/types/2317D695-8494-41B3-8970-89E69EF92A07",
+                    "label": "items in this category collected"
+                }
+            ],
+            "oc-pred:artifact-category-14--44": [
+                {
+                    "id": "http://opencontext.org/types/3AA73E31-FA1F-4220-9C59-3B018A92AF6F",
+                    "label": "Worked bone"
+                }
+            ],
+            "oc-pred:artifact-disposition-14--44": [
+                {
+                    "id": "http://opencontext.org/types/C52E4EFC-C2EB-49D8-B87D-B8A1AEB05817",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-15--44": [
+                {
+                    "id": "http://opencontext.org/types/71B7B271-77DD-400A-2E40-ED3A9A70D9E2",
+                    "label": "Aboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-15--44": [
+                {
+                    "id": "http://opencontext.org/types/D638940B-C13A-4FF0-166A-89E01A034BCB",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-16--44": [
+                {
+                    "id": "http://opencontext.org/types/D610ECB7-8AC4-4F46-F9BA-8EC39A44B321",
+                    "label": "Nonaboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-16--44": [
+                {
+                    "id": "http://opencontext.org/types/DC372E58-3E86-4B2B-56F9-12B094E75C2E",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-17--44": [
+                {
+                    "id": "http://opencontext.org/types/08D114ED-ACA6-491A-88CC-771171459728",
+                    "label": "Glass"
+                }
+            ],
+            "oc-pred:artifact-disposition-17--44": [
+                {
+                    "id": "http://opencontext.org/types/8AFB067F-B80B-4999-D0DB-D8DF3DB33A08",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-18--44": [
+                {
+                    "id": "http://opencontext.org/types/1A31E203-E357-4C54-B874-0C2F1D96EEA0",
+                    "label": "Lithics"
+                }
+            ],
+            "oc-pred:artifact-disposition-18--44": [
+                {
+                    "id": "http://opencontext.org/types/245A55F0-DF03-4C74-053E-EC9741C2AA98",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-19--44": [
+                {
+                    "id": "http://opencontext.org/types/D3B21563-3DF6-4524-D5BE-7C26BBC1519E",
+                    "label": "Metal"
+                }
+            ],
+            "oc-pred:artifact-disposition-19--44": [
+                {
+                    "id": "http://opencontext.org/types/635D3594-3C52-4BBF-8FCF-3096F20908C7",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-20--44": [
+                {
+                    "id": "http://opencontext.org/types/97CF49D7-4F49-4639-BEAE-19647119446B",
+                    "label": "Unworked Shell"
+                }
+            ],
+            "oc-pred:artifact-disposition-20--44": [
+                {
+                    "id": "http://opencontext.org/types/D0A3FDDD-9B56-479D-F4E8-2F8AA0079A5C",
+                    "label": "collected and subsequently reburied at the site"
+                }
+            ],
+            "oc-pred:artifact-category-21--44": [
+                {
+                    "id": "http://opencontext.org/types/74F4A923-8E1F-4912-C57F-A3D44DD48503",
+                    "label": "Shell-worked"
+                }
+            ],
+            "oc-pred:artifact-disposition-21--44": [
+                {
+                    "id": "http://opencontext.org/types/684769C7-BDA8-454F-1253-9F7B002B4C8E",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-22--44": [
+                {
+                    "id": "http://opencontext.org/types/8A578748-3CA9-40FB-2618-E52A1E33B59B",
+                    "label": "Other"
+                }
+            ],
+            "oc-pred:artifact-disposition-22--44": [
+                {
+                    "id": "http://opencontext.org/types/D2229532-1366-4C64-8B05-9F738964C2BC",
+                    "label": "OTHER"
+                }
+            ],
+            "oc-pred:artifact-category-23--44": [
+                {
+                    "id": "http://opencontext.org/types/FCD6AA4D-6AE4-42E0-37A2-A36ABE090725",
+                    "label": "Aboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-23--44": [
+                {
+                    "id": "http://opencontext.org/types/FAD61E6E-A88A-4DDA-3F29-DD9F6FCF057A",
+                    "label": "UNKNOWN"
+                }
+            ],
+            "oc-pred:artifact-category-24--44": [
+                {
+                    "id": "http://opencontext.org/types/7B8DEBF7-DC20-43C1-4F70-BB804AD5BF91",
+                    "label": "Lithics"
+                }
+            ],
+            "oc-pred:artifact-disposition-24--44": [
+                {
+                    "id": "http://opencontext.org/types/FFADD765-89C8-4786-9AE9-012C12590B6E",
+                    "label": "UNKNOWN"
+                }
+            ],
+            "oc-pred:artifact-category-25--44": [
+                {
+                    "id": "http://opencontext.org/types/1104F9D2-BD7E-4578-0B4A-45EAA19F94AB",
+                    "label": "Unworked Shell"
+                }
+            ],
+            "oc-pred:artifact-disposition-25--44": [
+                {
+                    "id": "http://opencontext.org/types/3569B3CD-D410-4ABE-01F5-7D336C016AE3",
+                    "label": "UNKNOWN"
+                }
+            ],
+            "oc-pred:artifact-category-26--44": [
+                {
+                    "id": "http://opencontext.org/types/8E3E2935-FEFD-416B-CE6F-BF1A8A2011DF",
+                    "label": "Aboriginal ceramics"
+                }
+            ],
+            "oc-pred:artifact-disposition-26--44": [
+                {
+                    "id": "http://opencontext.org/types/C048E6A9-EA58-4B62-C503-FC86FDD4202A",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-27--44": [
+                {
+                    "id": "http://opencontext.org/types/B373D332-EEF7-4FFC-5285-4C3BC6CA13DB",
+                    "label": "Unworked Shell"
+                }
+            ],
+            "oc-pred:artifact-disposition-27--44": [
+                {
+                    "id": "http://opencontext.org/types/5BDCF515-146B-43F8-AA09-3734AAE1E683",
+                    "label": "items in this category collected"
+                }
+            ],
+            "oc-pred:artifact-category-28--44": [
+                {
+                    "id": "http://opencontext.org/types/42E468CB-8B86-4DCD-3646-776B3D003198",
+                    "label": "Charcoal"
+                }
+            ],
+            "oc-pred:artifact-disposition-28--44": [
+                {
+                    "id": "http://opencontext.org/types/FDB447F4-88F3-4AC2-5038-DB07CFCFEA70",
+                    "label": "items in this category collected"
+                }
+            ],
+            "oc-pred:artifact-category-29--44": [
+                {
+                    "id": "http://opencontext.org/types/62431500-6577-453C-5FA1-86CEF7C79D07",
+                    "label": "Bone-animal or unidentif"
+                }
+            ],
+            "oc-pred:artifact-disposition-29--44": [
+                {
+                    "id": "http://opencontext.org/types/F8B84500-96A3-427E-D441-7312B855AFF9",
+                    "label": "all of category was collected"
+                }
+            ],
+            "oc-pred:artifact-category-30--44": [
+                {
+                    "id": "http://opencontext.org/types/4AC67A7F-E6DC-4D68-9E14-80E5DD2A0E41",
+                    "label": "Brick/building materials"
+                }
+            ],
+            "oc-pred:artifact-disposition-30--44": [
+                {
+                    "id": "http://opencontext.org/types/6FCE245A-0C3D-46F6-09D2-E0ED292859AB",
+                    "label": "observed by not collected"
+                }
+            ]
+        },
+        {
+            "id": "#obs-3",
+            "oc-gen:sourceID": "z_3_44a78fbb5",
+            "oc-gen:obsStatus": "active",
+            "oc-pred:diagnostic-type-1--44": [
+                {
+                    "id": "http://opencontext.org/types/E82B7015-12FD-4AFD-AA3A-5B9A199EFD56",
+                    "label": "CARRABELLE INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-1--44": [
+                14.0
+            ],
+            "oc-pred:diagnostic-type-2--44": [
+                {
+                    "id": "http://opencontext.org/types/E3CA00EA-1C34-4633-C08F-CE9782F23A91",
+                    "label": "CARRABELLE PUNCTATED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-2--44": [
+                16.0
+            ],
+            "oc-pred:diagnostic-type-3--44": [
+                {
+                    "id": "http://opencontext.org/types/01B25D9C-398D-4F8B-9F9B-7019303A0FA6",
+                    "label": "FORT WALTON INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-3--44": [
+                4.0
+            ],
+            "oc-pred:diagnostic-type-4--44": [
+                {
+                    "id": "http://opencontext.org/types/20175C68-DA7A-426B-FCDE-F23F1FD505C7",
+                    "label": "kieth incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-4--44": [
+                3.0
+            ],
+            "oc-pred:diagnostic-type-5--44": [
+                {
+                    "id": "http://opencontext.org/types/6407CA56-3E8F-4ACF-1ECC-406BC17AC695",
+                    "label": "LAKE JACKSON PLAIN"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-5--44": [
+                4.0
+            ],
+            "oc-pred:diagnostic-type-6--44": [
+                {
+                    "id": "http://opencontext.org/types/6CC3002D-5D38-42A4-F5A9-1327E08BFB26",
+                    "label": "shell-tempered plain and incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-6--44": [
+                41.0
+            ],
+            "oc-pred:diagnostic-type-7--44": [
+                {
+                    "id": "http://opencontext.org/types/6D8916B6-A3C0-4296-A845-EDC338867AED",
+                    "label": "Swift Creek Complicated Stamped"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-7--44": [
+                2.0
+            ],
+            "oc-pred:diagnostic-type-8--44": [
+                {
+                    "id": "http://opencontext.org/types/419A80A2-A479-4ABA-5687-AC96A4901A1C",
+                    "label": "WAKULLA CHECK STAMPED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-8--44": [
+                6.0
+            ],
+            "oc-pred:diagnostic-type-9--44": [
+                {
+                    "id": "http://opencontext.org/types/ED4A729C-2C34-4716-B1E1-9CED5951B248",
+                    "label": "weeden Isl red-flimed"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-9--44": [
+                2.0
+            ],
+            "oc-pred:diagnostic-type-10--44": [
+                {
+                    "id": "http://opencontext.org/types/6555BA0B-AA17-48B6-7528-328C869C7B92",
+                    "label": "weeden Isl. incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-10--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-11--44": [
+                {
+                    "id": "http://opencontext.org/types/5A9C07EE-1EF9-41CF-0A70-5ECC1C68F27F",
+                    "label": "weeden Isl. plain"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-11--44": [
+                14.0
+            ],
+            "oc-pred:diagnostic-type-12--44": [
+                {
+                    "id": "http://opencontext.org/types/D4C9D7F3-7826-4EA1-8BAF-6BF408634E41",
+                    "label": "weeden Isl. punctated"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-12--44": [
+                4.0
+            ],
+            "oc-pred:diagnostic-type-13--44": [
+                {
+                    "id": "http://opencontext.org/types/07F97B80-28DA-4052-21C1-1498D31D71CB",
+                    "label": "archaic micro tools"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-13--44": [
+                6.0
+            ],
+            "oc-pred:diagnostic-type-14--44": [
+                {
+                    "id": "http://opencontext.org/types/7BE9E5E7-C41C-4D13-4537-6F552C59B699",
+                    "label": "archaic stemmed PPK (putnam-like)"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-14--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-15--44": [
+                {
+                    "id": "http://opencontext.org/types/D9AA8F17-15D0-4383-D714-A374ED48A179",
+                    "label": "Bakers Creek PPKs"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-15--44": [
+                2.0
+            ],
+            "oc-pred:diagnostic-type-16--44": [
+                {
+                    "id": "http://opencontext.org/types/F4A26905-0C2A-4D9F-884F-C89793E5C0DF",
+                    "label": "carrabelle incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-16--44": [
+                65.0
+            ],
+            "oc-pred:diagnostic-type-17--44": [
+                {
+                    "id": "http://opencontext.org/types/8D4A50E8-CEF1-485C-11F7-382101A967F4",
+                    "label": "carrabelle puncated"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-17--44": [
+                312.0
+            ],
+            "oc-pred:diagnostic-type-18--44": [
+                {
+                    "id": "http://opencontext.org/types/67A5C75E-86BC-4B9C-678E-3610BDCA1E48",
+                    "label": "ft. walton incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-18--44": [
+                20.0
+            ],
+            "oc-pred:diagnostic-type-19--44": [
+                {
+                    "id": "http://opencontext.org/types/40869B90-5630-48ED-0A7A-7AB3DCFDBFAB",
+                    "label": "kieth incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-19--44": [
+                27.0
+            ],
+            "oc-pred:diagnostic-type-20--44": [
+                {
+                    "id": "http://opencontext.org/types/97DF6E43-343A-43B3-04F1-D7BD56FAC2F1",
+                    "label": "LAKE JACKSON PLAIN"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-20--44": [
+                184.0
+            ],
+            "oc-pred:diagnostic-type-21--44": [
+                {
+                    "id": "http://opencontext.org/types/4AFA4065-CB64-4EC9-CB72-5A6ABAE2BFAF",
+                    "label": "shell-tempered plain & incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-21--44": [
+                218.0
+            ],
+            "oc-pred:diagnostic-type-22--44": [
+                {
+                    "id": "http://opencontext.org/types/B3645587-7A00-422C-F159-CD115E10F649",
+                    "label": "swift creek comp. stamped (late)"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-22--44": [
+                78.0
+            ],
+            "oc-pred:diagnostic-type-23--44": [
+                {
+                    "id": "http://opencontext.org/types/542DD2CC-44A3-4725-4550-08A66766E532",
+                    "label": "tucker ridge pinched"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-23--44": [
+                29.0
+            ],
+            "oc-pred:diagnostic-type-24--44": [
+                {
+                    "id": "http://opencontext.org/types/2C06D87B-EF72-4B36-FD79-88FA8A95E9F2",
+                    "label": "Wakulla Check Stamped"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-24--44": [
+                129.0
+            ],
+            "oc-pred:diagnostic-type-25--44": [
+                {
+                    "id": "http://opencontext.org/types/32E60131-81D9-4429-FF7D-7396A05185A9",
+                    "label": "weeden isl incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-25--44": [
+                25.0
+            ],
+            "oc-pred:diagnostic-type-26--44": [
+                {
+                    "id": "http://opencontext.org/types/BED0968F-C402-40D9-A4AD-17CAE84B4B91",
+                    "label": "weeden isl red filmed"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-26--44": [
+                15.0
+            ],
+            "oc-pred:diagnostic-type-27--44": [
+                {
+                    "id": "http://opencontext.org/types/435BC832-4C0F-4FDF-1130-6E2B0EAC28F7",
+                    "label": "weeden island plain"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-27--44": [
+                203.0
+            ],
+            "oc-pred:diagnostic-type-28--44": [
+                {
+                    "id": "http://opencontext.org/types/C832A21B-420D-4001-610E-1DBFFE82BD73",
+                    "label": "Carrabelle Incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-28--44": [
+                65.0
+            ],
+            "oc-pred:diagnostic-type-29--44": [
+                {
+                    "id": "http://opencontext.org/types/2D1F07D1-ED33-4305-E78D-10F5E8E9C334",
+                    "label": "Carrabelle Punctated"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-29--44": [
+                312.0
+            ],
+            "oc-pred:diagnostic-type-30--44": [
+                {
+                    "id": "http://opencontext.org/types/17B5A70F-74F9-4A1F-5D31-CB39292BE4E0",
+                    "label": "Fort Walton Incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-30--44": [
+                20.0
+            ],
+            "oc-pred:diagnostic-type-31--44": [
+                {
+                    "id": "http://opencontext.org/types/12B77086-262E-43EC-2385-F41C310ADD11",
+                    "label": "Kieth Incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-31--44": [
+                27.0
+            ],
+            "oc-pred:diagnostic-type-32--44": [
+                {
+                    "id": "http://opencontext.org/types/08C5B621-CF5D-4AC8-3A77-EE6A1B63E7E1",
+                    "label": "Lake Jackson Plain"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-32--44": [
+                184.0
+            ],
+            "oc-pred:diagnostic-type-33--44": [
+                {
+                    "id": "http://opencontext.org/types/A647135E-2322-42D1-5C9C-63C98AD365C6",
+                    "label": "Micro-tools"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-33--44": [
+                6.0
+            ],
+            "oc-pred:diagnostic-type-34--44": [
+                {
+                    "id": "http://opencontext.org/types/7DE90ABB-72DF-40E6-3024-4CA53E3BB2A9",
+                    "label": "Shell-tempered plain & incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-34--44": [
+                218.0
+            ],
+            "oc-pred:diagnostic-type-35--44": [
+                {
+                    "id": "http://opencontext.org/types/E9721DE0-EFDB-4F6E-6A2F-4D69DBA8DB5C",
+                    "label": "Swift Cr. Comp. Stamped(late Var)"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-35--44": [
+                78.0
+            ],
+            "oc-pred:diagnostic-type-36--44": [
+                {
+                    "id": "http://opencontext.org/types/7B032ED3-A190-4F38-B4E2-4268E48465A9",
+                    "label": "Tucker Ridge Pinched"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-36--44": [
+                29.0
+            ],
+            "oc-pred:diagnostic-type-37--44": [
+                {
+                    "id": "http://opencontext.org/types/A45C47D4-3AAB-4EB5-BF6C-331EA64061C5",
+                    "label": "Wakulla Check Stamped"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-37--44": [
+                129.0
+            ],
+            "oc-pred:diagnostic-type-38--44": [
+                {
+                    "id": "http://opencontext.org/types/B9C79339-707E-4778-C6A5-3CB87FAFE1BE",
+                    "label": "Weeden Island Incised"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-38--44": [
+                25.0
+            ],
+            "oc-pred:diagnostic-type-39--44": [
+                {
+                    "id": "http://opencontext.org/types/F0D4099E-8373-4EB3-E260-3D0A6D05076D",
+                    "label": "Weeden Island Plain"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-39--44": [
+                203.0
+            ],
+            "oc-pred:diagnostic-type-40--44": [
+                {
+                    "id": "http://opencontext.org/types/D91037D9-FA12-4539-7757-1E09F56524C9",
+                    "label": "Weeden Red- Filmed"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-40--44": [
+                15.0
+            ],
+            "oc-pred:diagnostic-type-41--44": [
+                {
+                    "id": "http://opencontext.org/types/A279E4F9-812B-4BA3-ECE4-E9E4E868A079",
+                    "label": "CARRABELLE INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-41--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-42--44": [
+                {
+                    "id": "http://opencontext.org/types/54BC6E37-E162-40DE-A4B7-1EA45C574704",
+                    "label": "D'OLIVE INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-42--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-43--44": [
+                {
+                    "id": "http://opencontext.org/types/B4B85CE8-2D83-4603-C5DB-9E5314119D33",
+                    "label": "MOUND PLACE INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-43--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-44--44": [
+                {
+                    "id": "http://opencontext.org/types/4771CC7E-4A3A-4C3D-702E-8754EEBE14C9",
+                    "label": "MOUNDVILLE INCISED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-44--44": [
+                1.0
+            ],
+            "oc-pred:diagnostic-type-45--44": [
+                {
+                    "id": "http://opencontext.org/types/A04292E4-6ACC-45F4-B0B9-97C012D45755",
+                    "label": "PENSACOLA PLAIN"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-45--44": [
+                13.0
+            ],
+            "oc-pred:diagnostic-type-46--44": [
+                {
+                    "id": "http://opencontext.org/types/D6390BDA-94CB-485D-1DFA-3F6CEDB3BFD8",
+                    "label": "WAKULLA CHECK STAMPED"
+                }
+            ],
+            "oc-pred:diagnostic-type-count-46--44": [
+                9.0
+            ]
+        },
+        {
+            "id": "#obs-5",
+            "oc-gen:sourceID": "z_3_2e33eaf43",
+            "oc-gen:obsStatus": "active",
+            "oc-pred:remarks-on-collection-strategies-or-artifacts--44": [
+                {
+                    "id": "#string-533D0EA1-C2CB-4A2A-9A6E-462B35523E12",
+                    "xsd:string": "modern materials (window glass, wire nails, construction debris) not collected; shell types/density recorded-shell discarded"
+                },
+                {
+                    "id": "#string-62E2656C-0EDF-4311-FEF2-62112C72341C",
+                    "xsd:string": "modern materials: window glass, wire nails, construction debris, (not collected), shell types/density recorded-shell discarded"
+                },
+                {
+                    "id": "#string-A954BE37-0838-4F66-CEE8-07CF895E83CD",
+                    "xsd:string": "modern materials (window glass, wire nails) not collected, shell types/density recorded and discarded"
+                }
+            ],
+            "oc-pred:un-coded-culture-description--44": [
+                {
+                    "id": "#string-B9181F30-A548-4E83-1805-540430BF791C",
+                    "xsd:string": "Weeden Island unspecified, American 20th Century"
+                }
+            ],
+            "oc-pred:comments-primarily-temporal-or-functional-interpretati--44": [
+                {
+                    "id": "#string-0B609D49-57A0-4733-E7FB-6A176DE399B7",
+                    "xsd:string": "Intact Weehen Island and Fort Walton midden deposits with sub-midden Lare Archaic components. Weeden Island coponent is dominant, but Fort Walton component is significant. Insignificant early tp mid-2"
+                },
+                {
+                    "id": "#string-A40E5A17-1D05-45B6-0FB9-B009E484F2E9",
+                    "xsd:string": "WEEDEN ISLAND; FORT WALTON/PENSACOLA HABITATION/VILLAGE"
+                },
+                {
+                    "id": "#string-C3A2B98A-3CE3-4C3A-B64D-9C2FCF38EADD",
+                    "xsd:string": "weedon Isl. is dominant but Ft Walton is significant, insig. early-mid 20th enctury also"
+                },
+                {
+                    "id": "#string-F11F4AB1-0B76-4D07-71D6-D01C8DE70C0D",
+                    "xsd:string": "intact Weeden Isl./ Ft Walton midden deposits, potiential late Archaic sub midden component and early / middle woodland artifact scatter.  Weeden Isl. is dominant but Ft Walton is significant"
+                }
+            ]
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This region defines the                                                                approximate location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-derived-props-1",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -86.30859375,
+                            30.29701788337205
+                        ],
+                        [
+                            -86.30859375,
+                            30.44867367928756
+                        ],
+                        [
+                            -86.13281250000001,
+                            30.44867367928756
+                        ],
+                        [
+                            -86.13281250000001,
+                            30.29701788337205
+                        ],
+                        [
+                            -86.30859375,
+                            30.29701788337205
+                        ]
+                    ]
+                ],
+                "id": "#geo-derived-geom-1"
+            },
+            "id": "#geo-derived-1"
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1"
+            },
+            "id": "#geo-1",
+            "when": {
+                "id": "#event-when-3",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": -10000,
+                "stop": 1500,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-2",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-2"
+            },
+            "id": "#geo-1-event-2",
+            "when": {
+                "id": "#event-when-2",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": -3000,
+                "stop": -2000,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-3",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-3"
+            },
+            "id": "#geo-1-event-3",
+            "when": {
+                "id": "#event-when-4",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": 450,
+                "stop": 1000,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-4",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-4"
+            },
+            "id": "#geo-1-event-4",
+            "when": {
+                "id": "#event-when-4",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": 750,
+                "stop": 1000,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-5",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-5"
+            },
+            "id": "#geo-1-event-5",
+            "when": {
+                "id": "#event-when-5",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": 1000,
+                "stop": 1500,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-6",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-6"
+            },
+            "id": "#geo-1-event-6",
+            "when": {
+                "id": "#event-when-6",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": 1300,
+                "stop": 1700,
+                "reference-type": "specified"
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/47A25B5E-F4A5-47B2-AA94-625396D3B8EB",
+                "location-precision-note": "Location data approximated as a security precaution",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the                                                                 region approximating the location for this item",
+                "location-type": "oc-gen:discovey-location",
+                "id": "#geo-props-1-event-7",
+                "location-precision": 11
+            },
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -86.220703125,
+                    30.37284578133
+                ],
+                "id": "#geo-geom-1-event-7"
+            },
+            "id": "#geo-1-event-7",
+            "when": {
+                "id": "#event-when-7",
+                "type": "Interval",
+                "@type": "oc-gen:formation-use-life",
+                "start": 1900,
+                "stop": 1950,
+                "reference-type": "specified"
+            }
+        }
+    ],
+    "dc-terms:published": "2013-11-13",
+    "dc-terms:isPartOf": [
+        {
+            "id": "http://opencontext.org/projects/81204AF8-127C-4686-E9B0-1202C3A47959",
+            "label": "Florida Site Files",
+            "owl:sameAs": "http://opencontext.org/projects/florida-site-files--44"
+        }
+    ],
+    "@graph": [
+        {
+            "@id": "oc-pred:culture--44",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00001",
+                    "label": "Has period"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/4398A89B-2A59-4C2F-49EB-C574434B926E",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00028",
+                    "label": "Prehistoric Undifferentiated"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/A472FE17-4E58-437B-DB03-D46BB8B2D086",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00028",
+                    "label": "Prehistoric Undifferentiated"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/BC6A2BC6-8A7C-42FD-B58B-D9A7E00F4F66",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00019",
+                    "label": "Middle Woodland"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/986388EB-BF21-4D1F-EDF2-48000CAFAE83",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00059",
+                    "label": "Late Mississippian"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/3A754B8A-5139-4987-B8E0-A90F40EE1EF1",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00008",
+                    "label": "Woodland"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/56F6D705-4AEC-4117-D486-2673C59FE727",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00014",
+                    "label": "Late Archaic"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/D3931474-E652-4C83-AE1F-4FA4018E22B1",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00032",
+                    "label": "20th Century"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/34D19695-ECF1-4436-0C1F-B68261CAC9E9",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00020",
+                    "label": "Late Woodland"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/8A27AE27-ADDC-4837-4564-DE132531ACEA",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00024",
+                    "label": "Late Prehistoric"
+                }
+            ]
+        }
+    ]
+}

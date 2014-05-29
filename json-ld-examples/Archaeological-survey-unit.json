@@ -1,0 +1,982 @@
+﻿
+{
+    "@context": {
+        "id": "@id",
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "label": "rdfs:label",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "uuid": "dc-terms:identifier",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://www.cidoc-crm.org/cidoc-crm/",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "type": "oc-gen:geojson-type",
+        "FeatureCollection": "oc-gen:geojson-feature-col",
+        "Feature": "oc-gen:geojson-feature",
+        "Point": "oc-gen:geojson-point",
+        "Polygon": "oc-gen:geojson-polygon",
+        "features": "oc-gen:geojson-features",
+        "geometry": "oc-gen:geojson-geometry",
+        "coordinates": "oc-gen:geojson-coordinates",
+        "properties": "oc-gen:geojson-properties",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:geojson-location-precision",
+        "location-note": "oc-gen:geojson-location-note",
+        "where": {
+            "@type": "@id",
+            "@id": "oc-gen:event-where"
+        },
+        "when": "oc-gen:event-when",
+        "start": {
+            "@id": "http://www.w3.org/2006/time#hasBeginning"
+        },
+        "stop": {
+            "@id": "http://www.w3.org/2006/time#hasEnding"
+        },
+        "oc-pred:date--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/AE7CCE15-FFFF-4AA2-5640-7D86B6464214",
+            "label": "Date",
+            "slug": "date--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:date"
+        },
+        "oc-pred:recorder--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/A4965027-8B3F-4FD2-65CC-5996B894A5DF",
+            "label": "Recorder",
+            "slug": "recorder--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:start-time--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/BD3AFB9A-279C-408A-E15C-D15A3A138E7F",
+            "label": "Start Time",
+            "slug": "start-time--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:date"
+        },
+        "oc-pred:end-time--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/01BC6A66-BB93-4DB9-1B8D-6A5DBE490207",
+            "label": "End Time",
+            "slug": "end-time--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:date"
+        },
+        "oc-pred:start-time-date--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/AADD6660-BA8C-4317-AC9C-160211A30A3E",
+            "label": "Start Time (date)",
+            "slug": "start-time-date--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:end-time-date--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/ADFF11EA-623B-4AB8-7BF1-EC999A62D829",
+            "label": "End Time (date)",
+            "slug": "end-time-date--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:area-or-toponym--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/F15CC243-5F37-49E1-E1DC-A288494EE536",
+            "label": "Area or Toponym",
+            "slug": "area-or-toponym--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:location-and-description--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/A632E109-4BB4-419E-EF5F-9085220D09B6",
+            "label": "Location and Description",
+            "slug": "location-and-description--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:evergreens--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/60CE6BFF-3572-4501-F5B9-560767361002",
+            "label": "Evergreens",
+            "slug": "evergreens--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:decidiuous--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/023B74E7-2734-4736-4728-45C4847C8510",
+            "label": "Decidiuous",
+            "slug": "decidiuous--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:scrub-or-phrygana--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/F9ED629E-1941-4020-B192-DBFFA3CEB661",
+            "label": "Scrub or Phrygana",
+            "slug": "scrub-or-phrygana--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:maquis--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/4B2A9DB0-2200-4A7E-90DB-6B253300CDE8",
+            "label": "Maquis",
+            "slug": "maquis--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:grass-or-weeds--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/CCC95950-2CE7-46DD-B7D1-30F9ABEF77CD",
+            "label": "Grass or Weeds",
+            "slug": "grass-or-weeds--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:barren--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/5FF19842-7999-43CE-90DC-901C815DC2BB",
+            "label": "Barren",
+            "slug": "barren--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:general-info-legal-and-standard-other--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/26F2C4E1-71AB-460C-40E6-16F567FC7299",
+            "label": "General Info Legal and Standard Other",
+            "slug": "general-info-legal-and-standard-other--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:olives--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/C6B30AFD-830A-4117-2138-2B97F7D2B43B",
+            "label": "Olives",
+            "slug": "olives--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:vineyard--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/6C8B2ABF-6F25-4AAC-B837-E30847E31F9B",
+            "label": "Vineyard",
+            "slug": "vineyard--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:citrus--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/A1CAD306-D2C4-4EF0-8DAE-809F608F21B5",
+            "label": "Citrus",
+            "slug": "citrus--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:apricot--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/7EF71014-D53A-4A52-BF5D-51BF78CF3565",
+            "label": "Apricot",
+            "slug": "apricot--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:almonds--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/AD7ED87C-22AF-4192-30BD-BD4B1263F026",
+            "label": "Almonds",
+            "slug": "almonds--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:other-orchardgrove--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/78A3910B-C1B4-4014-8D67-03218C7E39BA",
+            "label": "Other Orchard/grove",
+            "slug": "other-orchardgrove--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:vegetation-small-leafed--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/F2451B37-003A-49EE-8443-FE9873C71B2B",
+            "label": "Vegetation, Small-leafed",
+            "slug": "vegetation-small-leafed--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:veg-broad-leafed--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/68EA040C-2868-4AD6-C3DC-66A6EBD37C5F",
+            "label": "Veg, Broad-leafed",
+            "slug": "veg-broad-leafed--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:greens--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/10D3CDD1-DC9D-4717-BB96-56DDC919EC74",
+            "label": "Greens",
+            "slug": "greens--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:grain--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/7A11CDC6-9909-4543-DF9D-06EF96042187",
+            "label": "Grain",
+            "slug": "grain--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:grain-stubble--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/ED1CE22D-47D7-4CA1-5712-7AEB64B956AD",
+            "label": "Grain Stubble",
+            "slug": "grain-stubble--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:kalamboki--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/27249ED6-CC08-4225-EA99-250B78C69DC7",
+            "label": "Kalamboki",
+            "slug": "kalamboki--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:other-vegetation--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/BE2CB8C1-FDEB-4D40-3DB6-F793360C43FA",
+            "label": "Other Vegetation",
+            "slug": "other-vegetation--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:dominant-vegetation-height--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/B3562F49-8769-4DD5-A63E-482269C3D5AC",
+            "label": "Dominant Vegetation Height",
+            "slug": "dominant-vegetation-height--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:percent-visible--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/8A001320-6BCF-4FCF-BA01-FD9758DA82E7",
+            "label": "Percent Visible",
+            "slug": "percent-visible--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:farm--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/B78D18B7-81FF-4EE7-9187-6797B3A64A66",
+            "label": "Farm",
+            "slug": "farm--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:soil--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/B1ED1734-87FA-4BF6-B91D-D63D0B658BAD",
+            "label": "Soil",
+            "slug": "soil--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:background-disturbance--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/182D76AF-174E-4B8D-146D-A5AE5283EE9C",
+            "label": "Background Disturbance",
+            "slug": "background-disturbance--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:sherd-crusting--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/B5F34A98-DDCD-4B5B-DD28-37F642B9BCA3",
+            "label": "Sherd Crusting",
+            "slug": "sherd-crusting--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:surface-clast-size--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/0C4CCB40-87E2-472D-01CE-26E3B7A5502D",
+            "label": "Surface Clast Size",
+            "slug": "surface-clast-size--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:comments-field--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/E9864EB5-54AA-4505-1D30-9E3FB965E77F",
+            "label": "Comments (field)",
+            "slug": "comments-field--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:string"
+        },
+        "oc-pred:walker-spacing--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/1A1E7A6F-A016-4CBB-22E8-AF9B47C668F9",
+            "label": "Walker Spacing",
+            "slug": "walker-spacing--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:bearing--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/E9E7C394-44CE-48B9-1D39-37B902D3060B",
+            "label": "Bearing",
+            "slug": "bearing--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:direction-from--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/B21FA28C-060D-4C25-C4DC-8CD7A03DB97F",
+            "label": "Direction From",
+            "slug": "direction-from--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:general-survey-comments--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/48C73825-E195-4CD4-EB06-5966C5459D8A",
+            "label": "General Survey Comments",
+            "slug": "general-survey-comments--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:number-of-bags--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/BC9C94E6-C472-43DE-9D30-4F971C1B9E5F",
+            "label": "Number of Bags",
+            "slug": "number-of-bags--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:survey-type--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/D067AF16-7E26-4640-FCC3-639D7FE364FD",
+            "label": "Survey Type",
+            "slug": "survey-type--42",
+            "oc-gen:predType": "variable",
+            "@type": "@id"
+        },
+        "oc-pred:digital--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/E27DF239-F1BD-49CF-CC5C-3E79C3F4EAA8",
+            "label": "Digital",
+            "slug": "digital--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:color--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/A9F414A1-4A49-4A47-1138-165E8B05DD77",
+            "label": "Color",
+            "slug": "color--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:boolean"
+        },
+        "oc-pred:total-object-count--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/0C287870-4D35-49F8-6D1A-84CD15BA4D7B",
+            "label": "Total object (count)",
+            "slug": "total-object-count--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:sherds--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/8369AEC1-1771-46CD-A414-FA8DC23DB5F2",
+            "label": "Sherds",
+            "slug": "sherds--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:tiles--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/83AC4E71-98A1-4128-26C0-73544784CFB6",
+            "label": "Tiles",
+            "slug": "tiles--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:lithics--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/F2D0556A-FCEE-455A-75F9-88489C5CA2A8",
+            "label": "Lithics",
+            "slug": "lithics--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:surveyunits-area-other--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/D619D7F4-4F8C-41BA-C4FC-C5D4A5C72C0D",
+            "label": "Surveyunits Area Other",
+            "slug": "surveyunits-area-other--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:ceramics--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/BDDBE5AE-3376-403D-2773-353458FA4085",
+            "label": "Ceramics",
+            "slug": "ceramics--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:integer"
+        },
+        "oc-pred:ceramic-density--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/5584EB85-85C6-4D29-BFFC-3FE988B77CE2",
+            "label": "Ceramic density",
+            "slug": "ceramic-density--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:area-walked--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/1B58808D-33BA-4E25-F1E1-95421CF1EBAC",
+            "label": "Area walked",
+            "slug": "area-walked--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:unit-area--42": {
+            "owl:sameAs": "http://opencontext.org/predicates/580080CC-49E3-4E6C-185F-6E45E78493E6",
+            "label": "Unit area",
+            "slug": "unit-area--42",
+            "oc-gen:predType": "variable",
+            "@type": "xsd:double"
+        },
+        "oc-pred:link": {
+            "owl:sameAs": "http://opencontext.org/predicates/oc-3",
+            "label": "link",
+            "slug": "link",
+            "oc-gen:predType": "link",
+            "@type": "@id"
+        },
+        "oc-pred:recorded-by": {
+            "owl:sameAs": "http://opencontext.org/predicates/oc-20",
+            "label": "Recorded by",
+            "slug": "recorded-by",
+            "oc-gen:predType": "link",
+            "@type": "@id"
+        }
+    },
+    "id": "http://opencontext.org/subjects/A86A6578-069F-4997-E70C-56A5F2BFA8EB",
+    "label": "Unit 1",
+    "@type": [
+        "oc-gen:cat-0021"
+    ],
+    "oc-gen:has-context-path": {
+        "id": "#context-1",
+        "oc-gen:has-path-items": [
+            {
+                "id": "http://opencontext.org/subjects/67D9F00D-14E6-4A1B-3A61-EC92FC774098",
+                "label": "Cyprus"
+            },
+            {
+                "id": "http://opencontext.org/subjects/48FD434C-F6D3-4E4D-BF5B-C9F5EA9B0953",
+                "label": "PKAP Survey Area"
+            },
+            {
+                "id": "http://opencontext.org/subjects/6EC56A96-97CB-4FCB-B92A-3B47FCEC9BEF",
+                "label": "Koutsopetria - Paleokastro"
+            }
+        ]
+    },
+    "oc-gen:has-contents": {
+        "id": "#contents-1",
+        "oc-gen:contains": [
+            {
+                "id": "http://opencontext.org/subjects/16E51943-4C18-4410-F77D-D747EFF03FFA",
+                "label": "Batch 21"
+            },
+            {
+                "id": "http://opencontext.org/subjects/1CEC10B7-344D-4C72-68B7-B5227E132CE0",
+                "label": "Batch 25"
+            },
+            {
+                "id": "http://opencontext.org/subjects/24E40AC9-7533-4DA2-F202-515B837B9EA2",
+                "label": "Batch 27"
+            },
+            {
+                "id": "http://opencontext.org/subjects/26701EA9-89B3-4B29-EE2F-7B3C386C4588",
+                "label": "Batch 20"
+            },
+            {
+                "id": "http://opencontext.org/subjects/2ACC1347-5E46-4F99-E218-C5922FE90558",
+                "label": "Batch 7"
+            },
+            {
+                "id": "http://opencontext.org/subjects/37E73F25-2CD1-483E-ECBA-962FEE555E13",
+                "label": "Batch 4"
+            },
+            {
+                "id": "http://opencontext.org/subjects/3BC97937-23B2-4C3D-A6DF-114F658EC129",
+                "label": "Batch 24"
+            },
+            {
+                "id": "http://opencontext.org/subjects/3CC594B1-9EF6-417B-1AA5-F3CDD0416B74",
+                "label": "Batch 2"
+            },
+            {
+                "id": "http://opencontext.org/subjects/4A941F12-8190-44C0-2241-363B0E791722",
+                "label": "Batch 3"
+            },
+            {
+                "id": "http://opencontext.org/subjects/4DCD7F97-6EAD-488A-F385-A33EBD50DE28",
+                "label": "Batch 1"
+            },
+            {
+                "id": "http://opencontext.org/subjects/5B0C426C-433C-4C93-CEC8-88058724AEDF",
+                "label": "Batch 30"
+            },
+            {
+                "id": "http://opencontext.org/subjects/5E4D2A3B-D640-4C69-AD70-25E640B3D181",
+                "label": "Batch 16"
+            },
+            {
+                "id": "http://opencontext.org/subjects/614A8208-9ED4-41E4-4338-7B246014C8E9",
+                "label": "Batch 14"
+            },
+            {
+                "id": "http://opencontext.org/subjects/6557E194-DF14-40D5-413A-5DEA2D342D45",
+                "label": "Batch 6"
+            },
+            {
+                "id": "http://opencontext.org/subjects/93269B99-EE59-4FF4-FB54-71516504847F",
+                "label": "Batch 29"
+            },
+            {
+                "id": "http://opencontext.org/subjects/9FFD8FA2-075A-4E96-4D23-64ADE8F1EBF4",
+                "label": "Batch 13"
+            },
+            {
+                "id": "http://opencontext.org/subjects/A39474C8-1FB2-4EC4-856A-62A23D466397",
+                "label": "Batch 12"
+            },
+            {
+                "id": "http://opencontext.org/subjects/C3FAEA75-2A6B-4939-BD3C-119BCEB48075",
+                "label": "Batch 5"
+            },
+            {
+                "id": "http://opencontext.org/subjects/AB482AF8-9DCC-4793-18E9-BD31238F896E",
+                "label": "Batch 8"
+            },
+            {
+                "id": "http://opencontext.org/subjects/BD99F691-241E-42A5-6DF8-F05775E1EAEC",
+                "label": "Batch 9"
+            },
+            {
+                "id": "http://opencontext.org/subjects/B8046E92-1F7D-4DDA-7210-349AB52BB034",
+                "label": "Batch 10"
+            },
+            {
+                "id": "http://opencontext.org/subjects/E783DFDD-E6DD-44B1-21D6-D38E88865544",
+                "label": "Batch 11"
+            },
+            {
+                "id": "http://opencontext.org/subjects/D1A96D1A-B603-4415-7EBA-11B908233284",
+                "label": "Batch 15"
+            },
+            {
+                "id": "http://opencontext.org/subjects/E0340E34-E90B-4502-3BE9-70956B8561C5",
+                "label": "Batch 17"
+            },
+            {
+                "id": "http://opencontext.org/subjects/D4DB0156-0C98-4341-F232-5D35EC0C64CB",
+                "label": "Batch 18"
+            },
+            {
+                "id": "http://opencontext.org/subjects/B2757387-C354-4EE9-B310-3669B73A115E",
+                "label": "Batch 19"
+            },
+            {
+                "id": "http://opencontext.org/subjects/B01593D1-8193-4EA7-40F5-19DB68592751",
+                "label": "Batch 22"
+            },
+            {
+                "id": "http://opencontext.org/subjects/CC5ABF6D-5C31-4154-4744-030BFF323A97",
+                "label": "Batch 23"
+            },
+            {
+                "id": "http://opencontext.org/subjects/DA559C3F-25A8-431D-B9BC-A34513C0D70E",
+                "label": "Batch 26"
+            },
+            {
+                "id": "http://opencontext.org/subjects/F57D44B6-0C7E-4E2E-3246-1EB0BCA2BD21",
+                "label": "Batch 28"
+            },
+            {
+                "id": "http://opencontext.org/subjects/B210E7D6-A77D-4E94-6DE7-7748B9A70219",
+                "label": "Batch 31"
+            }
+        ]
+    },
+    "oc-gen:has-obs": [
+        {
+            "id": "#obs-1",
+            "oc-gen:sourceID": "z_4_ede3de548",
+            "oc-gen:obsStatus": "active",
+            "oc-pred:date--42": [
+                "2004-06-18"
+            ],
+            "oc-pred:recorder--42": [
+                {
+                    "id": "http://opencontext.org/types/FF5FFBA6-1C86-4DB0-617F-C9BD8CB7A412",
+                    "label": "DKP"
+                }
+            ],
+            "oc-pred:start-time--42": [
+                "2014-04-02"
+            ],
+            "oc-pred:end-time--42": [
+                "2014-04-02"
+            ],
+            "oc-pred:start-time-date--42": [
+                {
+                    "id": "#string-C4E5F199-C2D9-4FF5-790C-067680422363",
+                    "xsd:string": "2004-06-18:07:46:00"
+                }
+            ],
+            "oc-pred:end-time-date--42": [
+                {
+                    "id": "#string-A6FD5698-885E-4D1A-2243-E6588AB41877",
+                    "xsd:string": "2004-06-18:08:23:00"
+                }
+            ],
+            "oc-pred:area-or-toponym--42": [
+                {
+                    "id": "http://opencontext.org/types/B978F873-6AF7-4E6D-35CA-FC840EC1E7D4",
+                    "label": "Koutsopetria/Paleokastro"
+                }
+            ],
+            "oc-pred:location-and-description--42": [
+                {
+                    "id": "#string-29815FF3-56C3-4118-ADD8-D4E567C64371",
+                    "xsd:string": "The first unit to the  northeast of fenced in areaa of excavation. A grain stubble field bordered on SW by uncultivated plot of land( directly N. of Fence) NW by Plowed field ; and N. by grain stubble sloping N upward toward Vigla. A patch of weeds and stone pil;e runs through the N. end of the unit."
+                }
+            ],
+            "oc-pred:evergreens--42": [
+                0.0
+            ],
+            "oc-pred:decidiuous--42": [
+                0.0
+            ],
+            "oc-pred:scrub-or-phrygana--42": [
+                0.0
+            ],
+            "oc-pred:maquis--42": [
+                0.0
+            ],
+            "oc-pred:grass-or-weeds--42": [
+                1.0
+            ],
+            "oc-pred:barren--42": [
+                0.0
+            ],
+            "oc-pred:general-info-legal-and-standard-other--42": [
+                0.0
+            ],
+            "oc-pred:olives--42": [
+                0.0
+            ],
+            "oc-pred:vineyard--42": [
+                0.0
+            ],
+            "oc-pred:citrus--42": [
+                0.0
+            ],
+            "oc-pred:apricot--42": [
+                0.0
+            ],
+            "oc-pred:almonds--42": [
+                0.0
+            ],
+            "oc-pred:other-orchardgrove--42": [
+                0.0
+            ],
+            "oc-pred:vegetation-small-leafed--42": [
+                0.0
+            ],
+            "oc-pred:veg-broad-leafed--42": [
+                0.0
+            ],
+            "oc-pred:greens--42": [
+                0.0
+            ],
+            "oc-pred:grain--42": [
+                0.0
+            ],
+            "oc-pred:grain-stubble--42": [
+                0.0
+            ],
+            "oc-pred:kalamboki--42": [
+                0.0
+            ],
+            "oc-pred:other-vegetation--42": [
+                0.0
+            ],
+            "oc-pred:dominant-vegetation-height--42": [
+                {
+                    "id": "http://opencontext.org/types/78BB6397-061B-4E76-D8D2-31FF92261342",
+                    "label": "<= knee"
+                }
+            ],
+            "oc-pred:percent-visible--42": [
+                40.0
+            ],
+            "oc-pred:farm--42": [
+                {
+                    "id": "http://opencontext.org/types/4A229651-C0CB-4661-5520-F02AEDBED5D4",
+                    "label": "Plowed"
+                }
+            ],
+            "oc-pred:soil--42": [
+                {
+                    "id": "http://opencontext.org/types/7BDD67FD-3B8A-43DF-5FCB-B1188F822346",
+                    "label": "Compacted"
+                }
+            ],
+            "oc-pred:background-disturbance--42": [
+                {
+                    "id": "http://opencontext.org/types/C0C3B3FF-87BB-4EFD-38F5-71C5C0788F92",
+                    "label": "Moderate"
+                }
+            ],
+            "oc-pred:sherd-crusting--42": [
+                {
+                    "id": "http://opencontext.org/types/96F5EFED-A4BB-4661-807C-81ED5BC94291",
+                    "label": "None"
+                }
+            ],
+            "oc-pred:surface-clast-size--42": [
+                {
+                    "id": "http://opencontext.org/types/4AEBF291-7366-4552-1BAB-1CED0AE8855E",
+                    "label": "Coarse Gravel (75-19mm)"
+                }
+            ],
+            "oc-pred:comments-field--42": [
+                {
+                    "id": "#string-415E37AC-C7C7-4D6C-8D63-63B214DED03F",
+                    "xsd:string": "Cut stone noted in pile of rocks on N. end"
+                }
+            ],
+            "oc-pred:walker-spacing--42": [
+                10.0
+            ],
+            "oc-pred:bearing--42": [
+                86.0
+            ],
+            "oc-pred:direction-from--42": [
+                {
+                    "id": "http://opencontext.org/types/9AD25103-C156-41D3-393A-4F899D157298",
+                    "label": "South"
+                }
+            ],
+            "oc-pred:general-survey-comments--42": [
+                {
+                    "id": "http://opencontext.org/types/9297363F-3012-4A75-71A2-B560D65A70B2",
+                    "label": "BPW other = Albaster ; mortar    SRF  other = Quartz; Gypsum"
+                }
+            ],
+            "oc-pred:number-of-bags--42": [
+                1.0
+            ],
+            "oc-pred:survey-type--42": [
+                {
+                    "id": "http://opencontext.org/types/8E93D96B-D6B1-481D-C0F6-0E8EBFA5A457",
+                    "label": "Standard"
+                }
+            ],
+            "oc-pred:digital--42": [
+                1.0
+            ],
+            "oc-pred:color--42": [
+                1.0
+            ],
+            "oc-pred:total-object-count--42": [
+                391.0
+            ],
+            "oc-pred:sherds--42": [
+                120.0
+            ],
+            "oc-pred:tiles--42": [
+                267.0
+            ],
+            "oc-pred:lithics--42": [
+                0.0
+            ],
+            "oc-pred:surveyunits-area-other--42": [
+                4.0
+            ],
+            "oc-pred:ceramics--42": [
+                387.0
+            ],
+            "oc-pred:ceramic-density--42": [
+                12093.75
+            ],
+            "oc-pred:area-walked--42": [
+                320.0
+            ],
+            "oc-pred:unit-area--42": [
+                1600.0
+            ],
+            "oc-pred:link": [
+                {
+                    "id": "http://opencontext.org/media/1EF9932C-1FF5-4BD1-1F14-2CDBA02E3FB8",
+                    "label": "1_1",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/3B4A944F-90F1-466F-C477-00385ABFFC27",
+                    "label": "1_1b"
+                },
+                {
+                    "id": "http://opencontext.org/media/D6CEDD56-D4E3-42D8-E44E-13DCC6F3CFD3",
+                    "label": "1_1c"
+                },
+                {
+                    "id": "http://opencontext.org/media/F5283A34-A277-47A3-BB6E-83DC71F2E713",
+                    "label": "1_1d"
+                },
+                {
+                    "id": "http://opencontext.org/media/653DACD5-AA9A-463A-EDA3-E9F942FA8902",
+                    "label": "1_1e",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1e.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/1C305CD5-512D-44FA-1579-8A931389A739",
+                    "label": "1_1f",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1f.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/708E116A-A73B-492F-D951-6815DA3D29CD",
+                    "label": "1_1g",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1g.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/8646A909-A75B-434D-63B3-1003056E9E4A",
+                    "label": "1_1h",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1h.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/9281280A-0CF0-40B1-E180-D06792EF2404",
+                    "label": "1_1i"
+                },
+                {
+                    "id": "http://opencontext.org/media/24ABF273-38D3-4CC7-B26D-9A76BBB920D0",
+                    "label": "1_1j",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1j.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/D7FAAB68-952B-4F94-99A7-0DF008F405E1",
+                    "label": "1_1k",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/pkap-cyprus/thumbs/1-499-gridded/1_1k.jpg"
+                },
+                {
+                    "id": "http://opencontext.org/media/AA9A8FCA-B4C1-46B3-8572-9B257C3A7747",
+                    "label": "1_1l"
+                },
+                {
+                    "id": "http://opencontext.org/media/BCF56CA7-FF37-4574-55B3-3DBEF665DCF0",
+                    "label": "1_1m"
+                },
+                {
+                    "id": "http://opencontext.org/media/A80A2563-19B2-4281-53EF-2946992F142C",
+                    "label": "1_1n"
+                },
+                {
+                    "id": "http://opencontext.org/media/FE73BFBA-7AC3-43E5-360E-F5104425700A",
+                    "label": "1_1o"
+                },
+                {
+                    "id": "http://opencontext.org/media/E96E8B50-4D50-4FDE-4680-D9EE9286314C",
+                    "label": "1_2"
+                }
+            ],
+            "oc-pred:recorded-by": [
+                {
+                    "id": "http://opencontext.org/persons/01B146EA-9654-4A13-FE59-DEA17A785EFE",
+                    "label": "David K. Pettegrew"
+                }
+            ]
+        }
+    ],
+    "properties": {
+        "href": "http://opencontext.org/subjects/A86A6578-069F-4997-E70C-56A5F2BFA8EB",
+        "location-note": "Location data available with no intentional reduction in precision",
+        "reference-type": "specified",
+        "id": "#geo-props-1",
+        "location-type": "oc-gen:discovey-location"
+    },
+    "geometry": {
+        "id": "#geo-geom-1",
+        "coordinates": [
+            33.706000976063,
+            34.981809886288
+        ],
+        "type": "Point"
+    },
+    "type": "Feature",
+    "dc-terms:published": "2013-10-25",
+    "dc-terms:isPartOf": [
+        {
+            "id": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2",
+            "label": "Pyla-Koutsopetria Archaeological Project",
+            "owl:sameAs": "http://opencontext.org/projects/pyla-koutsopetria-archaeological-project--42"
+        }
+    ],
+    "@graph": [
+        {
+            "@id": "oc-pred:ceramics--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:area-walked--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/square_meter",
+                    "label": "square meter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:tiles--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:sherds--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-bags--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:lithics--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:walker-spacing--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/meter",
+                    "label": "meter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:unit-area--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/square_meter",
+                    "label": "square meter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:total-object-count--42",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "label": "counting measure"
+                }
+            ]
+        }
+    ]
+}
