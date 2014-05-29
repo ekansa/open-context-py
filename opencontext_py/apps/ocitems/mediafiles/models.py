@@ -6,15 +6,12 @@ class Mediafile(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)
-    media_type = models.CharField(max_length=50)
+    file_type = models.CharField(max_length=50, db_index=True)
     mime_type_uri = models.CharField(max_length=200)
-    thumb_mime_uri = models.CharField(max_length=200)
-    thumb_uri = models.CharField(max_length=200)
-    preview_mime_uri = models.CharField(max_length=200)
-    preview_uri = models.CharField(max_length=200)
-    full_uri = models.CharField(max_length=200)
+    file_uri = models.CharField(max_length=200)
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
     updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'oc_mediafiles'
+        unique_together = (('uuid', 'file_type'),)

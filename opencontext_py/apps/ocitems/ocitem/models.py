@@ -10,6 +10,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
@@ -185,7 +186,6 @@ class LastUpdatedOrderedDict(OrderedDict):
 class ItemConstruction():
     """
     General purpose functions for building Open Context items
-    """
     base_context = False
     add_item_labels = True
     add_media_thumnails = True
@@ -198,6 +198,9 @@ class ItemConstruction():
     link_list = list()
     type_list = list()
     item_metadata = {}
+    thumbnails = {}
+    """
+
 
     def __init__(self):
         self.add_item_labels = True
@@ -211,6 +214,7 @@ class ItemConstruction():
         self.link_list = list()
         self.type_list = list()
         self.item_metadata = {}
+        self.thumbnails = {}
         context = LastUpdatedOrderedDict()
         context['id'] = '@id'
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
@@ -391,6 +395,10 @@ class ItemConstruction():
                     new_object_item['label'] = manifest_item.label
                 else:
                     new_object_item['label'] = 'Item not in manifest'
+                if(object_id in self.thumbnails):
+                    if(self.thumbnails[object_id] is not False):
+                        # add the thumbnail uri if it exists
+                        new_object_item['oc-gen:thumbnail-uri'] = self.thumbnails[object_id].file_uri
             if(item_type in settings.SLUG_TYPES):
                 new_object_item['owl:sameAs'] = self.make_oc_uri(manifest_item.slug, item_type)
         else:
@@ -667,6 +675,13 @@ class ItemConstruction():
             try:
                 manifest_item = Manifest.objects.get(uuid=uuid)
                 self.item_metadata[uuid] = manifest_item
+                if(manifest_item.item_type == 'media'):
+                    # a media item. get information about its thumbnail.
+                    try:
+                        thumb_obj = Mediafile.objects.get(uuid=uuid, file_type='oc-gen:thumbnail')
+                    except Mediafile.DoesNotExist:
+                        thumb_obj = False
+                    self.thumbnails[uuid] = thumb_obj
             except Manifest.DoesNotExist:
                 manifest_item = False
         return manifest_item
