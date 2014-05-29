@@ -1,5 +1,6 @@
 import json
 import geojson
+import copy
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from collections import OrderedDict
 from django.conf import settings
@@ -455,7 +456,7 @@ class ItemConstruction():
             features_dict = LastUpdatedOrderedDict()
             feature_events = LastUpdatedOrderedDict()
             for geo in geo_meta:
-                geo_id = geo.fid
+                geo_id = geo.feature_id
                 geo_node = '#geo-' + str(geo_id)  # the node id for database rec of the feature
                 geo_node_geom = '#geo-geom-' + str(geo_id)
                 geo_node_props = '#geo-props-' + str(geo_id)
@@ -576,16 +577,20 @@ class ItemConstruction():
                             for event in event_list:
                                 if(event_i <= 1):
                                     # add the time info to the feature
+                                    old_feature = features_dict[node_key]
+                                    old_geo_id = old_feature.geometry['id']
+                                    old_prop_id = old_feature.properties['id']
                                     features_dict[node_key].update(event)
                                 else:
-                                    act_feature = features_dict[node_key]
-                                    act_feature.update(event)  # add the time info to the new feature
+                                    act_feature = copy.deepcopy(old_feature)
                                     # now add new node ids for the new features created to for the event
                                     new_node = node_key + '-event-' + str(event_i)
                                     act_feature.id = new_node
-                                    act_feature.geometry.id += '-event-' + str(event_i)
-                                    act_feature.properties.id += '-event-' + str(event_i)
+                                    act_feature.geometry['id'] = old_geo_id + '-event-' + str(event_i)
+                                    act_feature.properties['id'] = old_prop_id + '-event-' + str(event_i)
+                                    act_feature.update(event)  # add the time info to the new feature
                                     features_dict[new_node] = act_feature
+                                    del(act_feature)
                                 event_i += 1
                 feature_keys = list(features_dict.keys())
                 if(len(feature_keys) == 1):
@@ -606,7 +611,8 @@ class ItemConstruction():
         """
         when = LastUpdatedOrderedDict()
         when['id'] = '#event-when-' + str(event.event_id)
-        when['@type'] = [event.meta_type, event.when_type]
+        when['type'] = event.when_type
+        when['@type'] = event.meta_type
         if(event.earliest != event.start):
             when['earliest'] = int(event.earliest)
         when['start'] = int(event.start)

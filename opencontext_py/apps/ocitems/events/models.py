@@ -7,6 +7,8 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 # a zero in the feature_id field means that the time data is not tied to
 # a specific feature associated with an item.
 class Event(models.Model):
+    DEFAULT_METATYPE = 'oc-gen:formation-use-life'
+    DEFAULT_WHENTYPE = 'Interval'
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     item_type = models.CharField(max_length=50, db_index=True)
@@ -34,38 +36,36 @@ class Event(models.Model):
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
+    def make_event_id(self):
+        """
+        assigns an id to an event
+        """
+        ea = EventAssignment()
+        return ea.make_event_id(self.uuid)
+
     def validate_times(self):
         """
         makes sure time data is properly validated
         """
-        time_list = [self.earliest, self.start, self.start, self.latest]
+        time_list = [self.earliest, self.start, self.stop, self.latest]
         time_list.sort()
         self.earliest = time_list[0]
         self.start = time_list[1]
-        self.start = time_list[2]
+        self.stop = time_list[2]
         self.latest = time_list[3]
-
-    def early_late_validate(self, need_early, need_late):
-        """
-        makes a pair of times in the proper order
-        """
-        if(need_late < need_early):
-            temp = need_early
-            need_early = need_late
-            need_late = temp
-        return need_early, need_late
 
     def save(self):
         """
         creates the hash-id on saving to insure a unique event
         """
         self.validate_times()
+        self.event_id = self.make_event_id()
         self.hash_id = self.make_hash_id()
         super(Event, self).save()
 
     class Meta:
         db_table = 'oc_events'
-        ordering = ['event_id']
+        ordering = ['earliest', 'start', 'stop', 'latest']
 
 
 class EventAssignment():
@@ -74,43 +74,9 @@ class EventAssignment():
     def __init__(self):
         do_something = True
 
-    """
-    def assign_initial_events(self):
-        chrono_items = Chrono.objects.all()
-        for citem in chrono_items:
-            meta_type = citem.meta_type
-            act_uuid = citem.uuid
-            geo_items = Geospace.objects.filter(uuid=act_uuid)
-            if(len(geo_items) > 0):
-                event_id = 1
-                for geoitem in geo_items:
-                    newr = Event(uuid=act_uuid,
-                                 item_type='subjects',
-                                 project_uuid=citem.project_uuid,
-                                 event_id=event_id,
-                                 meta_type=meta_type,
-                                 when_type='Interval',
-                                 feature_id=geoitem.fid,
-                                 earliest=citem.start_lc,
-                                 start=citem.start_c,
-                                 stop=citem.end_c,
-                                 latest=citem.end_lc,
-                                 note='')
-                    newr.save()
-                    event_id += 1
-            else:
-                newr = Event(uuid=act_uuid,
-                             item_type='subjects',
-                             project_uuid=citem.project_uuid,
-                             event_id=1,
-                             meta_type=meta_type,
-                             when_type='Interval',
-                             feature_id=0,
-                             earliest=citem.start_lc,
-                             start=citem.start_c,
-                             stop=citem.end_c,
-                             latest=citem.end_lc,
-                             note='')
-                newr.save()
-        return Event.objects.all().count()
-    """
+    def make_event_id(self, uuid):
+        """
+        assigns an event_id based on uuid
+        """
+        uuid_count = Event.objects.filter(uuid=uuid).count()
+        return uuid_count + 1

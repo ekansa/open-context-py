@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
 from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
 from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 
@@ -81,6 +82,9 @@ class OCmysql():
                 newr.save()
             elif(act_table == 'oc_types'):
                 newr = OCtype(**record)
+                newr.save()
+            elif(act_table == 'oc_events'):
+                newr = Event(**record)
                 newr.save()
             elif(act_table == 'oc_predicates'):
                 newr = Predicate(**record)
@@ -207,42 +211,45 @@ class OCmysql():
                                                                                       last=Max('published'))
             proj_dates[proj[0]] = early_date
         return proj_dates
-"""
+
     def update_geo_chrono(self):
-        geos = Geodataold.objects.all()
+        """
+        geos = Geospaceold.objects.all()
         for geo in geos:
-            ftype = geo.ftype
-            coordinates = ''
-            if(len(geo.geo_json) > 5):
-                geo_obj = json.loads(geo.geo_json)
-                ftype = geo_obj["geometry"]["type"]
-                coords = geo_obj["geometry"]["coordinates"]
-                coordinates = json.dumps(coords)
             record = {'uuid': geo.uuid,
                       'project_uuid': geo.project_uuid,
-                      'meta_type': 'oc-gen:discovey-location',
-                      'ftype': ftype,
+                      'source_id': 'ArchaeoML doc',
+                      'item_type': 'subjects',
+                      'feature_id': geo.fid,
+                      'meta_type': geo.meta_type,
+                      'ftype': geo.ftype,
                       'latitude': geo.latitude,
                       'longitude': geo.longitude,
                       'specificity': geo.specificity,
-                      'coordinates': coordinates,
+                      'coordinates': geo.coordinates,
                       'note': geo.note}
             newr = Geospace(**record)
             newr.save()
         geo_count = len(geos)
         geos = []
-        chronos = Chronologyold.objects.all()
+        geo_count = 0
+        chronos = Eventold.objects.all()
         for chrono in chronos:
             record = {'uuid': chrono.uuid,
+                      'item_type': chrono.item_type,
                       'project_uuid': chrono.project_uuid,
-                      'meta_type': 'oc-gen:use-life',
-                      'start_lc': chrono.start_lc,
-                      'start_c': chrono.start_c,
-                      'end_c': chrono.end_c,
-                      'end_lc': chrono.end_lc,
+                      'source_id': chrono.source_id,
+                      'event_id': chrono.event_id,
+                      'meta_type': chrono.meta_type,
+                      'when_type': chrono.when_type,
+                      'feature_id': chrono.feature_id,
+                      'earliest': chrono.earliest,
+                      'start': chrono.start,
+                      'stop': chrono.stop,
+                      'latest': chrono.latest,
                       'note': chrono.note}
-            newr = Chrono(**record)
+            newr = Event(**record)
             newr.save()
         chrono_count = len(chronos)
-        return 'Geospace records: ' + geo_count + ', chrono records: ' + chrono_count
-"""
+        return 'Geospace records: ' + geo_count + ', event records: ' + chrono_count
+        """

@@ -181,3 +181,61 @@ class Containment():
             subject_list.append(uuid)
         metadata_items = self.get_geochron_from_subject_list(subject_list, metadata_type)
         return metadata_items
+
+
+class EventAssertions():
+    """
+    This class manages event data based on assertion data
+    """
+
+    def assign_events_from_type(self, type_uuid,
+                                delete_old_source=False,
+                                feature_id=1,
+                                meta_type=Event.DEFAULT_METATYPE):
+        """
+        assigns an event to subjects items based on association
+        with a uuid identified type that has event data
+        """
+        type_events = Event.objects.filter(uuid=type_uuid)
+        type_event = type_events[0]
+        rel_subjects = Assertion.objects.filter(subject_type='subjects',
+                                                object_uuid=type_uuid)
+        for sub in rel_subjects:
+            if(delete_old_source is not False):
+                Event.objects.filter(uuid=sub.uuid, source_id=delete_old_source).delete()
+            record = {'uuid': sub.uuid,
+                      'item_type': sub.subject_type,
+                      'project_uuid': sub.project_uuid,
+                      'source_id': type_uuid,
+                      'meta_type': meta_type,
+                      'when_type': Event.DEFAULT_WHENTYPE,
+                      'feature_id': feature_id,
+                      'earliest': type_event.earliest,
+                      'start': type_event.start,
+                      'stop': type_event.stop,
+                      'latest': type_event.latest,
+                      'note': type_event.note}
+            newr = Event(**record)
+            newr.save()
+        return len(rel_subjects)
+
+    def process_unused_type_events(self, delete_old_source=False,
+                                   feature_id=1,
+                                   meta_type=Event.DEFAULT_METATYPE):
+        """
+        assigns events to subjects items based on associations
+        with uuid identified types that have event data
+        but are not yet used as source_ids for events
+        """
+        output = {}
+        type_events = Event.objects.filter(item_type='types')
+        for tevent in type_events:
+            type_uuid = tevent.uuid
+            tused_count = Event.objects.filter(source_id=type_uuid).count()
+            if(tused_count < 1):
+                output[type_uuid] = self.assign_events_from_type(type_uuid,
+                                                                 delete_old_source,
+                                                                 feature_id,
+                                                                 meta_type
+                                                                 )
+        return output
