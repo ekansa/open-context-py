@@ -187,6 +187,12 @@
     <!-- chronological latest date in Julian dates BCE  -->
     <field name="form_use_life_chrono_latest" type="double" indexed="true" stored="true" multiValued="true"/>
     
+    
+    <!-- 3 integer media types -->        
+	<field name="image_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	<field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	<field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+    
    
     <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
 	a prefix defined by the slug of its parent levels. For example, consider the type Taxon::Mammal.
@@ -199,7 +205,14 @@
     
 	-->
     
-    <!-- to index nominal @type = "@id" values -->
+    <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
+    the root context field is 'root_context'
+    -->
+    <dynamicField name="*_context" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+    
+    <!-- to index nominal predicates @type = "@id" values
+    the root dynamic field is 'root_pred'
+    -->
     <dynamicField name="*_pred" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- integer data predicates with @type = "xsd:integer" values -->
