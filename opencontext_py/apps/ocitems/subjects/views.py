@@ -12,11 +12,12 @@ def index(request):
 
 
 def html_view(request, uuid):
-    try:
-        actItem = Subject.objects.get(uuid=uuid)
-        return HttpResponse("Hello, world. You're at the subjects htmlView of "
+    ocitem = OCitem()
+    ocitem.get_item(uuid)
+    if(ocitem.manifest is not False):
+        return HttpResponse("Hello, world. You're at the subject htmlView of "
                             + str(uuid))
-    except Subject.DoesNotExist:
+    else:
         raise Http404
 
 
