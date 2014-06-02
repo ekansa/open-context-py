@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.ocitem.models import OCitem
 import json
 
 
@@ -12,18 +12,21 @@ def index(request):
 
 
 def html_view(request, uuid):
-    try:
-        actItem = OCtype.objects.get(uuid=uuid)
+    ocitem = OCitem()
+    ocitem.get_item(uuid)
+    if(ocitem.manifest is not False):
         return HttpResponse("Hello, world. You're at the type htmlView of " + str(uuid))
-    except Predicate.DoesNotExist:
+    else:
         raise Http404
 
 
 def json_view(request, uuid):
-    try:
-        act_item = OCtype.objects.get(uuid=uuid)
-        act_item.get_item()
-        json_output = json.dumps(act_item.ocitem.json_ld, indent=4)
-        return HttpResponse(json_output, mimetype='application/json')
-    except OCtype.DoesNotExist:
+    ocitem = OCitem()
+    ocitem.get_item(uuid)
+    if(ocitem.manifest is not False):
+        json_output = json.dumps(ocitem.json_ld,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output, mimetype='application/json; charset=utf8')
+    else:
         raise Http404

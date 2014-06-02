@@ -44,6 +44,8 @@ class OCitem():
         self.contents = False
         self.geo_meta = False
         self.event_meta = False
+        self.media = False
+        self.document = False
 
     def get_item(self, actUUID):
         """
@@ -51,23 +53,28 @@ class OCitem():
         """
         self.uuid = actUUID
         self.get_manifest()
-        self.get_assertions()
-        self.get_parent_contexts()
-        self.get_contained()
-        self.get_geoevent_metadata()
-        self.construct_json_ld()
+        if(self.manifest is not False):
+            self.get_assertions()
+            self.get_parent_contexts()
+            self.get_contained()
+            self.get_geoevent_metadata()
+            self.get_item_type_info()
+            self.construct_json_ld()
         return self
 
     def get_manifest(self):
         """
         gets basic metadata about the item from the Manifest app
         """
-        self.manifest = Manifest.objects.get(uuid=self.uuid)
-        self.slug = self.manifest.slug
-        self.label = self.manifest.label
-        self.project_uuid = self.manifest.project_uuid
-        self.item_type = self.manifest.item_type
-        self.published = self.manifest.published
+        try:
+            self.manifest = Manifest.objects.get(uuid=self.uuid)
+            self.slug = self.manifest.slug
+            self.label = self.manifest.label
+            self.project_uuid = self.manifest.project_uuid
+            self.item_type = self.manifest.item_type
+            self.published = self.manifest.published
+        except Manifest.DoesNotExist:
+            self.manifest = False
         return self.manifest
 
     def get_assertions(self):
@@ -114,6 +121,13 @@ class OCitem():
         self.contents = act_contain.get_children_by_parent_uuid(self.uuid)
         return self.contents
 
+    def get_item_type_info(self):
+        """
+        gets information specific to different item types
+        """
+        if(self.item_type == 'media'):
+            self.media = Mediafile.objects.filter(uuid=self.uuid)
+
     def construct_json_ld(self):
         """
         creates JSON-LD documents for an item
@@ -157,6 +171,8 @@ class OCitem():
                                                   self.item_type,
                                                   self.geo_meta,
                                                   self.event_meta)
+        if(self.media is not False):
+            json_ld = item_con.add_media_json(json_ld, self.media)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -200,7 +216,6 @@ class ItemConstruction():
     item_metadata = {}
     thumbnails = {}
     """
-
 
     def __init__(self):
         self.add_item_labels = True
@@ -400,7 +415,9 @@ class ItemConstruction():
                         # add the thumbnail uri if it exists
                         new_object_item['oc-gen:thumbnail-uri'] = self.thumbnails[object_id].file_uri
             if(item_type in settings.SLUG_TYPES):
-                new_object_item['owl:sameAs'] = self.make_oc_uri(manifest_item.slug, item_type)
+                manifest_item = self.get_item_metadata(object_id)
+                if(manifest_item is not False):
+                    new_object_item['owl:sameAs'] = self.make_oc_uri(manifest_item.slug, item_type)
         else:
             new_object_item['id'] = object_id
             if(self.add_linked_data_labels):
@@ -638,6 +655,20 @@ class ItemConstruction():
         act_dict['when'] = when
         return act_dict
 
+    def add_media_json(self, act_dict, media):
+        """
+        adds media files
+        """
+        media_list = []
+        for media_item in media:
+            list_item = LastUpdatedOrderedDict()
+            list_item['id'] = media_item.file_uri
+            list_item['@type'] = media_item.file_type
+            list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+            list_item['dcat:size'] = media_item.file_size
+            media_list.append(list_item)
+        act_dict['oc-gen:has-files'] = media_list
+        return act_dict
     def shorten_context_namespace(self, uri):
         """
         checks to see if a name space has been defined, and if so, use its prefix
