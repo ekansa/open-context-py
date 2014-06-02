@@ -1,7 +1,7 @@
-﻿Python==3.4
+Python==3.4
 Django==1.6.5
 Postgres==9.3
-psycopg2==2.5.2
+psycopg2==2.5.3
 requests==2.3.0
 unidecode==0.04.16
 geojson==1.0.7
