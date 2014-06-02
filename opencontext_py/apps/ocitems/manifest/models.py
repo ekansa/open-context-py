@@ -50,6 +50,7 @@ class ManifestGeneration():
         """
         gets the most recently updated Subject date
         """
+        label = label.replace('_', ' ')
         raw_slug = slugify(unidecode(label[:55]))
         act_proj_short_id = False
         if(project_uuid != '0'):
@@ -62,15 +63,13 @@ class ManifestGeneration():
             raw_slug = raw_slug + '--' + str(act_proj_short_id)
         slug = raw_slug
         try:
-            slug_in = Manifest.objects.get(item_type=item_type, project_uuid=project_uuid, slug=raw_slug)
+            slug_in = Manifest.objects.get(slug=raw_slug)
             slug_exists = True
         except Manifest.DoesNotExist:
             slug_exists = False
         if(slug_exists):
             try:
-                slug_count = Manifest.objects.filter(item_type=item_type,
-                                                     project_uuid=project_uuid,
-                                                     slug__startswith=raw_slug).count()
+                slug_count = Manifest.objects.filter(slug__startswith=raw_slug).count()
             except Manifest.DoesNotExist:
                 slug_count = 0
             if(slug_count > 0):
