@@ -243,6 +243,7 @@ class ItemConstruction():
         context['bibo'] = 'http://purl.org/ontology/bibo/'
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
+        context['dcat'] = 'http://www.w3.org/ns/dcat#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
         context['type'] = 'oc-gen:geojson-type'
