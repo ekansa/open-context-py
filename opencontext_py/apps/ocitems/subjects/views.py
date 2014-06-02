@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 import json
 
@@ -12,10 +12,11 @@ def index(request):
 
 
 def html_view(request, uuid):
-    try:
-        actItem = Subject.objects.get(uuid=uuid)
-        return HttpResponse("Hello, world. You're at the subjects htmlView of " + str(uuid))
-    except Subject.DoesNotExist:
+    ocitem = OCitem()
+    ocitem.get_item(uuid)
+    if(ocitem.manifest is not False):
+        return HttpResponse("Hello, world. You're at the subject htmlView of " + str(uuid))
+    else:
         raise Http404
 
 
