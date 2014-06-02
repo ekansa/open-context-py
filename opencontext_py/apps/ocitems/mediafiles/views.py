@@ -3,10 +3,10 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 import json
 
 
-# A subject is a generic item that is the subbject of observations
-# A subject is the main type of record in open context for analytic data
-# The main dependency for this app is for OCitems, which are used to generate
-# Every type of item in Open Context, including subjects
+# A media resource describes metadata about a binary file (usually an image)
+# A media resource will have links to different versions of the binary file
+# so that thumbnail, preview, and other versions can be discovered. However
+# these other versions are "part" of an abstract media resource
 def index(request):
     return HttpResponse("Hello, world. You're at the media index.")
 
