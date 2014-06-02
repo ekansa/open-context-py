@@ -5,12 +5,17 @@ from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollecti
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
-from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.documents.models import OCdocument
+from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
@@ -46,6 +51,12 @@ class OCitem():
         self.event_meta = False
         self.media = False
         self.document = False
+        self.person = False
+        self.project = False
+        self.vocabulary = False
+        self.table = False
+        self.predicate = False
+        self.octype = False
 
     def get_item(self, actUUID):
         """
@@ -127,6 +138,31 @@ class OCitem():
         """
         if(self.item_type == 'media'):
             self.media = Mediafile.objects.filter(uuid=self.uuid)
+        elif(self.item_type == 'documents'):
+            try:
+                self.document = OCdocument.objects.get(uuid=self.uuid)
+            except Document.DoesNotExist:
+                self.document = False
+        elif(self.item_type == 'persons'):
+            try:
+                self.person = Person.objects.get(uuid=self.uuid)
+            except Person.DoesNotExist:
+                self.person = False
+        elif(self.item_type == 'projects'):
+            try:
+                self.project = Project.objects.get(uuid=self.uuid)
+            except Project.DoesNotExist:
+                self.project = False
+        elif(self.item_type == 'predicates'):
+            try:
+                self.predicate = Predicate.objects.get(uuid=self.uuid)
+            except Predicate.DoesNotExist:
+                self.predicate = False
+        elif(self.item_type == 'types'):
+            try:
+                self.octype = OCtype.objects.get(uuid=self.uuid)
+            except OCtype.DoesNotExist:
+                self.octype = False
 
     def construct_json_ld(self):
         """
@@ -173,6 +209,8 @@ class OCitem():
                                                   self.event_meta)
         if(self.media is not False):
             json_ld = item_con.add_media_json(json_ld, self.media)
+        if(self.document is not False):
+            json_ld = item_con.add_document_json(json_ld, self.document)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -189,32 +227,9 @@ class OCitem():
         return self.json_ld
 
 
-class LastUpdatedOrderedDict(OrderedDict):
-    """
-    Stores items in the order the keys were last added
-    """
-    def __setitem__(self, key, value):
-        if key in self:
-            del self[key]
-        OrderedDict.__setitem__(self, key, value)
-
-
 class ItemConstruction():
     """
     General purpose functions for building Open Context items
-    base_context = False
-    add_item_labels = True
-    add_media_thumnails = True
-    add_subject_class = True
-    add_linked_data_labels = True
-    cannonical_uris = True
-    predicates = {}
-    obs_list = list()
-    var_list = list()
-    link_list = list()
-    type_list = list()
-    item_metadata = {}
-    thumbnails = {}
     """
 
     def __init__(self):
@@ -669,6 +684,13 @@ class ItemConstruction():
             list_item['dcat:size'] = float(media_item.filesize)
             media_list.append(list_item)
         act_dict['oc-gen:has-files'] = media_list
+        return act_dict
+
+    def add_document_json(self, act_dict, document):
+        """
+        adds document content
+        """
+        act_dict['oc-gen:has-content'] = document.content
         return act_dict
 
     def shorten_context_namespace(self, uri):

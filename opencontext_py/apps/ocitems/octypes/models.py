@@ -1,5 +1,4 @@
 from django.db import models
-from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem
 
 
 # OCtype stores a type, or an item from a project's controlled vocabulary
@@ -13,13 +12,6 @@ class OCtype(models.Model):
     rank = models.DecimalField(max_digits=8, decimal_places=3)
     label = models.CharField(max_length=200)
     updated = models.DateTimeField(auto_now=True)
-
-    def get_item(self):
-        act_item = OCitem()
-        self.ocitem = act_item.get_item(self.uuid)
-        self.label = self.ocitem.label
-        self.item_type = self.ocitem.item_type
-        return self.ocitem
 
     class Meta:
         db_table = 'oc_types'
