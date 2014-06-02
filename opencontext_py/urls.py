@@ -5,6 +5,7 @@ admin.autodiscover()
 
 from opencontext_py.apps.ocitems.subjects import views as SubjectViews
 from opencontext_py.apps.ocitems.mediafiles import views as MediaViews
+from opencontext_py.apps.ocitems.documents import views as DocumentViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 
@@ -16,10 +17,14 @@ urlpatterns = patterns('',
                        url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='json_view'),
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='html_view'),
                        url(r'^subjects', SubjectViews.index, name='index'),
-                       # Media views for main records (subjects of observations)
+                       # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='json_view'),
                        url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='html_view'),
                        url(r'^media', MediaViews.index, name='index'),
+                       # Document views for HTML document items
+                       url(r'^documents/(?P<uuid>\S+).json', DocumentViews.json_view, name='json_view'),
+                       url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='html_view'),
+                       url(r'^documents', DocumentViews.index, name='index'),
                        # Predicates views for descriptive variables and linking relations from OC contributors
                        url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='json_view'),
                        url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='html_view'),

@@ -209,6 +209,8 @@ class OCitem():
                                                   self.event_meta)
         if(self.media is not False):
             json_ld = item_con.add_media_json(json_ld, self.media)
+        if(self.document is not False):
+            json_ld = item_con.add_document_json(json_ld, self.document)
         json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
@@ -682,6 +684,13 @@ class ItemConstruction():
             list_item['dcat:size'] = float(media_item.filesize)
             media_list.append(list_item)
         act_dict['oc-gen:has-files'] = media_list
+        return act_dict
+
+    def add_document_json(self, act_dict, document):
+        """
+        adds document content
+        """
+        act_dict['oc-gen:has-content'] = document.content
         return act_dict
 
     def shorten_context_namespace(self, uri):
