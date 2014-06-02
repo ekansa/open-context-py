@@ -25,7 +25,6 @@ def json_view(request, uuid):
     if(ocitem.manifest is not False):
         json_output = json.dumps(ocitem.json_ld,
                                  indent=4,
-                                 use_decimal=True,
                                  ensure_ascii=False)
         return HttpResponse(json_output, mimetype='application/json; charset=utf8')
     else:
