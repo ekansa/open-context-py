@@ -665,10 +665,11 @@ class ItemConstruction():
             list_item['id'] = media_item.file_uri
             list_item['@type'] = media_item.file_type
             list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
-            list_item['dcat:size'] = media_item.file_size
+            list_item['dcat:size'] = float(media_item.filesize)
             media_list.append(list_item)
         act_dict['oc-gen:has-files'] = media_list
         return act_dict
+
     def shorten_context_namespace(self, uri):
         """
         checks to see if a name space has been defined, and if so, use its prefix
