@@ -1,4 +1,5 @@
 from django.conf.urls import patterns, include, url
+from django.conf import settings
 
 from django.contrib import admin
 admin.autodiscover()
@@ -8,6 +9,7 @@ from opencontext_py.apps.ocitems.mediafiles import views as MediaViews
 from opencontext_py.apps.ocitems.documents import views as DocumentViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
+
 
 urlpatterns = patterns('',
                        # Examples:
@@ -36,3 +38,9 @@ urlpatterns = patterns('',
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        )
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += patterns('',
+                            url(r'^__debug__/', include(debug_toolbar.urls)),
+                            )
