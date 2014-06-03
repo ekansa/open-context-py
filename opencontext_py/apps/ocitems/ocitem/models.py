@@ -27,6 +27,7 @@ class OCitem():
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
     PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
+    PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
     PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
     PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
     PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
@@ -173,6 +174,7 @@ class OCitem():
         item_con = ItemConstruction()
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
+        json_ld['uuid'] = self.uuid
         json_ld['label'] = self.label
         json_ld['@type'] = [self.manifest.class_uri]
         if(len(self.contexts) > 0):
@@ -318,7 +320,7 @@ class ItemConstruction():
                 p_data['slug'] = pmeta.slug
                 p_data['uuid'] = pmeta.uuid
                 # p_data['owl:sameAs'] = self.make_oc_uri(pmeta.slug, pmeta.item_type)
-                p_data['oc-gen:predType'] = pmeta.class_uri
+                p_data[OCitem.PREDICATES_OCGEN_PREDICATETYPE] = pmeta.class_uri
                 p_data['@type'] = pred_types[pred_uuid]
                 if(pmeta.class_uri == 'variable'):
                     self.var_list.append(p_data)
@@ -751,8 +753,8 @@ class ItemConstruction():
         """
         template_safe_dict = LastUpdatedOrderedDict()
         for key, item in node.items():
-            safe_key = key.replace(':', '---')
-            safe_key = safe_key.replace('@', 'at--')
+            safe_key = key.replace(':', '___')
+            safe_key = safe_key.replace('@', 'at__')
             if isinstance(item, dict):
                 template_safe_dict[safe_key] = self.make_dict_template_safe(item)
             elif isinstance(item, list):
@@ -767,3 +769,125 @@ class ItemConstruction():
             else:
                 template_safe_dict[safe_key] = item
         return template_safe_dict
+
+
+class TemplateItem():
+    """ This class makes an object useful for templating, since
+    the JSON-LD object can't be read by the django template system """
+
+    def __init__(self):
+        self.label = False
+        self.uuid = False
+        self.id = False
+        self.observations = False
+
+    def read_jsonld_dict(self, json_ld):
+        """ Reads JSON-LD dict object to make a TemplateItem object
+        """
+        self.label = json_ld['label']
+        self.uuid = json_ld['uuid']
+        self.id = json_ld['id']
+        self.create_observations(json_ld)
+
+    def create_observations(self, json_ld):
+        if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
+            context = json_ld['@context']
+            self.observations = []
+            for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+                act_obs = Observation()
+                act_obs.make_observation(context, obs_item)
+                self.observations.append(act_obs)
+
+
+class Observation():
+    """ This class makes an object useful for templating
+    describing descriptive properties and links for items"""
+
+    def __init__(self):
+        self.context = False
+        self.id = False
+        self.source_id = False
+        self.obs_status = False
+        self.properties = False
+        self.subjects_links = False
+        self.media_links = False
+        self.persons_links = False
+        self.documents_links = False
+
+    def make_observation(self, context, obs_dict):
+        """ Makes an observation with some observation metadata
+            property list, links to subjects items, links to media items,
+            links to persons items, and links to documents
+        """
+        self.context = context
+        self.id = obs_dict['id'].replace('#', '')
+        self.source_id = obs_dict[OCitem.PREDICATES_OCGEN_SOURCEID]
+        self.obs_status = obs_dict[OCitem.PREDICATES_OCGEN_OBSTATUS]
+        self.properties = self.make_properties(obs_dict)
+
+    def make_properties(self, obs_dict):
+        """ Makes property objects for an observation
+        """
+        properties = False
+        for key, item in obs_dict.items():
+            if(key != 'id' and key in self.context):
+                if(self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'variable'):
+                    if(properties is False):
+                        properties = []
+                    act_prop = Property()
+                    act_prop.start_property(self.context[key])
+                    act_prop.add_property_values(obs_dict[key])
+                    properties.append(act_prop)
+        return properties
+
+
+class Property():
+    """ This class makes an object useful for templating
+    a property which has a variable predicate with one or more values"""
+
+    def __init__(self):
+        self.varlabel = False
+        self.varuri = False
+        self.varslug = False
+        self.values = False
+
+    def start_property(self, predicate_info):
+        """ Starts a property with metadata about the variable
+        """
+        self.varlabel = predicate_info['label']
+        self.varuri = predicate_info['owl:sameAs']
+        self.varslug = predicate_info['slug']
+
+    def add_property_values(self, prop_vals):
+        """ Starts a property with metadata about the variable
+        """
+        self.values = []
+        for val_item in prop_vals:
+            act_prop_val = PropValue()
+            act_prop_val.make_value(val_item)
+            self.values.append(act_prop_val)
+
+
+class PropValue():
+    """ This class makes an object useful for templating
+    a property value"""
+
+    def __init__(self):
+        self.valtype = False
+        self.valuri = False
+        self.val = False
+        self.valid = False
+
+    def make_value(self, val_item):
+        if isinstance(val_item, dict):
+            if('id' in val_item):
+                if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
+                    self.valuri = val_item['id']
+                else:
+                    self.valid = val_item['id'].replace('#', '')
+            if('label' in val_item):
+                self.val = val_item['label']
+            if('xsd:string' in val_item):
+                self.val = val_item['xsd:string']
+        else:
+            self.val = val_item

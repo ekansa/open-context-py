@@ -1,0 +1,93 @@
+{% block header %}
+    {% if item.observations != False %}
+
+<div id="observations">
+    {% if item.observations|length > 1 %}
+    <ul class="nav nav-tabs" id="obsTabs" data-tabs="tabs">
+    {% for obs in item.observations %}
+        {% if forloop.counter == 1 %} 
+        <li class="active"><a data-toggle="tab" href="#{{ obs.id }}">Obs {{ forloop.counter }}</a></li>
+        {% else %}
+        <li><a data-toggle="tab" href="#{{ obs.id }}">Obs {{ forloop.counter }}</a></li>
+        {%endif%}
+    {% endfor %}
+    </ul>
+    <div class="tab-content">
+    {% else %}
+    <div>
+    {%endif%}
+    {% for obs in item.observations %}
+        {% if forloop.counter == 1 %}
+        <div id="{{ obs.id }}" class="tab-pane fade in active">
+        {% else %}
+        <div id="{{ obs.id }}" class="tab-pane fade">
+        {%endif%}
+        {% if obs.properties != False %}
+            <table class="table table-condensed table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>Descriptive Variable</th>
+                    <th>Value(s)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prop in obs.properties %}
+                    <tr>
+                        <td><a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a></td>
+                        <td>
+                        {% if prop.values != False %}
+                            {% if prop.values|length == 1 %}
+                                {% if prop.values.0.valuri != False %}
+                                    <a href="{{ prop.values.0.valuri }}">{{ prop.values.0.val }}</a>
+                                {% else %}
+                                    {{ prop.values.0.val }}
+                                {%endif%}
+                            {% else %}
+                            <ul>
+                                {% for propval in prop.values %}
+                                <li>
+                                    {% if propval.valuri != False %}
+                                    <a href="{{ propval.valuri }}">{{ propval.val }}</a>
+                                    {% else %}
+                                        {{ propval.val }}
+                                    {%endif%}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {%endif%}
+                        {%endif%}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        {%endif%}
+        </div>
+    {% endfor %}
+    </div>
+    {% if item.observations|length > 1 %}
+    <script type="text/javascript">
+        <!--
+        $('#obsTabs a').click(function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+         
+        var url = document.location.toString();
+        if (url.match('#')) {
+            $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
+            scroll(0,0);
+        }
+            
+        // Change hash for page-reload
+        $('.nav-tabs a').on('shown', function (e) {
+            window.location.hash = e.target.hash;
+            scroll(0,0);
+        })
+        -->
+	</script>
+    {%endif%}
+</div>
+
+    {%endif%}
+{% endblock %}
