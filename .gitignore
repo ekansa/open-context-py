@@ -2,7 +2,8 @@
 *.log
 *.pot
 *.py[cod]
-opencontext_py/settings.py
+secrets.json
+opencontext_py/secrets.json
 __pycache__/
 testing.txt
 db-logs/
