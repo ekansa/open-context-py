@@ -7,5 +7,6 @@ opencontext_py/secrets.json
 __pycache__/
 testing.txt
 db-logs/
+static/bootstrap/
 *.pyc
 solr-config/schema.xml.old
