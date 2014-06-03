@@ -26,6 +26,7 @@ def json_view(request, uuid):
         json_output = json.dumps(ocitem.json_ld,
                                  indent=4,
                                  ensure_ascii=False)
-        return HttpResponse(json_output, mimetype='application/json; charset=utf8')
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
     else:
         raise Http404
