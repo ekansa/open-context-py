@@ -7,6 +7,8 @@ admin.autodiscover()
 from opencontext_py.apps.ocitems.subjects import views as SubjectViews
 from opencontext_py.apps.ocitems.mediafiles import views as MediaViews
 from opencontext_py.apps.ocitems.documents import views as DocumentViews
+from opencontext_py.apps.ocitems.persons import views as PersonViews
+from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 
@@ -27,6 +29,14 @@ urlpatterns = patterns('',
                        url(r'^documents/(?P<uuid>\S+).json', DocumentViews.json_view, name='json_view'),
                        url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='html_view'),
                        url(r'^documents', DocumentViews.index, name='index'),
+                       # Person views for Person / organization items
+                       # url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='json_view'),
+                       # url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='html_view'),
+                       # url(r'^persons', PersonViews.index, name='index'),
+                       # Project views for projects
+                       # url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='json_view'),
+                       # url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='html_view'),
+                       # url(r'^projects', ProjectViews.index, name='index'),
                        # Predicates views for descriptive variables and linking relations from OC contributors
                        url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='json_view'),
                        url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='html_view'),
