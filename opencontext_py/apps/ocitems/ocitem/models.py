@@ -745,6 +745,10 @@ class ItemConstruction():
         return manifest_item
 
     def make_dict_template_safe(self, node):
+        """ Makes a JSON-LD structured dict object into a dict object safe for
+            use with templates, meaning no funny characters in the keys. Probably a
+            temporary hack
+        """
         template_safe_dict = LastUpdatedOrderedDict()
         for key, item in node.items():
             safe_key = key.replace(':', '---')
