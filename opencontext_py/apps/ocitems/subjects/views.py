@@ -1,6 +1,7 @@
+import json
 from django.http import HttpResponse, Http404
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
-import json
+from django.template import RequestContext, loader
 
 
 # A subject is a generic item that is the subbject of observations
@@ -13,10 +14,12 @@ def index(request):
 
 def html_view(request, uuid):
     ocitem = OCitem()
-    ocitem.get_item(uuid)
+    ocitem.get_item(uuid, True)
     if(ocitem.manifest is not False):
-        return HttpResponse("Hello, world. You're at the subject htmlView of "
-                            + str(uuid))
+        template = loader.get_template('subjects/view.html')
+        context = RequestContext(request,
+                                 {'item': ocitem.json_ld})
+        return HttpResponse(template.render(context))
     else:
         raise Http404
 

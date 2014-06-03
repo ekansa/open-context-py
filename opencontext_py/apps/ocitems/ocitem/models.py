@@ -38,6 +38,7 @@ class OCitem():
     PREDICATES_OCGEN_HASCHRONOREFSOURCE = 'oc-gen:has-chrono-ref-source'
 
     def __init__(self):
+        self.json_ld = False
         self.uuid = False
         self.slug = False
         self.label = False
@@ -58,7 +59,7 @@ class OCitem():
         self.predicate = False
         self.octype = False
 
-    def get_item(self, actUUID):
+    def get_item(self, actUUID, template_safe=False):
         """
         gets data for an item
         """
@@ -70,7 +71,7 @@ class OCitem():
             self.get_contained()
             self.get_geoevent_metadata()
             self.get_item_type_info()
-            self.construct_json_ld()
+            self.construct_json_ld(template_safe)
         return self
 
     def get_manifest(self):
@@ -164,7 +165,7 @@ class OCitem():
             except OCtype.DoesNotExist:
                 self.octype = False
 
-    def construct_json_ld(self):
+    def construct_json_ld(self, template_safe=False):
         """
         creates JSON-LD documents for an item
         currently, it's just here to make some initial JSON while we learn python
@@ -222,6 +223,8 @@ class OCitem():
                                                               self.slug, self.item_type)
         # add linked data annotations
         json_ld = item_con.add_linked_data_graph(json_ld)
+        if(template_safe):
+            json_ld = item_con.make_dict_template_safe(json_ld)
         self.json_ld = json_ld
         item_con.__del__()
         return self.json_ld
@@ -740,3 +743,23 @@ class ItemConstruction():
             except Manifest.DoesNotExist:
                 manifest_item = False
         return manifest_item
+
+    def make_dict_template_safe(self, node):
+        template_safe_dict = LastUpdatedOrderedDict()
+        for key, item in node.items():
+            safe_key = key.replace(':', '---')
+            safe_key = safe_key.replace('@', 'at--')
+            if isinstance(item, dict):
+                template_safe_dict[safe_key] = self.make_dict_template_safe(item)
+            elif isinstance(item, list):
+                new_list = []
+                for list_item in item:
+                    if isinstance(list_item, dict):
+                        new_item = self.make_dict_template_safe(list_item)
+                        new_list.append(new_item)
+                    else:
+                        new_list.append(list_item)
+                template_safe_dict[safe_key] = new_list
+            else:
+                template_safe_dict[safe_key] = item
+        return template_safe_dict
