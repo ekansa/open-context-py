@@ -32,6 +32,6 @@ def json_view(request, uuid):
                                  indent=4,
                                  ensure_ascii=False)
         return HttpResponse(json_output,
-                            mimetype='application/json; charset=utf8')
+                            content_type='application/json; charset=utf8')
     else:
         raise Http404
