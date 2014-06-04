@@ -5,27 +5,30 @@
         <title>View of {{ item.label }}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="../../static/bootstrap/3.1.1/css/bootstrap.min.css">
+        <link rel="stylesheet" href="../../static/oc/general.css">
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
         <script src="../../static/bootstrap/3.1.1/js/bootstrap.js"></script>
     </head>
     
     <body>
-        <div class="container">  
-            {% include 'header.html' %}
-            <div class="row">
-                <div class="col-md-8">
-                {% include 'items/context.html' %}
+        <div id="main">
+            <div class="container-fluid">  
+                {% include 'header.html' %}
+                <div class="row">
+                    <div class="col-sm-8">
+                    {% include 'items/context.html' %}
+                    </div>
+                    <div class="col-sm-4">
+                    
+                    </div>
                 </div>
-                <div class="col-md-4">
-                
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-8">
-                {% include 'items/observations.html' %}
-                </div>
-                <div class="col-md-4">
-                More stuff here
+                <div class="row">
+                    <div class="col-sm-8">
+                    {% include 'items/observations.html' %}
+                    </div>
+                    <div class="col-sm-4">
+                    More stuff here
+                    </div>
                 </div>
             </div>
         </div>
