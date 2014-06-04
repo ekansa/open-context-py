@@ -17,6 +17,7 @@ from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
@@ -39,6 +40,7 @@ class OCitem():
     PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
     PREDICATES_OCGEN_HASGEOREFSOURCE = 'oc-gen:has-geo-ref-source'
     PREDICATES_OCGEN_HASCHRONOREFSOURCE = 'oc-gen:has-chrono-ref-source'
+    PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
 
     def __init__(self):
         self.json_ld = False
@@ -54,6 +56,7 @@ class OCitem():
         self.contents = False
         self.geo_meta = False
         self.event_meta = False
+        self.stable_ids = False
         self.media = False
         self.document = False
         self.person = False
@@ -73,6 +76,7 @@ class OCitem():
             self.get_parent_contexts()
             self.get_contained()
             self.get_geoevent_metadata()
+            self.get_stable_ids()
             self.get_item_type_info()
             self.construct_json_ld()
         return self
@@ -150,6 +154,9 @@ class OCitem():
         act_contain = Containment()
         self.contents = act_contain.get_children_by_parent_uuid(self.uuid)
         return self.contents
+
+    def get_stable_ids(self):
+        self.stable_ids = StableIdentifer.objects.filter(uuid=self.uuid)
 
     def get_item_type_info(self):
         """
@@ -232,6 +239,8 @@ class OCitem():
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               'owl:sameAs',
                                                               self.slug, self.item_type)
+        # add the stable ids needed for citation
+        json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add linked data annotations
         json_ld = item_con.add_linked_data_graph(json_ld)
         self.json_ld = json_ld
@@ -438,6 +447,25 @@ class ItemConstruction():
                                                                           OCitem.PREDICATES_OCGEN_HASPATHITEMS,
                                                                           parent_uuid, 'subjects')
                     act_dict[act_pred_key] = act_context
+        return act_dict
+
+    def add_stable_ids(self, act_dict, item_type, stable_ids):
+        """
+        adds stable identifier information to an item's JSON-LD dictionary object
+        """
+        if(stable_ids is not False):
+            if(len(stable_ids) > 0):
+                stable_id_list = []
+                for stable_id in stable_ids:
+                    if(stable_id.stable_type in settings.STABLE_ID_URI_PREFIXES):
+                        uri = settings.STABLE_ID_URI_PREFIXES[stable_id.stable_type] + str(stable_id.stable_id)
+                        id_dict = {'id': uri}
+                        stable_id_list.append(id_dict)
+                if(len(stable_id_list) > 0):
+                    if(item_type == 'persons'):
+                        act_dict[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF] = stable_id_list
+                    else:
+                        act_dict['owl:sameAs'] = stable_id_list
         return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, object_id, item_type):

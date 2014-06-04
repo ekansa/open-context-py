@@ -147,3 +147,7 @@ ITEM_TYPES = (
 )
 
 SLUG_TYPES = ['predicates', 'projects']
+
+STABLE_ID_URI_PREFIXES = {'doi': 'http://dx.doi.org/',
+                          'orcid': 'http://orcid.org/',
+                          'ark': 'http://n2t.net/ark:/'}
