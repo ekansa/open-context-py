@@ -123,6 +123,29 @@ class Containment():
                 rel_sub_uuid_list.append(sub.uuid)
         return rel_sub_uuid_list
 
+    def get_related_context(self, uuid, reverse_links_ok=True):
+        """
+        gets context for media, and document items by looking for related subjects
+        """
+        self.contexts = {}
+        self.contexts_list = []
+        parents = False
+        rel_sub_uuid_list = self.get_related_subjects(uuid, reverse_links_ok)
+        if(len(rel_sub_uuid_list) > 0):
+            rel_subject_uuid = rel_sub_uuid_list[0]
+            parents = self.get_parents_by_child_uuid(rel_subject_uuid)
+            # add the related subject as the first item in the parent list
+            if(len(parents) > 0):
+                use_key = False
+                for key, parent_list in parents.items():
+                    use_key = key
+                    break
+                parents[use_key].insert(0, rel_subject_uuid)
+            else:
+                parents = {}
+                parents['related_context'] = [rel_subject_uuid]
+        return parents
+
     def get_geochron_from_subject_list(self, subject_list, metadata_type, do_parents=True):
         """
         gets the most specific geospatial or chronology metadata related to a list of subject items

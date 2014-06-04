@@ -5,6 +5,7 @@ from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollecti
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -29,6 +30,7 @@ class OCitem():
     PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
     PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
     PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
+    PREDICATES_OCGEN_HASLINKEDCONTEXTPATH = 'oc-gen:has-linked-context-path'
     PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
     PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
     PREDICATES_OCGEN_CONTAINS = 'oc-gen:contains'
@@ -48,6 +50,7 @@ class OCitem():
         self.manifest = False
         self.assertions = False
         self.contexts = False
+        self.linked_contexts = False
         self.contents = False
         self.geo_meta = False
         self.event_meta = False
@@ -60,34 +63,41 @@ class OCitem():
         self.predicate = False
         self.octype = False
 
-    def get_item(self, actUUID, template_safe=False):
+    def get_item(self, act_identifier, try_slug=False):
         """
         gets data for an item
         """
-        self.uuid = actUUID
-        self.get_manifest()
+        self.get_manifest(act_identifier, try_slug)
         if(self.manifest is not False):
             self.get_assertions()
             self.get_parent_contexts()
             self.get_contained()
             self.get_geoevent_metadata()
             self.get_item_type_info()
-            self.construct_json_ld(template_safe)
+            self.construct_json_ld()
         return self
 
-    def get_manifest(self):
+    def get_manifest(self, act_identifier, try_slug=False):
         """
         gets basic metadata about the item from the Manifest app
         """
-        try:
-            self.manifest = Manifest.objects.get(uuid=self.uuid)
+        if(try_slug):
+            try:
+                self.manifest = Manifest.objects.get(Q(uuid=act_identifier) | Q(slug=act_identifier))
+            except Manifest.DoesNotExist:
+                self.manifest = False
+        else:
+            try:
+                self.manifest = Manifest.objects.get(uuid=act_identifier)
+            except Manifest.DoesNotExist:
+                self.manifest = False
+        if(self.manifest is not False):
+            self.uuid = self.manifest.uuid
             self.slug = self.manifest.slug
             self.label = self.manifest.label
             self.project_uuid = self.manifest.project_uuid
             self.item_type = self.manifest.item_type
             self.published = self.manifest.published
-        except Manifest.DoesNotExist:
-            self.manifest = False
         return self.manifest
 
     def get_assertions(self):
@@ -103,16 +113,23 @@ class OCitem():
         """
         gets item parent context
         """
+        parents = False
         act_contain = Containment()
-        self.contexts = act_contain.get_parents_by_child_uuid(self.uuid)
         if(self.item_type == 'subjects'):
             # get item geospatial and chronological metadata if subject item
             # will do it differently if not a subject item
+            parents = act_contain.get_parents_by_child_uuid(self.uuid)
+            self.contexts = parents
+            # prepare a list of contexts (including the current item) to check for
+            # geospatial and event / chronology metadata
             subject_list = act_contain.contexts_list
             subject_list.insert(0, self.uuid)
             self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
             self.event_meta = act_contain.get_geochron_from_subject_list(subject_list, 'event')
-        return self.contexts
+        else:
+            parents = act_contain.get_related_context(self.uuid)
+            self.linked_contexts = parents
+        return parents
 
     def get_geoevent_metadata(self):
         """
@@ -166,7 +183,7 @@ class OCitem():
             except OCtype.DoesNotExist:
                 self.octype = False
 
-    def construct_json_ld(self, template_safe=False):
+    def construct_json_ld(self):
         """
         creates JSON-LD documents for an item
         currently, it's just here to make some initial JSON while we learn python
@@ -177,22 +194,14 @@ class OCitem():
         json_ld['uuid'] = self.uuid
         json_ld['label'] = self.label
         json_ld['@type'] = [self.manifest.class_uri]
-        if(len(self.contexts) > 0):
-            #adds parent contents, with different treenodes
-            act_context = LastUpdatedOrderedDict()
-            for tree_node, r_parents in self.contexts.items():
-                act_context = LastUpdatedOrderedDict()
-                # change the parent node to context not contents
-                tree_node = tree_node.replace('contents', 'context')
-                act_context['id'] = tree_node
-                # now reverse the list of parent contexts, so top most parent context is first,
-                # followed by children contexts
-                parents = r_parents[::-1]
-                for parent_uuid in parents:
-                    act_context = item_con.add_json_predicate_list_ocitem(act_context,
-                                                                          self.PREDICATES_OCGEN_HASPATHITEMS,
-                                                                          parent_uuid, 'subjects')
-            json_ld[self.PREDICATES_OCGEN_HASCONTEXTPATH] = act_context
+        # add context data
+        json_ld = item_con.add_contexts(json_ld,
+                                        self.PREDICATES_OCGEN_HASCONTEXTPATH,
+                                        self.contexts)
+        # add linked contexts (context inferred from linking relations)
+        json_ld = item_con.add_contexts(json_ld,
+                                        self.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH,
+                                        self.linked_contexts)
         if(len(self.contents) > 0):
             #adds child contents, with different treenodes
             for tree_node, children in self.contents.items():
@@ -225,8 +234,6 @@ class OCitem():
                                                               self.slug, self.item_type)
         # add linked data annotations
         json_ld = item_con.add_linked_data_graph(json_ld)
-        if(template_safe):
-            json_ld = item_con.make_dict_template_safe(json_ld)
         self.json_ld = json_ld
         item_con.__del__()
         return self.json_ld
@@ -412,6 +419,26 @@ class ItemConstruction():
                 act_list.append(assertion.data_num)
             act_dict[act_pred_key] = act_list
             return act_dict
+
+    def add_contexts(self, act_dict, act_pred_key, raw_contexts):
+        if(raw_contexts is not False):
+            if(len(raw_contexts) > 0):
+                #adds parent contents, with different treenodes
+                act_context = LastUpdatedOrderedDict()
+                for tree_node, r_parents in raw_contexts.items():
+                    act_context = LastUpdatedOrderedDict()
+                    # change the parent node to context not contents
+                    tree_node = tree_node.replace('contents', 'context')
+                    act_context['id'] = tree_node
+                    # now reverse the list of parent contexts, so top most parent context is first,
+                    # followed by children contexts
+                    parents = r_parents[::-1]
+                    for parent_uuid in parents:
+                        act_context = self.add_json_predicate_list_ocitem(act_context,
+                                                                          OCitem.PREDICATES_OCGEN_HASPATHITEMS,
+                                                                          parent_uuid, 'subjects')
+                    act_dict[act_pred_key] = act_context
+        return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, object_id, item_type):
         """
@@ -779,6 +806,7 @@ class TemplateItem():
         self.label = False
         self.uuid = False
         self.id = False
+        self.context = False
         self.observations = False
 
     def read_jsonld_dict(self, json_ld):
@@ -787,9 +815,22 @@ class TemplateItem():
         self.label = json_ld['label']
         self.uuid = json_ld['uuid']
         self.id = json_ld['id']
+        self.create_context(json_ld)
         self.create_observations(json_ld)
 
+    def create_context(self, json_ld):
+        """
+        Adds context object if json_ld describes such
+        """
+        act_context = Context()
+        act_context.make_context(json_ld)
+        if(act_context.contype is not False):
+            self.context = act_context
+
     def create_observations(self, json_ld):
+        """
+        Adds observation objects if json_ld describes such
+        """
         if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
             context = json_ld['@context']
             self.observations = []
@@ -797,6 +838,48 @@ class TemplateItem():
                 act_obs = Observation()
                 act_obs.make_observation(context, obs_item)
                 self.observations.append(act_obs)
+
+    def get_uuid_from_oc_uri(uri, return_type=False):
+        """ Gets a UUID and, if wanted item type from an Open Context URI """
+        if(uri.count('/') > 1):
+            uri_parts = uri.split('/')
+            uuid = uri_parts[(len(uri_parts) - 1)]
+            item_type = uri_parts[(len(uri_parts) - 2)]
+            if(return_type):
+                return {'item_type': item_type,
+                        'uuid': uuid}
+            else:
+                return uuid
+        else:
+            return False
+
+
+class Context():
+    """ This class makes an object useful for templating
+    describing context of items"""
+    def __init__(self):
+        self.id = False
+        self.contype = False
+        self.parents = False
+
+    def make_context(self, json_ld):
+        """ makes contexts for use with the template """
+        act_context = False
+        if(OCitem.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld):
+            self.contype = 'Context'
+            act_context = json_ld[OCitem.PREDICATES_OCGEN_HASCONTEXTPATH]
+        elif(OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH in json_ld):
+            self.contype = 'Context of related item'
+            act_context = json_ld[OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH]
+        if(act_context is not False):
+            self.id = act_context['id']
+            self.parents = []
+            for parent_item in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
+                act_parent = {}
+                act_parent['uri'] = parent_item['id']
+                act_parent['label'] = parent_item['label']
+                act_parent['uuid'] = TemplateItem.get_uuid_from_oc_uri(parent_item['id'])
+                self.parents.append(act_parent)
 
 
 class Observation():
@@ -877,12 +960,16 @@ class PropValue():
         self.valuri = False
         self.val = False
         self.valid = False
+        self.valuuid = False
 
     def make_value(self, val_item):
         if isinstance(val_item, dict):
             if('id' in val_item):
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.valuri = val_item['id']
+                    uri_item = TemplateItem.get_uuid_from_oc_uri(val_item['id'], True)
+                    self.valtype = uri_item['item_type']
+                    self.valuuid = uri_item['uuid']
                 else:
                     self.valid = val_item['id'].replace('#', '')
             if('label' in val_item):

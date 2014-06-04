@@ -1,4 +1,4 @@
-{% block header %}
+{% block observations %}
     {% if item.observations != False %}
 
 <div id="observations">
@@ -38,7 +38,7 @@
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
                                 {% if prop.values.0.valuri != False %}
-                                    <a href="{{ prop.values.0.valuri }}">{{ prop.values.0.val }}</a>
+                                    <a href="{% url 'types_html' prop.values.0.valuuid %}">{{ prop.values.0.val }}</a>
                                 {% else %}
                                     {{ prop.values.0.val }}
                                 {%endif%}
@@ -47,7 +47,7 @@
                                 {% for propval in prop.values %}
                                 <li>
                                     {% if propval.valuri != False %}
-                                    <a href="{{ propval.valuri }}">{{ propval.val }}</a>
+                                    <a href="{% url 'types_html' propval.valuuid %}">{{ propval.val }}</a>
                                     {% else %}
                                         {{ propval.val }}
                                     {%endif%}
