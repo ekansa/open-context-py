@@ -234,15 +234,16 @@ class OCitem():
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
                                                           self.project_uuid, 'projects')
+        # add the stable ids needed for citation
+        json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
+        # add a slug identifier if the item_type allows slugs
         item_con.add_item_labels = False
         if(self.item_type in settings.SLUG_TYPES):
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               'owl:sameAs',
                                                               self.slug, self.item_type)
-        # add the stable ids needed for citation
-        json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
-        # add linked data annotations
-        json_ld = item_con.add_linked_data_graph(json_ld)
+        # add linked data annotations, inferred authorship metadata
+        json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
         self.json_ld = json_ld
         item_con.__del__()
         return self.json_ld
@@ -264,6 +265,9 @@ class ItemConstruction():
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
+        self.dc_contrib_preds = list()
+        self.dc_creator_preds = list()
+        self.graph_links = list()
         self.item_metadata = {}
         self.thumbnails = {}
         context = LastUpdatedOrderedDict()
@@ -506,9 +510,25 @@ class ItemConstruction():
         act_dict[act_pred_key] = act_list
         return act_dict
 
-    def add_linked_data_graph(self, act_dict):
+    def add_inferred_authorship_linked_data_graph(self, act_dict):
         """
-        adds graph of linked data annotations
+        First gets linked data annotating entities in the item, this can include
+        Dublin Core contributor and Creator annotions.
+        Dublin Core contributor and Creator annotions are handled differently, since
+        they are more special and used for citation. They are used to create
+        predicate relations indicating authorship for an item.
+        """
+        # gets linked data for predicates and types
+        self.prepare_linked_data_graph()
+        # adds DC-contributors and Creators as inferred from annotations to predicates used on item
+        act_dict = self.add_inferred_dc_authorship(act_dict)
+        if(len(self.graph_links) > 0):
+            act_dict['@graph'] = self.graph_links
+        return act_dict
+
+    def prepare_linked_data_graph(self):
+        """
+        prepare a list of graph_links describing linked data annotations
         """
         graph_list = []
         #add linked data annotations for predicates
@@ -517,9 +537,73 @@ class ItemConstruction():
         #add linked data annotations for types
         for type_uuid in self.type_list:
             graph_list = self.get_annotations_for_ocitem(graph_list, type_uuid, 'types')
-        if(len(graph_list) > 0):
-            act_dict['@graph'] = graph_list
+        self.graph_links += graph_list
+        return self.graph_links
+
+    def add_inferred_dc_authorship(self, act_dict):
+        """
+        Adds authorship info via inference.
+        If some predicates had DC contributor or DC creator annotations, get their objects
+        to use in adding authorship information for the item
+        """
+        if(len(self.dc_contrib_preds) > 0 or len(self.dc_creator_preds) > 0):
+            contribs = self.get_dc_authorship(act_dict, self.dc_contrib_preds)
+            creators = self.get_dc_authorship(act_dict, self.dc_creator_preds)
+            if(contribs is not False):
+                if('dc-terms:contributor' in act_dict):
+                    act_dict['dc-terms:contributor'] = self.add_unique_entity_lists(act_dict['dc-terms:contributor'],
+                                                                                    contribs)
+                else:
+                    act_dict['dc-terms:contributor'] = contribs
+            if(creators is not False):
+                if('dc-terms:creator' in act_dict):
+                    act_dict['dc-terms:creator'] = self.add_unique_entity_lists(act_dict['dc-terms:creator'],
+                                                                                creators)
+                else:
+                    act_dict['dc-terms:creator'] = creators
         return act_dict
+
+    def add_unique_entity_lists(self, existing_list, to_add_list):
+        """
+        Adds entities (uniquely) to an existing list from another entity list
+        """
+        existing_ids = []
+        if(len(existing_list) > 0):
+            for existing_item in existing_list:
+                if('id' in existing_item):
+                    existing_ids.append(existing_item['id'])
+                elif('@id' in existing_item):
+                    existing_ids.append(existing_item['@id'])
+        if(len(to_add_list) > 0):
+            for to_add_item in to_add_list:
+                act_id = False
+                if('id' in to_add_item):
+                    act_id = to_add_item['id']
+                elif('@id' in to_add_item):
+                    act_id = to_add_item['@id']
+                if(act_id not in existing_ids):
+                    #only unique items, as identified by the id
+                    existing_list.append(to_add_item)
+                    existing_ids.append(act_id)
+        return existing_list
+
+    def get_dc_authorship(self, act_dict, author_predicates):
+        """
+        Looks through observations to find objects of author predicates
+        """
+        authors = False
+        if(len(author_predicates) > 0):
+            authors = []
+            author_ids = []
+            if(OCitem.PREDICATES_OCGEN_HASOBS in act_dict):
+                observations = act_dict[OCitem.PREDICATES_OCGEN_HASOBS]
+                for obs in observations:
+                    for author_pred in author_predicates:
+                        if(author_pred in obs):
+                            authors = self.add_unique_entity_lists(authors, obs[author_pred])
+            if(len(authors) < 1):
+                authors = False
+        return authors
 
     def get_annotations_for_ocitem(self, graph_list, subject_uuid, subject_type, prefix_slug=False):
         """
@@ -532,6 +616,7 @@ class ItemConstruction():
         except LinkAnnotation.DoesNotExist:
             la_count = 0
         if(la_count > 0):
+            added_annotation_count = 0
             act_annotation = LastUpdatedOrderedDict()
             if(prefix_slug is not False):
                 act_annotation['@id'] = prefix_slug
@@ -539,12 +624,24 @@ class ItemConstruction():
                 act_annotation['@id'] = self.make_oc_uri(subject_uuid, subject_type)
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
+                add_annotation = True
                 predicate_uri = self.shorten_context_namespace(link_anno.predicate_uri)
-                act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
-                                                                     predicate_uri,
-                                                                     link_anno.object_uri,
-                                                                     'uri')
-            graph_list.append(act_annotation)
+                object_prefix_uri = self.shorten_context_namespace(link_anno.object_uri)
+                if(predicate_uri == 'skos:closeMatch' or predicate_uri == 'owl:sameAs'):
+                    if(object_prefix_uri == 'dc-terms:contributor'):
+                        self.dc_contrib_preds.append(act_annotation['@id'])
+                        add_annotation = False
+                    elif(object_prefix_uri == 'dc-terms:creator'):
+                        self.dc_creator_preds.append(act_annotation['@id'])
+                        add_annotation = False
+                if(add_annotation):
+                    added_annotation_count += 1
+                    act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
+                                                                         predicate_uri,
+                                                                         link_anno.object_uri,
+                                                                         'uri')
+            if(added_annotation_count > 0):
+                graph_list.append(act_annotation)
         return graph_list
 
     def add_spacetime_metadata(self, act_dict, uuid, item_type, geo_meta, event_meta):
@@ -735,22 +832,24 @@ class ItemConstruction():
         """
         adds media files
         """
-        media_list = []
-        for media_item in media:
-            list_item = LastUpdatedOrderedDict()
-            list_item['id'] = media_item.file_uri
-            list_item['@type'] = media_item.file_type
-            list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
-            list_item['dcat:size'] = float(media_item.filesize)
-            media_list.append(list_item)
-        act_dict['oc-gen:has-files'] = media_list
+        if(media is not False):
+            media_list = []
+            for media_item in media:
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = media_item.file_uri
+                list_item['@type'] = media_item.file_type
+                list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+                list_item['dcat:size'] = float(media_item.filesize)
+                media_list.append(list_item)
+            act_dict['oc-gen:has-files'] = media_list
         return act_dict
 
     def add_document_json(self, act_dict, document):
         """
         adds document content
         """
-        act_dict['oc-gen:has-content'] = document.content
+        if(document is not False):
+            act_dict['oc-gen:has-content'] = document.content
         return act_dict
 
     def shorten_context_namespace(self, uri):
