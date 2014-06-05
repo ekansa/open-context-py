@@ -15,7 +15,7 @@ from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-
+from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 
 # OCmysql requests JSON-data from the MySQL datastore.
 # This is useful for synching the postgres and mysql databases as a temporary measure
@@ -91,6 +91,9 @@ class OCmysql():
                 newr.save()
             elif(act_table == 'oc_identifiers'):
                 newr = StableIdentifer(**record)
+                newr.save()
+            elif(act_table == 'oc_obsmetadata'):
+                newr = ObsMetadata(**record)
                 newr.save()
 
     def process_table(self, act_table, after):

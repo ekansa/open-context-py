@@ -10,6 +10,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
+from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
@@ -38,6 +39,8 @@ class OCitem():
     PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
     PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
     PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
+    PREDICATES_OCGEN_OBSLABEL = 'label'
+    PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
     PREDICATES_OCGEN_HASGEOREFSOURCE = 'oc-gen:has-geo-ref-source'
     PREDICATES_OCGEN_HASCHRONOREFSOURCE = 'oc-gen:has-chrono-ref-source'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
@@ -394,6 +397,15 @@ class ItemConstruction():
                             act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'active'
                         else:
                             act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'not active'
+                        try:
+                            obs_meta = ObsMetadata.objects.get(source_id=assertion.source_id,
+                                                               obs_num=assertion.obs_num)
+                        except ObsMetadata.DoesNotExist:
+                            obs_meta = False
+                        if(obs_meta is not False):
+                            act_obs[OCitem.PREDICATES_OCGEN_OBSLABEL] = obs_meta.label
+                            if(len(obs_meta.note) > 0):
+                                act_obs[OCitem.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
                         add_obs_def = False
                     if(assertion.predicate_uuid in self.predicates):
                         act_pred_key = self.predicates[assertion.predicate_uuid]
