@@ -70,6 +70,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.projects',
     'opencontext_py.apps.ocitems.strings',
     'opencontext_py.apps.ocitems.octypes',
+    'opencontext_py.apps.ocitems.octypetree',
     'opencontext_py.apps.ocitems.predicates',
     'opencontext_py.apps.ocitems.identifiers',
     'opencontext_py.apps.ocitems.obsmetadata',
