@@ -55,7 +55,9 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'opencontext_py.apps.entities.uri',
+    'opencontext_py.apps.entities.entity',
+    'opencontext_py.apps.ocitems.namespaces',
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
@@ -121,6 +123,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR + '/static/'
 STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     '/static/',
