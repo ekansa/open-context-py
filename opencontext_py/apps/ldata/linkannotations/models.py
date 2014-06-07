@@ -5,6 +5,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
+
 # This class stores linked data annotations made on the data contributed to open context
 class LinkAnnotation(models.Model):
     # predicates indicating that a subject has an object that is a broader, more general class or property
