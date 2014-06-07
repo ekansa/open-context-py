@@ -80,6 +80,8 @@ class LinkRecursion():
                     p_item['id'] = ent.uri
                     p_item['slug'] = ent.slug
                     p_item['label'] = ent.label
+                    if(ent.data_type is not False):
+                        p_item['@type'] = ent.data_type
                     output.append(p_item)
         return output
 
