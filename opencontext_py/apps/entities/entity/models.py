@@ -5,6 +5,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
+from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import TypeLookup
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
@@ -20,6 +21,7 @@ class Entity():
         self.label = False
         self.item_type = False
         self.class_uri = False
+        self.data_type = False
         self.alt_label = False
         self.vocab_uri = False
         self.vocabulary = False
@@ -87,4 +89,11 @@ class Entity():
                     tl = TypeLookup()
                     tl.get_octype_without_manifest(identifier)
                     self.content = tl.content
+                elif(manifest_item.item_type == 'predicates'):
+                    try:
+                        oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
+                    except Predicate.DoesNotExist:
+                        oc_pred = False
+                    if(oc_pred is not False):
+                        self.data_type = oc_pred.data_type
         return output
