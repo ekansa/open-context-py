@@ -3,6 +3,8 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.strings.models import OCstring
 
 
 # Assertions store descriptions and linking relations for Open Context items
@@ -262,3 +264,35 @@ class EventAssertions():
                                                                  meta_type
                                                                  )
         return output
+
+
+class ItemAssertion():
+    """
+    This class has useful funcitons for accessing assertion data
+    """
+    def __init__(self):
+        self.assertion = False
+        self.content = None
+
+    def get_comment_from_des_predicate_uuid(self, uuid, des_predicate_uuid):
+        """ Gets a comment (string) for an item based on an assertion
+            using a particular predicate_uuid
+        """
+        try:
+            self.assertion = Assertion.objects.filter(uuid=uuid, predicate_uuid=predicate_uuid)[0]
+        except Assertion.DoesNotExist:
+            self.assertion = False
+        if(self.assertion is not False):
+            if(self.assertion.object_type == 'xsd.string'):
+                try:
+                    string_item = OCstring.objects.get(uuid=self.assertion.object_uuid)
+                    self.content = string_item.content
+                except OCstring.DoesNotExist:
+                    self.content = False
+            elif(self.assertion.object_type == 'types'):
+                try:
+                    t_item = OCstring.objects.get(uuid=self.assertion.object_uuid)
+                    self.content = string_item.content
+                except OCstring.DoesNotExist:
+                    self.content = False
+                    
