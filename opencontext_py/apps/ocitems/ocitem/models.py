@@ -8,6 +8,9 @@ from django.db import models
 from django.db.models import Q
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
@@ -20,7 +23,6 @@ from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 
 # OCitem is a very general class for all Open Context items.
@@ -200,7 +202,7 @@ class OCitem():
         """
         item_con = ItemConstruction()
         json_ld = item_con.intialize_json_ld(self.assertions)
-        json_ld['id'] = item_con.make_oc_uri(self.uuid, self.item_type)
+        json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
         json_ld['uuid'] = self.uuid
         json_ld['label'] = self.label
         json_ld['@type'] = [self.manifest.class_uri]
@@ -233,7 +235,8 @@ class OCitem():
             json_ld = item_con.add_media_json(json_ld, self.media)
         if(self.document is not False):
             json_ld = item_con.add_document_json(json_ld, self.document)
-        json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
+        if(self.published is not None):
+            json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                           self.PREDICATES_DCTERMS_ISPARTOF,
                                                           self.project_uuid, 'projects')
@@ -271,24 +274,14 @@ class ItemConstruction():
         self.dc_contrib_preds = list()
         self.dc_creator_preds = list()
         self.graph_links = list()
-        self.item_metadata = {}
+        self.entity_metadata = {}
         self.thumbnails = {}
-        context = LastUpdatedOrderedDict()
+        item_ns = ItemNamespaces()
+        context = item_ns.namespaces
+        self.namespaces = context
         context['id'] = '@id'
-        context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
-        context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
         context['label'] = 'rdfs:label'
-        context['xsd'] = 'http://www.w3.org/2001/XMLSchema#'
-        context['skos'] = 'http://www.w3.org/2004/02/skos/core#'
-        context['owl'] = 'http://www.w3.org/2002/07/owl#'
-        context['dc-terms'] = 'http://purl.org/dc/terms/'
         context['uuid'] = 'dc-terms:identifier'
-        context['bibo'] = 'http://purl.org/ontology/bibo/'
-        context['foaf'] = 'http://xmlns.com/foaf/0.1/'
-        context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
-        context['dcat'] = 'http://www.w3.org/ns/dcat#'
-        context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
-        context['oc-pred'] = 'http://opencontext.org/predicates/'
         context['type'] = 'oc-gen:geojson-type'
         context['FeatureCollection'] = 'oc-gen:geojson-feature-col'
         context['Feature'] = 'oc-gen:geojson-feature'
@@ -335,15 +328,14 @@ class ItemConstruction():
                     pred_types[assertion.predicate_uuid] = assertion.object_type
         # prepares dictionary objects for each predicate
         for pred_uuid in raw_pred_list:
-            pmeta = self.get_item_metadata(pred_uuid)
+            pmeta = self.get_entity_metadata(pred_uuid)
             if(pmeta is not False):
                 p_data = LastUpdatedOrderedDict()
-                p_data['owl:sameAs'] = self.make_oc_uri(pred_uuid, pmeta.item_type)
-                p_data['label'] = pmeta.label
-                p_data['slug'] = pmeta.slug
-                p_data['uuid'] = pmeta.uuid
-                # p_data['owl:sameAs'] = self.make_oc_uri(pmeta.slug, pmeta.item_type)
-                p_data[OCitem.PREDICATES_OCGEN_PREDICATETYPE] = pmeta.class_uri
+                p_data['owl:sameAs'] = pmeta.uri
+                p_data['label'] = str(pmeta.label)
+                p_data['slug'] = str(pmeta.slug)
+                p_data['uuid'] = str(pmeta.uuid)
+                p_data[OCitem.PREDICATES_OCGEN_PREDICATETYPE] = str(pmeta.class_uri)
                 p_data['@type'] = pred_types[pred_uuid]
                 if(pmeta.class_uri == 'variable'):
                     self.var_list.append(p_data)
@@ -494,32 +486,20 @@ class ItemConstruction():
         else:
             act_list = []
         new_object_item = LastUpdatedOrderedDict()
-        if(item_type != 'uri' and object_id[:7] != 'http://' and object_id[:8] != 'https://'):
-            new_object_item['id'] = self.make_oc_uri(object_id, item_type)
-            if self.add_item_labels:
-                manifest_item = self.get_item_metadata(object_id)
-                if(manifest_item is not False):
-                    new_object_item['label'] = manifest_item.label
-                else:
-                    new_object_item['label'] = 'Item not in manifest'
-                if(object_id in self.thumbnails):
-                    if(self.thumbnails[object_id] is not False):
-                        # add the thumbnail uri if it exists
-                        new_object_item['oc-gen:thumbnail-uri'] = self.thumbnails[object_id].file_uri
-            if(item_type in settings.SLUG_TYPES):
-                manifest_item = self.get_item_metadata(object_id)
-                if(manifest_item is not False):
-                    new_object_item['owl:sameAs'] = self.make_oc_uri(manifest_item.slug, item_type)
-        else:
-            new_object_item['id'] = object_id
-            if(self.add_linked_data_labels):
-                try:
-                    link_item = LinkEntity.objects.get(uri=object_id)
-                    new_object_item['label'] = link_item.label
-                except LinkEntity.DoesNotExist:
-                    new_object_item['label'] = 'Label not known'
-        act_list.append(new_object_item)
-        act_dict[act_pred_key] = act_list
+        ent = self.get_entity_metadata(object_id)
+        if(ent is not False):
+            new_object_item['id'] = ent.uri
+            new_object_item['slug'] = ent.slug
+            if(ent.label is not False):
+                new_object_item['label'] = ent.label
+            else:
+                new_object_item['label'] = 'No record of label'
+            if(ent.thumbnail_uri is not False):
+                new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
+            if(ent.content is not False and ent.content != ent.label):
+                new_object_item['rdfs:comment'] = ent.content
+            act_list.append(new_object_item)
+            act_dict[act_pred_key] = act_list
         return act_dict
 
     def add_inferred_authorship_linked_data_graph(self, act_dict):
@@ -623,7 +603,7 @@ class ItemConstruction():
         """
         la_count = 0
         try:
-            link_annotations = LinkAnnotation.objects.filter(uuid=subject_uuid)
+            link_annotations = LinkAnnotation.objects.filter(subject=subject_uuid)
             la_count = len(link_annotations)
         except LinkAnnotation.DoesNotExist:
             la_count = 0
@@ -633,7 +613,7 @@ class ItemConstruction():
             if(prefix_slug is not False):
                 act_annotation['@id'] = prefix_slug
             else:
-                act_annotation['@id'] = self.make_oc_uri(subject_uuid, subject_type)
+                act_annotation['@id'] = URImanagement.make_oc_uri(subject_uuid, subject_type, self.cannonical_uris)
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
                 add_annotation = True
@@ -675,12 +655,12 @@ class ItemConstruction():
                 geo_node_derived_props = '#geo-derived-props-' + str(geo_id)
                 feature_events[geo_node] = []
                 geo_props = LastUpdatedOrderedDict()
-                geo_props['href'] = self.make_oc_uri(uuid, item_type)
+                geo_props['href'] = URImanagement.make_oc_uri(uuid, item_type, self.cannonical_uris)
                 geo_props['location-type'] = geo.meta_type
                 if(uuid != geo.uuid):
                     geo_props['reference-type'] = 'inferred'
-                    geo_props['reference-uri'] = self.make_oc_uri(geo.uuid, 'subjects')
-                    rel_meta = self.get_item_metadata(geo.uuid)
+                    geo_props['reference-uri'] = URImanagement.make_oc_uri(geo.uuid, 'subjects', self.cannonical_uris)
+                    rel_meta = self.get_entity_metadata(geo.uuid)
                     if(rel_meta is not False):
                         geo_props['reference-label'] = rel_meta.label
                 else:
@@ -831,8 +811,8 @@ class ItemConstruction():
             when['latest'] = int(event.latest)
         if(event.uuid != uuid):
             when['reference-type'] = 'inferred'
-            when['reference-uri'] = self.make_oc_uri(event.uuid, 'subjects')
-            rel_meta = self.get_item_metadata(event.uuid)
+            when['reference-uri'] = URImanagement.make_oc_uri(event.uuid, 'subjects', self.cannonical_uris)
+            rel_meta = self.get_entity_metadata(event.uuid)
             if(rel_meta is not False):
                 when['reference-label'] = rel_meta.label
         else:
@@ -868,49 +848,29 @@ class ItemConstruction():
         """
         checks to see if a name space has been defined, and if so, use its prefix
         """
-        context = self.base_context
-        for prefix in context:
-            namespace = str(context[prefix])
+        for prefix in self.namespaces:
+            namespace = str(self.namespaces[prefix])
             if(uri.find(namespace) == 0):
                 uri = uri.replace(namespace, (prefix + ":"))
                 break
         return uri
 
-    def make_oc_uri(self, uuid, item_type):
+    def get_entity_metadata(self, identifier):
         """
-        creates a URI for an item based on its uuid and its item_type
+        gets metadata about an item from a look-up to the entity class
         """
-        uri = False
-        uuid = str(uuid)
-        item_type = str(item_type)
-        if(self.cannonical_uris):
-            uri = settings.CANONICAL_HOST + "/" + item_type + "/" + uuid
-        else:
-            uri = "http://" + settings.HOSTNAME + "/" + item_type + "/" + uuid
-        return uri
-
-    def get_item_metadata(self, uuid):
-        """
-        gets metadata about an item from the manifest table
-        """
-        manifest_item = False
-        if(uuid in self.item_metadata):
+        entity_item = False
+        if(identifier in self.entity_metadata):
             # check first to see if the manifest item is already in memory
-            manifest_item = self.item_metadata[uuid]
+            entity_item = self.entity_metadata[identifier]
         else:
-            try:
-                manifest_item = Manifest.objects.get(uuid=uuid)
-                self.item_metadata[uuid] = manifest_item
-                if(manifest_item.item_type == 'media'):
-                    # a media item. get information about its thumbnail.
-                    try:
-                        thumb_obj = Mediafile.objects.get(uuid=uuid, file_type='oc-gen:thumbnail')
-                    except Mediafile.DoesNotExist:
-                        thumb_obj = False
-                    self.thumbnails[uuid] = thumb_obj
-            except Manifest.DoesNotExist:
-                manifest_item = False
-        return manifest_item
+            ent = Entity()
+            ent.get_thumbnail = True
+            found = ent.dereference(identifier)
+            if(found):
+                entity_item = ent
+                self.entity_metadata[identifier] = entity_item
+        return entity_item
 
     def make_dict_template_safe(self, node):
         """ Makes a JSON-LD structured dict object into a dict object safe for
@@ -978,20 +938,6 @@ class TemplateItem():
                 act_obs.make_observation(context, obs_item)
                 self.observations.append(act_obs)
 
-    def get_uuid_from_oc_uri(uri, return_type=False):
-        """ Gets a UUID and, if wanted item type from an Open Context URI """
-        if(uri.count('/') > 1):
-            uri_parts = uri.split('/')
-            uuid = uri_parts[(len(uri_parts) - 1)]
-            item_type = uri_parts[(len(uri_parts) - 2)]
-            if(return_type):
-                return {'item_type': item_type,
-                        'uuid': uuid}
-            else:
-                return uuid
-        else:
-            return False
-
 
 class Context():
     """ This class makes an object useful for templating
@@ -1017,7 +963,7 @@ class Context():
                 act_parent = {}
                 act_parent['uri'] = parent_item['id']
                 act_parent['label'] = parent_item['label']
-                act_parent['uuid'] = TemplateItem.get_uuid_from_oc_uri(parent_item['id'])
+                act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
                 self.parents.append(act_parent)
 
 
@@ -1053,13 +999,14 @@ class Observation():
         properties = False
         for key, item in obs_dict.items():
             if(key != 'id' and key in self.context):
-                if(self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'variable'):
-                    if(properties is False):
-                        properties = []
-                    act_prop = Property()
-                    act_prop.start_property(self.context[key])
-                    act_prop.add_property_values(obs_dict[key])
-                    properties.append(act_prop)
+                if(OCitem.PREDICATES_OCGEN_PREDICATETYPE in self.context[key]):
+                    if(self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'variable'):
+                        if(properties is False):
+                            properties = []
+                        act_prop = Property()
+                        act_prop.start_property(self.context[key])
+                        act_prop.add_property_values(obs_dict[key])
+                        properties.append(act_prop)
         return properties
 
 
@@ -1106,7 +1053,7 @@ class PropValue():
             if('id' in val_item):
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.valuri = val_item['id']
-                    uri_item = TemplateItem.get_uuid_from_oc_uri(val_item['id'], True)
+                    uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
                     self.valtype = uri_item['item_type']
                     self.valuuid = uri_item['uuid']
                 else:
