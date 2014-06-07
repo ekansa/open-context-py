@@ -1,4 +1,5 @@
 import uuid as GenUUID
+import datetime
 from django.conf import settings
 from datetime import datetime, date, time
 from django.db import models
@@ -119,7 +120,7 @@ class TypeManagement():
             newman.label = content
             newman.des_predicate_uuid = ''
             newman.views = 0
-            newman.revised = timezone.now()
+            newman.revised = datetime.datetime.now()
             newman.save()
         return self.oc_type
 
