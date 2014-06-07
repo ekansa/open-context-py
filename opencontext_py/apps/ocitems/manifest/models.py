@@ -24,6 +24,11 @@ class Manifest(models.Model):
     revised = models.DateTimeField(db_index=True)
     record_updated = models.DateTimeField(auto_now=True)
 
+    def validate_label(self):
+        if(len(self.label) > 175):
+            self.label = self.label[:172] + '...'
+        return self.label
+
     def make_slug(self):
         """
         creates a unique slug for a label with a given type
@@ -36,6 +41,7 @@ class Manifest(models.Model):
         """
         saves a manifest item with a good slug
         """
+        self.label = self.validate_label()
         self.slug = self.make_slug()
         super(Manifest, self).save()
 
