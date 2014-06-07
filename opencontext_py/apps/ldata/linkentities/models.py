@@ -44,6 +44,8 @@ class LinkEntityGeneration():
         uri = uri.replace('.', '-')
         uri = uri.replace('_', ' ')
         raw_slug = slugify(unidecode(uri[:55]))
+        if(raw_slug[-1:] == '-'):
+            raw_slug = raw_slug[:-1]
         slug = raw_slug
         try:
             slug_in = LinkEntity.objects.get(slug=raw_slug)
