@@ -841,7 +841,7 @@ class ItemConstruction():
         adds document content
         """
         if(document is not False):
-            act_dict['oc-gen:has-content'] = document.content
+            act_dict['dc-terms:description'] = document.content
         return act_dict
 
     def shorten_context_namespace(self, uri):
