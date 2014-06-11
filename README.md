@@ -8,7 +8,7 @@ and to make the data published by Open Context easier to maintain.
 
 Licensing:
 ==================
-All the source code specific to this project is licensed uner a GNU-GPL license (v. 3)
+All the source code specific to this project is licensed under a GNU-GPL license (v. 3)
 http://www.gnu.org/licenses/gpl.html
 
 All the usually liability waivers and disclaimers about using this code at your own considerable risk apply.
