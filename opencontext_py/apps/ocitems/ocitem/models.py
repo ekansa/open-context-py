@@ -204,6 +204,7 @@ class OCitem():
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
         json_ld['uuid'] = self.uuid
+        json_ld['slug'] = self.slug
         json_ld['label'] = self.label
         json_ld['@type'] = [self.manifest.class_uri]
         # add context data
