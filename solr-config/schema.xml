@@ -208,26 +208,26 @@
 	-->
 
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
-    the root context field is 'root_context'
+    the root context field is 'root___context_id'
     -->
-    <dynamicField name="*_context" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+    <dynamicField name="*___context_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- to index nominal predicates @type = "@id" values
-    the root dynamic field is 'root_pred'
+    the root dynamic field is 'root___pred_id'
     -->
-    <dynamicField name="*_pred" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+    <dynamicField name="*___pred_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- integer data predicates with @type = "xsd:integer" values -->
-	<dynamicField name="*_pred_int" type="tint" indexed="true" stored="true" required="false" multiValued="true" />
+	<dynamicField name="*___pred_int" type="tint" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- double precision decimal data predicates with @type = "xsd:double" values -->
-	<dynamicField name="*_pred_dec" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
+	<dynamicField name="*___pred_double" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- date data predicates with @type = "xsd:date" values -->
-	<dynamicField name="*_pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
+	<dynamicField name="*___pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- string data predicates with @type = "xsd:string" values -->
-	<dynamicField name="*_pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
+	<dynamicField name="*___pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
 
 
  <!-- Field to use to determine and enforce document uniqueness.
