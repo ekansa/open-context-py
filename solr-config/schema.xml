@@ -196,15 +196,27 @@
 	<field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
 
 
-    <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
-	a prefix defined by the slug of its parent levels. For example, consider the type Taxon::Mammal.
-	It will be useful to have facet values for the next level down available. To do this, use the database
-    to look up the slug of "Taxon::Mammal" to get something like "taxon-mammal" which will be used to make
-    the dynamic field name ("octype___taxon_mammal__pred") that store values for "Taxon::Mammal". Values for
-    dynamic fields are stored in uuid-key: label-value pairs.
+    <!-- these fields allow solr index desciptions of Open Context items, many of which are organized in hierarchies.
+    Essentially, we imagine all description to have a hierarchy. For example a field for "weight" can have a
+    value "10.1". The "10.1" value is a child of the field "weight".
+    
+    Fields with the _id suffix take values that identify children in the next level down down in a hierarchy. 
+    The prefix identifies the parent level of the hierachy. For example, consider the an item described by
+    "Taxon::Mouse"
+    
+    A database look up shows that "Mouse" is a subclass of "Misc. Rodent" which is in turn,
+    a subclass of "Mammal". We need to index the following then:
+    
+    (1) Add "Taxon" to the root description for the item as so:
+    	root___pred_id => "{'taxon-slug': 'Taxon'}"
+    (2) Add the type "Mammal" to the classification:
+    	taxon___pred_id => "{'mammal-slug':'Mammal'}"
+    (3) Add the sub-type "Misc. Rodent" to the classification:
+    	taxon___mammal_slug___pred_id: "{'misc-rodent-slug': 'Misc. Rodent'}"
+    (4) Add the sub-type "Mouse" to the classification:
+    	taxon___misc_rodent_slug___pred_id: "{'mouse-slug': 'Mouse'}"
 
-    {"uuid as key": "label as value"}
-
+    The above shows how all levels of the hierarchy get indexed for the desciption of "Taxon".
 	-->
 
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
