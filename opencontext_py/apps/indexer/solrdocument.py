@@ -69,7 +69,7 @@ class SolrDocument:
                     self._solr_field_name = self._convert_slug_to_solr(
                         self._solr_field_name
                         )
-                    # add field name and values
+                    # add field name and values as json
                     self.fields[self._solr_field_name] = \
                         self._convert_values_to_json(
                             self.context_path[index]['slug'],
