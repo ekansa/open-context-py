@@ -1,8 +1,8 @@
 from itertools import islice
 import requests
 from mysolr import Solr
-from opencontext_py.apps.index.uuidlist import UUIDList
-from opencontext_py.apps.index.solrdocument import SolrDocument
+from opencontext_py.apps.indexer.uuidlist import UUIDList
+from opencontext_py.apps.indexer.solrdocument import SolrDocument
 
 
 class Crawler():
