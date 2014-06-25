@@ -13,20 +13,20 @@ class Crawler():
         self.solr = Solr('http://localhost:8983/solr',
                          make_request=self.session)
 
-    def crawl(self):
+    def crawl(self, chunksize):
         while self.uuidlist is not None:
             documents = []
-            print('creating documents container list')
-            for uuid in islice(self.uuidlist, 0, 100):
+            print('creating container of ' + str(chunksize) + ' documents...')
+            for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
                     solrdocument = SolrDocument(uuid)
                     documents.append(solrdocument.fields)
-                    print('adding... ' + uuid)
-                except KeyError as err:
+                    print('adding ' + uuid)
+                except Exception as err:
                     print("KeyError: {0}".format(err) + " ---> " + uuid)
             self.solr.update(documents, 'json', commit=True)
 
 
 if __name__ == '__main__':
     crawler = Crawler()
-    crawler().crawl()
+    crawler().crawl(100)
