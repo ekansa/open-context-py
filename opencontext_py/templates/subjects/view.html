@@ -1,1 +1,37 @@
 {% extends 'item.html' %}
+<!DOCTYPE html>
+
+{% block itemcontent %}
+     <div class="row">
+         <div class="col-sm-8">
+         {% include 'items/context.html' %}
+         </div>
+         <div class="col-sm-4">
+         
+         </div>
+     </div>
+     <div class="row">
+         <div class="col-sm-8">
+         {% include 'items/observations.html' %}
+         </div>
+         <div class="col-sm-4">
+         More stuff here
+         </div>
+     </div>
+     {% if item.children != False %}
+     <div class="row">
+         <div class="col-sm-8">
+         {% with subjects_list=item.children.children %}
+         {% with node_id=item.children.id %}
+         {% with list_label='Contents' %}
+         {% include 'items/subjects-list.html' %}
+         {% endwith %}
+         {% endwith %}
+         {% endwith %}
+         </div>
+         <div class="col-sm-4">
+         
+         </div>
+     </div>
+     {%endif%}
+{% endblock %} 

@@ -89,6 +89,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+
 ROOT_URLCONF = 'opencontext_py.urls'
 
 WSGI_APPLICATION = 'opencontext_py.wsgi.application'
