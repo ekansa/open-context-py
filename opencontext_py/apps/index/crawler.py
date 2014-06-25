@@ -18,10 +18,12 @@ class Crawler():
             documents = []
             print('creating documents container list')
             for uuid in islice(self.uuidlist, 0, 100):
-                solrdocument = SolrDocument(uuid)
-                documents.append(solrdocument.__dict__)
-                print('adding...')
-                print(solrdocument.uuid)
+                try:
+                    solrdocument = SolrDocument(uuid)
+                    documents.append(solrdocument.fields)
+                    print('adding... ' + uuid)
+                except KeyError as err:
+                    print("KeyError: {0}".format(err) + " ---> " + uuid)
             self.solr.update(documents, 'json', commit=True)
 
 
