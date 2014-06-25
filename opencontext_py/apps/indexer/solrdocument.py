@@ -28,7 +28,6 @@ class SolrDocument:
             return None
 
     def _convert_slug_to_solr(self, slug):
-
         return slug.replace('-', '_')
 
     def _convert_values_to_json(self, key, value):
