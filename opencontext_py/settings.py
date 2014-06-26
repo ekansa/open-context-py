@@ -24,6 +24,7 @@ from django.core.exceptions import ImproperlyConfigured
 with open('secrets.json') as f:
     secrets = json.loads(f.read())
 
+
 def get_secret(setting, secrets=secrets):
     """Get secret variable or return an exception"""
     try:
@@ -77,7 +78,8 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.obsmetadata',
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.ldata.linkannotations',
-    'opencontext_py.apps.ldata.linkentities'
+    'opencontext_py.apps.ldata.linkentities',
+    'opencontext_py.apps.indexer',
 )
 
 MIDDLEWARE_CLASSES = (

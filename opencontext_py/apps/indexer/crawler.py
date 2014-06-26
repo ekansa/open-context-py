@@ -25,8 +25,3 @@ class Crawler():
                 except Exception as err:
                     print("Error: {0}".format(err) + " ---> " + uuid)
             self.solr.update(documents, 'json', commit=True)
-
-
-if __name__ == '__main__':
-    crawler = Crawler()
-    crawler().crawl(100)
