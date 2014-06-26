@@ -268,7 +268,7 @@ class EventAssertions():
 
 class ItemAssertion():
     """
-    This class has useful funcitons for accessing assertion data
+    This class has useful functions for accessing assertion data
     """
     def __init__(self):
         self.assertion = False
@@ -295,4 +295,20 @@ class ItemAssertion():
                     self.content = string_item.content
                 except OCstring.DoesNotExist:
                     self.content = False
-                    
+
+
+class ManageAssertions():
+    """
+    This class has useful functions for creating and updating assertion data
+    """
+
+    def change_predicate_object_uuid(self, predicate_uuid, old_object_uuid,
+                                     new_object_uuid, new_object_type):
+        """ Changes an object of a given predicate. Useful if an object_uuid has changed """
+        old_assertions = Assertion.objects.filter(predicate_uuid=predicate_uuid,
+                                                  object_uuid=old_object_uuid)
+        for act_ass in old_assertions:
+            act_ass.object_uuid = new_object_uuid
+            act_ass.object_type = new_object_type
+            act_ass.save()
+        return len(old_assertions)
