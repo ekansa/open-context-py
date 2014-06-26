@@ -19,11 +19,17 @@ class SolrDocument:
 
     def _get_context_path(self):
         if 'oc-gen:has-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-context-path']['oc-gen:has-path-items']
+            try:
+                return self.oc_item.json_ld[
+                    'oc-gen:has-context-path']['oc-gen:has-path-items']
+            except KeyError:
+                return None
         elif 'oc-gen:has-linked-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-linked-context-path']['oc-gen:has-path-items']
+            try:
+                return self.oc_item.json_ld[
+                    'oc-gen:has-linked-context-path']['oc-gen:has-path-items']
+            except KeyError:
+                return None
         else:
             return None
 

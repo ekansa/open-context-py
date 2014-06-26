@@ -23,7 +23,7 @@ class Crawler():
                     documents.append(solrdocument.fields)
                     print('adding ' + uuid)
                 except Exception as err:
-                    print("KeyError: {0}".format(err) + " ---> " + uuid)
+                    print("Error: {0}".format(err) + " ---> " + uuid)
             self.solr.update(documents, 'json', commit=True)
 
 
