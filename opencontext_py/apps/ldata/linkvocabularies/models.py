@@ -44,8 +44,8 @@ class LinkVocabulary():
             for s, p, o in self.graph.triples((None,
                                                RDFS.label,
                                                None)):
-                act_t = {'s': s,
-                         'o': o}
+                act_t = {'s': s.__str__(),
+                         'o': o.__str__()}
                 output.append(act_t)
         return output
 
