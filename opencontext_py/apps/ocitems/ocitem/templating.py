@@ -83,12 +83,13 @@ class Context():
         if(act_context is not False):
             self.id = act_context['id']
             self.parents = []
-            for parent_item in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
-                act_parent = {}
-                act_parent['uri'] = parent_item['id']
-                act_parent['label'] = parent_item['label']
-                act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
-                self.parents.append(act_parent)
+            if(OCitem.PREDICATES_OCGEN_HASPATHITEMS in act_context):
+                for parent_item in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
+                    act_parent = {}
+                    act_parent['uri'] = parent_item['id']
+                    act_parent['label'] = parent_item['label']
+                    act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
+                    self.parents.append(act_parent)
 
 
 class Children():
