@@ -665,6 +665,9 @@ class ItemConstruction():
         if(la_count > 0):
             act_annotation = LastUpdatedOrderedDict()
             act_annotation['@id'] = class_uri
+            ent = self.get_entity_metadata(class_uri)
+            if(ent is not False):
+                act_annotation['label'] = ent.label
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
                 predicate_uri = URImanagement.prefix_common_uri(link_anno.predicate_uri)
