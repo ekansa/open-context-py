@@ -11,7 +11,7 @@ class URImanagement():
         if(':' in identifier):
             split_id = True
             if(len(identifier) > 8):
-                if(identifier[:7] == 'http://' and identifier[:8] == 'https://'):
+                if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
                     split_id = False
             if(split_id):
                 item_ns = ItemNamespaces()
@@ -20,6 +20,22 @@ class URImanagement():
                 suffix = identifier_parts[1]
                 if(prefix in item_ns.namespaces):
                     identifier = str(item_ns.namespaces[prefix]) + str(suffix)
+        return identifier
+
+    def prefix_common_uri(identifier):
+        """ Converts URIs to a prefixed URI if it is in a
+        namespace used by Open Context JSON-LD @context
+        """
+        id_len = len(identifier)
+        if(id_len > 8):
+            if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
+                item_ns = ItemNamespaces()
+                for prefix, ns_uri in item_ns.namespaces.items():
+                    ns_uri_len = len(ns_uri)
+                    if(ns_uri_len < id_len):
+                        if(identifier[:ns_uri_len] == ns_uri):
+                            identifier = identifier.replace(ns_uri, (prefix + ':'))
+                            break
         return identifier
 
     def get_uuid_from_oc_uri(uri, return_type=False):
