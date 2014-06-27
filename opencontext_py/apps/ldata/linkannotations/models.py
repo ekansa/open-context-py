@@ -26,7 +26,7 @@ class LinkAnnotation(models.Model):
     subject = models.CharField(max_length=200, db_index=True)
     subject_type = models.CharField(max_length=50)
     project_uuid = models.CharField(max_length=50)
-    source_id = models.CharField(max_length=50)
+    source_id = models.CharField(max_length=200)  # longer than the normal 50 for URI-identifed vocabs
     predicate_uri = models.CharField(max_length=200, db_index=True)
     object_uri = models.CharField(max_length=200, db_index=True)
     creator_uuid = models.CharField(max_length=50)
