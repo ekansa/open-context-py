@@ -95,10 +95,10 @@ class LinkRecursion():
         alt_identifier_b = identifier
         # a little something to allow searches of either UUIDs or full URIs
         if(':' in identifier):
-            alt_identifier_b = URImanagement.get_uuid_from_oc_uri(identifier)
+            alt_identifier_b = URImanagement.convert_prefix_to_full_uri(identifier)
             if(len(identifier) > 8):
                 if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                    alt_identifier_a = URImanagement.convert_prefix_to_full_uri(identifier)
+                    alt_identifier_a = URImanagement.get_uuid_from_oc_uri(identifier)
                     if(alt_identifier_a is False):
                         alt_identifier_a = identifier
                     alt_identifier_b = URImanagement.prefix_common_uri(identifier)
