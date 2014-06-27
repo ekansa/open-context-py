@@ -21,6 +21,7 @@ class TemplateItem():
         self.context = False
         self.children = False
         self.observations = False
+        self.class_type_metadata = {}
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -28,6 +29,7 @@ class TemplateItem():
         self.label = json_ld['label']
         self.uuid = json_ld['uuid']
         self.id = json_ld['id']
+        self.store_class_type_metadata(json_ld)
         self.create_context(json_ld)
         self.create_children(json_ld)
         self.create_observations(json_ld)
@@ -37,7 +39,7 @@ class TemplateItem():
         Adds context object if json_ld describes such
         """
         act_context = Context()
-        act_context.make_context(json_ld)
+        act_context.make_context(json_ld, self.class_type_metadata)
         if(act_context.contype is not False):
             self.context = act_context
 
@@ -46,7 +48,7 @@ class TemplateItem():
         Adds children object if json_ld describes such
         """
         act_children = Children()
-        act_children.make_children(json_ld)
+        act_children.make_children(json_ld, self.class_type_metadata)
         if(act_children.children is not False):
             self.children = act_children
 
@@ -59,8 +61,37 @@ class TemplateItem():
             self.observations = []
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                 act_obs = Observation()
-                act_obs.make_observation(context, obs_item)
+                act_obs.make_observation(context, obs_item, self.class_type_metadata)
                 self.observations.append(act_obs)
+
+    def store_class_type_metadata(self, json_ld):
+        if('@graph' in json_ld):
+            for g_anno in json_ld['@graph']:
+                identifier = False
+                if('@id' in g_anno):
+                    identifier = g_anno['@id']
+                elif('id' in g_anno):
+                    identifier = g_anno['id']
+                if('oc-gen:' in identifier):
+                    meta = {}
+                    if('label' in g_anno):
+                        meta['typelabel'] = g_anno['label']
+                    if('oc-gen:hasIcon' in g_anno):
+                        meta['icon'] = g_anno['oc-gen:hasIcon'][0]['id']
+                    self.class_type_metadata[identifier] = meta
+
+
+class ItemMetadata():
+    """ Class has some methods to add metadata to items """
+    def get_class_meta(item, class_type_metadata):
+        item['typelabel'] = False
+        item['icon'] = False
+        if('type' in item):
+            if(item['type'] in class_type_metadata):
+                meta = class_type_metadata[item['type']]
+                for key, value in meta.items():
+                    item[key] = value
+        return item
 
 
 class Context():
@@ -71,7 +102,7 @@ class Context():
         self.contype = False
         self.parents = False
 
-    def make_context(self, json_ld):
+    def make_context(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
         act_context = False
         if(OCitem.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld):
@@ -88,7 +119,9 @@ class Context():
                     act_parent = {}
                     act_parent['uri'] = parent_item['id']
                     act_parent['label'] = parent_item['label']
+                    act_parent['type'] = parent_item['@type']
                     act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
+                    act_parent = ItemMetadata.get_class_meta(act_parent, class_type_metadata)
                     self.parents.append(act_parent)
 
 
@@ -99,7 +132,7 @@ class Children():
         self.id = False
         self.children = False
 
-    def make_children(self, json_ld):
+    def make_children(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
         act_children = False
         if(OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld):
@@ -111,7 +144,9 @@ class Children():
                 act_child = {}
                 act_child['uri'] = child_item['id']
                 act_child['label'] = child_item['label']
+                act_child['type'] = child_item['@type']
                 act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
+                act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
                 self.children.append(act_child)
 
 
@@ -130,7 +165,7 @@ class Observation():
         self.persons_links = False
         self.documents_links = False
 
-    def make_observation(self, context, obs_dict):
+    def make_observation(self, context, obs_dict, class_type_metadata):
         """ Makes an observation with some observation metadata
             property list, links to subjects items, links to media items,
             links to persons items, and links to documents
