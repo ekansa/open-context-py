@@ -6,7 +6,7 @@ class URImanagement():
     """ Functions for dealing with URIs """
     def convert_prefix_to_full_uri(identifier):
         """ Checks to see if a an identifer is a prefixed URI,
-            if so, it will convert to a full uri 
+            if so, it will convert to a full uri
         """
         if(':' in identifier):
             split_id = True

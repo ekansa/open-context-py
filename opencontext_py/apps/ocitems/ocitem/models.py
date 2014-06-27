@@ -206,7 +206,9 @@ class OCitem():
         json_ld['uuid'] = self.uuid
         json_ld['slug'] = self.slug
         json_ld['label'] = self.label
-        json_ld['@type'] = [self.manifest.class_uri]
+        if(len(self.manifest.class_uri) > 0):
+            json_ld['@type'] = [self.manifest.class_uri]
+            item_con.class_type_list.append(self.manifest.class_uri)
         # add context data
         json_ld = item_con.add_contexts(json_ld,
                                         self.PREDICATES_OCGEN_HASCONTEXTPATH,
@@ -272,6 +274,7 @@ class ItemConstruction():
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
+        self.class_type_list = list()
         self.dc_contrib_preds = list()
         self.dc_creator_preds = list()
         self.graph_links = list()
@@ -439,6 +442,7 @@ class ItemConstruction():
             return act_dict
 
     def add_contexts(self, act_dict, act_pred_key, raw_contexts):
+        """ adds context information, if present """
         if(raw_contexts is not False):
             if(len(raw_contexts) > 0):
                 #adds parent contents, with different treenodes
@@ -499,8 +503,14 @@ class ItemConstruction():
                 new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
             if(ent.content is not False and ent.content != ent.label):
                 new_object_item['rdfs:comment'] = ent.content
+            if((ent.class_uri is not False) and (item_type == 'subjects' or item_type == 'media')):
+                new_object_item['@type'] = ent.class_uri
+                if(ent.class_uri not in self.class_type_list):
+                    self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
             act_list.append(new_object_item)
             act_dict[act_pred_key] = act_list
+        elif(act_pred_key == 'oc-gen:hasIcon'):
+            act_dict[act_pred_key] = [{'id': object_id}]
         return act_dict
 
     def add_inferred_authorship_linked_data_graph(self, act_dict):
@@ -524,12 +534,15 @@ class ItemConstruction():
         prepare a list of graph_links describing linked data annotations
         """
         graph_list = []
-        #add linked data annotations for predicates
+        # add linked data annotations for predicates
         for (predicate_uuid, slug) in self.predicates.items():
             graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
-        #add linked data annotations for types
+        # add linked data annotations for types
         for type_uuid in self.type_list:
             graph_list = self.get_annotations_for_ocitem(graph_list, type_uuid, 'types')
+        # add lined data annotations for item oc-gen:classes (present in '@type' keys)
+        for class_uri in self.class_type_list:
+            graph_list = self.get_annotations_for_oc_gen_class(graph_list, class_uri)
         self.graph_links += graph_list
         return self.graph_links
 
@@ -618,8 +631,8 @@ class ItemConstruction():
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
                 add_annotation = True
-                predicate_uri = self.shorten_context_namespace(link_anno.predicate_uri)
-                object_prefix_uri = self.shorten_context_namespace(link_anno.object_uri)
+                predicate_uri = URImanagement.prefix_common_uri(link_anno.predicate_uri)
+                object_prefix_uri = URImanagement.prefix_common_uri(link_anno.object_uri)
                 if(predicate_uri == 'skos:closeMatch' or predicate_uri == 'owl:sameAs'):
                     if(object_prefix_uri == 'dc-terms:contributor'):
                         self.dc_contrib_preds.append(act_annotation['@id'])
@@ -635,6 +648,32 @@ class ItemConstruction():
                                                                          'uri')
             if(added_annotation_count > 0):
                 graph_list.append(act_annotation)
+        return graph_list
+
+    def get_annotations_for_oc_gen_class(self, graph_list, class_uri):
+        """
+        adds linked data annotations to a given subject_uuid
+        """
+        la_count = 0
+        alt_identifier = URImanagement.convert_prefix_to_full_uri(class_uri)
+        try:
+            link_annotations = LinkAnnotation.objects.filter(Q(subject=class_uri) |
+                                                             Q(subject=alt_identifier))
+            la_count = len(link_annotations)
+        except LinkAnnotation.DoesNotExist:
+            la_count = 0
+        if(la_count > 0):
+            act_annotation = LastUpdatedOrderedDict()
+            act_annotation['@id'] = class_uri
+            for link_anno in link_annotations:
+                # shorten the predicate uri if it's namespace is defined in the context
+                predicate_uri = URImanagement.prefix_common_uri(link_anno.predicate_uri)
+                object_prefix_uri = URImanagement.prefix_common_uri(link_anno.object_uri)
+                act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
+                                                                     predicate_uri,
+                                                                     link_anno.object_uri,
+                                                                     'uri')
+            graph_list.append(act_annotation)
         return graph_list
 
     def add_spacetime_metadata(self, act_dict, uuid, item_type, geo_meta, event_meta):
@@ -844,17 +883,6 @@ class ItemConstruction():
         if(document is not False):
             act_dict['dc-terms:description'] = document.content
         return act_dict
-
-    def shorten_context_namespace(self, uri):
-        """
-        checks to see if a name space has been defined, and if so, use its prefix
-        """
-        for prefix in self.namespaces:
-            namespace = str(self.namespaces[prefix])
-            if(uri.find(namespace) == 0):
-                uri = uri.replace(namespace, (prefix + ":"))
-                break
-        return uri
 
     def get_entity_metadata(self, identifier):
         """
