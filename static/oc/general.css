@@ -1,7 +1,17 @@
 /* Open Context Layout Main */
-
 #main {
 	width:98%;
 	margin-left:auto;
 	margin-right:auto;
+}
+div.subject-list-row {
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+div.subject-list-row img {
+	height: 30px;
+	width: 30px;
+}
+div.subject-list-text {
+	padding-top: 2%;
 }

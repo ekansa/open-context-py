@@ -26,15 +26,15 @@
             <table class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
-                    <th>Descriptive Variable</th>
-                    <th>Value(s)</th>
+                    <th class="col-sm-4">Descriptive Variable</th>
+                    <th class="col-sm-8">Value(s)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for prop in obs.properties %}
                     <tr>
-                        <td><a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a></td>
-                        <td>
+                        <td class="col-sm-4"><a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a></td>
+                        <td class="col-sm-8">
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
                                 {% if prop.values.0.valuri != False %}
