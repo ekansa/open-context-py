@@ -65,6 +65,7 @@ Class is available under the open-source GDAL license (www.gdal.org).
 
 import math
 
+
 class GlobalMercator(object):
     """
     TMS Global Mercator Profile
@@ -76,20 +77,20 @@ class GlobalMercator(object):
     Such tiles are compatible with Google Maps, Microsoft Virtual Earth, Yahoo Maps,
     UK Ordnance Survey OpenSpace API, ...
     and you can overlay them on top of base maps of those web mapping applications.
-    
+
     Pixel and tile coordinates are in TMS notation (origin [0,0] in bottom-left).
 
     What coordinate conversions do we need for TMS Global Mercator tiles::
 
-         LatLon      <->       Meters      <->     Pixels    <->       Tile     
+         LatLon      <->       Meters      <->     Pixels    <->       Tile
 
      WGS84 coordinates   Spherical Mercator  Pixels in pyramid  Tiles in pyramid
-         lat/lon            XY in metres     XY pixels Z zoom      XYZ from TMS 
-        EPSG:4326           EPSG:900913                                         
-         .----.              ---------               --                TMS      
-        /      \     <->     |       |     <->     /----/    <->      Google    
-        \      /             |       |           /--------/          QuadTree   
-         -----               ---------         /------------/                   
+         lat/lon            XY in metres     XY pixels Z zoom      XYZ from TMS
+        EPSG:4326           EPSG:900913
+         .----.              ---------               --                TMS
+        /      \     <->     |       |     <->     /----/    <->      Google
+        \      /             |       |           /--------/          QuadTree
+         -----               ---------         /------------/
        KML, public         WebMapService         Web Clients      TileMapService
 
     What is the coordinate extent of Earth in EPSG:900913?
@@ -122,7 +123,7 @@ class GlobalMercator(object):
       Well, the web clients like Google Maps are projecting those coordinates by
       Spherical Mercator, so in fact lat/lon coordinates on sphere are treated as if
       the were on the WGS84 ellipsoid.
-     
+
       From MSDN documentation:
       To simplify the calculations, we use the spherical form of projection, not
       the ellipsoidal form. Since the projection is used only for map display,
@@ -171,97 +172,84 @@ class GlobalMercator(object):
         self.originShift = 2 * math.pi * 6378137 / 2.0
         # 20037508.342789244
 
-    def LatLonToMeters(self, lat, lon ):
+    def LatLonToMeters(self, lat, lon):
         "Converts given lat/lon in WGS84 Datum to XY in Spherical Mercator EPSG:900913"
-
         mx = lon * self.originShift / 180.0
-        my = math.log( math.tan((90 + lat) * math.pi / 360.0 )) / (math.pi / 180.0)
-
+        my = math.log(math.tan((90 + lat) * math.pi / 360.0)) / (math.pi / 180.0)
         my = my * self.originShift / 180.0
         return mx, my
 
-    def MetersToLatLon(self, mx, my ):
+    def MetersToLatLon(self, mx, my):
         "Converts XY point from Spherical Mercator EPSG:900913 to lat/lon in WGS84 Datum"
-
         lon = (mx / self.originShift) * 180.0
         lat = (my / self.originShift) * 180.0
 
-        lat = 180 / math.pi * (2 * math.atan( math.exp( lat * math.pi / 180.0)) - math.pi / 2.0)
+        lat = 180 / math.pi * (2 * math.atan(math.exp(lat * math.pi / 180.0)) - math.pi / 2.0)
         return lat, lon
 
     def PixelsToMeters(self, px, py, zoom):
         "Converts pixel coordinates in given zoom level of pyramid to EPSG:900913"
 
-        res = self.Resolution( zoom )
+        res = self.Resolution(zoom)
         mx = px * res - self.originShift
         my = py * res - self.originShift
         return mx, my
-        
+
     def MetersToPixels(self, mx, my, zoom):
         "Converts EPSG:900913 to pyramid pixel coordinates in given zoom level"
-                
-        res = self.Resolution( zoom )
+        res = self.Resolution(zoom)
         px = (mx + self.originShift) / res
         py = (my + self.originShift) / res
         return px, py
-    
+
     def PixelsToTile(self, px, py):
         "Returns a tile covering region in given pixel coordinates"
 
-        tx = int( math.ceil( px / float(self.tileSize) ) - 1 )
-        ty = int( math.ceil( py / float(self.tileSize) ) - 1 )
+        tx = int(math.ceil(px / float(self.tileSize)) - 1)
+        ty = int(math.ceil(py / float(self.tileSize)) - 1)
         return tx, ty
 
     def PixelsToRaster(self, px, py, zoom):
         "Move the origin of pixel coordinates to top-left corner"
-        
         mapSize = self.tileSize << zoom
         return px, mapSize - py
-        
+
     def MetersToTile(self, mx, my, zoom):
         "Returns tile for given mercator coordinates"
-        
-        px, py = self.MetersToPixels( mx, my, zoom)
-        return self.PixelsToTile( px, py)
+        px, py = self.MetersToPixels(mx, my, zoom)
+        return self.PixelsToTile(px, py)
 
     def TileBounds(self, tx, ty, zoom):
         "Returns bounds of the given tile in EPSG:900913 coordinates"
-        
-        minx, miny = self.PixelsToMeters( tx*self.tileSize, ty*self.tileSize, zoom )
-        maxx, maxy = self.PixelsToMeters( (tx+1)*self.tileSize, (ty+1)*self.tileSize, zoom )
-        return ( minx, miny, maxx, maxy )
+        minx, miny = self.PixelsToMeters(tx*self.tileSize, ty*self.tileSize, zoom)
+        maxx, maxy = self.PixelsToMeters((tx+1)*self.tileSize, (ty+1)*self.tileSize, zoom)
+        return (minx, miny, maxx, maxy)
 
-    def TileLatLonBounds(self, tx, ty, zoom ):
+    def TileLatLonBounds(self, tx, ty, zoom):
         "Returns bounds of the given tile in latutude/longitude using WGS84 datum"
-
-        bounds = self.TileBounds( tx, ty, zoom)
+        bounds = self.TileBounds(tx, ty, zoom)
         minLat, minLon = self.MetersToLatLon(bounds[0], bounds[1])
         maxLat, maxLon = self.MetersToLatLon(bounds[2], bounds[3])
-         
-        return ( minLat, minLon, maxLat, maxLon )
-        
-    def Resolution(self, zoom ):
+        return (minLat, minLon, maxLat, maxLon)
+
+    def Resolution(self, zoom):
         "Resolution (meters/pixel) for given zoom level (measured at Equator)"
-        
         # return (2 * math.pi * 6378137) / (self.tileSize * 2**zoom)
         return self.initialResolution / (2**zoom)
-        
-    def ZoomForPixelSize(self, pixelSize ):
+
+    def ZoomForPixelSize(self, pixelSize):
         "Maximal scaledown zoom of the pyramid closest to the pixelSize."
-        
         for i in range(30):
             if pixelSize > self.Resolution(i):
-                return i-1 if i!=0 else 0 # We don't want to scale up
+                return i-1 if i != 0 else 0  # We don't want to scale up
 
     def GoogleTile(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Google Tile coordinates"
-        
         # coordinate origin is moved from bottom-left to top-left corner of the extent
         return tx, (2**zoom - 1) - ty
 
-    def QuadTree(self, tx, ty, zoom ):
+    def QuadTree(self, tx, ty, zoom):
         "Converts TMS tile coordinates to Microsoft QuadTree"
-        
         quadKey = ""
         ty = (2**zoom - 1) - ty
         for i in range(zoom, 0, -1):
@@ -272,9 +260,8 @@ class GlobalMercator(object):
             if (ty & mask) != 0:
                 digit += 2
             quadKey += str(digit)
-            
         return quadKey
-    
+
     def quadtree_to_tile(self, quadtree, zoom):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
@@ -290,11 +277,11 @@ class GlobalMercator(object):
             if(digit & 1):
                 tx += mask
             if(digit & 2):
-                ty += mask 
+                ty += mask
             i -= 1
         ty = ((1 << zoom) - 1) - ty
         return tx, ty
-    
+
     def lat_lon_to_quadtree(self, lat, lon, zoom):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
@@ -302,10 +289,10 @@ class GlobalMercator(object):
         """
         lat = float(lat)
         lon = float(lon)
-        mx, my = self.LatLonToMeters(lat,lon)
+        mx, my = self.LatLonToMeters(lat, lon)
         tx, ty = self.MetersToTile(mx, my, zoom)
         return self.QuadTree(tx, ty, zoom)
-    
+
     def quadtree_to_lat_lon(self, quadtree):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
