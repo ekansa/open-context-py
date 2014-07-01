@@ -59,19 +59,26 @@ class LinkRecursion():
     def __init__(self):
         self.parent_entities = []
 
-    def get_jsonldish_entity_parents(self, identifier):
+    def get_jsonldish_entity_parents(self, identifier, add_original=True):
         """
         Gets parent concepts for a given URI or UUID identified entity
         returns a list of dictionary objects similar to JSON-LD expectations
         This is useful for faceted search
+
+        If add_original is true, add the original UUID for the entity
+        that's the childmost item, at the bottom of the hierarchy
         """
         output = False
+        if(add_original):
+            output = []
         raw_parents = self.get_entity_parents(identifier)
         if(len(raw_parents) > 0):
             output = []
             # reverse the order of the list, to make top most concept
             # first
             parents = raw_parents[::-1]
+            if(add_original):
+                parents.append(identifier)
             for par_id in parents:
                 ent = Entity()
                 found = ent.dereference(par_id)
