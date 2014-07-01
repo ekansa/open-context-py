@@ -69,16 +69,15 @@ class LinkRecursion():
         that's the childmost item, at the bottom of the hierarchy
         """
         output = False
-        if(add_original):
-            output = []
         raw_parents = self.get_entity_parents(identifier)
+        if(add_original):# 
+            output = []  # add the original identifer to the list of parents, at lowest rank
+            raw_parents.insert(0, identifier)
         if(len(raw_parents) > 0):
             output = []
             # reverse the order of the list, to make top most concept
             # first
             parents = raw_parents[::-1]
-            if(add_original):
-                parents.append(identifier)
             for par_id in parents:
                 ent = Entity()
                 found = ent.dereference(par_id)
