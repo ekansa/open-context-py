@@ -1,8 +1,10 @@
+import requests
 from django.db import models
 
 
 # Mediafile has basic metadata about media resources (binary files) associated with a media resource item
 class Mediafile(models.Model):
+    MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)
@@ -12,6 +14,74 @@ class Mediafile(models.Model):
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
     updated = models.DateTimeField(auto_now=True)
 
+    def get_file_info(self):
+        """ Gets information about the file from a remote server """
+        if(self.filesize < 1 or len(self.mime_type_uri) < 2):
+            mm = ManageMediafiles()
+            ok = mm.get_head_info(self.file_uri)
+            if(ok):
+                self.file_type = mm.file_type
+                self.mime_type_uri = mm.mime_type_uri
+                self.filesize = mm.filesize
+
+    def save(self):
+        """
+        saves a manifest item with a good slug
+        """
+        self.get_file_info()
+        super(Mediafile, self).save()
+
     class Meta:
         db_table = 'oc_mediafiles'
         unique_together = (('uuid', 'file_type'),)
+
+
+class ManageMediafiles():
+    """
+    Methods to look-up filesizes and mime-types
+    """
+
+    def __init__(self):
+        self.file_uri = False
+        self.file_type = False
+        self.raw_mime_type = False
+        self.mime_type_uri = False
+        self.filesize = False
+
+    def get_head_info(self, file_uri):
+        output = False
+        r = requests.head(file_uri)
+        if(r.status_code == requests.codes.ok):
+            if('Content-Length' in r.headers):
+                self.filesize = r.headers['Content-Length']
+            if('Content-Type' in r.headers):
+                self.raw_mime_type = r.headers['Content-Type']
+                self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
+                self.file_type = self.mime_to_file_type(self.file_type)
+                output = True
+
+        return output
+
+    def raw_to_mimetype_uri(self, raw_mime_type):
+        """
+        Converts a raw mime-type to a mime_type_uri
+        """
+        return Mediafile.MEDIA_MIMETYPE_NS + raw_mime_type
+
+    def mime_to_file_type(self, mime_type):
+        """
+        Converts either a raw, a prefixed, or a full mimetype uri to
+        a file type
+        """
+        output = False
+        use_mime = str(mime_type)
+        if(':' in use_mime):
+            col_parts = use_mime.split(':')
+            if(len(col_parts) > 1):
+                use_mime = col_parts[1]
+        if('/' in use_mime):
+            mime_parts = use_mime.split('/')
+            len_parts = len(parts)
+            if(len_parts > 1):
+                output = mime_parts[len_parts - 2]
+        return output
