@@ -2,6 +2,7 @@
 *.log
 *.pot
 *.py[cod]
+*secrets.json
 secrets.json
 opencontext_py/secrets.json
 __pycache__/
