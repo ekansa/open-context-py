@@ -10,3 +10,4 @@ static/bootstrap/
 solr-config/schema.xml.old
 secrets.json
 opencontext_py/secrets.json
+secrets.json
