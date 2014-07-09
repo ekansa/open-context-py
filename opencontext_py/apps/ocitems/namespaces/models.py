@@ -17,6 +17,7 @@ class ItemNamespaces():
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
         context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
         context['dcat'] = 'http://www.w3.org/ns/dcat#'
+        context['geojson'] = 'http://ld.geojson.org/vocab#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
         self.namespaces = context

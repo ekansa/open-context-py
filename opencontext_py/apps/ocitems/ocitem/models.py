@@ -207,7 +207,7 @@ class OCitem():
         json_ld['slug'] = self.slug
         json_ld['label'] = self.label
         if(len(self.manifest.class_uri) > 0):
-            json_ld['@type'] = [self.manifest.class_uri]
+            json_ld['category'] = [self.manifest.class_uri]
             item_con.class_type_list.append(self.manifest.class_uri)
         # add context data
         json_ld = item_con.add_contexts(json_ld,
@@ -286,26 +286,38 @@ class ItemConstruction():
         context['id'] = '@id'
         context['label'] = 'rdfs:label'
         context['uuid'] = 'dc-terms:identifier'
-        context['type'] = 'oc-gen:geojson-type'
-        context['FeatureCollection'] = 'oc-gen:geojson-feature-col'
-        context['Feature'] = 'oc-gen:geojson-feature'
-        context['Point'] = 'oc-gen:geojson-point'
-        context['Polygon'] = 'oc-gen:geojson-polygon'
-        context['features'] = 'oc-gen:geojson-features'
-        context['geometry'] = 'oc-gen:geojson-geometry'
-        context['coordinates'] = 'oc-gen:geojson-coordinates'
-        context['properties'] = 'oc-gen:geojson-properties'
-        context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
+        context['type'] = '@type'
+        context['category'] = 'oc-gen:category'
+        context['Feature'] = 'geojson:Feature'
+        context['FeatureCollection'] = 'geojson:FeatureCollection'
+        context['GeometryCollection'] = 'geojson:GeometryCollection'
+        context['Instant'] = 'http://www.w3.org/2006/time#Instant'
+        context['Interval'] = 'http://www.w3.org/2006/time#Interval'
+        context['LineString'] = 'geojson:LineString'
+        context['MultiLineString'] = 'geojson:MultiLineString'
+        context['MultiPoint'] = 'geojson:MultiPoint'
+        context['MultiPolygon'] = 'geojson:MultiPolygon'
+        context['Point'] = 'geojson:Point'
+        context['Polygon'] = 'geojson:Polygon'
+        context['bbox'] = {'@id': 'geojson:bbox', '@container': '@list'}
+        context['circa'] = 'geojson:circa'
+        context['coordinates'] = 'geojson:coordinates'
+        context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
+        context['description'] = 'dc-terms:description'
+        context['features'] = {'@id': 'geojson:features', '@container': '@set'}
+        context['geometry'] = 'geojson:geometry'
+        context['properties'] = 'geojson:properties'
+        context['start'] = 'http://www.w3.org/2006/time#hasBeginning'
+        context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
+        context['title'] = 'dc-terms:title'
+        context['when'] = 'geojson:when'
+        context['reference-type'] = {'@id': 'oc-gen:reference-type', 'type': '@id'}
         context['inferred'] = 'oc-gen:inferred'
         context['specified'] = 'oc-gen:specified'
         context['reference-uri'] = 'oc-gen:reference-uri'
         context['reference-label'] = 'oc-gen:reference-label'
         context['location-precision'] = 'oc-gen:geojson-location-precision'
         context['location-note'] = 'oc-gen:geojson-location-note'
-        context['where'] = {'@id': 'oc-gen:event-where', '@type': '@id'}
-        context['when'] = 'oc-gen:event-when'
-        context['start'] = {'@id': 'http://www.w3.org/2006/time#hasBeginning'}
-        context['stop'] = {'@id': 'http://www.w3.org/2006/time#hasEnding'}
         self.base_context = context
 
     def __del__(self):
@@ -340,7 +352,7 @@ class ItemConstruction():
                 p_data['slug'] = str(pmeta.slug)
                 p_data['uuid'] = str(pmeta.uuid)
                 p_data[OCitem.PREDICATES_OCGEN_PREDICATETYPE] = str(pmeta.class_uri)
-                p_data['@type'] = pred_types[pred_uuid]
+                p_data['type'] = pred_types[pred_uuid]
                 if(pmeta.class_uri == 'variable'):
                     self.var_list.append(p_data)
                 elif(pmeta.class_uri == 'link'):
@@ -504,7 +516,7 @@ class ItemConstruction():
             if(ent.content is not False and ent.content != ent.label):
                 new_object_item['rdfs:comment'] = ent.content
             if((ent.class_uri is not False) and (item_type == 'subjects' or item_type == 'media')):
-                new_object_item['@type'] = ent.class_uri
+                new_object_item['type'] = ent.class_uri
                 if(ent.class_uri not in self.class_type_list):
                     self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
             act_list.append(new_object_item)
@@ -540,7 +552,7 @@ class ItemConstruction():
         # add linked data annotations for types
         for type_uuid in self.type_list:
             graph_list = self.get_annotations_for_ocitem(graph_list, type_uuid, 'types')
-        # add lined data annotations for item oc-gen:classes (present in '@type' keys)
+        # add lined data annotations for item oc-gen:classes (present in 'type' keys)
         for class_uri in self.class_type_list:
             graph_list = self.get_annotations_for_oc_gen_class(graph_list, class_uri)
         self.graph_links += graph_list
@@ -845,7 +857,7 @@ class ItemConstruction():
         when = LastUpdatedOrderedDict()
         when['id'] = '#event-when-' + str(event.event_id)
         when['type'] = event.when_type
-        when['@type'] = event.meta_type
+        when['type'] = event.meta_type
         if(event.earliest != event.start):
             when['earliest'] = int(event.earliest)
         when['start'] = int(event.start)
@@ -872,7 +884,7 @@ class ItemConstruction():
             for media_item in media:
                 list_item = LastUpdatedOrderedDict()
                 list_item['id'] = media_item.file_uri
-                list_item['@type'] = media_item.file_type
+                list_item['type'] = media_item.file_type
                 list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
                 list_item['dcat:size'] = float(media_item.filesize)
                 media_list.append(list_item)

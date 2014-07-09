@@ -83,6 +83,15 @@ class TemplateItem():
 
 class ItemMetadata():
     """ Class has some methods to add metadata to items """
+    def get_item_type(item):
+        """ Gets the item type from an item, accepts '@type' or 'type' predicates """
+        item_type = False
+        if('@type' in item):
+            item_type = item['@type']
+        elif('type' in item):
+            item_type = item['type']
+        return item_type
+
     def get_class_meta(item, class_type_metadata):
         item['typelabel'] = False
         item['icon'] = False
@@ -119,7 +128,7 @@ class Context():
                     act_parent = {}
                     act_parent['uri'] = parent_item['id']
                     act_parent['label'] = parent_item['label']
-                    act_parent['type'] = parent_item['@type']
+                    act_parent['type'] = ItemMetadata.get_item_type(parent_item)
                     act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
                     act_parent = ItemMetadata.get_class_meta(act_parent, class_type_metadata)
                     self.parents.append(act_parent)
@@ -144,7 +153,7 @@ class Children():
                 act_child = {}
                 act_child['uri'] = child_item['id']
                 act_child['label'] = child_item['label']
-                act_child['type'] = child_item['@type']
+                act_child['type'] = ItemMetadata.get_item_type(child_item)
                 act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
                 act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
                 self.children.append(act_child)
