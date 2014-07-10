@@ -13,7 +13,7 @@ class Crawler():
         self.solr = Solr('http://localhost:8983/solr',
                          make_request=self.session)
 
-    def crawl(self, chunksize):
+    def crawl(self, chunksize=100):
         while self.uuidlist is not None:
             documents = []
             print('creating container of ' + str(chunksize) + ' documents...')
