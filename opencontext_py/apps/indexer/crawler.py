@@ -1,3 +1,4 @@
+import sys
 import time
 import re
 from itertools import islice
@@ -12,14 +13,19 @@ class Crawler():
     def __init__(self):
         self.uuidlist = UUIDList().uuids
         self.session = requests.Session()
-        self.solr = Solr('http://localhost:8983/solr',
-                         make_request=self.session)
+        try:
+            self.solr = Solr('http://localhost:8983/solr',
+                             make_request=self.session)
+        except requests.ConnectionError:
+            print('\nError: Could not connect to Solr. Please '
+                  'verify your Solr instance and configuration.\n')
+            sys.exit()
 
     def crawl(self, chunksize=100):
         start_time = time.time()
-        print('\nStarting crawl...\n')
-        print('(#) UUID')
-        print('----------------------------------------')
+        print('\n\nStarting crawl...\n')
+        print("(#)\tUUID")
+        print('--------------------------------------------')
         document_count = 0
         while self.uuidlist is not None:
             documents = []
@@ -29,16 +35,22 @@ class Crawler():
                     if self._document_is_valid(solrdocument):
                         documents.append(solrdocument)
                         document_count += 1
-                        print('(' + str(document_count) + ') ' + uuid)
+                        print("(" + str(document_count) + ")\t" + uuid)
                     else:
                         print('Error: Skipping document due to datatype '
                               'mismatch -----> ' + uuid)
-                except Exception as err:
-                    print("Error: {0}".format(err) + " -----> " + uuid)
-            self.solr.update(documents, 'json', commit=True)
-            print('Crawl Rate: ' + self._documents_per_second(
-                document_count, start_time) + ' documents per second')
-            if self.solr.update(documents, 'json', commit=True).status != 200:
+                except Exception as error:
+                    print("Error: {0}".format(error) + " -----> " + uuid)
+            # Commit documents but also save the solr response status
+            # codes (e.g, 200, 400, etc.)
+            solr_status = self.solr.update(documents, 'json',
+                                           commit=True).status
+            if solr_status == 200:
+                print('--------------------------------------------')
+                print('Crawl Rate: ' + self._documents_per_second(
+                    document_count, start_time) + ' documents per second')
+                print('--------------------------------------------')
+            else:
                 print('Error: ' + str(self.solr.update(
                     documents, 'json', commit=True
                     ).raw_content))
@@ -50,13 +62,14 @@ class Crawler():
             solrdocument = SolrDocument(uuid).fields
             if self._document_is_valid(solrdocument):
                 documents.append(solrdocument)
-                self.solr.update(documents, 'json', commit=True)
-                if self.solr.update(
-                        documents, 'json', commit=True).status != 200:
+                # Commit the document and save the response status
+                solr_status = self.solr.update(
+                    documents, 'json', commit=True).status
+                if solr_status != 200:
                     print('Error: ' + str(self.solr.update(
                         documents, 'json', commit=True
                         ).raw_content)
-                        )
+                    )
                 else:
                     print('Successfully indexed ' + uuid + '.')
             else:
@@ -64,8 +77,8 @@ class Crawler():
                       'datatype mismatch.')
         except TypeError:
             print("Error: Unable to process document " + uuid + '.')
-        except Exception as err:
-            print("Error: {0}".format(err) + " -----> " + uuid)
+        except Exception as error:
+            print("Error: {0}".format(error) + " -----> " + uuid)
 
     def _document_is_valid(self, document):
         is_valid = True
