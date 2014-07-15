@@ -37,7 +37,7 @@ class Crawler():
                     print("Error: {0}".format(err) + " -----> " + uuid)
             self.solr.update(documents, 'json', commit=True)
             print('Crawl Rate: ' + self._documents_per_second(
-                start_time, document_count) + ' documents per second')
+                document_count, start_time) + ' documents per second')
             if self.solr.update(documents, 'json', commit=True).status != 200:
                 print('Error: ' + str(self.solr.update(
                     documents, 'json', commit=True
@@ -53,15 +53,17 @@ class Crawler():
                 self.solr.update(documents, 'json', commit=True)
                 if self.solr.update(
                         documents, 'json', commit=True).status != 200:
-                        print('Error: ' + str(self.solr.update(
-                            documents, 'json', commit=True
-                            ).raw_content)
-                            )
+                    print('Error: ' + str(self.solr.update(
+                        documents, 'json', commit=True
+                        ).raw_content)
+                        )
                 else:
                     print('Successfully indexed ' + uuid + '.')
             else:
                 print('Error: Unable to index ' + uuid + ' due to '
                       'datatype mismatch.')
+        except TypeError:
+            print("Error: Unable to process document " + uuid + '.')
         except Exception as err:
             print("Error: {0}".format(err) + " -----> " + uuid)
 
@@ -91,5 +93,5 @@ class Crawler():
             )
         return bool(pattern.search(value))
 
-    def _documents_per_second(self, start_time, document_count):
+    def _documents_per_second(self, document_count, start_time):
         return str(int(document_count//(time.time() - start_time)))
