@@ -11,6 +11,20 @@ from opencontext_py.apps.indexer.solrdocument import SolrDocument
 class Crawler():
 
     def __init__(self):
+        '''
+        The Open Context Crawler indexes Open Context items and makes
+        them searchable in Apache Solr.
+
+        To use, import this library and instantiate a crawler object:
+            crawler = Crawler()
+        Then crawl as follows:
+            crawler.crawl()
+        Crawling a single document is also supported:
+            crawler.index_single_document(
+                '9E474B89-E36B-4B9D-2D38-7C7CCBDBB030'
+                )
+        '''
+        # The list of OC items to crawl
         self.uuidlist = UUIDList().uuids
         self.session = requests.Session()
         try:
