@@ -25,7 +25,21 @@ class SolrDocument:
         self._process_context_path()
         self._process_predicates()
 
-    def _get_solr_field_name_suffix(self, predicate_type):
+    def _process_predicate_values(self, parent_slug, predicate_type):
+        # First generate the solr field name
+        solr_field_name = self._convert_slug_to_solr(
+            parent_slug +
+            self._get_predicate_field_name_suffix(
+                predicate_type)
+            )
+        # Then get the predicate values
+        self.fields[solr_field_name] = \
+            self._get_predicate_values(
+                parent_slug,
+                predicate_type
+            )
+
+    def _get_predicate_field_name_suffix(self, predicate_type):
         '''
         Defines whether our dynamic solr fields names for
         predicates end with ___pred_id, ___pred_numeric, etc.
@@ -86,21 +100,12 @@ class SolrDocument:
                             parent['label']
                             )
                         )
+                    # If it's the only item, process its predicate values
                     if len(parents) == 1:
-                    # if it's the only item (i.e., no parents),
-                        # process the predicate values
-                        # First generate the solr field name
-                        solr_field_name = self._convert_slug_to_solr(
-                            parent['slug'] +
-                            self._get_solr_field_name_suffix(
-                                predicate_type)
-                            )
-                        # Then get the predicate values
-                        self.fields[solr_field_name] = \
-                            self._get_predicate_values(
-                                parent['slug'],
-                                predicate_type
-                            )
+                        self._process_predicate_values(
+                            parent['slug'],
+                            predicate_type
+                        )
                 else:
                     # Process additional items
                     # Create solr field name using parent slug
@@ -117,15 +122,9 @@ class SolrDocument:
                             )
                     # If this is the last item, process the predicate values
                     if index == len(parents) - 1:
-                        solr_field_name = self._convert_slug_to_solr(
-                            parent['slug'] +
-                            self._get_solr_field_name_suffix(
-                                predicate_type)
-                            )
-                        self.fields[solr_field_name] = \
-                            self._get_predicate_values(
-                                parent['slug'],
-                                predicate_type
+                        self._process_predicate_values(
+                            parent['slug'],
+                            predicate_type
                             )
 
     def _get_context_path(self):
