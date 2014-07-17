@@ -15,11 +15,13 @@ class SolrDocument:
         Using our Python JSON-LD and other info provided in OCitem,
         build up dictionary of solr fields to index.
         '''
-        # Get ocitem, from which we can also access json_ld
+        # First get core data structures
         self.oc_item = OCitem().get_item(uuid)
         self.context_path = self._get_context_path()
+        # Store values here
         self.fields = {}
-        self._add_solr_fields()
+        # Start processing and adding values...
+        self._process_core_solr_fields()
         self._process_context_path()
         self._process_predicates()
 
@@ -150,7 +152,7 @@ class SolrDocument:
         json_values[key] = value
         return json.dumps(json_values, ensure_ascii=False)
 
-    def _add_solr_fields(self):
+    def _process_core_solr_fields(self):
         self.fields['uuid'] = self.oc_item.uuid
         self.fields['project_uuid'] = self.oc_item.project_uuid
         self.fields['published'] = self.oc_item.published.strftime(
