@@ -7,7 +7,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
 class SolrDocument:
     '''
     Defines the Solr Document objects that the crawler will crawl. Solr
-    fields are stored in the Solr Documents' "fields" property.
+    fields are stored in a Solr Document's "fields" property.
     '''
 
     def __init__(self, uuid):
@@ -15,7 +15,7 @@ class SolrDocument:
         Using our Python JSON-LD and other info provided in OCitem,
         build up dictionary of solr fields to index.
         '''
-        # get ocitem, from which we can also access json_ld
+        # Get ocitem, from which we can also access json_ld
         self.oc_item = OCitem().get_item(uuid)
         self.context_path = self._get_context_path()
         self.fields = {}
