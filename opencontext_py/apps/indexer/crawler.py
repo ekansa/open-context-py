@@ -35,7 +35,7 @@ class Crawler():
                   'verify your Solr instance and configuration.\n')
             sys.exit(1)
 
-    def crawl(self, chunksize=100):
+    def crawl(self, chunksize=500):
         start_time = time.time()
         print('\n\nStarting crawl...\n')
         print("(#)\tUUID")
@@ -55,19 +55,20 @@ class Crawler():
                               'mismatch -----> ' + uuid)
                 except Exception as error:
                     print("Error: {0}".format(error) + " -----> " + uuid)
-            # Commit documents but also save the solr response status
-            # code (e.g, 200, 400, etc.)
+            # Send the documents to Solr while saving the
+            # response status code (e.g, 200, 400, etc.)
             solr_status = self.solr.update(documents, 'json',
-                                           commit=True).status
+                                           commit=False).status
             if solr_status == 200:
+                self.solr.commit()
                 print('--------------------------------------------')
                 print('Crawl Rate: ' + self._documents_per_second(
                     document_count, start_time) + ' documents per second')
                 print('--------------------------------------------')
             else:
                 print('Error: ' + str(self.solr.update(
-                    documents, 'json', commit=True
-                    ).raw_content))
+                    documents, 'json', commit=False
+                    ).raw_content['error']['msg']))
         # Once the crawl has completed...
         self.solr.optimize()
         print('\n--------------------------------------------')
@@ -85,11 +86,10 @@ class Crawler():
                     [solrdocument], 'json', commit=True).status
                 if solr_status == 200:
                     print('Successfully indexed ' + uuid + '.')
-                    self.solr.optimize()
                 else:
                     print('Error: ' + str(self.solr.update(
                         [solrdocument], 'json', commit=True
-                        ).raw_content)
+                        ).raw_content['error']['msg'])
                     )
             else:
                 print('Error: Unable to index ' + uuid + ' due to '
