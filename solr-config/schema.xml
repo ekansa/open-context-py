@@ -39,7 +39,7 @@
   - for best index size and searching performance, set "index" to false
     for all general text fields, use copyField to copy them to the
     catchall "text" field, and use that for searching.
-  - For maximum indexing performance, use the StreamingUpdateSolrServer
+  - For maximum indexing performance, use the ConcurrentUpdateSolrServer
     java client.
   - Remember to run the JVM in server mode, and use a higher logging level
     that avoids logging every request
@@ -122,9 +122,9 @@
     <!-- uuid is a primary key, basis of opencontext URIs -->
     <field name="uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
-    <!-- uuid_label is string for storing JSON encoded key value pairs of item uuid's and labels {uuid-key:label-value},
+    <!-- slug_label is string for storing JSON encoded key value pairs of item slugs and labels {slug-key:label-value},
     useful for Join replaces with other fields.  -->
-    <field name="uuid_label" type="string" indexed="true" stored="false" required="true" multiValued="false" />
+    <field name="slug_label" type="string" indexed="true" stored="false" required="true" multiValued="false" />
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
@@ -153,7 +153,7 @@
     <!-- repo: identifier for the item's version control repository, don't store only want facets of these  -->
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
 
-    <!-- catchall field, containing all other searchable text fields (implemented
+   <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/>
 
@@ -179,6 +179,15 @@
     <!-- current location geospatial point. can have multiple types of points, but only one point per type. -->
     <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
 
+   <!-- catchall text field that indexes tokens both normally and in reverse for efficient
+        leading wildcard queries. -->
+   <field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>
+
+   <!-- non-tokenized version of manufacturer to make it easier to sort or group
+        results by manufacturer.  copied from "manu" via copyField -->
+   <field name="manu_exact" type="string" indexed="true" stored="false"/>
+
+   <field name="payloads" type="payloads" indexed="true" stored="true"/>
 
     <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <field name="form_use_life_chrono_tile" type="string" indexed="true" stored="false" multiValued="true"/>
@@ -195,28 +204,15 @@
 	<field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
 	<field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
 
+    <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
+	a prefix defined by the slug of its parent levels. For example, consider the type Taxon::Mammal.
+	It will be useful to have facet values for the next level down available. To do this, use the database
+    to look up the slug of "Taxon::Mammal" to get something like "taxon-mammal" which will be used to make
+    the dynamic field name ("octype___taxon_mammal__pred") that store values for "Taxon::Mammal". Values for
+    dynamic fields are stored in uuid-key: label-value pairs.
 
-    <!-- these fields allow solr index desciptions of Open Context items, many of which are organized in hierarchies.
-    Essentially, we imagine all description to have a hierarchy. For example a field for "weight" can have a
-    value "10.1". The "10.1" value is a child of the field "weight".
-    
-    Fields with the _id suffix take values that identify children in the next level down down in a hierarchy. 
-    The prefix identifies the parent level of the hierachy. For example, consider the an item described by
-    "Taxon::Mouse"
-    
-    A database look up shows that "Mouse" is a subclass of "Misc. Rodent" which is in turn,
-    a subclass of "Mammal". We need to index the following then:
-    
-    (1) Add "Taxon" to the root description for the item as so:
-    	root___pred_id => "{'taxon-slug': 'Taxon'}"
-    (2) Add the type "Mammal" to the classification:
-    	taxon___pred_id => "{'mammal-slug':'Mammal'}"
-    (3) Add the sub-type "Misc. Rodent" to the classification:
-    	taxon___mammal_slug___pred_id: "{'misc-rodent-slug': 'Misc. Rodent'}"
-    (4) Add the sub-type "Mouse" to the classification:
-    	taxon___misc_rodent_slug___pred_id: "{'mouse-slug': 'Mouse'}"
+    {"uuid as key": "label as value"}
 
-    The above shows how all levels of the hierarchy get indexed for the desciption of "Taxon".
 	-->
 
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
@@ -229,11 +225,8 @@
     -->
     <dynamicField name="*___pred_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <!-- integer data predicates with @type = "xsd:integer" values -->
-	<dynamicField name="*___pred_int" type="tint" indexed="true" stored="true" required="false" multiValued="true" />
-
-    <!-- double precision decimal data predicates with @type = "xsd:double" values -->
-	<dynamicField name="*___pred_double" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
+    <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
+	<dynamicField name="*___pred_numeric" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- date data predicates with @type = "xsd:date" values -->
 	<dynamicField name="*___pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
@@ -274,8 +267,7 @@
    <copyField source="manu" dest="manu_exact"/>
 -->
    <!-- Copy the price into a currency enabled field (default USD)
-   <copyField source="price" dest="price_c"/>
-    -->
+   <copyField source="price" dest="price_c"/> -->
 
    <!-- Text fields from SolrCell to search by default in our catch-all field
    <copyField source="title" dest="text"/>
@@ -285,11 +277,10 @@
    <copyField source="content" dest="text"/>
    <copyField source="content_type" dest="text"/>
    <copyField source="resourcename" dest="text"/>
-   <copyField source="url" dest="text"/>
-   -->
+   <copyField source="url" dest="text"/>-->
+
    <!-- Create a string version of author for faceting
-   <copyField source="author" dest="author_s"/>
-   -->
+   <copyField source="author" dest="author_s"/>-->
 
    <!-- Above, multiple source fields are copied to the [text] field.
 	  Another way to map multiple source fields to the same
@@ -401,14 +392,16 @@
       value verbatim (and hence don't correctly support range queries, since the
       lexicographic ordering isn't equal to the numeric ordering)
 
-      NOTE: These field types are deprecated will be removed in Solr 5.0!
-
+      NOTE: These field types are deprecated will be completely removed in Solr 5.0!
+    -->
+    <!--
     <fieldType name="pint" class="solr.IntField"/>
     <fieldType name="plong" class="solr.LongField"/>
     <fieldType name="pfloat" class="solr.FloatField"/>
     <fieldType name="pdouble" class="solr.DoubleField"/>
     <fieldType name="pdate" class="solr.DateField" sortMissingLast="true"/>
- -->
+    -->
+
     <!-- The "RandomSortField" is not used to store or search any
          data.  You can declare fields of this type it in your schema
          to generate pseudo-random orderings of your docs for sorting
@@ -449,7 +442,7 @@
       </analyzer>
     </fieldType>
 
-    <!-- A text type for English text where stopwords and synonyms are managed using the REST API -->
+    <!-- A text type for English text where stopwords and synonyms are managed using the REST API
     <fieldType name="managed_en" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
         <tokenizer class="solr.StandardTokenizerFactory"/>
@@ -457,7 +450,7 @@
         <filter class="solr.ManagedSynonymFilterFactory" managed="english" />
       </analyzer>
     </fieldType>
-
+    -->
     <!-- A general text field that has reasonable, generic
          cross-language defaults: it tokenizes with StandardTokenizer,
 	 removes stop words from case-insensitive "stopwords.txt"
@@ -1123,9 +1116,8 @@
     <!-- Thai -->
     <fieldType name="text_th" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
-        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <tokenizer class="solr.ThaiTokenizerFactory"/>
         <filter class="solr.LowerCaseFilterFactory"/>
-        <filter class="solr.ThaiWordFilterFactory"/>
         <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_th.txt" />
       </analyzer>
     </fieldType>

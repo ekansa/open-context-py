@@ -4,6 +4,9 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class UUIDList:
+    '''
+    The list of UUIDs that the crawler will crawl.
+    '''
     def __init__(self):
         self.uuids = Manifest.objects.values_list(
             'uuid', flat=True
