@@ -1,6 +1,7 @@
 import uuid as GenUUID
 import datetime
 from django.db import models
+from django.db.models import Q
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
@@ -32,23 +33,36 @@ class PredicateManage():
         self.data_type = "xsd:string"
         self.sort = 0
 
-    def get_make_predicate(self, predicate_label, predicate_type):
+    def get_make_predicate(self, predicate_label, predicate_type, data_type=False):
         """
         gets a predicate, filtered by label, predicate_type, and data_type
         """
-        try:
-            self.manifest = Manifest.objects.get(label=predicate_label,
-                                                 item_type='predicates',
-                                                 project_uuid=self.project_uuid,
-                                                 class_uri=predicate_type)
-        except Manifest.DoesNotExist:
-            self.manifest = False
-        if(self.manifest is not False):
-            try:
-                self.predicate = Predicate.objects.get(uuid=self.manifest.uuid)
-            except Predicate.DoesNotExist:
-                self.predicate = False
-        if(self.manifest is False):
+        self.manifest = False
+        self.predicate = False
+        if(data_type is not False):
+            self.data_type = data_type
+        plist = Manifest.objects.filter(label=predicate_label,
+                                        item_type='predicates',
+                                        project_uuid=self.project_uuid,
+                                        class_uri=predicate_type)
+        for pitem in plist:
+            if(self.manifest is False):
+                if(data_type is not False):
+                    try:  # try to find the predicate with a given data_type
+                        self.predicate = Predicate.objects.get(uuid=pitem.uuid,
+                                                               data_type=data_type)
+                        self.manifest = pitem
+                    except Predicate.DoesNotExist:
+                        self.predicate = False
+                        self.manifest = False
+                else:
+                    try:  # look for the predicate item
+                        self.predicate = Predicate.objects.get(uuid=pitem.uuid)
+                        self.manifest = pitem
+                    except Predicate.DoesNotExist:
+                        self.predicate = False
+                        self.manifest = False
+        if(self.manifest is False and self.predicate is False):
             uuid = GenUUID.uuid1()
             newpred = Predicate()
             newpred.uuid = uuid
@@ -72,4 +86,5 @@ class PredicateManage():
             newman.views = 0
             newman.revised = datetime.datetime.now()
             newman.save()
+            self.manifest = newman
         return self.predicate
