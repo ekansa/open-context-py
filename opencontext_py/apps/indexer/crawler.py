@@ -16,13 +16,18 @@ class Crawler():
         them searchable in Apache Solr.
 
         To use, import this library and instantiate a crawler object:
-            crawler = Crawler()
+
+        crawler = Crawler()
+
         Then crawl as follows:
-            crawler.crawl()
-        Crawling a single document is also supported:
-            crawler.index_single_document(
-                '9E474B89-E36B-4B9D-2D38-7C7CCBDBB030'
-                )
+
+        crawler.crawl()
+
+        Crawling a single document is also supported with the
+        index_single_document method. Just provide the document's UUID.
+        For example:
+
+        crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
         '''
         # The list of OC items to crawl
         self.uuidlist = UUIDList().uuids
@@ -37,10 +42,12 @@ class Crawler():
 
     def crawl(self, chunksize=500):
         '''
+        For efficiency, this method processes documents in "chunks."
         The default chunk size is 500, but one can specify other values.
 
         For example, to specify a chunksize of 100, use this method as
         follows:
+
         crawler = Crawler()
         crawler.crawl(100)
         '''
