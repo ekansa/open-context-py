@@ -36,6 +36,15 @@ class Crawler():
             sys.exit(1)
 
     def crawl(self, chunksize=500):
+        '''
+        The default chunk size is 500, but one can specify other values.
+
+        For example, to specify a chunksize of 100, use this method as
+        follows:
+        crawler = Crawler()
+        crawler.crawl(100)
+        '''
+
         start_time = time.time()
         print('\n\nStarting crawl...\n')
         print("(#)\tUUID")
@@ -76,6 +85,13 @@ class Crawler():
         print('--------------------------------------------\n')
 
     def index_single_document(self, uuid):
+        '''
+        Use this method to crawl a single document. Provide the item's
+        UUID as an argument. For example:
+
+        crawler = Crawler()
+        crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
+        '''
         print('\nAttempting to index document ' + uuid + '...\n')
         try:
             solrdocument = SolrDocument(uuid).fields
