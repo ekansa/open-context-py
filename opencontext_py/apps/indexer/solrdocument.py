@@ -87,7 +87,7 @@ class SolrDocument:
         for predicate in predicates:
             # We need the predicate's uuid to get its parents
             predicate_uuid = predicate[1]['owl:sameAs'].split('/')[-1]
-            predicate_type = predicate[1]['@type']
+            predicate_type = predicate[1]['type']
             parents = LinkRecursion(
                 ).get_jsonldish_entity_parents(predicate_uuid)
             # Process parents
