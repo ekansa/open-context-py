@@ -1,0 +1,666 @@
+﻿
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://www.cidoc-crm.org/cidoc-crm/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": "oc-gen:category",
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@id": "geojson:bbox",
+            "@container": "@list"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@id": "geojson:features",
+            "@container": "@set"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note",
+        "oc-pred:year--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/728F7EED-78E4-4525-F2DD-4185A26055B0",
+            "label": "Year",
+            "slug": "year--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:internal-find-number--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/25_DT_Var",
+            "label": "Internal Find Number",
+            "slug": "internal-find-number--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:integer"
+        },
+        "oc-pred:material--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/29_DT_Var",
+            "label": "Material",
+            "slug": "material--1",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:find-date--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/26_DT_Var",
+            "label": "Find Date",
+            "slug": "find-date--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:date"
+        },
+        "oc-pred:registration-date--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/27_DT_Var",
+            "label": "Registration Date",
+            "slug": "registration-date--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:date"
+        },
+        "oc-pred:artifact-name--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/28_DT_Var",
+            "label": "Artifact Name",
+            "slug": "artifact-name--1",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:initials--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/50AC2EE7-0BD5-45EE-6402-84B5974FD9B3",
+            "label": "Initials",
+            "slug": "initials--1",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:depth--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/82A288C8-24E1-41B1-E55E-3662844DE768",
+            "label": "Depth",
+            "slug": "depth--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:double"
+        },
+        "oc-pred:diameter--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/06BF03C9-B979-4582-1334-FA37F9536A2C",
+            "label": "Diameter",
+            "slug": "diameter--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:double"
+        },
+        "oc-pred:comparanda--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/9CA7DF79-B8E4-4334-22F0-C243D438F97E",
+            "label": "Comparanda",
+            "slug": "comparanda--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:weight--1-6": {
+            "owl:sameAs": "http://opencontext.org/predicates/498007BD-E0F4-4896-89F5-674F7FEDC848",
+            "label": "Weight",
+            "slug": "weight--1-6",
+            "oc-gen:predType": "variable",
+            "type": "xsd:double"
+        },
+        "oc-pred:conservation--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/52EE91E0-0E3C-4CA2-9D5A-38BF9AC79BCD",
+            "label": "Conservation",
+            "slug": "conservation--1",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:group--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/D79677B8-BBD9-4FE8-C917-3689DA664E2D",
+            "label": "Group",
+            "slug": "group--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:double"
+        },
+        "oc-pred:description--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/DF3081B7-F799-4404-B20B-CBE823C5480C",
+            "label": "Description",
+            "slug": "description--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:mint--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/A36766A0-1260-49DD-9C14-4B56DEFC3523",
+            "label": "Mint",
+            "slug": "mint--1",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:thickness--1": {
+            "owl:sameAs": "http://opencontext.org/predicates/DFDC70E0-C2E6-4CAD-CCF9-2EB4755D7458",
+            "label": "Thickness",
+            "slug": "thickness--1",
+            "oc-gen:predType": "variable",
+            "type": "xsd:double"
+        },
+        "oc-pred:link": {
+            "owl:sameAs": "http://opencontext.org/predicates/oc-3",
+            "label": "link",
+            "slug": "link",
+            "oc-gen:predType": "link",
+            "type": "@id"
+        },
+        "oc-pred:principle-author-analyst": {
+            "owl:sameAs": "http://opencontext.org/predicates/oc-28",
+            "label": "Principle Author / Analyst",
+            "slug": "principle-author-analyst",
+            "oc-gen:predType": "link",
+            "type": "@id"
+        }
+    },
+    "id": "http://opencontext.org/subjects/766ED8AA-3147-4CA2-6ECA-BD96BE0433BE",
+    "uuid": "766ED8AA-3147-4CA2-6ECA-BD96BE0433BE",
+    "slug": "dt-5019--1",
+    "label": "DT# 5019",
+    "category": [
+        "oc-gen:cat-0009"
+    ],
+    "oc-gen:has-context-path": {
+        "id": "#context-1",
+        "type": "oc-gen:contexts",
+        "oc-gen:has-path-items": [
+            {
+                "id": "http://opencontext.org/subjects/1_Global_Spatial",
+                "slug": "turkey",
+                "label": "Turkey",
+                "type": "oc-gen:cat-0046"
+            },
+            {
+                "id": "http://opencontext.org/subjects/1_DT_Spatial",
+                "slug": "domuztepe--1",
+                "label": "Domuztepe",
+                "type": "oc-gen:cat-0022"
+            },
+            {
+                "id": "http://opencontext.org/subjects/079651AD-9A94-4831-257A-637E46D348FC",
+                "slug": "vii--1-8",
+                "label": "VII",
+                "type": "oc-gen:cat-0032"
+            },
+            {
+                "id": "http://opencontext.org/subjects/D9428CF0-B3BA-4561-B850-E7A54D1786A1",
+                "slug": "lot-3930--1",
+                "label": "Lot 3930",
+                "type": "oc-gen:cat-0028"
+            }
+        ]
+    },
+    "oc-gen:has-obs": [
+        {
+            "id": "#obs-1",
+            "oc-gen:sourceID": "z_38_b4bbbac01",
+            "oc-gen:obsStatus": "active",
+            "type": "oc-gen:observations",
+            "oc-pred:year--1": [
+                {
+                    "id": "#string-9853FFCD-1578-4789-BA95-9EFFBDBA0993",
+                    "xsd:string": "335-37"
+                }
+            ],
+            "oc-pred:internal-find-number--1": [
+                221.0
+            ],
+            "oc-pred:material--1": [
+                {
+                    "id": "http://opencontext.org/types/356EA7D5-07BA-439E-A845-385A80421C09",
+                    "slug": "billon--1",
+                    "label": "Billon"
+                }
+            ],
+            "oc-pred:find-date--1": [
+                "2005-08-18"
+            ],
+            "oc-pred:registration-date--1": [
+                "2005-09-04"
+            ],
+            "oc-pred:artifact-name--1": [
+                {
+                    "id": "http://opencontext.org/types/28_284_DT_VarVal",
+                    "slug": "coin--1",
+                    "label": "Coin"
+                }
+            ],
+            "oc-pred:initials--1": [
+                {
+                    "id": "http://opencontext.org/types/F5AF09A7-2859-4608-11AE-0533B6B184FD",
+                    "slug": "em--1",
+                    "label": "EM"
+                }
+            ],
+            "oc-pred:depth--1": [
+                103.5
+            ],
+            "oc-pred:diameter--1": [
+                17.0
+            ],
+            "oc-pred:comparanda--1": [
+                {
+                    "id": "#string-21B7BD9C-5C3E-41E9-71CB-80D4C5DF5238",
+                    "xsd:string": "RIC VII Antioch 109"
+                }
+            ],
+            "oc-pred:weight--1-6": [
+                1.65
+            ],
+            "oc-pred:conservation--1": [
+                {
+                    "id": "http://opencontext.org/types/08F6B8C8-2238-45AC-2DF9-23E9657EE597",
+                    "slug": "no--1",
+                    "label": "no"
+                }
+            ],
+            "oc-pred:group--1": [
+                13.0
+            ],
+            "oc-pred:description--1": [
+                {
+                    "id": "#string-24099962-41D9-4FDC-713F-855AD902AFE4",
+                    "xsd:string": "Constantine II OBV: CONSTANTINVS IVN NOB C, laureate, cuirassed bust right REV: GLOR-IA EXERC-ITVS, two soldiers holding spears and shields on either side of standard."
+                }
+            ],
+            "oc-pred:mint--1": [
+                {
+                    "id": "http://opencontext.org/types/3886C289-6C32-405C-CCBD-36159E140EA3",
+                    "slug": "smanth-antioch--1",
+                    "label": "SMANΘ Antioch"
+                }
+            ],
+            "oc-pred:thickness--1": [
+                1.8
+            ],
+            "oc-pred:link": [
+                {
+                    "id": "http://opencontext.org/media/95D5414A-5CFA-46E3-2DB6-69432F34A0BA",
+                    "slug": "221obv1jpg--1",
+                    "label": "221obv1.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221obv1.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/BAFA847E-9F15-464D-C5C8-DC2055E63CCD",
+                    "slug": "221obv2jpg--1",
+                    "label": "221obv2.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221obv2.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/C385A880-9A71-4C01-41D0-C197D018FFF2",
+                    "slug": "221obv4jpg--1",
+                    "label": "221obv4.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221obv4.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/99BD3C43-1AD5-4148-7924-76AE7AFCD874",
+                    "slug": "221rev1jpg--1",
+                    "label": "221rev1.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev1.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/393E2A93-6328-4038-BFBA-63203B0577E6",
+                    "slug": "221rev2jpg--1",
+                    "label": "221rev2.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev2.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/FC2AD9D6-A13D-4E24-79E0-3C63DC34CFB9",
+                    "slug": "221rev3jpg--1",
+                    "label": "221rev3.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev3.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/8D8D1912-E2F2-48D0-F6CE-2581027A9869",
+                    "slug": "221rev4jpg--1",
+                    "label": "221rev4.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev4.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/44F0A722-5985-47F4-67E1-2F4CF5555EA9",
+                    "slug": "221rev5jpg--1",
+                    "label": "221rev5.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev5.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/B421EEA4-9760-45C1-593D-4FC36022291B",
+                    "slug": "221rev6jpg--1",
+                    "label": "221rev6.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev6.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/1E41BBCC-BA8B-4928-017F-C337CE60C6A1",
+                    "slug": "221rev7jpg--1",
+                    "label": "221rev7.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev7.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/8E5F6976-AA47-439C-1E68-94708C9A144B",
+                    "slug": "221rev8jpg--1",
+                    "label": "221rev8.jpg",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/221rev8.jpg",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/B486B8C1-4D73-438C-8F1C-728306209366",
+                    "slug": "dscn1583jpg--1",
+                    "label": "DSCN1583.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1583.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/6A9D590A-CDF1-4E60-0C4D-A2E150F61A97",
+                    "slug": "dscn1584jpg--1",
+                    "label": "DSCN1584.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1584.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/65CAA74D-25B4-4D9A-C9CE-951237359C16",
+                    "slug": "dscn1585jpg--1",
+                    "label": "DSCN1585.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1585.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/510727DF-EFD7-4D4A-9B9A-A1288EA39213",
+                    "slug": "dscn1586jpg--1",
+                    "label": "DSCN1586.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1586.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/450EC1B8-1DC7-4809-D7F3-3BA70302AA00",
+                    "slug": "dscn1587jpg--1",
+                    "label": "DSCN1587.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1587.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/7C299360-6199-4B31-A8B1-DF4429D0CE7C",
+                    "slug": "dscn1588jpg--1",
+                    "label": "DSCN1588.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1588.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/CEA30EED-5B33-490C-3405-D2B972CF031D",
+                    "slug": "dscn1589jpg--1",
+                    "label": "DSCN1589.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1589.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/2B909068-FF62-416E-3B34-6686986DCC17",
+                    "slug": "dscn1590jpg--1",
+                    "label": "DSCN1590.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1590.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/6B515F9B-1E28-4B91-AA7C-FA102534F466",
+                    "slug": "dscn1778jpg--1",
+                    "label": "DSCN1778.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1778.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/6489F871-3509-432A-CA55-A6AD43AA0644",
+                    "slug": "dscn1779jpg--1",
+                    "label": "DSCN1779.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1779.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/85175531-4251-41F4-5C9A-9F227E9AA5BB",
+                    "slug": "dscn1781jpg--1",
+                    "label": "DSCN1781.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1781.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/819513C0-D30E-4108-3D40-3644D13B76E3",
+                    "slug": "dscn1782jpg--1",
+                    "label": "DSCN1782.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1782.JPG",
+                    "type": "image"
+                },
+                {
+                    "id": "http://opencontext.org/media/227C7EFE-B44E-47A4-0909-7E9775370AE3",
+                    "slug": "dscn1783jpg--1",
+                    "label": "DSCN1783.JPG",
+                    "oc-gen:thumbnail-uri": "http://artiraq.org/static/opencontext/domuztepe/thumbs/coins/dt5019/DSCN1783.JPG",
+                    "type": "image"
+                }
+            ],
+            "oc-pred:principle-author-analyst": [
+                {
+                    "id": "http://opencontext.org/persons/C38BF34C-4E19-495B-0B2D-0EB787415A7B",
+                    "slug": "evan-carlson--1",
+                    "label": "Evan Carlson"
+                }
+            ]
+        }
+    ],
+    "features": [
+        {
+            "id": "#geo-1",
+            "properties": {
+                "id": "#geo-props-1",
+                "href": "http://opencontext.org/subjects/766ED8AA-3147-4CA2-6ECA-BD96BE0433BE",
+                "type": "oc-gen:discovey-location",
+                "location-note": "Location data available with no intentional reduction in precision",
+                "reference-label": "Domuztepe",
+                "reference-uri": "http://opencontext.org/subjects/1_DT_Spatial",
+                "reference-type": "inferred"
+            },
+            "type": "Feature",
+            "geometry": {
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    37.043998718262,
+                    37.330001831055
+                ],
+                "type": "Point"
+            },
+            "when": {
+                "id": "#event-when-1",
+                "type": "oc-gen:formation-use-life",
+                "start": 330,
+                "stop": 363,
+                "reference-type": "specified"
+            }
+        }
+    ],
+    "type": "FeatureCollection",
+    "dc-terms:published": "2010-07-31",
+    "dc-terms:isPartOf": [
+        {
+            "id": "http://opencontext.org/projects/3",
+            "slug": "domuztepe-excavations--1-2",
+            "label": "Domuztepe Excavations"
+        }
+    ],
+    "dc-terms:contributor": [
+        {
+            "id": "http://opencontext.org/persons/C38BF34C-4E19-495B-0B2D-0EB787415A7B",
+            "slug": "evan-carlson--1",
+            "label": "Evan Carlson"
+        }
+    ],
+    "@graph": [
+        {
+            "@id": "oc-pred:mint--1",
+            "skos:closeMatch": [
+                {
+                    "id": "http://gawd.atlantides.org/terms/origin",
+                    "slug": "gawd-atlantides-org-terms-origin",
+                    "label": "Origin place"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:diameter--1",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:weight--1-6",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/gram",
+                    "slug": "www-freebase-com-view-en-gram",
+                    "label": "gram"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:thickness--1",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/3886C289-6C32-405C-CCBD-36159E140EA3",
+            "skos:closeMatch": [
+                {
+                    "id": "http://pleiades.stoa.org/places/658381",
+                    "slug": "pleiades-stoa-org-places-658381",
+                    "label": "Antiochia/Theoupolis"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0009",
+            "label": "Coin",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0008",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0008",
+                    "label": "Object"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/coin.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0046",
+            "label": "Region",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0020",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0020",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/region.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0022",
+            "label": "Site",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0020",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0020",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/site.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0032",
+            "label": "Operation",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0023",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0023",
+                    "label": "Site Area"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/operation-area.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0028",
+            "label": "Lot",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0024",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0024",
+                    "label": "Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/locus-lot.jpg"
+                }
+            ]
+        }
+    ]
+}

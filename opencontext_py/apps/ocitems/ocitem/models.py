@@ -43,8 +43,6 @@ class OCitem():
     PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
     PREDICATES_OCGEN_OBSLABEL = 'label'
     PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
-    PREDICATES_OCGEN_HASGEOREFSOURCE = 'oc-gen:has-geo-ref-source'
-    PREDICATES_OCGEN_HASCHRONOREFSOURCE = 'oc-gen:has-chrono-ref-source'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
 
     def __init__(self):
@@ -222,6 +220,7 @@ class OCitem():
             for tree_node, children in self.contents.items():
                 act_children = LastUpdatedOrderedDict()
                 act_children['id'] = tree_node
+                act_children['type'] = 'oc-gen:contents'
                 for child_uuid in children:
                     act_children = item_con.add_json_predicate_list_ocitem(act_children,
                                                                            self.PREDICATES_OCGEN_CONTAINS,
@@ -286,6 +285,7 @@ class ItemConstruction():
         context['id'] = '@id'
         context['label'] = 'rdfs:label'
         context['uuid'] = 'dc-terms:identifier'
+        context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = 'oc-gen:category'
         context['Feature'] = 'geojson:Feature'
@@ -316,8 +316,8 @@ class ItemConstruction():
         context['specified'] = 'oc-gen:specified'
         context['reference-uri'] = 'oc-gen:reference-uri'
         context['reference-label'] = 'oc-gen:reference-label'
-        context['location-precision'] = 'oc-gen:geojson-location-precision'
-        context['location-note'] = 'oc-gen:geojson-location-note'
+        context['location-precision'] = 'oc-gen:location-precision'
+        context['location-note'] = 'oc-gen:location-note'
         self.base_context = context
 
     def __del__(self):
@@ -404,7 +404,7 @@ class ItemConstruction():
                         if(act_obs_num >= 0 and act_obs_num != 100):
                             act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'active'
                         else:
-                            act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'not active'
+                            act_obs[OCitem.PREDICATES_OCGEN_OBSTATUS] = 'deprecated'
                         try:
                             obs_meta = ObsMetadata.objects.get(source_id=assertion.source_id,
                                                                obs_num=assertion.obs_num)
@@ -415,6 +415,7 @@ class ItemConstruction():
                             if(len(obs_meta.note) > 0):
                                 act_obs[OCitem.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
                         add_obs_def = False
+                        act_obs['type'] = 'oc-gen:observations'
                     if(assertion.predicate_uuid in self.predicates):
                         act_pred_key = self.predicates[assertion.predicate_uuid]
                         act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
@@ -464,6 +465,7 @@ class ItemConstruction():
                     # change the parent node to context not contents
                     tree_node = tree_node.replace('contents', 'context')
                     act_context['id'] = tree_node
+                    act_context['type'] = 'oc-gen:contexts'
                     # now reverse the list of parent contexts, so top most parent context is first,
                     # followed by children contexts
                     parents = r_parents[::-1]
@@ -711,7 +713,7 @@ class ItemConstruction():
                 feature_events[geo_node] = []
                 geo_props = LastUpdatedOrderedDict()
                 geo_props['href'] = URImanagement.make_oc_uri(uuid, item_type, self.cannonical_uris)
-                geo_props['location-type'] = geo.meta_type
+                geo_props['type'] = geo.meta_type
                 if(uuid != geo.uuid):
                     geo_props['reference-type'] = 'inferred'
                     geo_props['reference-uri'] = URImanagement.make_oc_uri(geo.uuid, 'subjects', self.cannonical_uris)

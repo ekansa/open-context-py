@@ -1,617 +1,644 @@
 ﻿
 {
     "@context": {
-        "id": "@id",
         "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
         "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-        "label": "rdfs:label",
         "xsd": "http://www.w3.org/2001/XMLSchema#",
         "skos": "http://www.w3.org/2004/02/skos/core#",
         "owl": "http://www.w3.org/2002/07/owl#",
         "dc-terms": "http://purl.org/dc/terms/",
-        "uuid": "dc-terms:identifier",
         "bibo": "http://purl.org/ontology/bibo/",
         "foaf": "http://xmlns.com/foaf/0.1/",
         "cidoc-crm": "http://www.cidoc-crm.org/cidoc-crm/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
         "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
         "oc-pred": "http://opencontext.org/predicates/",
-        "type": "oc-gen:geojson-type",
-        "FeatureCollection": "oc-gen:geojson-feature-col",
-        "Feature": "oc-gen:geojson-feature",
-        "Point": "oc-gen:geojson-point",
-        "Polygon": "oc-gen:geojson-polygon",
-        "features": "oc-gen:geojson-features",
-        "geometry": "oc-gen:geojson-geometry",
-        "coordinates": "oc-gen:geojson-coordinates",
-        "properties": "oc-gen:geojson-properties",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": "oc-gen:category",
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
         "reference-type": {
-            "@type": "@id",
+            "type": "@id",
             "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
         "reference-uri": "oc-gen:reference-uri",
         "reference-label": "oc-gen:reference-label",
-        "location-precision": "oc-gen:geojson-location-precision",
-        "location-note": "oc-gen:geojson-location-note",
-        "where": {
-            "@type": "@id",
-            "@id": "oc-gen:event-where"
-        },
-        "when": "oc-gen:event-when",
-        "start": {
-            "@id": "http://www.w3.org/2006/time#hasBeginning"
-        },
-        "stop": {
-            "@id": "http://www.w3.org/2006/time#hasEnding"
-        },
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note",
         "oc-pred:element--35": {
             "owl:sameAs": "http://opencontext.org/predicates/56D8ADE0-1006-4177-866F-86644C1DC64F",
             "label": "Element",
             "slug": "element--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:taxon--35": {
             "owl:sameAs": "http://opencontext.org/predicates/7949DC4B-582C-40D5-EEF6-4C3D382D8241",
             "label": "Taxon",
             "slug": "taxon--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:symmetry--35": {
             "owl:sameAs": "http://opencontext.org/predicates/89A7DBA7-5D8A-43F5-45ED-DA19E85E22FE",
             "label": "Symmetry",
             "slug": "symmetry--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:id--35": {
             "owl:sameAs": "http://opencontext.org/predicates/3FECE781-AD62-41E5-07BE-0C280FEACDB2",
             "label": "Id #",
             "slug": "id--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:string"
+            "type": "xsd:string"
         },
         "oc-pred:letter--35": {
             "owl:sameAs": "http://opencontext.org/predicates/DA485DEB-1931-45BC-1B6A-4A54C26FCBA3",
             "label": "Letter",
             "slug": "letter--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:date"
+            "type": "xsd:date"
         },
         "oc-pred:find-number--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A65D6B1B-7E37-413B-2FF2-B0A5BE477EAA",
             "label": "Find Number",
             "slug": "find-number--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:integer"
+            "type": "xsd:integer"
         },
         "oc-pred:recovery-method--35": {
             "owl:sameAs": "http://opencontext.org/predicates/FD52797E-E90B-4B95-C2C3-E502A1C00F38",
             "label": "Recovery Method",
             "slug": "recovery-method--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:articulation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/B8ED6D43-A341-4AEC-0159-3917AAFA65DF",
             "label": "Articulation",
             "slug": "articulation--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:integer"
+            "type": "xsd:integer"
         },
         "oc-pred:certainty--35": {
             "owl:sameAs": "http://opencontext.org/predicates/B1604784-FB0B-476C-ADC2-D353EA5BFC7F",
             "label": "Certainty",
             "slug": "certainty--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:sex--35": {
             "owl:sameAs": "http://opencontext.org/predicates/1E6164D0-1326-4BC0-5F03-2C5D999B5A4B",
             "label": "Sex",
             "slug": "sex--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:animal-size--35": {
             "owl:sameAs": "http://opencontext.org/predicates/706ECC0C-8F6B-4C5A-51AE-8188CADFD229",
             "label": "Animal Size",
             "slug": "animal-size--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:surface-condition--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A33A9A45-B90A-43FB-B728-AD03F7AA7D49",
             "label": "Surface Condition",
             "slug": "surface-condition--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:origin-of-fragmentation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A3E74DF6-D162-4EE3-C217-01170C4ED419",
             "label": "Origin Of Fragmentation",
             "slug": "origin-of-fragmentation--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:number-of-pieces--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D7200F30-3072-4C39-65A6-E13223BA55F1",
             "label": "Number Of Pieces",
             "slug": "number-of-pieces--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:integer"
+            "type": "xsd:integer"
         },
         "oc-pred:number-of-elements--35": {
             "owl:sameAs": "http://opencontext.org/predicates/0B4D0518-7630-4A23-D609-060CCD6EDFC3",
             "label": "Number Of  Elements",
             "slug": "number-of-elements--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:integer"
+            "type": "xsd:integer"
         },
         "oc-pred:number-of-diagnostic-zones--35": {
             "owl:sameAs": "http://opencontext.org/predicates/9EFE6009-E424-413E-A75F-1D5A23FDADC7",
             "label": "Number Of Diagnostic Zones",
             "slug": "number-of-diagnostic-zones--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:weight-g--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A3F054B2-B406-4FCD-2829-572FCAC48F74",
             "label": "Weight (g)",
             "slug": "weight-g--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:other-sections-with-data-for-this-specimen--35": {
             "owl:sameAs": "http://opencontext.org/predicates/070E858C-ECF4-4CEA-7CAA-FC8B5EE35787",
             "label": "Other Sections (with Data For This Specimen)",
             "slug": "other-sections-with-data-for-this-specimen--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:length-cm--35": {
             "owl:sameAs": "http://opencontext.org/predicates/3C0F8201-02DF-4906-6808-0AF0A58DEB8F",
             "label": "Length (cm)",
             "slug": "length-cm--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:pictures--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D4012CCE-12F9-47B6-9CB9-2192BA25939F",
             "label": "Pictures",
             "slug": "pictures--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:location--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D05E6AA5-F8A6-4B80-ED76-8EF231585C6D",
             "label": "Location",
             "slug": "location--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:body-portion--35": {
             "owl:sameAs": "http://opencontext.org/predicates/8A705651-8598-44F3-7B54-69D922AD84A5",
             "label": "Body Portion",
             "slug": "body-portion--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:size-class--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D50AF395-DD5B-48FC-53BD-AC9D7A31B625",
             "label": "Size Class",
             "slug": "size-class--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:date-recorded--35": {
             "owl:sameAs": "http://opencontext.org/predicates/E4F4C075-4CEC-481F-D4F9-D433D507064E",
             "label": "Date Recorded",
             "slug": "date-recorded--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:date"
+            "type": "xsd:date"
         },
         "oc-pred:fragment-size--35": {
             "owl:sameAs": "http://opencontext.org/predicates/360950D6-F401-4FEC-0D42-3F2EA869656B",
             "label": "Fragment Size",
             "slug": "fragment-size--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:proximal-distal--35": {
             "owl:sameAs": "http://opencontext.org/predicates/DDBCD6F2-518A-4770-AE0B-3ED13BD54F49",
             "label": "Proximal / distal",
             "slug": "proximal-distal--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:fusion--35": {
             "owl:sameAs": "http://opencontext.org/predicates/B7C7E877-7C69-4E84-1069-29767A45A67F",
             "label": "Fusion",
             "slug": "fusion--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:fragmentation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/AD2CE4A4-4EE9-447E-4712-4AF27B5171DA",
             "label": "Fragmentation",
             "slug": "fragmentation--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:proximal-portion-present-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/82E807A5-3F65-43CC-FB7F-6B2F67FEB861",
             "label": "Proximal Portion Present: Anterior/posterior",
             "slug": "proximal-portion-present-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:proximal-portion-present-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/113E2241-3214-4059-EF81-5377D51EDF39",
             "label": "Proximal Portion Present: Medial/lateral",
             "slug": "proximal-portion-present-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:distal-portion-present-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/2521E7ED-FBB7-4F33-12C1-1E12A6342F47",
             "label": "Distal Portion Present: Anterior/posterior",
             "slug": "distal-portion-present-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:distal-portion-present-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/785B1E1F-E02C-4343-F278-E2422797491A",
             "label": "Distal Portion Present: Medial/lateral",
             "slug": "distal-portion-present-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:element-portion--35": {
             "owl:sameAs": "http://opencontext.org/predicates/F7CED6FD-DFF8-43F5-2847-6F94FDC95F2E",
             "label": "Element Portion",
             "slug": "element-portion--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-shaft-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/C82FFC35-26A3-420E-06D7-16A306877672",
             "label": "Cuts: Shaft, Anterior/posterior",
             "slug": "cuts-shaft-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-shaft-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A9627184-311B-4381-BA1B-B2BE2F7CEA62",
             "label": "Cuts: Shaft, Medial/lateral",
             "slug": "cuts-shaft-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-proximal-end-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/66439236-642A-40D3-7FDB-13CB930B3D75",
             "label": "Cuts: Proximal End, Anterior/posterior",
             "slug": "cuts-proximal-end-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-proximal-end-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/58BAE817-6B69-4F5C-08DF-E519D57594A8",
             "label": "Cuts: Proximal End, Medial/lateral",
             "slug": "cuts-proximal-end-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-distal-end-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/77738DC5-2553-4006-7D38-A25C9CA26D6B",
             "label": "Cuts: Distal End, Anterior/posterior",
             "slug": "cuts-distal-end-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-distal-end-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/DACF73C7-56A2-4B0A-3845-86D1B5FE708F",
             "label": "Cuts: Distal End, Medial/lateral",
             "slug": "cuts-distal-end-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cuts-cranial--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D336C551-D1E2-4DD3-D4F5-072862E79BB5",
             "label": "Cuts: Cranial",
             "slug": "cuts-cranial--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cut-type--35": {
             "owl:sameAs": "http://opencontext.org/predicates/8B1705A4-4E8D-4708-E1BC-0A7EC0B61D0F",
             "label": "Cut Type",
             "slug": "cut-type--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:tool-material--35": {
             "owl:sameAs": "http://opencontext.org/predicates/08FEFD00-B899-4A4F-A0AA-33EB8D94BB4C",
             "label": "Tool Material",
             "slug": "tool-material--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cut-depth--35": {
             "owl:sameAs": "http://opencontext.org/predicates/AE108406-2B24-4051-69EA-4487256EC284",
             "label": "Cut Depth",
             "slug": "cut-depth--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:cut-interpretation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/EA77CD86-41B5-41BD-DAC0-508E13C98E54",
             "label": "Cut Interpretation",
             "slug": "cut-interpretation--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-shaft-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/357DAD23-85D4-4648-0A10-231A21FC4E7B",
             "label": "Blows: Shaft Anterior/posterior",
             "slug": "blows-shaft-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-shaft-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/69C67CDA-D72C-458A-749D-7B8BF759D204",
             "label": "Blows: Shaft Medial/lateral",
             "slug": "blows-shaft-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-proximal-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/CFD7EE98-A4B6-483A-A0E9-57C884C70729",
             "label": "Blows: Proximal Anterior/posterior",
             "slug": "blows-proximal-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-proximal-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D8B51064-801F-47FF-6D5B-0231F8FE7BB8",
             "label": "Blows: Proximal Medial/lateral",
             "slug": "blows-proximal-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-distal-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/70C0812F-4FEA-407F-9E09-98B85B936AB6",
             "label": "Blows: Distal Anterior/posterior",
             "slug": "blows-distal-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-distal-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/9D89DE76-59E3-4887-0980-86C89ED4097E",
             "label": "Blows: Distal Medial/lateral",
             "slug": "blows-distal-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blows-cranial--35": {
             "owl:sameAs": "http://opencontext.org/predicates/A099D76F-0915-4620-8ED1-8D602359E169",
             "label": "Blows: Cranial",
             "slug": "blows-cranial--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:blow-interpretation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/1008DD48-E8EF-46E1-9BE3-59D48D35817F",
             "label": "Blow Interpretation",
             "slug": "blow-interpretation--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-shaft-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/AC44F01D-14F0-4756-5239-A8FAA9F0ADC0",
             "label": "Polish: Shaft Anterior/posterior",
             "slug": "polish-shaft-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-shaft-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/BD705325-CDB3-4F3C-B570-4D8FD7641F80",
             "label": "Polish: Shaft Medial/lateral",
             "slug": "polish-shaft-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-proximal-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/E967FDD1-8F26-43DE-E0C6-0E362FEE807E",
             "label": "Polish: Proximal Anterior/posterior",
             "slug": "polish-proximal-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-proximal-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/7E559B28-89B2-4C0B-9CAF-E2C222C26B2B",
             "label": "Polish: Proximal Medial/lateral",
             "slug": "polish-proximal-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-distal-anteriorposterior--35": {
             "owl:sameAs": "http://opencontext.org/predicates/682EE68D-3DA4-47D1-9236-D83772700FBD",
             "label": "Polish: Distal Anterior/posterior",
             "slug": "polish-distal-anteriorposterior--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-distal-mediallateral--35": {
             "owl:sameAs": "http://opencontext.org/predicates/49145008-6A38-4FDF-E89C-FD67C14241DE",
             "label": "Polish: Distal Medial/lateral",
             "slug": "polish-distal-mediallateral--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-cranial--35": {
             "owl:sameAs": "http://opencontext.org/predicates/100050A7-B9BB-46B4-EEE7-F48B8BD37E1E",
             "label": "Polish: Cranial",
             "slug": "polish-cranial--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:polish-interpretation--35": {
             "owl:sameAs": "http://opencontext.org/predicates/D7F592BC-9701-4114-0D84-008BBFC2576F",
             "label": "Polish Interpretation",
             "slug": "polish-interpretation--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:modification-comments--35": {
             "owl:sameAs": "http://opencontext.org/predicates/803017A7-F996-455B-CB8A-6431BEF5812D",
             "label": "Modification Comments",
             "slug": "modification-comments--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:string"
+            "type": "xsd:string"
         },
         "oc-pred:description--35": {
             "owl:sameAs": "http://opencontext.org/predicates/6619B23F-20B3-454D-185C-D6C35FEBCA7D",
             "label": "Description",
             "slug": "description--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:string"
+            "type": "xsd:string"
         },
         "oc-pred:recording-level-of-study-recorded-for-this-unit--35": {
             "owl:sameAs": "http://opencontext.org/predicates/FEAC96CC-09BC-4B37-4204-A792D57A8A6B",
             "label": "Recording (level Of Study Recorded For This Unit)",
             "slug": "recording-level-of-study-recorded-for-this-unit--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:depositional-context--35": {
             "owl:sameAs": "http://opencontext.org/predicates/9B2CE20A-8ACB-4116-8637-7042FA5C53AC",
             "label": "Depositional Context",
             "slug": "depositional-context--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:faunal-unit-description-date-recorded--35": {
             "owl:sameAs": "http://opencontext.org/predicates/82240C28-A1EA-47AE-CAC6-F48A079B0F24",
             "label": "Faunal Unit Description Date Recorded",
             "slug": "faunal-unit-description-date-recorded--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:date"
+            "type": "xsd:date"
         },
         "oc-pred:measurement-set--35": {
             "owl:sameAs": "http://opencontext.org/predicates/0FB884E2-EB9A-4569-CD41-0D5B325BDCD2",
             "label": "Measurement Set",
             "slug": "measurement-set--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:glmstandard-measurement--35": {
             "owl:sameAs": "http://opencontext.org/predicates/DE59D6EC-89D4-4F9F-D17C-C9F85BB1BEB4",
             "label": "GLm::Standard measurement",
             "slug": "glmstandard-measurement--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:bdstandard-measurement--35": {
             "owl:sameAs": "http://opencontext.org/predicates/BD6DACE2-5515-42A6-9030-9CCDA0DFE304",
             "label": "Bd::Standard measurement",
             "slug": "bdstandard-measurement--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:gllstandard-measurement--35": {
             "owl:sameAs": "http://opencontext.org/predicates/46208705-68B4-4FE2-F40E-F18C3CFE5A35",
             "label": "GLl::Standard measurement",
             "slug": "gllstandard-measurement--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:dmstandard-measurement--35": {
             "owl:sameAs": "http://opencontext.org/predicates/59EC174D-C187-4C3B-4D01-5146E1F11576",
             "label": "Dm::Standard measurement",
             "slug": "dmstandard-measurement--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:dlstandard-measurement--35": {
             "owl:sameAs": "http://opencontext.org/predicates/AC8723C1-148F-462D-B2FA-E22D7AE9BC3D",
             "label": "Dl::Standard measurement",
             "slug": "dlstandard-measurement--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:greatest-breadth-of-the-proximal-end-trochleastanda--35": {
             "owl:sameAs": "http://opencontext.org/predicates/C0EA0815-A855-4C74-25B6-31A5EDB294C6",
             "label": "Greatest breadth of the proximal end (trochlea)::Standard measurement",
             "slug": "greatest-breadth-of-the-proximal-end-trochleastanda--35",
             "oc-gen:predType": "variable",
-            "@type": "xsd:double"
+            "type": "xsd:double"
         },
         "oc-pred:recorded-by--35": {
             "owl:sameAs": "http://opencontext.org/predicates/5F2317D9-3A16-4340-B8A5-7778B8723F8A",
             "label": "Recorded By",
             "slug": "recorded-by--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:checked-by--35": {
             "owl:sameAs": "http://opencontext.org/predicates/9B3F00E7-6436-40D4-A783-0F0749C7AE2D",
             "label": "Checked By",
             "slug": "checked-by--35",
             "oc-gen:predType": "variable",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:principle-author-analyst": {
             "owl:sameAs": "http://opencontext.org/predicates/oc-28",
             "label": "Principle Author / Analyst",
             "slug": "principle-author-analyst",
             "oc-gen:predType": "link",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:recorded-by": {
             "owl:sameAs": "http://opencontext.org/predicates/oc-20",
             "label": "Recorded by",
             "slug": "recorded-by",
             "oc-gen:predType": "link",
-            "@type": "@id"
+            "type": "@id"
         },
         "oc-pred:checked-by--35-2": {
             "owl:sameAs": "http://opencontext.org/predicates/85999AAA-ECCF-4F8B-A9A4-7C636BAF463A",
             "label": "Checked By",
             "slug": "checked-by--35-2",
             "oc-gen:predType": "link",
-            "@type": "@id"
+            "type": "@id"
         }
     },
     "id": "http://opencontext.org/subjects/2DA33D4B-D502-420E-EC2D-97D95E45F751",
+    "uuid": "2DA33D4B-D502-420E-EC2D-97D95E45F751",
+    "slug": "bone-4017--35",
     "label": "Bone 4017",
-    "@type": [
+    "category": [
         "oc-gen:cat-0015"
     ],
     "oc-gen:has-context-path": {
         "id": "#context-1",
+        "type": "oc-gen:contexts",
         "oc-gen:has-path-items": [
             {
                 "id": "http://opencontext.org/subjects/1_Global_Spatial",
-                "label": "Turkey"
+                "slug": "turkey",
+                "label": "Turkey",
+                "type": "oc-gen:cat-0046"
             },
             {
                 "id": "http://opencontext.org/subjects/E44A115A-DFCB-4971-6750-40955DF2C062",
-                "label": "Çatalhöyük"
+                "slug": "catalhoyuk--34-2",
+                "label": "Çatalhöyük",
+                "type": "oc-gen:cat-0022"
             },
             {
                 "id": "http://opencontext.org/subjects/A4D8DDA4-44C6-4EAE-4EF6-685BA2A3D7F6",
-                "label": "Mound East"
+                "slug": "mound-east--34",
+                "label": "Mound East",
+                "type": "oc-gen:cat-0041"
             },
             {
                 "id": "http://opencontext.org/subjects/845F877B-3A3F-4810-E6F3-C8D6FEA3AECA",
-                "label": "Area TP"
+                "slug": "area-tp--35",
+                "label": "Area TP",
+                "type": "oc-gen:cat-0030"
             },
             {
                 "id": "http://opencontext.org/subjects/E70E630A-E5A8-442F-0435-627632D3E724",
-                "label": "Unit 7405"
+                "slug": "unit-7405--35",
+                "label": "Unit 7405",
+                "type": "oc-gen:cat-0026"
             }
         ]
     },
@@ -620,21 +647,25 @@
             "id": "#obs-1",
             "oc-gen:sourceID": "z_20_316e016d7",
             "oc-gen:obsStatus": "active",
+            "type": "oc-gen:observations",
             "oc-pred:element--35": [
                 {
                     "id": "http://opencontext.org/types/10CC0A1C-000D-491C-E08A-CAD190F4CCB5",
+                    "slug": "astragalus-talus-tibial-tarsal--35",
                     "label": "Astragalus (talus, tibial tarsal)"
                 }
             ],
             "oc-pred:taxon--35": [
                 {
                     "id": "http://opencontext.org/types/21AE4DA9-75C6-432B-5AC3-F1EDC29A346E",
+                    "slug": "capra--35",
                     "label": "Capra"
                 }
             ],
             "oc-pred:symmetry--35": [
                 {
                     "id": "http://opencontext.org/types/7965A7B8-C0F2-41E3-9818-DD8AB3E6CD60",
+                    "slug": "left--35",
                     "label": "Left"
                 }
             ],
@@ -653,6 +684,7 @@
             "oc-pred:recovery-method--35": [
                 {
                     "id": "http://opencontext.org/types/1401F569-C1F3-4CD2-5256-098DA527B0DE",
+                    "slug": "dry-sieved-at-4-mm--35",
                     "label": "dry sieved at 4 mm"
                 }
             ],
@@ -662,30 +694,35 @@
             "oc-pred:certainty--35": [
                 {
                     "id": "http://opencontext.org/types/486D68AC-0FA4-47CC-22B4-CE2B842D80DC",
+                    "slug": "certain--35",
                     "label": "Certain"
                 }
             ],
             "oc-pred:sex--35": [
                 {
                     "id": "http://opencontext.org/types/01B025B2-87BE-4C2B-3097-EE9F4CE604E8",
+                    "slug": "male--35",
                     "label": "Male"
                 }
             ],
             "oc-pred:animal-size--35": [
                 {
                     "id": "http://opencontext.org/types/3A3E0464-81EE-4CF1-1263-0217B4BF035B",
+                    "slug": "medium--35",
                     "label": "Medium"
                 }
             ],
             "oc-pred:surface-condition--35": [
                 {
                     "id": "http://opencontext.org/types/04051042-BCB8-4578-13A3-7D6ADAC3A9FD",
+                    "slug": "unweathered--35",
                     "label": "Unweathered"
                 }
             ],
             "oc-pred:origin-of-fragmentation--35": [
                 {
                     "id": "http://opencontext.org/types/F0AD1B2B-CE75-42B9-E5CC-486771FB387A",
+                    "slug": "whole--35",
                     "label": "Whole"
                 }
             ],
@@ -704,6 +741,7 @@
             "oc-pred:other-sections-with-data-for-this-specimen--35": [
                 {
                     "id": "http://opencontext.org/types/7EC60353-05A4-4B54-1EDA-192D7671DD43",
+                    "slug": "modification-measurements--35",
                     "label": "Modification + Measurements"
                 }
             ],
@@ -713,24 +751,28 @@
             "oc-pred:pictures--35": [
                 {
                     "id": "http://opencontext.org/types/59AC9CD3-B55E-4946-C2BA-70F31820BFC6",
+                    "slug": "photo--35",
                     "label": "Photo"
                 }
             ],
             "oc-pred:location--35": [
                 {
                     "id": "http://opencontext.org/types/6F509DB3-CD1D-478A-3CFA-E7499F5BE2FE",
+                    "slug": "storage--35",
                     "label": "Storage"
                 }
             ],
             "oc-pred:body-portion--35": [
                 {
                     "id": "http://opencontext.org/types/63644384-02EB-4FB9-AF2C-A02364315130",
+                    "slug": "lowerlimb--35",
                     "label": "Lowerlimb"
                 }
             ],
             "oc-pred:size-class--35": [
                 {
                     "id": "http://opencontext.org/types/8D367318-EBC5-4612-05A5-9789DC03BBE4",
+                    "slug": "sheep-size-medium-dog-to-medium-sheep--35",
                     "label": "Sheep-size (medium dog to medium sheep)"
                 }
             ],
@@ -740,216 +782,252 @@
             "oc-pred:fragment-size--35": [
                 {
                     "id": "http://opencontext.org/types/B2548E22-1581-4348-A484-5C4657571F3B",
+                    "slug": "complete--35-5",
                     "label": "Complete"
                 }
             ],
             "oc-pred:proximal-distal--35": [
                 {
                     "id": "http://opencontext.org/types/1B0FE517-9B2C-47D4-C8EB-2528DEDF0D71",
+                    "slug": "complete--35",
                     "label": "Complete"
                 }
             ],
             "oc-pred:fusion--35": [
                 {
                     "id": "http://opencontext.org/types/C80028FF-4B5B-4A1C-0EE2-E2296335AA60",
+                    "slug": "indeterminate--35-3",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:fragmentation--35": [
                 {
                     "id": "http://opencontext.org/types/2167D2BD-FF26-4A1B-46CB-3AAB58B1FE02",
+                    "slug": "indeterminate--35-8",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:proximal-portion-present-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/DB321934-B396-4BAD-8D6E-5DA9034DED14",
+                    "slug": "indeterminate--35-51",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:proximal-portion-present-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/4F393255-F79F-4517-0226-DEB04F4F2C39",
+                    "slug": "indeterminate--35-21",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:distal-portion-present-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/5B85902F-1796-4035-51BC-BDBD72EAB212",
+                    "slug": "indeterminate--35-23",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:distal-portion-present-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/93AE9AAE-7793-4646-FFA3-A3E983B45EFB",
+                    "slug": "indeterminate--35-36",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:element-portion--35": [
                 {
                     "id": "http://opencontext.org/types/370CD752-A138-4525-68A8-72D6FAB55666",
+                    "slug": "complete--35-2",
                     "label": "Complete"
                 }
             ],
             "oc-pred:cuts-shaft-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/2493C1BC-233A-4C2B-53F0-0D474CCF69F4",
+                    "slug": "indeterminate--35-12",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-shaft-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/869091D2-18F1-49AE-9215-A16969ACD1B4",
+                    "slug": "indeterminate--35-35",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-proximal-end-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/449E4434-1848-4484-47DF-6571220BC752",
+                    "slug": "indeterminate--35-19",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-proximal-end-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/AFA1F366-4C74-4BD8-421D-B044FE9641F6",
+                    "slug": "indeterminate--35-41",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-distal-end-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/94538504-FFE7-465A-79B9-732BA7DFA0BB",
+                    "slug": "indeterminate--35-37",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-distal-end-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/16C50408-3155-48A7-A86E-1A6830383FCF",
+                    "slug": "indeterminate--35-6",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cuts-cranial--35": [
                 {
                     "id": "http://opencontext.org/types/2CCD7B87-541E-4CBE-EA3E-98BE3A3ABE65",
+                    "slug": "indeterminate--35-15",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:cut-type--35": [
                 {
                     "id": "http://opencontext.org/types/22DB28C8-C7DD-420F-4591-884B800B9334",
+                    "slug": "chop--35",
                     "label": "Chop"
                 }
             ],
             "oc-pred:tool-material--35": [
                 {
                     "id": "http://opencontext.org/types/1601B911-7302-4CFC-7644-651E57EDD330",
+                    "slug": "metal--35",
                     "label": "Metal"
                 }
             ],
             "oc-pred:cut-depth--35": [
                 {
                     "id": "http://opencontext.org/types/E0ECB85D-1333-461B-3582-37A06710AD2F",
+                    "slug": "light--35",
                     "label": "Light"
                 }
             ],
             "oc-pred:cut-interpretation--35": [
                 {
                     "id": "http://opencontext.org/types/D8A1FEB3-0BE0-468B-A677-B56E0FC7A3CD",
+                    "slug": "dismemberment--35-2",
                     "label": "Dismemberment"
                 }
             ],
             "oc-pred:blows-shaft-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/A90FBDB8-E052-4872-48CF-169AE5322DFA",
+                    "slug": "indetermiante--35",
                     "label": "Indetermiante"
                 }
             ],
             "oc-pred:blows-shaft-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/9C1F82A5-EFF3-4696-CE36-0F7452C7A2BD",
+                    "slug": "indeterminate--35-39",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blows-proximal-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/5CF7EE68-AFEA-472B-7FAD-7EA7A005DF15",
+                    "slug": "indeterminate--35-24",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blows-proximal-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/F6F4437C-AC26-4F16-EDC3-B6E8562DC10D",
+                    "slug": "indeterminate--35-4",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blows-distal-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/3A2AE9E0-FA93-4CCC-4535-4101AA37931E",
+                    "slug": "indeterminate--35-18",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blows-distal-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/9697F58D-6E1C-4167-EA20-3323EEE33142",
+                    "slug": "indeterminate--35-38",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blows-cranial--35": [
                 {
                     "id": "http://opencontext.org/types/7D4296E5-7FE8-4571-4C0D-B398ABD1B8B8",
+                    "slug": "indeterminate--35-33",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:blow-interpretation--35": [
                 {
                     "id": "http://opencontext.org/types/8DEE82E1-8227-4707-EADC-EBF17AEA27AA",
+                    "slug": "indeterminate--35",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-shaft-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/4D11D2AD-1536-4BCC-6852-28307B5A488E",
+                    "slug": "indeterminate--35-20",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-shaft-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/53833C8A-0B8B-4421-A629-D808E3471B5F",
+                    "slug": "indeterminate--35-22",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-proximal-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/C3C9E911-F231-4857-0661-2D43C87A445D",
+                    "slug": "indeterminate--35-46",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-proximal-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/FAF2F1D8-91AE-43E6-2191-BE48E763083F",
+                    "slug": "indeterminate--35-58",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-distal-anteriorposterior--35": [
                 {
                     "id": "http://opencontext.org/types/BD828281-6C15-4884-F521-E25EB559341A",
+                    "slug": "indeterminate--35-44",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-distal-mediallateral--35": [
                 {
                     "id": "http://opencontext.org/types/C36DC243-7F26-4AA3-65DA-431A33636466",
+                    "slug": "indeterminate--35-45",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-cranial--35": [
                 {
                     "id": "http://opencontext.org/types/6322B596-2C70-4B65-8076-131798D206DC",
+                    "slug": "indeterminate--35-28",
                     "label": "Indeterminate"
                 }
             ],
             "oc-pred:polish-interpretation--35": [
                 {
                     "id": "http://opencontext.org/types/23BBB0E3-E040-42B7-94D2-47E414F0000C",
+                    "slug": "indeterminate--35-11",
                     "label": "Indeterminate"
                 }
             ],
@@ -968,12 +1046,14 @@
             "oc-pred:recording-level-of-study-recorded-for-this-unit--35": [
                 {
                     "id": "http://opencontext.org/types/EFF90B5F-BB66-4A84-8311-07ADF0D69C79",
+                    "slug": "long-form--35",
                     "label": "Long form"
                 }
             ],
             "oc-pred:depositional-context--35": [
                 {
                     "id": "http://opencontext.org/types/EA1D1F14-70AB-4ECE-9FBF-92B77C0C5D3A",
+                    "slug": "---35",
                     "label": "-"
                 }
             ],
@@ -983,6 +1063,7 @@
             "oc-pred:principle-author-analyst": [
                 {
                     "id": "http://opencontext.org/persons/FD2D702F-1EC6-4865-CCCC-DA8AF166CC83",
+                    "slug": "arek-marciniak--35",
                     "label": "Arek Marciniak"
                 }
             ]
@@ -991,9 +1072,12 @@
             "id": "#obs-3",
             "oc-gen:sourceID": "z_20_21dc12bfc",
             "oc-gen:obsStatus": "active",
+            "label": "Measurements",
+            "type": "oc-gen:observations",
             "oc-pred:measurement-set--35": [
                 {
                     "id": "http://opencontext.org/types/AD234463-0263-4821-386E-417A0D617B91",
+                    "slug": "1--35-2",
                     "label": "1"
                 }
             ],
@@ -1018,24 +1102,28 @@
             "oc-pred:recorded-by--35": [
                 {
                     "id": "http://opencontext.org/types/F1EE2434-BDC7-48CE-15AA-CDC47EE5BC60",
+                    "slug": "kamilla-pawlowska--35",
                     "label": "Kamilla Pawlowska"
                 }
             ],
             "oc-pred:checked-by--35": [
                 {
                     "id": "http://opencontext.org/types/3ED7E8AE-5997-47E5-805D-82F76AA2ED23",
+                    "slug": "nerissa-russell--35-2",
                     "label": "Nerissa Russell"
                 }
             ],
             "oc-pred:recorded-by": [
                 {
                     "id": "http://opencontext.org/persons/C5F71C79-0395-4E6A-DFE9-52B2D5215113",
+                    "slug": "kamilla-pawlowska--34",
                     "label": "Kamilla Pawlowska"
                 }
             ],
             "oc-pred:checked-by--35-2": [
                 {
                     "id": "http://opencontext.org/persons/94AA8533-450D-4FC7-4DC1-3CB12A3FE52C",
+                    "slug": "nerissa-russell--34",
                     "label": "Nerissa Russell"
                 }
             ]
@@ -1043,35 +1131,34 @@
     ],
     "features": [
         {
-            "id": "#geo-1",
-            "properties": {
-                "reference-uri": "http://opencontext.org/subjects/A4D8DDA4-44C6-4EAE-4EF6-685BA2A3D7F6",
-                "id": "#geo-props-1",
-                "location-type": "oc-gen:discovey-location",
-                "href": "http://opencontext.org/subjects/2DA33D4B-D502-420E-EC2D-97D95E45F751",
-                "reference-label": "Mound East",
-                "reference-type": "inferred",
-                "location-note": "Location data available with no intentional reduction in precision"
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    32.827191,
+                    37.668196
+                ]
             },
             "when": {
                 "id": "#event-when-1",
-                "type": "Interval",
-                "@type": "oc-gen:formation-use-life",
+                "type": "oc-gen:formation-use-life",
                 "start": -6200,
                 "stop": -6000,
                 "reference-type": "inferred",
                 "reference-uri": "http://opencontext.org/subjects/845F877B-3A3F-4810-E6F3-C8D6FEA3AECA",
                 "reference-label": "Area TP"
             },
-            "geometry": {
-                "id": "#geo-geom-1",
-                "coordinates": [
-                    32.827191,
-                    37.668196
-                ],
-                "type": "Point"
+            "type": "Feature",
+            "properties": {
+                "href": "http://opencontext.org/subjects/2DA33D4B-D502-420E-EC2D-97D95E45F751",
+                "reference-type": "inferred",
+                "type": "oc-gen:discovey-location",
+                "location-note": "Location data available with no intentional reduction in precision",
+                "reference-label": "Mound East",
+                "reference-uri": "http://opencontext.org/subjects/A4D8DDA4-44C6-4EAE-4EF6-685BA2A3D7F6",
+                "id": "#geo-props-1"
             },
-            "type": "Feature"
+            "id": "#geo-1"
         }
     ],
     "type": "FeatureCollection",
@@ -1079,77 +1166,44 @@
     "dc-terms:isPartOf": [
         {
             "id": "http://opencontext.org/projects/02594C48-7497-40D7-11AE-AB942DC513B8",
-            "label": "Çatalhöyük Area TP Zooarchaeology",
-            "owl:sameAs": "http://opencontext.org/projects/catalhoyuk-area-tp-zooarchaeology--35"
+            "slug": "catalhoyuk-area-tp-zooarchaeology--35-2",
+            "label": "Çatalhöyük Area TP Zooarchaeology"
+        }
+    ],
+    "dc-terms:contributor": [
+        {
+            "id": "http://opencontext.org/persons/FD2D702F-1EC6-4865-CCCC-DA8AF166CC83",
+            "slug": "arek-marciniak--35",
+            "label": "Arek Marciniak"
+        },
+        {
+            "id": "http://opencontext.org/persons/C5F71C79-0395-4E6A-DFE9-52B2D5215113",
+            "slug": "kamilla-pawlowska--34",
+            "label": "Kamilla Pawlowska"
         }
     ],
     "@graph": [
         {
             "@id": "oc-pred:dmstandard-measurement--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ],
             "skos:related": [
                 {
                     "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0019",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-14",
                     "label": "Dm"
                 }
-            ]
-        },
-        {
-            "@id": "oc-pred:dlstandard-measurement--35",
+            ],
             "rdfs:range": [
                 {
                     "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
                     "label": "millimeter"
                 }
             ],
-            "skos:related": [
+            "rdfs:subPropertyOf": [
                 {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0018",
-                    "label": "Dl"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:gllstandard-measurement--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ],
-            "skos:related": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0029",
-                    "label": "GLl"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:glmstandard-measurement--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ],
-            "skos:related": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0030",
-                    "label": "GLm"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:sex--35",
-            "skos:closeMatch": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0078",
-                    "label": "Has physiological sex determination"
+                    "id": "http://opencontext.org/predicates/d0775fcc-ee1a-11e3-ae22-e840f2d4bd21",
+                    "slug": "dm--35",
+                    "label": "Dm"
                 }
             ]
         },
@@ -1158,58 +1212,8 @@
             "skos:closeMatch": [
                 {
                     "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0077",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-41",
                     "label": "Has fusion character"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-pieces--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-elements--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:number-of-diagnostic-zones--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/counting_measure",
-                    "label": "counting measure"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:bdstandard-measurement--35",
-            "skos:related": [
-                {
-                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0009",
-                    "label": "Bd"
-                }
-            ],
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/millimeter",
-                    "label": "millimeter"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:length-cm--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/centimeter",
-                    "label": "centimeter"
                 }
             ]
         },
@@ -1218,25 +1222,15 @@
             "rdfs:range": [
                 {
                     "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
                     "label": "millimeter"
                 }
-            ]
-        },
-        {
-            "@id": "oc-pred:taxon--35",
-            "skos:closeMatch": [
+            ],
+            "rdfs:subPropertyOf": [
                 {
-                    "id": "http://purl.org/NET/biol/ns#term_hasTaxonomy",
-                    "label": "Has Biological Taxonomy"
-                }
-            ]
-        },
-        {
-            "@id": "oc-pred:weight-g--35",
-            "rdfs:range": [
-                {
-                    "id": "http://www.freebase.com/view/en/gram",
-                    "label": "gram"
+                    "id": "http://opencontext.org/predicates/c86b99a4-ee1b-11e3-a4ad-e840f2d4bd21",
+                    "slug": "greatest-breadth-of-the-proximal-end-trochlea--35",
+                    "label": "Greatest breadth of the proximal end (trochlea)"
                 }
             ]
         },
@@ -1245,7 +1239,174 @@
             "skos:closeMatch": [
                 {
                     "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0079",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-68",
                     "label": "Has anatomical identification"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:gllstandard-measurement--35",
+            "skos:related": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0029",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-25",
+                    "label": "GLl"
+                }
+            ],
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ],
+            "rdfs:subPropertyOf": [
+                {
+                    "id": "http://opencontext.org/predicates/ae83c6a8-ee1a-11e3-88ee-e840f2d4bd21",
+                    "slug": "gll--35",
+                    "label": "GLl"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:length-cm--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/centimeter",
+                    "slug": "www-freebase-com-view-en-centimeter",
+                    "label": "centimeter"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-elements--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "slug": "www-freebase-com-view-en-counting-measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:bdstandard-measurement--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ],
+            "skos:related": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0009",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0",
+                    "label": "Bd"
+                }
+            ],
+            "rdfs:subPropertyOf": [
+                {
+                    "id": "http://opencontext.org/predicates/9a2e1852-ee1a-11e3-a1f7-e840f2d4bd21",
+                    "slug": "bd--35",
+                    "label": "Bd"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:dlstandard-measurement--35",
+            "skos:related": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0018",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-53",
+                    "label": "Dl"
+                }
+            ],
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ],
+            "rdfs:subPropertyOf": [
+                {
+                    "id": "http://opencontext.org/predicates/91be3e10-ee1a-11e3-8261-e840f2d4bd21",
+                    "slug": "dl--35",
+                    "label": "Dl"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:sex--35",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0078",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-8",
+                    "label": "Has physiological sex determination"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:glmstandard-measurement--35",
+            "skos:related": [
+                {
+                    "id": "http://opencontext.org/vocabularies/open-context-zooarch/zoo-0030",
+                    "slug": "opencontext-org-vocabularies-open-context-zooarch-zoo-0-45",
+                    "label": "GLm"
+                }
+            ],
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/millimeter",
+                    "slug": "www-freebase-com-view-en-millimeter",
+                    "label": "millimeter"
+                }
+            ],
+            "rdfs:subPropertyOf": [
+                {
+                    "id": "http://opencontext.org/predicates/7b30c646-ee19-11e3-9fa8-e840f2d4bd21",
+                    "slug": "glm--35",
+                    "label": "GLm"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-pieces--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "slug": "www-freebase-com-view-en-counting-measure",
+                    "label": "counting measure"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:weight-g--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/gram",
+                    "slug": "www-freebase-com-view-en-gram",
+                    "label": "gram"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:taxon--35",
+            "skos:closeMatch": [
+                {
+                    "id": "http://purl.org/NET/biol/ns#term_hasTaxonomy",
+                    "slug": "purl-org-net-biol-nsterm-hastaxonomy",
+                    "label": "Has Biological Taxonomy"
+                }
+            ]
+        },
+        {
+            "@id": "oc-pred:number-of-diagnostic-zones--35",
+            "rdfs:range": [
+                {
+                    "id": "http://www.freebase.com/view/en/counting_measure",
+                    "slug": "www-freebase-com-view-en-counting-measure",
+                    "label": "counting measure"
                 }
             ]
         },
@@ -1254,6 +1415,7 @@
             "skos:closeMatch": [
                 {
                     "id": "http://purl.obolibrary.org/obo/UBERON_0002395",
+                    "slug": "purl-obolibrary-org-obo-uberon-0002395",
                     "label": "talus"
                 }
             ]
@@ -1263,6 +1425,7 @@
             "skos:closeMatch": [
                 {
                     "id": "http://eol.org/pages/42403",
+                    "slug": "eol-org-pages-42403",
                     "label": "Capra"
                 }
             ]
@@ -1272,7 +1435,104 @@
             "skos:closeMatch": [
                 {
                     "id": "http://purl.obolibrary.org/obo/UBERON_0003101",
+                    "slug": "purl-obolibrary-org-obo-uberon-0003101",
                     "label": "male organism"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0015",
+            "label": "Animal Bone",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0014",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0014",
+                    "label": "Biological subject, Ecofact"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/animal-bone.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0046",
+            "label": "Region",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0020",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0020",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/region.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0022",
+            "label": "Site",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0020",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0020",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/site.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0041",
+            "label": "Mound",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0023",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0023",
+                    "label": "Site Area"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/mound.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0030",
+            "label": "Area",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0023",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0023",
+                    "label": "Site Area"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/operation-area.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-0026",
+            "label": "Excavation Unit",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-0024",
+                    "slug": "opencontext-org-vocabularies-oc-general-cat-0024",
+                    "label": "Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/ex-square.jpg"
                 }
             ]
         }

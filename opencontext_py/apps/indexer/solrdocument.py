@@ -2,6 +2,7 @@ import datetime
 import json
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 class SolrDocument:

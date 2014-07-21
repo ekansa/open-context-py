@@ -37,7 +37,7 @@ class LinkAnnotation(models.Model):
         creates a hash-id to insure unique combinations of project_uuids and contexts
         """
         hash_obj = hashlib.sha1()
-        concat_string = self.subject + " " + self.predicate_uri + " " + self.object_uri
+        concat_string = str(self.subject) + " " + str(self.predicate_uri) + " " + str(self.object_uri)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
