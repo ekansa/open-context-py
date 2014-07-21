@@ -67,7 +67,7 @@ class Crawler():
                         document_count += 1
                         print("(" + str(document_count) + ")\t" + uuid)
                     else:
-                        print('Error: Skipping document due to datatype '
+                        print('Error: Skipping document due to a datatype '
                               'mismatch -----> ' + uuid)
                 except Exception as error:
                     print("Error: {0}".format(error) + " -----> " + uuid)
@@ -116,7 +116,7 @@ class Crawler():
                     )
             else:
                 print('Error: Unable to index ' + uuid + ' due to '
-                      'datatype mismatch.')
+                      'a datatype mismatch.')
         except TypeError:
             print("Error: Unable to process document " + uuid + '.')
         except Exception as error:
