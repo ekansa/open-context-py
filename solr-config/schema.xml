@@ -135,8 +135,8 @@
     <!-- table_id identifies a related downloadable table. not required. don't store, since only want facets of these -->
     <field name="table_id" type="string" indexed="true" stored="false" multiValued="true" />
 
-    <!-- labels for items, may want to be tokenizable -->
-    <field name="label" type="text_general" indexed="true" stored="true" multiValued="true"/>
+    <!-- general item type ('subjects', 'media', 'documents', etc.) -->
+    <field name="item_type" type="string" indexed="true" stored="true" multiValued="true"/>
 
     <!-- interest score for items -->
     <field name="interest_score" type="tdouble" indexed="true" stored="false" required="true" multiValued="false"/>

@@ -26,6 +26,8 @@ class SolrDocument:
         self.fields['text'] = ''  # Start of full-text field
         # Start processing and adding values...
         self._process_core_solr_fields()
+        self._process_project()
+        self._process_category()
         self._process_context_path()
         self._process_predicates()
         self._process_geo()
@@ -125,12 +127,15 @@ class SolrDocument:
                     solr_field_name = self._convert_slug_to_solr(
                         solr_field_name
                         )
+                    if(solr_field_name not in self.fields):
+                        self.fields[solr_field_name] = []
                     # Add slug and label as json values
-                    self.fields[solr_field_name] = \
+                    self.fields[solr_field_name].append(
                         self._convert_values_to_json(
                             parent['slug'],
                             parent['label']
                             )
+                        )
                     # If this is the last item, process the predicate values
                     if index == len(parents) - 1:
                         self._process_predicate_values(
@@ -165,11 +170,6 @@ class SolrDocument:
     def _process_core_solr_fields(self):
         self.fields['uuid'] = self.oc_item.uuid
         self.fields['project_uuid'] = self.oc_item.project_uuid
-        ent = Entity()
-        found = ent.dereference(self.oc_item.project_uuid)
-        if(found):
-            self.fields['project_slug'] = self._convert_values_to_json(ent.slug,
-                                                                       ent.label)
         self.fields['published'] = self.oc_item.published.strftime(
             '%Y-%m-%dT%H:%M:%SZ'
             )   # verify
@@ -182,6 +182,7 @@ class SolrDocument:
         self.fields['document_count'] = 0  # fix
         self.fields['slug_label'] = self._convert_values_to_json(self.oc_item.json_ld['slug'],
                                                                  self.oc_item.json_ld['label'])
+        self.fields['item_type'] = self.oc_item.item_type
         self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
 
     def _process_context_path(self):
@@ -210,7 +211,24 @@ class SolrDocument:
                             self.context_path[index]['label']
                             )
 
+    def _process_project(self):
+        """ Finds the project that this item is part of. If not part of a project,
+        make the project slug the same as the item's own slug.
+        """ 
+        if 'dc-terms:isPartOf' in self.oc_item.json_ld:
+            for proj in self.oc_item.json_ld['dc-terms:isPartOf']:
+                if('projects' in proj['id']):
+                    self.fields['project_slug'] = self._convert_values_to_json(proj['slug'],
+                                                                               proj['label'])
+                    break
+        elif(self.oc_item.item_type == 'projects'):
+            self.fields['project_slug'] = self._convert_values_to_json(self.oc_item.json_ld['slug'],
+                                                                       self.oc_item.json_ld['label'])
+
     def _process_geo(self):
+        """ Finds geospatial point coordinates in GeoJSON features for indexing.
+        Only 1 location of a given location type is allowed.
+        """
         if 'features' in self.oc_item.json_ld:
             discovery_done = False
             for feature in self.oc_item.json_ld['features']:
@@ -246,6 +264,9 @@ class SolrDocument:
                     break
 
     def _process_chrono(self):
+        """ Finds chronological / date ranges in GeoJSON features for indexing.
+        More than 1 date range per item is OK.
+        """
         if 'features' in self.oc_item.json_ld:
             for feature in self.oc_item.json_ld['features']:
                 bad_time = False
@@ -273,3 +294,29 @@ class SolrDocument:
                         .append(ct.encode_path_from_bce_ce(start, stop, '10M-'))
                     self.fields['form_use_life_chrono_earliest'].append(start)
                     self.fields['form_use_life_chrono_latest'].append(stop)
+
+    def _process_category(self):
+        """ Finds category / type data ('class_uri' n the manifest table)
+        For indexing as a type of predicate
+        """
+        if 'category' in self.oc_item.json_ld:
+            for cat in self.oc_item.json_ld['category']:
+                # get the parent entities of the current category
+                parents = LinkRecursion().get_jsonldish_entity_parents(cat)
+                item_type_found = False
+                act_predicate_field = False
+                for index, parent in enumerate(parents):
+                    # we're ignoring the 'slug' from the LinkRecursion parents, since it's not
+                    ptype = predicate_uuid = parent['id'].split('/')[-1]  # gets the last part of the URI
+                    prefix_ptype = 'oc-gen-' + ptype
+                    if(item_type_found is False):
+                        if(ptype == self.oc_item.item_type):
+                            item_type_found = True
+                    if(act_predicate_field is not False):
+                        solr_val = self._convert_values_to_json(prefix_ptype,
+                                                                parent['label'])
+                        if(act_predicate_field not in self.fields):
+                            self.fields[act_predicate_field] = []
+                        self.fields[act_predicate_field].append(solr_val)
+                    if(item_type_found):
+                        act_predicate_field = self._convert_slug_to_solr(prefix_ptype) + '___pred_id'
