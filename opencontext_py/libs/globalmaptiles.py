@@ -281,8 +281,15 @@ class GlobalMercator(object):
             i -= 1
         ty = ((1 << zoom) - 1) - ty
         return tx, ty
+    
+    def geojson_coords_to_quadtree(self, coords, zoom = 20):
+        """
+        Added by Eric Kansa to make it easier to get
+        a quad tree from GeoJSON point coordinates
+        """
+        return self.lat_lon_to_quadtree(coords[1], coords[0], zoom)
 
-    def lat_lon_to_quadtree(self, lat, lon, zoom):
+    def lat_lon_to_quadtree(self, lat, lon, zoom = 20):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
         Converts latitude longitude coordinates to a quadtree tile
