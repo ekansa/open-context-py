@@ -128,6 +128,9 @@
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    
+    <!-- project_uuid is required, identifies the project owning the solr doc with {slug-key:label-value} -->
+    <field name="project_slug" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
     <!-- table_id identifies a related downloadable table. not required. don't store, since only want facets of these -->
     <field name="table_id" type="string" indexed="true" stored="false" multiValued="true" />
@@ -164,6 +167,7 @@
 
     <!-- discovery location geospatial point. can have multiple types of points, but only one point per type. -->
     <field name="discovery_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
+    <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
 
     <!-- origin location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
@@ -178,16 +182,6 @@
 
     <!-- current location geospatial point. can have multiple types of points, but only one point per type. -->
     <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
-
-   <!-- catchall text field that indexes tokens both normally and in reverse for efficient
-        leading wildcard queries. -->
-   <field name="text_rev" type="text_general_rev" indexed="true" stored="false" multiValued="true"/>
-
-   <!-- non-tokenized version of manufacturer to make it easier to sort or group
-        results by manufacturer.  copied from "manu" via copyField -->
-   <field name="manu_exact" type="string" indexed="true" stored="false"/>
-
-   <field name="payloads" type="payloads" indexed="true" stored="true"/>
 
     <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <field name="form_use_life_chrono_tile" type="string" indexed="true" stored="false" multiValued="true"/>
