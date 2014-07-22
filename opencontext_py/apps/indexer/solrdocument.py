@@ -41,11 +41,14 @@ class SolrDocument:
                 predicate_type)
             )
         # Then get the predicate values
-        self.fields[solr_field_name] = \
-            self._get_predicate_values(
-                parent_slug,
-                predicate_type
-            )
+        if(solr_field_name not in self.fields):
+            self.fields[solr_field_name] = []
+        predicate_vals = self._get_predicate_values(parent_slug, predicate_type)
+        if(not(isinstance(predicate_vals, list))):
+            # simple case, not a list
+            self.fields[solr_field_name].append(predicate_vals)
+        else:
+            self.fields[solr_field_name].append(predicate_vals)
 
     def _get_predicate_field_name_suffix(self, predicate_type):
         '''
@@ -69,6 +72,7 @@ class SolrDocument:
             if obs_key in obs_list:
                 if predicate_type == '@id':
                     self.fields['text'] += obs_list[obs_key][0]['label'] + ' \n'
+                    parents = LinkRecursion().get_jsonldish_entity_parents(obs_list[obs_key][0]['id'])
                     return self._convert_values_to_json(
                         obs_list[obs_key][0]['slug'],
                         obs_list[obs_key][0]['label']
