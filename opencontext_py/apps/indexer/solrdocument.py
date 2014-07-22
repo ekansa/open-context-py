@@ -33,22 +33,45 @@ class SolrDocument:
         self._process_geo()
         self._process_chrono()
 
-    def _process_predicate_values(self, parent_slug, predicate_type):
+    def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
         solr_field_name = self._convert_slug_to_solr(
-            parent_slug +
+            predicate_slug +
             self._get_predicate_field_name_suffix(
                 predicate_type)
             )
         # Then get the predicate values
         if(solr_field_name not in self.fields):
             self.fields[solr_field_name] = []
-        predicate_vals = self._get_predicate_values(parent_slug, predicate_type)
-        if(not(isinstance(predicate_vals, list))):
-            # simple case, not a list
-            self.fields[solr_field_name].append(predicate_vals)
-        else:
-            self.fields[solr_field_name].append(predicate_vals)
+        pred_key = 'oc-pred:' + predicate_slug
+        for obs_list in self.oc_item.json_ld['oc-gen:has-obs']:
+            if pred_key in obs_list:
+                pred_values = obs_list[pred_key]
+                for val in pred_values:
+                    if predicate_type == '@id':
+                        act_solr_field = solr_field_name
+                        parents = LinkRecursion().get_jsonldish_entity_parents(val['id'])
+                        for parent in parents:
+                            if(act_solr_field not in self.fields):
+                                self.fields[act_solr_field] = []
+                            act_solr_val = self._convert_values_to_json(
+                                parent['slug'],
+                                parent['label']
+                                )
+                            self.fields['text'] += ' ' + parent['label'] + ' '
+                            self.fields[act_solr_field].append(act_solr_val)
+                            # print('\n ID field: ' + act_solr_field + ' Val: ' + act_solr_val)
+                            act_solr_field = self._convert_slug_to_solr(parent['slug']) + '___' + solr_field_name
+                        self.fields['text'] += ' \n'
+                    elif predicate_type in [
+                        'xsd:integer', 'xsd:double', 'xsd:boolean', 'xsd:date'
+                            ]:
+                        self.fields[solr_field_name].append(val)
+                    elif predicate_type == 'xsd:string':
+                        self.fields['text'] += val['xsd:string'] + ' \n'
+                        self.fields[solr_field_name].append(val['xsd:string'])
+                    else:
+                        raise Exception("Error: Could not get predicate value")
 
     def _get_predicate_field_name_suffix(self, predicate_type):
         '''
@@ -65,33 +88,6 @@ class SolrDocument:
             return '___pred_date'
         else:
             raise Exception("Error: Unknown predicate type")
-
-    def _get_predicate_values(self, predicate_slug, predicate_type):
-        obs_key = 'oc-pred:' + predicate_slug
-        for obs_list in self.oc_item.json_ld['oc-gen:has-obs']:
-            if obs_key in obs_list:
-                if predicate_type == '@id':
-                    self.fields['text'] += obs_list[obs_key][0]['label'] + ' \n'
-                    parents = LinkRecursion().get_jsonldish_entity_parents(obs_list[obs_key][0]['id'])
-                    return self._convert_values_to_json(
-                        obs_list[obs_key][0]['slug'],
-                        obs_list[obs_key][0]['label']
-                        )
-                elif predicate_type in [
-                    'xsd:integer', 'xsd:double', 'xsd:boolean'
-                        ]:
-                    if len(obs_list[obs_key]) == 1:
-                        return obs_list[obs_key][0]
-                    else:
-                        return obs_list[obs_key]
-                elif predicate_type == 'xsd:date':
-                    self.fields['text'] += obs_list[obs_key][0] + ' \n'
-                    return obs_list[obs_key][0] + 'T00:00:00Z'
-                elif predicate_type == 'xsd:string':
-                    self.fields['text'] += obs_list[obs_key][0]['xsd:string'] + ' \n'
-                    return obs_list[obs_key][0]['xsd:string']
-                else:
-                    raise Exception("Error: Could not get predicate value")
 
     def _process_predicates(self):
         # Get list of predicates
