@@ -128,7 +128,7 @@
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-    
+
     <!-- project_uuid is required, identifies the project owning the solr doc with {slug-key:label-value} -->
     <field name="project_slug" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
