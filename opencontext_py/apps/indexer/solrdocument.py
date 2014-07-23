@@ -41,7 +41,7 @@ class SolrDocument:
                 predicate_type)
             )
         # Then get the predicate values
-        if(solr_field_name not in self.fields):
+        if solr_field_name not in self.fields:
             self.fields[solr_field_name] = []
         predicate_key = 'oc-pred:' + predicate_slug
         for obs_list in self.oc_item.json_ld['oc-gen:has-obs']:
@@ -54,7 +54,7 @@ class SolrDocument:
                             value['id']
                             )
                         for parent in parents:
-                            if(active_solr_field not in self.fields):
+                            if active_solr_field not in self.fields:
                                 self.fields[active_solr_field] = []
                             active_solr_value = self._convert_values_to_json(
                                 parent['slug'],
@@ -229,7 +229,7 @@ class SolrDocument:
         """
         if 'dc-terms:isPartOf' in self.oc_item.json_ld:
             for proj in self.oc_item.json_ld['dc-terms:isPartOf']:
-                if('projects' in proj['id']):
+                if 'projects' in proj['id']:
                     self.fields['project_slug'] = self._convert_values_to_json(
                         proj['slug'],
                         proj['label'])
@@ -280,7 +280,7 @@ class SolrDocument:
                             str(coords[0]) + ' ' + str(coords[1])
                         discovery_done = True  # so we don't repeat getting
                                                # discovery locations
-                if(discovery_done):
+                if discovery_done:
                     break
 
     def _process_chrono(self):
@@ -333,8 +333,8 @@ class SolrDocument:
                     # gets the last part of the URI
                     ptype = parent['id'].split('/')[-1]
                     prefix_ptype = 'oc-gen-' + ptype
-                    if(item_type_found is False):
-                        if(ptype == self.oc_item.item_type):
+                    if item_type_found is False:
+                        if ptype == self.oc_item.item_type:
                             item_type_found = True
                     if active_predicate_field is not False:
                         solr_value = self._convert_values_to_json(
