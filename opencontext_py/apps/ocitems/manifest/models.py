@@ -74,9 +74,11 @@ class ManifestGeneration():
             raw_slug = raw_slug + 'x'  # slugs don't end with dashes
         raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 2 dash characters
         slug = raw_slug
+        slug_exists = False
         try:
-            slug_in = Manifest.objects.get(slug=raw_slug)
-            slug_exists = True
+            slug_exists_res = Manifest.objects.filter(slug=raw_slug)[:1]
+            if(len(slug_exists_res) > 0):
+                slug_exists = True
         except Manifest.DoesNotExist:
             slug_exists = False
         if(slug_exists):
