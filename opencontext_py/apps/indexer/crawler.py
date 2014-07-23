@@ -67,7 +67,7 @@ class Crawler():
                         document_count += 1
                         print("(" + str(document_count) + ")\t" + uuid)
                     else:
-                        print('Error: Skipping document due to datatype '
+                        print('Error: Skipping document due to a datatype '
                               'mismatch -----> ' + uuid)
                 except Exception as error:
                     print("Error: {0}".format(error) + " -----> " + uuid)
@@ -102,7 +102,7 @@ class Crawler():
         print('\nAttempting to index document ' + uuid + '...\n')
         try:
             solrdocument = SolrDocument(uuid).fields
-            if self._document_is_valid(solrdocument):
+            if self._is_valid_document(solrdocument):
                 # Commit the document and save the response status.
                 # Note: solr.update() expects a list
                 solr_status = self.solr.update(
@@ -116,13 +116,13 @@ class Crawler():
                     )
             else:
                 print('Error: Unable to index ' + uuid + ' due to '
-                      'datatype mismatch.')
+                      'a datatype mismatch.')
         except TypeError:
             print("Error: Unable to process document " + uuid + '.')
         except Exception as error:
             print("Error: {0}".format(error) + " -----> " + uuid)
 
-    def _document_is_valid(self, document):
+    def is_valid_document(self, document):
         '''
         Validate that numeric and date fields contain only numeric and
         date data.
@@ -130,21 +130,17 @@ class Crawler():
         is_valid = True
         for key in document:
             if key.endswith('numeric'):
-                if not(self._is_valid_float(document[key])):
-                    is_valid = False
+                for value in document[key]:
+                    if not(self._is_valid_float(value)):
+                        is_valid = False
             if key.endswith('date'):
-                if not(self._is_valid_date(document[key])):
-                    is_valid = False
+                for value in document[key]:
+                    if not(self._is_valid_date(value)):
+                        is_valid = False
         return is_valid
 
     def _is_valid_float(self, value):
-        if isinstance(value, float):
-            return True
-        elif isinstance(value, list):
-            # If it's a list, make sure all items are floats
-            return all(isinstance(item, float) for item in value)
-        else:
-            return False
+        return isinstance(value, float)
 
     def _is_valid_date(self, value):
         pattern = re.compile(
