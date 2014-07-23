@@ -1,3 +1,4 @@
+import re
 from unidecode import unidecode
 from django.utils import timezone
 from django.db import models
@@ -65,8 +66,13 @@ class ManifestGeneration():
                 act_proj_short_id = act_proj.short_id
             except Project.DoesNotExist:
                 act_proj_short_id = False
+        if(raw_slug == '-' or len(raw_slug) < 1):
+            raw_slug = 'x'  # slugs are not a dash or are empty
         if(act_proj_short_id is not False):
-            raw_slug = raw_slug + '--' + str(act_proj_short_id)
+            raw_slug = str(act_proj_short_id) + '--' + raw_slug
+        if(raw_slug[-1:] == '-'):
+            raw_slug = raw_slug + 'x'  # slugs don't end with dashes
+        raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 2 dash characters
         slug = raw_slug
         try:
             slug_in = Manifest.objects.get(slug=raw_slug)
@@ -79,7 +85,7 @@ class ManifestGeneration():
             except Manifest.DoesNotExist:
                 slug_count = 0
             if(slug_count > 0):
-                slug = raw_slug + "-" + str(slug_count + 1)
+                slug = raw_slug + "-" + str(slug_count + 1)  # ok because a slug does not end in a dash
         return slug
 
     def fix_blank_slugs(self):

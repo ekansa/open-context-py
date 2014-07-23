@@ -1,3 +1,4 @@
+import re
 from django.db import models
 from unidecode import unidecode
 from django.template.defaultfilters import slugify
@@ -38,14 +39,47 @@ class LinkEntityGeneration():
         """
         Makes a slug for the URI of the linked entity
         """
+        uri_prefixes = {'http://www.cidoc-crm.org/rdfs/cidoc-crm': 'crm-rdf',
+                        'http://collection.britishmuseum.org/description/thesauri': 'bm-thes',
+                        'http://collection.britishmuseum.org/id/thesauri': 'bm-thes',
+                        'http://concordia.atlantides.org': 'concordia',
+                        'http://gawd.atlantides.org/terms': 'gawd',
+                        'http://purl.org/dc/terms': 'dc-terms',
+                        'http://dbpedia.org/resource': 'dbpedia',
+                        'http://dbpedia.org/resource': 'dbpedia',
+                        'http://eol.org/pages': 'eol-p',
+                        'http://opencontext.org/vocabularies/dinaa': 'dinaa',
+                        'http://opencontext.org/vocabularies/oc-general': 'oc-gen',
+                        'http://opencontext.org/vocabularies/open-context-zooarch': 'oc-zoo',
+                        'http://orcid.org': 'orcid',
+                        'http://pleiades.stoa.org/places': 'pleiades-p',
+                        'http://purl.obolibrary.org/obo': 'obo',
+                        'http://purl.org/NET/biol/ns': 'biol',
+                        'http://sw.opencyc.org': 'opencyc',
+                        'http://www.freebase.com/view/en': 'freebase',
+                        'http://en.wiktionary.org/wiki': 'wiktionary',
+                        'http://www.geonames.org': 'geonames',
+                        'http://www.w3.org/2000/01/rdf-schema': 'rdfs',
+                        'http://www.w3.org/2003/01/geo/wgs84_pos': 'geo',
+                        'http://www.w3.org/2004/02/skos/core': 'skos',
+                        'http://en.wikipedia.org/wiki': 'wiki'
+                        }
+        for uri_root, uri_prefix in uri_prefixes.items():
+            uri = uri.replace(uri_root, uri_prefix)
+            #  replaces the start of a uri with a prefix
         uri = uri.replace('https://', '')
         uri = uri.replace('http://', '')
         uri = uri.replace('/', '-')
         uri = uri.replace('.', '-')
+        uri = uri.replace('#', '-')
         uri = uri.replace('_', ' ')
         raw_slug = slugify(unidecode(uri[:55]))
+        raw_slug = raw_slug.replace('---', '--')  # make sure no triple dashes, conflicts with solr
         if(raw_slug[-1:] == '-'):
             raw_slug = raw_slug[:-1]
+        if(raw_slug[-1:] == '-'):
+            raw_slug = raw_slug + 'x'  # slugs don't end with dashes
+        raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 3 dash characters
         slug = raw_slug
         try:
             slug_in = LinkEntity.objects.get(slug=raw_slug)
@@ -58,7 +92,7 @@ class LinkEntityGeneration():
             except LinkEntity.DoesNotExist:
                 slug_count = 0
             if(slug_count > 0):
-                slug = raw_slug + "-" + str(slug_count + 1)
+                slug = raw_slug + "-" + str(slug_count + 1)  # ok because a slug does not end in a dash
         return slug
 
     def fix_blank_slugs(self):
