@@ -102,7 +102,7 @@ class Crawler():
         print('\nAttempting to index document ' + uuid + '...\n')
         try:
             solrdocument = SolrDocument(uuid).fields
-            if self._document_is_valid(solrdocument):
+            if self._is_valid_document(solrdocument):
                 # Commit the document and save the response status.
                 # Note: solr.update() expects a list
                 solr_status = self.solr.update(
@@ -122,7 +122,7 @@ class Crawler():
         except Exception as error:
             print("Error: {0}".format(error) + " -----> " + uuid)
 
-    def _document_is_valid(self, document):
+    def is_valid_document(self, document):
         '''
         Validate that numeric and date fields contain only numeric and
         date data.
