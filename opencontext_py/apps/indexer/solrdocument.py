@@ -48,7 +48,7 @@ class SolrDocument:
             if pred_key in obs_list:
                 pred_values = obs_list[pred_key]
                 for val in pred_values:
-                    if (predicate_type == '@id' and predicate_slug != 'link'):
+                    if predicate_type == '@id':
                         act_solr_field = solr_field_name
                         parents = LinkRecursion().get_jsonldish_entity_parents(val['id'])
                         for parent in parents:
@@ -58,20 +58,11 @@ class SolrDocument:
                                 parent['slug'],
                                 parent['label']
                                 )
-                            self.fields['text'] += parent['label'] + ' '
+                            self.fields['text'] += ' ' + parent['label'] + ' '
                             self.fields[act_solr_field].append(act_solr_val)
                             # print('\n ID field: ' + act_solr_field + ' Val: ' + act_solr_val)
                             act_solr_field = self._convert_slug_to_solr(parent['slug']) + '___' + solr_field_name
-                    elif (predicate_type == '@id' and predicate_slug == 'link'):
-                        # case of a linking relation, don't bother looking up hierachies or recording
-                        # as a solr field, but check for image, other media, and document counts
-                        if('media' in val['id'] and val['type'] == 'image'):
-                            self.fields['image_media_count'] += 1
-                        elif('media' in val['id'] and val['type'] != 'image'):
-                            self.fields['other_binary_media_count'] += 1  # other types of media
-                        elif('documents' in val['id']):
-                            self.fields['document_count'] += 1
-                        self.fields['text'] += val['label'] + ' '
+                        self.fields['text'] += ' \n'
                     elif predicate_type in [
                         'xsd:integer', 'xsd:double', 'xsd:boolean', 'xsd:date'
                             ]:
@@ -81,7 +72,6 @@ class SolrDocument:
                         self.fields[solr_field_name].append(val['xsd:string'])
                     else:
                         raise Exception("Error: Could not get predicate value")
-                self.fields['text'] += ' \n'
 
     def _get_predicate_field_name_suffix(self, predicate_type):
         '''
@@ -112,22 +102,17 @@ class SolrDocument:
             parents = LinkRecursion(
                 ).get_jsonldish_entity_parents(predicate_uuid)
             # Process parents
-            link_predicate = False  # link predicates get special treatment
             for index, parent in enumerate(parents):
-                if(parent['slug'] == 'link'):
-                    link_predicate = True
-                else:
-                    # add the label of the variable to the text field
-                    self.fields['text'] += ' ' + parent['label'] + ' '
+                # add the label of the variable to the text field
+                self.fields['text'] += ' ' + parent['label'] + ' '
                 # Treat the first parent in a special way
                 if index == 0:
-                    if(link_predicate is False):
-                        self.fields['root___pred_id'].append(
-                            self._convert_values_to_json(
-                                parent['slug'],
-                                parent['label']
-                                )
+                    self.fields['root___pred_id'].append(
+                        self._convert_values_to_json(
+                            parent['slug'],
+                            parent['label']
                             )
+                        )
                     # If it's the only item, process its predicate values
                     if len(parents) == 1:
                         self._process_predicate_values(
@@ -142,16 +127,15 @@ class SolrDocument:
                     solr_field_name = self._convert_slug_to_solr(
                         solr_field_name
                         )
-                    if(link_predicate is False):
-                        if(solr_field_name not in self.fields):
-                            self.fields[solr_field_name] = []
-                        # Add slug and label as json values
-                        self.fields[solr_field_name].append(
-                            self._convert_values_to_json(
-                                parent['slug'],
-                                parent['label']
-                                )
+                    if(solr_field_name not in self.fields):
+                        self.fields[solr_field_name] = []
+                    # Add slug and label as json values
+                    self.fields[solr_field_name].append(
+                        self._convert_values_to_json(
+                            parent['slug'],
+                            parent['label']
                             )
+                        )
                     # If this is the last item, process the predicate values
                     if index == len(parents) - 1:
                         self._process_predicate_values(
@@ -191,11 +175,11 @@ class SolrDocument:
             )   # verify
         self.fields['updated'] = datetime.datetime.utcnow().strftime(  # verify
             '%Y-%m-%dT%H:%M:%SZ')
-        self.fields['image_media_count'] = 0  # default, can add as image media links discovered
-        self.fields['other_binary_media_count'] = 0  # default, can add as other media links discovered
-        self.fields['document_count'] = 0  # default, can add as doc links discovered
+        self.fields['image_media_count'] = 0  # fix
+        self.fields['other_binary_media_count'] = 0  # fix
         self.fields['sort_score'] = 0  # fix
         self.fields['interest_score'] = 0  # fix
+        self.fields['document_count'] = 0  # fix
         self.fields['slug_label'] = self._convert_values_to_json(self.oc_item.json_ld['slug'],
                                                                  self.oc_item.json_ld['label'])
         self.fields['item_type'] = self.oc_item.item_type
@@ -324,8 +308,7 @@ class SolrDocument:
                 for index, parent in enumerate(parents):
                     # we're ignoring the 'slug' from the LinkRecursion parents, since it's not
                     ptype = predicate_uuid = parent['id'].split('/')[-1]  # gets the last part of the URI
-                    # prefix_ptype = 'oc-gen-' + ptype
-                    prefix_ptype = parent['slug']  # consistent with other uses of slugs for solr fields
+                    prefix_ptype = 'oc-gen-' + ptype
                     if(item_type_found is False):
                         if(ptype == self.oc_item.item_type):
                             item_type_found = True
