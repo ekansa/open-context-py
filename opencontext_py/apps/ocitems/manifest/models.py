@@ -73,21 +73,34 @@ class ManifestGeneration():
         if(raw_slug[-1:] == '-'):
             raw_slug = raw_slug + 'x'  # slugs don't end with dashes
         raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 2 dash characters
-        slug = raw_slug
+        slug = self.raw_to_final_slug(raw_slug)  # function for making sure unique slugs
+        return slug
+
+    def raw_to_final_slug(self, raw_slug):
+        """ Converts a raw to a final slug, checks if the slug exists. If it does, add a suffix.
+        If the suffixed slug already exists, try the next suffix until we get one that does not exist.
+        """
         slug_exists = False
         try:
             slug_exists_res = Manifest.objects.filter(slug=raw_slug)[:1]
             if(len(slug_exists_res) > 0):
                 slug_exists = True
+            else:
+                slug = raw_slug
         except Manifest.DoesNotExist:
             slug_exists = False
-        if(slug_exists):
-            try:
-                slug_count = Manifest.objects.filter(slug__startswith=raw_slug).count()
-            except Manifest.DoesNotExist:
-                slug_count = 0
-            if(slug_count > 0):
-                slug = raw_slug + "-" + str(slug_count + 1)  # ok because a slug does not end in a dash
+            slug = raw_slug
+        if slug_exists:
+            test_slug = raw_slug
+            counter = 0
+            while slug_exists:
+                slug_count = Manifest.objects.filter(slug__startswith=test_slug).count()
+                if(slug_count > 0):
+                    test_slug = test_slug + "-" + str(slug_count + counter)  # ok because a slug does not end in a dash
+                    counter += 1
+                else:
+                    slug = test_slug
+                    slug_exists = False
         return slug
 
     def fix_blank_slugs(self):
