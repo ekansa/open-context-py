@@ -133,8 +133,9 @@ class Crawler():
                 if not(self._is_valid_float(document[key])):
                     is_valid = False
             if key.endswith('date'):
-                if not(self._is_valid_date(document[key])):
-                    is_valid = False
+                for value in document[key]:
+                    if not(self._is_valid_date(value)):
+                        is_valid = False
         return is_valid
 
     def _is_valid_float(self, value):

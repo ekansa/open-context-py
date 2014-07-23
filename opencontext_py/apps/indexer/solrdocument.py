@@ -2,7 +2,7 @@ import datetime
 import json
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
-from opencontext_py.apps.entities.entity.models import Entity
+#from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 
@@ -43,33 +43,43 @@ class SolrDocument:
         # Then get the predicate values
         if(solr_field_name not in self.fields):
             self.fields[solr_field_name] = []
-        pred_key = 'oc-pred:' + predicate_slug
+        predicate_key = 'oc-pred:' + predicate_slug
         for obs_list in self.oc_item.json_ld['oc-gen:has-obs']:
-            if pred_key in obs_list:
-                pred_values = obs_list[pred_key]
-                for val in pred_values:
+            if predicate_key in obs_list:
+                predicate_values = obs_list[predicate_key]
+                for value in predicate_values:
                     if predicate_type == '@id':
-                        act_solr_field = solr_field_name
-                        parents = LinkRecursion().get_jsonldish_entity_parents(val['id'])
+                        active_solr_field = solr_field_name
+                        parents = LinkRecursion().get_jsonldish_entity_parents(
+                            value['id']
+                            )
                         for parent in parents:
-                            if(act_solr_field not in self.fields):
-                                self.fields[act_solr_field] = []
-                            act_solr_val = self._convert_values_to_json(
+                            if(active_solr_field not in self.fields):
+                                self.fields[active_solr_field] = []
+                            active_solr_value = self._convert_values_to_json(
                                 parent['slug'],
                                 parent['label']
                                 )
                             self.fields['text'] += ' ' + parent['label'] + ' '
-                            self.fields[act_solr_field].append(act_solr_val)
-                            # print('\n ID field: ' + act_solr_field + ' Val: ' + act_solr_val)
-                            act_solr_field = self._convert_slug_to_solr(parent['slug']) + '___' + solr_field_name
+                            self.fields[active_solr_field].append(
+                                active_solr_value
+                                )
+                            # print('\n ID field: ' + active_solr_field +
+                            #' Val: ' + active_solr_value)
+                            active_solr_field = self._convert_slug_to_solr(
+                                parent['slug']) + '___' + solr_field_name
                         self.fields['text'] += ' \n'
                     elif predicate_type in [
-                        'xsd:integer', 'xsd:double', 'xsd:boolean', 'xsd:date'
+                        'xsd:integer', 'xsd:double', 'xsd:boolean'
                             ]:
-                        self.fields[solr_field_name].append(val)
+                        self.fields[solr_field_name].append(value)
+                    elif predicate_type == 'xsd:date':
+                        self.fields[solr_field_name].append(value +
+                                                            'T00:00:00Z')
                     elif predicate_type == 'xsd:string':
-                        self.fields['text'] += val['xsd:string'] + ' \n'
-                        self.fields[solr_field_name].append(val['xsd:string'])
+                        self.fields['text'] += value['xsd:string'] + ' \n'
+                        self.fields[solr_field_name].append(
+                            value['xsd:string'])
                     else:
                         raise Exception("Error: Could not get predicate value")
 
@@ -127,7 +137,7 @@ class SolrDocument:
                     solr_field_name = self._convert_slug_to_solr(
                         solr_field_name
                         )
-                    if(solr_field_name not in self.fields):
+                    if solr_field_name not in self.fields:
                         self.fields[solr_field_name] = []
                     # Add slug and label as json values
                     self.fields[solr_field_name].append(
@@ -180,8 +190,9 @@ class SolrDocument:
         self.fields['sort_score'] = 0  # fix
         self.fields['interest_score'] = 0  # fix
         self.fields['document_count'] = 0  # fix
-        self.fields['slug_label'] = self._convert_values_to_json(self.oc_item.json_ld['slug'],
-                                                                 self.oc_item.json_ld['label'])
+        self.fields['slug_label'] = self._convert_values_to_json(
+            self.oc_item.json_ld['slug'],
+            self.oc_item.json_ld['label'])
         self.fields['item_type'] = self.oc_item.item_type
         self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
 
@@ -212,21 +223,26 @@ class SolrDocument:
                             )
 
     def _process_project(self):
-        """ Finds the project that this item is part of. If not part of a project,
-        make the project slug the same as the item's own slug.
-        """ 
+        """
+        Finds the project that this item is part of. If not part of a
+        project, make the project slug the same as the item's own slug.
+        """
         if 'dc-terms:isPartOf' in self.oc_item.json_ld:
             for proj in self.oc_item.json_ld['dc-terms:isPartOf']:
                 if('projects' in proj['id']):
-                    self.fields['project_slug'] = self._convert_values_to_json(proj['slug'],
-                                                                               proj['label'])
+                    self.fields['project_slug'] = self._convert_values_to_json(
+                        proj['slug'],
+                        proj['label'])
                     break
         elif(self.oc_item.item_type == 'projects'):
-            self.fields['project_slug'] = self._convert_values_to_json(self.oc_item.json_ld['slug'],
-                                                                       self.oc_item.json_ld['label'])
+            self.fields['project_slug'] = self._convert_values_to_json(
+                self.oc_item.json_ld['slug'],
+                self.oc_item.json_ld['label']
+                )
 
     def _process_geo(self):
-        """ Finds geospatial point coordinates in GeoJSON features for indexing.
+        """
+        Finds geospatial point coordinates in GeoJSON features for indexing.
         Only 1 location of a given location type is allowed.
         """
         if 'features' in self.oc_item.json_ld:
@@ -256,10 +272,14 @@ class SolrDocument:
                         coords = False
                     if(coords is not False):
                         gm = GlobalMercator()
-                        self.fields['discovery_geotile'] = gm.geojson_coords_to_quadtree(coords, zoom)
-                        # indexing with coordinates seperated by a space is in lon-lat order, like GeoJSON
-                        self.fields['discovery_geolocation'] = str(coords[0]) + ' ' + str(coords[1])
-                        discovery_done = True  # so we don't repeat getting discovery locations
+                        self.fields['discovery_geotile'] = \
+                            gm.geojson_coords_to_quadtree(coords, zoom)
+                        # indexing with coordinates seperated by a space is in
+                        # lon-lat order, like GeoJSON
+                        self.fields['discovery_geolocation'] = \
+                            str(coords[0]) + ' ' + str(coords[1])
+                        discovery_done = True  # so we don't repeat getting
+                                               # discovery locations
                 if(discovery_done):
                     break
 
@@ -282,7 +302,8 @@ class SolrDocument:
                     when_type = feature['when']['type']
                 except KeyError:
                     when_type = False
-                if(when_type == 'oc-gen:formation-use-life' and bad_time is False):
+                if(when_type == 'oc-gen:formation-use-life' and
+                        bad_time is False):
                     ct = ChronoTile()
                     if('form_use_life_chrono_tile' not in self.fields):
                         self.fields['form_use_life_chrono_tile'] = []
@@ -290,8 +311,9 @@ class SolrDocument:
                         self.fields['form_use_life_chrono_earliest'] = []
                     if('form_use_life_chrono_latest' not in self.fields):
                         self.fields['form_use_life_chrono_latest'] = []
-                    self.fields['form_use_life_chrono_tile']\
-                        .append(ct.encode_path_from_bce_ce(start, stop, '10M-'))
+                    self.fields['form_use_life_chrono_tile'].append(
+                        ct.encode_path_from_bce_ce(start, stop, '10M-')
+                        )
                     self.fields['form_use_life_chrono_earliest'].append(start)
                     self.fields['form_use_life_chrono_latest'].append(stop)
 
@@ -304,19 +326,24 @@ class SolrDocument:
                 # get the parent entities of the current category
                 parents = LinkRecursion().get_jsonldish_entity_parents(cat)
                 item_type_found = False
-                act_predicate_field = False
+                active_predicate_field = False
                 for index, parent in enumerate(parents):
-                    # we're ignoring the 'slug' from the LinkRecursion parents, since it's not
-                    ptype = predicate_uuid = parent['id'].split('/')[-1]  # gets the last part of the URI
+                    # we're ignoring the 'slug' from the LinkRecursion parents,
+                        # since it's not...
+                    # gets the last part of the URI
+                    ptype = parent['id'].split('/')[-1]
                     prefix_ptype = 'oc-gen-' + ptype
                     if(item_type_found is False):
                         if(ptype == self.oc_item.item_type):
                             item_type_found = True
-                    if(act_predicate_field is not False):
-                        solr_val = self._convert_values_to_json(prefix_ptype,
-                                                                parent['label'])
-                        if(act_predicate_field not in self.fields):
-                            self.fields[act_predicate_field] = []
-                        self.fields[act_predicate_field].append(solr_val)
+                    if(active_predicate_field is not False):
+                        solr_value = self._convert_values_to_json(
+                            prefix_ptype,
+                            parent['label']
+                            )
+                        if(active_predicate_field not in self.fields):
+                            self.fields[active_predicate_field] = []
+                        self.fields[active_predicate_field].append(solr_value)
                     if(item_type_found):
-                        act_predicate_field = self._convert_slug_to_solr(prefix_ptype) + '___pred_id'
+                        active_predicate_field = self._convert_slug_to_solr(
+                            prefix_ptype) + '___pred_id'
