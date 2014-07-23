@@ -62,7 +62,7 @@ class Crawler():
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
                     solrdocument = SolrDocument(uuid).fields
-                    if self._document_is_valid(solrdocument):
+                    if self._is_valid_document(solrdocument):
                         documents.append(solrdocument)
                         document_count += 1
                         print("(" + str(document_count) + ")\t" + uuid)
@@ -122,7 +122,7 @@ class Crawler():
         except Exception as error:
             print("Error: {0}".format(error) + " -----> " + uuid)
 
-    def is_valid_document(self, document):
+    def _is_valid_document(self, document):
         '''
         Validate that numeric and date fields contain only numeric and
         date data.
