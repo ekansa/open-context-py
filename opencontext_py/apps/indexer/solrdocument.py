@@ -234,7 +234,7 @@ class SolrDocument:
                         proj['slug'],
                         proj['label'])
                     break
-        elif(self.oc_item.item_type == 'projects'):
+        elif self.oc_item.item_type == 'projects':
             self.fields['project_slug'] = self._convert_values_to_json(
                 self.oc_item.json_ld['slug'],
                 self.oc_item.json_ld['label']
@@ -263,14 +263,14 @@ class SolrDocument:
                     zoom = feature['properties']['location-precision']
                 except KeyError:
                     zoom = 20
-                if(ftype == 'Point'
-                   and loc_type == 'oc-gen:discovey-location'
-                   and discovery_done is False):
+                if ftype == 'Point' \
+                    and loc_type == 'oc-gen:discovey-location' \
+                        and discovery_done is False:
                     try:
                         coords = feature['geometry']['coordinates']
                     except KeyError:
                         coords = False
-                    if(coords is not False):
+                    if coords is not False:
                         gm = GlobalMercator()
                         self.fields['discovery_geotile'] = \
                             gm.geojson_coords_to_quadtree(coords, zoom)
@@ -302,14 +302,14 @@ class SolrDocument:
                     when_type = feature['when']['type']
                 except KeyError:
                     when_type = False
-                if(when_type == 'oc-gen:formation-use-life' and
-                        bad_time is False):
+                if when_type == 'oc-gen:formation-use-life' \
+                        and bad_time is False:
                     ct = ChronoTile()
-                    if('form_use_life_chrono_tile' not in self.fields):
+                    if 'form_use_life_chrono_tile' not in self.fields:
                         self.fields['form_use_life_chrono_tile'] = []
-                    if('form_use_life_chrono_earliest' not in self.fields):
+                    if 'form_use_life_chrono_earliest' not in self.fields:
                         self.fields['form_use_life_chrono_earliest'] = []
-                    if('form_use_life_chrono_latest' not in self.fields):
+                    if 'form_use_life_chrono_latest' not in self.fields:
                         self.fields['form_use_life_chrono_latest'] = []
                     self.fields['form_use_life_chrono_tile'].append(
                         ct.encode_path_from_bce_ce(start, stop, '10M-')
@@ -336,14 +336,14 @@ class SolrDocument:
                     if(item_type_found is False):
                         if(ptype == self.oc_item.item_type):
                             item_type_found = True
-                    if(active_predicate_field is not False):
+                    if active_predicate_field is not False:
                         solr_value = self._convert_values_to_json(
                             prefix_ptype,
                             parent['label']
                             )
-                        if(active_predicate_field not in self.fields):
+                        if active_predicate_field not in self.fields:
                             self.fields[active_predicate_field] = []
                         self.fields[active_predicate_field].append(solr_value)
-                    if(item_type_found):
+                    if item_type_found:
                         active_predicate_field = self._convert_slug_to_solr(
                             prefix_ptype) + '___pred_id'
