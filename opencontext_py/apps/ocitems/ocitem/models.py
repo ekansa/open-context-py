@@ -898,7 +898,7 @@ class ItemConstruction():
         adds document content
         """
         if(document is not False):
-            act_dict['dc-terms:description'] = document.content
+            act_dict['rdf:HTML'] = document.content
         return act_dict
 
     def get_entity_metadata(self, identifier):
