@@ -239,9 +239,10 @@ class OCitem():
             json_ld = item_con.add_document_json(json_ld, self.document)
         if(self.published is not None):
             json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
-        json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
-                                                          self.PREDICATES_DCTERMS_ISPARTOF,
-                                                          self.project_uuid, 'projects')
+        if(self.uuid != self.project_uuid):
+            json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
+                                                              self.PREDICATES_DCTERMS_ISPARTOF,
+                                                              self.project_uuid, 'projects')
         # add the stable ids needed for citation
         json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add a slug identifier if the item_type allows slugs
@@ -249,7 +250,9 @@ class OCitem():
         if(self.item_type in settings.SLUG_TYPES):
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               'owl:sameAs',
-                                                              self.slug, self.item_type)
+                                                              self.slug,
+                                                              self.item_type,
+                                                              True)
         # add linked data annotations, inferred authorship metadata
         json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
         self.json_ld = json_ld
@@ -495,7 +498,8 @@ class ItemConstruction():
                         act_dict['owl:sameAs'] = stable_id_list
         return act_dict
 
-    def add_json_predicate_list_ocitem(self, act_dict, act_pred_key, object_id, item_type):
+    def add_json_predicate_list_ocitem(self, act_dict, act_pred_key,
+                                       object_id, item_type, do_slug_uri=False):
         """
         creates a list for an act_predicate of the json_ld dictionary object if it doesn't exist
         adds a list item of a dictionary object for a linked Open Context item
@@ -505,26 +509,30 @@ class ItemConstruction():
         else:
             act_list = []
         new_object_item = LastUpdatedOrderedDict()
-        ent = self.get_entity_metadata(object_id)
-        if(ent is not False):
-            new_object_item['id'] = ent.uri
-            new_object_item['slug'] = ent.slug
-            if(ent.label is not False):
-                new_object_item['label'] = ent.label
-            else:
-                new_object_item['label'] = 'No record of label'
-            if(ent.thumbnail_uri is not False):
-                new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
-            if(ent.content is not False and ent.content != ent.label):
-                new_object_item['rdfs:comment'] = ent.content
-            if((ent.class_uri is not False) and (item_type == 'subjects' or item_type == 'media')):
-                new_object_item['type'] = ent.class_uri
-                if(ent.class_uri not in self.class_type_list):
-                    self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
+        if do_slug_uri:
+            new_object_item['id'] = URImanagement.make_oc_uri(object_id, item_type)
             act_list.append(new_object_item)
-            act_dict[act_pred_key] = act_list
-        elif(act_pred_key == 'oc-gen:hasIcon'):
-            act_dict[act_pred_key] = [{'id': object_id}]
+        else:
+            ent = self.get_entity_metadata(object_id)
+            if(ent is not False):
+                new_object_item['id'] = ent.uri
+                new_object_item['slug'] = ent.slug
+                if(ent.label is not False):
+                    new_object_item['label'] = ent.label
+                else:
+                    new_object_item['label'] = 'No record of label'
+                if(ent.thumbnail_uri is not False):
+                    new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
+                if(ent.content is not False and ent.content != ent.label):
+                    new_object_item['rdfs:comment'] = ent.content
+                if((ent.class_uri is not False) and (item_type == 'subjects' or item_type == 'media')):
+                    new_object_item['type'] = ent.class_uri
+                    if(ent.class_uri not in self.class_type_list):
+                        self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
+                act_list.append(new_object_item)
+                act_dict[act_pred_key] = act_list
+            elif(act_pred_key == 'oc-gen:hasIcon'):
+                act_dict[act_pred_key] = [{'id': object_id}]
         return act_dict
 
     def add_inferred_authorship_linked_data_graph(self, act_dict):
