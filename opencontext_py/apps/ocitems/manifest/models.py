@@ -14,7 +14,7 @@ class Manifest(models.Model):
     item_type = models.CharField(max_length=50)
     repo = models.CharField(max_length=200)
     class_uri = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=70, blank=True, null=True, db_index=True)
+    slug = models.SlugField(max_length=70, unique=True)
     label = models.CharField(max_length=200)
     des_predicate_uuid = models.CharField(max_length=50)
     views = models.IntegerField()
