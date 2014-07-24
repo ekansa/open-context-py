@@ -30,9 +30,9 @@ urlpatterns = patterns('',
                        url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
                        url(r'^documents', DocumentViews.index, name='index'),
                        # Person views for Person / organization items
-                       # url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='json_view'),
-                       # url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='html_view'),
-                       # url(r'^persons', PersonViews.index, name='index'),
+                       url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='json_view'),
+                       url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='html_view'),
+                       url(r'^persons', PersonViews.index, name='index'),
                        # Project views for projects
                        # url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='json_view'),
                        # url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='html_view'),
