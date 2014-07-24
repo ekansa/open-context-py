@@ -34,9 +34,9 @@ urlpatterns = patterns('',
                        url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='html_view'),
                        url(r'^persons', PersonViews.index, name='index'),
                        # Project views for projects
-                       # url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='json_view'),
-                       # url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='html_view'),
-                       # url(r'^projects', ProjectViews.index, name='index'),
+                       url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='json_view'),
+                       url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='html_view'),
+                       url(r'^projects', ProjectViews.index, name='index'),
                        # Predicates views for descriptive variables and linking relations from OC contributors
                        url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='predicates_json'),
                        url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='predicates_html'),
