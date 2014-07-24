@@ -32,6 +32,7 @@ class SolrDocument:
         self._process_predicates()
         self._process_geo()
         self._process_chrono()
+        self._process_text_content()
         self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
@@ -406,6 +407,17 @@ class SolrDocument:
                     if item_type_found:
                         active_predicate_field = self._convert_slug_to_solr(
                             prefix_ptype) + '___pred_id'
+
+    def _process_text_content(self):
+        """ Gets text content for indexing
+        """
+        text_predicates = ['dc-terms:description',
+                           'dc-terms:abstract',
+                           'rdfs:comment',
+                           'rdf:HTML']
+        for pred in text_predicates:
+            if pred in self.oc_item.json_ld:
+                self.fields['text'] += self.oc_item.json_ld[pred] + '\n'
 
     def _process_interest_score(self):
         """ Calculates the 'interest score' for sorting items with more documentation
