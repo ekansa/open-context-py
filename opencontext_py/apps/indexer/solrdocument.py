@@ -31,6 +31,7 @@ class SolrDocument:
         self._process_predicates()
         self._process_geo()
         self._process_chrono()
+        self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
@@ -211,7 +212,8 @@ class SolrDocument:
         # default, can add as doc links discovered
         self.fields['document_count'] = 0
         self.fields['sort_score'] = 0  # fix
-        self.fields['interest_score'] = 0  # fix
+        #default, adds to interest score once other fields determined
+        self.fields['interest_score'] = 0
         self.fields['slug_label'] = self._convert_values_to_json(
             self.oc_item.json_ld['slug'],
             self.oc_item.json_ld['label'])
@@ -267,6 +269,7 @@ class SolrDocument:
         Finds geospatial point coordinates in GeoJSON features for indexing.
         Only 1 location of a given location type is allowed.
         """
+        self.geo_specified = False
         if 'features' in self.oc_item.json_ld:
             discovery_done = False
             for feature in self.oc_item.json_ld['features']:
@@ -285,6 +288,12 @@ class SolrDocument:
                     zoom = feature['properties']['location-precision']
                 except KeyError:
                     zoom = 20
+                try:
+                    ref_type = feature['properties']['reference-type']
+                    if(ref_type == 'specified'):
+                        self.geo_specified = True
+                except KeyError:
+                    ref_type = False
                 if ftype == 'Point' \
                     and loc_type == 'oc-gen:discovey-location' \
                         and discovery_done is False:
@@ -309,6 +318,7 @@ class SolrDocument:
         """ Finds chronological / date ranges in GeoJSON features for indexing.
         More than 1 date range per item is OK.
         """
+        self.chrono_specified = False
         if 'features' in self.oc_item.json_ld:
             for feature in self.oc_item.json_ld['features']:
                 bad_time = False
@@ -324,6 +334,12 @@ class SolrDocument:
                     when_type = feature['when']['type']
                 except KeyError:
                     when_type = False
+                try:
+                    ref_type = feature['when']['reference-type']
+                    if(ref_type == 'specified'):
+                        self.chrono_specified = True
+                except KeyError:
+                    ref_type = False
                 if when_type == 'oc-gen:formation-use-life' \
                         and bad_time is False:
                     chrono_tile = ChronoTile()
@@ -373,3 +389,31 @@ class SolrDocument:
                     if item_type_found:
                         active_predicate_field = self._convert_slug_to_solr(
                             prefix_ptype) + '___pred_id'
+
+    def _process_interest_score(self):
+        """ Calculates the 'interest score' for sorting items with more documentation
+        / description to a higher rank.
+        """
+        self.fields['interest_score'] = 0
+        type_scores = {'subjects': 0,
+                       'media': 5,
+                       'documents': 5,
+                       'persons': 2,
+                       'types': 2,
+                       'predicates': 2,
+                       'projects': 50,
+                       'vocabularies': 25,
+                       'tables': 25}
+        if(self.oc_item.item_type in type_scores):
+            self.fields['interest_score'] += type_scores[self.oc_item.item_type]
+        for field_key, value in self.fields.items():
+            if('__pred_' in field_key):
+                self.fields['interest_score'] += 1
+        self.fields['interest_score'] += len(self.fields['text']) / 100
+        self.fields['interest_score'] += self.fields['image_media_count'] * 4
+        self.fields['interest_score'] += self.fields['other_binary_media_count'] * 5
+        self.fields['interest_score'] += self.fields['document_count'] * 4
+        if(self.geo_specified):
+            self.fields['interest_score'] += 5  # geo data specified, more interesting
+        if(self.chrono_specified):
+            self.fields['interest_score'] += 5  # chrono data specified, more interesting
