@@ -287,7 +287,7 @@ class ItemConstruction():
         context['uuid'] = 'dc-terms:identifier'
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
-        context['category'] = 'oc-gen:category'
+        context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
         context['Feature'] = 'geojson:Feature'
         context['FeatureCollection'] = 'geojson:FeatureCollection'
         context['GeometryCollection'] = 'geojson:GeometryCollection'
@@ -311,7 +311,7 @@ class ItemConstruction():
         context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
         context['title'] = 'dc-terms:title'
         context['when'] = 'geojson:when'
-        context['reference-type'] = {'@id': 'oc-gen:reference-type', 'type': '@id'}
+        context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
         context['inferred'] = 'oc-gen:inferred'
         context['specified'] = 'oc-gen:specified'
         context['reference-uri'] = 'oc-gen:reference-uri'
