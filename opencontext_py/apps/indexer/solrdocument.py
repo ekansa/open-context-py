@@ -4,6 +4,7 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 
 class SolrDocument:
@@ -43,35 +44,51 @@ class SolrDocument:
         # Then get the predicate values
         if solr_field_name not in self.fields:
             self.fields[solr_field_name] = []
+        if self.oc_item.item_type == 'media' or self.oc_item.item_type == 'documents':
+            make_join_ids = True  # we want to make joins easier for these types of items
+        else:
+            make_join_ids = False
         predicate_key = 'oc-pred:' + predicate_slug
         for obs_list in self.oc_item.json_ld['oc-gen:has-obs']:
             if predicate_key in obs_list:
                 predicate_values = obs_list[predicate_key]
                 for value in predicate_values:
-                    if predicate_type == '@id' and predicate_slug != 'link':
-                        active_solr_field = solr_field_name
-                        parents = LinkRecursion().get_jsonldish_entity_parents(
-                            value['id']
-                            )
-                        for parent in parents:
-                            if active_solr_field not in self.fields:
-                                self.fields[active_solr_field] = []
-                            active_solr_value = self._convert_values_to_json(
-                                parent['slug'],
-                                parent['label']
+                    if predicate_type == '@id':
+                        if(make_join_ids and 'subjects' in value['id']):
+                            # case where we want to make a join field to link
+                            # associated subjects items with media or document items
+                            # allows join relationships between 'join___pred_id' and
+                            # 'uuid' solr fields.
+                            if 'join___pred_id' not in self.fields:
+                                self.fields['join___pred_id'] = []
+                            # get subjects UUID from the URI
+                            sub_uuid = URImanagement.get_uuid_from_oc_uri(value['id'])
+                            # append to the solr field for joins
+                            self.fields['join___pred_id'].append(sub_uuid)
+                        if(predicate_slug != 'link'):
+                            active_solr_field = solr_field_name
+                            parents = LinkRecursion().get_jsonldish_entity_parents(
+                                value['id']
                                 )
-                            self.fields['text'] += ' ' + parent['label'] + ' '
-                            self.fields[active_solr_field].append(
-                                active_solr_value
-                                )
-                            # print('\n ID field: ' + active_solr_field +
-                            #' Val: ' + active_solr_value)
-                            active_solr_field = self._convert_slug_to_solr(
-                                parent['slug']) + '___' + solr_field_name
-                    elif predicate_type == '@id' and predicate_slug == 'link':
-                        # case of a linking relation, don't bother looking up
-                        # hierarchies or recording as a solr field, but check
-                        # for image, other media, and document counts
+                            for parent in parents:
+                                if active_solr_field not in self.fields:
+                                    self.fields[active_solr_field] = []
+                                active_solr_value = self._convert_values_to_json(
+                                    parent['slug'],
+                                    parent['label']
+                                    )
+                                self.fields['text'] += ' ' + parent['label'] + ' '
+                                self.fields[active_solr_field].append(
+                                    active_solr_value
+                                    )
+                                # print('\n ID field: ' + active_solr_field +
+                                #' Val: ' + active_solr_value)
+                                active_solr_field = self._convert_slug_to_solr(
+                                    parent['slug']) + '___' + solr_field_name
+                        else:
+                            # case of a linking relation, don't bother looking up
+                            # hierarchies or recording as a solr field, but check
+                            # for image, other media, and document counts
                             if 'media' in value['id'] \
                                     and value['type'] == 'image':
                                 self.fields['image_media_count'] += 1
