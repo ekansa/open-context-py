@@ -11,7 +11,7 @@ def index(request):
 
 def html_view(request, uuid):
     ocitem = OCitem()
-    ocitem.get_item(uuid)
+    ocitem.get_item(uuid, True)
     if(ocitem.manifest is not False):
         return HttpResponse("Hello, world. You're at the project htmlView of " + str(uuid))
     else:
@@ -20,7 +20,7 @@ def html_view(request, uuid):
 
 def json_view(request, uuid):
     ocitem = OCitem()
-    ocitem.get_item(uuid)
+    ocitem.get_item(uuid, True)
     if(ocitem.manifest is not False):
         json_output = json.dumps(ocitem.json_ld,
                                  indent=4,
