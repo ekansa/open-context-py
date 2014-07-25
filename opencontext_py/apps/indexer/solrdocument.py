@@ -91,10 +91,10 @@ class SolrDocument:
                             # hierarchies or recording as a solr field, but check
                             # for image, other media, and document counts
                             if 'media' in value['id'] \
-                                    and value['type'] == 'image':
+                                    and 'image' in value['type']:
                                 self.fields['image_media_count'] += 1
                             elif 'media' in value['id'] \
-                                    and value['type'] != 'image':
+                                    and 'image' not in value['type']:
                                  # other types of media
                                 self.fields['other_binary_media_count'] += 1
                             elif 'documents' in value['id']:
