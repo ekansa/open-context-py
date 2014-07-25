@@ -1,3 +1,4 @@
+import time
 import json
 import geojson
 import copy
@@ -46,6 +47,7 @@ class OCitem():
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
 
     def __init__(self):
+        self.time_start = time.time()
         self.json_ld = False
         self.uuid = False
         self.slug = False
@@ -255,6 +257,7 @@ class OCitem():
                                                               True)
         # add linked data annotations, inferred authorship metadata
         json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
+        json_ld['time'] = time.time() - self.time_start
         self.json_ld = json_ld
         item_con.__del__()
         return self.json_ld
