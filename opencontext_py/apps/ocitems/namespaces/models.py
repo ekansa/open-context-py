@@ -15,7 +15,7 @@ class ItemNamespaces():
         context['dc-terms'] = 'http://purl.org/dc/terms/'
         context['bibo'] = 'http://purl.org/ontology/bibo/'
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
-        context['cidoc-crm'] = 'http://www.cidoc-crm.org/cidoc-crm/'
+        context['cidoc-crm'] = 'http://erlangen-crm.org/current/'
         context['dcat'] = 'http://www.w3.org/ns/dcat#'
         context['geojson'] = 'http://ld.geojson.org/vocab#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
