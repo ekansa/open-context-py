@@ -54,7 +54,7 @@ class Assertion(models.Model):
 
     class Meta:
         db_table = 'oc_assertions'
-        ordering = ['sort']
+        ordering = ['uuid', 'sort']
 
 
 class Containment():
