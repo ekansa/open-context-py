@@ -40,16 +40,16 @@ class Crawler():
                   'verify your Solr instance and configuration.\n')
             sys.exit(1)
 
-    def crawl(self, chunksize=500):
+    def crawl(self, chunksize=100):
         '''
         For efficiency, this method processes documents in "chunks."
         The default chunk size is 500, but one can specify other values.
 
-        For example, to specify a chunksize of 100, use this method as
+        For example, to specify a chunksize of 500, use this method as
         follows:
 
         crawler = Crawler()
-        crawler.crawl(100)
+        crawler.crawl(500)
         '''
 
         start_time = time.time()
@@ -78,7 +78,7 @@ class Crawler():
             if solr_status == 200:
                 self.solr.commit()
                 print('--------------------------------------------')
-                print('Crawl Rate: ' + self._documents_per_second(
+                print('Crawl Rate: ' + self._get_crawl_rate_in_seconds(
                     document_count, start_time) + ' documents per second')
                 print('--------------------------------------------')
             else:
@@ -100,6 +100,7 @@ class Crawler():
         crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
         '''
         print('\nAttempting to index document ' + uuid + '...\n')
+        start_time = time.time()
         try:
             solrdocument = SolrDocument(uuid).fields
             if self._is_valid_document(solrdocument):
@@ -108,7 +109,9 @@ class Crawler():
                 solr_status = self.solr.update(
                     [solrdocument], 'json', commit=True).status
                 if solr_status == 200:
-                    print('Successfully indexed ' + uuid + '.')
+                    print('Successfully indexed ' + uuid + ' in ' +
+                          self._get_crawl_rate_in_seconds(1, start_time)
+                          + ' seconds.')
                 else:
                     print('Error: ' + str(self.solr.update(
                         [solrdocument], 'json', commit=True
@@ -148,5 +151,5 @@ class Crawler():
             )
         return bool(pattern.search(value))
 
-    def _documents_per_second(self, document_count, start_time):
-        return str(int(document_count//(time.time() - start_time)))
+    def _get_crawl_rate_in_seconds(self, document_count, start_time):
+        return str(round(document_count/(time.time() - start_time), 3))
