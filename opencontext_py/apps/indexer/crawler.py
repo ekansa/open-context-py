@@ -1,20 +1,18 @@
-import sys
 import time
-import re
 from itertools import islice
-import requests
-from mysolr import Solr
+from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
 from opencontext_py.apps.indexer.uuidlist import UUIDList
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 
 
 class Crawler():
-
+    '''
+    The Open Context Crawler indexes Open Context items and makes them
+    searchable in Apache Solr.
+    '''
     def __init__(self):
         '''
-        The Open Context Crawler indexes Open Context items and makes
-        them searchable in Apache Solr.
-
         To use, import this library and instantiate a crawler object:
 
         crawler = Crawler()
@@ -29,16 +27,10 @@ class Crawler():
 
         crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
         '''
-        # The list of OC items to crawl
+        # The list of Open Context items to crawl
         self.uuidlist = UUIDList().uuids
-        self.session = requests.Session()
-        try:
-            self.solr = Solr('http://localhost:8983/solr',
-                             make_request=self.session)
-        except requests.ConnectionError:
-            print('\nError: Could not connect to Solr. Please '
-                  'verify your Solr instance and configuration.\n')
-            sys.exit(1)
+        # Connect to Solr
+        self.solr = SolrConnection().connection
 
     def crawl(self, chunksize=100):
         '''
@@ -59,10 +51,11 @@ class Crawler():
         document_count = 0
         while self.uuidlist is not None:
             documents = []
+            # Process the UUID list in chunks
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
                     solrdocument = SolrDocument(uuid).fields
-                    if self._is_valid_document(solrdocument):
+                    if crawlutil().is_valid_document(solrdocument):
                         documents.append(solrdocument)
                         document_count += 1
                         print("(" + str(document_count) + ")\t" + uuid)
@@ -78,7 +71,7 @@ class Crawler():
             if solr_status == 200:
                 self.solr.commit()
                 print('--------------------------------------------')
-                print('Crawl Rate: ' + self._get_crawl_rate_in_seconds(
+                print('Crawl Rate: ' + crawlutil().get_crawl_rate_in_seconds(
                     document_count, start_time) + ' documents per second')
                 print('--------------------------------------------')
             else:
@@ -103,14 +96,14 @@ class Crawler():
         start_time = time.time()
         try:
             solrdocument = SolrDocument(uuid).fields
-            if self._is_valid_document(solrdocument):
+            if crawlutil().is_valid_document(solrdocument):
                 # Commit the document and save the response status.
                 # Note: solr.update() expects a list
                 solr_status = self.solr.update(
                     [solrdocument], 'json', commit=True).status
                 if solr_status == 200:
                     print('Successfully indexed ' + uuid + ' in ' +
-                          self._get_crawl_rate_in_seconds(1, start_time)
+                          crawlutil().get_crawl_rate_in_seconds(1, start_time)
                           + ' seconds.')
                 else:
                     print('Error: ' + str(self.solr.update(
@@ -124,32 +117,3 @@ class Crawler():
             print("Error: Unable to process document " + uuid + '.')
         except Exception as error:
             print("Error: {0}".format(error) + " -----> " + uuid)
-
-    def _is_valid_document(self, document):
-        '''
-        Validate that numeric and date fields contain only numeric and
-        date data.
-        '''
-        is_valid = True
-        for key in document:
-            if key.endswith('numeric'):
-                for value in document[key]:
-                    if not(self._is_valid_float(value)):
-                        is_valid = False
-            if key.endswith('date'):
-                for value in document[key]:
-                    if not(self._is_valid_date(value)):
-                        is_valid = False
-        return is_valid
-
-    def _is_valid_float(self, value):
-        return isinstance(value, float)
-
-    def _is_valid_date(self, value):
-        pattern = re.compile(
-            '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z'
-            )
-        return bool(pattern.search(value))
-
-    def _get_crawl_rate_in_seconds(self, document_count, start_time):
-        return str(round(document_count/(time.time() - start_time), 3))
