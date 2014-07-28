@@ -4,7 +4,7 @@ import re
 
 class CrawlerUtilities():
     '''
-    Utilities useful for crawler app
+    Utilities useful for the crawler app
     '''
     def is_valid_document(self, document):
         '''
