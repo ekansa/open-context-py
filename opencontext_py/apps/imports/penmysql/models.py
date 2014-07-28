@@ -83,7 +83,10 @@ class PenMysql():
                     print("\n Active table: " + act_table + " (Recs: " + str(len(recs)) + ")")
                     self.store_records(act_table, recs)
 
-    def allow_write(self, act_table, record):
+    def check_allow_write(self, act_table, record):
+        """
+        checks to see if a record is OK to add
+        """
         if(self.allow_overwrite):
             allow_write = True # create new record or save over old
         else:
@@ -108,7 +111,7 @@ class PenMysql():
         stores records retrieved for a given table
         """
         for record in recs:
-            allow_write = self.allow_write(act_table, record)
+            allow_write = self.check_allow_write(act_table, record)
             if(allow_write is False):
                 print('\n Not allowed to overwite record.')
             else:
@@ -117,6 +120,9 @@ class PenMysql():
                     newr.save()
                 elif(act_table == 'link_entities'):
                     newr = LinkEntity(**record)
+                    newr.save()
+                elif(act_table == 'oc_manifest'):
+                    newr = Manifest(**record)
                     newr.save()
                 elif(act_table == 'oc_mediafiles'):
                     newr = Mediafile(**record)
