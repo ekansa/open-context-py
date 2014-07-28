@@ -53,7 +53,7 @@ class LinkEntityGeneration():
                         'http://opencontext.org/vocabularies/open-context-zooarch': 'oc-zoo',
                         'http://orcid.org': 'orcid',
                         'http://pleiades.stoa.org/places': 'pleiades-p',
-                        '"http://pleiades.stoa.org/vocabularies/time-periods': 'pleiades-tp',
+                        'http://pleiades.stoa.org/vocabularies/time-periods': 'pleiades-tp',
                         'http://purl.obolibrary.org/obo': 'obo',
                         'http://purl.org/NET/biol/ns': 'biol',
                         'http://sw.opencyc.org': 'opencyc',
