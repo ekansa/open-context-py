@@ -53,6 +53,7 @@ class LinkEntityGeneration():
                         'http://opencontext.org/vocabularies/open-context-zooarch': 'oc-zoo',
                         'http://orcid.org': 'orcid',
                         'http://pleiades.stoa.org/places': 'pleiades-p',
+                        '"http://pleiades.stoa.org/vocabularies/time-periods': 'pleiades-tp',
                         'http://purl.obolibrary.org/obo': 'obo',
                         'http://purl.org/NET/biol/ns': 'biol',
                         'http://sw.opencyc.org': 'opencyc',
@@ -62,7 +63,8 @@ class LinkEntityGeneration():
                         'http://www.w3.org/2000/01/rdf-schema': 'rdfs',
                         'http://www.w3.org/2003/01/geo/wgs84_pos': 'geo',
                         'http://www.w3.org/2004/02/skos/core': 'skos',
-                        'http://en.wikipedia.org/wiki': 'wiki'
+                        'http://en.wikipedia.org/wiki': 'wiki',
+                        'http://id.loc.gov/authorities/subjects': 'loc-sh'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             uri = uri.replace(uri_root, uri_prefix)
