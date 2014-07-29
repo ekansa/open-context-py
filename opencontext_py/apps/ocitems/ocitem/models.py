@@ -249,6 +249,9 @@ class OCitem():
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               self.PREDICATES_DCTERMS_ISPARTOF,
                                                               self.project_uuid, 'projects')
+        if(self.project is not False):
+            json_ld['description'] = self.project.short_des
+            json_ld['dc-terms:abstract'] = self.project.content
         # add the stable ids needed for citation
         json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add a slug identifier if the item_type allows slugs

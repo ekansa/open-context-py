@@ -419,6 +419,7 @@ class SolrDocument:
         """ Gets text content for indexing
         """
         text_predicates = ['dc-terms:description',
+                           'description',
                            'dc-terms:abstract',
                            'rdfs:comment',
                            'rdf:HTML']
