@@ -45,8 +45,10 @@ class SolrDocument:
         # Then get the predicate values
         if solr_field_name not in self.fields:
             self.fields[solr_field_name] = []
-        if self.oc_item.item_type == 'media' or self.oc_item.item_type == 'documents':
-            make_join_ids = True  # we want to make joins easier for these types of items
+        if self.oc_item.item_type == 'media' \
+                or self.oc_item.item_type == 'documents':
+        # we want to make joins easier for these types of items
+            make_join_ids = True
         else:
             make_join_ids = False
         predicate_key = 'oc-pred:' + predicate_slug
@@ -55,30 +57,35 @@ class SolrDocument:
                 predicate_values = obs_list[predicate_key]
                 for value in predicate_values:
                     if predicate_type == '@id':
-                        if(make_join_ids and 'subjects' in value['id']):
+                        if make_join_ids and 'subjects' in value['id']:
                             # case where we want to make a join field to link
-                            # associated subjects items with media or document items
-                            # allows join relationships between 'join___pred_id' and
-                            # 'uuid' solr fields.
+                            # associated subjects items with media or document
+                            # items allows join relationships between
+                            # 'join___pred_id' and 'uuid' solr fields.
                             if 'join___pred_id' not in self.fields:
                                 self.fields['join___pred_id'] = []
                             # get subjects UUID from the URI
-                            sub_uuid = URImanagement.get_uuid_from_oc_uri(value['id'])
+                            sub_uuid = URImanagement.get_uuid_from_oc_uri(
+                                value['id']
+                                )
                             # append to the solr field for joins
                             self.fields['join___pred_id'].append(sub_uuid)
-                        if(predicate_slug != 'link'):
+                        if predicate_slug != 'link':
                             active_solr_field = solr_field_name
-                            parents = LinkRecursion().get_jsonldish_entity_parents(
+                            parents = LinkRecursion(
+                                ).get_jsonldish_entity_parents(
                                 value['id']
                                 )
                             for parent in parents:
                                 if active_solr_field not in self.fields:
                                     self.fields[active_solr_field] = []
-                                active_solr_value = self._convert_values_to_json(
-                                    parent['slug'],
-                                    parent['label']
+                                active_solr_value = \
+                                    self._convert_values_to_json(
+                                        parent['slug'],
+                                        parent['label']
                                     )
-                                self.fields['text'] += ' ' + parent['label'] + ' '
+                                self.fields['text'] += ' ' + \
+                                    parent['label'] + ' '
                                 self.fields[active_solr_field].append(
                                     active_solr_value
                                     )
@@ -87,9 +94,9 @@ class SolrDocument:
                                 active_solr_field = self._convert_slug_to_solr(
                                     parent['slug']) + '___' + solr_field_name
                         else:
-                            # case of a linking relation, don't bother looking up
-                            # hierarchies or recording as a solr field, but check
-                            # for image, other media, and document counts
+                            # case of a linking relation, don't bother looking
+                            # up hierarchies or recording as a solr field, but
+                            # check for image, other media, and document counts
                             if 'media' in value['id'] \
                                     and 'image' in value['type']:
                                 self.fields['image_media_count'] += 1
@@ -308,7 +315,7 @@ class SolrDocument:
                     zoom = 20
                 try:
                     ref_type = feature['properties']['reference-type']
-                    if(ref_type == 'specified'):
+                    if ref_type == 'specified':
                         self.geo_specified = True
                 except KeyError:
                     ref_type = False
@@ -354,7 +361,7 @@ class SolrDocument:
                     when_type = False
                 try:
                     ref_type = feature['when']['reference-type']
-                    if(ref_type == 'specified'):
+                    if ref_type == 'specified':
                         self.chrono_specified = True
                 except KeyError:
                     ref_type = False
@@ -420,8 +427,8 @@ class SolrDocument:
                 self.fields['text'] += self.oc_item.json_ld[pred] + '\n'
 
     def _process_interest_score(self):
-        """ Calculates the 'interest score' for sorting items with more documentation
-        / description to a higher rank.
+        """ Calculates the 'interest score' for sorting items with more
+        documentation / description to a higher rank.
         """
         self.fields['interest_score'] = 0
         type_scores = {'subjects': 0,
@@ -433,16 +440,21 @@ class SolrDocument:
                        'projects': 50,
                        'vocabularies': 25,
                        'tables': 25}
-        if(self.oc_item.item_type in type_scores):
-            self.fields['interest_score'] += type_scores[self.oc_item.item_type]
+        if self.oc_item.item_type in type_scores:
+            self.fields['interest_score'] += type_scores[
+                self.oc_item.item_type
+                ]
         for field_key, value in self.fields.items():
-            if('__pred_' in field_key):
+            if '__pred_' in field_key:
                 self.fields['interest_score'] += 1
         self.fields['interest_score'] += len(self.fields['text']) / 100
         self.fields['interest_score'] += self.fields['image_media_count'] * 4
-        self.fields['interest_score'] += self.fields['other_binary_media_count'] * 5
+        self.fields['interest_score'] += self.fields[
+            'other_binary_media_count'] * 5
         self.fields['interest_score'] += self.fields['document_count'] * 4
-        if(self.geo_specified):
-            self.fields['interest_score'] += 5  # geo data specified, more interesting
-        if(self.chrono_specified):
-            self.fields['interest_score'] += 5  # chrono data specified, more interesting
+        if self.geo_specified:
+        # geo data specified, more interesting
+            self.fields['interest_score'] += 5
+        if self.chrono_specified:
+        # chrono data specified, more interesting
+            self.fields['interest_score'] += 5
