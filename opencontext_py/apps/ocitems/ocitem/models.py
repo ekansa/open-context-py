@@ -255,6 +255,7 @@ class OCitem():
         if(self.project is not False):
             json_ld['description'] = self.project.short_des
             json_ld['dc-terms:abstract'] = self.project.content
+            json_ld = item_con.add_editorial_status(json_ld, self.project.edit_status)
         # add the stable ids needed for citation
         json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add a slug identifier if the item_type allows slugs
@@ -534,6 +535,20 @@ class ItemConstruction():
                                                                la.predicate_uri,
                                                                la.object_uri,
                                                                item_type)
+        return act_dict
+
+    def add_editorial_status(self, act_dict, edit_status):
+        """
+        adds editorial status information to the resource
+        """
+        oc_status = 'oc-gen:edit-level-' + str(edit_status)
+        act_dict = self.add_json_predicate_list_ocitem(act_dict, 'bibo:status', oc_status, False)
+        if edit_status == 0:
+            act_dict = self.add_json_predicate_list_ocitem(act_dict, 'bibo:status', 'bibo:status/forthcoming', False)
+        elif edit_status >= 1 and edit_status <= 2:
+            act_dict = self.add_json_predicate_list_ocitem(act_dict, 'bibo:status', 'bibo:status/nonPeerReviewed', False)
+        else:
+            act_dict = self.add_json_predicate_list_ocitem(act_dict, 'bibo:status', 'bibo:status/peerReviewed', False)
         return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key,

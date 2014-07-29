@@ -46,7 +46,6 @@ class LinkEntityGeneration():
                         'http://gawd.atlantides.org/terms': 'gawd',
                         'http://purl.org/dc/terms': 'dc-terms',
                         'http://dbpedia.org/resource': 'dbpedia',
-                        'http://dbpedia.org/resource': 'dbpedia',
                         'http://eol.org/pages': 'eol-p',
                         'http://opencontext.org/vocabularies/dinaa': 'dinaa',
                         'http://opencontext.org/vocabularies/oc-general': 'oc-gen',
@@ -64,7 +63,8 @@ class LinkEntityGeneration():
                         'http://www.w3.org/2003/01/geo/wgs84_pos': 'geo',
                         'http://www.w3.org/2004/02/skos/core': 'skos',
                         'http://en.wikipedia.org/wiki': 'wiki',
-                        'http://id.loc.gov/authorities/subjects': 'loc-sh'
+                        'http://id.loc.gov/authorities/subjects': 'loc-sh',
+                        'http://purl.org/ontology/bibo/status': 'bibo'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             uri = uri.replace(uri_root, uri_prefix)
