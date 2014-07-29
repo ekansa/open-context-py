@@ -21,7 +21,7 @@ from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.projects.models import Project, ProjectRels
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
@@ -66,6 +66,7 @@ class OCitem():
         self.document = False
         self.person = False
         self.project = False
+        self.sub_projects = False
         self.vocabulary = False
         self.table = False
         self.predicate = False
@@ -181,8 +182,10 @@ class OCitem():
             except Person.DoesNotExist:
                 self.person = False
         elif(self.item_type == 'projects'):
+            pr = ProjectRels()
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
+                self.sub_projects = pr.get_sub_projects(self.uuid)
             except Project.DoesNotExist:
                 self.project = False
         elif(self.item_type == 'predicates'):
@@ -265,6 +268,12 @@ class OCitem():
         # add linked data annotations, inferred authorship metadata
         json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
         json_ld = item_con.add_link_annotations(json_ld, self.link_annotations)
+        if self.sub_projects is list:
+            for sub_proj in self.sub_projects:
+                json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
+                                                                  'dc-terms:hasPart',
+                                                                  sub_proj.uuid,
+                                                                  'projects')
         json_ld['time'] = time.time() - self.time_start
         self.json_ld = json_ld
         item_con.__del__()

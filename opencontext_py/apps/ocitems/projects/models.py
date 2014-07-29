@@ -15,3 +15,23 @@ class Project(models.Model):
 
     class Meta:
         db_table = 'oc_projects'
+
+
+class ProjectRels():
+    """
+    Checks on project relationships with subprojects
+    """
+
+    def __init__(self):
+        self.sub_projects = False
+
+    def get_sub_projects(self, uuid):
+        """
+        Gets (child) sub-projects from the current project uuid
+        """
+        sub_projs = Project.objects.filter(project_uuid=uuid).exclude(uuid=uuid)
+        if(len(sub_projs) > 0):
+            self.sub_projects = sub_projs
+        else:
+            self.sub_projects = False
+        return self.sub_projects
