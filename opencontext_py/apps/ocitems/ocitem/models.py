@@ -83,6 +83,7 @@ class OCitem():
             self.get_geoevent_metadata()
             self.get_stable_ids()
             self.get_item_type_info()
+            self.get_link_anotations()
             self.construct_json_ld()
         return self
 
@@ -195,6 +196,9 @@ class OCitem():
             except OCtype.DoesNotExist:
                 self.octype = False
 
+    def get_link_anotations(self):
+        self.link_annotations = LinkAnnotation.objects.filter(subject=self.uuid)
+
     def construct_json_ld(self):
         """
         creates JSON-LD documents for an item
@@ -257,6 +261,7 @@ class OCitem():
                                                               True)
         # add linked data annotations, inferred authorship metadata
         json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
+        json_ld = item_con.add_link_annotations(json_ld, self.link_annotations)
         json_ld['time'] = time.time() - self.time_start
         self.json_ld = json_ld
         item_con.__del__()
@@ -426,7 +431,8 @@ class ItemConstruction():
                         act_pred_key = self.predicates[assertion.predicate_uuid]
                         act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
             observations.append(act_obs)
-        act_dict[OCitem.PREDICATES_OCGEN_HASOBS] = observations
+        if(len(observations) > 0):
+            act_dict[OCitem.PREDICATES_OCGEN_HASOBS] = observations
         return act_dict
 
     def add_predicate_value(self, act_dict, act_pred_key, assertion):
@@ -501,6 +507,23 @@ class ItemConstruction():
                         act_dict['owl:sameAs'] = stable_id_list
         return act_dict
 
+    def add_link_annotations(self, act_dict, link_annotations):
+        """
+        adds stable identifier information to an item's JSON-LD dictionary object
+        """
+        if(len(link_annotations) > 0):
+            for la in link_annotations:
+                tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
+                if(tcheck is False):
+                    item_type = False
+                else:
+                    item_type = tcheck['item_type']
+                act_dict = self.add_json_predicate_list_ocitem(act_dict,
+                                                               la.predicate_uri,
+                                                               la.object_uri,
+                                                               item_type)
+        return act_dict
+
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key,
                                        object_id, item_type, do_slug_uri=False):
         """
@@ -528,7 +551,10 @@ class ItemConstruction():
                     new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
                 if(ent.content is not False and ent.content != ent.label):
                     new_object_item['rdfs:comment'] = ent.content
-                if((ent.class_uri is not False) and (item_type == 'subjects' or item_type == 'media')):
+                if((ent.class_uri is not False) and
+                    (item_type == 'subjects'
+                     or item_type == 'media'
+                     or item_type == 'persons')):
                     new_object_item['type'] = ent.class_uri
                     if(ent.class_uri not in self.class_type_list):
                         self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
