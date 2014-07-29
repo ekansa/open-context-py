@@ -64,7 +64,7 @@ class LinkEntityGeneration():
                         'http://www.w3.org/2004/02/skos/core': 'skos',
                         'http://en.wikipedia.org/wiki': 'wiki',
                         'http://id.loc.gov/authorities/subjects': 'loc-sh',
-                        'http://purl.org/ontology/bibo/status': 'bibo'
+                        'http://purl.org/ontology/bibo': 'bibo'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             uri = uri.replace(uri_root, uri_prefix)
