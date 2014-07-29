@@ -33,8 +33,6 @@ class CrawlerUtilities():
         return bool(pattern.search(value))
 
     def get_crawl_rate_in_seconds(self, document_count, start_time):
-        print(start_time)
-        print(time.time())
         return str(round(document_count/(time.time() - start_time), 3))
 
     def get_elapsed_time_in_seconds(self, start_time):
