@@ -50,7 +50,8 @@ class PenMysql():
 
     def __init__(self):
         self.json_r = False
-        self.allow_overwrite = False
+        self.allow_overwrite = False  # if true, overwrite a record if it already exists
+        self.update_keep_old = False  # if true, use old data to 'fill in the blanks' of fields
 
     def get_table_records(self, act_table, after, start):
         """
@@ -106,51 +107,88 @@ class PenMysql():
                     allow_write = True
         return allow_write
 
+    def dictfetchall(self, cursor):
+        "Returns all rows from a cursor as a dict"
+        desc = cursor.description
+        return [
+            dict(zip([col[0] for col in desc], row))
+            for row in cursor.fetchall()
+        ]
+
+    def prep_update_keep_old(self, act_table, record):
+        """
+        checks to see if a record is OK to add
+        """
+        if(self.update_keep_old is False):
+            new_record = record  # do not change the new record with old values
+        else:
+            new_record = False  # default to false, a failure
+            if(act_table in self.UNIQUE_FIELDS):
+                sql = 'SELECT * FROM ' + act_table + ' WHERE '
+                f_terms = []
+                for act_field in self.UNIQUE_FIELDS[act_table]:
+                    f_term = act_field + ' = \'' + record[act_field] + '\' '
+                    f_terms.append(f_term)
+                sql = sql + ' AND '.join(f_terms)
+                sql = sql + ' LIMIT 1; '
+                cursor = connection.cursor()
+                cursor.execute(sql)
+                results = self.dictfetchall(cursor)
+                if(len(results) == 1):
+                    new_record = {}
+                    for field_key, value in results[0].items():
+                        if field_key in record:
+                            new_record[field_key] = record[field_key]  # use new data provided
+                        else:
+                            new_record[field_key] = value  # use old value for data
+        return new_record
+
     def store_records(self, act_table, recs):
         """
         stores records retrieved for a given table
         """
         for record in recs:
             allow_write = self.check_allow_write(act_table, record)
-            if(allow_write is False):
+            record = self.prep_update_keep_old(act_table, record)
+            if(allow_write is False and self.update_keep_old is False):
                 print('\n Not allowed to overwite record.')
             else:
                 if(act_table == 'link_annotations'):
                     newr = LinkAnnotation(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'link_entities'):
                     newr = LinkEntity(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_manifest'):
                     newr = Manifest(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_mediafiles'):
                     newr = Mediafile(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_documents'):
                     newr = OCdocument(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_persons'):
                     newr = Person(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_projects'):
                     newr = Project(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_strings'):
                     newr = OCstring(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_types'):
                     newr = OCtype(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_events'):
                     newr = Event(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_predicates'):
                     newr = Predicate(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_identifiers'):
                     newr = StableIdentifer(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
                 elif(act_table == 'oc_obsmetadata'):
                     newr = ObsMetadata(**record)
-                    newr.save()
+                    newr.save(force_update=self.update_keep_old)
