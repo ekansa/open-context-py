@@ -103,7 +103,7 @@ class Crawler():
                     [solrdocument], 'json', commit=True).status
                 if solr_status == 200:
                     print('Successfully indexed ' + uuid + ' in ' +
-                          crawlutil().get_crawl_rate_in_seconds(1, start_time)
+                          crawlutil().get_elapsed_time_in_seconds(start_time)
                           + ' seconds.')
                 else:
                     print('Error: ' + str(self.solr.update(
