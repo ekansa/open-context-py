@@ -183,9 +183,9 @@ class OCitem():
                 self.person = False
         elif(self.item_type == 'projects'):
             pr = ProjectRels()
+            self.sub_projects = pr.get_sub_projects(self.uuid)
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
-                self.sub_projects = pr.get_sub_projects(self.uuid)
             except Project.DoesNotExist:
                 self.project = False
         elif(self.item_type == 'predicates'):
@@ -268,7 +268,7 @@ class OCitem():
         # add linked data annotations, inferred authorship metadata
         json_ld = item_con.add_inferred_authorship_linked_data_graph(json_ld)
         json_ld = item_con.add_link_annotations(json_ld, self.link_annotations)
-        if self.sub_projects is list:
+        if self.sub_projects is not False:
             for sub_proj in self.sub_projects:
                 json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                                   'dc-terms:hasPart',
