@@ -34,11 +34,9 @@ class Crawler():
 
     def crawl(self, chunksize=100):
         '''
-        For efficiency, this method processes documents in "chunks."
-        The default chunk size is 500, but one can specify other values.
-
-        For example, to specify a chunksize of 500, use this method as
-        follows:
+        For efficiency, this method processes documents in "chunks." The
+        default chunk size is 100, but one can specify other values. For
+        example, to specify a chunksize of 500, use this method as follows:
 
         crawler = Crawler()
         crawler.crawl(500)
