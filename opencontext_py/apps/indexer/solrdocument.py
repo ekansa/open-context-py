@@ -1,5 +1,6 @@
 import datetime
 import json
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
 from opencontext_py.libs.chronotiles import ChronoTile
@@ -82,6 +83,7 @@ class SolrDocument:
                                 active_solr_value = \
                                     self._convert_values_to_json(
                                         parent['slug'],
+                                        parent['id'],
                                         parent['label']
                                     )
                                 self.fields['text'] += ' ' + \
@@ -164,6 +166,7 @@ class SolrDocument:
                         self.fields['root___pred_id'].append(
                             self._convert_values_to_json(
                                 parent['slug'],
+                                parent['id'],
                                 parent['label']
                                 )
                             )
@@ -188,6 +191,7 @@ class SolrDocument:
                         self.fields[solr_field_name].append(
                             self._convert_values_to_json(
                                 parent['slug'],
+                                parent['id'],
                                 parent['label']
                                 )
                             )
@@ -217,9 +221,11 @@ class SolrDocument:
     def _convert_slug_to_solr(self, slug):
         return slug.replace('-', '_')
 
-    def _convert_values_to_json(self, key, value):
-        json_values = {}
-        json_values[key] = value
+    def _convert_values_to_json(self, slug, id_uri, label):
+        json_values = LastUpdatedOrderedDict()
+        json_values['slug'] = slug
+        json_values['id'] = id_uri
+        json_values['label'] = label
         return json.dumps(json_values, ensure_ascii=False)
 
     def _process_core_solr_fields(self):
@@ -241,6 +247,7 @@ class SolrDocument:
         self.fields['interest_score'] = 0
         self.fields['slug_label'] = self._convert_values_to_json(
             self.oc_item.json_ld['slug'],
+            self.oc_item.json_ld['id'],
             self.oc_item.json_ld['label'])
         self.fields['item_type'] = self.oc_item.item_type
         self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
@@ -253,6 +260,7 @@ class SolrDocument:
                         self.fields['root___context_id'] = \
                             self._convert_values_to_json(
                                 self.context_path[0]['slug'],
+                                self.context_path[0]['id'],
                                 self.context_path[0]['label']
                                 )
                 else:
@@ -268,6 +276,7 @@ class SolrDocument:
                     self.fields[solr_field_name] = \
                         self._convert_values_to_json(
                             self.context_path[index]['slug'],
+                            self.context_path[index]['id'],
                             self.context_path[index]['label']
                             )
 
@@ -281,11 +290,13 @@ class SolrDocument:
                 if 'projects' in proj['id']:
                     self.fields['project_slug'] = self._convert_values_to_json(
                         proj['slug'],
+                        proj['id'],
                         proj['label'])
                     break
         elif self.oc_item.item_type == 'projects':
             self.fields['project_slug'] = self._convert_values_to_json(
                 self.oc_item.json_ld['slug'],
+                self.oc_item.json_ld['id'],
                 self.oc_item.json_ld['label']
                 )
 
@@ -406,6 +417,7 @@ class SolrDocument:
                     if active_predicate_field is not False:
                         solr_value = self._convert_values_to_json(
                             prefix_ptype,
+                            parent['id'],
                             parent['label']
                             )
                         if active_predicate_field not in self.fields:
