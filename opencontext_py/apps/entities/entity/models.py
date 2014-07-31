@@ -8,6 +8,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import TypeLookup
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.subjects.models import Subject
 
 
 # This class is used to dereference URIs or prefixed URIs
@@ -96,4 +97,16 @@ class Entity():
                         oc_pred = False
                     if(oc_pred is not False):
                         self.data_type = oc_pred.data_type
+        return output
+
+    def context_dereference(self, context):
+        """ looks up a context, described as a '/' seperated list of labels """
+        output = False
+        try:
+            subject = Subject.objects.filter(context=context)[:1]
+        except Subject.DoesNotExist:
+            subject = False
+        if subject is not False:
+            if len(subject) == 1:
+                output = self.dereference(subject[0].uuid)
         return output

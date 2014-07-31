@@ -22,6 +22,7 @@ from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.projects.models import Project, ProjectRels
+from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
