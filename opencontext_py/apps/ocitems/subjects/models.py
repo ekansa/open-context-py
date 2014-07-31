@@ -5,6 +5,7 @@ from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 # A subject is a generic item that is the subbject of observations
@@ -136,3 +137,23 @@ class SubjectGeneration():
                     self.error_uuids[sub_item.uuid] = {'context': act_context,
                                                        'error': 'bad path'}
         return done_count
+
+
+class Context():
+    """ Class for managing subject contexts, especially for lookups """
+    def __init__(self):
+        self.entity = False
+
+    def context_dereference(self, context):
+        """ looks up a context, described as a '/' seperated list of labels """
+        ent = Entity()
+        output = False
+        try:
+            subject = Subject.objects.filter(context=context)[:1]
+        except Subject.DoesNotExist:
+            subject = False
+        if subject is not False:
+            if len(subject) == 1:
+                output = ent.dereference(subject[0].uuid)
+                self.entity = ent
+        return output
