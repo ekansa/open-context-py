@@ -43,7 +43,7 @@ SECRET_KEY = get_secret('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = []
 
@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
     'opencontext_py.apps.indexer',
+    'opencontext_py.apps.searcher.sets',
 )
 
 MIDDLEWARE_CLASSES = (
