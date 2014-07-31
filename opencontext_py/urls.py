@@ -11,6 +11,7 @@ from opencontext_py.apps.ocitems.persons import views as PersonViews
 from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
+from opencontext_py.apps.searcher.sets import views as SetsViews
 
 
 urlpatterns = patterns('',
@@ -21,6 +22,10 @@ urlpatterns = patterns('',
                        url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
                        url(r'^subjects', SubjectViews.index, name='index'),
+                       # Sets views
+                       url(r'^sets/(?P<context>\S+).json', SetsViews.json_view, name='sets_json'),
+                       url(r'^sets/(?P<context>\S+)', SetsViews.html_view, name='sets_html'),
+                       url(r'^sets/$', SetsViews.index, name='index'),
                        # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
                        url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
