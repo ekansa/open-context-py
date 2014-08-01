@@ -64,10 +64,57 @@ class ProjectMeta():
         resonable_clusters = False
         number_clusters = self.MAX_CLUSTERS
         while resonable_clusters is False:
+            boxes = []
+            resonable_clusters = True
             centroids, _ = kmeans(data, number_clusters)
             idx, _ = vq(data, centroids)
-            resonable_clusters = True
-        return centroids
+            i = 0
+            for centroid in centroids:
+                cent_lon = centroid[0]
+                cent_lat = centroid[1]
+                max_lon = max(data[idx == i, 0])
+                max_lat = max(data[idx == i, 1])
+                min_lon = min(data[idx == i, 0])
+                min_lat = min(data[idx == i, 1])
+                box = self.make_box(min_lon, min_lat, max_lon, max_lat)
+                boxes.append(box)
+                max_dist = self.get_point_distance(min_lon,
+                                                   min_lat,
+                                                   max_lon,
+                                                   max_lat)
+                i += 1
+                for o_centroid in centroids:
+                    o_lon = o_centroid[0]
+                    o_lat = o_centroid[1]
+                    if o_lon != cent_lon and o_lat != cent_lat:
+                        # not the same centroid, so check distance
+                        cent_dist = self.get_point_distance(o_lon,
+                                                            o_lat,
+                                                            cent_lon,
+                                                            cent_lat)
+                        if(max_dist * .75) > cent_dist:
+                            print('Loop (' + str(number_clusters) + ') ' + str(max_dist) + ' too big to ' + str(cent_dist))
+                            resonable_clusters = False
+            if resonable_clusters is False:
+                number_clusters = number_clusters - 1
+            if number_clusters < 1:
+                resonable_clusters = True
+        return boxes
+
+    def get_point_distance(self, x, y, xx, yy):
+        """ calculates the distance btween two points """
+        sqrd = ((x - xx) * (x - xx)) + ((y - yy) * (y - yy))
+        dist = np.sqrt([sqrd])
+        return dist[0]
+
+    def make_box(self, min_lon, min_lat, max_lon, max_lat):
+        """ Makes geojson coordinates list for a bounding feature """
+        coordinates = [[min_lon, min_lat],
+                       [min_lon, max_lat],
+                       [max_lon, max_lat],
+                       [max_lon, min_lat],
+                       [min_lon, min_lat]]
+        return coordinates
 
     def get_distinct_geo(self, uuids):
         """ Gets distinct geo lat/lons """
