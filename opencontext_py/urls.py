@@ -23,8 +23,8 @@ urlpatterns = patterns('',
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
                        url(r'^subjects', SubjectViews.index, name='index'),
                        # Sets views
-                       url(r'^sets/(?P<context>\S+).json', SetsViews.json_view, name='sets_json'),
-                       url(r'^sets/(?P<context>\S+)', SetsViews.html_view, name='sets_html'),
+                       url(r'^sets/(?P<spatial_context>\S+).json', SetsViews.json_view, name='sets_json'),
+                       url(r'^sets/(?P<spatial_context>\S+)', SetsViews.html_view, name='sets_html'),
                        url(r'^sets/$', SetsViews.index, name='index'),
                        # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
