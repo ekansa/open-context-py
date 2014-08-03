@@ -21,8 +21,8 @@ from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.projects.models import Project, ProjectRels
-from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
+from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.projects.metadata import ProjectRels, ProjectMeta
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
@@ -184,7 +184,11 @@ class OCitem():
                 self.person = False
         elif(self.item_type == 'projects'):
             pr = ProjectRels()
+            pm = ProjectMeta()
             self.sub_projects = pr.get_sub_projects(self.uuid)
+            if self.geo_meta is False:
+                pm.make_geo_meta(self.uuid)
+                self.geo_meta = pm.geo_objs
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
             except Project.DoesNotExist:

@@ -1,3 +1,4 @@
+import json
 import numpy as np
 from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
@@ -36,18 +37,103 @@ class ProjectMeta():
     """
 
     MAX_CLUSTERS = 15
-    MIN_CLUSTER_SIZE = .05
+    MIN_CLUSTER_SIZE = .05  # of the diagonal length between min(lat/lon) and max(lat/lon)
+    LENGTH_CENTOID_FACTOR = .75  # for comparing cluster diagonal length with centoid distances
 
     def __init__(self):
-        self.geo_ents = False
+        self.project_uuid = False
+        self.geo_objs = False  # geospace objects of proj. metadata
+        self.max_geo_range = False  # max distance (Euclidean coordinates)
+                                    # of rectangular region with all project points
         self.event_ents = False
-        self.geo_range = False
+        self.geo_range = False  # dict object of min, max longitude, latitudes
 
-    def make_uuids_list(self, uuids):
-        """ Makes a list of UUIDS if only passed a string """
-        if uuids is not list:
-            uuids = [uuids]  # make a list
-        return uuids
+    def make_geo_meta(self, project_uuid):
+        output = False
+        self.project_uuid = project_uuid
+        pr = ProjectRels()
+        sub_projs = pr.get_sub_projects(project_uuid)
+        if sub_projs is False:
+            uuids = project_uuid
+        else:
+            uuids = []
+            for sub_proj in sub_projs:
+                uuids.append(sub_proj.uuid)
+            uuids.append(project_uuid)
+        self.get_geo_range(uuids)
+        if self.geo_range is not False:
+            min_lon_lat = [self.geo_range['longitude__min'],
+                           self.geo_range['latitude__min']]
+            max_lon_lat = [self.geo_range['longitude__max'],
+                           self.geo_range['latitude__max']]
+            min_point = np.fromiter(min_lon_lat, np.dtype('float'))
+            max_point = np.fromiter(max_lon_lat, np.dtype('float'))
+            self.max_geo_range = self.get_point_distance(min_point[0],
+                                                         min_point[1],
+                                                         max_point[0],
+                                                         max_point[1])
+            print(str(self.max_geo_range))
+            if self.max_geo_range == 0:
+                # only 1 geopoint known for the project
+                lon_lat = [self.geo_range['longitude__min'],
+                           self.geo_range['longitude__max']]
+                clusts = {'centroids': [lon_lat],
+                          'boxes': []}
+            else:
+                # need to cluster geo data
+                clusts = self.cluster_geo(uuids)
+            self.make_geo_objs(clusts)
+            output = True
+        return output
+
+    def make_geo_objs(self, clusts):
+        geo_objs = []
+        if len(clusts['boxes']) == 0:
+            # no bounding box polygons, just a simple point to add
+            geo_obj = self.make_geo_obj(1,
+                                        clusts['centroids'][0][0],
+                                        clusts['centroids'][0][1]
+                                        )
+            geo_objs.append(geo_obj)
+        else:
+            # has 1 or more bounding box polygons
+            i = 0
+            for box in clusts['boxes']:
+                act_cent = clusts['centroids'][i]
+                i += 1
+                geo_obj = self.make_geo_obj(i,
+                                            act_cent[0],
+                                            act_cent[1],
+                                            box
+                                            )
+                if(box[0][0][0] != box[0][2][0] and box[0][0][1] != box[0][2][1]):
+                    # only add a box if the cluster has more than 1 item
+                    geo_objs.append(geo_obj)
+        self.geo_objs = geo_objs
+        return geo_objs
+
+    def make_geo_obj(self, feature_id, lon, lat, coords=False):
+        geo_obj = Geospace()
+        geo_obj.uuid = self.project_uuid
+        geo_obj.project_uuid = self.project_uuid
+        geo_obj.source_id = 'Project metadata summary'
+        geo_obj.item_type = 'projects'
+        geo_obj.feature_id = feature_id
+        geo_obj.meta_type = 'oc-gen:geo-coverage'
+        if coords is False:
+            geo_obj.ftype = 'Point'
+            geo_obj.coordinates = ''
+        else:
+            geo_obj.ftype = 'Polygon'
+            geo_obj.coordinates = json.dumps(coords, ensure_ascii=False)
+        geo_obj.latitude = lat
+        geo_obj.longitude = lon
+        geo_obj.specificity = 0
+        geo_obj.note = 'Project geographic coverage \
+                        summarized from geospatial data \
+                        describing subjects published \
+                        with this project.'
+        return geo_obj
 
     def cluster_geo(self, uuids):
         """ Puts geo points into clusters """
@@ -76,6 +162,8 @@ class ProjectMeta():
                 max_lat = max(data[idx == i, 1])
                 min_lon = min(data[idx == i, 0])
                 min_lat = min(data[idx == i, 1])
+                if(len(data[idx == i]) < 2):
+                    resonable_clusters = False
                 box = self.make_box(min_lon, min_lat, max_lon, max_lat)
                 boxes.append(box)
                 max_dist = self.get_point_distance(min_lon,
@@ -92,14 +180,22 @@ class ProjectMeta():
                                                             o_lat,
                                                             cent_lon,
                                                             cent_lat)
-                        if(max_dist * .75) > cent_dist:
-                            print('Loop (' + str(number_clusters) + ') ' + str(max_dist) + ' too big to ' + str(cent_dist))
+                        """
+                        if(max_dist * self.LENGTH_CENTOID_FACTOR) > cent_dist:
+                            print('Loop (' + str(number_clusters) + ') ' + str(max_dist) \
+                                  + ' too big to ' + str(cent_dist))
+                            resonable_clusters = False
+                        """
+                        if cent_dist < (self.MIN_CLUSTER_SIZE * self.max_geo_range):
+                            print('Loop (' + str(number_clusters) + ') cluster size: ' \
+                                  + str(cent_dist) + ' too small to ' + str(self.max_geo_range))
                             resonable_clusters = False
             if resonable_clusters is False:
                 number_clusters = number_clusters - 1
             if number_clusters < 1:
                 resonable_clusters = True
-        return boxes
+        return {'centroids': centroids,
+                'boxes': boxes}
 
     def get_point_distance(self, x, y, xx, yy):
         """ calculates the distance btween two points """
@@ -109,11 +205,11 @@ class ProjectMeta():
 
     def make_box(self, min_lon, min_lat, max_lon, max_lat):
         """ Makes geojson coordinates list for a bounding feature """
-        coordinates = [[min_lon, min_lat],
+        coordinates = [[[min_lon, min_lat],
                        [min_lon, max_lat],
                        [max_lon, max_lat],
                        [max_lon, min_lat],
-                       [min_lon, min_lat]]
+                       [min_lon, min_lat]]]
         return coordinates
 
     def get_distinct_geo(self, uuids):
@@ -131,6 +227,7 @@ class ProjectMeta():
         of project uuids. Accepts a list to get sub-projects
         """
         uuids = self.make_uuids_list(uuids)
+        print('Geo range for ' + str(uuids))
         proj_geo = Geospace.objects.filter(project_uuid__in=uuids)\
                            .exclude(latitude=0, longitude=0)\
                            .aggregate(Max('latitude'),
@@ -138,11 +235,12 @@ class ProjectMeta():
                                       Min('latitude'),
                                       Min('longitude'))
         if(proj_geo['latitude__max'] is not None):
-            """
-            self.max_lat = proj_geo['latitude__max']
-            self.min_lat = proj_geo['latitude__min']
-            self.max_lon = proj_geo['longitude__max']
-            self.min_lon = proj_geo['longitude__min']
-            """
             self.geo_range = proj_geo
+        return self.geo_range
+
+    def make_uuids_list(self, uuids):
+        """ Makes a list of UUIDS if only passed a string """
+        if uuids is not list:
+            uuids = [uuids]  # make a list
+        return uuids
 
