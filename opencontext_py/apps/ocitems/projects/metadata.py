@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -150,6 +151,7 @@ class ProjectMeta():
         resonable_clusters = False
         number_clusters = self.MAX_CLUSTERS
         while resonable_clusters is False:
+            ch_boxes = []
             boxes = []
             resonable_clusters = True
             centroids, _ = kmeans(data, number_clusters)
@@ -162,14 +164,51 @@ class ProjectMeta():
                 max_lat = max(data[idx == i, 1])
                 min_lon = min(data[idx == i, 0])
                 min_lat = min(data[idx == i, 1])
+                ch_box = {'max_lon': max_lon,
+                          'max_lat': max_lat,
+                          'min_lon': min_lon,
+                          'min_lat': min_lat}
+                ch_boxes.append(ch_box)
+                i += 1
+            i = 0
+            for centroid in centroids:
+                cent_lon = centroid[0]
+                cent_lat = centroid[1]
+                max_lon = max(data[idx == i, 0])
+                max_lat = max(data[idx == i, 1])
+                min_lon = min(data[idx == i, 0])
+                min_lat = min(data[idx == i, 1])
                 if(len(data[idx == i]) < 2):
-                    resonable_clusters = False
+                    # the cluster has only 1 point, meaning it may be too small
+                    cluster_ok = self.check_ok_cluster_for_lone_point(uuids,
+                                                                      max_lon,
+                                                                      max_lat)
+                    if cluster_ok is False:
+                        print('Loop (' + str(number_clusters) + '), cluster '
+                                       + str(i)
+                                       + ' has too few members')
+                        resonable_clusters = False
                 box = self.make_box(min_lon, min_lat, max_lon, max_lat)
                 boxes.append(box)
                 max_dist = self.get_point_distance(min_lon,
                                                    min_lat,
                                                    max_lon,
                                                    max_lat)
+                jj = 0
+                for ch_box in ch_boxes:
+                    if jj != i:
+                        # different box then
+                        overlap = self.check_overlap(min_lon,
+                                                     min_lat,
+                                                     max_lon,
+                                                     max_lat,
+                                                     ch_box)
+                        if overlap:
+                            print('Loop (' + str(number_clusters) + '), cluster '
+                                  + str(i)
+                                  + ' overlaps with ' + str(jj))
+                            resonable_clusters = False
+                    jj += 1
                 i += 1
                 for o_centroid in centroids:
                     o_lon = o_centroid[0]
@@ -180,12 +219,6 @@ class ProjectMeta():
                                                             o_lat,
                                                             cent_lon,
                                                             cent_lat)
-                        """
-                        if(max_dist * self.LENGTH_CENTOID_FACTOR) > cent_dist:
-                            print('Loop (' + str(number_clusters) + ') ' + str(max_dist) \
-                                  + ' too big to ' + str(cent_dist))
-                            resonable_clusters = False
-                        """
                         if cent_dist < (self.MIN_CLUSTER_SIZE * self.max_geo_range):
                             print('Loop (' + str(number_clusters) + ') cluster size: ' \
                                   + str(cent_dist) + ' too small to ' + str(self.max_geo_range))
@@ -196,6 +229,21 @@ class ProjectMeta():
                 resonable_clusters = True
         return {'centroids': centroids,
                 'boxes': boxes}
+
+    def check_overlap(self, min_lon, min_lat, max_lon, max_lat, ch_box):
+        """ Checkes to see if a box is inside the coordinates of another box """
+        overlap = False
+        overlap_lon = False
+        overlap_lat = False
+        if (min_lon >= ch_box['min_lon'] and min_lon <= ch_box['max_lon'])\
+           or (max_lon >= ch_box['min_lon'] and max_lon <= ch_box['max_lon']):
+            overlap_lon = True
+        if (min_lat >= ch_box['min_lat'] and min_lat <= ch_box['max_lat'])\
+           or (max_lat >= ch_box['min_lat'] and max_lat <= ch_box['max_lat']):
+            overlap_lat = True
+        if overlap_lon and overlap_lat:
+            overlap = True
+        return overlap
 
     def get_point_distance(self, x, y, xx, yy):
         """ calculates the distance btween two points """
@@ -211,6 +259,22 @@ class ProjectMeta():
                        [max_lon, min_lat],
                        [min_lon, min_lat]]]
         return coordinates
+
+    def check_ok_cluster_for_lone_point(self, uuids, lon, lat):
+        """ Checks to see if a lone point has enough items
+           items in it to be considered a good cluster """
+        cluster_ok = False
+        uuids = self.make_uuids_list(uuids)
+        p_geo = Geospace.objects.filter(project_uuid__in=uuids,
+                                        latitude=lat,
+                                        longitude=lon)[:1]
+        if len(p_geo) == 1:
+            subj_uuid = p_geo[0].uuid
+            cont = Containment()
+            children = cont.get_children_by_parent_uuid(subj_uuid, True)
+            if len(children) > 2:
+                cluster_ok = True
+        return cluster_ok
 
     def get_distinct_geo(self, uuids):
         """ Gets distinct geo lat/lons """
