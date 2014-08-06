@@ -34,6 +34,7 @@ class SolrDocument:
         self._process_geo()
         self._process_chrono()
         self._process_text_content()
+        self._process_dc_terms()
         self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
@@ -294,6 +295,42 @@ class SolrDocument:
                 self.oc_item.json_ld['label']
                 )
 
+    def _process_dc_terms(self):
+        """
+        Finds the project that this item is part of. If not part of a
+        project, make the project slug the same as the item's own slug.
+        """
+        if 'dc-terms:coverage' in self.oc_item.json_ld:
+            fname = 'dc_terms_coverage___pred_id'
+            self.fields[fname] = []
+            for meta in self.oc_item.json_ld['dc-terms:coverage']:
+                self.fields['text'] += meta['label'] + '\n'
+                item = self._convert_values_to_json(
+                    meta['slug'],
+                    meta['id'],
+                    meta['label'])
+                self.fields[fname].append(item)
+        if 'dc-terms:subject' in self.oc_item.json_ld:
+            fname = 'dc_terms_subject___pred_id'
+            self.fields[fname] = []
+            for meta in self.oc_item.json_ld['dc-terms:subject']:
+                self.fields['text'] += meta['label'] + '\n'
+                item = self._convert_values_to_json(
+                    meta['slug'],
+                    meta['id'],
+                    meta['label'])
+                self.fields[fname].append(item)
+        if 'dc-terms:spatial' in self.oc_item.json_ld:
+            fname = 'dc_terms_spatial___pred_id'
+            self.fields[fname] = []
+            for meta in self.oc_item.json_ld['dc-terms:spatial']:
+                self.fields['text'] += meta['label'] + '\n'
+                item = self._convert_values_to_json(
+                    meta['slug'],
+                    meta['id'],
+                    meta['label'])
+                self.fields[fname].append(item)
+
     def _process_geo(self):
         """
         Finds geospatial point coordinates in GeoJSON features for indexing.
@@ -325,7 +362,8 @@ class SolrDocument:
                 except KeyError:
                     ref_type = False
                 if ftype == 'Point' \
-                    and loc_type == 'oc-gen:discovey-location' \
+                    and (loc_type == 'oc-gen:discovey-location'\
+                         or loc_type == 'oc-gen:geo-coverage')\
                         and discovery_done is False:
                     try:
                         coords = feature['geometry']['coordinates']
