@@ -6,7 +6,7 @@ class ExpRecord(models.Model):
     table_id = models.CharField(max_length=50, db_index=True)
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
-    row_num = models.IntegerField()  # the row number
+    row_num = models.IntegerField(db_index=True)  # the row number
     field_num = models.IntegerField()  # the field number
     record = models.TextField()  # the actual cell value
     updated = models.DateTimeField(auto_now=True)
