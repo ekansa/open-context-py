@@ -2,7 +2,7 @@ import datetime
 import json
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
-from opencontext_py.apps.ldata.linkannotations.models import LinkRecursion
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement

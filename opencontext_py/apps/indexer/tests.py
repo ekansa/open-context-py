@@ -1,6 +1,6 @@
 from django.test import TestCase
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
-#from opencontext_py.apps.ldata.linklinkannotations.models import LinkRecursion
+#from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 
 
 class TestPredicateValues(TestCase):
