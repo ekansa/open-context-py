@@ -79,6 +79,8 @@ INSTALLED_APPS = (
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
+    'opencontext_py.apps.exports.fields',
+    'opencontext_py.apps.exports.records',
     'opencontext_py.apps.indexer',
     'opencontext_py.apps.searcher.sets',
 )
