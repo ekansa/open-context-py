@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
+import django.utils.http as http
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 #from django.template import RequestContext, loader
