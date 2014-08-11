@@ -21,14 +21,14 @@ def html_view(request, spatial_context=None):
 
 
 def json_view(request, spatial_context=None):
+    # Gather context-related information
     context_data = LastUpdatedOrderedDict()
     if spatial_context is not None:
-        #path = request.path.split('/')
         entity = Entity()
         found = entity.context_dereference(spatial_context)
         if found:
             context_data['slug'] = entity.slug
-            context_data['id'] = entity.uri.replace(':', '%3A')
+            context_data['id'] = entity.uri
             context_data['label'] = entity.label
             context_depth = len(spatial_context.rstrip('/').split(
                 '/sets/')[0].split('/'))
