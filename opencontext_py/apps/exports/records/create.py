@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
 
 
 # Creates an export table
@@ -47,32 +48,35 @@ class Create():
         self.fields.append({'label': 'Last Updated',
                             'rel_ids': ['last-updated'],
                             'field_num': 6})
+        self.fields.append({'label': 'Authorship',
+                            'rel_ids': ['authorship'],
+                            'field_num': 7})
         self.fields.append({'label': 'Latitude (WGS-84)',
                             'rel_ids': ['latitude'],
-                            'field_num': 7})
+                            'field_num': 8})
         self.fields.append({'label': 'Longitude (WGS-84)',
                             'rel_ids': ['longitude'],
-                            'field_num': 8})
+                            'field_num': 9})
         self.fields.append({'label': 'Geospatial note',
                             'rel_ids': ['geospatial-note'],
-                            'field_num': 9})
+                            'field_num': 10})
         if self.dates_bce_ce:
             self.fields.append({'label': 'Early Date (BCE/CE)',
                                 'rel_ids': ['early-bce-ce'],
-                                'field_num': 10})
+                                'field_num': 11})
             self.fields.append({'label': 'Late Date (BCE/CE)',
                                 'rel_ids': ['late-bce-ce'],
-                                'field_num': 11})
+                                'field_num': 12})
         else:
             self.fields.append({'label': 'Early Date (BP)',
                                 'rel_ids': ['early-bp'],
-                                'field_num': 10})
+                                'field_num': 11})
             self.fields.append({'label': 'Late Date (BP)',
                                 'rel_ids': ['late-bp'],
-                                'field_num': 11})
+                                'field_num': 12})
         self.fields.append({'label': 'Context URI',
                             'rel_ids': ['context-uri'],
-                            'field_num': 12})
+                            'field_num': 13})
         for field in self.fields:
             self.save_field(field)
 
@@ -103,6 +107,7 @@ class Create():
             if man is not False:
                 print(str(row_num) + ': ' + str(uuid))
                 self.save_basic_default_field_cells(row_num, man)
+                self.save_authorship(row_num, man)
                 act_contain = Containment()
                 parents = act_contain.get_parents_by_child_uuid(man.uuid)
                 subject_list = act_contain.contexts_list
@@ -135,7 +140,7 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 12
+        cell.field_num = 13
         cell.record = context_uri
         cell.save()
         cell = None
@@ -194,7 +199,7 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 10
+        cell.field_num = 11
         cell.record = str(earliest)
         cell.save()
         cell = None
@@ -204,7 +209,7 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 11
+        cell.field_num = 12
         cell.record = str(latest)
         cell.save()
         cell = None
@@ -213,14 +218,15 @@ class Create():
         """ Saves geo lat / lon data for an item """
         latitude = ''
         longitude = ''
-        note = 'No intentional reduction in precision'
+        note = 'Best available location data'
         if geo_meta is not False:
             for geo in geo_meta:
                 if geo.meta_type == 'oc-gen:discovey-location':
                     latitude = geo.latitude
                     longitude = geo.longitude
                     if geo.specificity < 0:
-                        note = 'Location data approximated as a security precaution'
+                        note = 'Location approximated \
+                        as a security precaution (Zoom: ' + str(abs(geo.specificity)) + ')'
                     break
         # save Latitude
         cell = ExpCell()
@@ -228,7 +234,7 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 7
+        cell.field_num = 8
         cell.record = str(latitude)
         cell.save()
         cell = None
@@ -238,7 +244,7 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 8
+        cell.field_num = 9
         cell.record = str(longitude)
         cell.save()
         cell = None
@@ -248,8 +254,32 @@ class Create():
         cell.uuid = man.uuid
         cell.project_uuid = man.project_uuid
         cell.row_num = row_num
-        cell.field_num = 9
+        cell.field_num = 10
         cell.record = note
+        cell.save()
+        cell = None
+
+    def save_authorship(self, row_num, man):
+        """ Saves authorship information """
+        authors = ''
+        auth = Authorship()
+        found = auth.get_authors(man.uuid,
+                                 man.project_uuid)
+        if found:
+            all_author_ids = auth.creators + auth.contributors
+            all_authors = []
+            for auth_id in all_author_ids:
+                author = self.deref_entity_label(auth_id)
+                all_authors.append(author)
+            authors = '; '.join(all_authors)
+        # save Authors
+        cell = ExpCell()
+        cell.table_id = self.table_id
+        cell.uuid = man.uuid
+        cell.project_uuid = man.project_uuid
+        cell.row_num = row_num
+        cell.field_num = 7
+        cell.record = authors
         cell.save()
         cell = None
 

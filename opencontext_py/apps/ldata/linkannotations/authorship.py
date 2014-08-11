@@ -65,6 +65,7 @@ class Authorship():
         return output
 
     def get_project_authors(self, project_uuid):
+        """ Gets author information for a project """
         output = False
         creator_links = LinkAnnotation.objects\
                                       .filter(Q(subject=project_uuid),
