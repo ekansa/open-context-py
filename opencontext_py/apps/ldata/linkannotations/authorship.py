@@ -92,3 +92,15 @@ class Authorship():
         if len(self.contributors) > 0 or len(self.creators) > 0:
             output = True
         return output
+
+    def check_authorship_object(self, object_uri):
+        """ checks to see if an object_uri is an authorship object """
+        auth_objects = [self.URI_DC_CONTRIB,
+                        self.URI_DC_CREATE,
+                        self.PRF_DC_CONTRIB,
+                        self.PRF_DC_CREATE]
+        if object_uri in auth_objects:
+            output = True
+        else:
+            output = False
+        return output

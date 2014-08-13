@@ -5,7 +5,7 @@ from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.fields.models import ExpField
 from opencontext_py.apps.exports.records.models import ExpCell
-from opencontext_py.apps.exports.records.uuidlist import UUIDListSimple
+from opencontext_py.apps.exports.records.uuidlist import UUIDListSimple, UUIDListExportTable
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.geospace.models import Geospace
@@ -14,18 +14,38 @@ from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkentities.sorting import LinkEntitySorter
 
 
 # Creates an export table
 class Create():
 
+    EQUIV_PREDICATES = ['skos:closeMatch',
+                        'http://www.w3.org/2004/02/skos/core#closeMatch']
+
     def __init__(self):
         self.table_id = False
         self.label = False
-        self.dates_bce_ce = True
+        self.dates_bce_ce = True  # calendar dates in BCE/CE, if false BP
+        self.include_equiv_ld = True  # include linked data related by EQUIV_PREDICATES
+        self.inlude_ld_obj_uris = True  # include URIs to linked data objects
+        self.include_ld_equiv_values = True  # include original values annoted as
+                                             # equivalent to linked data
+        self.boolean_multiple_ld_fields = 'yes'  # for multiple values of linked data
+                                                 # (same predicate, multiple objects)
+                                                 # make multiple fields if NOT False.
+                                                 # When this value is NOT False, its
+                                                 # string value indicates presence of
+                                                 # a linked data object uri.
+        self.include_original_fields = False  # include original field data
         self.fields = []
         self.context_fields = LastUpdatedOrderedDict()
+        self.ld_fields = LastUpdatedOrderedDict()
         self.entities = {}
+        self.predicate_uris_boolean_types = False  # predicate_uris expressed as boolean types
+        self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
+        self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
         self.uuidlist = []
 
     def prep_default_fields(self):
@@ -120,6 +140,129 @@ class Create():
                 row_num += 1
             else:
                 print(uuid + ' Failed!')
+
+    def get_predicate_uuids(self):
+        """ Gets predicate uuids for a table """
+        self.entities = {}  # resets the entites, no need to keep context entitites in memory
+        uuids = UUIDListExportTable(self.table_id).uuids
+        # seems faster than a select distinct with a join.
+        for uuid in uuids:
+            pred_uuids = Assertion.objects\
+                                  .values_list('predicate_uuid', flat=True)\
+                                  .filter(uuid=uuid)
+            item_preds = LastUpdatedOrderedDict()
+            for pred_uuid in pred_uuids:
+                if pred_uuid not in item_preds:
+                    item_preds[pred_uuid] = 1
+                else:
+                    item_preds[pred_uuid] += 1
+            for pred_uuid, count in item_preds.items():
+                if pred_uuid not in self.predicate_uuids:
+                    pred_label = self.deref_entity_label(pred_uuid)
+                    pred_type = self.entities[pred_uuid].data_type
+                    self.predicate_uuids[pred_uuid] = {'count': count,
+                                                       'label': pred_label,
+                                                       'type': pred_type}
+                else:
+                    if self.predicate_uuids[pred_uuid]['count'] < count:
+                        self.predicate_uuids[pred_uuid]['count'] = count
+        return self.predicate_uuids
+
+    def get_predicate_link_annotations(self):
+        """ Gets the link data annotations for predicates used on a table """
+        auth = Authorship()
+        for pred_uuid, pred in self.predicate_uuids.items():
+            la_s = LinkAnnotation.objects\
+                                 .filter(subject=pred_uuid)
+            if len(la_s) > 0:
+                self.predicate_uuids[pred_uuid]['annotations'] = []
+            for la in la_s:
+                link_anno = {'pred': la.predicate_uri,
+                             'obj': la.object_uri}
+                self.predicate_uuids[pred_uuid]['annotations'].append(link_anno)
+                if la.predicate_uri in self.EQUIV_PREDICATES:
+                    authorship = auth.check_authorship_object(la.object_uri)
+                    if authorship is False:  # only keep predicates not related to authorship
+                        if la.object_uri not in self.ld_predicates:
+                            pred_equiv_label = self.deref_entity_label(la.object_uri)
+                            self.ld_predicates[la.object_uri] = {'uuids': [pred_uuid],
+                                                                 'obj_uuids': {},
+                                                                 'obj_uris': [],
+                                                                 'label': pred_equiv_label}
+                        else:
+                            self.ld_predicates[la.object_uri]['uuids'].append(pred_uuid)
+        return self.ld_predicates
+
+    def get_ld_predicate_values(self, ld_field_uri):
+        """ gets a list of object_uuids used with predicates related to a
+            ld_field_uri
+        """
+        object_uuids = Assertion.objects\
+                                .values_list('object_uuid', flat=True)\
+                                .filter(predicate_uuid__in=self.ld_predicates[ld_field_uri]['uuids'])\
+                                .distinct()
+        for obj_uuid in object_uuids:
+            if obj_uuid not in self.ld_predicates[ld_field_uri]['obj_uuids']:
+                obj_equiv_uris = []
+                # get link data annotations for the object_uuid
+                la_s = LinkAnnotation.objects\
+                                     .filter(subject=obj_uuid)
+                for la in la_s:
+                    if la.predicate_uri in self.EQUIV_PREDICATES:
+                        obj_equiv_uri = la.object_uri
+                        obj_equiv_uris.append(obj_equiv_uri)
+                        if obj_equiv_uri not in self.ld_predicates[ld_field_uri]['obj_uris']:
+                            self.ld_predicates[ld_field_uri]['obj_uris'].append(obj_equiv_uri)
+                self.ld_predicates[ld_field_uri]['obj_uuids'][obj_uuid] = obj_equiv_uris
+        return self.ld_predicates[ld_field_uri]
+
+    def process_ld_fields_values(self):
+        """ Creates fields for linked data, then saves
+            records of linked data for each item in the export
+            table
+        """
+        if self.include_equiv_ld and len(self.ld_predicates) > 0:
+            for ld_pred_uri, ld_pred in self.ld_predicates.items():
+                if self.boolean_multiple_ld_fields is not False:
+                    le_sort = LinkEntitySorter()
+                    #  sort the URIs for the objects, so the fields come in a
+                    #  nice, reasonable order.
+                    sort_obj_uris = le_sort.sort_ld_entity_list(ld_pred['obj_uris'])
+                    for ld_obj_uri in sort_obj_uris:
+                        field_num = self.get_add_ld_field_number('[Has]',
+                                                                 ld_pred_uri,
+                                                                 ld_obj_uri)
+
+    def get_add_ld_field_number(self, field_type, ld_obj_uri, ld_obj_uri=False):
+        """ Gets the field_num for a linked data field, given the uri
+            for the linked data field, and optionally the object
+            Creates a new field for the linked data as needed
+        """
+        if ld_obj_uri is not False:
+            field_key = ld_pred_uri + '::' + ld_obj_uri
+        else:
+            field_key = ld_pred_uri
+        if len(field_type) > 0:
+            field_key += '::' + field_type
+        if field_key in self.ld_fields:
+            field_num = self.ld_fields[field_key]
+        else:
+            field_num = len(self.fields) + 1
+            label = self.deref_entity_label(ld_pred_uri)
+            rel_ids = [field_type, ld_pred_uri]
+            if ld_obj_uri is not False:
+                rel_ids.append(ld_obj_uri)
+                obj_label = self.deref_entity_label(ld_obj_uri)
+                label = label + ' :: ' + obj_label
+            if len(field_type) > 0:
+                label += ' ' + field_type
+            field = {'label': label,
+                     'rel_ids': rel_ids,
+                     'field_num': field_num}
+            self.fields.append(field)
+            self.save_field(field)
+            self.ld_fields[field_key] = field_num
+        return field_num
 
     def save_context(self, row_num, man, raw_parents):
         """ Save context information, will also add new context fields
@@ -364,4 +507,5 @@ class Create():
                 self.entities[entity_id] = ent
             else:
                 self.entities[entity_id] = False
+                print('Missing id: ' + entity_id)
         return output
