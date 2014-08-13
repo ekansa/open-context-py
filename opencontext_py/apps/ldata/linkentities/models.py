@@ -10,6 +10,7 @@ class LinkEntity(models.Model):
     slug = models.SlugField(max_length=70, unique=True)
     label = models.CharField(max_length=200, db_index=True)
     alt_label = models.CharField(max_length=200, db_index=True)
+    sort = models.CharField(max_length=60, db_index=True)
     vocab_uri = models.CharField(max_length=200)
     ent_type = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
