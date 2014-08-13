@@ -43,6 +43,8 @@ class LinkRecursion():
                     p_item['label'] = ent.label
                     if(ent.data_type is not False):
                         p_item['type'] = ent.data_type
+                    else:
+                        p_item['type'] = '@id'
                     output.append(p_item)
         return output
 
