@@ -325,6 +325,7 @@ class Create():
                     obj_label = ''
             else:
                 obj_label = self.deref_entity_label(object_uuid)
+                obj_label = str(obj_label)
             if obj_label not in obj_values['[Source]']:
                 obj_values['[Source]'].append(obj_label)
             obj_ld_found = False
@@ -394,7 +395,7 @@ class Create():
             if obj_ld_equiv_uri is not False:
                 rel_ids.append(obj_ld_equiv_uri)
                 obj_label = self.deref_entity_label(obj_ld_equiv_uri)
-                label = label + ' :: ' + obj_label
+                label = label + ' :: ' + str(obj_label)
             if len(field_type) > 0:
                 label += ' ' + field_type
             field = {'label': label,
@@ -509,8 +510,8 @@ class Create():
                     latitude = geo.latitude
                     longitude = geo.longitude
                     if geo.specificity < 0:
-                        note = 'Location approximated \
-                        as a security precaution (Zoom: ' + str(abs(geo.specificity)) + ')'
+                        note = 'Location approximated '
+                        note += 'as a security precaution (Zoom: ' + str(abs(geo.specificity)) + ')'
                     break
         # save Latitude
         cell = ExpCell()
