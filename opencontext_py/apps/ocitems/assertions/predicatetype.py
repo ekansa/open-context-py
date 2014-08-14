@@ -5,7 +5,8 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.predicates.models import Predicate, PredicateManage
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.predicates.manage import PredicateManage
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
 
@@ -15,7 +16,8 @@ class PredicateTypeAssertions():
     """
 
     def __init__(self):
-        self.alt_data_type = "xsd:string"
+        self.alt_data_type = "xsd:string"  # data-type for predicates created from others
+                                           # with inconsistent types
 
     def seperate_inconsistent_data_type(self, predicate_uuid):
         """ This looks for assertions that have different object types than the

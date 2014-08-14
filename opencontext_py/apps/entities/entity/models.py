@@ -6,7 +6,7 @@ from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import TypeLookup
+from opencontext_py.apps.ocitems.octypes.lookup import TypeLookup
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.subjects.models import Subject
 
