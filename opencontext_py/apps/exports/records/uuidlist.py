@@ -26,3 +26,28 @@ class UUIDListExportTable:
                             .filter(table_id=table_id)\
                             .distinct()\
                             .iterator()
+
+
+class UUIDsRowsExportTable:
+    '''
+    List of dict objects for uuids and row_numbers
+    '''
+    def __init__(self, table_id):
+        self.rows = ExpCell.objects\
+                           .values('uuid', 'row_num')\
+                           .order_by('row_num')\
+                           .filter(table_id=table_id)\
+                           .distinct()\
+                           .iterator()
+
+
+class ExportTableDump:
+    '''
+    List of dict objects cells to dump
+    '''
+    def __init__(self, table_id):
+        self.cells = ExpCell.objects\
+                            .values('row_num', 'field_num', 'record')\
+                            .order_by('row_num', 'field_num')\
+                            .filter(table_id=table_id)\
+                            .iterator()

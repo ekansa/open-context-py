@@ -5,13 +5,16 @@ from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.fields.models import ExpField
 from opencontext_py.apps.exports.records.models import ExpCell
-from opencontext_py.apps.exports.records.uuidlist import UUIDListSimple, UUIDListExportTable
+from opencontext_py.apps.exports.records.uuidlist import UUIDListSimple,\
+    UUIDListExportTable,\
+    UUIDsRowsExportTable
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
@@ -29,9 +32,9 @@ class Create():
         self.label = False
         self.dates_bce_ce = True  # calendar dates in BCE/CE, if false BP
         self.include_equiv_ld = True  # include linked data related by EQUIV_PREDICATES
-        self.inlude_ld_obj_uris = True  # include URIs to linked data objects
-        self.include_ld_equiv_values = True  # include original values annoted as
-                                             # equivalent to linked data
+        self.include_ld_obj_uris = True  # include URIs to linked data objects
+        self.include_ld_source_values = True  # include original values annoted as
+                                              # equivalent to linked data
         self.boolean_multiple_ld_fields = 'yes'  # for multiple values of linked data
                                                  # (same predicate, multiple objects)
                                                  # make multiple fields if NOT False.
@@ -46,6 +49,7 @@ class Create():
         self.predicate_uris_boolean_types = False  # predicate_uris expressed as boolean types
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
         self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
+        self.ld_object_equivs = LastUpdatedOrderedDict()  # unique linked_data predicates
         self.uuidlist = []
 
     def prep_default_fields(self):
@@ -109,6 +113,19 @@ class Create():
         exfield.rel_ids = json.dumps(field['rel_ids'], ensure_ascii=False)
         exfield.save()
 
+    def check_reload_fields_from_db(self):
+        """ Reloads fields, incase a process was interrupted """
+        if len(self.fields) < 1:
+            exfields = ExpField.objects\
+                               .filter(table_id=self.table_id)\
+                               .order_by('field_num')
+            for exfield in exfields:
+                field = {}
+                field['field_num'] = exfield.field_num
+                field['label'] = exfield.label
+                field['rel_ids'] = json.loads(exfield.rel_ids)
+                self.fields.append(field)
+
     def process_uuids_simple(self, project_uuids, class_uri):
         """ Gets a list of uuids and basic metadata about items for the
             export table. Does so in the simpliest way, filtering only
@@ -116,6 +133,10 @@ class Create():
         self.prep_default_fields()
         self.uuidlist = UUIDListSimple(project_uuids, class_uri).uuids
         self.process_uuid_list(self.uuidlist)
+        self.get_predicate_uuids()  # now prepare to do item descriptions
+        self.get_predicate_link_annotations()  # even if not showing linked data
+        self.process_ld_predicates_values()  # only if exporting linked data
+        self.save_ld_fields()  # only if exporting linked data
 
     def process_uuid_list(self, uuids, starting_row=1):
         row_num = starting_row
@@ -144,6 +165,7 @@ class Create():
     def get_predicate_uuids(self):
         """ Gets predicate uuids for a table """
         self.entities = {}  # resets the entites, no need to keep context entitites in memory
+        self.check_reload_fields_from_db()  # gets fields from DB, if process was interrupted
         uuids = UUIDListExportTable(self.table_id).uuids
         # seems faster than a select distinct with a join.
         for uuid in uuids:
@@ -176,6 +198,7 @@ class Create():
                                  .filter(subject=pred_uuid)
             if len(la_s) > 0:
                 self.predicate_uuids[pred_uuid]['annotations'] = []
+                self.predicate_uuids[pred_uuid]['ld-equiv'] = []
             for la in la_s:
                 link_anno = {'pred': la.predicate_uri,
                              'obj': la.object_uri}
@@ -183,26 +206,39 @@ class Create():
                 if la.predicate_uri in self.EQUIV_PREDICATES:
                     authorship = auth.check_authorship_object(la.object_uri)
                     if authorship is False:  # only keep predicates not related to authorship
+                        pred_ld_equiv_uri = la.object_uri  # the object_uri is equivalent to
+                                                           # the predicate_uuid
+                        self.predicate_uuids[pred_uuid]['ld-equiv'].append(pred_ld_equiv_uri)
                         if la.object_uri not in self.ld_predicates:
-                            pred_equiv_label = self.deref_entity_label(la.object_uri)
-                            self.ld_predicates[la.object_uri] = {'uuids': [pred_uuid],
-                                                                 'obj_uuids': {},
-                                                                 'obj_uris': [],
-                                                                 'label': pred_equiv_label}
+                            pred_equiv_label = self.deref_entity_label(pred_ld_equiv_uri)
+                            self.ld_predicates[pred_ld_equiv_uri] = {'uuids': [pred_uuid],
+                                                                     'obj_uuids': {},
+                                                                     'obj_uris': [],
+                                                                     'label': pred_equiv_label}
                         else:
-                            self.ld_predicates[la.object_uri]['uuids'].append(pred_uuid)
+                            self.ld_predicates[pred_ld_equiv_uri]['uuids'].append(pred_uuid)
         return self.ld_predicates
 
-    def get_ld_predicate_values(self, ld_field_uri):
+    def process_ld_predicates_values(self):
+        """ Processes linked uri equivalents for predicates to
+            get linked data for objects assocated with these predicates
+        """
+        if self.include_equiv_ld and len(self.ld_predicates) > 0:
+            for pred_ld_equiv_uri, ld_pred in self.ld_predicates.items():
+                self.get_ld_predicate_values(pred_ld_equiv_uri)
+
+    def get_ld_predicate_values(self, pred_ld_equiv_uri):
         """ gets a list of object_uuids used with predicates related to a
             ld_field_uri
         """
         object_uuids = Assertion.objects\
                                 .values_list('object_uuid', flat=True)\
-                                .filter(predicate_uuid__in=self.ld_predicates[ld_field_uri]['uuids'])\
+                                .filter(predicate_uuid__in=self.ld_predicates[pred_ld_equiv_uri]['uuids'])\
                                 .distinct()
         for obj_uuid in object_uuids:
-            if obj_uuid not in self.ld_predicates[ld_field_uri]['obj_uuids']:
+            if obj_uuid not in self.ld_object_equivs:
+                self.ld_object_equivs[obj_uuid] = []
+            if obj_uuid not in self.ld_predicates[pred_ld_equiv_uri]['obj_uuids']:
                 obj_equiv_uris = []
                 # get link data annotations for the object_uuid
                 la_s = LinkAnnotation.objects\
@@ -210,49 +246,154 @@ class Create():
                 for la in la_s:
                     if la.predicate_uri in self.EQUIV_PREDICATES:
                         obj_equiv_uri = la.object_uri
-                        obj_equiv_uris.append(obj_equiv_uri)
-                        if obj_equiv_uri not in self.ld_predicates[ld_field_uri]['obj_uris']:
-                            self.ld_predicates[ld_field_uri]['obj_uris'].append(obj_equiv_uri)
-                self.ld_predicates[ld_field_uri]['obj_uuids'][obj_uuid] = obj_equiv_uris
-        return self.ld_predicates[ld_field_uri]
+                        if obj_equiv_uri not in self.ld_predicates[pred_ld_equiv_uri]['obj_uris']:
+                            self.ld_predicates[pred_ld_equiv_uri]['obj_uris'].append(obj_equiv_uri)
+                        if obj_equiv_uri not in self.ld_object_equivs[obj_uuid]:
+                            self.ld_object_equivs[obj_uuid].append(obj_equiv_uri)
+        return self.ld_predicates[pred_ld_equiv_uri]
 
-    def process_ld_fields_values(self):
+    def do_boolean_multiple_ld_fields(self, pred_ld_equiv_uri):
+        """ Checks to see if a ld_field_uri (equivalent to a predicate_uuid in assertions)
+            has multiple values in a given item. If so, then returns true.
+            Otherwise, this returns false.
+        """
+        output = False
+        if self.boolean_multiple_ld_fields is not False:
+            if pred_ld_equiv_uri in self.ld_predicates:
+                for predicate_uuid in self.ld_predicates[pred_ld_equiv_uri]['uuids']:
+                    if predicate_uuid in self.predicate_uuids:
+                        if self.predicate_uuids[predicate_uuid]['count'] > 1:
+                            output = True
+        return output
+
+    def save_ld_fields(self):
         """ Creates fields for linked data, then saves
             records of linked data for each item in the export
             table
         """
         if self.include_equiv_ld and len(self.ld_predicates) > 0:
-            for ld_pred_uri, ld_pred in self.ld_predicates.items():
-                if self.boolean_multiple_ld_fields is not False:
+            for pred_ld_equiv_uri, ld_pred in self.ld_predicates.items():
+                if self.do_boolean_multiple_ld_fields(pred_ld_equiv_uri):
                     le_sort = LinkEntitySorter()
                     #  sort the URIs for the objects, so the fields come in a
                     #  nice, reasonable order.
                     sort_obj_uris = le_sort.sort_ld_entity_list(ld_pred['obj_uris'])
                     for ld_obj_uri in sort_obj_uris:
+                        # make a field for each linked data pred and object
                         field_num = self.get_add_ld_field_number('[Has]',
-                                                                 ld_pred_uri,
+                                                                 pred_ld_equiv_uri,
                                                                  ld_obj_uri)
+                else:
+                    if self.include_ld_obj_uris:
+                        field_num = self.get_add_ld_field_number('[URI]',
+                                                                 pred_ld_equiv_uri)
+                    field_num = self.get_add_ld_field_number('[Label]',
+                                                             pred_ld_equiv_uri)
+                    if self.include_ld_source_values:
+                        field_num = self.get_add_ld_field_number('[Source]',
+                                                                 pred_ld_equiv_uri)
+            # get the rows for the export table
+            rows = UUIDsRowsExportTable(self.table_id).rows
+            for row in rows:
+                for pred_ld_equiv_uri, ld_pred in self.ld_predicates.items():
+                    item_data = Assertion.objects.filter(uuid=row['uuid'],
+                                                         predicate_uuid__in=ld_pred['uuids'])
+                    if len(item_data) > 0:
+                        self.add_ld_cells(row['uuid'],
+                                          row['row_num'],
+                                          item_data,
+                                          pred_ld_equiv_uri)
 
-    def get_add_ld_field_number(self, field_type, ld_obj_uri, ld_obj_uri=False):
+    def add_ld_cells(self, uuid, row_num, item_data, pred_ld_equiv_uri):
+        """ Adds linked data records for an assertion """
+        if self.do_boolean_multiple_ld_fields(pred_ld_equiv_uri):
+            multi_ld_fields = True
+        else:
+            multi_ld_fields = False
+        obj_values = LastUpdatedOrderedDict()
+        obj_values['[URI]'] = []
+        obj_values['[Label]'] = []
+        obj_values['[Source]'] = []
+        project_uuid = item_data[0].project_uuid
+        for assertion in item_data:
+            object_uuid = assertion.object_uuid
+            if assertion.object_type == 'xsd:string':
+                try:
+                    oc_str = OCstring.objects.get(uuid=object_uuid)
+                    obj_label = oc_str.content
+                except OCstring.DoesNotExist:
+                    obj_label = ''
+            else:
+                obj_label = self.deref_entity_label(object_uuid)
+            if obj_label not in obj_values['[Source]']:
+                obj_values['[Source]'].append(obj_label)
+            obj_ld_found = False
+            if object_uuid in self.ld_object_equivs:
+                for obj_ld_equiv_uri in self.ld_object_equivs[object_uuid]:
+                    obj_ld_found = True
+                    if multi_ld_fields:
+                        cell_value = self.boolean_multiple_ld_fields
+                        field_num = self.get_add_ld_field_number('[Has]',
+                                                                 pred_ld_equiv_uri,
+                                                                 obj_ld_equiv_uri)
+                        cell = ExpCell()
+                        cell.table_id = self.table_id
+                        cell.uuid = uuid
+                        cell.project_uuid = project_uuid
+                        cell.row_num = row_num
+                        cell.field_num = field_num
+                        cell.record = cell_value
+                        cell.save()
+                        cell = None
+                    else:
+                        # predicate not broken into seperate fields for different values
+                        obj_equiv_label = self.deref_entity_label(obj_ld_equiv_uri)
+                        if obj_equiv_label not in obj_values['[Label]']:
+                            obj_values['[Label]'].append(obj_equiv_label)
+                        if obj_ld_equiv_uri not in obj_values['[URI]']:
+                            obj_values['[URI]'].append(obj_ld_equiv_uri)
+            if obj_ld_found is False:
+                print('No linked data for object:' + object_uuid)
+        if multi_ld_fields is False:
+            # predicate not broken into seperate fields for different values
+            for field_type, value_list in obj_values.items():
+                if len(value_list) > 0:
+                    cell_value = '; '.join(value_list)
+                    field_num = self.get_add_ld_field_number(field_type,
+                                                             pred_ld_equiv_uri)
+                    cell = ExpCell()
+                    cell.table_id = self.table_id
+                    cell.uuid = uuid
+                    cell.project_uuid = project_uuid
+                    cell.row_num = row_num
+                    cell.field_num = field_num
+                    cell.record = cell_value
+                    cell.save()
+                    cell = None
+
+    def get_add_ld_field_number(self,
+                                field_type,
+                                pred_ld_equiv_uri,
+                                obj_ld_equiv_uri=False):
         """ Gets the field_num for a linked data field, given the uri
             for the linked data field, and optionally the object
             Creates a new field for the linked data as needed
         """
-        if ld_obj_uri is not False:
-            field_key = ld_pred_uri + '::' + ld_obj_uri
+        if obj_ld_equiv_uri is not False:
+            field_key = pred_ld_equiv_uri + '::' + obj_ld_equiv_uri
         else:
-            field_key = ld_pred_uri
+            field_key = pred_ld_equiv_uri
         if len(field_type) > 0:
             field_key += '::' + field_type
         if field_key in self.ld_fields:
             field_num = self.ld_fields[field_key]
         else:
             field_num = len(self.fields) + 1
-            label = self.deref_entity_label(ld_pred_uri)
-            rel_ids = [field_type, ld_pred_uri]
-            if ld_obj_uri is not False:
-                rel_ids.append(ld_obj_uri)
-                obj_label = self.deref_entity_label(ld_obj_uri)
+            label = self.deref_entity_label(pred_ld_equiv_uri)
+            rel_ids = [field_type, pred_ld_equiv_uri]
+            if obj_ld_equiv_uri is not False:
+                rel_ids.append(obj_ld_equiv_uri)
+                obj_label = self.deref_entity_label(obj_ld_equiv_uri)
                 label = label + ' :: ' + obj_label
             if len(field_type) > 0:
                 label += ' ' + field_type
@@ -506,6 +647,5 @@ class Create():
                 output = ent.label
                 self.entities[entity_id] = ent
             else:
-                self.entities[entity_id] = False
                 print('Missing id: ' + entity_id)
         return output
