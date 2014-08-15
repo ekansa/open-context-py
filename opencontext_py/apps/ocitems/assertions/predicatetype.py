@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.octypes.management import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -18,6 +19,33 @@ class PredicateTypeAssertions():
     def __init__(self):
         self.alt_data_type = "xsd:string"  # data-type for predicates created from others
                                            # with inconsistent types
+
+    def convert_string_to_type_asserions(self, predicate_uuid):
+        """ Converts xsd:string objects to type objects in the Assertions table
+        """
+        output = False
+        try:  # look for the predicate item
+            pred = Predicate.objects.get(uuid=predicate_uuid)
+            pdata_type = pred.data_type
+        except Predicate.DoesNotExist:
+            pdata_type = False
+        if pdata_type == 'id':
+            # yes, the predicate has data_type = 'id', so it can take types
+            bad_assertions = Assertion.objects\
+                                      .filter(predicate_uuid=predicate_uuid,
+                                              object_type='xsd:string')
+            output = len(bad_assertions)
+            for bad_ass in bad_assertions:
+                new_ass = bad_ass
+                tm = TypeManagement()
+                tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
+                                                        bad_ass.object_uuid)
+                new_ass.object_uuid = tm.oc_type.uuid
+                new_ass.object_type = 'types'
+                Assertion.objects\
+                         .filter(hash_id=bad_ass.hash_id).delete()
+                new_ass.save()
+        return output
 
     def seperate_inconsistent_data_type(self, predicate_uuid):
         """ This looks for assertions that have different object types than the
