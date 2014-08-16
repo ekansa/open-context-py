@@ -173,7 +173,8 @@ class LinkVocabulary():
                                                None)):
                 subject_uri = s.__str__()  # get the URI of the subject as a string
                 index = o.__str__()  # get the URI of the object as a string
-                data_indexes[subject_uri] = int(float(index))
+                data_indexes[subject_uri] = int(float(index)) + 1  # add 1
+                # so first child does not have the exact same index as the first parent.
             if(len(data_indexes) > 0):
                 for subject_uri, index in data_indexes.items():
                     print('Sorting: ' + subject_uri)
