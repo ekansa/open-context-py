@@ -3,7 +3,7 @@ from unidecode import unidecode
 from django.utils import timezone
 from django.db import models
 from django.template.defaultfilters import slugify
-from opencontext_py.apps.ocitems.projects.models import Project as Project
+from opencontext_py.apps.ocitems.projects.models import Project
 
 
 # Manifest provides basic item metadata for all open context items that get a URI
@@ -35,7 +35,10 @@ class Manifest(models.Model):
         creates a unique slug for a label with a given type
         """
         man_gen = ManifestGeneration()
-        slug = man_gen.make_manifest_slug(self.label, self.item_type, self.project_uuid)
+        slug = man_gen.make_manifest_slug(self.uuid,
+                                          self.label,
+                                          self.item_type,
+                                          self.project_uuid)
         return slug
 
     def save(self):
@@ -53,7 +56,7 @@ class Manifest(models.Model):
 
 class ManifestGeneration():
 
-    def make_manifest_slug(self, label, item_type, project_uuid):
+    def make_manifest_slug(self, uuid, label, item_type, project_uuid):
         """
         gets the most recently updated Subject date
         """
@@ -73,16 +76,18 @@ class ManifestGeneration():
         if(raw_slug[-1:] == '-'):
             raw_slug = raw_slug + 'x'  # slugs don't end with dashes
         raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 2 dash characters
-        slug = self.raw_to_final_slug(raw_slug)  # function for making sure unique slugs
+        slug = self.raw_to_final_slug(uuid, raw_slug)  # function for making sure unique slugs
         return slug
 
-    def raw_to_final_slug(self, raw_slug):
+    def raw_to_final_slug(self, uuid, raw_slug):
         """ Converts a raw to a final slug, checks if the slug exists. If it does, add a suffix.
         If the suffixed slug already exists, try the next suffix until we get one that does not exist.
         """
         slug_exists = False
         try:
-            slug_exists_res = Manifest.objects.filter(slug=raw_slug)[:1]
+            slug_exists_res = Manifest.objects\
+                                      .filter(slug=raw_slug)\
+                                      .exclude(uuid=uuid)[:1]
             if(len(slug_exists_res) > 0):
                 slug_exists = True
             else:

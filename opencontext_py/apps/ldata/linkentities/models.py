@@ -40,6 +40,7 @@ class LinkEntityGeneration():
         """
         Makes a slug for the URI of the linked entity
         """
+        actual_uri = uri
         uri_prefixes = {'http://www.cidoc-crm.org/rdfs/cidoc-crm': 'crm-rdf',
                         'http://collection.britishmuseum.org/description/thesauri': 'bm-thes',
                         'http://collection.britishmuseum.org/id/thesauri': 'bm-thes',
@@ -68,8 +69,8 @@ class LinkEntityGeneration():
                         'http://purl.org/ontology/bibo': 'bibo'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
-            uri = uri.replace(uri_root, uri_prefix)
             #  replaces the start of a uri with a prefix
+            uri = uri.replace(uri_root, uri_prefix)
         uri = uri.replace('https://', '')
         uri = uri.replace('http://', '')
         uri = uri.replace('/', '-')
@@ -86,7 +87,10 @@ class LinkEntityGeneration():
         slug = raw_slug
         try:
             slug_in = LinkEntity.objects.get(slug=raw_slug)
-            slug_exists = True
+            if slug_in.uri != actual_uri:
+                slug_exists = True
+            else:
+                slug_exists = False
         except LinkEntity.DoesNotExist:
             slug_exists = False
         if(slug_exists):
