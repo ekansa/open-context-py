@@ -4,6 +4,7 @@ from django.db import models
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class Containment():
@@ -17,6 +18,47 @@ class Containment():
         self.contexts = {}
         self.contexts_list = []
         recurse_count = 0
+
+    def get_project_top_level_contexts(self, project_uuid, visible_only=True):
+        """
+        Gets a list the top level contexts in a project hierarchy,
+        Assumes a project is hierarchy is contained in a more general
+        containment hierarchy owned by other projects
+        """
+        if project_uuid != '0':
+            a_tab = 'oc_assertions'
+            m_tab = '"oc_manifest" AS "m_b"'
+            filters = 'oc_assertions.object_uuid=oc_manifest.uuid \
+                      AND oc_assertions.predicate_uuid = \''\
+                      + Assertion.PREDICATES_CONTAINS + '\' \
+                      AND oc_assertions.uuid=m_b.uuid \
+                      AND m_b.project_uuid != \''\
+                      + project_uuid + '\' '
+            top = Manifest.objects\
+                          .filter(project_uuid=project_uuid,
+                                  item_type='subjects')\
+                          .extra(tables=[a_tab, m_tab], where=[filters])\
+                          .values_list('uuid', flat=True)\
+                          .distinct()
+        else:
+            top = []
+            a_tab = 'oc_assertions'
+            filter_a = 'oc_assertions.uuid=oc_manifest.uuid \
+                        AND oc_assertions.predicate_uuid = \''\
+                        + Assertion.PREDICATES_CONTAINS + '\' '
+            cnt = Manifest.objects\
+                          .filter(project_uuid=project_uuid,
+                                  item_type='subjects')\
+                          .extra(tables=[a_tab], where=[filter_a])\
+                          .values_list('uuid', flat=True)\
+                          .distinct()
+            for uuid in cnt:
+                contained = Assertion.objects\
+                                     .filter(object_uuid=uuid,
+                                             predicate_uuid=Assertion.PREDICATES_CONTAINS)[:1]
+                if len(contained) < 1:
+                    top.append(uuid)
+        return top
 
     def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
         """
