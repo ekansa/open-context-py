@@ -303,6 +303,7 @@ class ItemConstruction():
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
+        self.pred_strings = {}  # for tracking string values for preds with linked data
         self.class_type_list = list()
         self.dc_contrib_preds = list()
         self.dc_creator_preds = list()
@@ -397,6 +398,8 @@ class ItemConstruction():
             else:
                 key = 'oc-pred:' + v_data['slug']
             self.predicates[v_data['uuid']] = key
+            if v_data['type'] == 'xsd:string':
+                self.pred_strings[key] = []  # to keep track of linked data for strings
             del v_data['uuid']
             context[key] = v_data
             v += 1
@@ -471,6 +474,8 @@ class ItemConstruction():
                 act_list = []
             if (assertion.object_type == 'xsd:string'):
                 new_object_item = LastUpdatedOrderedDict()
+                if assertion.object_uuid not in self.pred_strings[act_pred_key]:
+                    self.pred_strings[act_pred_key].append(assertion.object_uuid) # for linked data
                 new_object_item['id'] = '#string-' + str(assertion.object_uuid)
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
@@ -621,6 +626,9 @@ class ItemConstruction():
         # add linked data annotations for predicates
         for (predicate_uuid, slug) in self.predicates.items():
             graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
+            if slug in self.pred_strings:
+                for string_uuid in self.pred_strings[slug]:
+                    graph_list = self.get_annotations_for_ocitem(graph_list, string_uuid, 'xsd:string')
         # add linked data annotations for types
         for type_uuid in self.type_list:
             graph_list = self.get_annotations_for_ocitem(graph_list, type_uuid, 'types')
@@ -710,6 +718,8 @@ class ItemConstruction():
             act_annotation = LastUpdatedOrderedDict()
             if(prefix_slug is not False):
                 act_annotation['@id'] = prefix_slug
+            elif subject_type == 'xsd:string':
+                act_annotation['@id'] = '#string-' + subject_uuid  # for string annotations
             else:
                 act_annotation['@id'] = URImanagement.make_oc_uri(subject_uuid, subject_type, self.cannonical_uris)
             for link_anno in link_annotations:
