@@ -625,8 +625,11 @@ class ItemConstruction():
         graph_list = []
         # add linked data annotations for predicates
         for (predicate_uuid, slug) in self.predicates.items():
+            g_start = len(graph_list)
             graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
-            if slug in self.pred_strings:
+            g_next = len(graph_list)
+            if g_next > g_start and slug in self.pred_strings:
+                # only check for LD annotations if the current predicate has an annotation
                 for string_uuid in self.pred_strings[slug]:
                     graph_list = self.get_annotations_for_ocitem(graph_list, string_uuid, 'xsd:string')
         # add linked data annotations for types
