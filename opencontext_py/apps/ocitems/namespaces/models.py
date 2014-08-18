@@ -18,6 +18,7 @@ class ItemNamespaces():
         context['cidoc-crm'] = 'http://erlangen-crm.org/current/'
         context['dcat'] = 'http://www.w3.org/ns/dcat#'
         context['geojson'] = 'http://ld.geojson.org/vocab#'
+        context['cc'] = 'http://creativecommons.org/ns#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
         self.namespaces = context

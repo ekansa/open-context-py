@@ -3,11 +3,8 @@
 
 {% block itemcontent %}
      <div class="row">
-         <div class="col-sm-8">
+         <div class="col-sm-12">
          {% include 'items/context.html' %}
-         </div>
-         <div class="col-sm-4">
-         
          </div>
      </div>
      <div class="row">
@@ -15,7 +12,7 @@
          {% include 'items/observations.html' %}
          </div>
          <div class="col-sm-4">
-         More stuff here
+         {% include 'items/project.html' %}
          </div>
      </div>
      {% if item.children != False %}

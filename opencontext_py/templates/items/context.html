@@ -1,9 +1,13 @@
 {% block context %}
     {% if item.context != False %}
         <ol id="{{ item.context.id }}" class="breadcrumb">
-            <li><strong>Context</strong></li>
+            <li><strong>Context:</strong></li>
         {% for par in item.context.parents %}
+            {% if forloop.counter == 1 %} 
+            <li id="context-root"><a href="{% url 'subjects_html' par.uuid %}">{{ par.label }}</a></li>
+            {% else %}
             <li><a href="{% url 'subjects_html' par.uuid %}">{{ par.label }}</a></li>
+            {%endif%}
         {% endfor %}
         </ol>
     {%endif%}

@@ -15,3 +15,7 @@ div.subject-list-row img {
 div.subject-list-text {
 	padding-top: 2%;
 }
+/* Tweeks to Bootstrap */
+#context-root::before {
+      content: ""; 
+    }

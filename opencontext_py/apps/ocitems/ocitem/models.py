@@ -26,6 +26,8 @@ from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels, ProjectMeta
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
+from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
 
 # OCitem is a very general class for all Open Context items.
@@ -214,6 +216,8 @@ class OCitem():
         currently, it's just here to make some initial JSON while we learn python
         """
         item_con = ItemConstruction()
+        item_con.uuid = self.uuid
+        item_con.project_uuid = self.project_uuid
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
         json_ld['uuid'] = self.uuid
@@ -262,6 +266,7 @@ class OCitem():
             json_ld['description'] = self.project.short_des
             json_ld['dc-terms:abstract'] = self.project.content
             json_ld = item_con.add_editorial_status(json_ld, self.project.edit_status)
+        json_ld = item_con.add_license(json_ld)
         # add the stable ids needed for citation
         json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add a slug identifier if the item_type allows slugs
@@ -293,6 +298,8 @@ class ItemConstruction():
     """
 
     def __init__(self):
+        self.uuid = False
+        self.project_uuid = False
         self.add_item_labels = True
         self.add_linked_data_labels = True
         self.add_media_thumnails = True
@@ -647,21 +654,58 @@ class ItemConstruction():
         If some predicates had DC contributor or DC creator annotations, get their objects
         to use in adding authorship information for the item
         """
+        contribs = False
+        creators = False
+        auth = Authorship()
+        auth.get_project_authors(self.project_uuid)
+        proj_creators = []
+        for proj_creator in auth.creators:
+            new_object_item = LastUpdatedOrderedDict()
+            ent = self.get_entity_metadata(proj_creator)
+            if ent is not False:
+                new_object_item['id'] = ent.uri
+                new_object_item['slug'] = ent.slug
+                new_object_item['label'] = ent.label
+                if ent.class_uri is not False:
+                    new_object_item['type'] = ent.class_uri
+                proj_creators.append(new_object_item)
         if(len(self.dc_contrib_preds) > 0 or len(self.dc_creator_preds) > 0):
             contribs = self.get_dc_authorship(act_dict, self.dc_contrib_preds)
             creators = self.get_dc_authorship(act_dict, self.dc_creator_preds)
-            if(contribs is not False):
-                if('dc-terms:contributor' in act_dict):
-                    act_dict['dc-terms:contributor'] = self.add_unique_entity_lists(act_dict['dc-terms:contributor'],
-                                                                                    contribs)
-                else:
-                    act_dict['dc-terms:contributor'] = contribs
-            if(creators is not False):
-                if('dc-terms:creator' in act_dict):
-                    act_dict['dc-terms:creator'] = self.add_unique_entity_lists(act_dict['dc-terms:creator'],
-                                                                                creators)
-                else:
-                    act_dict['dc-terms:creator'] = creators
+        if creators is False:
+            creators = proj_creators
+        else:
+            for proj_creator in proj_creators:
+                creators.append(proj_creator)
+        if(contribs is not False):
+            if('dc-terms:contributor' in act_dict):
+                act_dict['dc-terms:contributor'] = self.add_unique_entity_lists(act_dict['dc-terms:contributor'],
+                                                                                contribs)
+            else:
+                act_dict['dc-terms:contributor'] = contribs
+        if(creators is not False):
+            if('dc-terms:creator' in act_dict):
+                act_dict['dc-terms:creator'] = self.add_unique_entity_lists(act_dict['dc-terms:creator'],
+                                                                            creators)
+            else:
+                act_dict['dc-terms:creator'] = creators
+        return act_dict
+
+    def add_license(self, act_dict):
+        """ Adds license information """
+        lic = Licensing()
+        item_license = lic.get_license(self.uuid,
+                                       self.project_uuid)
+        if item_license is not False:
+            new_object_item = LastUpdatedOrderedDict()
+            new_object_item['id'] = item_license
+            ent = self.get_entity_metadata(item_license)
+            if ent is not False:
+                new_object_item['slug'] = ent.slug
+                new_object_item['label'] = ent.label
+            act_dict['dc-terms:license'] = [new_object_item]
+        else:
+            print('crap, no license')
         return act_dict
 
     def add_unique_entity_lists(self, existing_list, to_add_list):

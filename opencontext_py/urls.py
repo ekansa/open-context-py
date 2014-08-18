@@ -21,35 +21,35 @@ urlpatterns = patterns('',
                        # Subjects views for main records (subjects of observations)
                        url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
-                       url(r'^subjects', SubjectViews.index, name='index'),
+                       url(r'^subjects', SubjectViews.index, name='subjects_index'),
                        # Sets views
                        url(r'^sets/(?P<spatial_context>\S+).json', SetsViews.json_view, name='sets_json'),
                        url(r'^sets/(?P<spatial_context>\S+)', SetsViews.html_view, name='sets_html'),
-                       url(r'^sets/$', SetsViews.index, name='index'),
+                       url(r'^sets/$', SetsViews.index, name='sets_index'),
                        # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
                        url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
-                       url(r'^media', MediaViews.index, name='index'),
+                       url(r'^media', MediaViews.index, name='media_index'),
                        # Document views for HTML document items
                        url(r'^documents/(?P<uuid>\S+).json', DocumentViews.json_view, name='documents_json'),
                        url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
-                       url(r'^documents', DocumentViews.index, name='index'),
+                       url(r'^documents', DocumentViews.index, name='documents_index'),
                        # Person views for Person / organization items
-                       url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='json_view'),
-                       url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='html_view'),
-                       url(r'^persons', PersonViews.index, name='index'),
+                       url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='persons_json'),
+                       url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='persons_html'),
+                       url(r'^persons', PersonViews.index, name='persons_index'),
                        # Project views for projects
-                       url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='json_view'),
-                       url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='html_view'),
-                       url(r'^projects', ProjectViews.index, name='index'),
+                       url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='projects_json'),
+                       url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='projects_html'),
+                       url(r'^projects', ProjectViews.index, name='projects_index'),
                        # Predicates views for descriptive variables and linking relations from OC contributors
                        url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='predicates_json'),
                        url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='predicates_html'),
-                       url(r'^predicates', PredicateViews.index, name='index'),
+                       url(r'^predicates', PredicateViews.index, name='predicates_index'),
                        # Types views for controlled vocabulary entities from OC contributors
                        url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
-                       url(r'^types', OCtypeViews.index, name='index'),
+                       url(r'^types', OCtypeViews.index, name='types_index'),
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

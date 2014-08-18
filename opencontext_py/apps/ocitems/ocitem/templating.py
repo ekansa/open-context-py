@@ -22,6 +22,7 @@ class TemplateItem():
         self.children = False
         self.observations = False
         self.class_type_metadata = {}
+        self.project = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -33,6 +34,7 @@ class TemplateItem():
         self.create_context(json_ld)
         self.create_children(json_ld)
         self.create_observations(json_ld)
+        self.create_project(json_ld)
 
     def create_context(self, json_ld):
         """
@@ -63,6 +65,13 @@ class TemplateItem():
                 act_obs = Observation()
                 act_obs.make_observation(context, obs_item, self.class_type_metadata)
                 self.observations.append(act_obs)
+
+    def create_project(self, json_ld):
+        """ Makes an instance of a project class, with data from the JSON_LD
+        """
+        proj = Project()
+        proj.make_project(json_ld)
+        self.project = proj
 
     def store_class_type_metadata(self, json_ld):
         if('@graph' in json_ld):
@@ -256,3 +265,25 @@ class PropValue():
                 self.val = val_item['xsd:string']
         else:
             self.val = val_item
+
+
+class Project():
+    """ This class makes an object useful for templating
+    a property value"""
+
+    def __init__(self):
+        self.uri = False
+        self.uuid = False
+        self.slug = False
+        self.label = False
+
+    def make_project(self, json_ld):
+        if isinstance(json_ld, dict):
+            if('dc-terms:isPartOf' in json_ld):
+                for proj_item in json_ld['dc-terms:isPartOf']:
+                    if 'projects' in proj_item['id']:
+                        self.uri = proj_item['id']
+                        self.uuid = URImanagement.get_uuid_from_oc_uri(proj_item['id'])
+                        self.slug = proj_item['slug']
+                        self.label = proj_item['label']
+                        break

@@ -66,7 +66,10 @@ class LinkEntityGeneration():
                         'http://www.w3.org/2004/02/skos/core': 'skos',
                         'http://en.wikipedia.org/wiki': 'wiki',
                         'http://id.loc.gov/authorities/subjects': 'loc-sh',
-                        'http://purl.org/ontology/bibo': 'bibo'
+                        'http://purl.org/ontology/bibo': 'bibo',
+                        'http://creativecommons.org/ns#': 'cc',
+                        'http://creativecommons.org/licenses': 'cc-license',
+                        'http://creativecommons.org/publicdomain': 'cc-publicdomain'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
