@@ -56,3 +56,7 @@ class ViewUtilities():
                 # If so, we want their slugs
                 valid_context_slugs.append(entity.slug)
         return valid_context_slugs
+
+    # TODO process parents - perhaps break up _get_valid_context_slug
+    # so that it just returns valid URIs. Then we could get the slugs with a
+    # separate method that could also request slugs for the parent.
