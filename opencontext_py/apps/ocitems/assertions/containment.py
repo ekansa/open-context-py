@@ -5,6 +5,7 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 class Containment():
@@ -17,7 +18,7 @@ class Containment():
         self.contents = {}
         self.contexts = {}
         self.contexts_list = []
-        recurse_count = 0
+        self.recurse_count = 0
 
     def get_project_top_level_contexts(self, project_uuid, visible_only=True):
         """
@@ -201,3 +202,33 @@ class Containment():
             subject_list.append(uuid)
         metadata_items = self.get_geochron_from_subject_list(subject_list, metadata_type)
         return metadata_items
+
+    def get_parent_slug_by_slug(self, child_slug):
+        """ gets the slug for a parent item
+            from a child item's slug
+        """
+        self.recurse_count = 0
+        self.contexts_list = []
+        self.contexts = {}
+        output = False
+        ent = Entity()
+        found = ent.dereference(child_slug)
+        if found:
+            self.get_parents_by_child_uuid(ent.uuid, False)
+            if len(self.contexts_list) > 0:
+                parent_uuid = self.contexts_list[0]
+                # clear class so we can use this again
+                self.contexts_list = []
+                self.contexts = {}
+                self.recurse_count = 0
+                ent_p = Entity()
+                found_p = ent_p.dereference(parent_uuid)
+                if found_p:
+                    output = ent_p.slug
+                else:
+                    print('Cannot dereference parent_uuid: ' + parent_uuid)
+            else:
+                print('No parent item found. (Root Context)')
+        else:
+            print('Cannot find the item for slug: ' + child_slug)
+        return output
