@@ -19,3 +19,16 @@ div.subject-list-text {
 #context-root::before {
       content: ""; 
     }
+div.obs-multi {
+	border-left: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+	border-bottom: 1px solid #ddd;
+}
+div.obs-single {
+	border: 1px solid #ddd;
+}
+/* So long uri in Citation has good wrapping */
+#item-uri {
+	max-width:200px;
+    word-wrap:break-word;
+}

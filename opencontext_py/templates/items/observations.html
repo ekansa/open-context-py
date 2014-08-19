@@ -12,9 +12,9 @@
         {%endif%}
     {% endfor %}
     </ul>
-    <div class="tab-content">
+    <div class="tab-content obs-multi">
     {% else %}
-    <div>
+    <div class="obs-single">
     {%endif%}
     {% for obs in item.observations %}
         {% if forloop.counter == 1 %}

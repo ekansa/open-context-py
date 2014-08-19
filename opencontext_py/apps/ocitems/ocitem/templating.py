@@ -1,5 +1,6 @@
 import json
 import copy
+import datetime
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -23,6 +24,7 @@ class TemplateItem():
         self.observations = False
         self.class_type_metadata = {}
         self.project = False
+        self.citation = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -35,6 +37,7 @@ class TemplateItem():
         self.create_children(json_ld)
         self.create_observations(json_ld)
         self.create_project(json_ld)
+        self.create_citation(json_ld)
 
     def create_context(self, json_ld):
         """
@@ -72,6 +75,15 @@ class TemplateItem():
         proj = Project()
         proj.make_project(json_ld)
         self.project = proj
+
+    def create_citation(self, json_ld):
+        """ Makes an instance of a citation class, with data from the JSON_LD
+        """
+        cite = Citation()
+        cite.project = self.project
+        cite.context = self.context
+        cite.make_citation(json_ld)
+        self.citation = cite
 
     def store_class_type_metadata(self, json_ld):
         if('@graph' in json_ld):
@@ -119,6 +131,7 @@ class Context():
         self.id = False
         self.contype = False
         self.parents = False
+        self.parent_labels = []
 
     def make_context(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
@@ -141,6 +154,7 @@ class Context():
                     act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
                     act_parent = ItemMetadata.get_class_meta(act_parent, class_type_metadata)
                     self.parents.append(act_parent)
+                    self.parent_labels.append(act_parent['label'])
 
 
 class Children():
@@ -219,6 +233,7 @@ class Property():
         self.varlabel = False
         self.varuri = False
         self.varslug = False
+        self.vartype = False
         self.values = False
 
     def start_property(self, predicate_info):
@@ -227,6 +242,7 @@ class Property():
         self.varlabel = predicate_info['label']
         self.varuri = predicate_info['owl:sameAs']
         self.varslug = predicate_info['slug']
+        self.vartype = predicate_info['type']
 
     def add_property_values(self, prop_vals):
         """ Starts a property with metadata about the variable
@@ -234,6 +250,7 @@ class Property():
         self.values = []
         for val_item in prop_vals:
             act_prop_val = PropValue()
+            act_prop_val.vartype = self.vartype
             act_prop_val.make_value(val_item)
             self.values.append(act_prop_val)
 
@@ -243,6 +260,7 @@ class PropValue():
     a property value"""
 
     def __init__(self):
+        self.vartype = False
         self.valtype = False
         self.valuri = False
         self.val = False
@@ -264,12 +282,15 @@ class PropValue():
             if('xsd:string' in val_item):
                 self.val = val_item['xsd:string']
         else:
-            self.val = val_item
+            if self.vartype == 'xsd:integer':
+                self.val = str(int(float(val_item)))
+            else:
+                self.val = val_item
 
 
 class Project():
     """ This class makes an object useful for templating
-    a property value"""
+    project information"""
 
     def __init__(self):
         self.uri = False
@@ -287,3 +308,60 @@ class Project():
                         self.slug = proj_item['slug']
                         self.label = proj_item['label']
                         break
+
+
+class Citation():
+    """ This class makes an object useful for templating
+    ciation information"""
+
+    def __init__(self):
+        self.item_authors = []
+        self.item_editors = []
+        self.doi = False
+        self.ark = False
+        self.project = False
+        self.context = False
+        self.cite_authors = ''
+        self.cite_editors = ''
+        self.cite_title = ''
+        self.cite_year = ''
+        self.cite_released = ''
+        self.uri = ''
+        self.coins = False
+
+    def make_citation(self, json_ld):
+        if isinstance(json_ld, dict):
+            if('dc-terms:contributor' in json_ld):
+                for p_item in json_ld['dc-terms:contributor']:
+                    self.item_authors.append(p_item['label'])
+            if('dc-terms:creator' in json_ld):
+                for p_item in json_ld['dc-terms:creator']:
+                    self.item_editors.append(p_item['label'])
+            if('owl:sameAs' in json_ld):
+                for s_item in json_ld['owl:sameAs']:
+                    if 'dx.doi.org' in s_item['id']:
+                        self.doi = s_item['id']
+                    elif 'n2t.net/ark:' in s_item['id']:
+                        self.ark = s_item['id']
+            if len(self.item_authors) < 1:
+                self.item_authors = self.item_editors
+            published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            self.cite_authors = ', '.join(self.item_authors)
+            parent_prefix = False
+            parent_items = self.context.parent_labels
+            if len(parent_items) > 1:
+                # del parent_items[0]
+                parent_prefix = ' / '.join(parent_items)
+            self.cite_title = json_ld['label']
+            if parent_prefix is not False:
+                self.cite_title += ' from ' + parent_prefix
+            self.cite_year += published.strftime('%Y')
+            self.cite_released = published.strftime('%Y-%m-%d')
+            self.uri = json_ld['id']
+            self.cite_editors = ', '.join(self.item_editors)
+            if len(self.item_editors) == 1:
+                self.cite_editors += ' (Ed.) '
+            elif len(self.item_editors) > 1:
+                self.cite_editors += ' (Eds.) '
+            else:
+                self.cite_editors += ''
