@@ -1,10 +1,22 @@
 {% block project %}
+    <!--
     <div id="project" class="panel panel-default">
         <div class="panel-heading">
             <h3 class="panel-title">Part of Project:</h3>
         </div>
         <div class="panel-body">
           <a href="{% url 'projects_html' item.project.slug %}">{{ item.project.label }}</a>
+        </div>
+    </div>
+    -->
+    <div class="row">
+        <div class="col-sm-6">
+            <h4>Project</h4>
+            <a href="{% url 'projects_html' item.project.slug %}">{{ item.project.label }}</a>
+        </div>
+        <div class="col-sm-6">
+            <h4>Editorial Status</h4>
+            <p>Status...</p>
         </div>
     </div>
 {% endblock %}

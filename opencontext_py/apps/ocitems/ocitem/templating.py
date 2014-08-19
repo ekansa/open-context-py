@@ -25,6 +25,7 @@ class TemplateItem():
         self.class_type_metadata = {}
         self.project = False
         self.citation = False
+        self.geo = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -38,6 +39,7 @@ class TemplateItem():
         self.create_observations(json_ld)
         self.create_project(json_ld)
         self.create_citation(json_ld)
+        self.create_geo(json_ld)
 
     def create_context(self, json_ld):
         """
@@ -84,6 +86,13 @@ class TemplateItem():
         cite.context = self.context
         cite.make_citation(json_ld)
         self.citation = cite
+
+    def create_geo(self, json_ld):
+        """ Makes an instance of a GeoMap class, with data from the JSON_LD
+        """
+        geo = GeoMap()
+        geo.make_geomap(json_ld)
+        self.geo = geo
 
     def store_class_type_metadata(self, json_ld):
         if('@graph' in json_ld):
@@ -330,6 +339,7 @@ class Citation():
         self.coins = False
 
     def make_citation(self, json_ld):
+        """ Make citation from metadata in the JSON-LD dict """
         if isinstance(json_ld, dict):
             if('dc-terms:contributor' in json_ld):
                 for p_item in json_ld['dc-terms:contributor']:
@@ -369,3 +379,31 @@ class Citation():
                 self.cite_editors += ' (Eds.) '
             else:
                 self.cite_editors += ''
+
+
+class GeoMap():
+    def __init__(self):
+        self.geojson = False
+        self.start_lat = 0
+        self.start_lon = 0
+        self.start_zoom = 7
+
+    def make_geomap(self, json_ld):
+        if isinstance(json_ld, dict):
+            if 'features' in json_ld:
+                lats = []
+                lons = []
+                for feature in json_ld['features']:
+                    if 'Polygon' in feature['geometry']['type']:
+                        self.start_zoom = 6
+                    elif feature['geometry']['type'] == 'Point':
+                        lats.append(feature['geometry']['coordinates'][1])
+                        lons.append(feature['geometry']['coordinates'][0])
+                self.start_lat = sum(lats) / float(len(lats))
+                self.start_lon = sum(lons) / float(len(lons))
+                geojson = LastUpdatedOrderedDict()
+                geojson['type'] = 'FeatureCollection'
+                geojson['features'] = json_ld['features']
+                self.geojson = json.dumps(geojson,
+                                          indent=4,
+                                          ensure_ascii=False)

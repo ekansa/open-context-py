@@ -1,0 +1,19 @@
+{% block map %}
+    {% if item.geo != False %}
+        {% if item.geo.geojson != False %}
+<div id="map-outer">
+    <h4>Mapping Data</h4>
+    <div id="map"></div>
+    <script type="text/javascript">
+        <!--
+        var geojson = {% autoescape off %}{{ item.geo.geojson }}{% endautoescape %};
+        var start_lat = {{ item.geo.start_lat }};
+        var start_lon = {{ item.geo.start_lon }};
+        var start_zoom = {{ item.geo.start_zoom }};
+        initmap();
+        -->
+	</script>
+</div>
+        {%endif%}
+    {%endif%}
+{% endblock %}
