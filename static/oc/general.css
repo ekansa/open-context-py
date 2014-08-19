@@ -4,6 +4,27 @@
 	margin-left:auto;
 	margin-right:auto;
 }
+#footer-upper {
+	margin-top: 5%;
+	background-color: #666666;
+}
+div.footer-cell {
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
+	padding: 1%;
+}
+div.footer-cell img {
+	max-height: 75px;
+	margin-left: auto;
+	margin-right: auto;
+}
+#footer-lower {
+	background-color: #333333;
+	color: #fff;
+	text-align: center;
+	font-size: 75%;
+}
 div.subject-list-row {
 	padding-top: 1%;
 	padding-bottom: 1%;
