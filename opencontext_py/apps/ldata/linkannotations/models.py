@@ -70,8 +70,9 @@ class LinkRecursion():
         """
         output = False
         raw_parents = self.get_entity_parents(identifier)
-        if(add_original):# 
-            output = []  # add the original identifer to the list of parents, at lowest rank
+        if(add_original):   #
+            output = []  # add the original identifer to the list of parents,
+                         # at lowest rank
             raw_parents.insert(0, identifier)
         if(len(raw_parents) > 0):
             output = []
@@ -88,6 +89,8 @@ class LinkRecursion():
                     p_item['label'] = ent.label
                     if(ent.data_type is not False):
                         p_item['type'] = ent.data_type
+                    else:
+                        p_item['type'] = '@id'
                     output.append(p_item)
         return output
 
