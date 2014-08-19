@@ -9,27 +9,28 @@
      </div>
      <div class="row">
          <div class="col-sm-8">
-         {% include 'items/observations.html' %}
+            <div class="row">
+                <div class="col-sm-12">
+                    {% include 'items/observations.html' %}
+                </div>
+            </div>
+            {% if item.children != False %}
+            <div class="row">
+                <div class="col-sm-12">
+                {% with subjects_list=item.children.children %}
+                {% with node_id=item.children.id %}
+                {% with list_label='Contents' %}
+                {% include 'items/subjects-list.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                </div>
+            </div>
+            {%endif%}
          </div>
          <div class="col-sm-4">
          {% include 'items/citation.html' %}
          {% include 'items/project.html' %}
          </div>
      </div>
-     {% if item.children != False %}
-     <div class="row">
-         <div class="col-sm-8">
-         {% with subjects_list=item.children.children %}
-         {% with node_id=item.children.id %}
-         {% with list_label='Contents' %}
-         {% include 'items/subjects-list.html' %}
-         {% endwith %}
-         {% endwith %}
-         {% endwith %}
-         </div>
-         <div class="col-sm-4">
-         
-         </div>
-     </div>
-     {%endif%}
 {% endblock %} 
