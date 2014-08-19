@@ -346,7 +346,7 @@ class Citation():
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
             published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
-            if len(self.item_authors) > 1:
+            if len(self.item_authors) > 0:
                 self.cite_authors = ', '.join(self.item_authors)
             else:
                 self.cite_authors = 'Open Context Editors'
