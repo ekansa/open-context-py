@@ -128,7 +128,7 @@
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-    
+
     <!-- project_uuid is required, identifies the project owning the solr doc with {slug-key:label-value} -->
     <field name="project_slug" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
@@ -214,10 +214,23 @@
     -->
     <dynamicField name="*___context_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
+    <dynamicField name="*___context_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+
+    <!-- Used for filter queries. Just captures the slug -->
+    <copyField source="*___context_id" dest="*___context_id_fq"/>
+
     <!-- to index nominal predicates @type = "@id" values
     the root dynamic field is 'root___pred_id'
     -->
+
     <dynamicField name="*___pred_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+
+    <dynamicField name="*___pred_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+
+    <!-- Used for filter queries. Just captures the slug -->
+    <copyField source="*___pred_id" dest="*___pred_id_fq"/>
+
+
 
     <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
 	<dynamicField name="*___pred_numeric" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
@@ -300,6 +313,17 @@
        single-valued and either required or have a default value.
       -->
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+
+    <fieldType name="oc_id_field" class="solr.TextField">
+    <!-- OC-specific field -->
+        <analyzer type="index">
+        <tokenizer class="solr.PatternTokenizerFactory" pattern="^([a-z0-9\-]*?)___" group="1"/>
+        </analyzer>
+        <analyzer type="query">
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        </analyzer>
+    </fieldType>
+
 
     <!-- boolean type: "true" or "false" -->
     <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>

@@ -41,8 +41,8 @@ class SolrDocument:
         # First generate the solr field name
         solr_field_name = self._convert_slug_to_solr(
             predicate_slug +
-            self._get_predicate_field_name_suffix(
-                predicate_type)
+            self._get_predicate_type_string(
+                predicate_type, prefix='___pred_')
             )
         # Then get the predicate values
         if solr_field_name not in self.fields:
@@ -82,8 +82,10 @@ class SolrDocument:
                                 if active_solr_field not in self.fields:
                                     self.fields[active_solr_field] = []
                                 active_solr_value = \
-                                    self._convert_values_to_json(
+                                    self._concat_solr_string_value(
                                         parent['slug'],
+                                        self._get_predicate_type_string(
+                                            parent['type']),
                                         parent['id'],
                                         parent['label']
                                     )
@@ -92,8 +94,6 @@ class SolrDocument:
                                 self.fields[active_solr_field].append(
                                     active_solr_value
                                     )
-                                # print('\n ID field: ' + active_solr_field +
-                                #' Val: ' + active_solr_value)
                                 active_solr_field = self._convert_slug_to_solr(
                                     parent['slug']) + '___' + solr_field_name
                         else:
@@ -125,19 +125,20 @@ class SolrDocument:
                         raise Exception("Error: Could not get predicate value")
                 self.fields['text'] += ' \n'
 
-    def _get_predicate_field_name_suffix(self, predicate_type):
+    def _get_predicate_type_string(self, predicate_type,
+                                   prefix=''):
         '''
         Defines whether our dynamic solr fields names for
         predicates end with ___pred_id, ___pred_numeric, etc.
         '''
-        if predicate_type == '@id':
-            return '___pred_id'
+        if predicate_type in ['@id', 'id']:
+            return prefix + 'id'
         elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-            return '___pred_numeric'
+            return prefix + 'numeric'
         elif predicate_type == 'xsd:string':
-            return '___pred_string'
+            return prefix + 'string'
         elif predicate_type == 'xsd:date':
-            return '___pred_date'
+            return prefix + 'date'
         else:
             raise Exception("Error: Unknown predicate type")
 
@@ -165,8 +166,10 @@ class SolrDocument:
                 if index == 0:
                     if link_predicate is False:
                         self.fields['root___pred_id'].append(
-                            self._convert_values_to_json(
+                            self._concat_solr_string_value(
                                 parent['slug'],
+                                self._get_predicate_type_string(
+                                    parent['type']),
                                 parent['id'],
                                 parent['label']
                                 )
@@ -190,8 +193,10 @@ class SolrDocument:
                             self.fields[solr_field_name] = []
                         # Add slug and label as json values
                         self.fields[solr_field_name].append(
-                            self._convert_values_to_json(
+                            self._concat_solr_string_value(
                                 parent['slug'],
+                                self._get_predicate_type_string(
+                                    parent['type']),
                                 parent['id'],
                                 parent['label']
                                 )
@@ -215,6 +220,10 @@ class SolrDocument:
 
     def _convert_slug_to_solr(self, slug):
         return slug.replace('-', '_')
+
+    def _concat_solr_string_value(self, slug, type, id, label):
+        return slug + '___' + type + '___' + \
+            id.split('http://opencontext.org')[1] + '___' + label
 
     def _convert_values_to_json(self, slug, id_uri, label):
         json_values = LastUpdatedOrderedDict()
@@ -240,8 +249,9 @@ class SolrDocument:
         self.fields['sort_score'] = 0  # fix
         #default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
-        self.fields['slug_label'] = self._convert_values_to_json(
+        self.fields['slug_label'] = self._concat_solr_string_value(
             self.oc_item.json_ld['slug'],
+            'id',
             self.oc_item.json_ld['id'],
             self.oc_item.json_ld['label'])
         self.fields['item_type'] = self.oc_item.item_type
@@ -253,11 +263,10 @@ class SolrDocument:
                 # treat the root in its own special way
                 if index == 0:
                         self.fields['root___context_id'] = \
-                            self._convert_values_to_json(
-                                self.context_path[0]['slug'],
-                                self.context_path[0]['id'],
-                                self.context_path[0]['label']
-                                )
+                            self.context_path[0]['slug'] + '___id___' + \
+                            self.context_path[0]['id'].split(
+                                'http://opencontext.org')[1] + '___' + \
+                            self.context_path[0]['label']
                 else:
                 # for others, get the parent slug and generate a
                 # dynamic field name
@@ -267,13 +276,12 @@ class SolrDocument:
                     solr_field_name = self._convert_slug_to_solr(
                         solr_field_name
                         )
-                    # add field name and values as json
+                    # add field name and values
                     self.fields[solr_field_name] = \
-                        self._convert_values_to_json(
-                            self.context_path[index]['slug'],
-                            self.context_path[index]['id'],
-                            self.context_path[index]['label']
-                            )
+                        self.context_path[index]['slug'] + '___id___' + \
+                        self.context_path[index]['id'].split(
+                            'http://opencontext.org')[1] + '___' + \
+                        self.context_path[index]['label']
 
     def _process_project(self):
         """
@@ -283,14 +291,17 @@ class SolrDocument:
         if 'dc-terms:isPartOf' in self.oc_item.json_ld:
             for proj in self.oc_item.json_ld['dc-terms:isPartOf']:
                 if 'projects' in proj['id']:
-                    self.fields['project_slug'] = self._convert_values_to_json(
-                        proj['slug'],
-                        proj['id'],
-                        proj['label'])
+                    self.fields['project_slug'] = \
+                        self._concat_solr_string_value(
+                            proj['slug'],
+                            'id',
+                            proj['id'],
+                            proj['label'])
                     break
         elif self.oc_item.item_type == 'projects':
-            self.fields['project_slug'] = self._convert_values_to_json(
+            self.fields['project_slug'] = self._concat_solr_string_value(
                 self.oc_item.json_ld['slug'],
+                'id',
                 self.oc_item.json_ld['id'],
                 self.oc_item.json_ld['label']
                 )
@@ -305,7 +316,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:coverage']:
                 self.fields['text'] += meta['label'] + '\n'
-                item = self._convert_values_to_json(
+                item = self._concat_solr_string_value(
                     meta['slug'],
                     meta['id'],
                     meta['label'])
@@ -315,7 +326,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:subject']:
                 self.fields['text'] += meta['label'] + '\n'
-                item = self._convert_values_to_json(
+                item = self._concat_solr_string_value(
                     meta['slug'],
                     meta['id'],
                     meta['label'])
@@ -325,7 +336,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:spatial']:
                 self.fields['text'] += meta['label'] + '\n'
-                item = self._convert_values_to_json(
+                item = self._concat_solr_string_value(
                     meta['slug'],
                     meta['id'],
                     meta['label'])
@@ -362,7 +373,7 @@ class SolrDocument:
                 except KeyError:
                     ref_type = False
                 if ftype == 'Point' \
-                    and (loc_type == 'oc-gen:discovey-location'\
+                    and (loc_type == 'oc-gen:discovey-location'
                          or loc_type == 'oc-gen:geo-coverage')\
                         and discovery_done is False:
                     try:
@@ -447,8 +458,9 @@ class SolrDocument:
                         if ptype == self.oc_item.item_type:
                             item_type_found = True
                     if active_predicate_field is not False:
-                        solr_value = self._convert_values_to_json(
+                        solr_value = self._concat_solr_string_value(
                             prefix_ptype,
+                            'id',
                             parent['id'],
                             parent['label']
                             )
