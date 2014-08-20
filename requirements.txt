@@ -13,3 +13,4 @@ requests==2.3.0
 rdflib==4.1.2
 numpy==1.8.1
 scipy==0.14.0
+roman==2.0.0
