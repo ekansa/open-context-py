@@ -10,13 +10,7 @@ def index(request):
 
 
 def html_view(request, spatial_context=None):
-    #context_depth = len(spatial_context.rstrip('/').split(
-    #    '/sets/')[0].split('/'))
-    # if spatial_context is None:
     return HttpResponse("Hello, world. You are trying to browse sets.")
-    #else:
-    #    return HttpResponse(str(context_depth) +
-    #                        " Hello, the context is: " + spatial_context)
 
 
 def json_view(request, spatial_context=None):

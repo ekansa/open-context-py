@@ -1,12 +1,13 @@
 import itertools
 import django.utils.http as http
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.assertions.containment import Containment
 
 
 class ViewUtilities():
     '''
-    Various methods useful for parsing URIs, requests and processing user
-    input.
+    Various methods useful for parsing URIs, requests, and processing user
+    input
     '''
 
     def _get_context_paths(spatial_context):
@@ -41,8 +42,8 @@ class ViewUtilities():
 
     def _get_valid_context_slugs(contexts):
         '''
-        Takes a list of contexts and returns a list of slugs for the valid
-        contexts.
+        Takes a list of contexts and, for valid contexts, returns a list of
+        slugs
         '''
         entity = Entity()
         valid_context_slugs = []
@@ -56,6 +57,13 @@ class ViewUtilities():
                 # If so, we want their slugs
                 valid_context_slugs.append(entity.slug)
         return valid_context_slugs
+
+    def _get_parent_slug(slug):
+        '''
+        Takes a slug and returns the slug of its parent. It returns False if
+        a slug has no parent.
+        '''
+        return Containment().get_parent_slug_by_slug(slug)
 
     # TODO process parents - perhaps break up _get_valid_context_slug
     # so that it just returns valid URIs. Then we could get the slugs with a
