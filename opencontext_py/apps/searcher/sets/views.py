@@ -85,7 +85,7 @@ def json_view(request, spatial_context=None):
     #return HttpResponse(context_list)
     return HttpResponse(json.dumps(response.facets['facet_fields'],
                         ensure_ascii=False, indent=4),
-                        content_type="application/json")
+                        content_type="application/json; charset=utf8")
     #return HttpResponse(json.dumps(response.raw_content,
     #                    ensure_ascii=False, indent=4),
     #                    content_type="application/json")
