@@ -26,6 +26,8 @@ class TemplateItem():
         self.project = False
         self.citation = False
         self.geo = False
+        self.nav_items = settings.NAV_ITEMS
+        self.act_nav = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -40,6 +42,10 @@ class TemplateItem():
         self.create_project(json_ld)
         self.create_citation(json_ld)
         self.create_geo(json_ld)
+        ent = Entity()
+        found = ent.dereference(self.uuid)
+        if found:
+            self.act_nav = ent.item_type
 
     def create_context(self, json_ld):
         """

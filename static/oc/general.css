@@ -4,6 +4,13 @@
 	margin-left:auto;
 	margin-right:auto;
 }
+#header-logo {
+	padding-top: 1%;
+}
+#header-oc {
+}
+#header-label {
+}
 #footer-upper {
 	margin-top: 5%;
 	background-color: #666666;
