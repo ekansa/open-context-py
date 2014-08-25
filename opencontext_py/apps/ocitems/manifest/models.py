@@ -1,4 +1,6 @@
 import re
+import roman
+from math import pow
 from unidecode import unidecode
 from django.utils import timezone
 from django.db import models
@@ -56,19 +58,35 @@ class Manifest(models.Model):
 
 class ManifestGeneration():
 
+    # used in generating values for the sort field
+    DEFAULT_SORT = [{'item_type': 'projects',
+                     'class_uri': False},
+                    {'item_type': 'tables',
+                     'class_uri': False},
+                    {'item_type': 'vocabularies',
+                     'class_uri': False},
+                    {'item_type': 'subjects',
+                     'class_uri': False},
+                    {'item_type': 'media',
+                     'class_uri': False},
+                    {'item_type': 'documents',
+                     'class_uri': False},
+                    {'item_type': 'persons',
+                     'class_uri': False},
+                    {'item_type': 'predicates',
+                     'class_uri': 'variable'},
+                    {'item_type': 'predicates',
+                     'class_uri': 'link'},
+                    {'item_type': 'types',
+                     'class_uri': False}]
+
     def make_manifest_slug(self, uuid, label, item_type, project_uuid):
         """
         gets the most recently updated Subject date
         """
         label = label.replace('_', ' ')
         raw_slug = slugify(unidecode(label[:55]))
-        act_proj_short_id = False
-        if(project_uuid != '0'):
-            try:
-                act_proj = Project.objects.get(uuid=project_uuid)
-                act_proj_short_id = act_proj.short_id
-            except Project.DoesNotExist:
-                act_proj_short_id = False
+        act_proj_short_id = self.get_project_index(project_uuid)
         if(raw_slug == '-' or len(raw_slug) < 1):
             raw_slug = 'x'  # slugs are not a dash or are empty
         if(act_proj_short_id is not False):
@@ -119,3 +137,133 @@ class ManifestGeneration():
                 nslug.save()
                 cc += 1
         return cc
+
+    def get_project_index(self, project_uuid):
+        """ Gets the sort - index number for a project """
+        act_proj_short_id = False
+        if(project_uuid != '0'):
+            try:
+                act_proj = Project.objects.get(uuid=project_uuid)
+                act_proj_short_id = act_proj.short_id
+            except Project.DoesNotExist:
+                act_proj_short_id = 0
+        return act_proj_short_id
+
+    def gen_sort_from_label(self,
+                            label,
+                            class_uri,
+                            item_type,
+                            project_uuid):
+        """
+        Makes a sort value for a manifet item.
+        Sort orders are recorded in numeric strings as so:
+
+        '00-0000-000000-000000-000000-000000-000000-000000-000000'
+
+        This first two digits record are highest level organizers for
+        sorting in the oc_assertions table (so containment comes before
+        variable predicates, which come before linking predicates, etc.)
+
+        The next 4 digits store sort order based on project sort index.
+        The rest of the digits store sort order in a nested hiearchy.
+        """
+        type_index = self.get_type_sort_val(item_type, class_uri)
+        prefix = self.prepend_zeros(type_index, 2)
+        proj_index = self.get_project_index(project_uuid)
+        prefix += '-' + self.prepend_zeros(proj_index, 4)
+
+    def make_label_sortval(self, label):
+        """ Make a sort value from a label """
+        try_roman = True
+        label_parts = re.split(':|\ |\.|\,|\;|\-|\(|\)|\_|\[|\]|\/',
+                               label)
+        sorts = []
+        if len(label_parts) > 2:
+            try_roman = False
+        for part in label_parts:
+            if len(part) > 0:
+                if part.isdigit():
+                    num_part = int(float(part))
+                    part_sort = self.sort_digits(num_part)
+                    sorts.append(part_sort)
+                else:
+                    part = unidecode(part)
+                    part = re.sub(r'\W+', '', part)
+                    roman_num = False
+                    if try_roman:
+                        try:
+                            num_part = roman.fromRoman(part)
+                            part_sort = self.sort_digits(num_part)
+                            sorts.append(part_sort)
+                            roman_num = True
+                        except:
+                            roman_num = False
+                    if roman_num is False:
+                        max_char_index = len(part)
+                        continue_sort = True
+                        char_index = 0
+                        part_sort_parts = []
+                        num_char_found = False
+                        while continue_sort:
+                            act_char = part[char_index]
+                            char_val = ord(act_char) - 48
+                            if char_val > 9:
+                                act_part_sort_part = self.sort_digits(char_val, 3)
+                            else:
+                                num_char_found = True
+                                act_part_sort_part = str(char_val)
+                            part_sort_parts.append(act_part_sort_part)
+                            part_sort = ''.join(part_sort_parts)
+                            char_index += 1
+                            if char_index >= max_char_index:
+                                continue_sort = False
+                        if len(part_sort) > 6 and num_char_found:
+                            # print('Gotta split: ' + part_sort)
+                            start_index = 0
+                            max_index = len(part_sort)
+                            while start_index < max_index:
+                                end_index = start_index + 6
+                                if end_index > max_index:
+                                    end_index = max_index
+                                new_part = part_sort[start_index:end_index]
+                                new_part = self.prepend_zeros(new_part)
+                                sorts.append(new_part)
+                                start_index = end_index
+                        elif len(part_sort) > 6 and num_char_found is False:
+                            part_sort = part_sort[:6]
+                            sorts.append(part_sort)
+                        else:
+                            part_sort = self.prepend_zeros(part_sort)
+                            sorts.append(part_sort)
+        return '-'.join(sorts)
+
+    def get_type_sort_val(self, item_type, class_uri=False):
+        """ Gets the index number (sort) for a given item_type """
+        output = len(self.DEFAULT_SORT)
+        i = 0
+        for sort_type in self.DEFAULT_SORT:
+            if (item_type == sort_type['item_type']) and\
+               (sort_type['class_uri'] is False):
+                output = i
+                break
+            elif (item_type == sort_type['item_type']) and\
+                 (class_uri in sort_type['class_uri']):
+                output = i
+                break
+            i += 1
+        return output
+
+    def sort_digits(self, index, digit_length=6):
+        """ Makes a 3 digit sort friendly string from an index """
+        if index >= pow(10, digit_length):
+            index = pow(10, digit_length) - 1
+        sort = str(index)
+        sort = self.prepend_zeros(sort, digit_length)
+        return sort
+
+    def prepend_zeros(self, sort, digit_length=6):
+        """ prepends zeros if too short """
+        if len(sort) < digit_length:
+            while len(sort) < digit_length:
+                sort = '0' + sort
+        return sort
