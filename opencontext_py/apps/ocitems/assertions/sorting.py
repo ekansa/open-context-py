@@ -27,19 +27,16 @@ class AssertionSorting():
                                   .order_by('uuid', 'sort')
         act_uuid = False
         print('Number of assertions to change: ' + str(len(act_assertions)))
-        for old_ass in act_assertions:
-            new_ass = old_ass
-            if old_ass.uuid != act_uuid:
-                start_sort = round(old_ass.sort, 0)
-                act_uuid = old_ass.uuid
-            if old_ass.object_uuid in type_rankings:
-                type_rank = type_rankings[old_ass.object_uuid]
+        for act_ass in act_assertions:
+            if act_ass.uuid != act_uuid:
+                start_sort = round(oact_ass.sort, 0)
+                act_uuid = act_ass.uuid
+            if act_ass.object_uuid in type_rankings:
+                type_rank = type_rankings[act_ass.object_uuid]
             else:
                 type_rank = default_missing_rank
-            new_ass.sort = float(start_sort) + (type_rank / 1000)
-            Assertion.objects\
-                     .filter(hash_id=old_ass.hash_id).delete()
-            new_ass.save()
+            act_ass.sort = float(start_sort) + (type_rank / 1000)
+            act_ass.save(force_update=True)
 
     def get_ranked_types_for_pred(self, predicate_uuid):
         """ Gets the ranked types used with a given predicate """
