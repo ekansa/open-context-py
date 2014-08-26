@@ -40,7 +40,7 @@
                                 {% if prop.values.0.valuri != False %}
                                     <a href="{% url 'types_html' prop.values.0.valuuid %}">{{ prop.values.0.val }}</a>
                                 {% else %}
-                                    {{ prop.values.0.val }}
+									{% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
                                 {%endif%}
                             {% else %}
                             <ul>
@@ -49,7 +49,7 @@
                                     {% if propval.valuri != False %}
                                     <a href="{% url 'types_html' propval.valuuid %}">{{ propval.val }}</a>
                                     {% else %}
-                                        {{ propval.val }}
+                                        {% autoescape off %}{{ propval.val }}{% endautoescape %}
                                     {%endif%}
                                 </li>
                                 {% endfor %}
