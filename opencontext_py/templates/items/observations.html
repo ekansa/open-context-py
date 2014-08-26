@@ -89,7 +89,7 @@
                         <td class="col-sm-4">
                             <a href="{{ anno.id }}" target="_blank">{{ anno.label }}</a>
                             <br/>
-                            <small>[From: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
+                            <small>[Standard: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
                         </td>
                         <td class="col-sm-8">
                         {% if anno.literals != None %}
@@ -109,14 +109,14 @@
                             {% if anno.objects|length == 1 %}
                                 <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
                                 <br/>
-                                <small>[From: <a href="{{ anno.objects.0.vocab_uri }}" target="_blank">{{ anno.objects.0.vocabulary }}</a>]</small>
+                                <small>[Standard: <a href="{{ anno.objects.0.vocab_uri }}" target="_blank">{{ anno.objects.0.vocabulary }}</a>]</small>
                             {% else %}
                             <ul>
                                 {% for annoval in anno.objects %}
                                 <li>
                                     <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
                                     <br/>
-                                    <small>[From: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
+                                    <small>[Standard: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
                                 </li>
                                 {% endfor %}
                             </ul>

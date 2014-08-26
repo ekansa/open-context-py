@@ -39,11 +39,11 @@ class TemplateItem():
         self.uuid = json_ld['uuid']
         self.id = json_ld['id']
         self.store_class_type_metadata(json_ld)
+        self.create_project(json_ld)
         self.create_context(json_ld)
         self.create_children(json_ld)
         self.create_linked_data(json_ld)
         self.create_observations(json_ld)
-        self.create_project(json_ld)
         self.create_citation(json_ld)
         self.create_geo(json_ld)
         ent = Entity()
@@ -127,6 +127,7 @@ class TemplateItem():
         """ Makes an instance of a GeoMap class, with data from the JSON_LD
         """
         linked_data = LinkedData()
+        linked_data.project = self.project
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
 
@@ -488,6 +489,7 @@ class LinkedData():
         self.linked_predicates = False
         self.linked_types = False
         self.annotations = []
+        self.project = False
 
     def make_linked_data(self, json_ld):
         """ Makes a list of linked data annotations that have unique combinations of predicates and objects
@@ -527,8 +529,12 @@ class LinkedData():
                                                     act_annotation['objects'][act_type['id']] = act_type
                                             else:
                                                 act_type = act_val
-                                                act_type['vocab_uri'] = settings.CANONICAL_HOST
-                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME
+                                                if self.project.label is False:
+                                                    act_type['vocab_uri'] = settings.CANONICAL_HOST
+                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME
+                                                else:
+                                                    act_type['vocab_uri'] = self.project.uri
+                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME + ' :: ' + self.project.label
                                                 if act_type['id'] not in act_annotation['oc_objects']:
                                                     # makes sure we've got unique objects
                                                     act_annotation['oc_objects'][act_type['id']] = act_type
@@ -607,6 +613,7 @@ class LinkedData():
                                         linked_types[link_assertion['subject']] = link_assertion
                 if len(linked_predicates) > 0:
                     self.linked_predicates = linked_predicates
+                    self.linked_types = {}
                     output = True
                 if len(linked_types) > 0:
                     self.linked_types = linked_types
