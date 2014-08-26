@@ -9,6 +9,12 @@
             <li><a href="{% url 'subjects_html' par.uuid %}">{{ par.label }}</a></li>
             {%endif%}
         {% endfor %}
+            <li class="active" id="item-in-context">{{ item.label }}</li>
         </ol>
+    {% else %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Context:</strong></li>
+            <li id="context-root" class="active" id="item-in-context">{{ item.label }}</li>
+        </ol>    
     {%endif%}
 {% endblock %}

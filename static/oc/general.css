@@ -56,6 +56,10 @@ div.obs-multi {
 div.obs-single {
 	border: 1px solid #ddd;
 }
+#item-in-context {
+	font-weight: bold;
+	color: #000000;
+}
 /* So long uri in Citation has good wrapping */
 #item-uri {
 	max-width:200px;
