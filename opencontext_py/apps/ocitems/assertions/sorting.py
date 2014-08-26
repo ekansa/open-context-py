@@ -29,7 +29,7 @@ class AssertionSorting():
         print('Number of assertions to change: ' + str(len(act_assertions)))
         for act_ass in act_assertions:
             if act_ass.uuid != act_uuid:
-                start_sort = round(oact_ass.sort, 0)
+                start_sort = round(act_ass.sort, 0)
                 act_uuid = act_ass.uuid
             if act_ass.object_uuid in type_rankings:
                 type_rank = type_rankings[act_ass.object_uuid]
