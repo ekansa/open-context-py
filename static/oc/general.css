@@ -33,6 +33,18 @@ div.footer-cell img {
 	text-align: center;
 	font-size: 75%;
 }
+.project-edit-stars {
+	color: #EE7600;
+}
+a.project-edit-stars:link {
+	color: #EE7600;
+}
+a.project-edit-stars:visited {
+	color: #EE7600;
+}
+a.project-edit-stars:hover {
+	color: #EE7600;
+}
 div.subject-list-row {
 	padding-top: 1%;
 	padding-bottom: 1%;
