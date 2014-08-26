@@ -6,9 +6,9 @@
     <ul class="nav nav-tabs" id="obsTabs" data-tabs="tabs">
     {% for obs in item.observations %}
         {% if forloop.counter == 1 %} 
-        <li class="active"><a data-toggle="tab" href="#{{ obs.id }}">Obs {{ forloop.counter }}</a></li>
+        <li class="active"><a data-toggle="tab" href="#{{ obs.id }}">{{ obs.label }}</a></li>
         {% else %}
-        <li><a data-toggle="tab" href="#{{ obs.id }}">Obs {{ forloop.counter }}</a></li>
+        <li><a data-toggle="tab" href="#{{ obs.id }}">{{ obs.label }}</a></li>
         {%endif%}
     {% endfor %}
     </ul>
@@ -59,6 +59,67 @@
                         </td>
                     </tr>
                 {% endfor %}
+            </tbody>
+            </table>
+        {%endif%}
+        {% if obs.annotations != False %}
+            <table class="table table-condensed table-hover table-striped">
+            <thead>
+                <tr>
+                    <th class="col-sm-4">Property or Relation</th>
+                    <th class="col-sm-8">Value(s)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for anno in obs.annotations %}
+                    <tr>
+                        <td class="col-sm-4">
+                            <a href="{{ anno.id }}" target="_blank">{{ anno.label }}</a>
+                            <br/>
+                            <small>[From: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
+                        </td>
+                        <td class="col-sm-8">
+                        {% if anno.literals != None %}
+                            {% if anno.literals|length == 1 %}
+                                {% autoescape off %}{{ anno.literals.0 }}{% endautoescape %}
+                            {% else %}
+                            <ul>
+                                {% for annoval in anno.literals %}
+                                <li>
+                                    {% autoescape off %}{{ annoval }}{% endautoescape %}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {%endif%}
+                        {%endif%}
+                        {% if anno.objects != None %}
+                            {% if anno.objects|length == 1 %}
+                                <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
+                                <br/>
+                                <small>[From: <a href="{{ anno.objects.0.vocab_uri }}" target="_blank">{{ anno.objects.0.vocabulary }}</a>]</small>
+                            {% else %}
+                            <ul>
+                                {% for annoval in anno.objects %}
+                                <li>
+                                    <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
+                                    <br/>
+                                    <small>[From: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                            {%endif%}
+                        {%endif%}
+                        </td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td class="col-sm-4">Editorial Note</td>
+                    <td class="col-sm-8"><p>Open Context editors work with data contributors to annotate datasets to shared vocabularies,
+                    ontologies, and other standards using '<a href="http://linkeddata.org/" target="_blank">Linked Open Data</a>' (LOD) methods.</p>
+                        <p>The annotations presented above approximate some of the meaning in this contributed data record to concepts defined in shared standards.
+                        These annotations are provided to help make datasets easier to understand and use with other datasets.</p>
+                    </td>
+                </tr>
             </tbody>
             </table>
         {%endif%}

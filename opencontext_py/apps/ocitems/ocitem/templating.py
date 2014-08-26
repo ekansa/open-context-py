@@ -8,6 +8,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 
 
 # Help organize the code, with a class to make templating easier
@@ -26,6 +27,7 @@ class TemplateItem():
         self.project = False
         self.citation = False
         self.geo = False
+        self.linked_data = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
 
@@ -38,6 +40,7 @@ class TemplateItem():
         self.store_class_type_metadata(json_ld)
         self.create_context(json_ld)
         self.create_children(json_ld)
+        self.create_linked_data(json_ld)
         self.create_observations(json_ld)
         self.create_project(json_ld)
         self.create_citation(json_ld)
@@ -72,9 +75,17 @@ class TemplateItem():
         if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
             context = json_ld['@context']
             self.observations = []
+            obs_num = 1
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                 act_obs = Observation()
+                act_obs.obs_num = obs_num
                 act_obs.make_observation(context, obs_item, self.class_type_metadata)
+                self.observations.append(act_obs)
+                obs_num += 1
+            if len(self.linked_data.annotations) > 0:
+                # make a special observation for linked data annotations
+                act_obs = Observation()
+                act_obs.make_linked_data_obs(self.linked_data.annotations)
                 self.observations.append(act_obs)
 
     def create_project(self, json_ld):
@@ -99,6 +110,13 @@ class TemplateItem():
         geo = GeoMap()
         geo.make_geomap(json_ld)
         self.geo = geo
+
+    def create_linked_data(self, json_ld):
+        """ Makes an instance of a GeoMap class, with data from the JSON_LD
+        """
+        linked_data = LinkedData()
+        linked_data.make_linked_data(json_ld)
+        self.linked_data = linked_data
 
     def store_class_type_metadata(self, json_ld):
         if('@graph' in json_ld):
@@ -204,13 +222,28 @@ class Observation():
     def __init__(self):
         self.context = False
         self.id = False
+        self.obs_num = 0
+        self.label = False
         self.source_id = False
         self.obs_status = False
+        self.obs_type = False
         self.properties = False
         self.subjects_links = False
         self.media_links = False
         self.persons_links = False
         self.documents_links = False
+        self.annotations = False
+
+    def make_linked_data_obs(self, annotations):
+        """ Makes an observation with some metadata
+            specifically for display of linked data
+        """
+        self.id = 'linked-data'
+        self.source_id = 'oc-editors'
+        self.obs_status = 'active'
+        self.obs_type = 'annotations'
+        self.label = 'Standards Annotations'
+        self.annotations = annotations
 
     def make_observation(self, context, obs_dict, class_type_metadata):
         """ Makes an observation with some observation metadata
@@ -221,6 +254,14 @@ class Observation():
         self.id = obs_dict['id'].replace('#', '')
         self.source_id = obs_dict[OCitem.PREDICATES_OCGEN_SOURCEID]
         self.obs_status = obs_dict[OCitem.PREDICATES_OCGEN_OBSTATUS]
+        self.obs_type = 'contributor'
+        if OCitem.PREDICATES_OCGEN_OBSLABEL in obs_dict:
+            self.label = obs_dict[OCitem.PREDICATES_OCGEN_OBSLABEL]
+        else:
+            if self.obs_num < 2:
+                self.label = 'Main Observation'
+            else:
+                self.label = 'Obs (' + self.obs_num + ')'
         self.properties = self.make_properties(obs_dict)
 
     def make_properties(self, obs_dict):
@@ -312,6 +353,7 @@ class Project():
         self.uuid = False
         self.slug = False
         self.label = False
+        self.edit_status = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -322,6 +364,13 @@ class Project():
                         self.uuid = URImanagement.get_uuid_from_oc_uri(proj_item['id'])
                         self.slug = proj_item['slug']
                         self.label = proj_item['label']
+                        try:
+                            # now get the edit status for the project, not in the JSON-LD
+                            # but from the database
+                            project = ModProject.objects.get(uuid=self.uuid)
+                            self.edit_status = project.edit_status
+                        except ModProject.DoesNotExist:
+                            project = False
                         break
 
 
@@ -395,6 +444,10 @@ class GeoMap():
         self.start_zoom = 7
 
     def make_geomap(self, json_ld):
+        """ Makes an ordered dict for saving geojson data as json
+            embedded in the HTML of an item, for easy use by
+            leaflet
+        """
         if isinstance(json_ld, dict):
             if 'features' in json_ld:
                 lats = []
@@ -413,3 +466,108 @@ class GeoMap():
                 self.geojson = json.dumps(geojson,
                                           indent=4,
                                           ensure_ascii=False)
+
+
+class LinkedData():
+
+    REL_PREDICATES = ['skos:closeMatch']
+
+    def __init__(self):
+        self.linked_predicates = False
+        self.linked_types = False
+        self.annotations = []
+
+    def make_linked_data(self, json_ld):
+        output = False
+        ld_found = self.make_linked_data_lists(json_ld)
+        if ld_found:
+            if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
+                annotations = []
+                for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+                    for link_pred in self.linked_predicates:
+                        if link_pred['subject'] in obs_item:
+                            act_annotation = link_pred
+                            act_annotation['objects'] = []
+                            act_annotation['oc_objects'] = []
+                            act_annotation['literals'] = []
+                            for act_val in obs_item[link_pred['subject']]:
+                                if isinstance(act_val, dict):
+                                    if 'xsd:string' in act_val:
+                                        act_annotation['literals'].append(act_val['xsd:string'])
+                                    else:
+                                        if 'id' in act_val:
+                                            act_type_id = act_val['id']
+                                            if act_type_id in self.linked_types:
+                                                act_annotation['objects'].append(self.linked_types[act_type_id])
+                                            else:
+                                                act_val['vocab_uri'] = settings.CANONICAL_HOST
+                                                act_val['vocabulary'] = settings.CANONICAL_SITENAME
+                                                act_annotation['oc_objects'].append(act_val)
+                                else:
+                                    act_annotation['literals'].append(act_val)
+                            if len(act_annotation['literals']) < 1:
+                                act_annotation['literals'] = None
+                            if len(act_annotation['objects']) < 1:
+                                if len(act_annotation['oc_objects']) < 1:
+                                    act_annotation['objects'] = None
+                                    act_annotation['oc_objects'] = None
+                                else:
+                                    act_annotation['objects'] = act_annotation['oc_objects']
+                            annotations.append(act_annotation)
+                if len(annotations) > 0:
+                    self.annotations = annotations
+                    output = True
+        return output
+
+    def make_linked_data_lists(self, json_ld):
+        """ Makes lists of linked predicates and types by
+            reading the @graph section of the JSON-LD
+        """
+        output = False
+        if isinstance(json_ld, dict):
+            if '@graph' in json_ld:
+                linked_predicates = []
+                linked_types = LastUpdatedOrderedDict()
+                for ld_item in json_ld['@graph']:
+                    subject_type = False
+                    if '@id' in ld_item:
+                        subject_id = ld_item['@id']
+                    elif 'id' in ld_item:
+                        subject_id = ld_item['@id']
+                    else:
+                        subject_id = False
+                    if subject_id is not False:
+                        if 'oc-pred:' in subject_id:
+                            subject_type = 'predicates'
+                        elif (settings.CANONICAL_HOST + '/predicates/') in subject_id:
+                            subject_type = 'predicates'
+                        elif 'oc-types:' in subject_id:
+                            subject_type = 'types'
+                        elif (settings.CANONICAL_HOST + '/types/') in subject_id:
+                            subject_type = 'types'
+                        else:
+                            subject_type = False
+                    if subject_type is not False:
+                        for rel_predicate in self.REL_PREDICATES:
+                            if rel_predicate in ld_item:
+                                for link_assertion in ld_item[rel_predicate]:
+                                    link_assertion['subject'] = subject_id
+                                    link_assertion['vocab_uri'] = False
+                                    link_assertion['vocabulary'] = False
+                                    ent = Entity()
+                                    found = ent.dereference(link_assertion['id'])
+                                    if found:
+                                        link_assertion['vocab_uri'] = ent.vocab_uri
+                                        link_assertion['vocabulary'] = ent.vocabulary
+                                    if subject_type == 'predicates':
+                                        linked_predicates.append(link_assertion)
+                                    else:
+                                        linked_types[link_assertion['subject']] = link_assertion
+                if len(linked_predicates) > 0:
+                    self.linked_predicates = linked_predicates
+                    output = True
+                if len(linked_types) > 0:
+                    self.linked_types = linked_types
+                    output = True
+        return output
+

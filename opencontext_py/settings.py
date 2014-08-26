@@ -143,7 +143,8 @@ try:
 except:
     HOSTNAME = 'localhost'
 
-CANONICAL_HOST = "http://opencontext.org"
+CANONICAL_HOST = 'http://opencontext.org'
+CANONICAL_SITENAME = 'Open Context'
 
 ITEM_TYPES = (
     ('subjects', 'subjects'),
