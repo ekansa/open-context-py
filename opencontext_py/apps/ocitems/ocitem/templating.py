@@ -23,6 +23,7 @@ class TemplateItem():
         self.context = False
         self.children = False
         self.observations = False
+        self.obs_more_tab = 0
         self.class_type_metadata = {}
         self.project = False
         self.citation = False
@@ -87,6 +88,17 @@ class TemplateItem():
                 act_obs = Observation()
                 act_obs.make_linked_data_obs(self.linked_data.annotations)
                 self.observations.append(act_obs)
+            # for when to add a 'more' drop down list
+            all_labels = ''
+            obs_num = 1
+            for obs in self.observations:
+                # gap at end to approximate spacing between tabs
+                all_labels += obs.label + '     '
+                if len(all_labels) < 90:
+                    self.obs_more_tab = obs_num
+                obs_num += 1
+            if len(all_labels) < 90:
+                self.obs_more_tab += 1
 
     def create_project(self, json_ld):
         """ Makes an instance of a project class, with data from the JSON_LD
@@ -261,7 +273,7 @@ class Observation():
             if self.obs_num < 2:
                 self.label = 'Main Observation'
             else:
-                self.label = 'Obs (' + self.obs_num + ')'
+                self.label = 'Obs (' + str(self.obs_num) + ')'
         self.properties = self.make_properties(obs_dict)
 
     def make_properties(self, obs_dict):
@@ -478,45 +490,75 @@ class LinkedData():
         self.annotations = []
 
     def make_linked_data(self, json_ld):
+        """ Makes a list of linked data annotations that have unique combinations of predicates and objects
+        """
         output = False
         ld_found = self.make_linked_data_lists(json_ld)
         if ld_found:
             if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
-                annotations = []
+                # using an ordered dict to make sure we can more easily have unique combos of preds and objects
+                temp_annotations = LastUpdatedOrderedDict()
                 for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                     for link_pred in self.linked_predicates:
                         if link_pred['subject'] in obs_item:
-                            act_annotation = link_pred
-                            act_annotation['objects'] = []
-                            act_annotation['oc_objects'] = []
-                            act_annotation['literals'] = []
+                            if link_pred['id'] not in temp_annotations:
+                                act_annotation = link_pred
+                                act_annotation['subjects'] = []
+                                act_annotation['objects'] = LastUpdatedOrderedDict()
+                                act_annotation['oc_objects'] = LastUpdatedOrderedDict()
+                                act_annotation['literals'] = []
+                            else:
+                                act_annotation = temp_annotations[link_pred['id']]
+                            if link_pred['subject'] not in act_annotation['subjects']:
+                                act_annotation['subjects'].append(link_pred['subject'])
                             for act_val in obs_item[link_pred['subject']]:
                                 if isinstance(act_val, dict):
                                     if 'xsd:string' in act_val:
-                                        act_annotation['literals'].append(act_val['xsd:string'])
+                                        if act_val['xsd:string'] not in act_annotation['literals']:
+                                            # makes sure we've got unique string literals
+                                            act_annotation['literals'].append(act_val['xsd:string'])
                                     else:
                                         if 'id' in act_val:
-                                            act_type_id = act_val['id']
-                                            if act_type_id in self.linked_types:
-                                                act_annotation['objects'].append(self.linked_types[act_type_id])
+                                            act_type_oc_id = act_val['id']
+                                            if act_type_oc_id in self.linked_types:
+                                                act_type = self.linked_types[act_type_oc_id]
+                                                if act_type['id'] not in act_annotation['objects']:
+                                                    # makes sure we've got unique objects
+                                                    act_annotation['objects'][act_type['id']] = act_type
                                             else:
-                                                act_val['vocab_uri'] = settings.CANONICAL_HOST
-                                                act_val['vocabulary'] = settings.CANONICAL_SITENAME
-                                                act_annotation['oc_objects'].append(act_val)
+                                                act_type = act_val
+                                                act_type['vocab_uri'] = settings.CANONICAL_HOST
+                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME
+                                                if act_type['id'] not in act_annotation['oc_objects']:
+                                                    # makes sure we've got unique objects
+                                                    act_annotation['oc_objects'][act_type['id']] = act_type
                                 else:
-                                    act_annotation['literals'].append(act_val)
-                            if len(act_annotation['literals']) < 1:
-                                act_annotation['literals'] = None
-                            if len(act_annotation['objects']) < 1:
-                                if len(act_annotation['oc_objects']) < 1:
-                                    act_annotation['objects'] = None
-                                    act_annotation['oc_objects'] = None
-                                else:
-                                    act_annotation['objects'] = act_annotation['oc_objects']
-                            annotations.append(act_annotation)
-                if len(annotations) > 0:
-                    self.annotations = annotations
+                                    if act_val not in act_annotation['literals']:
+                                        # makes sure we've got unique value literals
+                                        act_annotation['literals'].append(act_val)
+                            temp_annotations[link_pred['id']] = act_annotation
+                if len(temp_annotations) > 0:
                     output = True
+                    for pred_uri_key, act_annotation in temp_annotations.items():
+                        if len(act_annotation['literals']) < 1:
+                            act_annotation['literals'] = None
+                        if len(act_annotation['objects']) > 0:
+                            objects_list = []
+                            for obj_uri_key, act_obj in act_annotation['objects'].items():
+                                objects_list.append(act_obj)
+                            act_annotation['objects'] = objects_list
+                        if len(act_annotation['oc_objects']) > 0:
+                            oc_objects_list = []
+                            for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
+                                oc_objects_list.append(act_obj)
+                            act_annotation['oc_objects'] = oc_objects_list
+                        if len(act_annotation['objects']) < 1:
+                            if len(act_annotation['oc_objects']) < 1:
+                                act_annotation['objects'] = None
+                                act_annotation['oc_objects'] = None
+                            else:
+                                act_annotation['objects'] = act_annotation['oc_objects']
+                        self.annotations.append(act_annotation)
         return output
 
     def make_linked_data_lists(self, json_ld):

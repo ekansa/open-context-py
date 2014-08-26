@@ -7,10 +7,23 @@
     {% for obs in item.observations %}
         {% if forloop.counter == 1 %} 
         <li class="active"><a data-toggle="tab" href="#{{ obs.id }}">{{ obs.label }}</a></li>
-        {% else %}
+        {% elif forloop.counter > 1 and forloop.counter < item.obs_more_tab  %}
         <li><a data-toggle="tab" href="#{{ obs.id }}">{{ obs.label }}</a></li>
+        {% else %}
         {%endif%}
     {% endfor %}
+    {% if item.observations|length > item.obs_more_tab %}
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">More <span class="caret"></span></a>
+            <ul class="dropdown-menu" role="menu">
+                {% for obs in item.observations %}
+                {% if forloop.counter >= item.obs_more_tab  %}
+                <li><a data-toggle="tab" href="#{{ obs.id }}">{{ obs.label }}</a></li>
+                {%endif%}
+                {% endfor %}
+            </ul>
+        </li>
+    {%endif%}
     </ul>
     <div class="tab-content obs-multi">
     {% else %}
