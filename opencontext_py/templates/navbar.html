@@ -1,44 +1,35 @@
 {% block navbar %}
 <nav class="navbar navbar-inverse" role="navigation">
     <div class="container-fluid">
-        <div class="navbar" id="navbar-div">
-            <ul class="nav navbar-nav">
-            {% for nav_dict in nav_items %}
-            {% if nav_dict.link == None %}
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ nav_dict.display }} <span class="caret"></span></a>
-                    <ul class="dropdown-menu" role="menu">
-                    {% for drop_item in nav_dict.urls %}
-                        <li><a href="{{ drop_item.link }}">{{ drop_item.display }}</a></li>
-                    {% endfor %}   
-                    </ul>
-                </li>
+        <ul class="nav navbar-nav">
+        {% for nav_dict in nav_items %}
+        {% if nav_dict.link == None %}
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ nav_dict.display }} <span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                {% for drop_item in nav_dict.urls %}
+                    <li><a href="{{ drop_item.link }}">{{ drop_item.display }}</a></li>
+                {% endfor %}   
+                </ul>
+            </li>
+        {% else %}
+            {% if nav_dict.always %}
+                {% if nav_dict.key == act_nav %}
+                <li class="active">{% else %}<li>{%endif%}<a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
             {% else %}
-                {% if nav_dict.always %}
-                    {% if nav_dict.key == act_nav %}
-                    <li class="active">
-                    {% else %}
-                    <li>
-                    {%endif%}
-                    <li><a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
-                    </li>
-                {% else %}
-                    {% if nav_dict.key == act_nav %}
-                    <li class="active">
-                        <a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a>
-                    </li>
-                    {%endif%}
+                {% if nav_dict.key == act_nav %}
+                <li class="active"><a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
                 {%endif%}
             {%endif%}
-            {% endfor %}
-            </ul>
-            <form class="navbar-form navbar-right" role="search" method="get" action="../../search">
-                <div class="form-group">
-                  <input type="text" class="form-control" placeholder="Search" name="q" />
-                </div>
-                <button type="submit" class="btn btn-default">Submit</button>
-            </form>
-        </div>
+        {%endif%}
+        {% endfor %}
+        </ul>
+        <form class="navbar-form navbar-right" role="search" method="get" action="../../search">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Search" name="q" />
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
     </div>
 </nav>
 {% endblock %}
