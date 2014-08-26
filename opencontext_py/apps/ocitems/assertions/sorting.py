@@ -36,7 +36,7 @@ class AssertionSorting():
             else:
                 type_rank = default_missing_rank
             act_ass.sort = float(start_sort) + (type_rank / 1000)
-            act_ass.save(force_update=True)
+            act_ass.sort_save()
 
     def get_ranked_types_for_pred(self, predicate_uuid):
         """ Gets the ranked types used with a given predicate """

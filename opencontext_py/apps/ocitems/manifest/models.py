@@ -43,13 +43,13 @@ class Manifest(models.Model):
                                           self.project_uuid)
         return slug
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         saves a manifest item with a good slug
         """
         self.label = self.validate_label()
         self.slug = self.make_slug()
-        super(Manifest, self).save()
+        super(Manifest, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_manifest'
