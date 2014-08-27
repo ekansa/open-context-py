@@ -50,8 +50,8 @@
                         <td class="col-sm-8">
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
-                                {% if prop.values.0.valuri != False %}
-                                    <a href="{% url 'types_html' prop.values.0.valuuid %}">{{ prop.values.0.val }}</a>
+                                {% if prop.values.0.uri != False %}
+                                    <a href="{% url 'types_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
                                 {% else %}
 									{% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
                                 {%endif%}
@@ -59,8 +59,8 @@
                             <ul>
                                 {% for propval in prop.values %}
                                 <li>
-                                    {% if propval.valuri != False %}
-                                    <a href="{% url 'types_html' propval.valuuid %}">{{ propval.val }}</a>
+                                    {% if propval.uri != False %}
+                                    <a href="{% url 'types_html' propval.uuid %}">{{ propval.val }}</a>
                                     {% else %}
                                         {% autoescape off %}{{ propval.val }}{% endautoescape %}
                                     {%endif%}
@@ -135,6 +135,66 @@
                 </tr>
             </tbody>
             </table>
+        {%endif%}
+        
+        {% if obs.subjects_links != False %}
+            <div class="subjects-links">
+                <table class="table table-condensed table-hover">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-4">Relation</th>
+                            <th class="col-sm-8">Linked Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for link in obs.subjects_links %}
+                            <tr>
+                                <td class="col-sm-4"><a href="{% url 'predicates_html' link.linkslug %}">{{ link.linklabel }}</a></td>
+                                <td class="col-sm-8">
+                                <div class="subjects-links-cell">
+                                {% with subjects_list=link.subjects %}
+                                {% with node_id=link.nodeid %}
+                                {% with list_label='Linked Items' %}
+                                {% with len_label=link.subjects|length %}
+                                {% with col_num=2 %}
+                                {% with icon_grid_with=2 %}
+                                {% with text_grid_with=4 %}
+                                {% with show_header=False %}
+                                {% include 'items/subjects-list.html' %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                {% endwith %}
+                                </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {%endif%}
+        {% if obs.media_links != False %}
+            <div class="media-links">
+                {% for link in obs.media_links %}
+                    {% with media_list=link.media %}
+                    {% with node_id=link.nodeid %}
+                    {% with list_label='Linked Media' %}
+                    {% with len_label=link.media|length %}
+                    {% with col_num=4 %}
+                    {% with show_header=True %}
+                    {% include 'items/media-list.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                {% endfor %}
+            </div>
         {%endif%}
         </div>
     {% endfor %}

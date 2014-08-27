@@ -20,6 +20,7 @@ class TemplateItem():
         self.label = False
         self.uuid = False
         self.id = False
+        self.item_category_label = False
         self.context = False
         self.children = False
         self.observations = False
@@ -79,13 +80,15 @@ class TemplateItem():
             obs_num = 1
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                 act_obs = Observation()
+                act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.obs_num = obs_num
-                act_obs.make_observation(context, obs_item, self.class_type_metadata)
+                act_obs.make_observation(context, obs_item)
                 self.observations.append(act_obs)
                 obs_num += 1
             if len(self.linked_data.annotations) > 0:
                 # make a special observation for linked data annotations
                 act_obs = Observation()
+                act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.make_linked_data_obs(self.linked_data.annotations)
                 self.observations.append(act_obs)
             # for when to add a 'more' drop down list
@@ -146,6 +149,12 @@ class TemplateItem():
                     if('oc-gen:hasIcon' in g_anno):
                         meta['icon'] = g_anno['oc-gen:hasIcon'][0]['id']
                     self.class_type_metadata[identifier] = meta
+        if 'category' in json_ld:
+            item_cat_labels = []
+            for cat in json_ld['category']:
+                if cat in self.class_type_metadata:
+                    item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
+            self.item_category_label = ', '.join(item_cat_labels)
 
 
 class ItemMetadata():
@@ -196,6 +205,9 @@ class Context():
                     act_parent = {}
                     act_parent['uri'] = parent_item['id']
                     act_parent['label'] = parent_item['label']
+                    act_parent['altlabel'] = None
+                    act_parent['linkslug'] = None
+                    act_parent['linklabel'] = None
                     act_parent['type'] = ItemMetadata.get_item_type(parent_item)
                     act_parent['uuid'] = URImanagement.get_uuid_from_oc_uri(parent_item['id'])
                     act_parent = ItemMetadata.get_class_meta(act_parent, class_type_metadata)
@@ -222,6 +234,9 @@ class Children():
                 act_child = {}
                 act_child['uri'] = child_item['id']
                 act_child['label'] = child_item['label']
+                act_child['altlabel'] = None
+                act_child['linkslug'] = None
+                act_child['linklabel'] = None
                 act_child['type'] = ItemMetadata.get_item_type(child_item)
                 act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
                 act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
@@ -241,11 +256,13 @@ class Observation():
         self.obs_status = False
         self.obs_type = False
         self.properties = False
+        self.links = False
         self.subjects_links = False
         self.media_links = False
-        self.persons_links = False
         self.documents_links = False
+        self.persons_links = False
         self.annotations = False
+        self.class_type_metadata = False
 
     def make_linked_data_obs(self, annotations):
         """ Makes an observation with some metadata
@@ -258,7 +275,7 @@ class Observation():
         self.label = 'Standards Annotations'
         self.annotations = annotations
 
-    def make_observation(self, context, obs_dict, class_type_metadata):
+    def make_observation(self, context, obs_dict):
         """ Makes an observation with some observation metadata
             property list, links to subjects items, links to media items,
             links to persons items, and links to documents
@@ -276,6 +293,7 @@ class Observation():
             else:
                 self.label = 'Obs (' + str(self.obs_num) + ')'
         self.properties = self.make_properties(obs_dict)
+        self.links = self.make_links(obs_dict)
 
     def make_properties(self, obs_dict):
         """ Makes property objects for an observation
@@ -292,6 +310,33 @@ class Observation():
                         act_prop.add_property_values(obs_dict[key])
                         properties.append(act_prop)
         return properties
+
+    def make_links(self, obs_dict):
+        """ Makes property objects for an observation
+        """
+        links = False
+        for key, item in obs_dict.items():
+            if(key != 'id' and key in self.context):
+                if(OCitem.PREDICATES_OCGEN_PREDICATETYPE in self.context[key]):
+                    if(self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'link'):
+                        if links is False:
+                            links = []
+                        act_link = Link()
+                        act_link.class_type_metadata = self.class_type_metadata
+                        act_link.start_link(self.context[key])
+                        act_link.add_link_objects(obs_dict[key])
+                        if act_link.subjects is not False:
+                            if self.subjects_links is False:
+                                self.subjects_links = []
+                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-subjects-' + act_link.linkslug
+                            self.subjects_links.append(act_link)
+                        if act_link.media is not False:
+                            if self.media_links is False:
+                                self.media_links = []
+                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-media-' + act_link.linkslug
+                            self.media_links.append(act_link)
+                        links.append(act_link)
+        return links
 
 
 class Property():
@@ -314,7 +359,7 @@ class Property():
         self.vartype = predicate_info['type']
 
     def add_property_values(self, prop_vals):
-        """ Starts a property with metadata about the variable
+        """ Adds values to a variable
         """
         self.values = []
         for val_item in prop_vals:
@@ -324,30 +369,93 @@ class Property():
             self.values.append(act_prop_val)
 
 
+class Link():
+
+    def __init__(self):
+        self.nodeid = False
+        self.linklabel = False
+        self.linkuri = False
+        self.linkslug = False
+        self.linktype = False
+        self.subjects = False
+        self.media = False
+        self.documents = False
+        self.persons = False
+        self.class_type_metadata = False
+
+    def start_link(self, predicate_info):
+        """ Starts a link property with metadata about the link
+        """
+        self.linklabel = predicate_info['label']
+        self.linkuri = predicate_info['owl:sameAs']
+        self.linkslug = predicate_info['slug']
+        self.linktype = predicate_info['type']
+
+    def add_link_objects(self, link_vals):
+        """ Adds objects (of different types) to the link
+        """
+        for val_item in link_vals:
+            act_prop_val = PropValue()
+            act_prop_val.vartype = self.linktype
+            act_prop_val.make_value(val_item)
+            if act_prop_val.item_type == 'subjects':
+                if self.subjects is False:
+                    self.subjects = []
+                list_item = {}
+                list_item['uri'] = act_prop_val.uri
+                list_item['label'] = act_prop_val.val
+                list_item['altlabel'] = None
+                list_item['linkslug'] = self.linkslug
+                list_item['linklabel'] = self.linklabel
+                list_item['type'] = act_prop_val.type
+                list_item['uuid'] = act_prop_val.uuid
+                list_item = ItemMetadata.get_class_meta(list_item,
+                                                        self.class_type_metadata)
+                self.subjects.append(list_item)
+            if act_prop_val.item_type == 'media':
+                if self.media is False:
+                    self.media = []
+                self.media.append(act_prop_val)
+            if act_prop_val.item_type == 'documents':
+                if self.documents is False:
+                    self.documents = []
+                self.documents.append(act_prop_val)
+            if act_prop_val.item_type == 'persons':
+                if self.persons is False:
+                    self.persons = []
+                self.persons.append(act_prop_val)
+
+
 class PropValue():
     """ This class makes an object useful for templating
     a property value"""
 
     def __init__(self):
         self.vartype = False
-        self.valtype = False
-        self.valuri = False
+        self.item_type = False
+        self.uri = False
         self.val = False
-        self.valid = False
-        self.valuuid = False
+        self.id = False
+        self.uuid = False
+        self.type = False
+        self.thumbnail = False
 
     def make_value(self, val_item):
         if isinstance(val_item, dict):
             if('id' in val_item):
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
-                    self.valuri = val_item['id']
+                    self.uri = val_item['id']
                     uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
-                    self.valtype = uri_item['item_type']
-                    self.valuuid = uri_item['uuid']
+                    self.item_type = uri_item['item_type']
+                    self.uuid = uri_item['uuid']
                 else:
-                    self.valid = val_item['id'].replace('#', '')
+                    self.id = val_item['id'].replace('#', '')
             if('label' in val_item):
                 self.val = val_item['label']
+            if('type' in val_item):
+                self.type = val_item['type']
+            if 'oc-gen:thumbnail-uri' in val_item:
+                self.thumbnail = val_item['oc-gen:thumbnail-uri']
             if('xsd:string' in val_item):
                 self.val = val_item['xsd:string']
         else:
