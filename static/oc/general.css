@@ -80,19 +80,12 @@ div.media-links {
 	font-weight: bold;
 	color: #000000;
 }
-div.obs-multi {
-	/*
-	border-left: 1px solid #ddd;
-	border-right: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
-	padding: 1%;
-	*/
+#rel-item-in-context {
+	font-weight: bold;
+	color: #000000;
 }
-div.obs-single {
-	/* 
-	border: 1px solid #ddd;
-	padding: 1%;
-	*/
+#rel-item-in-context::before {
+    content: "\2194"; 
 }
 div.top-panel {
 	border-top-left-radius: 0px;
@@ -103,8 +96,10 @@ div.panel-group div.top-panel {
 	border-top-left-radius: 0px;
 	border-top-right-radius: 0px;
 }
-#outer-contents {
-	
+div.preview-image {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
 }
 div.subjects-links-cell {
 	width: 100%;

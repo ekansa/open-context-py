@@ -250,7 +250,7 @@
                     <tbody>
                         {% for link in obs.subjects_links %}
                             <tr>
-                                <td class="col-sm-4"><a href="{% url 'predicates_html' link.linkslug %}">{{ link.linklabel }}</a></td>
+                                <td class="col-sm-4">{% if link.linkslug != 'link' %}<a href="{% url 'predicates_html' link.linkslug %}">{{ link.linklabel }}</a>{%else%}{{ link.linklabel }}{%endif%}</td>
                                 <td class="col-sm-8">
                                 <div class="subjects-links-cell">
                                 {% with subjects_list=link.subjects %}

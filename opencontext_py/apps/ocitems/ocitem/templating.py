@@ -30,6 +30,7 @@ class TemplateItem():
         self.citation = False
         self.geo = False
         self.linked_data = False
+        self.content = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -37,8 +38,12 @@ class TemplateItem():
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
         """
-        self.label = json_ld['label']
         self.uuid = json_ld['uuid']
+        ent = Entity()
+        found = ent.dereference(self.uuid)
+        if found:
+            self.act_nav = ent.item_type
+        self.label = json_ld['label']
         self.id = json_ld['id']
         self.store_class_type_metadata(json_ld)
         self.create_project(json_ld)
@@ -48,10 +53,7 @@ class TemplateItem():
         self.create_observations(json_ld)
         self.create_citation(json_ld)
         self.create_geo(json_ld)
-        ent = Entity()
-        found = ent.dereference(self.uuid)
-        if found:
-            self.act_nav = ent.item_type
+        self.create_content(json_ld)
 
     def create_context(self, json_ld):
         """
@@ -59,7 +61,7 @@ class TemplateItem():
         """
         act_context = Context()
         act_context.make_context(json_ld, self.class_type_metadata)
-        if(act_context.contype is not False):
+        if(act_context.type is not False):
             self.context = act_context
 
     def create_children(self, json_ld):
@@ -90,6 +92,11 @@ class TemplateItem():
                    self.children is not False and\
                    (act_obs.properties is not False or\
                    act_obs.links is not False):
+                    self.use_accordions = True
+                if obs_num == 1 and\
+                   (self.act_nav == 'media' or
+                    self.act_nav == 'documents' or
+                   self.act_nav == 'projects'):
                     self.use_accordions = True
                 self.observations.append(act_obs)
                 obs_num += 1
@@ -142,7 +149,44 @@ class TemplateItem():
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
 
+    def create_content(self, json_ld):
+        """
+        Gets various forms of content for media, documents, projects
+        """
+        if 'oc-gen:has-files' in json_ld:
+            # content for media
+            if self.content is False:
+                self.content = {}
+                self.content['fullfile'] = False
+                self.content['preview'] = False
+                self.content['thumbnail'] = False
+            for file_item in json_ld['oc-gen:has-files']:
+                if file_item['type'] == 'oc-gen:fullfile':
+                    self.content['fullfile'] = file_item['id']
+                elif file_item['type'] == 'oc-gen:preview':
+                    self.content['preview'] = file_item['id']
+                elif file_item['type'] == 'oc-gen:thumbnail':
+                    self.content['thumbnail'] = file_item['id']
+        elif 'rdf:HTML' in json_ld:
+            # content for documents
+            if self.content is False:
+                self.content = {}
+            self.content['main_text'] = json_ld['rdf:HTML']
+        elif 'dc-terms:abstract' in json_ld:
+            # content for project abstracts
+            if self.content is False:
+                self.content = {}
+            self.content['main_text'] = json_ld['dc-terms:abstract']
+        elif 'description' in json_ld:
+            # content for project descriptions
+            if self.content is False:
+                self.content = {}
+            self.content['sum_text'] = json_ld['description']
+
     def store_class_type_metadata(self, json_ld):
+        """ Stores information about classes / categories, including labels and icons
+            needed for user inferface
+        """
         if('@graph' in json_ld):
             for g_anno in json_ld['@graph']:
                 identifier = False
@@ -163,6 +207,12 @@ class TemplateItem():
                 if cat in self.class_type_metadata:
                     item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
             self.item_category_label = ', '.join(item_cat_labels)
+        if self.item_category_label is False:
+            # make sure the item has category label, if needed get from settings nav_items
+            for nav_item in settings.NAV_ITEMS:
+                if nav_item['key'] == self.act_nav:
+                    self.item_category_label = nav_item['display']
+                    break
 
 
 class ItemMetadata():
@@ -192,7 +242,7 @@ class Context():
     describing context of items"""
     def __init__(self):
         self.id = False
-        self.contype = False
+        self.type = False
         self.parents = False
         self.parent_labels = []
 
@@ -200,10 +250,10 @@ class Context():
         """ makes contexts for use with the template """
         act_context = False
         if(OCitem.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld):
-            self.contype = 'Context'
+            self.type = 'context'
             act_context = json_ld[OCitem.PREDICATES_OCGEN_HASCONTEXTPATH]
         elif(OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH in json_ld):
-            self.contype = 'Context of related item'
+            self.type = 'related'
             act_context = json_ld[OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH]
         if(act_context is not False):
             self.id = act_context['id']
