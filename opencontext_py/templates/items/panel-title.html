@@ -1,0 +1,5 @@
+{% if show_header %}
+<div class="panel-heading">
+    <h4 class="panel-title">{% if accordion %}<a data-toggle="collapse" data-parent="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc" href="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel"><span class="glyphicon glyphicon-resize-vertical"></span> {{ panel_label }} ({{ panel_label_suffix }})</a>{%else%}{{ panel_label }} ({{ panel_label_suffix }}){%endif%}</h4>
+</div>
+{%endif%}

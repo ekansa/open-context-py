@@ -37,12 +37,30 @@
         {%endif%}
         {% if obs.properties != False %}
             {% if item.use_accordions %}
+                {% with top_panel_num=item.observations|length %}
                 {% with idprefix='obs' %}
                 {% with idnum=obs.obs_num %}
                 {% with idsuffix='props' %}
                 {% with panel_label='Descriptions' %}
                 {% with panel_label_suffix=obs.properties|length %}
                 {% include 'items/accordion-group-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            {%else%}
+                {% with top_panel_num=item.observations|length %}
+                {% with show_header=True %}
+                {% with panel_label='Descriptions' %}
+                {% with panel_label_suffix=obs.properties|length %}
+                {% with prefix_node_id='obs-' %}
+                {% with node_id=obs.obs_num %}
+                {% with suffix_node_id='-props' %}
+                {% include 'items/plain-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
                 {% endwith %}
                 {% endwith %}
                 {% endwith %}
@@ -89,16 +107,36 @@
             </table>
             {% if item.use_accordions %}
                 {% include 'items/accordion-group-panel-end.html' %}
+            {%else%}
+                {% include 'items/plain-panel-end.html' %}
             {%endif%}
         {%endif%}
         {% if obs.annotations != False %}
             {% if item.use_accordions %}
+                {% with top_panel_num=item.observations|length %}
                 {% with idprefix='obs' %}
                 {% with idnum=obs.obs_num %}
                 {% with idsuffix='ld' %}
                 {% with panel_label='Annotations' %}
                 {% with panel_label_suffix=obs.annotations|length %}
                 {% include 'items/accordion-group-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            {%else%}
+                {% with top_panel_num=item.observations|length %}
+                {% with show_header=True %}
+                {% with panel_label='Annotations' %}
+                {% with panel_label_suffix=obs.annotations|length %}
+                {% with prefix_node_id='obs-' %}
+                {% with node_id=obs.obs_num %}
+                {% with suffix_node_id='-ld' %}
+                {% include 'items/plain-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
                 {% endwith %}
                 {% endwith %}
                 {% endwith %}
@@ -166,6 +204,8 @@
             </table>
             {% if item.use_accordions %}
                 {% include 'items/accordion-group-panel-end.html' %}
+            {%else%}
+                {% include 'items/plain-panel-end.html' %}
             {%endif%}
         {%endif%}
         

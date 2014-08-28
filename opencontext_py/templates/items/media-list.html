@@ -3,7 +3,7 @@
     {% for row in media_list|columns:col_num %}    
     <div class="row media-list-row">
         {% for media in row %}
-        <div class="col-md-3 media-thumb">
+        <div class="col-xs-6 col-md-3 media-thumb">
             <a class="thumbnail" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
         </div>
         {% endfor %}

@@ -81,12 +81,30 @@ div.media-links {
 	color: #000000;
 }
 div.obs-multi {
+	/*
 	border-left: 1px solid #ddd;
 	border-right: 1px solid #ddd;
 	border-bottom: 1px solid #ddd;
+	padding: 1%;
+	*/
 }
 div.obs-single {
+	/* 
 	border: 1px solid #ddd;
+	padding: 1%;
+	*/
+}
+div.top-panel {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+	border-top: none;
+}
+div.panel-group div.top-panel {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+}
+#outer-contents {
+	
 }
 div.subjects-links-cell {
 	width: 100%;

@@ -17,6 +17,7 @@
             {% if item.children != False %}
             <div class="row">
                 <div class="col-sm-12">
+                    <div id="outer-contents">
                 {% if item.use_accordions %}
                     {% with idprefix='children' %}
                     {% with idnum=1 %}
@@ -58,6 +59,7 @@
                     {% endwith %}
                     {% endwith %}
                 {%endif%}
+                    </div>
                 </div>
             </div>
             {%endif%}

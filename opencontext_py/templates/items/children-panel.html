@@ -1,20 +1,25 @@
 {% if subjects_list|length > 0 %}
-    <div class="panel panel-default">
-        {% if show_header %}
-        <div class="panel-heading">
-            <h4 class="panel-title">{{ panel_label }} ({{ panel_label_suffix }})</h4>
-        </div>
-        {%endif%}
-        <div id="{{ node_id }}" class="panel-body">
-            {% with subjects_list=subjects_list %}
-            {% with col_num=3 %}
-            {% with icon_grid_with=1 %}
-            {% with text_grid_with=3 %}
-            {% include 'items/subjects-list.html' %}
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-            {% endwith %}
-        </div>
-    </div>
+    {% with show_header=True %}
+    {% with panel_label=panel_label %}
+    {% with panel_label_suffix=panel_label_suffix %}
+    {% with prefix_node_id='' %}
+    {% with node_id=node_id %}
+    {% with suffix_node_id='' %}
+    {% include 'items/plain-panel-start.html' %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% with subjects_list=subjects_list %}
+    {% with col_num=3 %}
+    {% with icon_grid_with=1 %}
+    {% with text_grid_with=3 %}
+    {% include 'items/subjects-list.html' %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% include 'items/plain-panel-end.html' %}
 {%endif%}
