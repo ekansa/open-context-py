@@ -352,6 +352,18 @@ class Observation():
                                 self.media_links = []
                             act_link.nodeid = 'obs-' + str(self.obs_num) + '-media-' + act_link.linkslug
                             self.media_links.append(act_link)
+                        if act_link.persons is not False:
+                            self.persons_link_count += len(act_link.persons)
+                            if self.persons_links is False:
+                                self.persons_links = []
+                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-persons-' + act_link.linkslug
+                            self.persons_links.append(act_link)
+                        if act_link.documents is not False:
+                            self.documents_link_count += len(act_link.documents)
+                            if self.documents_links is False:
+                                self.documents_links = []
+                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-documents-' + act_link.linkslug
+                            self.documents_links.append(act_link)
                         links.append(act_link)
         return links
 
@@ -407,6 +419,8 @@ class Link():
         self.linkuri = predicate_info['owl:sameAs']
         self.linkslug = predicate_info['slug']
         self.linktype = predicate_info['type']
+        if self.linkslug == 'link':
+            self.linklabel = 'Linked / Associated'
 
     def add_link_objects(self, link_vals):
         """ Adds objects (of different types) to the link
