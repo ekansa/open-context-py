@@ -36,6 +36,19 @@
         <div id="{{ obs.id }}" class="tab-pane fade">
         {%endif%}
         {% if obs.properties != False %}
+            {% if item.use_accordions %}
+                {% with idprefix='obs' %}
+                {% with idnum=obs.obs_num %}
+                {% with idsuffix='props' %}
+                {% with panel_label='Descriptions' %}
+                {% with panel_label_suffix=obs.properties|length %}
+                {% include 'items/accordion-group-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            {%endif%}
             <table class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
@@ -74,8 +87,24 @@
                 {% endfor %}
             </tbody>
             </table>
+            {% if item.use_accordions %}
+                {% include 'items/accordion-group-panel-end.html' %}
+            {%endif%}
         {%endif%}
         {% if obs.annotations != False %}
+            {% if item.use_accordions %}
+                {% with idprefix='obs' %}
+                {% with idnum=obs.obs_num %}
+                {% with idsuffix='ld' %}
+                {% with panel_label='Annotations' %}
+                {% with panel_label_suffix=obs.annotations|length %}
+                {% include 'items/accordion-group-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            {%endif%}
             <table class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
@@ -135,9 +164,25 @@
                 </tr>
             </tbody>
             </table>
+            {% if item.use_accordions %}
+                {% include 'items/accordion-group-panel-end.html' %}
+            {%endif%}
         {%endif%}
         
         {% if obs.subjects_links != False %}
+            {% if item.use_accordions %}
+                {% with idprefix='obs' %}
+                {% with idnum=obs.obs_num %}
+                {% with idsuffix='subjects' %}
+                {% with panel_label='Linked Items' %}
+                {% with panel_label_suffix=obs.subjects_link_count %}
+                {% include 'items/accordion-group-panel-start.html' %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+                {% endwith %}
+            {%endif%}
             <div class="subjects-links">
                 <table class="table table-condensed table-hover">
                     <thead>
@@ -176,24 +221,49 @@
                     </tbody>
                 </table>
             </div>
+            {% if item.use_accordions %}
+                {% include 'items/accordion-group-panel-end.html' %}
+            {%endif%}
         {%endif%}
         {% if obs.media_links != False %}
             <div class="media-links">
-                {% for link in obs.media_links %}
-                    {% with media_list=link.media %}
-                    {% with node_id=link.nodeid %}
-                    {% with list_label='Linked Media' %}
-                    {% with len_label=link.media|length %}
-                    {% with col_num=4 %}
-                    {% with show_header=True %}
-                    {% include 'items/media-list.html' %}
+                {% if item.use_accordions %}
+                    {% with idprefix='obs' %}
+                    {% with idnum=obs.obs_num %}
+                    {% with idsuffix='media' %}
+                    {% with panel_label='Linked Media' %}
+                    {% with panel_label_suffix=obs.media_link_count %}
+                    {% include 'items/accordion-group-panel-start.html' %}
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
                     {% endwith %}
-                    {% endwith %}
-                {% endfor %}
+                    {% for link in obs.media_links %}
+                        {% with media_list=link.media %}
+                        {% with col_num=4 %}
+                        {% include 'items/media-list.html' %}
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
+                    {% include 'items/accordion-group-panel-end.html' %}
+                {% else %}
+                    {% for link in obs.media_links %}
+                        {% with media_list=link.media %}
+                        {% with node_id=link.nodeid %}
+                        {% with panel_label='Linked Media' %}
+                        {% with panel_label_suffix=obs.media_link_count %}
+                        {% with col_num=4 %}
+                        {% with show_header=True %}
+                        {% include 'items/media-panel.html' %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                        {% endwith %}
+                    {% endfor %}
+                {% endif %}
             </div>
         {%endif%}
         </div>

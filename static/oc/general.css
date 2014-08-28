@@ -64,7 +64,9 @@ div.media-thumb {
 	text-align: center;
 }
 div.media-links {
+	/*
 	padding: 1%;
+	*/
 }
 /* Tweeks to Bootstrap */
 #context-root::before {

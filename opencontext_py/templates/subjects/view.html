@@ -17,23 +17,47 @@
             {% if item.children != False %}
             <div class="row">
                 <div class="col-sm-12">
-                {% with subjects_list=item.children.children %}
-                {% with node_id=item.children.id %}
-                {% with list_label='Contents' %}
-                {% with len_label=item.children.children|length %}
-                {% with col_num=3 %}
-                {% with icon_grid_with=1 %}
-                {% with text_grid_with=3 %}
-                {% with show_header=True %}
-                {% include 'items/subjects-list.html' %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
-                {% endwith %}
+                {% if item.use_accordions %}
+                    {% with idprefix='children' %}
+                    {% with idnum=1 %}
+                    {% with idsuffix='con' %}
+                    {% with panel_label='Contents' %}
+                    {% with panel_label_suffix=item.children.children|length %}
+                    {% include 'items/accordion-group-panel-start.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% with subjects_list=item.children.children %}
+                    {% with col_num=3 %}
+                    {% with icon_grid_with=1 %}
+                    {% with text_grid_with=3 %}
+                    {% include 'items/subjects-list.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% include 'items/accordion-group-panel-end.html' %}
+                {%else%}
+                    {% with subjects_list=item.children.children %}
+                    {% with node_id=item.children.id %}
+                    {% with panel_label='Contents' %}
+                    {% with panel_label_suffix=item.children.children|length %}
+                    {% with col_num=3 %}
+                    {% with icon_grid_with=1 %}
+                    {% with text_grid_with=3 %}
+                    {% with show_header=True %}
+                    {% include 'items/children-panel.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% endwith %}
+                {%endif%}
                 </div>
             </div>
             {%endif%}

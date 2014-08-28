@@ -1,20 +1,12 @@
 {% load partition %}
 {% if media_list|length > 0 %}
-    {% if show_header %}
-    <div class="row">
-        <div class="col-sm-12"><h4>{{ list_label }} ({{ len_label }})</h4></div>
-    </div>
-    {%endif%}
-    <div id="{{ node_id }}">
-        {% for row in media_list|columns:col_num %}    
-        <div class="row media-list-row">
-            {% for media in row %}
-            <div class="col-md-3 media-thumb">
-                <a class="thumbnail" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
-            </div>
-            {% endfor %}
+    {% for row in media_list|columns:col_num %}    
+    <div class="row media-list-row">
+        {% for media in row %}
+        <div class="col-md-3 media-thumb">
+            <a class="thumbnail" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
         </div>
         {% endfor %}
     </div>
-    
+    {% endfor %}
 {%endif%}

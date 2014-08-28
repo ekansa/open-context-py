@@ -1,0 +1,11 @@
+<!-- start of accordian group -->
+<div class="panel-group" id="{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" data-parent="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc" href="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel"><span class="glyphicon glyphicon-resize-vertical"></span> {{ panel_label }} ({{ panel_label_suffix }})</a>
+            </h4>
+        </div>
+        <div id="{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel" class="panel-collapse collapse in">
+            <div class="panel-body">
+            <!-- start of accordian content -->

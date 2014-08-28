@@ -32,6 +32,7 @@ class TemplateItem():
         self.linked_data = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
+        self.use_accordions = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -83,6 +84,13 @@ class TemplateItem():
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.obs_num = obs_num
                 act_obs.make_observation(context, obs_item)
+                if act_obs.use_accordions:
+                    self.use_accordions = True
+                if obs_num == 1 and\
+                   self.children is not False and\
+                   (act_obs.properties is not False or\
+                   act_obs.links is not False):
+                    self.use_accordions = True
                 self.observations.append(act_obs)
                 obs_num += 1
             if len(self.linked_data.annotations) > 0:
@@ -261,8 +269,13 @@ class Observation():
         self.media_links = False
         self.documents_links = False
         self.persons_links = False
+        self.subjects_link_count = 0
+        self.media_link_count = 0
+        self.documents_link_count = 0
+        self.persons_link_count = 0
         self.annotations = False
         self.class_type_metadata = False
+        self.use_accordions = False
 
     def make_linked_data_obs(self, annotations):
         """ Makes an observation with some metadata
@@ -294,6 +307,8 @@ class Observation():
                 self.label = 'Obs (' + str(self.obs_num) + ')'
         self.properties = self.make_properties(obs_dict)
         self.links = self.make_links(obs_dict)
+        if self.properties is not False and self.links is not False:
+            self.use_accordions = True
 
     def make_properties(self, obs_dict):
         """ Makes property objects for an observation
@@ -326,11 +341,13 @@ class Observation():
                         act_link.start_link(self.context[key])
                         act_link.add_link_objects(obs_dict[key])
                         if act_link.subjects is not False:
+                            self.subjects_link_count += len(act_link.subjects)
                             if self.subjects_links is False:
                                 self.subjects_links = []
                             act_link.nodeid = 'obs-' + str(self.obs_num) + '-subjects-' + act_link.linkslug
                             self.subjects_links.append(act_link)
                         if act_link.media is not False:
+                            self.media_link_count += len(act_link.media)
                             if self.media_links is False:
                                 self.media_links = []
                             act_link.nodeid = 'obs-' + str(self.obs_num) + '-media-' + act_link.linkslug
