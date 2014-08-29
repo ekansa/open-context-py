@@ -37,12 +37,18 @@ class Assertion(models.Model):
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique assertion
         """
         self.hash_id = self.make_hash_id()
-        super(Assertion, self).save()
+        super(Assertion, self).save(*args, **kwargs)
+
+    def sort_save(self):
+        """
+        save only sorting value
+        """
+        super(Assertion, self).save(update_fields=['sort'])
 
     class Meta:
         db_table = 'oc_assertions'

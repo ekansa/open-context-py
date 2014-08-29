@@ -1,7 +1,7 @@
 {% block context %}
     {% if item.context != False %}
         <ol id="{{ item.context.id }}" class="breadcrumb">
-            <li><strong>Context:</strong></li>
+            <li id="context-start">Context:</li>
         {% for par in item.context.parents %}
             {% if forloop.counter == 1 %} 
             <li id="context-root"><a href="{% url 'subjects_html' par.uuid %}">{{ par.label }}</a></li>
@@ -9,6 +9,16 @@
             <li><a href="{% url 'subjects_html' par.uuid %}">{{ par.label }}</a></li>
             {%endif%}
         {% endfor %}
+            {% if item.context.type == 'context' %}
+            <li class="active" id="item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
+            {% else %}
+            <li class="active" id="rel-item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
+            {%endif%}
         </ol>
+    {% else %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Context:</strong></li>
+            <li id="context-root" class="active" id="item-in-context">{{ item.label }}</li>
+        </ol>    
     {%endif%}
 {% endblock %}

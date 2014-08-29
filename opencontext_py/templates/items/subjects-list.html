@@ -1,23 +1,15 @@
-{% block context %}
 {% load partition %}
-    {% if subjects_list|length > 0 %}
-        <div class="row">
-            <div class="col-sm-12"><h4>{{ list_label }} ({{ subjects_list|length }})</h4></div>
+{% if subjects_list|length > 0 %}
+    {% for row in subjects_list|columns:col_num %}    
+    <div class="row subject-list-row">
+        {% for sub in row %}
+        <div class="col-sm-{{ icon_grid_with }}">
+            <a href="{% url 'subjects_html' sub.uuid %}"><img src="{{ sub.icon }}" alt="Icon for {{ sub.typelabel }}"/></a>
+        </div>    
+        <div class="col-sm-{{ text_grid_with }}">
+            <div class="subject-list-text"><a href="{% url 'subjects_html' sub.uuid %}">{{ sub.label }}</a></div>
         </div>
-        <div id="{{ node_id }}">
-            {% for row in subjects_list|columns:3 %}    
-            <div class="row subject-list-row">
-                {% for sub in row %}
-                <div class="col-sm-1">
-                    <a href="{% url 'subjects_html' sub.uuid %}"><img src="{{ sub.icon }}" alt="Icon for {{ sub.typelabel }}"/></a>
-                </div>    
-                <div class="col-sm-3">
-                    <div class="subject-list-text"><a href="{% url 'subjects_html' sub.uuid %}">{{ sub.label }}</a></div>
-                </div>
-                {% endfor %}
-            </div>
-            {% endfor %}
-        </div>
-        
-    {%endif%}
-{% endblock %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+{%endif%}

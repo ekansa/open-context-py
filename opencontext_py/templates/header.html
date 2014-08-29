@@ -1,10 +1,13 @@
 {% block header %}
 <div class="row">
-    <div id="home-icon" class="col-md-1">
-        <img src="../../static/oc/images/oc-door-logo.png" alt="Open Context Logo" />
+    <div id="header-logo" class="col-md-1">
+        <a href="../../" title="Open Context Home"><img src="../../static/oc/images/oc-door-logo.png" alt="Open Context Logo" /></a>
     </div>
-    <div id="" class="col-md-8">
-        <h1>Open Context Item: {{ item.label }}</h1>
+    <div id="header-oc" class="col-md-4">
+        <h1>Open Context</h1>
+    </div>
+    <div id="header-label" class="col-md-4">
+        <h1>{{ page_label }}</h1>
     </div>
     <div class="col-md-3">
         

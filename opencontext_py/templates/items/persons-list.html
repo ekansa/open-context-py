@@ -1,0 +1,12 @@
+{% load partition %}
+{% if persons_list|length > 0 %}
+    {% for row in persons_list|columns:col_num %}    
+    <div class="row persons-list-row">
+        {% for pers in row %}
+        <div class="col-sm-{{ text_grid_with }}">
+            <div class="persons-list-text"><a href="{% url 'persons_html' pers.uuid %}">{{ pers.val }}</a></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+{%endif%}

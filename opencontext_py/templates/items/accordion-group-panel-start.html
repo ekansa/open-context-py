@@ -1,0 +1,25 @@
+<!-- start of accordian group -->
+<div class="panel-group" id="{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc">
+    {% if top_panel_num > 1 %}
+    <div class="panel panel-default top-panel">
+    {%else%}
+    <div class="panel panel-default">
+    {%endif%}
+        {% with show_header=True %}
+        {% with accordion=True %}
+        {% with idprefix=idprefix %}
+        {% with idnum=idnum %}
+        {% with idsuffix=idsuffix %}
+        {% with panel_label=panel_label %}
+        {% with panel_label_suffix=panel_label_suffix %}
+        {% include 'items/panel-title.html' %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        <div id="{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel" class="panel-collapse collapse in">
+            <div class="panel-body">
+            <!-- start of accordian content -->

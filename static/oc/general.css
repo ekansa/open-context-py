@@ -4,6 +4,14 @@
 	margin-left:auto;
 	margin-right:auto;
 }
+#header-logo {
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+#header-oc {
+}
+#header-label {
+}
 #footer-upper {
 	margin-top: 5%;
 	background-color: #666666;
@@ -25,7 +33,23 @@ div.footer-cell img {
 	text-align: center;
 	font-size: 75%;
 }
+.project-edit-stars {
+	color: #EE7600;
+}
+a.project-edit-stars:link {
+	color: #EE7600;
+}
+a.project-edit-stars:visited {
+	color: #EE7600;
+}
+a.project-edit-stars:hover {
+	color: #EE7600;
+}
 div.subject-list-row {
+	padding-top: 1%;
+	padding-bottom: 1%;
+}
+div.media-list-row {
 	padding-top: 1%;
 	padding-bottom: 1%;
 }
@@ -36,17 +60,51 @@ div.subject-list-row img {
 div.subject-list-text {
 	padding-top: 2%;
 }
+div.media-thumb {
+	text-align: center;
+}
+div.media-links {
+	/*
+	padding: 1%;
+	*/
+}
 /* Tweeks to Bootstrap */
 #context-root::before {
       content: ""; 
     }
-div.obs-multi {
-	border-left: 1px solid #ddd;
-	border-right: 1px solid #ddd;
-	border-bottom: 1px solid #ddd;
+#context-start {
+	font-weight: normal;
+	color: rgb(51, 51, 51);
 }
-div.obs-single {
-	border: 1px solid #ddd;
+#item-in-context {
+	font-weight: bold;
+	color: #000000;
+}
+#rel-item-in-context {
+	font-weight: bold;
+	color: #000000;
+}
+#rel-item-in-context::before {
+    content: "\2194"; 
+}
+div.top-panel {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+	border-top: none;
+}
+div.panel-group div.top-panel {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+}
+div.preview-image {
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+}
+div.subjects-links-cell {
+	width: 100%;
+	margin-left: 1%;
+	text-align: left;
 }
 /* So long uri in Citation has good wrapping */
 #item-uri {

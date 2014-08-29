@@ -1,0 +1,17 @@
+<!-- start plain panel -->
+{% if top_panel_num > 1 %}
+    <div class="panel panel-default top-panel">
+{%else%}
+    <div class="panel panel-default">
+{%endif%}
+    {% with show_header=show_header %}
+    {% with accordion=False %}
+    {% with panel_label=panel_label %}
+    {% with panel_label_suffix=panel_label_suffix %}
+    {% include 'items/panel-title.html' %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    {% endwith %}
+    <div id="{{ prefix_node_id }}{{ node_id }}{{ suffix_node_id }}" class="panel-body">
+    <!-- start plain panel content-->
