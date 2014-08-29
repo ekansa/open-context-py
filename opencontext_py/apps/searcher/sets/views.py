@@ -14,6 +14,12 @@ def html_view(request, spatial_context=None):
 
 
 def json_view(request, spatial_context=None):
+    # query_params = request.GET
+    query = {}
+    if request.GET.get('q') is None or len(request.GET.get('q')) < 1:
+        query['q'] = '*:*'
+    else:
+        query['q'] = request.GET.get('q')
     entity = Entity()
     solr = SolrConnection().connection
     if spatial_context is None:
@@ -64,8 +70,7 @@ def json_view(request, spatial_context=None):
                     #str(parent_found) + ' ' + str(parent_slug))
         #context_data['solr_field_name'] = solr_field_name
     # build solr query
-    query = {}
-    query['q'] = '*:*'
+    #query['q'] = '*:*'
     query['fl'] = ['uuid', context_facet_request_field]
     query['facet.field'] = context_facet_request_field
     query['facet'] = 'true'
@@ -76,10 +81,11 @@ def json_view(request, spatial_context=None):
     query['start'] = 0
     query['debugQuery'] = 'true'
     response = solr.search(**query)
+    #return HttpResponse(query_params.items())
     #return HttpResponse(context_list)
-    return HttpResponse(json.dumps(response.facets['facet_fields'],
-                        ensure_ascii=False, indent=4),
-                        content_type="application/json; charset=utf8")
-    #return HttpResponse(json.dumps(response.raw_content,
+    #return HttpResponse(json.dumps(response.facets['facet_fields'],
     #                    ensure_ascii=False, indent=4),
-    #                    content_type="application/json")
+    #                    content_type="application/json; charset=utf8")
+    return HttpResponse(json.dumps(response.raw_content,
+                        ensure_ascii=False, indent=4),
+                        content_type="application/json")
