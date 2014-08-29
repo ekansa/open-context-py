@@ -146,14 +146,15 @@ class ManifestGeneration():
                 nslug.slug_save()
                 cc += 1
         print('Working on everything else...')
-        try:
-            no_slugs = Manifest.objects.all().exclude(slug__isnull=False)
-        except Manifest.DoesNotExist:
-            no_slugs = False
-        if(no_slugs is not False):
-            for nslug in no_slugs:
-                nslug.slug_save()
-                cc += 1
+        no_slugs = Manifest.objects\
+                           .all()\
+                           .values_list('uuid', flat=True)\
+                           .exclude(slug__isnull=False)\
+                           .iterator()
+        for nslug_uuid in no_slugs:
+            nslug = Manifest.objects.get(uuid=nslug_uuid)
+            nslug.slug_save()
+            cc += 1
         return cc
 
     def get_project_index(self, project_uuid):
