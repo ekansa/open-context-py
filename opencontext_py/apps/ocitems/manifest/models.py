@@ -51,6 +51,14 @@ class Manifest(models.Model):
         self.slug = self.make_slug()
         super(Manifest, self).save(*args, **kwargs)
 
+    def slug_save(self):
+        """
+        save only slug value
+        """
+        self.label = self.validate_label()
+        self.slug = self.make_slug()
+        super(Manifest, self).save(update_fields=['slug'])
+
     class Meta:
         db_table = 'oc_manifest'
         unique_together = (("item_type", "slug"),)
@@ -90,10 +98,10 @@ class ManifestGeneration():
         if(raw_slug == '-' or len(raw_slug) < 1):
             raw_slug = 'x'  # slugs are not a dash or are empty
         if(act_proj_short_id is not False):
-            raw_slug = str(act_proj_short_id) + '--' + raw_slug
+            raw_slug = str(act_proj_short_id) + '-' + raw_slug
         if(raw_slug[-1:] == '-'):
             raw_slug = raw_slug + 'x'  # slugs don't end with dashes
-        raw_slug = re.sub(r'([-]){3,}', r'--', raw_slug)  # slugs can't have more than 2 dash characters
+        raw_slug = re.sub(r'([-]){2,}', r'-', raw_slug)  # slugs can't have more than 1 dash characters
         slug = self.raw_to_final_slug(uuid, raw_slug)  # function for making sure unique slugs
         return slug
 
@@ -129,12 +137,22 @@ class ManifestGeneration():
     def fix_blank_slugs(self):
         cc = 0
         try:
+            no_slugs = Manifest.objects.filter(item_type='projects').exclude(slug__isnull=False)
+            print('Making slugs for projects: ' + str(len(no_slugs)))
+        except Manifest.DoesNotExist:
+            no_slugs = False
+        if(no_slugs is not False):
+            for nslug in no_slugs:
+                nslug.slug_save()
+                cc += 1
+        print('Working on everything else...')
+        try:
             no_slugs = Manifest.objects.all().exclude(slug__isnull=False)
         except Manifest.DoesNotExist:
             no_slugs = False
         if(no_slugs is not False):
             for nslug in no_slugs:
-                nslug.save()
+                nslug.slug_save()
                 cc += 1
         return cc
 
