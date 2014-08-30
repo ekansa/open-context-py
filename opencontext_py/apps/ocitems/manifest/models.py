@@ -302,7 +302,7 @@ class ManifestGeneration():
                 char_val = ord(act_char)
                 if char_val >= 49 and char_val <= 57:
                     act_type = 'number'
-                elif char_val > 65 and char_val <= 122:
+                elif char_val >= 65 and char_val <= 122:
                     act_type = 'letter'
                 else:
                     act_type = False
@@ -317,6 +317,7 @@ class ManifestGeneration():
                 i += 1
         else:
             label = '0'
+        print('Sort label is: ' + label)
         try_roman = True
         label_parts = re.split(':|\ |\.|\,|\;|\-|\(|\)|\_|\[|\]|\/',
                                label)
