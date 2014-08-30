@@ -177,7 +177,7 @@ class TemplateItem():
             if self.content is False:
                 self.content = {}
             self.content['main_text'] = json_ld['dc-terms:abstract']
-        elif 'description' in json_ld:
+        if 'description' in json_ld:
             # content for project descriptions
             if self.content is False:
                 self.content = {}
