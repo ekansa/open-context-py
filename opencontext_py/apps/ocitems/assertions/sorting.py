@@ -14,6 +14,9 @@ class AssertionSorting():
                               'media',
                               'subjects']
 
+    def __init__(self):
+        self.problems = []
+
     def sort_ranked_types_for_project(self, project_uuid):
         """Changes sort order for assertions with ranked types in a project """
         act_preds = self.get_preds_with_ranked_types(project_uuid)
@@ -103,7 +106,8 @@ class AssertionSorting():
             # get all assertions for this subject uuid and predicate_uuid
             presort_assertions = Assertion.objects\
                                           .filter(uuid=uuid,
-                                                  predicate_uuid=predicate_uuid)\
+                                                  predicate_uuid=predicate_uuid,
+                                                  object_type__in=self.TYPES_SORT_BY_MANIFEST)\
                                           .order_by('sort')
             # make a list of objects to request from the manifest tab
             act_objects = []
@@ -125,7 +129,15 @@ class AssertionSorting():
                 manifest_sort[sorted_manifest_uuid] = manifest_rank
             # iterate through assertions to save sort order
             for act_ass in presort_assertions:
-                manifest_rank = manifest_sort[act_ass.object_uuid]
+                if act_ass.object_uuid in manifest_sort:
+                    manifest_rank = manifest_sort[act_ass.object_uuid]
+                else:
+                    self.problems.append({'Error': 'Missing object',
+                                          'uuid': uuid,
+                                          'predicate_uuid': predicate_uuid,
+                                          'object_uuid': act_ass.object_uuid,
+                                          'object_type': act_ass.object_type})
+                    manifest_rank = len(manifest_sort) + 1
                 act_ass.sort = float(start_sort) + (manifest_rank / 1000)
                 act_ass.sort_save()
                 change_count += 1
