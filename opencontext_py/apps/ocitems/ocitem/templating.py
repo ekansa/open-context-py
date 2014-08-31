@@ -122,6 +122,9 @@ class TemplateItem():
         """ Makes an instance of a project class, with data from the JSON_LD
         """
         proj = Project()
+        proj.item_type = self.act_nav
+        if proj.item_type == 'projects':
+            proj.uuid = self.uuid
         proj.make_project(json_ld)
         self.project = proj
 
@@ -286,19 +289,20 @@ class Children():
         if(OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld):
             self.contype = 'Context'
             act_children = json_ld[OCitem.PREDICATES_OCGEN_HASCONTENTS]
-            self.id = act_children['id']
-            self.children = []
-            for child_item in act_children[OCitem.PREDICATES_OCGEN_CONTAINS]:
-                act_child = {}
-                act_child['uri'] = child_item['id']
-                act_child['label'] = child_item['label']
-                act_child['altlabel'] = None
-                act_child['linkslug'] = None
-                act_child['linklabel'] = None
-                act_child['type'] = ItemMetadata.get_item_type(child_item)
-                act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
-                act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
-                self.children.append(act_child)
+            if OCitem.PREDICATES_OCGEN_CONTAINS in act_children:
+                self.id = act_children['id']
+                self.children = []
+                for child_item in act_children[OCitem.PREDICATES_OCGEN_CONTAINS]:
+                    act_child = {}
+                    act_child['uri'] = child_item['id']
+                    act_child['label'] = child_item['label']
+                    act_child['altlabel'] = None
+                    act_child['linkslug'] = None
+                    act_child['linklabel'] = None
+                    act_child['type'] = ItemMetadata.get_item_type(child_item)
+                    act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
+                    act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
+                    self.children.append(act_child)
 
 
 class Observation():
@@ -556,6 +560,7 @@ class Project():
         self.slug = False
         self.label = False
         self.edit_status = False
+        self.item_type = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -573,6 +578,12 @@ class Project():
                             self.edit_status = project.edit_status
                         except ModProject.DoesNotExist:
                             project = False
+                        break
+            if self.item_type == 'projects' and 'bibo:status' in json_ld:
+                for bibo_status in json_ld['bibo:status']:
+                    if 'edit-level' in bibo_status['id']:
+                        # get the number at the end of edit-level
+                        self.edit_status = float(bibo_status['id'].split('-')[-1])
                         break
 
 

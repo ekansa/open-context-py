@@ -114,7 +114,7 @@ class AssertionSorting():
             start_sort = False
             for pre_ass in presort_assertions:
                 if start_sort is False:
-                    start_sort = pre_ass.sort
+                    start_sort = round(pre_ass.sort, 0)
                 act_objects.append(pre_ass.object_uuid)
             # get sorted list of objects from the manifest tab
             sorted_objects = Manifest.objects\
