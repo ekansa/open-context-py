@@ -47,6 +47,25 @@ class PenMysql():
                      'oc_strings': ['uuid'],
                      'oc_subjects': ['uuid'],
                      'oc_types': ['uuid']}
+    REQUEST_TABLES = {'oc_documents': {'sub': False},
+                      'oc_mediafiles': {'sub': False},
+                      'oc_persons': {'sub': False},
+                      'oc_subjects': {'sub': False},
+                      'oc_geospace': {'sub': False},
+                      'oc_events': {'sub': False},
+                      'oc_types': {'sub': False},
+                      'oc_strings': {'sub': False},
+                      'oc_predicates': {'sub': ['variable',
+                                                'link']},
+                      'oc_assertions': {'sub': ['contain',
+                                                'property',
+                                                'links-subjects',
+                                                'links-media',
+                                                'links-documents',
+                                                'links-persons'
+                                                ]},
+                      'link_entities': {'sub': False},
+                      'link_annotations': {'sub': False}}
 
     def __init__(self):
         self.json_r = False
@@ -54,11 +73,18 @@ class PenMysql():
         self.update_keep_old = False  # if true, use old data to 'fill in the blanks' of fields
         self.table_records_base_url = False  # base URL for getting JSON data to import
 
-    def get_table_records(self, act_table, after, start):
+    def get_project_records(self, project_uuid):
+        pass
+
+    def get_table_records(self, act_table, after, start, project_uuids=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
-        payload = {'table': act_table, 'after': after, 'start': start}
+        payload = {'table': act_table,
+                   'after': after,
+                   'start': start}
+        if project_uuids is not False:
+            payload['project_uuids'] = project_uuids
         r = requests.get(self.table_records_base_url, params=payload, timeout=240)
         json_r = r.json()
         self.json_r = json_r
@@ -182,6 +208,9 @@ class PenMysql():
                 elif(act_table == 'oc_obsmetadata'):
                     newr = ObsMetadata(**record)
                 if(newr is not False):
+                    """
                     newr.save(force_insert=self.force_insert,
                               force_update=self.update_keep_old)
+                    """
+                    print('Pretending to save: ' + str(record))
     
