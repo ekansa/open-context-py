@@ -37,7 +37,7 @@ class PenMysql():
                      'oc_identifiers': ['uuid',
                                         'stable_type'],
                      'oc_manifest': ['uuid'],
-                     'oc_mediafiles': ['uuid'
+                     'oc_mediafiles': ['uuid',
                                        'file_type'],
                      'oc_obsmetadata': ['source_id',
                                         'obs_num'],
@@ -47,14 +47,14 @@ class PenMysql():
                      'oc_strings': ['uuid'],
                      'oc_subjects': ['uuid'],
                      'oc_types': ['uuid']}
-    REQUEST_TABLES = {'oc_documents': {'sub': False},
-                      'oc_mediafiles': {'sub': False},
-                      'oc_persons': {'sub': False},
-                      'oc_subjects': {'sub': False},
-                      'oc_geospace': {'sub': False},
-                      'oc_events': {'sub': False},
-                      'oc_types': {'sub': False},
-                      'oc_strings': {'sub': False},
+    REQUEST_TABLES = {'oc_documents': {'sub': [False]},
+                      'oc_mediafiles': {'sub': [False]},
+                      'oc_persons': {'sub': [False]},
+                      'oc_subjects': {'sub': [False]},
+                      'oc_geospace': {'sub': [False]},
+                      'oc_events': {'sub': [False]},
+                      'oc_types': {'sub': [False]},
+                      'oc_strings': {'sub': [False]},
                       'oc_predicates': {'sub': ['variable',
                                                 'link']},
                       'oc_assertions': {'sub': ['contain',
@@ -64,28 +64,70 @@ class PenMysql():
                                                 'links-documents',
                                                 'links-persons'
                                                 ]},
-                      'link_entities': {'sub': False},
-                      'link_annotations': {'sub': False}}
+                      'link_entities': {'sub': [False]},
+                      'link_annotations': {'sub': [False]}}
 
     def __init__(self):
         self.json_r = False
         self.force_insert = True  # if false overwrite a record if it already exists
         self.update_keep_old = False  # if true, use old data to 'fill in the blanks' of fields
         self.table_records_base_url = False  # base URL for getting JSON data to import
+        self.record_batch_size = 200
 
     def get_project_records(self, project_uuid):
-        pass
+        """ Gets all the data belonging to a project """
+        after = '2001-01-01'
+        for act_table, sub_dict in self.REQUEST_TABLES.items():
+            for sub_table in sub_dict['sub']:
+                print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
+                self.process_request_table(act_table,
+                                           sub_table,
+                                           after,
+                                           project_uuid)
 
-    def get_table_records(self, act_table, after, start, project_uuids=False):
+    def process_request_table(self, act_table,
+                              sub_table,
+                              after,
+                              project_uuids=False):
+        """ iterates through a table until there are
+        no more records to save
+        """
+        continue_tab = True
+        start = 0
+        recs = self.record_batch_size
+        while continue_tab:
+            json_ok = self.get_table_records(act_table,
+                                             sub_table,
+                                             after,
+                                             start,
+                                             recs,
+                                             project_uuids)
+            if json_ok is not None:
+                continue_tab = self.store_tab_records()
+            else:
+                print('Bad JSON in: ' + act_table + '(' + str(sub_table) + ')')
+                continue_tab = False
+            start = start + recs
+
+    def get_table_records(self, act_table,
+                          sub_table,
+                          after,
+                          start,
+                          recs,
+                          project_uuids=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
-        payload = {'table': act_table,
+        payload = {'tab': act_table,
                    'after': after,
-                   'start': start}
+                   'start': start,
+                   'recs': recs}
+        if sub_table is not False:
+            payload['sub'] = sub_table
         if project_uuids is not False:
             payload['project_uuids'] = project_uuids
         r = requests.get(self.table_records_base_url, params=payload, timeout=240)
+        r.raise_for_status()
         json_r = r.json()
         self.json_r = json_r
         return json_r
@@ -103,13 +145,19 @@ class PenMysql():
         """
         iterates through tabs in the JSON data to save list of records for each tab
         """
+        has_records = False  # the JSON data actually has records
         if('tabs' in self.json_r):
             tabs = self.json_r['tabs']
             for act_table in tabs:
                 if(act_table in self.json_r):
                     recs = self.json_r[act_table]
-                    print("\n Active table: " + act_table + " (Recs: " + str(len(recs)) + ")")
-                    self.store_records(act_table, recs)
+                    if len(recs) > 0:
+                        has_records = True
+                        print("\n Active table: " + act_table + " (Recs: " + str(len(recs)) + ")")
+                        self.store_records(act_table, recs)
+        else:
+            print("Where's the data?")
+        return has_records
 
     def check_allow_write(self, act_table, record):
         """
@@ -123,7 +171,7 @@ class PenMysql():
                 sql = 'SELECT * FROM ' + act_table + ' WHERE '
                 f_terms = []
                 for act_field in self.UNIQUE_FIELDS[act_table]:
-                    f_term = act_field + ' = \'' + record[act_field] + '\' '
+                    f_term = act_field + ' = \'' + str(record[act_field]) + '\' '
                     f_terms.append(f_term)
                 sql = sql + ' AND '.join(f_terms)
                 sql = sql + ' LIMIT 1; '
