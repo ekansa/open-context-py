@@ -52,13 +52,14 @@ class PenMysql():
         self.json_r = False
         self.force_insert = True  # if false overwrite a record if it already exists
         self.update_keep_old = False  # if true, use old data to 'fill in the blanks' of fields
+        self.table_records_base_url = False  # base URL for getting JSON data to import
 
     def get_table_records(self, act_table, after, start):
         """
         gets json data for records of a mysql datatable after a certain time
         """
         payload = {'table': act_table, 'after': after, 'start': start}
-        r = requests.get(self.TABLE_RECORDS_URL, params=payload, timeout=240)
+        r = requests.get(self.table_records_base_url, params=payload, timeout=240)
         json_r = r.json()
         self.json_r = json_r
         return json_r
