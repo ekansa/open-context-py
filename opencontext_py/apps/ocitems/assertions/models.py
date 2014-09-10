@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime
 from django.conf import settings
 from django.db import models
 
@@ -42,6 +43,8 @@ class Assertion(models.Model):
         creates the hash-id on saving to insure a unique assertion
         """
         self.hash_id = self.make_hash_id()
+        if self.created is None:
+            self.created = datetime.now()
         super(Assertion, self).save(*args, **kwargs)
 
     def sort_save(self):

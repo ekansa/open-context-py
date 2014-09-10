@@ -623,7 +623,10 @@ class Citation():
                         self.ark = s_item['id']
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
-            published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            if 'dc-terms:published' in json_ld:
+                published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            else:
+                published = datetime.datetime.now()
             if len(self.item_authors) > 0:
                 self.cite_authors = ', '.join(self.item_authors)
             else:

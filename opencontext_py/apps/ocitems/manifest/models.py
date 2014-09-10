@@ -85,6 +85,8 @@ class Manifest(models.Model):
         """
         saves a manifest item with a good slug
         """
+        if self.views is None:
+            self.views = 0
         self.label = self.validate_label()
         self.make_slug_and_sort()
         super(Manifest, self).save(*args, **kwargs)

@@ -11,6 +11,14 @@ class OCtype(models.Model):
     rank = models.DecimalField(max_digits=8, decimal_places=3)
     updated = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        """
+        saves a manifest item with a good slug
+        """
+        if self.rank is None:
+            self.rank = 0
+        super(OCtype, self).save(*args, **kwargs)
+
     class Meta:
         db_table = 'oc_types'
         ordering = ['rank']

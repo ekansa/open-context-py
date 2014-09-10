@@ -24,12 +24,12 @@ class Subject(models.Model):
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique subject
         """
         self.hash_id = self.make_hash_id()
-        super(Subject, self).save()
+        super(Subject, self).save(*args, **kwargs)
 
     def get_item(self):
         actItem = OCitem()

@@ -4,7 +4,9 @@ from django.db import connection
 from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
+from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person as Person
 from opencontext_py.apps.ocitems.projects.models import Project as Project
@@ -27,7 +29,10 @@ class PenMysql():
                      'link_entities': ['uri'],
                      'oc_assertions': ['uuid',
                                        'obs_num',
-                                       'predicate_uuid'],
+                                       'predicate_uuid',
+                                       'object_uuid',
+                                       'data_num',
+                                       'data_date'],
                      'oc_documents': ['uuid'],
                      'oc_events': ['uuid',
                                    'meta_type',
@@ -171,8 +176,9 @@ class PenMysql():
                 sql = 'SELECT * FROM ' + act_table + ' WHERE '
                 f_terms = []
                 for act_field in self.UNIQUE_FIELDS[act_table]:
-                    f_term = act_field + ' = \'' + str(record[act_field]) + '\' '
-                    f_terms.append(f_term)
+                    if act_field in record:
+                        f_term = act_field + ' = \'' + str(record[act_field]) + '\' '
+                        f_terms.append(f_term)
                 sql = sql + ' AND '.join(f_terms)
                 sql = sql + ' LIMIT 1; '
                 cursor = connection.cursor()
@@ -202,8 +208,9 @@ class PenMysql():
                 sql = 'SELECT * FROM ' + act_table + ' WHERE '
                 f_terms = []
                 for act_field in self.UNIQUE_FIELDS[act_table]:
-                    f_term = act_field + ' = \'' + record[act_field] + '\' '
-                    f_terms.append(f_term)
+                    if act_field in record:
+                        f_term = act_field + ' = \'' + record[act_field] + '\' '
+                        f_terms.append(f_term)
                 sql = sql + ' AND '.join(f_terms)
                 sql = sql + ' LIMIT 1; '
                 cursor = connection.cursor()
@@ -233,8 +240,12 @@ class PenMysql():
                     newr = LinkAnnotation(**record)
                 elif(act_table == 'link_entities'):
                     newr = LinkEntity(**record)
+                elif(act_table == 'oc_assertions'):
+                    newr = Assertion(**record)
                 elif(act_table == 'oc_manifest'):
                     newr = Manifest(**record)
+                elif(act_table == 'oc_subjects'):
+                    newr = Subject(**record)
                 elif(act_table == 'oc_mediafiles'):
                     newr = Mediafile(**record)
                 elif(act_table == 'oc_documents'):
@@ -256,9 +267,5 @@ class PenMysql():
                 elif(act_table == 'oc_obsmetadata'):
                     newr = ObsMetadata(**record)
                 if(newr is not False):
-                    """
                     newr.save(force_insert=self.force_insert,
                               force_update=self.update_keep_old)
-                    """
-                    print('Pretending to save: ' + str(record))
-    

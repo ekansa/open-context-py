@@ -19,17 +19,20 @@ class Mediafile(models.Model):
         if(self.filesize < 1 or len(self.mime_type_uri) < 2):
             mm = ManageMediafiles()
             ok = mm.get_head_info(self.file_uri)
-            if(ok):
-                self.file_type = mm.file_type
+            if ok:
                 self.mime_type_uri = mm.mime_type_uri
                 self.filesize = mm.filesize
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         saves a manifest item with a good slug
         """
+        if self.filesize is None:
+            self.filesize = 0
+        if self.mime_type_uri is None:
+            self.mime_type_uri = ''
         self.get_file_info()
-        super(Mediafile, self).save()
+        super(Mediafile, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_mediafiles'
@@ -43,7 +46,7 @@ class ManageMediafiles():
 
     def __init__(self):
         self.file_uri = False
-        self.file_type = False
+        self.genfile_type = False
         self.raw_mime_type = False
         self.mime_type_uri = False
         self.filesize = False
@@ -57,7 +60,7 @@ class ManageMediafiles():
             if('Content-Type' in r.headers):
                 self.raw_mime_type = r.headers['Content-Type']
                 self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
-                self.file_type = self.mime_to_file_type(self.file_type)
+                self.genfile_type = self.mime_to_general_file_type(self.genfile_type)
                 output = True
 
         return output
@@ -68,10 +71,10 @@ class ManageMediafiles():
         """
         return Mediafile.MEDIA_MIMETYPE_NS + raw_mime_type
 
-    def mime_to_file_type(self, mime_type):
+    def mime_to_general_file_type(self, mime_type):
         """
         Converts either a raw, a prefixed, or a full mimetype uri to
-        a file type
+        a general file type
         """
         output = False
         use_mime = str(mime_type)
