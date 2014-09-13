@@ -8,6 +8,12 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.documents.models import OCdocument
+from opencontext_py.apps.ocitems.persons.models import Person
 
 
 # This class is used to delete or merge entities
@@ -34,9 +40,7 @@ class DeleteMerge():
         self.merge_into_uuid = merge_into_uuid
         output = {}
         output['done'] = False
-        ok_delete = self.prep_delete_uuid(delete_uuid)
-        ok_merge = self.prep_merge_uuid(merge_into_uuid)
-        if ok_delete and ok_merge:
+        if ok_delete and ok_merge and delete_uuid != merge_into_uuid:
             output['assertions'] = self.alter_assertions(delete_uuid, merge_into_uuid)
             output['annotations'] = self.alter_annotations(delete_uuid, merge_into_uuid)
             self.delete_self_containment(self, merge_into_uuid)
@@ -49,6 +53,7 @@ class DeleteMerge():
             output['message'] = ', merged into - '
             output['message'] += self.merge_manifest_obj.label + '(' + merge_into_uuid + ')'
             self.delete_manifest_obj.delete()  # deletes object from the manifest
+            self.delete_type_records(delete_uuid, delete_manifest_obj.item_type)
             output['done'] = True
         return output
 
@@ -78,7 +83,30 @@ class DeleteMerge():
             output['altered_children'] = self.update_children_subjects(self.delete_children)
             output['message'] = 'Deleted item: ' + self.delete_manifest_obj.label + '(' + delete_uuid + ')'
             self.delete_manifest_obj.delete() # deletes object from the manifest
+            self.delete_type_records(delete_uuid, delete_manifest_obj.item_type)
             output['done'] = True
+        return output
+
+    def delete_type_records(self, uuid, item_type):
+        """ Deletes records of data specific to models of different types
+            For now, we're not deleting strings, since they may be used
+            on one or more types.
+        """
+        output = True
+        if item_type == 'subjects':
+            Subject.objects.filter(uuid=uuid).delete()
+        elif item_type == 'media':
+            Mediafile.objects.filter(uuid=uuid).delete()
+        elif item_type == 'documents':
+            OCdocument.objects.filter(uuid=uuid).delete()
+        elif item_type == 'persons':
+            Person.objects.filter(uuid=uuid).delete()
+        elif item_type == 'predicates':
+            Predicate.objects.filter(uuid=uuid).delete()
+        elif item_type == 'types':
+            OCtype.objects.filter(uuid=uuid).delete()
+        else:
+            output = False
         return output
 
     def update_children_subjects(self, contents):

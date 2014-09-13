@@ -1,18 +1,21 @@
 import json
 import requests
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.records.models import ImportCell
 
 
 class RefineAPI():
     """ Interacts with Open (Google) Refine for importing and updating data """
     DEFAULT_REFINE_BASE_URL = 'http://127.0.0.1:3333'
 
-    def __init__(self):
+    def __init__(self, refine_project):
         self.refine_model = False
         self.col_schema = False
         self.json_r = False
         self.refine_base_url = self.DEFAULT_REFINE_BASE_URL
-        self.refine_project = False
+        self.refine_project = str(refine_project)
+        self.source_id = 'ref:' + str(refine_project)
         self.row_request_limit = 500
         self.data = False
 
