@@ -258,6 +258,8 @@ class PenMysql():
                     newr = OCstring(**record)
                 elif(act_table == 'oc_types'):
                     newr = OCtype(**record)
+                elif(act_table == 'oc_geospace'):
+                    newr = Geospace(**record)
                 elif(act_table == 'oc_events'):
                     newr = Event(**record)
                 elif(act_table == 'oc_predicates'):

@@ -23,12 +23,12 @@ class LinkEntity(models.Model):
         slug = le_gen.make_slug(self.uri)
         return slug
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         saves a manifest item with a good slug
         """
         self.slug = self.make_slug()
-        super(LinkEntity, self).save()
+        super(LinkEntity, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'link_entities'

@@ -54,14 +54,14 @@ class Event(models.Model):
         self.stop = time_list[2]
         self.latest = time_list[3]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique event
         """
         self.validate_times()
         self.event_id = self.make_event_id()
         self.hash_id = self.make_hash_id()
-        super(Event, self).save()
+        super(Event, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_events'

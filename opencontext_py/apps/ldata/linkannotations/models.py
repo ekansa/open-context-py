@@ -37,12 +37,12 @@ class LinkAnnotation(models.Model):
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique assertion
         """
         self.hash_id = self.make_hash_id()
-        super(LinkAnnotation, self).save()
+        super(LinkAnnotation, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'link_annotations'
