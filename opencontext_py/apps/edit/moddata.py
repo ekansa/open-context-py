@@ -38,12 +38,14 @@ class DeleteMerge():
         """
         self.delete_uuid = delete_uuid
         self.merge_into_uuid = merge_into_uuid
+        ok_delete = self.prep_delete_uuid(delete_uuid)
+        ok_merge = self.prep_merge_uuid(merge_into_uuid)
         output = {}
         output['done'] = False
         if ok_delete and ok_merge and delete_uuid != merge_into_uuid:
             output['assertions'] = self.alter_assertions(delete_uuid, merge_into_uuid)
             output['annotations'] = self.alter_annotations(delete_uuid, merge_into_uuid)
-            self.delete_self_containment(self, merge_into_uuid)
+            self.delete_self_containment(merge_into_uuid)
             cont = Containment()
             self.merge_children = cont.get_children_by_parent_uuid(merge_into_uuid,
                                                                    True)
