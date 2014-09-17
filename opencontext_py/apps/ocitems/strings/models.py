@@ -13,7 +13,7 @@ class OCstring(models.Model):
 
     def make_hash_id(self):
         """
-        creates a hash-id to insure unique combinations of project_uuids and contexts
+        creates a hash-id to insure unique combinations of project_uuids and content
         """
         hash_obj = hashlib.sha1()
         concat_string = self.project_uuid + " " + self.content
@@ -22,7 +22,7 @@ class OCstring(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        creates the hash-id on saving to insure a unique assertion
+        creates the hash-id on saving to insure a unique string for a project
         """
         self.hash_id = self.make_hash_id()
         super(OCstring, self).save(*args, **kwargs)
