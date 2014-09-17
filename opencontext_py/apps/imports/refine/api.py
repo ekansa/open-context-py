@@ -48,15 +48,17 @@ class RefineAPI():
             row_cell_count = len(row['cells'])
             record = LastUpdatedOrderedDict()
             for col_index, col in self.col_schema.items():
-                record[col_index] = None  # defaults to none, for blank cells
+                record[col_index] = ''  # defaults to blank data
                 col_cell_index = int(float(col['cellIndex']))
                 if col_cell_index < row_cell_count and col_cell_index >= 0:
                     if row['cells'][col_cell_index] is not None:
-                        record[col_index] = row['cells'][col_cell_index]['v']
+                        # get the trimmed value for the cell
+                        record[col_index] = str(row['cells'][col_cell_index]['v']).strip()
             self.data.append(record)
 
     def prepare_model(self):
         """ prepare's the data model / schema for a refine project """
+        output = False
         self.get_model()
         if self.refine_model is not False:
             self.col_schema = LastUpdatedOrderedDict()
@@ -64,6 +66,9 @@ class RefineAPI():
             for col in self.refine_model['columnModel']['columns']:
                 field_index += 1
                 self.col_schema[field_index] = col
+        if self.col_schema is not False:
+            output = True
+        return output
 
     def get_rows(self, start):
         """
