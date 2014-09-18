@@ -78,17 +78,30 @@ class PenMysql():
         self.update_keep_old = False  # if true, use old data to 'fill in the blanks' of fields
         self.table_records_base_url = False  # base URL for getting JSON data to import
         self.record_batch_size = 200
+        self.start_table = False
+        self.start_sub = False
+        self.start_batch = 0
 
     def get_project_records(self, project_uuid):
         """ Gets all the data belonging to a project """
         after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
             for sub_table in sub_dict['sub']:
-                print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
-                self.process_request_table(act_table,
-                                           sub_table,
-                                           after,
-                                           project_uuid)
+                if self.start_table is False:
+                    print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
+                    self.process_request_table(act_table,
+                                               sub_table,
+                                               after,
+                                               project_uuid)
+                else:
+                    if self.start_table == act_table and sub_table == self.start_sub:
+                        print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
+                        self.process_request_table(act_table,
+                                               sub_table,
+                                               after,
+                                               project_uuid)
+                        self.start_table = False
+                        self.start_sub = False
 
     def process_request_table(self, act_table,
                               sub_table,
@@ -98,7 +111,13 @@ class PenMysql():
         no more records to save
         """
         continue_tab = True
-        start = 0
+        if self.start_batch > 0\
+           and self.start_table == act_table\
+           and self.start_sub == sub_table:
+            start = self.start_batch
+            self.start_batch = 0
+        else:
+            start = 0
         recs = self.record_batch_size
         while continue_tab:
             json_ok = self.get_table_records(act_table,
