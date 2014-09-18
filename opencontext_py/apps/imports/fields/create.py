@@ -3,6 +3,7 @@ import datetime
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.fieldtypes.models import ImportFieldType
 from opencontext_py.apps.imports.refine.api import RefineAPI
 
 
@@ -38,9 +39,7 @@ class ImportFields():
                 imp_f.project_uuid = self.project_uuid
                 imp_f.source_id = self.source_id
                 imp_f.field_num = col_index
-                imp_f.field_type = imp_f.DEFAULT_FIELD_TYPE
                 imp_f.is_keycell = False
-                imp_f.label = col['name']
                 imp_f.ref_name = col['name']
                 imp_f.ref_orig_name = col['originalName']
                 imp_f.f_uuid = self.check_for_updated_uuid(col['name'],
@@ -59,7 +58,7 @@ class ImportFields():
                                field_type=False):
         """ Checks to see if a previously assigned field_uuid should be kept"""
         old_fields = ImportField.objects\
-                                .filter(Q(label=label) | Q(ref_name=label) | Q(ref_orig_name=orig_name),
+                                .filter(Q(ref_name=label) | Q(ref_orig_name=orig_name),
                                         Q(source_id=self.source_id) | Q(source_id=self.obsolete_source_id))[:1]
         if len(old_fields) > 0:
             f_uuid = old_fields[0].f_uuid
@@ -73,14 +72,24 @@ class ImportFields():
             type and label in a project
         """
         if field_type is False:
-            poss_rel_fields = ImportField.objects\
-                                         .filter(project_uuid=self.project_uuid,
-                                                 label=label)[:1]
+            poss_rel_fields = ImportFieldType.objects\
+                                             .filter(project_uuid=self.project_uuid,
+                                                     label=label)[:1]
         else:
-            poss_rel_fields = ImportField.objects\
-                                         .filter(project_uuid=self.project_uuid,
-                                                 field_type=field_type,
-                                                 label=label)[:1]
+            poss_rel_fields = ImportFieldType.objects\
+                                             .filter(project_uuid=self.project_uuid,
+                                                     field_type=field_type,
+                                                     label=label)[:1]
+        if len(poss_rel_fields) < 1:
+            if field_type is False:
+                poss_rel_fields = ImportField.objects\
+                                             .filter(project_uuid=self.project_uuid,
+                                                     ref_name=label)[:1]
+            else:
+                poss_rel_fields = ImportField.objects\
+                                             .filter(project_uuid=self.project_uuid,
+                                                     field_type=field_type,
+                                                     ref_name=label)[:1]
         if len(poss_rel_fields) > 0:
             f_uuid = poss_rel_fields[0].f_uuid
         else:

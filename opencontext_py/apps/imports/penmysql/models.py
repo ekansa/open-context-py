@@ -150,7 +150,7 @@ class PenMysql():
             payload['sub'] = sub_table
         if project_uuids is not False:
             payload['project_uuids'] = project_uuids
-        r = requests.get(self.table_records_base_url, params=payload, timeout=720)
+        r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
         r.raise_for_status()
         json_r = r.json()
         self.json_r = json_r
