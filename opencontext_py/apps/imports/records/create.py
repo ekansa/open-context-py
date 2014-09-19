@@ -34,7 +34,7 @@ class ImportRecords():
             # ok, refine works, schema is OK. Save old project data as obsolute source_id
             self.update_obsolete_source()
             # now save the current schema for this project
-            imp_f.obsolete_source_id  = self.obsolete_source_id
+            imp_f.obsolete_source_id = self.obsolete_source_id
             model_ok = imp_f.save_refine_model(refine_project)
             if model_ok:
                 # now that we've save the current schema, get+save the project records
