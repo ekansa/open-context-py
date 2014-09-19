@@ -2,6 +2,7 @@ import json
 import requests
 from django.db import connection
 from django.db.models import Avg, Max, Min
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEntity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -52,25 +53,25 @@ class PenMysql():
                      'oc_strings': ['uuid'],
                      'oc_subjects': ['uuid'],
                      'oc_types': ['uuid']}
-    REQUEST_TABLES = {'oc_documents': {'sub': [False]},
-                      'oc_mediafiles': {'sub': [False]},
-                      'oc_persons': {'sub': [False]},
-                      'oc_subjects': {'sub': [False]},
-                      'oc_geospace': {'sub': [False]},
-                      'oc_events': {'sub': [False]},
-                      'oc_types': {'sub': [False]},
-                      'oc_strings': {'sub': [False]},
-                      'oc_predicates': {'sub': ['variable',
-                                                'link']},
-                      'oc_assertions': {'sub': ['contain',
-                                                'property',
-                                                'links-subjects',
-                                                'links-media',
-                                                'links-documents',
-                                                'links-persons'
-                                                ]},
-                      'link_entities': {'sub': [False]},
-                      'link_annotations': {'sub': [False]}}
+    REQUEST_TABLES = LastUpdatedOrderedDict({'oc_documents': {'sub': [False]},
+                                             'oc_mediafiles': {'sub': [False]},
+                                             'oc_persons': {'sub': [False]},
+                                             'oc_subjects': {'sub': [False]},
+                                             'oc_geospace': {'sub': [False]},
+                                             'oc_events': {'sub': [False]},
+                                             'oc_types': {'sub': [False]},
+                                             'oc_strings': {'sub': [False]},
+                                             'oc_predicates': {'sub': ['variable',
+                                                                       'link']},
+                                             'oc_assertions': {'sub': ['contain',
+                                                                       'property',
+                                                                       'links-subjects',
+                                                                       'links-media',
+                                                                       'links-documents',
+                                                                       'links-persons'
+                                                                       ]},
+                                             'link_entities': {'sub': [False]},
+                                             'link_annotations': {'sub': [False]}})
 
     def __init__(self):
         self.json_r = False
@@ -95,13 +96,16 @@ class PenMysql():
                                                project_uuid)
                 else:
                     if self.start_table == act_table and sub_table == self.start_sub:
+                        # So we can start at some point in the process, useful to recover from interrupts
                         print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
                         self.process_request_table(act_table,
-                                               sub_table,
-                                               after,
-                                               project_uuid)
+                                                   sub_table,
+                                                   after,
+                                                   project_uuid)
                         self.start_table = False
                         self.start_sub = False
+                    else:
+                        print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
 
     def process_request_table(self, act_table,
                               sub_table,
