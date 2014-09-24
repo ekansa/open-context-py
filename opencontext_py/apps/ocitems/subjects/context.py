@@ -52,10 +52,11 @@ class SubjectGeneration():
                 manifest_subjects = False
         return manifest_subjects
 
-    def generate_context_path(self, uuid, include_self=True, delim='/'):
+    def generate_context_path(self, uuid, include_self=True):
         """
         generates a context path for a subject with a given uuid
         """
+        delim = Subject.HIEARCHY_DELIM
         path = False
         act_contain = Containment()
         act_contain.contexts = []

@@ -8,6 +8,7 @@ from django.db import models
 # The main dependency for this app is for OCitems, which are used to generate
 # Every type of item in Open Context, including subjects
 class Subject(models.Model):
+    HIEARCHY_DELIM = '/'
     uuid = models.CharField(max_length=50, primary_key=True)
     hash_id = models.CharField(max_length=50, unique=True)
     project_uuid = models.CharField(max_length=50)

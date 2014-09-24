@@ -58,6 +58,7 @@ class ImportRecords():
                     imp_cell.field_num = int(float(field_num))
                     imp_cell.fl_uuid = False
                     imp_cell.l_uuid = False
+                    imp_cell.cell_ok = True  # default to Import OK
                     imp_cell.record = str(cell_value)
                     imp_cell.save()
             self.make_or_preserve_obsolete_uuids()
