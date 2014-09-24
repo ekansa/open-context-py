@@ -187,12 +187,15 @@ class CandidateSubject():
     def match_against_subjects(self, context):
         """ Checks to see if the item exists in the subjects table """
         match_found = False
-        subject_match = Subject.objects\
-                               .filter(project_uuid=self.project_uuid,
-                                       context=context)[:1]
-        if len(subject_match) > 0:
+        hash_id = Subject.make_hash_id(self.project_uuid, context)
+        try:
+            subject_match = Subject.objects\
+                                   .get(hash_id=hash_id)
+        except Subject.DoesNotExist:
+            subject_match = False
+        if subject_match is not False:
             match_found = True
-            self.uuid = subject_match[0].uuid
+            self.uuid = subject_match.uuid
         return match_found
 
     def match_against_manifest(self, label, class_uri):

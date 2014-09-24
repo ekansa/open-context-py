@@ -16,12 +16,14 @@ class Subject(models.Model):
     context = models.CharField(max_length=400)
     updated = models.DateTimeField(auto_now=True)
 
-    def make_hash_id(self):
+    def make_hash_id(self,
+                     project_uuid,
+                     context):
         """
         creates a hash-id to insure unique combinations of project_uuids and contexts
         """
         hash_obj = hashlib.sha1()
-        concat_string = self.project_uuid + " " + self.context
+        concat_string = project_uuid + " " + context
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
@@ -29,7 +31,8 @@ class Subject(models.Model):
         """
         creates the hash-id on saving to insure a unique subject
         """
-        self.hash_id = self.make_hash_id()
+        self.hash_id = self.make_hash_id(self.project_uuid,
+                                         self.context)
         super(Subject, self).save(*args, **kwargs)
 
     def get_item(self):
