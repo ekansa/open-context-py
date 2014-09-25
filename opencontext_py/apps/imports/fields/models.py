@@ -16,6 +16,7 @@ class ImportField(models.Model):
     field_type = models.CharField(max_length=50)
     field_data_type = models.CharField(max_length=50)
     field_value_cat = models.CharField(max_length=50)
+    obs_num = models.IntegerField()
     label = models.CharField(max_length=200, db_index=True)
     value_prefix = models.CharField(max_length=50)
     unique_count = models.IntegerField()

@@ -39,6 +39,7 @@ class ImportFields():
                 imp_f.source_id = self.source_id
                 imp_f.field_num = col_index
                 imp_f.is_keycell = False
+                imp_f.obs_num = 1
                 imp_f.label = col['name']
                 imp_f.ref_name = col['name']
                 imp_f.ref_orig_name = col['originalName']

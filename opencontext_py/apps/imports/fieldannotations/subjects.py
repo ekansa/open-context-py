@@ -115,6 +115,8 @@ class CandidateSubject():
         self.project_uuid = False
         self.source_id = False
         self.parent_uuid = False
+        self.obs_node = False
+        self.obs_num = 0
         self.parent_context = ''
         self.label_prefix = ''
         self.context = ''
@@ -152,6 +154,26 @@ class CandidateSubject():
                 match_found = self.match_against_mainfest(self.label,
                                                           self.class_uri)
         self.update_import_cell_uuid()
+        self.add_contain_assertion()
+
+    def add_contain_assertion(self):
+        """ Adds a containment assertion for the new subject item """
+        if self.allow_new\
+           and self.parent_uuid is not False\
+           and self.uuid is not False:
+            new_ass = Assertion()
+            new_ass.uuid = self.parent_uuid
+            new_ass.subject_type = 'subjects'
+            new_ass.project_uuid = self.project_uuid
+            new_ass.source_id = self.source_id
+            new_ass.obs_node = self.obs_node
+            new_ass.obs_num = self.obs_num
+            new_ass.sort = 1
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
+            new_ass.object_uuid = self.uuid
+            new_ass.object_type = 'subjects'
+            new_ass.save()
 
     def create_subject_item(self):
         """ Create and save a new subject object"""
