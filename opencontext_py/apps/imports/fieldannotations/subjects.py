@@ -32,24 +32,70 @@ class ProcessSubjects():
         if root_subject_field is not False:
             pass
 
-    def get_distinct_field_subjects(self, field_num, in_rows=False):
+    def process_field_hierarchy(self,
+                                field_num,
+                                parent_uuid=False,
+                                parent_context='',
+                                in_rows=False):
+        distinct_records = self.get_field_records(field_num,
+                                                  in_rows)
+        if distinct_records is not False:
+            field_obj = self.subjects_fields[field_num]
+            if field_num == self.root_subject_field and parent_uuid is False:
+                if field_num in self.field_parent_entites:
+                    if self.field_parent_entities[field_num] is not False:
+                        parent_uuid = self.field_parent_entities[field_num].uuid
+                        parent_context = self.field_parent_entities[field_num].context
+            for rec_hash, dist_rec in distinct_records.items():
+                cs = CandidateSubject()
+                cs.project_uuid = self.project_uuid
+                cs.source_id = self.source_id
+                cs.obs_node = 'obs-' + str(field_obj.obs_num)
+                cs.obs_num = field_obj.obs_num
+                cs.parent_context = parent_context
+                cs.patent_uuid = parent_uuid
+                cs.label_prefix = field_obj.label_prefix
+                cs.allow_new = True  # allow new because it is a hierarchic field
+                cs.class_uri = field_obj.class_uri
+                cs.import_rows = dist_rec['rows']
+                cs.reconcile_item(dist_rec['imp_cell_obj'])
+                if cs.uuid is not False:
+                    if field_num in self.contain_ordered_subjects:
+                        if self.contain_ordered_subjects[field_num] is not False:
+                            # subject entity successfully reconciled or created
+                            # now process next level down in hierarchy, if it exists
+                            self.process_field_hierarchy(self.contain_ordered_subjects[field_num],
+                                                         cs.uuid,
+                                                         cs.context,
+                                                         dist_rec['imp_cell_obj'])
+
+    def get_field_records(self,
+                          field_num,
+                          in_rows=False):
+        """ Gets dict object of unique field records, dict has a
+            list of row_nums where each unique record value appears """
+        distinct_records = False
         if in_rows is False:
             field_cells = ImportCell.objects\
-                                    .order_by()\
                                     .filter(source_id=self.source_id,
-                                            field_num=field_num,
+                                            field_num=self.field_num,
                                             row_num_gte=self.start_row,
-                                            row_num_lt=self.end_row)\
-                                    .distinct('rec_hash')
+                                            row_num_lt=self.end_row)
         else:
             field_cells = ImportCell.objects\
                                     .order_by()\
                                     .filter(source_id=self.source_id,
-                                            field_num=field_num,
-                                            row_num__in=in_rows)\
-                                    .distinct('rec_hash')
+                                            field_num=self.field_num,
+                                            row_num__in=in_rows)
         if len(field_cells) > 0:
-            pass
+            distinct_records = {}
+            for cell in field_cells:
+                # iterate through cells to get list of row_nums for each distinct value
+                if cell.rec_hash is not in distinct_records:
+                    distinct_records[cell.rec_hash]['rows'] = []
+                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
+                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
+        return distinct_records
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy
@@ -97,14 +143,34 @@ class ProcessSubjects():
                                                    predicate_rel=ImportFieldAnnotation.PRED_CONTAINED_IN)[:1]
         if len(parent_anno) > 0:
             ent = Entity()
+            ent.get_context = True
             found = ent.dereference(parent_anno[0].object_uuid)
             if found:
                 self.field_parent_entites[field_num] = ent
 
-    def get_subject_fields(self):
-        sub_fields = ImportField.objects\
-                                .filter(source_id=self.source_id,
-                                        field_type='subjects')
+    def get_field_subjects(self):
+        distinct_records = False
+        if self.in_rows is False:
+            field_cells = ImportCell.objects\
+                                    .filter(source_id=self.source_id,
+                                            field_num=self.field_num,
+                                            row_num_gte=self.start_row,
+                                            row_num_lt=self.end_row)
+        else:
+            field_cells = ImportCell.objects\
+                                    .order_by()\
+                                    .filter(source_id=self.source_id,
+                                            field_num=self.field_num,
+                                            row_num__in=self.in_rows)
+        if len(field_cells) > 0:
+            distinct_records = {}
+            for cell in field_cells:
+                # iterate through cells to get list of row_nums for each distinct value
+                if cell.rec_hash is not in distinct_records:
+                    distinct_records[cell.rec_hash]['rows'] = []
+                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
+                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
+        return distinct_records
 
 
 class CandidateSubject():
@@ -148,6 +214,7 @@ class CandidateSubject():
                 # the fl_uuid for the ImportCell reflects unique entities in a field, since
                 # uniqueness depends on context (values in other cells)
                 self.uuid = GenUUID.uuid4()
+                self.create_subject_item()
         else:
             if self.label is not False:
                 # only allow matches on non-blank items when not creating a record
@@ -204,7 +271,16 @@ class CandidateSubject():
             else:
                 # update all the import cells in the list of rows
                 # to have the relevant uuid
-                pass
+                self.imp_cell_obj.fl_uuid = self.uuid
+                self.imp_cell_obj.save()
+                up_cells = ImportCell.objects\
+                                     .filter(source_id=self.source_id,
+                                             field_num=self.imp_cell_obj.field_num,
+                                             row_num__in=self.import_rows)
+                for up_cell in up_cells:
+                    # save each cell with the correct UUID
+                    up_cell.fl_uuid = self.uuid
+                    up_cell.save()
 
     def match_against_subjects(self, context):
         """ Checks to see if the item exists in the subjects table """

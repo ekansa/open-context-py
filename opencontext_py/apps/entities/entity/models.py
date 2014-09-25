@@ -32,6 +32,8 @@ class Entity():
         self.comment = False
         self.thumbnail_media = False
         self.get_thumbnail = False
+        self.context = False
+        self.get_context = False
 
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
@@ -97,6 +99,13 @@ class Entity():
                         oc_pred = False
                     if(oc_pred is not False):
                         self.data_type = oc_pred.data_type
+                elif(manifest_item.item_type == 'subjects' and self.get_context):
+                    try:
+                        subj = Subject.objects.get(uuid=manifest_item.uuid)
+                    except Subject.DoesNotExist:
+                        subj = False
+                    if subj is not False:
+                        self.context = subj.context
         return output
 
     def context_dereference(self, context):
