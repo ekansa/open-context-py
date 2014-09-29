@@ -27,16 +27,34 @@ class ProcessSubjects():
         self.end_row = self.batch_size
 
     def process_contained_batch(self):
+        """ processes containment fields for subject
+            entities starting with a given row number.
+            This iterates over all containment fields, starting
+            with the root subjhect field
+        """
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
         if root_subject_field is not False:
-            pass
+            self.process_field_hierarchy(root_subject_field)
 
     def process_field_hierarchy(self,
                                 field_num,
                                 parent_uuid=False,
                                 parent_context='',
                                 in_rows=False):
+        """ processes subject entitites from a given field. takes arguments
+            about:
+            1. field_num (the field to find candidate subject entities)
+            2. parent_uuid (the uuid for the parent / containing subject entity)
+            3. parent_context (the context path of the parent entitiy)
+            4. in_rows (a list of row numbers to search within. this insures
+               that entities are reconciled within contexts so that a
+               Bone 1 in a Locus 1 is noted as different from a Bone 1 in
+               Locus 2)
+
+            Note: this function is recursive and calls itself if the
+            the field_num has child fields.
+        """
         distinct_records = self.get_field_records(field_num,
                                                   in_rows)
         if distinct_records is not False:

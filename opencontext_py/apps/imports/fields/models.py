@@ -7,6 +7,7 @@ class ImportField(models.Model):
     DEFAULT_FIELD_TYPE = 'Type not assigned'
     DEFAULT_DATA_TYPE = ''
     DEFAULT_VALUE_CAT = ''
+
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     field_num = models.IntegerField()

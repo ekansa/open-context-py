@@ -20,5 +20,5 @@ class ImportFieldAnnotation(models.Model):
         unique_together = ('source_id',
                            'field_num',
                            'predicate_rel',
-                           'object_num',
+                           'object_field_num',
                            'object_uuid')
