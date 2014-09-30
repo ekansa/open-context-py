@@ -10,13 +10,17 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 
 # Processes to generate subjects items for an import
 class ProcessSubjects():
 
     def __init__(self, source_id):
-        self.source_id = False
+        self.source_id = source_id
+        pg = ProcessGeneral(source_id)
+        pg.get_source()
+        self.project_uuid = pg.project_uuid
         self.subjects_fields = False
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
@@ -208,7 +212,7 @@ class CandidateSubject():
         self.class_uri = ''
         self.uuid = False  # final, uuid for the item
         self.imp_cell_obj = False  # ImportCell object
-        self.allow_blank = False  # Allow item to be bank
+        self.evenif_blank = False  # Mint a new item even if the record is blank
         self.allow_new = False  # only allow new if item is imported in a hierachy, otherwise match with manifest
         self.import_rows = False  # if a list, then changes to uuids are saved for all rows in this list
 
@@ -218,7 +222,10 @@ class CandidateSubject():
         if len(imp_cell_obj.record) > 0:
             self.label = self.label_prefix + imp_cell_obj.record
         else:
-            if self.allow_blank:
+            pg = ProcessGeneral(self.source_id)
+            self.evenif_blank = pg.check_blank_required(imp_cell_obj.field_num,
+                                                        imp_cell_obj.row_num)
+            if self.evenif_blank:
                 self.label = self.label_prefix + self.DEFAULT_BLANK
         if self.allow_new and self.label is not False:
             # Only create a new item if it is allowed and if the label is not false
