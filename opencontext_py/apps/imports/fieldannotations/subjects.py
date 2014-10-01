@@ -100,14 +100,14 @@ class ProcessSubjects():
         if in_rows is False:
             field_cells = ImportCell.objects\
                                     .filter(source_id=self.source_id,
-                                            field_num=self.field_num,
-                                            row_num_gte=self.start_row,
-                                            row_num_lt=self.end_row)
+                                            field_num=field_num,
+                                            row_num__gte=self.start_row,
+                                            row_num__lt=self.end_row)
         else:
             field_cells = ImportCell.objects\
                                     .order_by()\
                                     .filter(source_id=self.source_id,
-                                            field_num=self.field_num,
+                                            field_num=field_num,
                                             row_num__in=in_rows)
         if len(field_cells) > 0:
             distinct_records = {}
