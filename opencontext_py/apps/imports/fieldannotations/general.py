@@ -9,7 +9,7 @@ from opencontext_py.apps.imports.records.models import ImportCell
 class ProcessGeneral():
 
     def __init__(self, source_id):
-        self.source_id = False
+        self.source_id = source_id
         self.project_uuid = False
         self.fields = False
 
@@ -25,7 +25,7 @@ class ProcessGeneral():
             output = True
         return output
 
-    def check_blank_required(self
+    def check_blank_required(self,
                              field_num,
                              row_num):
         """ Checks to see if a given record

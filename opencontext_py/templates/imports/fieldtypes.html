@@ -1,0 +1,59 @@
+{% extends 'imports.html' %}
+<!DOCTYPE html>
+
+{% block itemcontent %}
+     <div class="row">
+         <div class="col-sm-12">
+            <h2>Classify Fields</h2>
+         </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-8">
+            <table id="fieldstab" class="table table-condensed table-hover">
+                <thead>
+                    <th>Number</th>
+                    <th>Label</th>
+                    <th>Source Label</th>
+                    <th>Type</th>
+                    <th>Data Type</th>
+                </thead>
+                <tbody id="fieldtabfields">
+                {% for field in ip.fields %}
+                    <tr id="field-num-{{ field.field_num }}">
+                        <td>{{ field.field_num }}</td>
+                        <td>{{ field.label }}</td>
+                        <td>{{ field.ref_name }}</td>
+                        <td>{{ field.field_type }}</td>
+                        <td>{{ field.data_type }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Field Types</h4>
+                </div>
+                <div class="panel-body">
+                    <ul>
+                        <li><a href="javascript:assignType('subjects')">Subjects</a></li>
+                        <li><a href="javascript:assignType('media')">Media</a></li>
+                        <li><a href="javascript:assignType('documents')">Documents</a></li>
+                        <li><a href="javascript:assignType('persons')">Persons</a></li>
+                        <li><a href="javascript:assignType('description')">Description</a></li>
+                        <li><a href="javascript:assignType('relation')">Linking Relation</a></li>
+                        <li><a href="javascript:assignType('variable')">Variable</a></li>
+                        <li><a href="javascript:assignType('value')">Value</a></li>
+                        <li><a href="javascript:assignType('lat')">Latitude</a></li>
+                        <li><a href="javascript:assignType('lon')">Longitude</a></li>
+                        <li><a href="javascript:assignType('early')">Date Early</a></li>
+                        <li><a href="javascript:assignType('late')">Date Late</a></li>
+                        <li><strong><a href="javascript:assignType('ignore')">Ignore</a></strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>    
+    </div>
+    <script src="../../static/oc/js/imports/classify.js"></script>
+{% endblock %} 

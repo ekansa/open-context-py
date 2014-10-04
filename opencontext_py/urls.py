@@ -12,7 +12,7 @@ from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
-
+from opencontext_py.apps.imports.fields import views as Imp_fields
 
 urlpatterns = patterns('',
                        # Examples:
@@ -49,6 +49,11 @@ urlpatterns = patterns('',
                        url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
                        url(r'^types', OCtypeViews.index, name='types_index'),
+                       # Importer views for controlled vocabulary entities from OC contributors
+                       url(r'^imports/field-types/(?P<source_id>\S+)', Imp_fields.field_types,
+                           name='imp_field_types'),
+                       url(r'^imports/field-classify', Imp_fields.field_classify,
+                           name='imp_field_classify'),
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

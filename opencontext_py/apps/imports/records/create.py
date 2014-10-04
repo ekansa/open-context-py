@@ -17,14 +17,14 @@ class ImportRecords():
         self.project_uuid = False
         self.related_fields = {}
 
-    def gen_obsolute_source_id(self):
+    def gen_obsolete_source_id(self):
         self.obsolete_source_id = 'obs-' + self.source_id
 
     def import_refine(self, refine_project):
         """ Saves data from a refine project, including schema """
         r_api = RefineAPI(refine_project)
         self.source_id = r_api.source_id
-        self.gen_obsolute_source_id()
+        self.gen_obsolete_source_id()
         imp_f = ImportFields()
         imp_f.source_id = self.source_id
         imp_f.project_uuid = self.project_uuid
