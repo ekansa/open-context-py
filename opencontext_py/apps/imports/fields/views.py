@@ -1,18 +1,20 @@
 import json
 from django.http import HttpResponse, Http404
 from opencontext_py.apps.imports.fields.templating import ImportProfile
+from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import RequestContext, loader
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 
-# A subject is a generic item that is the subbject of observations
-# A subject is the main type of record in open context for analytic data
-# The main dependency for this app is for OCitems, which are used to generate
-# Every type of item in Open Context, including subjects
+# These views display an HTML form for classifying import fields,
+# and handles AJAX requests / responses to change classifications
 def index(request):
     return HttpResponse("Hello, world. You're at the imports fields index.")
 
 
+@ensure_csrf_cookie
 def field_types(request, source_id):
+    """ Show HTML form listing fields classified by field type """
     ip = ImportProfile(source_id)
     if ip.project_uuid is not False:
         ip.get_fields()
@@ -24,12 +26,22 @@ def field_types(request, source_id):
         raise Http404
 
 
-def field_classify(request):
-    ip = ImportProfile()
-    if ip.project_uuid is not False:
-        ip.get_fields()
-        context = RequestContext(request,
-                                 {'ip': ip})
-        return HttpResponse(template.render(context))
+def field_classify(request, source_id):
+    """ Classifies one or more fields with posted data """
+    if request.method == 'POST':
+        ip = ImportProfile(source_id)
+        if ip.project_uuid is not False:
+            ifd = ImportFieldDescribe(source_id)
+            if 'field_type' in request.POST and 'field_num' in request.POST:
+                ifd.updated_field_type(request.POST['field_type'],
+                                       request.POST['field_num'])
+            ip.get_fields(ifd.field_num_list)
+            json_output = json.dumps(ip.jsonify_fields(),
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            raise Http404
     else:
-        raise Http404
+        return HttpResponseForbidden

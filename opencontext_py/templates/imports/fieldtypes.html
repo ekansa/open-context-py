@@ -8,29 +8,33 @@
          </div>
      </div>
      <div class="row">
-        <div class="col-sm-8">
-            <table id="fieldstab" class="table table-condensed table-hover">
+        <div class="col-sm-9">
+            <table id="fieldstabhead" class="table table-condensed table-hover">
                 <thead>
-                    <th>Number</th>
-                    <th>Label</th>
-                    <th>Source Label</th>
-                    <th>Type</th>
-                    <th>Data Type</th>
+                    <th class="col-sm-2">Number</th>
+                    <th class="col-sm-3">Label</th>
+                    <th class="col-sm-3">Source Label</th>
+                    <th class="col-sm-2">Type</th>
+                    <th class="col-sm-2">Data Type</th>
                 </thead>
+            </table>
+            <div style="overflow-y:auto; max-height:500px;">    
+            <table id="fieldstab" class="table table-condensed table-hover">
                 <tbody id="fieldtabfields">
                 {% for field in ip.fields %}
                     <tr id="field-num-{{ field.field_num }}">
-                        <td>{{ field.field_num }}</td>
-                        <td>{{ field.label }}</td>
-                        <td>{{ field.ref_name }}</td>
-                        <td>{{ field.field_type }}</td>
-                        <td>{{ field.data_type }}</td>
+                        <td class="col-sm-2">{{ field.field_num }}</td>
+                        <td class="col-sm-3">{{ field.label }}</td>
+                        <td class="col-sm-3">{{ field.ref_name }}</td>
+                        <td id="field-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_type }}</td>
+                        <td id="field-data-type-{{ field.field_num }}" class="col-sm-2">{{ field.data_type }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            </div>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title">Field Types</h4>

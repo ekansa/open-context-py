@@ -52,7 +52,7 @@ urlpatterns = patterns('',
                        # Importer views for controlled vocabulary entities from OC contributors
                        url(r'^imports/field-types/(?P<source_id>\S+)', Imp_fields.field_types,
                            name='imp_field_types'),
-                       url(r'^imports/field-classify', Imp_fields.field_classify,
+                       url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
                            name='imp_field_classify'),
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
