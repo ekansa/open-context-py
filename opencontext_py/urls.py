@@ -52,6 +52,8 @@ urlpatterns = patterns('',
                        # Importer views for controlled vocabulary entities from OC contributors
                        url(r'^imports/field-types/(?P<source_id>\S+)', Imp_fields.field_types,
                            name='imp_field_types'),
+                       url(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_fields.field_types_more,
+                           name='imp_field_types_more'),
                        url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
                            name='imp_field_classify'),
                        url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,

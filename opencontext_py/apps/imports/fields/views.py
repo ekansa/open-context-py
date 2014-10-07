@@ -18,10 +18,28 @@ def field_types(request, source_id):
     ip = ImportProfile(source_id)
     if ip.project_uuid is not False:
         ip.get_fields()
-        template = loader.get_template('imports/fieldtypes.html')
+        template = loader.get_template('imports/field-types.html')
         context = RequestContext(request,
                                  {'ip': ip})
         return HttpResponse(template.render(context))
+    else:
+        raise Http404
+
+
+@ensure_csrf_cookie
+def field_types_more(request, source_id):
+    """ Show HTML form further classifying subject fields """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_subject_type_fields()
+        if len(ip.fields) > 0:
+            template = loader.get_template('imports/field-types-more.html')
+            context = RequestContext(request,
+                                     {'ip': ip})
+            return HttpResponse(template.render(context))
+        else:
+            redirect = '../../imports/field-types/' + source_id
+            return HttpResponseRedirect(redirect)
     else:
         raise Http404
 

@@ -1,0 +1,61 @@
+{% extends 'imports.html' %}
+<!DOCTYPE html>
+
+{% block itemcontent %}
+     <div class="row">
+         <div class="col-sm-9">
+            <h2>Classify Fields with Described Entities</h2>
+         </div>
+         <div class="col-sm-3">
+            <ul class="pagination">
+                <li><a href="../../imports/field-types/{{ ip.source_id }}">Previous</a></li>
+                <li><a href="#">Next</a></li>
+              </ul>
+         </div>
+     </div>
+     <div class="row">
+        <div class="col-sm-9">
+            <table id="fieldstabhead" class="table table-condensed table-hover">
+                <thead>
+                    <th class="col-sm-1">Number</th>
+                    <th class="col-sm-2">Label</th>
+                    <th class="col-sm-2">Value Label Prefix</th>
+                    <th class="col-sm-2">Example Entities</th>
+                    <th class="col-sm-2">Type</th>
+                    <th class="col-sm-3">Value Category</th>
+                </thead>
+            </table>
+            <div style="overflow-y:auto; max-height:500px;">    
+            <table id="fieldstab" class="table table-condensed table-hover">
+                <tbody id="fieldtabfields">
+                {% for field in ip.fields %}
+                    <tr id="field-num-{{ field.field_num }}">
+                        <td class="col-sm-1">{{ field.field_num }}</td>
+                        <td class="col-sm-2">{{ field.label }}</td>
+                        <td class="col-sm-2"><input id="field-value-prefix-{{ field.field_num }}" value="{{ field.value_prefix }}" type="text" onchange="javascript:assignFieldValuePrefix({{ field.field_num }});"/></td>
+                        <td id="field-value-examples-{{ field.field_num }}" class="col-sm-2">{{ field.ex_csv }}</td>
+                        <td class="col-sm-2">{{ field.field_type }}</td>
+                        <td id="field-value-cat-{{ field.field_num }}" class="col-sm-3">{{ field.field_value_cat }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Open Context Item Categories</h4>
+                </div>
+                <div class="panel-body">
+                    <h5><span id="s-cat-label">Selected Category</span><span class="badge" id="s-cat-uri">-</span></h5>
+                    <input id="s-cat-input" type="text" value="" />
+                    <ul id="cat-list">
+                        
+                    </ul>
+                </div>
+            </div>
+        </div>    
+    </div>
+    <script src="../../static/oc/js/imports/fields-classify-2.js"></script>
+{% endblock %} 
