@@ -35,6 +35,9 @@ def field_classify(request, source_id):
             if 'field_type' in request.POST and 'field_num' in request.POST:
                 ifd.updated_field_type(request.POST['field_type'],
                                        request.POST['field_num'])
+            elif 'field_data_type' in request.POST and 'field_num' in request.POST:
+                ifd.updated_field_data_type(request.POST['field_data_type'],
+                                            request.POST['field_num'])
             ip.get_fields(ifd.field_num_list)
             json_output = json.dumps(ip.jsonify_fields(),
                                      indent=4,
