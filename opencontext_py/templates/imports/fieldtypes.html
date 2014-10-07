@@ -24,7 +24,7 @@
                 {% for field in ip.fields %}
                     <tr id="field-num-{{ field.field_num }}">
                         <td class="col-sm-2">{{ field.field_num }}</td>
-                        <td class="col-sm-3">{{ field.label }}</td>
+                        <td class="col-sm-3"><input id="field-label-{{ field.field_num }}" value="{{ field.label }}" type="text" onchange="javascript:assignFieldLabel({{ field.field_num }});"/></td>
                         <td class="col-sm-3">{{ field.ref_name }}</td>
                         <td id="field-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_type }}</td>
                         <td id="field-data-type-{{ field.field_num }}" class="col-sm-2">{{ field.data_type }}</td>

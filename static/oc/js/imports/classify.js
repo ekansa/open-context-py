@@ -77,3 +77,32 @@ function assignDataTypeDone(data){
 		ft_dom.innerHTML = data[i].field_data_type
 	}
 }
+
+function assignFieldLabel(field_num) {
+	/* Composes request to add a field_type to a selected list of rows 
+	*/
+	var fl_domID = "field-label-" + field_num;
+	var label = document.getElementById(fl_domID).value;
+	url = "../../imports/field-meta-update/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			label: label,
+			field_num: field_num,
+			csrfmiddlewaretoken: csrftoken},
+		success: assignDataTypeDone
+	});	
+}
+
+function assignFieldLabelDone(data){
+	/* Shows updates to field_data_type */
+	document.focus();
+	for (var i = 0, length = data.length; i < length; i++) {
+		var field_num = data[i].field_num
+		var ft_dom_id = 'field-label-' + field_num
+		var ft_dom = document.getElementById(ft_dom_id)
+		ft_dom.value = data[i].label
+	}
+}

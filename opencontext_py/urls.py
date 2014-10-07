@@ -54,6 +54,8 @@ urlpatterns = patterns('',
                            name='imp_field_types'),
                        url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
                            name='imp_field_classify'),
+                       url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
+                           name='imp_field_meta_update'),
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
