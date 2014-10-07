@@ -26,6 +26,7 @@ class ImportFieldDescribe():
     def update_field_label(self, label, field_num):
         """ Updates field_data_type for a comma-seperated list of field_nums """
         self.get_field_num_list(field_num)
+        label = label.strip()
         ImportField.objects\
                    .filter(field_num__in=self.field_num_list)\
                    .update(label=label)

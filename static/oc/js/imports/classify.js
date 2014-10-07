@@ -52,7 +52,7 @@ function assignTypeDone(data){
 }
 
 function assignDataType(field_data_type) {
-	/* Composes request to add a field_type to a selected list of rows 
+	/* Composes request to add a field_data_type to a selected list of rows 
 	*/
 	var selected_fields = getSelectedFieldNumbers();
 	url = "../../imports/field-classify/" + encodeURIComponent(source_id);
@@ -79,7 +79,7 @@ function assignDataTypeDone(data){
 }
 
 function assignFieldLabel(field_num) {
-	/* Composes request to add a field_type to a selected list of rows 
+	/* Composes request to change field label for a field_num 
 	*/
 	var fl_domID = "field-label-" + field_num;
 	var label = document.getElementById(fl_domID).value;
@@ -97,7 +97,7 @@ function assignFieldLabel(field_num) {
 }
 
 function assignFieldLabelDone(data){
-	/* Shows updates to field_data_type */
+	/* Shows updates to field_label */
 	document.focus();
 	for (var i = 0, length = data.length; i < length; i++) {
 		var field_num = data[i].field_num
