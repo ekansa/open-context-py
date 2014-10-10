@@ -18,7 +18,7 @@ from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 class ImportProfile():
 
     DEFAULT_SUBJECT_TYPE_FIELDS = ['subjects',
-                                   'meddia',
+                                   'media',
                                    'documents',
                                    'persons',
                                    'projects']
@@ -62,6 +62,16 @@ class ImportProfile():
             field_obj.examples = self.get_example_entities(field_obj.field_num,
                                                            field_obj.value_prefix)
             field_obj.ex_csv = ', '.join(field_obj.examples)
+            if len(field_obj.field_value_cat) > 0:
+                ent = Entity()
+                ent.get_icon = True
+                found = ent.dereference(field_obj.field_value_cat)
+                if found:
+                    field_obj.field_value_cat_label = ent.label
+                    field_obj.field_value_cat_icon = ent.icon
+            else:
+                field_obj.field_value_cat_icon = False
+                field_obj.field_value_cat_label = ''
             self.fields.append(field_obj)
 
     def get_example_entities(self, field_num, value_prefix):
@@ -109,5 +119,12 @@ class ImportProfile():
                 field_dict['examples'] = self.get_example_entities(field_obj.field_num,
                                                                    field_obj.value_prefix)
                 field_dict['ex_csv'] = ', '.join(field_dict['examples'])
+                if len(field_obj.field_value_cat) > 0:
+                    ent = Entity()
+                    ent.get_icon = True
+                    found = ent.dereference(field_obj.field_value_cat)
+                    if found:
+                        field_dict['field_value_cat_label'] = ent.label
+                        field_dict['field_value_cat_icon'] = ent.icon
             output.append(field_dict)
         return output

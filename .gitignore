@@ -8,6 +8,7 @@ db-logs/
 static/exports/
 static/bootstrap/
 static/jquery/
+static/angularjs/
 *.pyc
 solr-config/schema.xml.old
 secrets*

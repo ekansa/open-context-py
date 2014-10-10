@@ -12,6 +12,7 @@ from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
+from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.imports.fields import views as Imp_fields
 
 urlpatterns = patterns('',
@@ -58,6 +59,9 @@ urlpatterns = patterns('',
                            name='imp_field_classify'),
                        url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
                            name='imp_field_meta_update'),
+                       url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
+                           name='entity_hierarchy_children'),
+                       # Admin route
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

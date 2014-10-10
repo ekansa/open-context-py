@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -34,6 +35,8 @@ class Entity():
         self.get_thumbnail = False
         self.context = False
         self.get_context = False
+        self.get_icon = False
+        self.icon = False
 
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
@@ -63,6 +66,15 @@ class Entity():
                         vocab_entity = False
                     if(vocab_entity is not False):
                         self.vocabulary = vocab_entity.label
+                    if self.get_icon:
+                        prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
+                        icon_anno = LinkAnnotation.objects\
+                                                  .filter(Q(subject=ld_entity.uri)
+                                                          | Q(subject=identifier)
+                                                          | Q(subject=prefix_uri),
+                                                          predicate_uri='oc-gen:hasIcon')[:1]
+                        if len(icon_anno) > 0:
+                            self.icon = icon_anno[0].object_uri
                 else:
                     try_manifest = True
                     # couldn't find the item in the linked entities table

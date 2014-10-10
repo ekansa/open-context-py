@@ -29,13 +29,33 @@
             <table id="fieldstab" class="table table-condensed table-hover">
                 <tbody id="fieldtabfields">
                 {% for field in ip.fields %}
-                    <tr id="field-num-{{ field.field_num }}">
+                    <tr id="field-num-{{ field.field_num }}" onclick="javascript:getTypeHierarchy({{ field.field_num }});">
                         <td class="col-sm-1">{{ field.field_num }}</td>
                         <td class="col-sm-2">{{ field.label }}</td>
-                        <td class="col-sm-2"><input id="field-value-prefix-{{ field.field_num }}" value="{{ field.value_prefix }}" type="text" onchange="javascript:assignFieldValuePrefix({{ field.field_num }});"/></td>
-                        <td id="field-value-examples-{{ field.field_num }}" class="col-sm-2">{{ field.ex_csv }}</td>
-                        <td class="col-sm-2">{{ field.field_type }}</td>
-                        <td id="field-value-cat-{{ field.field_num }}" class="col-sm-3">{{ field.field_value_cat }}</td>
+                        <td class="col-sm-2"><input id="field-value-prefix-{{ field.field_num }}"
+                                                    value="{{ field.value_prefix }}"
+                                                    type="text"
+                                                    onblur="javascript:assignFieldValuePrefix({{ field.field_num }});"
+                                                    style="width:80%;"
+                                                    /></td>
+                        <td class="col-sm-2"><samp id="field-value-examples-{{ field.field_num }}">{{ field.ex_csv }}</samp></td>
+                        <td class="col-sm-2" id="field-type-{{ field.field_num }}">{{ field.field_type }}</td>
+                        <td class="col-sm-3">
+                            <div class="container-fluid">
+                                <div class="row subject-list-row">
+                                    <div class="col-sm-3" id="field-val-cat-icon-{{ field.field_num }}">
+                                        {% if field.field_value_cat_icon != False %}
+                                        <img src="{{ field.field_value_cat_icon }}" alt="Item category icon" />
+                                        {%endif%}
+                                    </div>
+                                    <div class="col-sm-9">
+                                        <span id="field-value-cat-label-{{ field.field_num }}">{{ field.field_value_cat_label }}</span>
+                                        <br/>
+                                        <samp><small id="field-value-cat-id-{{ field.field_num }}">{{ field.field_value_cat }}</small></samp>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -43,19 +63,27 @@
             </div>
         </div>
         <div class="col-sm-3">
-            <div class="panel panel-default">
+            <div class="panel panel-default" ng-app="TreeApp">
                 <div class="panel-heading">
                     <h4 class="panel-title">Open Context Item Categories</h4>
                 </div>
-                <div class="panel-body">
-                    <h5><span id="s-cat-label">Selected Category</span><span class="badge" id="s-cat-uri">-</span></h5>
-                    <input id="s-cat-input" type="text" value="" />
-                    <ul id="cat-list">
-                        
-                    </ul>
+                <div class="panel-body" ng-controller="TreeController">
+                    <div class="container-fluid">
+                        <div class="row subject-list-row" onclick="javascript:assignEntityCategory();">
+                            <div class="col-sm-3" id="tree-sel-icon"></div>
+                            <div class="col-sm-9">
+                                <span id="tree-sel-label"></span>
+                                <br/>
+                                <samp><small id="tree-sel-id"></small></samp>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="background:whitesmoke;border:1px solid lightgray;border-radius:5px;">
+                        <abn-tree id="type-hierarchy" tree-data="tree_data" tree-control="my_tree" on-select="my_tree_handler(branch)" expand-level="2"></abn-tree>
+                    </div>
                 </div>
             </div>
-        </div>    
+        </div>
+        <script src="../../static/oc/js/imports/fields-classify-more.js"></script>
     </div>
-    <script src="../../static/oc/js/imports/fields-classify-2.js"></script>
 {% endblock %} 

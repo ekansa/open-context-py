@@ -77,7 +77,13 @@ def field_meta_update(request, source_id):
             if 'label' in request.POST and 'field_num' in request.POST:
                 ifd.update_field_label(request.POST['label'],
                                        request.POST['field_num'])
-            ip.get_fields(ifd.field_num_list)
+            elif 'value_prefix' in request.POST and 'field_num' in request.POST:
+                ifd.update_field_value_prefix(request.POST['value_prefix'],
+                                              request.POST['field_num'])
+            elif 'field_value_cat' in request.POST and 'field_num' in request.POST:
+                ifd.update_field_value_cat(request.POST['field_value_cat'],
+                                           request.POST['field_num'])
+            ip.get_subject_type_fields()
             json_output = json.dumps(ip.jsonify_fields(),
                                      indent=4,
                                      ensure_ascii=False)
