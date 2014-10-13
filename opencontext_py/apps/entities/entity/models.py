@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -37,6 +38,7 @@ class Entity():
         self.get_context = False
         self.get_icon = False
         self.icon = False
+        self.ids_meta = False
 
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
@@ -130,4 +132,117 @@ class Entity():
         if subject is not False:
             if len(subject) == 1:
                 output = self.dereference(subject[0].uuid)
+        return output
+
+    def search(self,
+               qstring,
+               item_type=False,
+               class_uri=False,
+               project_uuid=False,
+               vocab_uri=False):
+        """ Searches for entities limited by query strings
+            and optionally other criteria
+        """
+        entity_list = []
+        manifest_list = []
+        if item_type is False and class_uri is False\
+           and project_uuid is False and vocab_uri is False:
+            """ Search all types of entities, only limit by string matching """
+            entity_list = LinkEntity.objects\
+                                    .filter(Q(uri__icontains=qstring)\
+                                            | Q(slug__icontains=qstring)\
+                                            | Q(label__icontains=qstring)\
+                                            | Q(alt_label__icontains=qstring))[:10]
+            manifest_list = Manifest.objects\
+                                    .filter(Q(uuid__icontains=qstring)\
+                                            | Q(slug__icontains=qstring)\
+                                            | Q(label__icontains=qstring))[:10]
+        elif item_type == 'uri' and class_uri is False\
+                and project_uuid is False and vocab_uri is False:
+            """ Search for link entities only limit by string matching """
+            entity_list = LinkEntity.objects\
+                                    .filter(Q(uri__icontains=qstring)\
+                                            | Q(slug__icontains=qstring)\
+                                            | Q(label__icontains=qstring)\
+                                            | Q(alt_label__icontains=qstring))[:15]
+        elif item_type is not False and item_type != 'uri':
+            """ Look only for manifest items """
+            if class_uri is False and project_uuid is False:
+                manifest_list = Manifest.objects\
+                                        .filter(item_type=item_type)\
+                                        .filter(Q(uuid__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring))[:15]
+            elif class_uri is not False and project_uuid is False:
+                manifest_list = Manifest.objects\
+                                        .filter(item_type=item_type,
+                                                class_uri=class_uri)\
+                                        .filter(Q(uuid__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring))[:15]
+            elif class_uri is False and project_uuid is not False:
+                manifest_list = Manifest.objects\
+                                        .filter(item_type=item_type,
+                                                project_uuid=project_uuid)\
+                                        .filter(Q(uuid__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring))[:15]
+        elif item_type is False and project_uuid is not False:
+            manifest_list = Manifest.objects\
+                                    .filter(project_uuid=project_uuid)\
+                                    .filter(Q(uuid__icontains=qstring)\
+                                            | Q(slug__icontains=qstring)\
+                                            | Q(label__icontains=qstring))[:10]
+        self.ids_meta = {}
+        output = []
+        for link_entity in entity_list:
+            item = LastUpdatedOrderedDict()
+            item['id'] = link_entity.uri
+            item['label'] = link_entity.label
+            item['slug'] = link_entity.slug
+            item['type'] = 'uri'
+            item['class_uri'] = False
+            item['partOf_id'] = link_entity.vocab_uri
+            item['partOf_label'] = self.get_link_entity_label(link_entity.vocab_uri)
+            output.append(item)
+        for man_entity in manifest_list:
+            item = LastUpdatedOrderedDict()
+            item['id'] = man_entity.uuid
+            item['label'] = man_entity.label
+            item['slug'] = man_entity.slug
+            item['type'] = man_entity.item_type
+            item['class_uri'] = man_entity.class_uri
+            item['partOf_id'] = man_entity.project_uuid
+            item['partOf_label'] = self.get_manifest_label(man_entity.project_uuid)
+            output.append(item)
+        return output
+
+    def get_link_entity_label(self, uri):
+        """ Gets labels for vocabularies """
+        if uri in self.ids_meta:
+            output = self.ids_meta[uri]
+        else:
+            output = False
+            try:
+                link_entity = LinkEntity.objects.get(uri=uri)
+            except LinkEntity.DoesNotExist:
+                link_entity = False
+            if link_entity is not False:
+                output = link_entity.label
+            self.ids_meta[uri] = output
+        return output
+
+    def get_manifest_label(self, uuid):
+        """ Gets labels for items in the manifest """
+        if uuid in self.ids_meta:
+            output = self.ids_meta[uuid]
+        else:
+            output = False
+            try:
+                manifest_item = Manifest.objects.get(uuid=uuid)
+            except Manifest.DoesNotExist:
+                manifest_item = False
+            if manifest_item is not False:
+                output = manifest_item.label
+            self.ids_meta[uuid] = output
         return output

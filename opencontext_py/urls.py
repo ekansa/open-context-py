@@ -61,6 +61,8 @@ urlpatterns = patterns('',
                            name='imp_field_meta_update'),
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
                            name='entity_hierarchy_children'),
+                       url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
+                           name='entity_look_up'),
                        # Admin route
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
