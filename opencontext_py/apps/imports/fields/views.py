@@ -44,6 +44,26 @@ def field_types_more(request, source_id):
         raise Http404
 
 
+@ensure_csrf_cookie
+def field_entity_relations(request, source_id):
+    """ Show HTML form to change relationships for entities
+        to be created / or updated from an import table
+    """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_subject_type_fields()
+        if len(ip.fields) > 0:
+            template = loader.get_template('imports/field-entity-relations.html')
+            context = RequestContext(request,
+                                     {'ip': ip})
+            return HttpResponse(template.render(context))
+        else:
+            redirect = '../../imports/field-types/' + source_id
+            return HttpResponseRedirect(redirect)
+    else:
+        raise Http404
+
+
 def field_classify(request, source_id):
     """ Classifies one or more fields with posted data """
     if request.method == 'POST':

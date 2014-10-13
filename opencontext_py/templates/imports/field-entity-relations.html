@@ -14,7 +14,7 @@
          </div>
      </div>
      <div class="row">
-        <div class="col-sm-6">
+        <div class="col-sm-8">
             <table id="fieldstabhead" class="table table-condensed table-hover">
                 <thead>
                     <th class="col-sm-4">Subject Label</th>
@@ -36,7 +36,7 @@
             </table>
             </div>
         </div>
-        <div class="col-sm-6">
+        <div class="col-sm-4">
             <div class="panel panel-default" ng-app="TreeApp">
                 <div class="panel-heading">
                     <h4 class="panel-title">Containment Hierarchy</h4>
@@ -50,18 +50,53 @@
         </div>
     </div>
     <div class="row">
-        <div class="col-sm-3">
-            <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contains');">Contains</button>
+        <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Add Relationships</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contains');">Contains</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contained-in');">Contained in</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-3');">Links with</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addOtherRel();">Other Relation</button>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-sm-3">
-            <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contained-in');">Contained in</button>
-        </div>
-        <div class="col-sm-3">
-            <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-3');">Links with</button>
-        </div>
-        <div class="col-sm-3">
-            <button type="button" class="btn btn-primary" onclick="javascript:addOtherRel();">Other Relation</button>
+        <div class="col-sm-4">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Enity Lookup</h4>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label for="sel-entity-label" class="col-sm-2 control-label">Label</label>
+                            <input id="sel-entity-label" type="text"  value="Select an entity" readonly/>
+                        </div>
+                        <div class="form-group">
+                            <label for="sel-entity-id" class="col-sm-2 control-label">Label</label>
+                            <input id="sel-entity-id" type="text"  value="Select an entity" readonly/>
+                        </div>
+                        <div class="form-group">
+                            <label for="entity-string" class="col-sm-2 control-label">Search</label>
+                            <input id="entity-string" type="text"  value="" onchange="javascript:searchEntities();" />
+                        </div>
+                    </form>
+                    <ul id="search-entity-list">
+                        
+                    </ul>
+                </div>
+            </div>
         </div>
     </div> 
-    <script src="../../static/oc/js/imports/fields-classify-more.js"></script> 
+    <script src="../../static/oc/js/imports/fields-relations.js"></script> 
 {% endblock %} 
