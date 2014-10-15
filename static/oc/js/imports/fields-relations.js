@@ -56,6 +56,7 @@ function getTypeHierarchyDone(data){
 
 
 function searchEntities(){
+	/* AJAX call to search entities filtered by a search-string */
 	var act_domID = "entity-string";
 	var qstring = document.getElementById(act_domID).value;
 	var searchEntityListDomID = "search-entity-list";
@@ -73,6 +74,7 @@ function searchEntities(){
 
 
 function searchEntitiesDone(data){
+	/* Displays list of entities that meet search criteria */
 	var searchEntityListDomID = "search-entity-list";
 	var searchEntityListDom = document.getElementById(searchEntityListDomID);
 	searchEntityListDom.innerHTML = "";
@@ -84,4 +86,16 @@ function searchEntitiesDone(data){
 		newListItem.innerHTML = entityString;
 		searchEntityListDom.appendChild(newListItem);
 	}
+}
+
+function selectEntity(item_num) {
+	/* Adds selected entity label and ID to the right dom element */
+	var act_domID = "search-entity-id-" + item_num;
+	var item_id = document.getElementById(act_domID).innerHTML;
+	var sel_id_dom = document.getElementById("sel-entity-id");
+	sel_id_dom.value = item_id;
+	act_domID =  "search-entity-label-" + item_num;
+	var item_label = document.getElementById(act_domID).innerHTML;
+	var sel_label_dom = document.getElementById("sel-entity-label");
+	sel_label_dom.value = item_label;
 }

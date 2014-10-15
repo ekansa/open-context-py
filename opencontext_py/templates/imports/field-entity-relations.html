@@ -15,6 +15,41 @@
      </div>
      <div class="row">
         <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Add Relationships</h4>
+                </div>
+                <div class="panel-body">
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contains');">Contains</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contained-in');">Contained in</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-3');">Links with</button>
+                    </div>
+                    <div class="col-sm-3">
+                        <button type="button" class="btn btn-primary" onclick="javascript:addOtherRel();">Other Relation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="panel panel-default" ng-app="TreeApp">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Containment Hierarchy</h4>
+                </div>
+                <div class="panel-body" ng-controller="TreeController">
+                    <div style="background:whitesmoke;border:1px solid lightgray;border-radius:5px;">
+                        <abn-tree id="type-hierarchy" tree-data="tree_data" tree-control="my_tree" on-select="my_tree_handler(branch)" expand-level="2"></abn-tree>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
             <table id="fieldstabhead" class="table table-condensed table-hover">
                 <thead>
                     <th class="col-sm-4">Subject Label</th>
@@ -34,41 +69,6 @@
                 {% endfor %}
                 </tbody>
             </table>
-            </div>
-        </div>
-        <div class="col-sm-4">
-            <div class="panel panel-default" ng-app="TreeApp">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Containment Hierarchy</h4>
-                </div>
-                <div class="panel-body" ng-controller="TreeController">
-                    <div style="background:whitesmoke;border:1px solid lightgray;border-radius:5px;">
-                        <abn-tree id="type-hierarchy" tree-data="tree_data" tree-control="my_tree" on-select="my_tree_handler(branch)" expand-level="2"></abn-tree>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-8">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Add Relationships</h4>
-                </div>
-                <div class="panel-body">
-                    <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contains');">Contains</button>
-                    </div>
-                    <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-gen:contained-in');">Contained in</button>
-                    </div>
-                    <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRel('oc-3');">Links with</button>
-                    </div>
-                    <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addOtherRel();">Other Relation</button>
-                    </div>
-                </div>
             </div>
         </div>
         <div class="col-sm-4">

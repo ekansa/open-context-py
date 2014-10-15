@@ -1,8 +1,10 @@
 from django.db import models
 from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
+from opencontext_py.apps.ocitems.assertions.models import Assertion
 
 
-# Methods to describe import fields
+# Methods to describe import fields and their annotations
 class ImportFieldDescribe():
 
     def __init__(self, source_id):
@@ -56,4 +58,28 @@ class ImportFieldDescribe():
         else:
             self.field_num_list = [field_num]
         return self.field_num_list
+
+    def update_field_containedin_entity(self, field_num, object_uuid):
+        """ gets the project_uuid from the source_id
+        """
+        # delete cases where the another field contains the current field
+        anno_objs = ImportFieldAnnotation.objects\
+                                         .filter(source_id=self.source_id,
+                                                 predicate_rel=Assertion.PREDICATES_CONTAINS,
+                                                 object_field_num=field_num)\
+                                         .delete()
+        # delete cases where the current field is contained in an entity
+        anno_subjs = ImportFieldAnnotation.objects\
+                                          .filter(source_id=self.source_id,
+                                                  predicate_rel=ImportFieldAnnotation.PRED_CONTAINED_IN,
+                                                  field_num=field_num)\
+                                          .delete()
+        ifa = ImportFieldAnnotation()
+        ifa.source_id = self.source_id
+        ifa.project_uuid = self.project_uuid
+        ifa.field_num = field_num
+        ifa.predicate_rel = ImportFieldAnnotation.PRED_CONTAINED_IN
+        ifa.object_field_num = 0
+        ifa.object_uuid = object_uuid
+        ifa.save()
 

@@ -14,6 +14,7 @@ from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.imports.fields import views as Imp_fields
+from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 
 urlpatterns = patterns('',
                        # Examples:
@@ -61,6 +62,8 @@ urlpatterns = patterns('',
                            name='imp_field_classify'),
                        url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
                            name='imp_field_meta_update'),
+                       url(r'^imports/field-annotations/(?P<source_id>\S+)', Imp_field_annos.view,
+                           name='imp_field_annos_view'),
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
                            name='entity_hierarchy_children'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
