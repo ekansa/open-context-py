@@ -99,3 +99,19 @@ function selectEntity(item_num) {
 	var sel_label_dom = document.getElementById("sel-entity-label");
 	sel_label_dom.value = item_label;
 }
+
+function addRelInterface(predicate_id){
+	var title_domID = "myModalLabel";
+	var title_dom = document.getElementById(title_domID);
+	if (predicate_id == "oc-gen:contains") {
+		title_dom.innerHTML = "Add <strong>Containment</strong> Relation";
+	}
+	else if (predicate_id == "oc-gen:contained-in") {
+		title_dom.innerHTML = "Add <strong>Contained in</strong> [a subject entity] Relation";
+	}
+	else{
+		title_dom.innerHTML = "Go away and never come back";
+	}
+	var modal = $("#myModal").modal("show");
+}
+

@@ -29,11 +29,11 @@ class ImportProfile():
         pg.get_source()
         self.project_uuid = pg.project_uuid
         self.fields = []
-        self.field_annotations = []
+        self.raw_field_annotations = []
         self.label = False
         self.has_subjects = False
         self.get_examples = False
-        self.get_annotations = False
+        self.field_annotations = False
 
     def get_fields(self, field_num_list=False):
         """ Gets a list of field objects, limited by a list of field_num if not false """
@@ -95,8 +95,8 @@ class ImportProfile():
         """ get list of annotations on fields """
         anno_list = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id)
-        self.field_annotations = anno_list
-        return self.field_annotations
+        self.raw_field_annotations = anno_list
+        return self.raw_field_annotations
 
     def get_field_object(self, field_num):
         """ gets the field object for a specific field_num """
@@ -113,11 +113,11 @@ class ImportProfile():
         """ makes a list of field annotations with field metadata
            for annotated fields used for a source_id
         """
-        anno_list = []
-        for anno_obj in self.field_annotations:
+        self.field_annotations = []
+        for anno_obj in self.raw_field_annotations:
             anno_dict = self.make_dict_from_anno_obj(anno_obj)
-            anno_list.append(anno_dict)
-        return anno_list
+            self.field_annotations.append(anno_dict)
+        return self.field_annotations
 
     def check_subject_entity_fields(self):
         """ checks to see it there is at least one field that gets
@@ -133,35 +133,39 @@ class ImportProfile():
     def make_dict_from_anno_obj(self, anno_obj):
         """ returns an ordered dict for an import field annotation object """
         anno_dict = LastUpdatedOrderedDict()
-        anno_dict['field_num'] = anno_obj.field_num
+        anno_dict['id'] = anno_obj.id
         sub_field_obj = self.get_field_object(anno_obj.field_num)
         if sub_field_obj is not False:
             anno_dict['subject'] = self.make_dict_from_field_obj(sub_field_obj)
+            anno_dict['subject']['id'] = anno_obj.field_num
         else:
             anno_dict['subject'] = False
-        anno_dict['predicate_rel'] = anno_obj.predicate_rel
+        anno_dict['predicate'] = LastUpdatedOrderedDict()
+        anno_dict['predicate']['id'] = anno_obj.predicate_rel
         ent = Entity()
         found = ent.dereference(anno_obj.predicate_rel)
         if found:
-            anno_dict['predicate_label'] = ent.label
+            anno_dict['predicate']['label'] = ent.label
+        elif anno_obj.predicate_rel == ImportFieldAnnotation.PRED_CONTAINED_IN:
+            anno_dict['predicate']['label'] = 'Contained in'
         else:
-            anno_dict['predicate_label'] = False
-        anno_dict['field_num'] = anno_obj.field_num
-        anno_dict['object_field_num'] = anno_obj.object_field_num
-        anno_dict['object'] = False
-        anno_dict['object_uuid'] = anno_obj.object_uuid
-        anno_dict['object_label'] = False
+            anno_dict['predicate']['label'] = False
         if anno_obj.object_field_num > 0:
-            obj_field_obj = self.get_field_object(anno_obj.field_num)
-            if sub_field_obj is not False:
-                anno_dict['object'] = self.make_dict_from_field_obj(sub_field_obj)
-        elif len(anno_obj.object_uuid) > 1:
+            obj_field_obj = self.get_field_object(anno_obj.object_field_num)
+            anno_dict['object'] = self.make_dict_from_field_obj(obj_field_obj)
+            anno_dict['object']['id'] = anno_obj.object_field_num
+            anno_dict['object']['type'] = 'import-field'
+        else:
+            anno_dict['object'] = LastUpdatedOrderedDict()
+            anno_dict['object']['id'] = anno_obj.object_uuid
             ent = Entity()
             found = ent.dereference(anno_obj.object_uuid)
             if found:
-                anno_dict['object_label'] = ent.label
+                anno_dict['object']['label'] = ent.label
+                anno_dict['object']['type'] = ent.item_type
             else:
-                anno_dict['object_label'] = False
+                anno_dict['object']['label'] = False
+                anno_dict['object']['type'] = False
         return anno_dict
 
     def make_dict_from_field_obj(self, field_obj):

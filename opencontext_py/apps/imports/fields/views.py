@@ -51,8 +51,10 @@ def field_entity_relations(request, source_id):
     """
     ip = ImportProfile(source_id)
     if ip.project_uuid is not False:
-        ip.get_subject_type_fields()
+        ip.get_fields()
         if len(ip.fields) > 0:
+            ip.get_field_annotations()
+            ip.jsonify_field_annotations()
             template = loader.get_template('imports/field-entity-relations.html')
             context = RequestContext(request,
                                      {'ip': ip})
