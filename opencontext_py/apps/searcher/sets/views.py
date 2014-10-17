@@ -3,6 +3,7 @@ from django.http import HttpResponse, Http404
 import django.utils.http as http
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs import viewutilities
 
 
 def index(request):
@@ -14,29 +15,39 @@ def html_view(request, spatial_context=None):
 
 
 def json_view(request, spatial_context=None):
-    # query_params = request.GET
-    query = {}
-    if request.GET.get('q') is None or len(request.GET.get('q')) < 1:
-        query['q'] = '*:*'
-    else:
-        query['q'] = request.GET.get('q')
-    entity = Entity()
+
+    # Connect to Solr
     solr = SolrConnection().connection
+
+    # Start building up our solr query
+    query = {}
+
+    # If the user does not provide a search term, search for everything
+    query['q'] = request.GET.get('q', default='*:*')
+
+    testing = viewutilities._process_spatial_context(spatial_context)
+    return HttpResponse(testing['fq'])
+    # If the user does not provide a spatial context, start at the root context
     if spatial_context is None:
         context_facet_request_field = 'root___context_id'
-        context_list = 'There is\'t one.'
-    # Process the context path
-    # note: the derefencing needs to be able to handle a list since
-    # users can select multiple contexts (with the || operator).
-    # We may need to parse each url into separate urls in order to
-    # dereference 'multi-selected' contexts.
+    # Otherwise, process the context path
     else:
-        context_depth = len(spatial_context.split('/'))
         context_list = []
-        if '||' in spatial_context:
+        # TODO Stopped here
+        test = viewutilities._process_spatial_context(spatial_context)
+        # TODO: raise 404 if valid_context list is empty (or maybe set
+        # spatial context to None)
+        return HttpResponse(test)
+        context_depth = viewutilities._get_context_depth(spatial_context)
 
-            context_list = ['blah']
-            return HttpResponse(context_list)
+        # Prepare to resolve spatial entities
+        entity = Entity()
+
+        context_list = viewutilities._get_context_paths(spatial_context)
+        context_slugs = viewutilities._get_valid_context_slugs(context_list)
+        # context_list = ['blah']
+        # TODO: Stopped above but still testing here
+        return HttpResponse(context_slugs)
         found = entity.context_dereference(
             http.urlunquote_plus(spatial_context))
         if found:
@@ -52,9 +63,10 @@ def json_view(request, spatial_context=None):
         else:
             #  We need the parent slug so we can generate the solr field name
             # for fq requests
+
             # Removes the last part of the path
             parent_path = '/'.join(spatial_context.split('/')[:-1])
-            # Get the parent slug
+            # Use parent_path to get the parent slug
             parent_found = entity.context_dereference(
                 http.urlunquote_plus(parent_path))
             if parent_found:
@@ -69,8 +81,8 @@ def json_view(request, spatial_context=None):
                 #return HttpResponse(str(context_depth) + ' ' + \
                     #str(parent_found) + ' ' + str(parent_slug))
         #context_data['solr_field_name'] = solr_field_name
+
     # build solr query
-    #query['q'] = '*:*'
     query['fl'] = ['uuid', context_facet_request_field]
     query['facet.field'] = context_facet_request_field
     query['facet'] = 'true'
