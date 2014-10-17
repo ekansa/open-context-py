@@ -60,7 +60,8 @@ class ImportFieldDescribe():
         return self.field_num_list
 
     def update_field_containedin_entity(self, field_num, object_uuid):
-        """ gets the project_uuid from the source_id
+        """ Updates a field annotation to make it contained a subject entity (object_uuid)
+            after first deleting other containment annotations
         """
         # delete cases where the another field contains the current field
         anno_objs = ImportFieldAnnotation.objects\
@@ -82,4 +83,12 @@ class ImportFieldDescribe():
         ifa.object_field_num = 0
         ifa.object_uuid = object_uuid
         ifa.save()
+
+    def delete_field_annotation(self, annotation_id):
+        """ Deletes an annotation by its id """
+        annos = ImportFieldAnnotation.objects\
+                                     .filter(source_id=self.source_id,
+                                             id=annotation_id)\
+                                     .delete()
+
 

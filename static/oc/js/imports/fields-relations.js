@@ -55,49 +55,81 @@ function getTypeHierarchyDone(data){
 }
 
 
-function searchEntities(){
+
+/* ----------------------------------------------------
+ * Functions to DELETE field annotations
+ *
+ * ----------------------------------------------------
+*/
+
+function deleteAnnotation(annotation_id){
 	/* AJAX call to search entities filtered by a search-string */
-	var act_domID = "entity-string";
-	var qstring = document.getElementById(act_domID).value;
-	var searchEntityListDomID = "search-entity-list";
-	var searchEntityListDom = document.getElementById(searchEntityListDomID);
-	searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
-	var url = "../../entities/look-up/0";
+	var url = "../../imports/field-annotation-delete/" + encodeURIComponent(source_id) + "/" + annotation_id;
 	var req = $.ajax({
-		type: "GET",
+		type: "POST",
 		url: url,
 		dataType: "json",
-		data: { q:qstring },
-		success: searchEntitiesDone
+		data: {csrfmiddlewaretoken: csrftoken},
+		success: deleteAnnotationDone
 	});
 }
 
-
-function searchEntitiesDone(data){
-	/* Displays list of entities that meet search criteria */
-	var searchEntityListDomID = "search-entity-list";
-	var searchEntityListDom = document.getElementById(searchEntityListDomID);
-	searchEntityListDom.innerHTML = "";
-	for (var i = 0, length = data.length; i < length; i++) {
-		var newListItem = document.createElement("li");
-		newListItem.id = "search-entity-item-" + i;
-		var entityString = "<a href=\"javascript:selectEntity(" + i + ")\" id=\"search-entity-label-" + i + "\" >" + data[i].label + "</a>";
-		entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
-		newListItem.innerHTML = entityString;
-		searchEntityListDom.appendChild(newListItem);
-	}
+function deleteAnnotationDone(data){
+	/* Finish delete by showing updated list of annotations */
+	displayAnnotations(data);
 }
 
-function selectEntity(item_num) {
-	/* Adds selected entity label and ID to the right dom element */
-	var act_domID = "search-entity-id-" + item_num;
-	var item_id = document.getElementById(act_domID).innerHTML;
-	var sel_id_dom = document.getElementById("sel-entity-id");
-	sel_id_dom.value = item_id;
-	act_domID =  "search-entity-label-" + item_num;
-	var item_label = document.getElementById(act_domID).innerHTML;
-	var sel_label_dom = document.getElementById("sel-entity-label");
-	sel_label_dom.value = item_label;
+
+
+
+
+/* ----------------------------------------------------
+ * Functions to add annotations to fields
+ *
+ * ----------------------------------------------------
+*/
+
+function displayAnnotations(data){
+	/* Displays annotations after updates, data is JSON data from AJAX response */
+	var tbodyDom = document.getElementById("fieldAnnotationsTbody");
+	tbodyDom.innerHTML = "";
+	for (var i = 0, length = data.length; i < length; i++) {
+		var anno = data[i];
+		var newRow = document.createElement("tr");
+		newRow.id = "anno-num-" + anno.id;
+		var rowString = [
+			"<td>",
+			"<button onclick=\"javascript:deleteAnnotation(" + anno.id +" );\" type=\"button\" class=\"btn btn-warning btn-xs\">",
+			"<span class=\"glyphicon glyphicon-remove\"></span>",
+			"</button>",
+			"</td>",
+			"<td>",
+			"<span id=\"sub-label-" + anno.id +"\">" + anno.subject.label + "</span>",
+			"<br/>",
+			"<samp>",
+			"<small>Import field</small>",
+			"<small id=\"sub-id-" + anno.id + "\">" + anno.subject.id + "</small>",
+			"</samp>",
+			"</td>",
+			"<td>",
+			"<span id=\"pred-label-" + anno.id +"\">" + anno.predicate.label + "</span>",
+			"<br/>",
+			"<samp>",
+			"<small id=\"pred-id-" + anno.id + "\">" + anno.predicate.id + "</small>",
+			"</samp>",
+			"</td>",
+			"<td>",
+			"<span id=\"obj-label-" + anno.id + "\">" + anno.object.label + "</span>",
+			"<br/>",
+			"<samp>",
+			"<small id=\"obj-type-" + anno.id + "\">" + anno.object.type + "</small>",
+			"<small id=\"obj-id-" + anno.id + "\">" + anno.object.id + "</small>",
+			"</samp>",
+			"</td>"
+		].join("\n");
+		newRow.innerHTML = rowString;
+		tbodyDom.appendChild(newRow);
+	}
 }
 
 function addRelInterface(predicate_id){

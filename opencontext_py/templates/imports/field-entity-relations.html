@@ -71,16 +71,16 @@
     </div>
     <div class="row">
         <div class="col-sm-8">
-            <table id="fieldstabhead" class="table table-condensed table-hover">
+            <table id="fieldAnnotationsThead" class="table table-condensed table-hover">
                 <thead>
                     <th class="col-sm-1">Delete</th>
                     <th class="col-sm-3">Subject Label</th>
                     <th class="col-sm-4">Predicate Relation</th>
                     <th class="col-sm-4">Object Label</th>
                 </thead>
-                <tbody id="fieldtabfields">
+                <tbody id="fieldAnnotationsTbody">
                 {% for anno in ip.field_annotations %}
-                    <tr id="field-num-{{ anno.id }}">
+                    <tr id="anno-num-{{ anno.id }}">
                         <td>
                             <button onclick="javascript:deleteAnnotation({{ anno.id }});" type="button" class="btn btn-warning btn-xs">
                                 <span class="glyphicon glyphicon-remove"></span>
@@ -147,5 +147,6 @@
             </div>
         </div>
     </div> 
-    <script src="../../static/oc/js/imports/fields-relations.js"></script> 
+    <script src="../../static/oc/js/imports/fields-relations.js"></script>
+    <script src="../../static/oc/js/entities/entities.js"></script> 
 {% endblock %} 
