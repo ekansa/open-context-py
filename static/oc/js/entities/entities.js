@@ -5,23 +5,67 @@
 */
 
 /* DOM id for input element with search string */
-var act_domID = "entity-string"; 
+var search_text_domID = "entity-string"; 
 /* DOM id for <ul> element where entity search results go */
 var searchEntityListDomID = "search-entity-list";
 var selectFoundEntityFunction = "selectEntity";
+var entities_panel_title = "Entity Lookup";
+var limit_item_type = false;
+
+function generateEntitiesInterface(selectReadOnly){
+	/* returns a HTML string to generate an entities search interface */
+	selectReadOnly = selectReadOnly || "readonly";
+	var interfaceString = [	
+		"<div class=\"panel panel-default\">",
+			"<div class=\"panel-heading\">",
+				"<h4 class=\"panel-title\">" + entities_panel_title + "</h4>",
+			"</div>",
+			"<div class=\"panel-body\">",
+				"<form class=\"form-horizontal\" role=\"form\">",
+					"<div class=\"form-group form-group-sm\">",
+						"<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
+						"<div class=\"col-xs-10\">",
+							"<input id=\"sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + selectReadOnly + "/>",
+						"</div>",
+					"</div>",
+					"<div class=\"form-group form-group-sm\">",
+						"<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
+						"<div class=\"col-xs-10\">",
+							"<input id=\"sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + selectReadOnly + "/>",
+						"</div>",
+					"</div>",
+					"<div class=\"form-group form-group-sm\">",
+						"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
+						"<div class=\"col-xs-10\">",
+							"<input id=\"" + search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"javascript:searchEntities();\" class=\"form-control input-sm\" />",
+						"</div>",
+					"</div>",
+				"</form>",
+				"<ul id=\"" + searchEntityListDomID + "\">",
+				"</ul>",
+			"</div>",
+		"</div>"].join("\n");
+	return interfaceString;
+}
 
 function searchEntities(){
 	/* AJAX call to search entities filtered by a search-string */
-	var act_domID = "entity-string";
-	var qstring = document.getElementById(act_domID).value;
+	var qstring = document.getElementById(search_text_domID).value;
 	var searchEntityListDom = document.getElementById(searchEntityListDomID);
 	searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
-	var url = "../../entities/look-up/0";
+	var url = "../../entities/look-up/";
+	var data = { q:qstring };
+	if (limit_item_type != false) {
+		url += limit_item_type;
+	}
+	else{
+		url += "0";
+	}
 	var req = $.ajax({
 		type: "GET",
 		url: url,
 		dataType: "json",
-		data: { q:qstring },
+		data: data,
 		success: searchEntitiesDone
 	});
 }
@@ -51,3 +95,6 @@ function selectEntity(item_num) {
 	var sel_label_dom = document.getElementById("sel-entity-label");
 	sel_label_dom.value = item_label;
 }
+
+
+

@@ -115,3 +115,17 @@ def field_meta_update(request, source_id):
             raise Http404
     else:
         return HttpResponseForbidden
+
+
+def field_list(request, source_id):
+    """ Classifies one or more fields with posted data """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        json_output = json.dumps(ip.jsonify_fields(),
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404

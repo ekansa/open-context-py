@@ -21,39 +21,37 @@
                 </div>
                 <div class="panel-body">
                     <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRelInterface('oc-gen:contains');">Contains</button>
+                        <button type="button" class="btn btn-info" onclick="javascript:addRelInterface('contains');">Contains</button>
                     </div>
                     <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRelInterface('oc-gen:contained-in');">Contained in</button>
+                        <button type="button" class="btn btn-info" onclick="javascript:addRelInterface('contained-in');">Contained in</button>
                     </div>
                     <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRelInterface('oc-3');">Links with</button>
+                        <button type="button" class="btn btn-info" onclick="javascript:addRelInterface('links-field');">Links (fields)</button>
+                        <button style="margin-top:1%;" type="button" class="btn btn-info" onclick="javascript:addRelInterface('links-entity');">Links (entity)</button>
                     </div>
                     <div class="col-sm-3">
-                        <button type="button" class="btn btn-primary" onclick="javascript:addRelInterface('other');">Other Relation</button>
+                        <button type="button" class="btn btn-info" onclick="javascript:addRelInterface('other');">Other Relation</button>
                     </div>
-                    
-                    
-                    <!-- Modal -->
-                    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                      <div class="modal-dialog">
-                        <div class="modal-content">
-                          <div class="modal-header">
-                            <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-                            <h4 class="modal-title" id="myModalLabel">Modal title</h4>
-                          </div>
-                          <div class="modal-body" id="myModalBody">
-                            ...
-                          </div>
-                          <div class="modal-footer">
-                            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    
                 </div>
+            </div>    
+                    
+            <!-- Modal -->
+            <div class="modal fade bs-example-modal-lg" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                    <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                  </div>
+                  <div class="modal-body modal-lg" id="myModalBody">
+                    ...
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
             </div>
         </div>
         <div class="col-sm-4">
@@ -115,6 +113,7 @@
             </table>
         </div>
         <div class="col-sm-4">
+            <!--
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title">Entity Lookup</h4>
@@ -145,8 +144,9 @@
                     </ul>
                 </div>
             </div>
+            -->
         </div>
     </div> 
-    <script src="../../static/oc/js/imports/fields-relations.js"></script>
-    <script src="../../static/oc/js/entities/entities.js"></script> 
+    <script src="../../static/oc/js/imports/fields-relations.js" onload="javascript:get_field_data();"></script>
+    <script src="../../static/oc/js/entities/entities.js"></script>
 {% endblock %} 
