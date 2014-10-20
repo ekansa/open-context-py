@@ -1,6 +1,7 @@
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
@@ -25,10 +26,74 @@ class ProcessSubjects():
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
-        self.field_parent_entites = {}  # Parent entities named for a given field
+        self.field_parent_entities = {}  # Parent entities named for a given field
         self.start_row = 1
         self.batch_size = 250
         self.end_row = self.batch_size
+        self.example_size = 5
+
+    def get_contained_examples(self):
+        example_containment = []
+        self.get_subject_fields()
+        if self.root_subject_field is not False:
+            example_containment = self.get_contained_field_exp(self.root_subject_field,
+                                                               False,
+                                                               True)
+        return example_containment
+
+    def get_contained_field_exp(self,
+                                field_num,
+                                in_rows=False,
+                                check_parent_entity=False):
+        """ get examples of entities in containment fields, does recursive lookups
+            to get a whole tree, limited to a maximum of a few examples
+        """
+        contain_nodes = False
+        add_field_examples = True
+        if field_num == self.root_subject_field and check_parent_entity:
+            # Check to see if the root is contained in a named entity
+            if self.field_parent_entities[field_num] is not False:
+                # Root is in a named entity, so add it.
+                contain_nodes = []
+                add_field_examples = False
+                parent_uuid = self.field_parent_entities[field_num].uuid
+                parent_context = self.field_parent_entities[field_num].context
+                contain_node = LastUpdatedOrderedDict()
+                contain_node['label'] = parent_context
+                contain_node['type'] = 'subjects'
+                contain_node['field_label'] = 'Parent of field: ' + self.subjects_fields[field_num].label
+                contain_node['field_num'] = 0
+                contain_node['id'] = parent_uuid
+                # now look for children of the root entity.
+                contain_node['children'] = self.get_contained_field_exp(field_num)
+                contain_nodes.append(contain_node)
+        if add_field_examples:
+            distinct_records = self.get_field_records(field_num,
+                                                      in_rows)
+            if distinct_records is not False:
+                contain_nodes = []
+                field_obj = self.subjects_fields[field_num]
+                for rec_hash, dist_rec in distinct_records.items():
+                    if len(contain_nodes) <= self.example_size:
+                        # only add examples if we're less or equal to the the total example size
+                        contain_node = LastUpdatedOrderedDict()
+                        entity_label = dist_rec['imp_cell_obj'].record
+                        if len(entity_label) < 1:
+                            entity_label = '[BLANK]'
+                        contain_node['label'] = field_obj.value_prefix + entity_label
+                        contain_node['type'] = 'import-rec'
+                        contain_node['field_label'] = field_obj.label
+                        contain_node['field_num'] = field_num
+                        contain_node['id'] = dist_rec['rows'][0]
+                        contain_node['children'] = False
+                        if field_num in self.contain_ordered_subjects:
+                            if self.contain_ordered_subjects[field_num] is not False:
+                                child_field = self.contain_ordered_subjects[field_num]
+                                print('Rows: ' + str(dist_rec['imp_cell_obj']))
+                                contain_node['children'] = self.get_contained_field_exp(child_field,
+                                                                                        dist_rec['rows'])
+                        contain_nodes.append(contain_node)
+        return contain_nodes
 
     def process_contained_batch(self):
         """ processes containment fields for subject
@@ -76,7 +141,7 @@ class ProcessSubjects():
                 cs.obs_num = field_obj.obs_num
                 cs.parent_context = parent_context
                 cs.patent_uuid = parent_uuid
-                cs.label_prefix = field_obj.label_prefix
+                cs.label_prefix = field_obj.value_prefix
                 cs.allow_new = True  # allow new because it is a hierarchic field
                 cs.class_uri = field_obj.class_uri
                 cs.import_rows = dist_rec['rows']
@@ -89,7 +154,7 @@ class ProcessSubjects():
                             self.process_field_hierarchy(self.contain_ordered_subjects[field_num],
                                                          cs.uuid,
                                                          cs.context,
-                                                         dist_rec['imp_cell_obj'])
+                                                         dist_rec['rows'])
 
     def get_field_records(self,
                           field_num,
@@ -113,7 +178,8 @@ class ProcessSubjects():
             distinct_records = {}
             for cell in field_cells:
                 # iterate through cells to get list of row_nums for each distinct value
-                if cell.rec_hash is not in distinct_records:
+                if cell.rec_hash not in distinct_records:
+                    distinct_records[cell.rec_hash] = {}
                     distinct_records[cell.rec_hash]['rows'] = []
                     distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
                 distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
@@ -158,7 +224,7 @@ class ProcessSubjects():
 
     def get_field_parent_entity(self, field_num):
         """ Get's a parent entity named for a given field """
-        self.field_parent_entites[field_num] = False
+        self.field_parent_entities[field_num] = False
         parent_anno = ImportFieldAnnotation.objects\
                                            .filter(source_id=self.source_id,
                                                    field_num=field_num,
@@ -168,7 +234,7 @@ class ProcessSubjects():
             ent.get_context = True
             found = ent.dereference(parent_anno[0].object_uuid)
             if found:
-                self.field_parent_entites[field_num] = ent
+                self.field_parent_entities[field_num] = ent
 
     def get_field_subjects(self):
         distinct_records = False
@@ -188,7 +254,7 @@ class ProcessSubjects():
             distinct_records = {}
             for cell in field_cells:
                 # iterate through cells to get list of row_nums for each distinct value
-                if cell.rec_hash is not in distinct_records:
+                if cell.rec_hash not in distinct_records:
                     distinct_records[cell.rec_hash]['rows'] = []
                     distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
                 distinct_records[cell.rec_hash]['rows'].append(cell.row_num)

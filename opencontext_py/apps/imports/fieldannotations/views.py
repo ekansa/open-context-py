@@ -3,6 +3,7 @@ from django.http import HttpResponse, Http404
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
+from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubjects
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -21,6 +22,20 @@ def view(request, source_id):
         ip.get_field_annotations()
         anno_list = ip.jsonify_field_annotations()
         json_output = json.dumps(anno_list,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
+def subjects_hierarchy_examples(request, source_id):
+    """ Returns JSON data with examples of the subjects hierarchy """
+    ps = ProcessSubjects(source_id)
+    if ps.project_uuid is not False:
+        cont_list = ps.get_contained_examples()
+        json_output = json.dumps(cont_list,
                                  indent=4,
                                  ensure_ascii=False)
         return HttpResponse(json_output,
@@ -57,7 +72,8 @@ def create(request, source_id):
             ifd = ImportFieldDescribe(source_id)
             ifd.project_uuid = ip.project_uuid
             if request.POST['predicate_rel'] == Assertion.PREDICATES_CONTAINS:
-                pass
+                ifd.update_field_contains(request.POST['field_num'],
+                                          request.POST['object_field_num'])
             elif request.POST['predicate_rel'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
                 ifd.update_field_containedin_entity(request.POST['field_num'],
                                                     request.POST['object_uuid'])

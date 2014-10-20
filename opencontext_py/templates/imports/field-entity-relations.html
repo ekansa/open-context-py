@@ -15,7 +15,7 @@
      </div>
      <div class="row">
         <div class="col-sm-8">
-            <div class="panel panel-default">
+            <div class="panel panel-default" style="min-height: 300px;">
                 <div class="panel-heading">
                     <h4 class="panel-title">Field Annotations and Relations</h4>
                 </div>
@@ -182,5 +182,5 @@
          
     </script>
     <script src="../../static/oc/js/imports/fields-relations.js" onload="javascript:get_field_data();"></script>
-    <script src="../../static/oc/js/entities/entities.js"></script>
+    <script src="../../static/oc/js/entities/entities.js" onload="javascript:getSubjectsHierarchy();"></script>
 {% endblock %} 
