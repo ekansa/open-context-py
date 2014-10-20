@@ -77,8 +77,11 @@ function searchEntitiesDone(data){
 	for (var i = 0, length = data.length; i < length; i++) {
 		var newListItem = document.createElement("li");
 		newListItem.id = "search-entity-item-" + i;
+		var entityIDdomID = "search-entity-id-" + i;
+		var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
 		var entityString = "<a href=\"javascript:" + selectFoundEntityFunction + "(" + i + ")\" id=\"search-entity-label-" + i + "\" >" + data[i].label + "</a>";
-		entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
+		// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
+		entityString += "<br/><small>" + linkHTML + "</small>";
 		newListItem.innerHTML = entityString;
 		searchEntityListDom.appendChild(newListItem);
 	}
@@ -96,5 +99,16 @@ function selectEntity(item_num) {
 	sel_label_dom.value = item_label;
 }
 
+function generateEntityLink(nodeID, entity_type, entity_id, entity_label){
+	var linkHTML = "";
+	var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
+	if (entity_type != "uri") {
+		linkHTML = "<a title=\"View in new tab\" id=\"" + nodeID + "\" href=\"../../" + entity_type + "/" + entity_id + "\" target=\"_blank\">" + icon + entity_label + "</a>";
+	}
+	else{
+		linkHTML = "<a title=\"View in new tab\" id=\"" + nodeID + "\" href=\"" + entity_id + "\" target=\"_blank\">" + icon + entity_label + "</a>";
+	}
+	return linkHTML;
+}
 
 

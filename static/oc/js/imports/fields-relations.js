@@ -63,7 +63,7 @@ function getTypeHierarchyDone(data){
 */
 
 function deleteAnnotation(annotation_id){
-	/* AJAX call to search entities filtered by a search-string */
+	/* AJAX call delete a specific annotation */
 	var url = "../../imports/field-annotation-delete/" + encodeURIComponent(source_id) + "/" + annotation_id;
 	var req = $.ajax({
 		type: "POST",
@@ -97,6 +97,9 @@ function displayAnnotations(data){
 		var anno = data[i];
 		var newRow = document.createElement("tr");
 		newRow.id = "anno-num-" + anno.id;
+		var obj_id_link = anno.object.id; //default, no link
+		var entityIDdomID = "obj-id-" + anno.id;
+		var linkHTML = generateEntityLink(entityIDdomID, anno.object.type, anno.object.id, anno.object.id);
 		var rowString = [
 			"<td>",
 			"<button onclick=\"javascript:deleteAnnotation(" + anno.id +" );\" type=\"button\" class=\"btn btn-warning btn-xs\">",
@@ -123,7 +126,7 @@ function displayAnnotations(data){
 			"<br/>",
 			"<samp>",
 			"<small id=\"obj-type-" + anno.id + "\">" + anno.object.type + "</small>",
-			"<small id=\"obj-id-" + anno.id + "\">" + anno.object.id + "</small>",
+			"<small id=\"obj-outer-id-" + anno.id + "\">" + linkHTML + "</small>",
 			"</samp>",
 			"</td>"
 		].join("\n");
@@ -149,25 +152,25 @@ function relationInterface(type){
 	/* object for making interfaces of different types */
 	this.type = type;
 	if (type == "contains") {
-		this.predicate_id ="oc-gen:contains";
+		this.predicate_id = PREDICATE_CONTAINS;
 		this.predicate_label = "Containment";
 		this.title = "Add <strong>Containment</strong> Relation";
 		this.body = "";
 	}
 	else if (type == "contained-in") {
-		this.predicate_id = "oc-gen:contained-in";
+		this.predicate_id = PREDICATE_CONTAINED_IN;
 		this.predicate_label = "Contained in";
 		this.title = "Add <strong>Contained in</strong> [a subject entity] Relation";
 		this.body = generateContainedInBody();
 	}
 	else if (type == "links-field") {
-		this.predicate_id = "oc-3";
+		this.predicate_id = PREDICATE_LINK;
 		this.predicate_label = "Links with";
 		this.title = "Add <strong>Links with</strong> [an Object Field] Relation";
 		this.body = "";
 	}
 	else if (type == "links-entity") {
-		this.predicate_id = "oc-3";
+		this.predicate_id = PREDICATE_LINK;
 		this.predicate_label = "Links with";
 		this.title = "Add <strong>Links with</strong> [an Object Enitty] Relation";
 		this.body = "";
@@ -303,7 +306,7 @@ function checkContainmentInActionReady(){
 			"<div class=\"col-xs-3\">",
 				entity_label,
 			"</div>",
-			"<div class=\"col-xs-2\">",
+			"<div class=\"col-xs-2\" id=\"action-botton-div\">",
 				"<button onclick=\"javascript:addContainedIn();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
 					"<span class=\"glyphicon glyphicon-cloud-upload\" ></span> Save",
 				"</button>",
@@ -313,6 +316,38 @@ function checkContainmentInActionReady(){
 	}
 }
 
+function addContainedIn(){
+	/* AJAX call to search entities filtered by a search-string */
+	var sel_num_domID = "subject" + "-f-num";
+	var field_num = document.getElementById(sel_num_domID).value;
+	
+	// Check to see if there's a selected parent entity.
+	var sel_id_dom = document.getElementById("sel-entity-id");
+	var entity_id = sel_id_dom.value;
+	
+	//Replace action button with an "updating" message
+	var act_dom = document.getElementById("action-botton-div");
+	act_dom.innerHTML = "Saving 'contained-in' relation...";
+	
+	var url = "../../imports/field-annotation-create/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			field_num: field_num,
+			predicate_rel: PREDICATE_CONTAINED_IN,
+			object_uuid: entity_id,
+			csrfmiddlewaretoken: csrftoken},
+		success: addContainedInDone
+	});
+}
+
+function addContainedInDone(data){
+	/* Finish new relation by showing updated list of annotations */
+	$("#myModal").modal("hide");
+	displayAnnotations(data);
+}
 
 
 

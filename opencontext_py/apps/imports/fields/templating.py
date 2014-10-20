@@ -34,6 +34,9 @@ class ImportProfile():
         self.has_subjects = False
         self.get_examples = False
         self.field_annotations = False
+        self.PREDICATE_CONTAINS = Assertion.PREDICATES_CONTAINS
+        self.PREDICATE_LINK = Assertion.PREDICATES_LINK
+        self.PREDICATE_CONTAINED_IN = ImportFieldAnnotation.PRED_CONTAINED_IN
 
     def get_fields(self, field_num_list=False):
         """ Gets a list of field objects, limited by a list of field_num if not false """

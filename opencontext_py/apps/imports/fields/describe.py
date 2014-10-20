@@ -9,6 +9,7 @@ class ImportFieldDescribe():
 
     def __init__(self, source_id):
         self.source_id = source_id
+        self.project_uuid = False
         self.field_num_list = []
 
     def update_field_type(self, field_type, field_num):
