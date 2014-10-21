@@ -84,7 +84,7 @@ def _process_spatial_context(spatial_context=None):
         # First, handle the most likely scenario of a single context
         if len(parent_child_slugs) == 1:
             context['fq'] = _prepare_filter_query(parent_child_slugs[0])
-        # Otherwise, we'll need to combine multiple contexts into an OR filter
+        # Otherwise, combine multiple contexts into an OR filter
         else:
             fq_string = ' OR '.join(
                 [_prepare_filter_query(slug_set) for slug_set
@@ -92,3 +92,6 @@ def _process_spatial_context(spatial_context=None):
                 )
             context['fq'] = '(' + fq_string + ')'
         return context
+    else:
+        pass
+    # TODO: handle facet.field

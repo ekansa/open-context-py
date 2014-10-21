@@ -228,7 +228,8 @@ class Containment():
                 else:
                     print('Cannot dereference parent_uuid: ' + parent_uuid)
             else:
-                print('No parent item found. (Root Context)')
+                # print('No parent item found. (Root Context)')
+                pass
         else:
             print('Cannot find the item for slug: ' + child_slug)
         return output

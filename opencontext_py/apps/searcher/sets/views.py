@@ -24,9 +24,10 @@ def json_view(request, spatial_context=None):
 
     # If the user does not provide a search term, search for everything
     query['q'] = request.GET.get('q', default='*:*')
-
-    testing = viewutilities._process_spatial_context(spatial_context)
-    return HttpResponse(testing['fq'])
+    # TODO: complete this method (test code below)
+    if spatial_context:
+        testing = viewutilities._process_spatial_context(spatial_context)
+        return HttpResponse(testing['fq'])
     # If the user does not provide a spatial context, start at the root context
     if spatial_context is None:
         context_facet_request_field = 'root___context_id'
