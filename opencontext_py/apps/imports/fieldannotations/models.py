@@ -9,7 +9,8 @@ class ImportFieldAnnotation(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     field_num = models.IntegerField()
-    predicate_rel = models.CharField(max_length=50, db_index=True)
+    predicate = models.CharField(max_length=50, db_index=True)
+    predicate_field_num = models.IntegerField()
     object_field_num = models.IntegerField()
     object_uuid = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
@@ -19,6 +20,7 @@ class ImportFieldAnnotation(models.Model):
         ordering = ['source_id', 'field_num']
         unique_together = ('source_id',
                            'field_num',
-                           'predicate_rel',
+                           'predicate',
+                           'predicate_field_num',
                            'object_field_num',
                            'object_uuid')

@@ -165,31 +165,56 @@ class Entity():
                                             | Q(slug__icontains=qstring)\
                                             | Q(label__icontains=qstring)\
                                             | Q(alt_label__icontains=qstring))[:15]
+        elif item_type == 'uri' and class_uri is False\
+                and project_uuid is False and vocab_uri is not False:
+            """ Search for link entities, limit by vocab_uri """
+            vocab_uri = self.make_id_list(vocab_uri)
+            entity_list = LinkEntity.objects\
+                                    .filter(vocab_uri__in=vocab_uri)\
+                                    .filter(Q(uri__icontains=qstring)\
+                                            | Q(slug__icontains=qstring)\
+                                            | Q(label__icontains=qstring)\
+                                            | Q(alt_label__icontains=qstring))[:15]
         elif item_type is not False and item_type != 'uri':
             """ Look only for manifest items """
+            item_type = self.make_id_list(item_type)
+            print('Item_type: ' + str(item_type))
             if class_uri is False and project_uuid is False:
                 manifest_list = Manifest.objects\
-                                        .filter(item_type=item_type)\
+                                        .filter(item_type__in=item_type)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
             elif class_uri is not False and project_uuid is False:
+                class_uri = self.make_id_list(class_uri)
                 manifest_list = Manifest.objects\
-                                        .filter(item_type=item_type,
-                                                class_uri=class_uri)\
+                                        .filter(item_type__in=item_type,
+                                                class_uri__in=class_uri)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
             elif class_uri is False and project_uuid is not False:
+                project_uuid = self.make_id_list(project_uuid)
                 manifest_list = Manifest.objects\
-                                        .filter(item_type=item_type,
-                                                project_uuid=project_uuid)\
+                                        .filter(item_type__in=item_type,
+                                                project_uuid__in=project_uuid)\
+                                        .filter(Q(uuid__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring))[:15]
+            elif class_uri is not False and project_uuid is not False:
+                class_uri = self.make_id_list(class_uri)
+                project_uuid = self.make_id_list(project_uuid)
+                manifest_list = Manifest.objects\
+                                        .filter(item_type__in=item_type,
+                                                class_uri__in=class_uri,
+                                                project_uuid__in=project_uuid)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
         elif item_type is False and project_uuid is not False:
+            project_uuid = self.make_id_list(project_uuid)
             manifest_list = Manifest.objects\
-                                    .filter(project_uuid=project_uuid)\
+                                    .filter(project_uuid__in=project_uuid)\
                                     .filter(Q(uuid__icontains=qstring)\
                                             | Q(slug__icontains=qstring)\
                                             | Q(label__icontains=qstring))[:10]
@@ -216,6 +241,14 @@ class Entity():
             item['partOf_label'] = self.get_manifest_label(man_entity.project_uuid)
             output.append(item)
         return output
+
+    def make_id_list(self, id_string):
+        """ Simple method to make an id_string a list of ids """
+        if ',' in id_string:
+            output_list = id_string.split(",")
+        else:
+            output_list = [id_string]
+        return output_list
 
     def get_link_entity_label(self, uri):
         """ Gets labels for vocabularies """

@@ -143,16 +143,24 @@ class ImportProfile():
             anno_dict['subject']['id'] = anno_obj.field_num
         else:
             anno_dict['subject'] = False
-        anno_dict['predicate'] = LastUpdatedOrderedDict()
-        anno_dict['predicate']['id'] = anno_obj.predicate_rel
-        ent = Entity()
-        found = ent.dereference(anno_obj.predicate_rel)
-        if found:
-            anno_dict['predicate']['label'] = ent.label
-        elif anno_obj.predicate_rel == ImportFieldAnnotation.PRED_CONTAINED_IN:
-            anno_dict['predicate']['label'] = 'Contained in'
+        if anno_obj.predicate_field_num > 0:
+            pred_field_obj = self.get_field_object(anno_obj.predicate_field_num)
+            anno_dict['predicate'] = self.make_dict_from_field_obj(pred_field_obj)
+            anno_dict['predicate']['id'] = anno_obj.predicate_field_num
+            anno_dict['predicate']['type'] = 'import-field'
         else:
-            anno_dict['predicate']['label'] = False
+            anno_dict['predicate'] = LastUpdatedOrderedDict()
+            anno_dict['predicate']['id'] = anno_obj.predicate
+            ent = Entity()
+            found = ent.dereference(anno_obj.predicate)
+            if found:
+                anno_dict['predicate']['label'] = ent.label
+                anno_dict['predicate']['type'] = ent.item_type
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_CONTAINED_IN:
+                anno_dict['predicate']['label'] = 'Contained in'
+            else:
+                anno_dict['predicate']['label'] = False
+                anno_dict['predicate']['type'] = False
         if anno_obj.object_field_num > 0:
             obj_field_obj = self.get_field_object(anno_obj.object_field_num)
             anno_dict['object'] = self.make_dict_from_field_obj(obj_field_obj)

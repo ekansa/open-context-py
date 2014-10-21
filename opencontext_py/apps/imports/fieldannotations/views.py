@@ -71,13 +71,13 @@ def create(request, source_id):
         if ip.project_uuid is not False:
             ifd = ImportFieldDescribe(source_id)
             ifd.project_uuid = ip.project_uuid
-            if request.POST['predicate_rel'] == Assertion.PREDICATES_CONTAINS:
+            if request.POST['predicate'] == Assertion.PREDICATES_CONTAINS:
                 ifd.update_field_contains(request.POST['field_num'],
                                           request.POST['object_field_num'])
-            elif request.POST['predicate_rel'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
+            elif request.POST['predicate'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
                 ifd.update_field_containedin_entity(request.POST['field_num'],
                                                     request.POST['object_uuid'])
-            elif request.POST['predicate_rel'] == Assertion.PREDICATES_LINK:
+            elif request.POST['predicate'] == Assertion.PREDICATES_LINK:
                 pass
             ip.get_field_annotations()
             anno_list = ip.jsonify_field_annotations()
@@ -90,3 +90,24 @@ def create(request, source_id):
             raise Http404
     else:
         return HttpResponseForbidden
+
+
+def make_or_reconcile_link_predicate(request, source_id):
+    """ Classifies one or more fields with posted data """
+    if request.method == 'POST':
+        ip = ImportProfile(source_id)
+        if ip.project_uuid is not False:
+            ifd = ImportFieldDescribe(source_id)
+            ifd.project_uuid = ip.project_uuid
+            uuid = ifd.make_or_reconcile_link_predicate(request.POST['label'],
+                                                        request.POST['project_uuid'])
+            output = {uuid: uuid}
+            json_output = json.dumps(output,
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            raise Http404
+    else:
+        return HttpResponseForbidden 

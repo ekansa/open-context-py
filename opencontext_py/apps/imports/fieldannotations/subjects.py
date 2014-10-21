@@ -11,6 +11,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 
@@ -68,8 +69,10 @@ class ProcessSubjects():
                 contain_node['children'] = self.get_contained_field_exp(field_num)
                 contain_nodes.append(contain_node)
         if add_field_examples:
-            distinct_records = self.get_field_records(field_num,
-                                                      in_rows)
+            pc = ProcessCells(self.source_id,
+                              self.start_row)
+            distinct_records = pc.get_field_records(field_num,
+                                                    in_rows)
             if distinct_records is not False:
                 contain_nodes = []
                 field_obj = self.subjects_fields[field_num]
@@ -81,7 +84,7 @@ class ProcessSubjects():
                         if len(entity_label) < 1:
                             entity_label = '[BLANK]'
                         contain_node['label'] = field_obj.value_prefix + entity_label
-                        contain_node['type'] = 'import-rec'
+                        contain_node['type'] = 'import-record'
                         contain_node['field_label'] = field_obj.label
                         contain_node['field_num'] = field_num
                         contain_node['id'] = dist_rec['rows'][0]
@@ -124,8 +127,10 @@ class ProcessSubjects():
             Note: this function is recursive and calls itself if the
             the field_num has child fields.
         """
-        distinct_records = self.get_field_records(field_num,
-                                                  in_rows)
+        pc = ProcessCells(self.source_id,
+                          self.start_row)
+        distinct_records = pc.get_field_records(field_num,
+                                                in_rows)
         if distinct_records is not False:
             field_obj = self.subjects_fields[field_num]
             if field_num == self.root_subject_field and parent_uuid is False:
@@ -156,35 +161,6 @@ class ProcessSubjects():
                                                          cs.context,
                                                          dist_rec['rows'])
 
-    def get_field_records(self,
-                          field_num,
-                          in_rows=False):
-        """ Gets dict object of unique field records, dict has a
-            list of row_nums where each unique record value appears """
-        distinct_records = False
-        if in_rows is False:
-            field_cells = ImportCell.objects\
-                                    .filter(source_id=self.source_id,
-                                            field_num=field_num,
-                                            row_num__gte=self.start_row,
-                                            row_num__lt=self.end_row)
-        else:
-            field_cells = ImportCell.objects\
-                                    .order_by()\
-                                    .filter(source_id=self.source_id,
-                                            field_num=field_num,
-                                            row_num__in=in_rows)
-        if len(field_cells) > 0:
-            distinct_records = {}
-            for cell in field_cells:
-                # iterate through cells to get list of row_nums for each distinct value
-                if cell.rec_hash not in distinct_records:
-                    distinct_records[cell.rec_hash] = {}
-                    distinct_records[cell.rec_hash]['rows'] = []
-                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
-                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
-        return distinct_records
-
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy
             or a list of fields that are not in containment relationships
@@ -200,11 +176,11 @@ class ProcessSubjects():
                 parent_anno = ImportFieldAnnotation.objects\
                                                    .filter(source_id=self.source_id,
                                                            object_field_num=sub_field.field_num,
-                                                           predicate_rel=Assertion.PREDICATES_CONTAINS)[:1]
+                                                           predicate=Assertion.PREDICATES_CONTAINS)[:1]
                 child_anno = ImportFieldAnnotation.objects\
                                                   .filter(source_id=self.source_id,
                                                           field_num=sub_field.field_num,
-                                                          predicate_rel=Assertion.PREDICATES_CONTAINS)[:1]
+                                                          predicate=Assertion.PREDICATES_CONTAINS)[:1]
                 if len(child_anno) > 0:
                     self.contain_ordered_subjects[sub_field.field_num] = child_anno[0].object_field_num
                     if len(parent_anno) < 1:
@@ -228,7 +204,7 @@ class ProcessSubjects():
         parent_anno = ImportFieldAnnotation.objects\
                                            .filter(source_id=self.source_id,
                                                    field_num=field_num,
-                                                   predicate_rel=ImportFieldAnnotation.PRED_CONTAINED_IN)[:1]
+                                                   predicate=ImportFieldAnnotation.PRED_CONTAINED_IN)[:1]
         if len(parent_anno) > 0:
             ent = Entity()
             ent.get_context = True

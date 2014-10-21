@@ -11,6 +11,9 @@ var searchEntityListDomID = "search-entity-list";
 var selectFoundEntityFunction = "selectEntity";
 var entities_panel_title = "Entity Lookup";
 var limit_item_type = false;
+var limit_class_uri = false;
+var limit_project_uuid = false;
+var limit_vocab_uri = false;
 
 function generateEntitiesInterface(selectReadOnly){
 	/* returns a HTML string to generate an entities search interface */
@@ -55,6 +58,15 @@ function searchEntities(){
 	searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
 	var url = "../../entities/look-up/";
 	var data = { q:qstring };
+	if (limit_class_uri != false) {
+		data['class_uri'] = limit_class_uri;
+	}
+	if (limit_project_uuid != false) {
+		data['project_uuid'] = limit_project_uuid;
+	}
+	if (limit_vocab_uri != false) {
+		data['vocab_uri'] = limit_vocab_uri;
+	}
 	if (limit_item_type != false) {
 		url += limit_item_type;
 	}
@@ -103,11 +115,14 @@ function generateEntityLink(nodeID, entity_type, entity_id, entity_label){
 	var linkHTML = "";
 	var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
 	var labelSpan = "<span id=\"" + nodeID + "\">" + entity_label + "</span>";
-	if (entity_type != "uri") {
+	if (entity_type != "uri" && entity_type != "import-field") {
 		linkHTML = "<a title=\"View in new tab\" href=\"../../" + entity_type + "/" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
 	}
-	else{
+	else if (entity_type == "uri") {
 		linkHTML = "<a title=\"View in new tab\" href=\"" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
+	}
+	else{
+		linkHTML = labelSpan;
 	}
 	return linkHTML;
 }
