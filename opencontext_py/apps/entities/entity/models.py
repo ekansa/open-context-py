@@ -178,7 +178,6 @@ class Entity():
         elif item_type is not False and item_type != 'uri':
             """ Look only for manifest items """
             item_type = self.make_id_list(item_type)
-            print('Item_type: ' + str(item_type))
             if class_uri is False and project_uuid is False:
                 manifest_list = Manifest.objects\
                                         .filter(item_type__in=item_type)\

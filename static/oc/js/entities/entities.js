@@ -15,9 +15,38 @@ var limit_class_uri = false;
 var limit_project_uuid = false;
 var limit_vocab_uri = false;
 
-function generateEntitiesInterface(selectReadOnly){
+function generateEntitiesInterface(selectReadOnly, additionalButton){
 	/* returns a HTML string to generate an entities search interface */
+	if (selectReadOnly) {
+		selectReadOnly = "readonly";
+	}
+	else{
+		selectReadOnly = "";
+	}
 	selectReadOnly = selectReadOnly || "readonly";
+	if (additionalButton != false) {
+		//request to add an additional button to add more functionality
+		var disabled = "";
+		if (additionalButton.buttonDisabled) {
+			disabled = "disabled=\"disabled\"";
+		}
+		var buttonGroupHTML = [
+			"<div class=\"form-group form-group-sm\">",
+				"<label for=\"sel-added-control\" class=\"col-xs-2 control-label\">" + additionalButton.label + "</label>",
+					"<div class=\"col-xs-10\">",
+						"<button id=\"" + additionalButton.buttonID + "\" style=\"margin-bottom:1%;\" type=\"button\" ",
+						"class=\"" + additionalButton.buttonClass + "\" onclick=\"javascript:" + additionalButton.funct + ";\"",
+						disabled + ">",
+						"<span class=\"" + additionalButton.icon + "\"></span>",
+						" " + additionalButton.buttonText + "</button>",
+					"</div>",
+				"</div>"
+		].join("\n");
+	}
+	else{
+		var buttonGroupHTML = "";
+	}
+	
 	var interfaceString = [	
 		"<div class=\"panel panel-default\">",
 			"<div class=\"panel-heading\">",
@@ -37,6 +66,7 @@ function generateEntitiesInterface(selectReadOnly){
 							"<input id=\"sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + selectReadOnly + "/>",
 						"</div>",
 					"</div>",
+					buttonGroupHTML,
 					"<div class=\"form-group form-group-sm\">",
 						"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
 						"<div class=\"col-xs-10\">",

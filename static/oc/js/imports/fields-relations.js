@@ -358,7 +358,7 @@ function generateContainedInBody(){
 	limit_project_uuid = "0," + project_uuid; 
 	selectFoundEntityFunction = "selectParentEntity";
 	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects']);
-	var entityInterfaceHTML = generateEntitiesInterface("");
+	var entityInterfaceHTML = generateEntitiesInterface(true, false);
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
@@ -624,7 +624,15 @@ function generateOtherPredicateBody(){
 	limit_class_uri = "link";
 	limit_project_uuid = "0," + project_uuid; 
 	selectFoundEntityFunction = "selectPredicateLinkEntity";
-	var entityInterfaceHTML = generateEntitiesInterface("");
+	var additionalButton = {label: "Select",
+		funct: "useSelectedLinkEnity()",
+		icon: "glyphicon glyphicon-check",
+		buttonID: "sel-entity-use-button",
+		buttonClass: "btn btn-info",
+		buttonText: "Use the above Link Relation",
+		buttonDisabled: true
+	}
+	var entityInterfaceHTML = generateEntitiesInterface(true, additionalButton);
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
@@ -649,11 +657,23 @@ function generateOtherPredicateBody(){
 	return bodyString;
 }
 
-function selectPredicateLinkEntity(entity_id){
-	
+function selectPredicateLinkEntity(entity_num){
+	// Action from list of predicate entities, uses clicks to select to use a link predicate
+	var label_domID = "search-entity-label-" + entity_num;
+	var id_domID = "search-entity-id-" + entity_num;
+	var label = document.getElementById(label_domID).innerHTML;
+	var id = document.getElementById(id_domID).innerHTML;
+	document.getElementById("sel-entity-label").value = label;
+	document.getElementById("sel-entity-id").value = id;
+	document.getElementById("sel-entity-use-button").disabled = "";
 }
 
-
+function useSelectedLinkEnity(){
+	// Action to use a predicate entity, either previously selected from a list
+	// if a list is not chosen, use the search string and note it is for a new entity
+	
+	
+}
 
 
 /* --------------------------------------------------------------
