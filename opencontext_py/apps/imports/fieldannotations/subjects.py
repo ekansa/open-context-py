@@ -35,6 +35,31 @@ class ProcessSubjects():
         self.new_subjects = []
         self.reconciled_subjects = []
 
+    def clear_source(self):
+        """ Clears a prior import if the start_row is 1.
+            This makes sure new entities and assertions are made for
+            this source_id, and we don't duplicate things
+        """
+        if self.start_row <= 1:
+            # get rid of "subjects" related assertions made from this source
+            rem_assertions = Assertion.objects\
+                                      .filter(source_id=self.source_id,
+                                              project_uuid=self.project_uuid,
+                                              subject_type='subjects',
+                                              object_type='subjects')\
+                                      .delete()
+            #get rid of "subjects" manifest records from this source
+            rem_manifest = Manifest.objects\
+                                   .filter(source_id=self.source_id,
+                                           project_uuid=self.project_uuid,
+                                           item_type='subjects')\
+                                   .delete()
+            #get rid of subject records from this source
+            rem_subject = Subject.objects\
+                                 .filter(source_id=self.source_id,
+                                         project_uuid=self.project_uuid)\
+                                 .delete()
+
     def get_contained_examples(self):
         example_containment = []
         self.get_subject_fields()
@@ -119,10 +144,11 @@ class ProcessSubjects():
             This iterates over all containment fields, starting
             with the root subjhect field
         """
+        self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
-        if root_subject_field is not False:
-            self.process_field_hierarchy(root_subject_field)
+        if self.root_subject_field is not False:
+            self.process_field_hierarchy(self.root_subject_field)
 
     def process_field_hierarchy(self,
                                 field_num,
@@ -149,7 +175,7 @@ class ProcessSubjects():
         if distinct_records is not False:
             field_obj = self.subjects_fields[field_num]
             if field_num == self.root_subject_field and parent_uuid is False:
-                if field_num in self.field_parent_entites:
+                if field_num in self.field_parent_entities:
                     if self.field_parent_entities[field_num] is not False:
                         parent_uuid = self.field_parent_entities[field_num].uuid
                         parent_context = self.field_parent_entities[field_num].context
@@ -160,19 +186,19 @@ class ProcessSubjects():
                 cs.obs_node = 'obs-' + str(field_obj.obs_num)
                 cs.obs_num = field_obj.obs_num
                 cs.parent_context = parent_context
-                cs.patent_uuid = parent_uuid
+                cs.parent_uuid = parent_uuid
                 cs.label_prefix = field_obj.value_prefix
                 cs.allow_new = True  # allow new because it is a hierarchic field
-                cs.class_uri = field_obj.class_uri
-                cs.import_rows = dist_rec['rows']
+                cs.class_uri = field_obj.field_value_cat
+                cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 if cs.uuid is not False:
                     if cs.is_new:
-                        self.new_subjects.append({uuid: cs.uuid,
-                                                  context: cs.context})
+                        self.new_subjects.append({'uuid': cs.uuid,
+                                                  'context': cs.context})
                     else:
-                        self.reconciled_subjects.append({uuid: cs.uuid,
-                                                         context: cs.context})
+                        self.reconciled_subjects.append({'uuid': cs.uuid,
+                                                         'context': cs.context})
                     if field_num in self.contain_ordered_subjects:
                         if self.contain_ordered_subjects[field_num] is not False:
                             # subject entity successfully reconciled or created
@@ -290,8 +316,12 @@ class CandidateSubject():
             self.label = self.label_prefix + imp_cell_obj.record
         else:
             pg = ProcessGeneral(self.source_id)
+            if self.import_rows is not False:
+                check_list = self.import_rows
+            else:
+                check_list = [imp_cell_obj.row_num]
             self.evenif_blank = pg.check_blank_required(imp_cell_obj.field_num,
-                                                        imp_cell_obj.row_num)
+                                                        check_list)
             if self.evenif_blank:
                 self.label = self.label_prefix + self.DEFAULT_BLANK
         if self.allow_new and self.label is not False:
@@ -334,9 +364,12 @@ class CandidateSubject():
             new_ass.object_uuid = self.uuid
             new_ass.object_type = 'subjects'
             try:
+                # in case the relationship already exists
                 new_ass.save()
             except:
-                pass
+                print('Containment failed: ' + str(new_ass.uuid) + ' ' + str(new_ass.object_uuid))
+        else:
+            print('No attempt at Containment: ' + str(self.parent_uuid) + ' ' + str(self.uuid))
 
     def create_subject_item(self):
         """ Create and save a new subject object"""
@@ -350,6 +383,7 @@ class CandidateSubject():
         new_man.uuid = self.uuid
         new_man.project_uuid = self.project_uuid
         new_man.source_id = self.source_id
+        new_man.item_type = 'subjects'
         new_man.repo = ''
         new_man.class_uri = self.class_uri
         new_man.label = self.label
@@ -381,7 +415,7 @@ class CandidateSubject():
     def match_against_subjects(self, context):
         """ Checks to see if the item exists in the subjects table """
         match_found = False
-        hash_id = Subject.make_hash_id(self.project_uuid, context)
+        hash_id = Subject().make_hash_id(self.project_uuid, context)
         try:
             subject_match = Subject.objects\
                                    .get(hash_id=hash_id)
