@@ -32,6 +32,8 @@ class ProcessSubjects():
         self.batch_size = 250
         self.end_row = self.batch_size
         self.example_size = 5
+        self.new_subjects = []
+        self.reconciled_subjects = []
 
     def get_contained_examples(self):
         example_containment = []
@@ -165,14 +167,21 @@ class ProcessSubjects():
                 cs.import_rows = dist_rec['rows']
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 if cs.uuid is not False:
+                    if cs.is_new:
+                        self.new_subjects.append({uuid: cs.uuid,
+                                                  context: cs.context})
+                    else:
+                        self.reconciled_subjects.append({uuid: cs.uuid,
+                                                         context: cs.context})
                     if field_num in self.contain_ordered_subjects:
                         if self.contain_ordered_subjects[field_num] is not False:
                             # subject entity successfully reconciled or created
                             # now process next level down in hierarchy, if it exists
-                            self.process_field_hierarchy(self.contain_ordered_subjects[field_num],
-                                                         cs.uuid,
-                                                         cs.context,
-                                                         dist_rec['rows'])
+                            for child_field in self.contain_ordered_subjects[field_num]:
+                                self.process_field_hierarchy(child_field,
+                                                             cs.uuid,
+                                                             cs.context,
+                                                             dist_rec['rows'])
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy
@@ -272,6 +281,7 @@ class CandidateSubject():
         self.evenif_blank = False  # Mint a new item even if the record is blank
         self.allow_new = False  # only allow new if item is imported in a hierachy, otherwise match with manifest
         self.import_rows = False  # if a list, then changes to uuids are saved for all rows in this list
+        self.is_new = False
 
     def reconcile_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the subjects table """
@@ -297,6 +307,7 @@ class CandidateSubject():
                 # uniqueness depends on context (values in other cells)
                 self.uuid = GenUUID.uuid4()
                 self.create_subject_item()
+                self.is_new = True
         else:
             if self.label is not False:
                 # only allow matches on non-blank items when not creating a record
@@ -322,7 +333,10 @@ class CandidateSubject():
             new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
             new_ass.object_uuid = self.uuid
             new_ass.object_type = 'subjects'
-            new_ass.save()
+            try:
+                new_ass.save()
+            except:
+                pass
 
     def create_subject_item(self):
         """ Create and save a new subject object"""
