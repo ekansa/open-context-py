@@ -351,23 +351,31 @@ class CandidateSubject():
         if self.allow_new\
            and self.parent_uuid is not False\
            and self.uuid is not False:
-            new_ass = Assertion()
-            new_ass.uuid = self.parent_uuid
-            new_ass.subject_type = 'subjects'
-            new_ass.project_uuid = self.project_uuid
-            new_ass.source_id = self.source_id
-            new_ass.obs_node = self.obs_node
-            new_ass.obs_num = self.obs_num
-            new_ass.sort = 1
-            new_ass.visibility = 1
-            new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
-            new_ass.object_uuid = self.uuid
-            new_ass.object_type = 'subjects'
-            try:
-                # in case the relationship already exists
-                new_ass.save()
-            except:
-                print('Containment failed: ' + str(new_ass.uuid) + ' ' + str(new_ass.object_uuid))
+            old_ass = Assertion.objects\
+                               .filter(uuid=self.parent_uuid,
+                                       obs_num=self.obs_num,
+                                       predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                       object_uuid=self.uuid)[:1]
+            if len(old_ass) < 1:
+                new_ass = Assertion()
+                new_ass.uuid = self.parent_uuid
+                new_ass.subject_type = 'subjects'
+                new_ass.project_uuid = self.project_uuid
+                new_ass.source_id = self.source_id
+                new_ass.obs_node = '#contents-' + str(self.obs_num)
+                new_ass.obs_num = self.obs_num
+                new_ass.sort = 1
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
+                new_ass.object_uuid = self.uuid
+                new_ass.object_type = 'subjects'
+                try:
+                    # in case the relationship already exists
+                    new_ass.save()
+                except:
+                    print('Containment failed: ' + str(new_ass.uuid) + ' ' + str(new_ass.object_uuid))
+            else:
+                print('Containment already exists')
         else:
             print('No attempt at Containment: ' + str(self.parent_uuid) + ' ' + str(self.uuid))
 
