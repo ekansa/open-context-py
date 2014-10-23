@@ -78,7 +78,20 @@ def create(request, source_id):
                 ifd.update_field_containedin_entity(request.POST['field_num'],
                                                     request.POST['object_uuid'])
             elif request.POST['predicate'] == Assertion.PREDICATES_LINK:
-                pass
+                if 'object_field_num' in request.POST:
+                    ifd.update_field_links(request.POST['field_num'],
+                                           request.POST['object_field_num'])
+            else:
+                if request.POST['predicate'] == '-1':
+                    # the predicate is not yet reconciled
+                    predicate_id = ifd.make_or_reconcile_link_predicate(request.POST['predicate_label'],
+                                                                        ifd.project_uuid)
+                else:
+                    predicate_id = request.POST['predicate']
+                ifd.update_field_custom_predicate(request.POST['field_num'],
+                                                  request.POST['object_field_num'],
+                                                  predicate_id,
+                                                  request.POST['predicate_type'])
             ip.get_field_annotations()
             anno_list = ip.jsonify_field_annotations()
             json_output = json.dumps(anno_list,
@@ -90,24 +103,3 @@ def create(request, source_id):
             raise Http404
     else:
         return HttpResponseForbidden
-
-
-def make_or_reconcile_link_predicate(request, source_id):
-    """ Classifies one or more fields with posted data """
-    if request.method == 'POST':
-        ip = ImportProfile(source_id)
-        if ip.project_uuid is not False:
-            ifd = ImportFieldDescribe(source_id)
-            ifd.project_uuid = ip.project_uuid
-            uuid = ifd.make_or_reconcile_link_predicate(request.POST['label'],
-                                                        request.POST['project_uuid'])
-            output = {uuid: uuid}
-            json_output = json.dumps(output,
-                                     indent=4,
-                                     ensure_ascii=False)
-            return HttpResponse(json_output,
-                                content_type='application/json; charset=utf8')
-        else:
-            raise Http404
-    else:
-        return HttpResponseForbidden 

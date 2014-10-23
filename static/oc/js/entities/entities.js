@@ -143,15 +143,19 @@ function selectEntity(item_num) {
 
 function generateEntityLink(nodeID, entity_type, entity_id, entity_label){
 	var linkHTML = "";
-	var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
 	var labelSpan = "<span id=\"" + nodeID + "\">" + entity_label + "</span>";
-	if (entity_type != "uri" && entity_type != "import-field") {
+	if (entity_type != "uri" && entity_type != "import-field" && entity_type != "user-typed-link") {
+		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
 		linkHTML = "<a title=\"View in new tab\" href=\"../../" + entity_type + "/" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
 	}
 	else if (entity_type == "uri") {
+		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
 		linkHTML = "<a title=\"View in new tab\" href=\"" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
 	}
 	else{
+		if (entity_type == "user-typed-link") {
+			var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
+		}
 		linkHTML = labelSpan;
 	}
 	return linkHTML;

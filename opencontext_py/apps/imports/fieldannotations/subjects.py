@@ -75,6 +75,7 @@ class ProcessSubjects():
                                                     in_rows)
             if distinct_records is not False:
                 contain_nodes = []
+                unique_labels = []
                 field_obj = self.subjects_fields[field_num]
                 for rec_hash, dist_rec in distinct_records.items():
                     if len(contain_nodes) <= self.example_size:
@@ -83,7 +84,8 @@ class ProcessSubjects():
                         entity_label = dist_rec['imp_cell_obj'].record
                         if len(entity_label) < 1:
                             entity_label = '[BLANK]'
-                        contain_node['label'] = field_obj.value_prefix + entity_label
+                        entity_label = field_obj.value_prefix + entity_label
+                        contain_node['label'] = entity_label
                         contain_node['type'] = 'import-record'
                         contain_node['field_label'] = field_obj.label
                         contain_node['field_num'] = field_num
@@ -91,11 +93,22 @@ class ProcessSubjects():
                         contain_node['children'] = False
                         if field_num in self.contain_ordered_subjects:
                             if self.contain_ordered_subjects[field_num] is not False:
-                                child_field = self.contain_ordered_subjects[field_num]
-                                print('Rows: ' + str(dist_rec['imp_cell_obj']))
-                                contain_node['children'] = self.get_contained_field_exp(child_field,
-                                                                                        dist_rec['rows'])
-                        contain_nodes.append(contain_node)
+                                unique_child_labels = []
+                                for child_field in self.contain_ordered_subjects[field_num]:
+                                    act_children = self.get_contained_field_exp(child_field,
+                                                                                dist_rec['rows'])
+                                    if act_children is not False:
+                                        if contain_node['children'] is False:
+                                            contain_node['children'] = []
+                                        for act_child in act_children:
+                                            if act_child['label'] not in unique_child_labels:
+                                                # so we only list the same entity once
+                                                contain_node['children'].append(act_child)
+                                                unique_child_labels.append(act_child['label'])
+                        if entity_label not in unique_labels:
+                            # so we only list the same entity once
+                            contain_nodes.append(contain_node)
+                            unique_labels.append(entity_label)
         return contain_nodes
 
     def process_contained_batch(self):
@@ -180,9 +193,11 @@ class ProcessSubjects():
                 child_anno = ImportFieldAnnotation.objects\
                                                   .filter(source_id=self.source_id,
                                                           field_num=sub_field.field_num,
-                                                          predicate=Assertion.PREDICATES_CONTAINS)[:1]
+                                                          predicate=Assertion.PREDICATES_CONTAINS)
                 if len(child_anno) > 0:
-                    self.contain_ordered_subjects[sub_field.field_num] = child_anno[0].object_field_num
+                    self.contain_ordered_subjects[sub_field.field_num] = []
+                    for child in child_anno:
+                        self.contain_ordered_subjects[sub_field.field_num].append(child.object_field_num)
                     if len(parent_anno) < 1:
                         # field has children, but no parent it's at the root level
                         self.root_subject_field = sub_field.field_num

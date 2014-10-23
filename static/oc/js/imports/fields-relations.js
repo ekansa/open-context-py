@@ -181,7 +181,7 @@ function relationInterface(type){
 		this.predicate_id = PREDICATE_LINK;
 		this.predicate_label = "Links with";
 		this.title = "Add <strong>Links with</strong> [an Object Field] Relation";
-		this.body = "";
+		this.body = generateLinksFieldsBody();
 	}
 	else if (type == "links-entity") {
 		this.predicate_id = PREDICATE_LINK;
@@ -235,13 +235,13 @@ function checkActionReady(){
 		checkContainmentInActionReady();
 	}
 	else if (act_interface_type == "links-field") {
-		//code
+		checkLinksFieldsReady();
 	}
 	else if (act_interface_type == "links-entity") {
 		//code
 	}
 	else {
-		//code
+		checkOtherActionReady();
 	}
 }
 
@@ -466,37 +466,15 @@ function addContainedInDone(data){
 
 
 /* --------------------------------------------------------------
- * Interface For "Other" Relations
+ * Interface For "Links" (fields) Relations
  * --------------------------------------------------------------
  */
-var other_predicate_id = '';
-var other_predicate_label = '';
-var other_predicate_type = '';
-function generateOtherBody(){
+function generateLinksFieldsBody(){
 	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects', 'media', 'documents', 'persons']);
 	var objectInterfaceHTML = generateFieldListHTML('object', ['subjects', 'media', 'documents', 'persons']);
-	if (other_predicate_type == 'import-field') {
-		other_predicate_label = 'Field: ' +  other_predicate_id;
-	}
-	if (other_predicate_id == '') {
-		var predicateHTML = "Click button on the right to set-up linking relationships.";
-	}
-	else{
-		var predicateHTML = generateEntityLink('other-predicate-id', other_predicate_type, other_predicate_id, other_predicate_label);	
-	}
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
-			"</div>",
-			"<div class=\"row\">",
-				"<div class=\"col-xs-6\" id=\"other-sel-predicate-outer\">",
-					predicateHTML,
-				"</div>",
-				"<div class=\"col-xs-6\">",
-					"<button style=\"margin-bottom:1%;\" type=\"button\" class=\"btn btn-info\" onclick=\"javascript:predicateInterface();\">",
-						"<span class=\"glyphicon glyphicon-wrench\"></span>",
-					" Set-up Custom Linking Relation</button>",
-				"</div>",
 			"</div>",
 			"<div class=\"row\">",	
 				"<div class=\"col-xs-6\">",
@@ -511,7 +489,7 @@ function generateOtherBody(){
 	return bodyString;
 }
 
-function checkOtherActionReady(){
+function checkLinksFieldsReady(){
 	// Check to see if there's a selected subject field.
 	var subj_num_domID = "subject" + "-f-num";
 	var field_num = document.getElementById(subj_num_domID).value;
@@ -536,14 +514,14 @@ function checkOtherActionReady(){
 			"</div>",
 			"<div class=\"col-xs-4\">",
 				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
-				" <strong>Contains</strong> ",
+				" <strong>Links with</strong> ",
 				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
 			"</div>",
 			"<div class=\"col-xs-3\">",
 				object_label,
 			"</div>",
 			"<div class=\"col-xs-2\" id=\"action-botton-div\">",
-				"<button onclick=\"javascript:addOther();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
+				"<button onclick=\"javascript:addLinksFields();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
 					"<span class=\"glyphicon glyphicon-cloud-upload\" ></span> Save",
 				"</button>",
 			"</div>"
@@ -552,7 +530,7 @@ function checkOtherActionReady(){
 	}
 }
 
-function addOther(){
+function addLinksFields(){
 	/* AJAX call to search entities filtered by a search-string */
 	var subj_num_domID = "subject" + "-f-num";
 	var field_num = document.getElementById(subj_num_domID).value;
@@ -571,7 +549,168 @@ function addOther(){
 		dataType: "json",
 		data: {
 			field_num: field_num,
-			predicate: PREDICATE_CONTAINS,
+			predicate: PREDICATE_LINK,
+			object_field_num: obj_field_num,
+			csrfmiddlewaretoken: csrftoken},
+		success: addLinksFieldsDone
+	});
+}
+
+function addLinksFieldsDone(data){
+	/* Finish new relation by showing updated list of annotations */
+	$("#myModal").modal("hide");
+	displayAnnotations(data);
+}
+
+
+
+
+
+/* --------------------------------------------------------------
+ * Interface For "Other" Relations
+ * --------------------------------------------------------------
+ */
+var other_predicate_id = '';
+var other_predicate_label = '';
+var other_predicate_type = '';
+function generateOtherBody(){
+	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects', 'media', 'documents', 'persons']);
+	var objectInterfaceHTML = generateFieldListHTML('object', ['subjects', 'media', 'documents', 'persons']);
+	var predicateHTML = generateOtherLinkPredicateFinalHTML();
+	var bodyString = [
+		"<div class=\"container-fluid\">",
+			"<div id=\"action-div\">",	
+			"</div>",
+			"<div class=\"row\">",
+				"<div class=\"col-xs-6\" id=\"other-predicate-final-show\">",
+					predicateHTML,
+				"</div>",
+				"<div class=\"col-xs-6\">",
+					"<button style=\"margin-bottom:1%;\" type=\"button\" class=\"btn btn-info\" onclick=\"javascript:predicateInterface();\">",
+						"<span class=\"glyphicon glyphicon-wrench\"></span>",
+					" Set-up Custom Linking Relation</button>",
+				"</div>",
+			"</div>",
+			"<div class=\"row\">",	
+				"<div class=\"col-xs-6\">",
+					subjectInterfaceHTML,
+				"</div>",
+				"<div class=\"col-xs-6\">",
+					objectInterfaceHTML,
+				"</div>",
+			"</div>",
+		"</div>"
+	].join("\n");
+	return bodyString;
+}
+
+function generateOtherLinkPredicateFinalHTML(){
+	//Generates HTML for the final selected link predicate
+	var show_other_pred_label = other_predicate_label;
+	var show_other_pred_id = other_predicate_id;
+	var show_other_pred_type = other_predicate_type;
+	if (other_predicate_type == 'import-field') {
+		show_other_pred_label = 'Field: ' +  other_predicate_id;
+	}
+	if (other_predicate_label.length > 0) {
+		if (other_predicate_id == "-1") {
+			show_other_pred_id = "[New / not yet reconciled]";
+		}	
+	}
+	else{
+		show_other_pred_id = "none selected";
+		show_other_pred_type = "none selected";
+	}
+	
+	if (other_predicate_label.length < 1) {
+		var predicateHTML = "Click button on the right to set-up linking relationships.";
+	}
+	else{
+		var predicateHTML = "Selected link relation: " + generateEntityLink('other-predicate-id', other_predicate_type, other_predicate_id, show_other_pred_label);	
+	}
+	return predicateHTML;
+}
+
+function checkOtherActionReady(){
+	// Check to see if there's a selected subject field.
+	var subj_num_domID = "subject" + "-f-num";
+	var field_num = document.getElementById(subj_num_domID).value;
+	
+	// Check to see if there's a selected parent entity.
+	var obj_num_domID = "object" + "-f-num";
+	var obj_field_num = document.getElementById(obj_num_domID).value;
+	
+	if (field_num > 0 && obj_field_num > 0 && other_predicate_id != "") {
+		// We're ready to try to create a 'contained-in' relationship
+		var subj_label_domID = "subject" + "-f-label";
+		var field_label = document.getElementById(subj_label_domID).value;
+		var obj_label_domID = "object" + "-f-label";
+		var obj_label_dom = document.getElementById(obj_label_domID);
+		var object_label = obj_label_dom.value;
+		var show_other_pred_label = other_predicate_label;
+		var show_other_pred_id = other_predicate_id;
+		var show_other_pred_type = other_predicate_type;
+		if (other_predicate_type == 'import-field') {
+			show_other_pred_label = 'Field: ' +  other_predicate_id;
+		}
+		if (other_predicate_id == "-1") {
+			show_other_pred_type = "[New / not yet reconciled]";
+			show_other_pred_id = "[New / not yet reconciled]";
+		}	
+		
+		var button_row = document.getElementById("action-div");
+		button_row.className = "row alert alert-success";
+		var rowHTML = [
+			"<div class=\"col-xs-3\">",
+				field_label,
+			"</div>",
+			"<div class=\"col-xs-1\" style=\"text-align:right;\">",
+				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
+			"</div>",
+			"<div class=\"col-xs-2\">",
+				"<strong>" + show_other_pred_label + "</strong> " + show_other_pred_type + "",
+			"</div>",
+			"<div class=\"col-xs-1\" style=\"text-align:left;\">",
+				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
+			"</div>",
+			"<div class=\"col-xs-3\">",
+				object_label,
+			"</div>",
+			"<div class=\"col-xs-2\" id=\"action-botton-div\">",
+				"<button onclick=\"javascript:addOther();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
+					"<span class=\"glyphicon glyphicon-cloud-upload\" ></span> Save",
+				"</button>",
+			"</div>"
+		].join("\n");
+		button_row.innerHTML = rowHTML;
+	}
+	else{
+		// alert('crap: ' + field_num+ " : " + obj_field_num + " : " + other_predicate_id);
+	}
+}
+
+function addOther(){
+	/* AJAX call to search entities filtered by a search-string */
+	var subj_num_domID = "subject" + "-f-num";
+	var field_num = document.getElementById(subj_num_domID).value;
+	
+	var obj_num_domID = "object" + "-f-num";
+	var obj_field_num = document.getElementById(obj_num_domID).value;
+	
+	//Replace action button with an "updating" message
+	var act_dom = document.getElementById("action-botton-div");
+	act_dom.innerHTML = "Saving this relation...";
+	
+	var url = "../../imports/field-annotation-create/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			field_num: field_num,
+			predicate: other_predicate_id,
+			predicate_label: other_predicate_label,
+			predicate_type: other_predicate_type,
 			object_field_num: obj_field_num,
 			csrfmiddlewaretoken: csrftoken},
 		success: addOtherDone
@@ -610,15 +749,7 @@ function predicateInterface(){
 
 function generateOtherPredicateBody(){
 	var fieldInterfaceHTML = generateFieldListHTML('linking', ['relation']);
-	if (other_predicate_type == 'import-field') {
-		other_predicate_label = 'Field: ' +  other_predicate_id;
-	}
-	if (other_predicate_id == '') {
-		var predicateHTML = "No linking relation set-up yet.";
-	}
-	else{
-		var predicateHTML = generateEntityLink('other-predicate-interface', other_predicate_type, other_predicate_id, other_predicate_label);	
-	}
+	var predicateHTML = generateSelectedCustomPredicateHTML();
 	entities_panel_title = "Select Link Relation Concept";
 	limit_item_type = "predicates";
 	limit_class_uri = "link";
@@ -637,12 +768,8 @@ function generateOtherPredicateBody(){
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
 			"</div>",
-			"<div class=\"row\">",
-				"<div class=\"col-xs-6\" id=\"other-predicate-interface-outer\">",
-					predicateHTML,
-				"</div>",
-				"<div class=\"col-xs-6\">",
-				"</div>",
+			"<div class=\"row\" style=\"padding-bottom:1%;\" id=\"other-predicate-interface-outer\">",
+				predicateHTML,
 			"</div>",
 			"<div class=\"row\">",	
 				"<div class=\"col-xs-6\">",
@@ -657,6 +784,40 @@ function generateOtherPredicateBody(){
 	return bodyString;
 }
 
+function generateSelectedCustomPredicateHTML(){
+	// Generates Selected Custom Predicate HTML
+	var show_other_pred_label = other_predicate_label;
+	var show_other_pred_id = other_predicate_id;
+	var show_other_pred_type = other_predicate_type;
+	if (other_predicate_type == 'import-field') {
+		show_other_pred_label = 'Field: ' +  other_predicate_id;
+	}
+	if (other_predicate_label.length > 0) {
+		if (other_predicate_id == "-1") {
+			show_other_pred_id = "[New / not yet reconciled]";
+		}	
+	}
+	else{
+		show_other_pred_id = "none selected";
+		show_other_pred_type = "none selected";
+	}
+	
+	var predicateHTML = [
+			"<div class=\"col-xs-4\">",
+				"Selected Link/Relation (type for new): ",
+				"<input onchange=\"javascript:newLinkPredicateLabel();\" id=\"custom-predicate-label\" value=\"" + show_other_pred_label + "\" type=\"\"/>",
+			"</div>",
+			"<div class=\"col-xs-4\">",
+				"Selected Link/Relation ID: <input id=\"custom-predicate-id\" value=\"" + show_other_pred_id + "\" type=\"\"/>",
+			"</div>",
+			"<div class=\"col-xs-4\">",
+				"Selected Link/Relation Type:<br/><span id=\"custom-predicate-type\">" + show_other_pred_type + "</span>",
+			"</div>"
+		].join("\n");
+	return predicateHTML;
+}
+
+
 function selectPredicateLinkEntity(entity_num){
 	// Action from list of predicate entities, uses clicks to select to use a link predicate
 	var label_domID = "search-entity-label-" + entity_num;
@@ -668,12 +829,44 @@ function selectPredicateLinkEntity(entity_num){
 	document.getElementById("sel-entity-use-button").disabled = "";
 }
 
+var doNewLinkPredicateLabel = true;
 function useSelectedLinkEnity(){
 	// Action to use a predicate entity, either previously selected from a list
 	// if a list is not chosen, use the search string and note it is for a new entity
 	
+	//set doNewLinkPredicateLabel as false, so the change does not trigger the 
+	//newLinkPredicateLabel() function
+	doNewLinkPredicateLabel = false;
 	
+	other_predicate_label = document.getElementById("sel-entity-label").value;
+	other_predicate_id = document.getElementById("sel-entity-id").value;
+	other_predicate_type = "predicates";
+	var predicateHTML = generateSelectedCustomPredicateHTML();
+	document.getElementById("other-predicate-interface-outer").innerHTML = predicateHTML;
+	var finalPredicateHTML = generateOtherLinkPredicateFinalHTML();
+	document.getElementById("other-predicate-final-show").innerHTML = finalPredicateHTML;
+	doNewLinkPredicateLabel = true;
+	checkActionReady();
 }
+
+function newLinkPredicateLabel(){
+	// Action to use a predicate entity, either previously selected from a list
+	// if a list is not chosen, use the search string and note it is for a new entity
+	if (doNewLinkPredicateLabel) {
+		//only do this if doNewLinkPredicateLabel is true, so as not to get messed up by
+		//selecting a link entity from the entity list
+		other_predicate_label = document.getElementById("custom-predicate-label").value;
+		other_predicate_id = -1;
+		other_predicate_type = "user-typed-link";
+		var predicateHTML = generateSelectedCustomPredicateHTML();
+		document.getElementById("other-predicate-interface-outer").innerHTML = predicateHTML;
+		var finalPredicateHTML = generateOtherLinkPredicateFinalHTML();
+		document.getElementById("other-predicate-final-show").innerHTML = finalPredicateHTML;
+		checkActionReady();
+	}
+}
+
+
 
 
 /* --------------------------------------------------------------
