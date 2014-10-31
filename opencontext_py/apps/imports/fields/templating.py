@@ -23,6 +23,10 @@ class ImportProfile():
                                    'persons',
                                    'projects']
 
+    DEFAULT_DESCRIBE_TYPE_FIELDS = ['description',
+                                    'variable',
+                                    'value']
+
     def __init__(self, source_id):
         self.source_id = source_id
         pg = ProcessGeneral(source_id)
@@ -37,6 +41,8 @@ class ImportProfile():
         self.PREDICATE_CONTAINS = Assertion.PREDICATES_CONTAINS
         self.PREDICATE_LINK = Assertion.PREDICATES_LINK
         self.PREDICATE_CONTAINED_IN = ImportFieldAnnotation.PRED_CONTAINED_IN
+        self.PRED_DESCRIBES = ImportFieldAnnotation.PRED_DESCRIBES
+        self.PRED_VALUE_OF = ImportFieldAnnotation.PRED_VALUE_OF
 
     def get_fields(self, field_num_list=False):
         """ Gets a list of field objects, limited by a list of field_num if not false """
@@ -101,6 +107,16 @@ class ImportProfile():
         self.raw_field_annotations = anno_list
         return self.raw_field_annotations
 
+    def get_annotations_by_subject_field(self, field_num):
+        output = []
+        if len(self.raw_field_annotations) < 1:
+            self.get_field_annotations()
+        for anno_obj in self.raw_field_annotations:
+            if anno_obj.field_num == field_num:
+                anno_dict = self.make_dict_from_anno_obj(anno_obj)
+                output.append(anno_dict)
+        return output
+
     def get_field_object(self, field_num):
         """ gets the field object for a specific field_num """
         output = False
@@ -158,6 +174,10 @@ class ImportProfile():
                 anno_dict['predicate']['type'] = ent.item_type
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_CONTAINED_IN:
                 anno_dict['predicate']['label'] = 'Contained in'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_DESCRIBES:
+                anno_dict['predicate']['label'] = 'Describes'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_VALUE_OF:
+                anno_dict['predicate']['label'] = 'Value of'
             else:
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False
@@ -210,5 +230,6 @@ class ImportProfile():
         output = []
         for field_obj in self.fields:
             field_dict = self.make_dict_from_field_obj(field_obj)
+            field_dict['annotations'] = self.get_annotations_by_subject_field(field_obj.field_num)
             output.append(field_dict)
         return output

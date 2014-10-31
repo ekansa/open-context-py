@@ -5,6 +5,7 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.imports.fieldannotations.links import CandidateLink
 
+
 # Methods to describe import fields and their annotations
 class ImportFieldDescribe():
 

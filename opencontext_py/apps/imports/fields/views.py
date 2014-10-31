@@ -66,6 +66,22 @@ def field_entity_relations(request, source_id):
         raise Http404
 
 
+@ensure_csrf_cookie
+def field_descriptions(request, source_id):
+    """ Show HTML form to change relationships for entities
+        to be created / or updated from an import table
+    """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        template = loader.get_template('imports/field-descriptions.html')
+        context = RequestContext(request,
+                                 {'ip': ip})
+        return HttpResponse(template.render(context))
+    else:
+        raise Http404
+
+
 def field_classify(request, source_id):
     """ Classifies one or more fields with posted data """
     if request.method == 'POST':

@@ -9,7 +9,7 @@
          <div class="col-sm-3">
             <ul class="pagination">
                 <li><a href="../../imports/field-types-more/{{ ip.source_id }}">Previous</a></li>
-                <li><a href="#">Next</a></li>
+                <li><a href="../../imports/field-descriptions/{{ ip.source_id }}">Next</a></li>
               </ul>
          </div>
      </div>
@@ -197,9 +197,12 @@
         */
         var PREDICATE_CONTAINS = "{{ ip.PREDICATE_CONTAINS}}";
         var PREDICATE_LINK = "{{ ip.PREDICATE_LINK}}";
+        var DEFAULT_SUBJECT_TYPE_FIELDS = {{ ip.DEFAULT_SUBJECT_TYPE_FIELDS|safe }};
         var PREDICATE_CONTAINED_IN = "{{ ip.PREDICATE_CONTAINED_IN}}";
          
     </script>
-    <script src="../../static/oc/js/imports/fields-relations.js" onload="javascript:get_field_data();"></script>
+    <!-- load up field data in the background, we'll need that to make lists of fields to display -->
+    <script src="../../static/oc/js/imports/fields-data.js" onload="javascript:get_field_data(true);"></script>
+    <script src="../../static/oc/js/imports/fields-relations.js"></script>
     <script src="../../static/oc/js/entities/entities.js" onload="javascript:getSubjectsHierarchy();"></script>
 {% endblock %} 

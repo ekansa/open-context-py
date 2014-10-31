@@ -470,8 +470,8 @@ function addContainedInDone(data){
  * --------------------------------------------------------------
  */
 function generateLinksFieldsBody(){
-	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects', 'media', 'documents', 'persons']);
-	var objectInterfaceHTML = generateFieldListHTML('object', ['subjects', 'media', 'documents', 'persons']);
+	var subjectInterfaceHTML = generateFieldListHTML('subject', DEFAULT_SUBJECT_TYPE_FIELDS);
+	var objectInterfaceHTML = generateFieldListHTML('object', DEFAULT_SUBJECT_TYPE_FIELDS);
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
@@ -574,8 +574,8 @@ var other_predicate_id = '';
 var other_predicate_label = '';
 var other_predicate_type = '';
 function generateOtherBody(){
-	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects', 'media', 'documents', 'persons']);
-	var objectInterfaceHTML = generateFieldListHTML('object', ['subjects', 'media', 'documents', 'persons']);
+	var subjectInterfaceHTML = generateFieldListHTML('subject', DEFAULT_SUBJECT_TYPE_FIELDS);
+	var objectInterfaceHTML = generateFieldListHTML('object', DEFAULT_SUBJECT_TYPE_FIELDS);
 	var predicateHTML = generateOtherLinkPredicateFinalHTML();
 	var bodyString = [
 		"<div class=\"container-fluid\">",
@@ -885,85 +885,11 @@ function generateAddPredicateHTML(predicate_id, predicate_label){
 	return predicateHTML;
 }
 
-function generateFieldListHTML(sub_obj_type, field_type_limits){
-	/* Makes a snippett of HTML for a field list used as either a subject or object */
-	
-	
-	var panelTitle = "Relationship '" + sub_obj_type + "' field";
-	var main_DomID = sub_obj_type + "-field-interfacce";
-	var tbody_DomID = sub_obj_type + "-Tbody";
-	var rowsHTML = generateFieldListRowsHTML(sub_obj_type, field_type_limits);
-	var mainHTML = [
-		"<div class=\"panel panel-default\">",
-			"<div class=\"panel-heading\">",
-				"<h4 class=\"panel-title\">" + panelTitle + "</h4>",
-			"</div>",
-			"<div class=\"panel-body\">",
-				"<form class=\"form-horizontal\" role=\"form\">",
-					"<div class=\"form-group form-group-sm\">",
-						"<label for=\"" + sub_obj_type + "-f-label\" class=\"col-xs-2 control-label\">Label</label>",
-						"<div class=\"col-xs-10\">",
-							"<input id=\"" + sub_obj_type + "-f-label\" type=\"text\"  value=\"\" placeholder=\"Select a field\" class=\"form-control input-sm\" />",
-						"</div>",
-					"</div>",
-					"<div class=\"form-group form-group-sm\">",
-						"<label for=\"" + sub_obj_type + "-f-num\" class=\"col-xs-2 control-label\">Field#</label>",
-						"<div class=\"col-xs-10\">",
-							"<input id=\"" + sub_obj_type + "-f-num\" type=\"text\"  value=\"\" placeholder=\"Select a field\" class=\"form-control input-sm\" />",
-						"</div>",
-					"</div>",
-				"</form>",
-				"<table id=\"" + sub_obj_type + "-fieldsTable\" class=\"table table-condensed table-hover\">",
-					"<thead>",
-						"<th class=\"col-sm-1\">Field</th>",
-						"<th class=\"col-sm-11\">Label</th>",
-					"</thead>",
-					"<tbody id=\"" + tbody_DomID + "\">",
-						rowsHTML,
-					"</tbody>",
-				"</table>",
-			"</div>",
-		"</div>"
-	].join("\n");
-	return mainHTML;
-}
 
-function generateFieldListRowsHTML(sub_obj_type, field_type_limits){
-	/* Makes a snippett of HTML for rows of a field list used as either a subject or object */
-	var rows = [];
-	for (var i = 0, length = field_data.length; i < length; i++) {
-		field = field_data[i];
-		var use_field = false;
-		if (field_type_limits[0] == 'none') {
-			// don't limit by field_type
-			use_field = true;
-		}
-		else{
-			// limit by a list of allowed field types, check if in that list
-			if (field_type_limits.indexOf(field.field_type) >= 0) {
-				use_field = true;
-			}
-		}
-		if (use_field) {
-			var row_id = sub_obj_type + "-field-num-" + field.field_num;
-			var label_id = sub_obj_type + "-field-label-" + field.field_num;
-			rowHTML = [
-				"<tr id=\"" + row_id  + "\">",
-					"<td>",
-						field.field_num,	
-					"</td>",
-					"<td>",
-						"<a id=\"" + label_id + "\" href=\"javascript:selectField('" + sub_obj_type + "'," + field.field_num + ");\">" + field.label + "</a>",	
-					"</td>",
-				"</tr>"
-			].join("\n");
-			rows.push(rowHTML);
-		}
-	}
-	var rowsHTML = rows.join("\n"); 
-	return rowsHTML;
-}
-
+/* --------------------------------------------------------------
+ * Field selection function
+ * --------------------------------------------------------------
+ */
 function selectField(sub_obj_type, field_num){
 	/* Selects a field to use as either a subject or an object field */
 	var label_domID = sub_obj_type + "-field-label-" + field_num;
@@ -975,29 +901,3 @@ function selectField(sub_obj_type, field_num){
 	checkActionReady()
 }
 
-
-
-
-/* ----------------------------------------------------
- * AJAX to load up fields
- *
- * ----------------------------------------------------
-*/
-
-function get_field_data(){
-	/* AJAX to get field data */
-	var url = "../../imports/field-list/" + encodeURIComponent(source_id);
-	var req = $.ajax({
-		type: "GET",
-		url: url,
-		dataType: "json",
-		success: get_field_data_Done
-	});
-}
-
-function get_field_data_Done(data){
-	/* Stores field data in the global 'field_list' */
-	for (var i = 0, length = data.length; i < length; i++) {
-		field_data.push(data[i]);
-	}
-}

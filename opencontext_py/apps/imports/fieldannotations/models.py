@@ -5,6 +5,8 @@ from django.db import models
 class ImportFieldAnnotation(models.Model):
 
     PRED_CONTAINED_IN = 'oc-gen:contained-in'
+    PRED_DESCRIBES = 'oc-gen:describes'
+    PRED_VALUE_OF = 'oc-gen:value-of'
 
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
