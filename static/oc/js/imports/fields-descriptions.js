@@ -89,10 +89,15 @@ function determine_description_predicate(selected_fields, object_field_num){
 
 function describeField(sub_obj_type, object_field_num){
 	// sends ajax request to assign descriptions to fields
+	post_annotation(sub_obj_type, object_field_num).then(get_example_entities).then(reload_fields);
+}
+
+function post_annotation(sub_obj_type, object_field_num){
+	// sends ajax request to assign descriptions to fields
 	var selected_fields = getSelectedFieldNumbers();
 	var act_predicate = determine_description_predicate(selected_fields, object_field_num);
 	var url = "../../imports/field-annotation-create/" + encodeURIComponent(source_id);
-	var req = $.ajax({
+	return $.ajax({
 		type: "POST",
 		url: url,
 		dataType: "json",
@@ -100,11 +105,50 @@ function describeField(sub_obj_type, object_field_num){
 			field_num: selected_fields,
 			predicate: act_predicate,
 			object_field_num: object_field_num,
-			csrfmiddlewaretoken: csrftoken},
-		success: assignTypeDone
+			csrfmiddlewaretoken: csrftoken}
+		});
+}
+
+function get_example_entities(data){
+	var url = "../../imports/field-described-examples/" + encodeURIComponent(source_id);
+	return $.ajax({
+		type: "GET",
+		url: url,
+		dataType: "json"
 	});
 }
 
-function describeFieldDone(data){
+function reload_fields(data){
+	var url = "../../imports/field-list/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+			type: "GET",
+			url: url,
+			dataType: "json",
+			success: alt_field_data_Done
+		});
+}
 	
+	
+	
+	
+/* ----------------------------------------------------
+ * Functions to DELETE description annotations
+ *
+ * ----------------------------------------------------
+*/
+
+function removeDescriptionAnno(annotaiton_id){
+	/* sets of a chain of AJAX calls to remove an annotation, then load up examples, then fields */
+	deleteAnnotation(annotaiton_id).then(get_example_entities).then(reload_fields);
+}
+
+function deleteAnnotation(annotation_id){
+	/* AJAX call delete a specific annotation */
+	var url = "../../imports/field-annotation-delete/" + encodeURIComponent(source_id) + "/" + annotation_id;
+	return $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {csrfmiddlewaretoken: csrftoken}
+	});
 }

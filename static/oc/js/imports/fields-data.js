@@ -30,6 +30,8 @@ function get_field_data(success_function){
 
 function get_field_data_Done(data){
 	/* Stores field data in the global 'field_list' */
+	field_data = [];
+	annotations = [];
 	for (var i = 0, length = data.length; i < length; i++) {
 		field_data.push(data[i]);
 		for (var j = 0, length_anno = data[i].annotations.length; j < length_anno; j++) {
@@ -186,7 +188,8 @@ function generate_field_describesHTML(field){
 	for (var i = 0, length = field.annotations.length; i < length; i++) {
 		if (field.annotations[i].predicate.id == PRED_DESCRIBES || field.annotations[i].predicate.id == PRED_VALUE_OF) {
 			outputHTML = "<button type=\"button\" class=\"btn btn-warning btn-xs\" ";
-			outputHTML += "onclick=\"javascript:removeAnnotation(" + field.annotations[i].id + ");\" >";
+			outputHTML += "onclick=\"javascript:removeDescriptionAnno(" + field.annotations[i].id + ");\" >";
+			outputHTML += "<span class=\"glyphicon glyphicon-remove\"></span></button> ";
 			outputHTML += field.annotations[i].object.label;
 			outputHTML += " (Field: " + field.annotations[i].object.field_num + ")";
 		}

@@ -44,6 +44,20 @@ def subjects_hierarchy_examples(request, source_id):
         raise Http404
 
 
+def described_examples(request, source_id):
+    """ Returns JSON data with examples of described entites """
+    ps = ProcessSubjects(source_id)
+    if ps.project_uuid is not False:
+        cont_list = ps.get_contained_examples()
+        json_output = json.dumps(cont_list,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
 def delete(request, source_id, annotation_id):
     """ Returns JSON data for an identifier in its hierarchy """
     if request.method == 'POST':
@@ -81,6 +95,14 @@ def create(request, source_id):
                 if 'object_field_num' in request.POST:
                     ifd.update_field_links(request.POST['field_num'],
                                            request.POST['object_field_num'])
+            elif request.POST['predicate'] == ImportFieldAnnotation.PRED_DESCRIBES:
+                if 'object_field_num' in request.POST:
+                    ifd.update_desciption(request.POST['field_num'],
+                                          request.POST['object_field_num'])
+            elif request.POST['predicate'] == ImportFieldAnnotation.PRED_VALUE_OF:
+                if 'object_field_num' in request.POST:
+                    ifd.update_variable_value(request.POST['field_num'],
+                                              request.POST['object_field_num'])
             else:
                 if request.POST['predicate'] == '-1':
                     # the predicate is not yet reconciled
