@@ -44,7 +44,84 @@ class ProcessDescriptions():
     def get_description_examples(self):
         """ Gets example entities described by other fields
         """
+        example_entities = []
         self.get_description_annotations()
+        if self.des_rels is not False:
+            for ent_field_num, ent_obj in self.des_rels.items():
+                # get some example records 
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                distinct_records = pc.get_field_records(ent_field_num,
+                                                        False)
+                if distinct_records is not False:
+                    entity_example_count = 0
+                    # sort the list in row_order from the import table
+                    distinct_records = self.order_distinct_records(distinct_records)
+                    for row_key, dist_rec in distinct_records.items():
+                        if entity_example_count < self.example_size:
+                            # if we're less than the example size, make
+                            # an example object
+                            entity_example_count += 1
+                            entity = LastUpdatedOrderedDict()
+                            entity_label = dist_rec['imp_cell_obj'].record
+                            if len(entity_label) < 1:
+                                entity_label = '[BLANK]'
+                            entity_label = ent_obj['field'].value_prefix + entity_label
+                            entity['label'] = entity_label
+                            entity['id'] = str(ent_field_num) + '-' + str(row_key)
+                            entity['descriptions'] = []
+                            example_rows = []
+                            example_rows.append(dist_rec['rows'][0])
+                            for des_field_obj in ent_obj['des_by_fields']:
+                                des_item = LastUpdatedOrderedDict()
+                                des_item['predicate'] = LastUpdatedOrderedDict()
+                                # values are in a list, in case there are more than 1 (variable-value)
+                                des_item['objects'] = []
+                                des_item['predicate']['type'] = des_field_obj.field_type
+                                if des_field_obj.field_type == 'description':
+                                    # set the predicate for this description
+                                    des_item['predicate']['label'] = des_field_obj.label
+                                    des_item['predicate']['id'] = des_field_obj.field_num
+                                    # now get a value for this description from the imported cells
+                                    pc = ProcessCells(self.source_id,
+                                                      self.start_row)
+                                    val_recs = pc.get_field_records(des_field_obj.field_num,
+                                                                    example_rows)
+                                    val_rec = self.get_first_distinct_record(val_recs)
+                                    if val_rec is not False:
+                                        object_val = LastUpdatedOrderedDict()
+                                        object_val['record'] = val_rec['imp_cell_obj'].record
+                                        object_val['id'] = val_rec['rows'][0]
+                                        des_item['objects'].append(object_val)
+                                elif des_field_obj.field_type == 'variable':
+                                    # need to get the predicate from the imported cells
+                                    pc = ProcessCells(self.source_id,
+                                                      self.start_row)
+                                    var_recs = pc.get_field_records(des_field_obj.field_num,
+                                                                    example_rows)
+                                    var_rec = self.get_first_distinct_record(var_recs)
+                                    if var_rec is not False:
+                                        des_item['predicate']['label'] = var_rec['imp_cell_obj'].record
+                                        pid = str(des_field_obj.field_num) + '-' + str(var_rec['rows'][0])
+                                        des_item['predicate']['id'] = pid
+                                        # now need to get fields that have object values for the predicate
+                                        valueof_fields = self.get_variable_valueof(des_field_obj)
+                                        for val_field_obj in valueof_fields:
+                                            pc = ProcessCells(self.source_id,
+                                                              self.start_row)
+                                            val_recs = pc.get_field_records(val_field_obj.field_num,
+                                                                            example_rows)
+                                            val_rec = self.get_first_distinct_record(val_recs)
+                                            if val_rec is not False:
+                                                object_val = LastUpdatedOrderedDict()
+                                                object_val['record'] = val_rec['imp_cell_obj'].record
+                                                oid = str(val_field_obj.field_num) + '-' + str(val_rec['rows'][0])
+                                                object_val['id'] = oid
+                                                des_item['objects'].append(object_val)
+                                entity['descriptions'].append(des_item)
+                            example_entities.append(entity)
+        return example_entities
+
 
     def get_description_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -53,10 +130,10 @@ class ProcessDescriptions():
         self.description_annotations = ImportFieldAnnotation.objects\
                                                             .filter(source_id=self.source_id,
                                                                     predicate=ImportFieldAnnotation.PRED_DESCRIBES)\
-                                                            .order_by(field_num)
+                                                            .order_by('field_num')
         if len(self.description_annotations) > 0:
             self.des_rels = LastUpdatedOrderedDict()
-            for des_anno in self.des_rels:
+            for des_anno in self.description_annotations:
                 add_descriptor_field = False
                 if des_anno.object_field_num not in self.des_rels:
                     # entities being described are in the field identified by object_field_num
@@ -73,11 +150,34 @@ class ProcessDescriptions():
                     # the descriptive field is identified by the field_num
                     des_field_obj = self.get_field_obj(des_anno.field_num)
                     if des_field_obj is not False:
-                        self.self.des_rels[des_anno.object_field_num]['des_by_fields'].append(des_field_obj)
+                        self.des_rels[des_anno.object_field_num]['des_by_fields'].append(des_field_obj)
+
+    def order_distinct_records(self, distinct_records):
+        """ returns distict records in their proper order """
+        row_key_recs = {}
+        row_key_list = []
+        for rec_hash, dist_rec in distinct_records.items():
+            row_key = dist_rec['rows'][0]
+            row_key_recs[row_key] = dist_rec
+            row_key_list.append(row_key)
+        row_key_list = sorted(row_key_list)
+        row_key_ordered_recs = LastUpdatedOrderedDict()
+        for row_key in row_key_list:
+            row_key_ordered_recs[row_key] = row_key_recs[row_key]
+        return row_key_ordered_recs
+
+    def get_first_distinct_record(self, distinct_records):
+        """ returns the first distinct record dictionary object """
+        output = False
+        if distinct_records is not False:
+            for rec_hash, dist_rec in distinct_records.items():
+                output = dist_rec
+                break
+        return output
 
     def get_variable_valueof(self, des_field_obj):
         """ Checks to see if the des_by_field is a variable that has designated values """
-        valueof_fields = False
+        valueof_fields = []
         if des_field_obj.field_type == 'variable':
             # get list of field_nums that have the des_by_field as their object
             val_annos = ImportFieldAnnotation.objects\
@@ -86,7 +186,6 @@ class ProcessDescriptions():
                                                      object_field_num=des_field_obj.field_num)\
                                              .order_by(field_num)
             if len(val_annos) > 1:
-                valueof_fields = []
                 for val_anno in val_annos:
                     val_obj = self.get_field_obj(val_anno.field_num)
                     if val_obj is not False:

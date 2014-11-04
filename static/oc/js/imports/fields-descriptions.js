@@ -3,6 +3,10 @@
  *
  * ----------------------------------------------------
 */
+function start_descriptions(){
+	/* Chains together AJAX request to get existing description annotations, examples */
+	chained_field_data().then(get_example_entities).then(reload_fields);
+}
 
 function alt_field_data_Done(data){
 	get_field_data_Done(data);
@@ -114,7 +118,8 @@ function get_example_entities(data){
 	return $.ajax({
 		type: "GET",
 		url: url,
-		dataType: "json"
+		dataType: "json",
+		success: get_example_entitiesDone
 	});
 }
 
@@ -128,8 +133,79 @@ function reload_fields(data){
 		});
 }
 	
-	
-	
+
+/* --------------------------------------------
+ * Example entities display
+ * --------------------------------------------
+*/
+
+function get_example_entitiesDone(data){
+	if (data.length > 0) {
+		var example_HTML = "";
+		for (var i = 0, length = data.length; i < length; i++) {
+			example_HTML += generate_example_entity_tabHTML(data[i]);
+		}
+	}
+	else{
+		var example_HTML = [
+			"<div class=\"alert alert-info\" role=\"alert\">",
+			"[No descriptions assigned yet]",
+			"</div>"
+		].join("\n");
+	}
+	var example_DomID = "described_examples_outer";
+	var example_dom = document.getElementById(example_DomID);
+	example_dom.innerHTML = example_HTML;
+}
+
+function generate_example_entity_tabHTML(entity){
+	/* generates HTML for an example entity */
+	var rowsHTML = generate_example_des_rowsHTML(entity);
+	var tab_HTML = [
+		"<h5>" + entity.label + "</h5>",
+		"<table id=\"" + entity.id + "-des-tab\" class=\"table table-condensed table-bordered table-striped\">",
+			"<thead>",
+				"<th class=\"col-sm-6\">Property / Predicate</th>",
+				"<th class=\"col-sm-6\">Value(s)</th>",
+			"</thead>",
+			"<tbody>",
+				rowsHTML,
+			"</tbody>",
+		"</table>",
+	].join("\n");
+	return tab_HTML;
+}
+
+function generate_example_des_rowsHTML(entity){
+	var rowsHTML = "";
+	for (var i = 0, length = entity.descriptions.length; i < length; i++) {
+		var act_des = entity.descriptions[i];
+		if ( act_des.objects.length > 1) {
+			var valsHTML = "<ul>";
+			for (var j = 0, length = act_des.objects.length; j < length; j++) {
+				var act_val_obj = act_des.objects[j];
+				valsHTML += "<li>" + act_val_obj.record + "</li>";
+			}
+			valsHTML += "</ul>";
+		}
+		else{
+			var valsHTML = act_des.objects[0].record;
+			if (valsHTML.length > 144) {
+				valsHTML = valsHTML.substring(0, 144) + "...";	
+			}
+		}
+		var rowHTML = [
+			"<tr>",
+				"<td>" + act_des.predicate.label,
+				"</td>",
+				"<td>" + valsHTML,
+				"</td>",
+			"</tr>"
+		].join("\n");
+		rowsHTML += rowHTML;
+	}
+	return rowsHTML;
+}	
 	
 /* ----------------------------------------------------
  * Functions to DELETE description annotations

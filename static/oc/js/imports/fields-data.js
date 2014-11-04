@@ -10,22 +10,23 @@ var annotations = [];
 function get_field_data(success_function){
 	/* AJAX to get field data */
 	var url = "../../imports/field-list/" + encodeURIComponent(source_id);
-	if (success_function) {
-		var req = $.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			success: get_field_data_Done
-		});
-	}
-	else{
-		var req = $.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			success: alt_field_data_Done
-		});
-	}
+	var req = $.ajax({
+		type: "GET",
+		url: url,
+		dataType: "json",
+		success: alt_field_data_Done
+	});
+}
+
+function chained_field_data(){
+	/* AJAX to get field data, used in a chain */
+	var url = "../../imports/field-list/" + encodeURIComponent(source_id);
+	return $.ajax({
+		type: "GET",
+		url: url,
+		dataType: "json",
+		success: alt_field_data_Done
+	});
 }
 
 function get_field_data_Done(data){
@@ -191,7 +192,7 @@ function generate_field_describesHTML(field){
 			outputHTML += "onclick=\"javascript:removeDescriptionAnno(" + field.annotations[i].id + ");\" >";
 			outputHTML += "<span class=\"glyphicon glyphicon-remove\"></span></button> ";
 			outputHTML += field.annotations[i].object.label;
-			outputHTML += " (Field: " + field.annotations[i].object.field_num + ")";
+			outputHTML += "<br/><samp>(Field: " + field.annotations[i].object.field_num + ")</samp>";
 		}
 		
 	}

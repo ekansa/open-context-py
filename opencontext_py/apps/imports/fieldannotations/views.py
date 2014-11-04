@@ -4,6 +4,7 @@ from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubjects
+from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -46,10 +47,10 @@ def subjects_hierarchy_examples(request, source_id):
 
 def described_examples(request, source_id):
     """ Returns JSON data with examples of described entites """
-    ps = ProcessSubjects(source_id)
-    if ps.project_uuid is not False:
-        cont_list = ps.get_contained_examples()
-        json_output = json.dumps(cont_list,
+    pd = ProcessDescriptions(source_id)
+    if pd.project_uuid is not False:
+        example_list = pd.get_description_examples()
+        json_output = json.dumps(example_list,
                                  indent=4,
                                  ensure_ascii=False)
         return HttpResponse(json_output,
