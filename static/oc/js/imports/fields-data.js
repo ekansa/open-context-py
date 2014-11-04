@@ -7,14 +7,14 @@
 
 var field_data = [];
 var annotations = [];
-function get_field_data(success_function){
+function get_field_data(){
 	/* AJAX to get field data */
 	var url = "../../imports/field-list/" + encodeURIComponent(source_id);
 	var req = $.ajax({
 		type: "GET",
 		url: url,
 		dataType: "json",
-		success: alt_field_data_Done
+		success: get_field_data_Done
 	});
 }
 
