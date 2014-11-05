@@ -17,6 +17,7 @@ class ArachneAPI():
         self.arachne_html_url = False
         self.filter_by_images = True
         self.image_height = self.DEFAULT_IMAGE_HEIGHT
+        self.result_count = False
         self.results = False
 
     def get_keyword_results(self, keyword):
@@ -24,8 +25,15 @@ class ArachneAPI():
             search finds entities
         """
         self.get_keyword_search_json(keyword)
+        self.get_result_metadata()
         self.generate_results_list()
         return self.results
+
+    def get_result_metadata(self):
+        """ gets metadata about the search result """
+        if self.arachne_json_r is not False:
+            if 'size' in self.arachne_json_r:
+                self.result_count = self.arachne_json_r['size']
 
     def generate_results_list(self):
         """ makes a list of results with full URLs """

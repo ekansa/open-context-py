@@ -1,6 +1,9 @@
-from django.http import HttpResponse, Http404
-from opencontext_py.apps.ocitems.ocitem.models import OCitem
 import json
+from django.http import HttpResponse, Http404
+from opencontext_py.apps.ocitems.octypes.supplement import TypeSupplement
+from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
+from django.template import RequestContext, loader
 
 
 # An octype item is a concept from a controlled vocabulary that originates from
@@ -15,7 +18,14 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
-        return HttpResponse("Hello, world. You're at the type htmlView of " + str(uuid))
+        ts = TypeSupplement(ocitem.json_ld)
+        ocitem.json_ld = ts.get_arachne_comparanda()
+        temp_item = TemplateItem()
+        temp_item.read_jsonld_dict(ocitem.json_ld)
+        template = loader.get_template('types/view.html')
+        context = RequestContext(request,
+                                 {'item': temp_item})
+        return HttpResponse(template.render(context))
     else:
         raise Http404
 
@@ -24,6 +34,8 @@ def json_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
+        ts = TypeSupplement(ocitem.json_ld)
+        ocitem.json_ld = ts.get_arachne_comparanda()
         json_output = json.dumps(ocitem.json_ld,
                                  indent=4,
                                  ensure_ascii=False)

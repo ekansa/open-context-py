@@ -531,16 +531,20 @@ class PropValue():
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.uri = val_item['id']
                     uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
-                    self.item_type = uri_item['item_type']
-                    self.uuid = uri_item['uuid']
+                    if uri_item is not False:
+                        self.item_type = uri_item['item_type']
+                        self.uuid = uri_item['uuid']
+                    else:
+                        self.item_type = 'external-resource'
+                        self.uuid = None
                 else:
                     self.id = val_item['id'].replace('#', '')
             if('label' in val_item):
                 self.val = val_item['label']
-            if('type' in val_item):
-                self.type = val_item['type']
             if 'oc-gen:thumbnail-uri' in val_item:
                 self.thumbnail = val_item['oc-gen:thumbnail-uri']
+                if self.item_type == 'external-resource':
+                    self.item_type = 'media'
             if('xsd:string' in val_item):
                 self.val = val_item['xsd:string']
         else:
