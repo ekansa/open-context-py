@@ -5,7 +5,7 @@
         {% for media in row %}
         <div class="col-xs-6 col-md-3 media-thumb">
             {% if media.uuid == None %}   
-            <a class="thumbnail" title="{{ media.val }}" href="{{  media.uri }}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
+            <a target="_blank" class="thumbnail" title="{{ media.val }}" href="{{  media.uri }}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
             {% else %}
             <a class="thumbnail" title="{{ media.val }}" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
             {% endif %}

@@ -539,6 +539,8 @@ class PropValue():
                         self.uuid = None
                 else:
                     self.id = val_item['id'].replace('#', '')
+            if 'type' in val_item:
+                self.type = val_item['type']
             if('label' in val_item):
                 self.val = val_item['label']
             if 'oc-gen:thumbnail-uri' in val_item:
