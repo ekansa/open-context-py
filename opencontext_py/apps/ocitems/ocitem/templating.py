@@ -77,11 +77,20 @@ class TemplateItem():
         """
         Adds observation objects if json_ld describes such
         """
+        if self.act_nav == 'types':
+            if self.observations is False:
+                self.observations = []
+            act_obs = Observation()
+            act_obs.obs_num = 1
+            act_obs.make_type_obs(json_ld)
+            if act_obs.properties is not False:
+                self.observations.append(act_obs)
         if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
             context = json_ld['@context']
-            self.observations = []
-            obs_num = 1
+            if self.observations is False:
+                self.observations = []
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+                obs_num = len(self.observations) + 1
                 act_obs = Observation()
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.obs_num = obs_num
@@ -99,7 +108,6 @@ class TemplateItem():
                    self.act_nav == 'projects'):
                     self.use_accordions = True
                 self.observations.append(act_obs)
-                obs_num += 1
             if len(self.linked_data.annotations) > 0:
                 # make a special observation for linked data annotations
                 act_obs = Observation()
@@ -331,6 +339,37 @@ class Observation():
         self.class_type_metadata = False
         self.use_accordions = False
 
+    def make_type_obs(self, json_ld):
+        """ Makes an observation with some metadata
+            specifically for display of information related
+            to types
+        """
+        self.id = 'type-data'
+        self.source_id = 'project'
+        self.obs_status = 'active'
+        self.obs_type = 'contributor'
+        self.label = 'Description of this Category / Type'
+        if 'skos:related' in json_ld:
+            for rel_item in json_ld['skos:related']:
+                if 'oc-pred:' in rel_item['id']:
+                    if self.properties is False:
+                        self.properties = []
+                        act_prop = Property()
+                        act_prop.varlabel = 'Related Property'
+                        act_prop.varuri = False
+                        act_prop.varslug = False
+                        act_prop.vartype = False
+                        act_prop.values = []
+                        act_val = PropValue()
+                        act_val.vartype = 'id'
+                        act_val.item_type = 'predicates'
+                        act_val.uri = rel_item['owl:sameAs']
+                        act_val.id = rel_item['owl:sameAs']
+                        act_val.uuid = URImanagement.get_uuid_from_oc_uri(rel_item['owl:sameAs'])
+                        act_val.val = rel_item['label']
+                        act_prop.values.append(act_val)
+                        self.properties.append(act_prop)
+
     def make_linked_data_obs(self, annotations):
         """ Makes an observation with some metadata
             specifically for display of linked data
@@ -359,6 +398,8 @@ class Observation():
                 self.label = 'Main Observation'
             else:
                 self.label = 'Obs (' + str(self.obs_num) + ')'
+        if self.source_id == 'http://arachne.dainst.org/data/search':
+            self.label = 'Arachne Comparanda'
         self.properties = self.make_properties(obs_dict)
         self.links = self.make_links(obs_dict)
         if self.properties is not False and self.links is not False:
@@ -706,9 +747,9 @@ class LinkedData():
         output = False
         ld_found = self.make_linked_data_lists(json_ld)
         if ld_found:
+            # using an ordered dict to make sure we can more easily have unique combos of preds and objects
+            temp_annotations = LastUpdatedOrderedDict()
             if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
-                # using an ordered dict to make sure we can more easily have unique combos of preds and objects
-                temp_annotations = LastUpdatedOrderedDict()
                 for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                     for link_pred in self.linked_predicates:
                         if link_pred['subject'] in obs_item:
@@ -752,28 +793,28 @@ class LinkedData():
                                         # makes sure we've got unique value literals
                                         act_annotation['literals'].append(act_val)
                             temp_annotations[link_pred['id']] = act_annotation
-                if len(temp_annotations) > 0:
-                    output = True
-                    for pred_uri_key, act_annotation in temp_annotations.items():
-                        if len(act_annotation['literals']) < 1:
-                            act_annotation['literals'] = None
-                        if len(act_annotation['objects']) > 0:
-                            objects_list = []
-                            for obj_uri_key, act_obj in act_annotation['objects'].items():
-                                objects_list.append(act_obj)
-                            act_annotation['objects'] = objects_list
-                        if len(act_annotation['oc_objects']) > 0:
-                            oc_objects_list = []
-                            for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
-                                oc_objects_list.append(act_obj)
-                            act_annotation['oc_objects'] = oc_objects_list
-                        if len(act_annotation['objects']) < 1:
-                            if len(act_annotation['oc_objects']) < 1:
-                                act_annotation['objects'] = None
-                                act_annotation['oc_objects'] = None
-                            else:
-                                act_annotation['objects'] = act_annotation['oc_objects']
-                        self.annotations.append(act_annotation)
+            if len(temp_annotations) > 0:
+                output = True
+                for pred_uri_key, act_annotation in temp_annotations.items():
+                    if len(act_annotation['literals']) < 1:
+                        act_annotation['literals'] = None
+                    if len(act_annotation['objects']) > 0:
+                        objects_list = []
+                        for obj_uri_key, act_obj in act_annotation['objects'].items():
+                            objects_list.append(act_obj)
+                        act_annotation['objects'] = objects_list
+                    if len(act_annotation['oc_objects']) > 0:
+                        oc_objects_list = []
+                        for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
+                            oc_objects_list.append(act_obj)
+                        act_annotation['oc_objects'] = oc_objects_list
+                    if len(act_annotation['objects']) < 1:
+                        if len(act_annotation['oc_objects']) < 1:
+                            act_annotation['objects'] = None
+                            act_annotation['oc_objects'] = None
+                        else:
+                            act_annotation['objects'] = act_annotation['oc_objects']
+                    self.annotations.append(act_annotation)
         return output
 
     def make_linked_data_lists(self, json_ld):
@@ -790,7 +831,7 @@ class LinkedData():
                     if '@id' in ld_item:
                         subject_id = ld_item['@id']
                     elif 'id' in ld_item:
-                        subject_id = ld_item['@id']
+                        subject_id = ld_item['id']
                     else:
                         subject_id = False
                     if subject_id is not False:
