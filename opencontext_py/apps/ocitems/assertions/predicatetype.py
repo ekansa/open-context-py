@@ -7,7 +7,7 @@ from opencontext_py.apps.ocitems.octypes.management import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.predicates.manage import PredicateManage
+from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
 
@@ -76,7 +76,7 @@ class PredicateTypeAssertions():
                                  .order_by('object_type')\
                                  .distinct('object_type')  # get distinct list of object_types
             for aitem in adistinct:  # list of assertions that are not using the good data type
-                pm = PredicateManage()
+                pm = PredicateManagement()
                 pm.source_id = pman.source_id
                 pm.project_uuid = pman.project_uuid
                 pm.sort = pred.sort
@@ -99,7 +99,7 @@ class PredicateTypeAssertions():
                     la.save()
                 alist = Assertion.objects.filter(predicate_uuid=predicate_uuid).exclude(object_type=pdata_type)
                 for aitem in alist:  # list of assertions that are not using the good data type
-                    pm = PredicateManage()
+                    pm = PredicateManagement()
                     pm.source_id = pman.source_id
                     pm.project_uuid = pman.project_uuid
                     pm.sort = pred.sort

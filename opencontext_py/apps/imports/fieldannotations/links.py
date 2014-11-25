@@ -5,7 +5,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.predicates.manage import PredicateManage
+from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
@@ -49,7 +49,7 @@ class CandidateLink():
         """ makes a new linking relationship or
             reconciles with existing relations
         """
-        pm = PredicateManage()
+        pm = PredicateManagement()
         pm.project_uuid = self.project_uuid
         pm.source_id = self.source_id
         pm.data_type = self.data_type

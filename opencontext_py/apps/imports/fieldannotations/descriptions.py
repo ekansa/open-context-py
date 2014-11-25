@@ -4,6 +4,8 @@ from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.octypes.management import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring

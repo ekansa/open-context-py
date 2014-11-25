@@ -4,7 +4,7 @@ from datetime import datetime, date, time
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.predicates.manage import PredicateManage
+from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -73,7 +73,7 @@ class HierarchicPredicates():
                 for label_part in child_parts:
                     act_new_label = act_new_label + act_delim + label_part
                     act_delim = self.HIERARCHY_DELIM
-                    pred_manage = PredicateManage()
+                    pred_manage = PredicateManagement()
                     pred_manage.project_uuid = manifest.project_uuid
                     pred_manage.source_id = self.source_id
                     pred_manage.sort = oc_pred.sort
