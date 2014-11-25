@@ -3,10 +3,11 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.octypes.management import TypeManagement
+from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ocitems.strings.management import StringManagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
@@ -18,6 +19,12 @@ from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 # Processes to generate subjects items for an import
 class ProcessDescriptions():
+
+    DESCRIBE_OBJECT_TYPES = ['types',
+                             'xsd:boolean',
+                             'xsd:date',
+                             'xsd:integer',
+                             'xsd:double']
 
     def __init__(self, source_id):
         self.source_id = source_id
@@ -38,7 +45,27 @@ class ProcessDescriptions():
         """
         if self.start_row <= 1:
             # will clear an import of descriptions
-            pass
+            rem_assertions = Assertion.objects\
+                                      .filter(source_id=self.source_id,
+                                              project_uuid=self.project_uuid,
+                                              object_type__in=self.DESCRIBE_OBJECT_TYPES)\
+                                      .delete()
+            #get rid of "types" manifest records from this source
+            rem_manifest = Manifest.objects\
+                                   .filter(source_id=self.source_id,
+                                           project_uuid=self.project_uuid,
+                                           item_type='types')\
+                                   .delete()
+            #get rid of type records from this source
+            rem_type = OCtype.objects\
+                             .filter(source_id=self.source_id,
+                                     project_uuid=self.project_uuid)\
+                             .delete()
+            #get rid of string records from this source
+            rem_string = OCstring.objects\
+                                 .filter(source_id=self.source_id,
+                                         project_uuid=self.project_uuid)\
+                                 .delete()
         return True
 
     def get_description_examples(self):
@@ -47,11 +74,11 @@ class ProcessDescriptions():
         example_entities = []
         self.get_description_annotations()
         if self.des_rels is not False:
-            for ent_field_num, ent_obj in self.des_rels.items():
+            for subj_field_num, ent_obj in self.des_rels.items():
                 # get some example records 
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
-                distinct_records = pc.get_field_records(ent_field_num,
+                distinct_records = pc.get_field_records(subj_field_num,
                                                         False)
                 if distinct_records is not False:
                     entity_example_count = 0
@@ -68,7 +95,7 @@ class ProcessDescriptions():
                                 entity_label = '[BLANK]'
                             entity_label = ent_obj['field'].value_prefix + entity_label
                             entity['label'] = entity_label
-                            entity['id'] = str(ent_field_num) + '-' + str(row_key)
+                            entity['id'] = str(subj_field_num) + '-' + str(row_key)
                             entity['descriptions'] = []
                             example_rows = []
                             example_rows.append(dist_rec['rows'][0])
@@ -122,6 +149,36 @@ class ProcessDescriptions():
                             example_entities.append(entity)
         return example_entities
 
+    def process_description_batch(self):
+        """ processes containment fields for subject
+            entities starting with a given row number.
+            This iterates over all containment fields, starting
+            with the root subjhect field
+        """
+        self.clear_source()  # clear prior import for this source
+        self.end_row = self.start_row + self.batch_size
+        self.get_description_annotations()
+        if self.des_rels is not False:
+            for subj_field_num, ent_obj in self.des_rels.items():
+                # loop through the fields that describe the subj_field_num
+                for des_field_obj in ent_obj['des_by_fields']:
+                    if des_field_obj.field_type == 'description':
+                        pass
+                    elif des_field_obj.field_type == 'variable':
+                        pass
+                    pass
+                # get records for the subject
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                distinct_records = pc.get_field_records(subj_field_num,
+                                                        False)
+                if distinct_records is not False:
+                    distinct_records = self.order_distinct_records(distinct_records)
+                    for row_key, dist_rec in distinct_records.items():
+                        if dist_rec['imp_cell_obj'].cell_ok:
+                            # the subject record is OK to use for creating
+                            # description records
+                            pass
 
     def get_description_annotations(self):
         """ Gets descriptive annotations, and a 
