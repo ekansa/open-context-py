@@ -19,7 +19,8 @@ from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 
-# Processes to generate subjects items for an import
+# Processes to generate descriptions and non-containment
+# linking relationships
 class ProcessDescriptions():
 
     DESCRIBE_OBJECT_TYPES = ['types',
@@ -52,12 +53,23 @@ class ProcessDescriptions():
                                               project_uuid=self.project_uuid,
                                               object_type__in=self.DESCRIBE_OBJECT_TYPES)\
                                       .delete()
+            #get rid of "predicates" manifest records from this source
+            rem_manifest = Manifest.objects\
+                                   .filter(source_id=self.source_id,
+                                           project_uuid=self.project_uuid,
+                                           item_type='predicates')\
+                                   .delete()
             #get rid of "types" manifest records from this source
             rem_manifest = Manifest.objects\
                                    .filter(source_id=self.source_id,
                                            project_uuid=self.project_uuid,
                                            item_type='types')\
                                    .delete()
+            #get rid of type records from this source
+            rem_pred = Predicate.objects\
+                                .filter(source_id=self.source_id,
+                                        project_uuid=self.project_uuid)\
+                                .delete()
             #get rid of type records from this source
             rem_type = OCtype.objects\
                              .filter(source_id=self.source_id,
@@ -152,10 +164,9 @@ class ProcessDescriptions():
         return example_entities
 
     def process_description_batch(self):
-        """ processes containment fields for subject
-            entities starting with a given row number.
-            This iterates over all containment fields, starting
-            with the root subjhect field
+        """ processes fields describing a subject (subjects, media, documents, persons, projects)
+            entity field.
+            if start_row is 1, then this makes new predicate entities
         """
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
