@@ -18,6 +18,7 @@ class PredicateManagement():
         self.source_id = False
         self.data_type = "xsd:string"
         self.sort = 0
+        self.candidate_uuid = False  # uuid in case one is needed
 
     def get_make_predicate(self, predicate_label, predicate_type, data_type=False):
         """
@@ -49,7 +50,10 @@ class PredicateManagement():
                         self.predicate = False
                         self.manifest = False
         if(self.manifest is False and self.predicate is False):
-            uuid = GenUUID.uuid4()
+            if self.candidate_uuid is False:
+                uuid = GenUUID.uuid4()
+            else:
+                uuid = self.candidate_uuid
             newpred = Predicate()
             newpred.uuid = uuid
             newpred.project_uuid = self.project_uuid

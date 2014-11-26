@@ -12,6 +12,7 @@ from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
+from opencontext_py.apps.imports.records.unimport import UnImport
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 
@@ -42,23 +43,10 @@ class ProcessSubjects():
         """
         if self.start_row <= 1:
             # get rid of "subjects" related assertions made from this source
-            rem_assertions = Assertion.objects\
-                                      .filter(source_id=self.source_id,
-                                              project_uuid=self.project_uuid,
-                                              subject_type='subjects',
-                                              object_type='subjects')\
-                                      .delete()
-            #get rid of "subjects" manifest records from this source
-            rem_manifest = Manifest.objects\
-                                   .filter(source_id=self.source_id,
-                                           project_uuid=self.project_uuid,
-                                           item_type='subjects')\
-                                   .delete()
-            #get rid of subject records from this source
-            rem_subject = Subject.objects\
-                                 .filter(source_id=self.source_id,
-                                         project_uuid=self.project_uuid)\
-                                 .delete()
+            unimport = UnImport(self.source_id,
+                                self.project_uuid)
+            unimport.delete_containment_assertions()
+            unimport.delete_subjects_entities()
 
     def get_contained_examples(self):
         example_containment = []

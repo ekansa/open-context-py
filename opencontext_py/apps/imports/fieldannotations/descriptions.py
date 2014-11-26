@@ -17,17 +17,11 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
+from opencontext_py.apps.imports.records.unimport import UnImport
 
 
-# Processes to generate descriptions and non-containment
-# linking relationships
+# Processes to generate descriptions 
 class ProcessDescriptions():
-
-    DESCRIBE_OBJECT_TYPES = ['types',
-                             'xsd:boolean',
-                             'xsd:date',
-                             'xsd:integer',
-                             'xsd:double']
 
     def __init__(self, source_id):
         self.source_id = source_id
@@ -48,38 +42,12 @@ class ProcessDescriptions():
         """
         if self.start_row <= 1:
             # will clear an import of descriptions
-            rem_assertions = Assertion.objects\
-                                      .filter(source_id=self.source_id,
-                                              project_uuid=self.project_uuid,
-                                              object_type__in=self.DESCRIBE_OBJECT_TYPES)\
-                                      .delete()
-            #get rid of "predicates" manifest records from this source
-            rem_manifest = Manifest.objects\
-                                   .filter(source_id=self.source_id,
-                                           project_uuid=self.project_uuid,
-                                           item_type='predicates')\
-                                   .delete()
-            #get rid of "types" manifest records from this source
-            rem_manifest = Manifest.objects\
-                                   .filter(source_id=self.source_id,
-                                           project_uuid=self.project_uuid,
-                                           item_type='types')\
-                                   .delete()
-            #get rid of type records from this source
-            rem_pred = Predicate.objects\
-                                .filter(source_id=self.source_id,
-                                        project_uuid=self.project_uuid)\
-                                .delete()
-            #get rid of type records from this source
-            rem_type = OCtype.objects\
-                             .filter(source_id=self.source_id,
-                                     project_uuid=self.project_uuid)\
-                             .delete()
-            #get rid of string records from this source
-            rem_string = OCstring.objects\
-                                 .filter(source_id=self.source_id,
-                                         project_uuid=self.project_uuid)\
-                                 .delete()
+            unimport = UnImport(self.source_id,
+                                self.project_uuid)
+            unimport.delete_descibe_assertions()
+            unimport.delete_predicate_vars()
+            unimport.delete_types_entities()
+            unimport.delete_strings()
         return True
 
     def get_description_examples(self):
@@ -173,20 +141,20 @@ class ProcessDescriptions():
         self.get_description_annotations()
         if self.des_rels is not False:
             for subj_field_num, ent_obj in self.des_rels.items():
-                # loop through the fields that describe the subj_field_num
-                for des_field_obj in ent_obj['des_by_fields']:
-                    if des_field_obj.field_type == 'description':
-                        pass
-                    elif des_field_obj.field_type == 'variable':
-                        pass
-                    pass
-                # get records for the subject
+                # get records for the subject of the description
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 distinct_records = pc.get_field_records(subj_field_num,
                                                         False)
                 if distinct_records is not False:
                     distinct_records = self.order_distinct_records(distinct_records)
+                    # loop through the fields that describe the subj_field_num
+                    for des_field_obj in ent_obj['des_by_fields']:
+                        if des_field_obj.field_type == 'description':
+                            pass
+                        elif des_field_obj.field_type == 'variable':
+                            pass
+                        pass
                     for row_key, dist_rec in distinct_records.items():
                         if dist_rec['imp_cell_obj'].cell_ok:
                             # the subject record is OK to use for creating
@@ -281,76 +249,80 @@ class CandidateDescription():
     def __init__(self):
         self.project_uuid = False
         self.source_id = False
+        self.subject_uuid = False
+        self.predicate_uuid = False
+        self.object_uuid = False
+        self.object_type = False
+        self.data_num = False
+        self.data_date = False
 
-    def create_subject_item(self):
-        """ Create and save a new subject object"""
-        new_sub = Subject()
-        new_sub.uuid = self.uuid  # use the previously assigned temporary UUID
-        new_sub.project_uuid = self.project_uuid
-        new_sub.source_id = self.source_id
-        new_sub.context = self.context
-        new_sub.save()
-        new_man = Manifest()
-        new_man.uuid = self.uuid
-        new_man.project_uuid = self.project_uuid
-        new_man.source_id = self.source_id
-        new_man.item_type = 'subjects'
-        new_man.repo = ''
-        new_man.class_uri = self.class_uri
-        new_man.label = self.label
-        new_man.des_predicate_uuid = ''
-        new_man.views = 0
-        new_man.save()
 
-    def update_import_cell_uuid(self):
-        """ Saves the uuid to the import cell record """
-        if self.uuid is not False:
-            if self.import_rows is False:
-                # only update the current import cell object
-                self.imp_cell_obj.fl_uuid = self.uuid
-                self.imp_cell_obj.save()
-            else:
-                # update all the import cells in the list of rows
-                # to have the relevant uuid
-                self.imp_cell_obj.fl_uuid = self.uuid
-                self.imp_cell_obj.save()
-                up_cells = ImportCell.objects\
-                                     .filter(source_id=self.source_id,
-                                             field_num=self.imp_cell_obj.field_num,
-                                             row_num__in=self.import_rows)
-                for up_cell in up_cells:
-                    # save each cell with the correct UUID
-                    up_cell.fl_uuid = self.uuid
-                    up_cell.save()
+class CandidateDescriptivePredicate():
+    """ Class for reconciling and generating a descriptive predicate """
 
-    def match_against_subjects(self, context):
-        """ Checks to see if the item exists in the subjects table """
-        match_found = False
-        hash_id = Subject().make_hash_id(self.project_uuid, context)
-        try:
-            subject_match = Subject.objects\
-                                   .get(hash_id=hash_id)
-        except Subject.DoesNotExist:
-            subject_match = False
-        if subject_match is not False:
-            match_found = True
-            self.uuid = subject_match.uuid
-        return match_found
+    def __init__(self):
+        self.label = False
+        self.project_uuid = False
+        self.source_id = False
+        self.uuid = False
+        self.data_type = False
+        self.sort = 0
+        self.candidate_uuid = False
+        self.des_import_cell = False
 
-    def match_against_manifest(self, label, class_uri):
-        """ Checks to see if the item exists in the manifest """
-        match_found = False
-        manifest_match = Manifest.objects\
-                                 .filter(project_uuid=self.project_uuid,
-                                         label=label,
-                                         class_uri=class_uri)[:1]
-        if len(manifest_match) > 0:
-            match_found = True
-            self.uuid = manifest_match[0].uuid
-        else:
-            # can't match the item in the manifest
-            if self.allow_new is False:
-                # mark the cell to be ignored. It can't be associated with any entities
-                self.imp_cell_obj.cell_ok = False
-                self.imp_cell_obj.save()
-        return match_found
+    def setup_field(self, des_field_obj):
+        """ sets up, with slightly different patterns for
+            description field or a variable field
+        """
+        if des_field_obj.field_type == 'description':
+            if self.label is False:
+                self.label = des_field_obj.label
+            if self.candidate_uuid is False:
+                self.candidate_uuid = des_field_obj.f_uuid
+        elif des_field_obj.field_type == 'variable':
+            if self.des_import_cell is not False:
+                if self.label is False:
+                    self.label = self.des_import_cell.record
+                if self.candidate_uuid is False:
+                    self.candidate_uuid = self.des_import_cell.fl_uuid
+        if self.project_uuid is False:
+            self.project_uuid = des_field_obj.project_uuid
+        if self.source_id is False:
+            self.source_id = des_field_obj.source_id
+        if self.data_type is False:
+            self.data_type = des_field_obj.data_type
+        if self.sort < 1:
+            self.sort = des_field_obj.field_num
+
+    def reconcile_predicate_var(self, des_field_obj):
+        """ reconciles a predicate variable from the Import Field
+        """
+        output = False
+        self.setup_field(des_field_obj)
+        if len(self.label) > 0:
+            output = True
+            pm = PredicateManagement()
+            pm.project_uuid = self.project_uuid
+            pm.source_id = self.source_id
+            pm.sort = self.sort
+            pm.candidate_uuid = self.candidate_uuid
+            predicate = pm.get_make_predicate(self.label,
+                                              'variable',
+                                              self.data_type)
+            self.uuid = predicate.uuid
+            if predicate.uuid != self.candidate_uuid:
+                if self.des_import_cell is False:
+                    # update the reconcilted UUID with for the import field object
+                    des_field_obj.f_uuid = predicate.uuid
+                    des_field_obj.save()
+                else:
+                    # update the reconcilted UUID for import cells with same rec_hash
+                    up_cells = ImportCell.objects\
+                                         .filter(source_id=self.source_id,
+                                                 field_num=self.des_import_cell.field_num,
+                                                 rec_hash=self.des_import_cell.rec_hash)
+                    for up_cell in up_cells:
+                        # save each cell with the correct UUID
+                        up_cell.fl_uuid = self.uuid
+                        up_cell.save()
+        return output

@@ -27,6 +27,12 @@ class ImportProfile():
                                     'variable',
                                     'value']
 
+    DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
+                                     'xsd:boolean',
+                                     'xsd:date',
+                                     'xsd:integer',
+                                     'xsd:double']
+
     def __init__(self, source_id):
         self.source_id = source_id
         pg = ProcessGeneral(source_id)
