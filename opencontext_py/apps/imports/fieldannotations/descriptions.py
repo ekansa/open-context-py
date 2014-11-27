@@ -34,6 +34,8 @@ class ProcessDescriptions():
         self.batch_size = 250
         self.end_row = self.batch_size
         self.example_size = 5
+        self.reconciled_predicates = {}
+        self.reconciled_types = {}
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -141,6 +143,11 @@ class ProcessDescriptions():
         self.get_description_annotations()
         if self.des_rels is not False:
             for subj_field_num, ent_obj in self.des_rels.items():
+                # loop through the fields that describe the subj_field_num
+                self.reconcile_descriptive_predicates(ent_obj['des_by_fields'])
+            # reconciles types by looping through reconciled predicate fields
+            self.reconcile_types_strings()
+            for subj_field_num, ent_obj in self.des_rels.items():
                 # get records for the subject of the description
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
@@ -148,13 +155,6 @@ class ProcessDescriptions():
                                                         False)
                 if distinct_records is not False:
                     distinct_records = self.order_distinct_records(distinct_records)
-                    # loop through the fields that describe the subj_field_num
-                    for des_field_obj in ent_obj['des_by_fields']:
-                        if des_field_obj.field_type == 'description':
-                            pass
-                        elif des_field_obj.field_type == 'variable':
-                            pass
-                        pass
                     for row_key, dist_rec in distinct_records.items():
                         if dist_rec['imp_cell_obj'].cell_ok:
                             # the subject record is OK to use for creating
@@ -241,6 +241,105 @@ class ProcessDescriptions():
             output = f_objs[0]
         return output
 
+    def reconcile_descriptive_predicates(self, des_by_fields):
+        """ reconciles descriptive predicate fields """
+        for des_field_obj in des_by_fields:
+            field_num = des_field_obj.field_num
+            if field_num not in self.reconciled_predicates:
+                recon_predicate = {'predicate': False,
+                                   'field_obj': des_field_obj,
+                                   'rows': False}
+                if des_field_obj.field_type == 'description':
+                    # straight forward. Predicate label from the Import Field label
+                    cdp = CandidateDescriptivePredicate()
+                    cdp.reconcile_predicate_var(des_field_obj)
+                    recon_predicate['predicate'] = cpd.predicate
+                elif des_field_obj.field_type == 'variable':
+                    # Predicate label in Records of Import cells
+                    pc = ProcessCells(self.source_id,
+                                      self.start_row)
+                    distinct_records = pc.get_field_records(des_field_obj.field_num,
+                                                            False)
+                    for row_key, dist_rec in distinct_records.items():
+                        pred_rows = {}
+                        cdp = CandidateDescriptivePredicate()
+                        # checks to see if we need to use even a blank label
+                        # beccause of dependencies with value-of fields
+                        cdp.label = self.make_var_label_evenif_blank(des_field_obj,
+                                                                     dist_rec)
+                        cdp.des_import_cell = dist_rec['imp_cell_obj']
+                        cdp.reconcile_predicate_var(des_field_obj)
+                        for imp_cell_row in dist_rec['rows']:
+                            pred_rows[imp_cell_row] = cpd.predicate
+                        recon_predicate['rows'] = pred_rows
+                self.reconciled_predicates[des_field_obj.field_num] = recon_predicate
+
+    def make_var_label_evenif_blank(self, des_field_obj, dist_rec):
+        """ Checks to see if a descriptive field of type "variable"
+           needs to be created even in cases of Import Cell records,
+           that are used for labeling predicate-variables are blank.
+           We need a "blank" predicate-variable when 
+        """
+        label = dist_rec['imp_cell_obj'].record
+        if len(label) < 1:
+            valueof_fields = self.get_variable_valueof(des_field_obj)
+            for valueof_field in valueof_fields:
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                distinct_records = pc.get_field_records(valueof_field,
+                                                        dist_rec['rows'])
+                for row_key, val_dist_rec in distinct_records.items():
+                    if len(val_dist_rec['imp_cell_obj'].record) > 0:
+                        label = CandidateDescriptivePredicate.DEFAULT_BLANK
+                        label += '[Field: ' + str(des_field_obj.field_num) + ']'
+                        break
+                if len(label) > 0:
+                    break
+        return label
+
+    def look_up_predicate(self, field_num, row_num):
+        """ Looks up the appropriate predicate_uuid based on
+            a field_num and a row_num
+        """
+        predicate = False
+        if field_num in self.reconciled_predicates:
+            act_field = self.reconciled_predicates[field_num]
+            predicate = act_field['predicate']
+            if predicate is False:
+                if row_num in act_field['rows']:
+                    predicate = act_field['rows'][row_num]
+        return predicate
+
+    def reconcile_types_strings(self):
+        """ Reconciles type items by looping through reconciled
+            predicate fields. Also reconciles strings
+        """
+        for field_num, recon_predicate in self.reconciled_predicates.items():
+            data_type = recon_predicate['field_obj'].data_type
+            if data_type == 'id' or data_type == 'xsd:string':
+                # we have a field with an id data_type, which becomes a types entity
+                if recon_predicate['rows'] is not False:
+                    valueof_fields = self.get_variable_valueof(recon_predicate['field_obj'])
+                elif recon_predicate['predicate'] is not False:
+                    valueof_fields = [field_num]
+                else:
+                    valueof_fields = []
+                for valueof_field in valueof_fields:
+                    pc = ProcessCells(self.source_id,
+                                      self.start_row)
+                    distinct_records = pc.get_field_records(valueof_field,
+                                                            False)
+                    for row_key, val_dist_rec in distinct_records.items():
+                        if len(val_dist_rec['imp_cell_obj'].record) > 0:
+                            # found a non-blank type item
+                            cs = CandidateString()
+                            cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
+                            content_uuid = cs.uuid  # string content uuid
+                            if data_type == 'id':
+                                for row_num in val_dist_rec['rows']:
+                                    predicate = self.look_up_predicate(field_num,
+                                                                       row_num)
+
 
 class CandidateDescription():
 
@@ -260,6 +359,8 @@ class CandidateDescription():
 class CandidateDescriptivePredicate():
     """ Class for reconciling and generating a descriptive predicate """
 
+    DEFAULT_BLANK = '[Blank]'
+
     def __init__(self):
         self.label = False
         self.project_uuid = False
@@ -267,8 +368,8 @@ class CandidateDescriptivePredicate():
         self.uuid = False
         self.data_type = False
         self.sort = 0
-        self.candidate_uuid = False
         self.des_import_cell = False
+        self.predicate = False
 
     def setup_field(self, des_field_obj):
         """ sets up, with slightly different patterns for
@@ -277,14 +378,10 @@ class CandidateDescriptivePredicate():
         if des_field_obj.field_type == 'description':
             if self.label is False:
                 self.label = des_field_obj.label
-            if self.candidate_uuid is False:
-                self.candidate_uuid = des_field_obj.f_uuid
         elif des_field_obj.field_type == 'variable':
             if self.des_import_cell is not False:
                 if self.label is False:
                     self.label = self.des_import_cell.record
-                if self.candidate_uuid is False:
-                    self.candidate_uuid = self.des_import_cell.fl_uuid
         if self.project_uuid is False:
             self.project_uuid = des_field_obj.project_uuid
         if self.source_id is False:
@@ -305,15 +402,15 @@ class CandidateDescriptivePredicate():
             pm.project_uuid = self.project_uuid
             pm.source_id = self.source_id
             pm.sort = self.sort
-            pm.candidate_uuid = self.candidate_uuid
             predicate = pm.get_make_predicate(self.label,
                                               'variable',
                                               self.data_type)
             self.uuid = predicate.uuid
+            self.predicate = predicate
             if predicate.uuid != self.candidate_uuid:
                 if self.des_import_cell is False:
                     # update the reconcilted UUID with for the import field object
-                    des_field_obj.f_uuid = predicate.uuid
+                    des_field_obj.f_uuid = self.uuid
                     des_field_obj.save()
                 else:
                     # update the reconcilted UUID for import cells with same rec_hash
@@ -325,4 +422,78 @@ class CandidateDescriptivePredicate():
                         # save each cell with the correct UUID
                         up_cell.fl_uuid = self.uuid
                         up_cell.save()
+        return output
+
+
+class CandidateString():
+    """ Class for reconciling and generating strings """
+
+    def __init__(self):
+        self.content = False
+        self.project_uuid = False
+        self.source_id = False
+        self.uuid = False
+        self.oc_string = False
+
+    def reconcile_string_cell(self, imp_cell):
+        """ reconciles a predicate variable from the Import Field
+        """
+        output = False
+        if len(imp_cell.record) > 0:
+            output = True
+            sm = StringManagement()
+            sm.project_uuid = imp_cell.project_uuid
+            sm.source_id = imp_cell.source_id
+            sm.candidate_uuid = imp_cell.l_uuid
+            self.oc_string = sm.get_make_string(imp_cell.record)
+            self.uuid = oc_string.uuid
+            self.content = oc_string.content
+            if self.uuid != imp_cell.l_uuid:
+                # update the reconcilted UUID for import cells with same rec_hash
+                up_cells = ImportCell.objects\
+                                     .filter(source_id=self.source_id,
+                                             field_num=imp_cell.field_num,
+                                             rec_hash=imp_cell.rec_hash)
+                for up_cell in up_cells:
+                    # save each cell with the correct UUID
+                    up_cell.l_uuid = self.uuid
+                    up_cell.save()
+        return output
+
+
+class CandidateType():
+    """ Class for reconciling and generating strings """
+
+    def __init__(self):
+        self.project_uuid = False
+        self.source_id = False
+        self.oc_type = False
+        self.uuid = False
+
+    def reconcile_type_cell(self,
+                            recon_predicate,
+                            content_uuid,
+                            val_dist_rec):
+        """ reconciles a distinct type,
+            with consideration for how the 
+        """
+        output = False
+        if len(imp_cell.record) > 0:
+            output = True
+            sm = StringManagement()
+            sm.project_uuid = imp_cell.project_uuid
+            sm.source_id = imp_cell.source_id
+            self.oc_string = sm.get_make_string(imp_cell.record)
+            self.uuid = oc_string.uuid
+            self.content = oc_string.content
+            if self.uuid != imp_cell.l_uuid:
+                # update the reconcilted UUID for import cells with same rec_hash
+                up_cells = ImportCell.objects\
+                                     .filter(source_id=self.source_id,
+                                             field_num=imp_cell.field_num,
+                                             rec_hash=imp_cell.rec_hash)
+                for up_cell in up_cells:
+                    # save each cell with the correct UUID
+                    up_cell.l_uuid = self.uuid
+                    up_cell.save()
         return output
