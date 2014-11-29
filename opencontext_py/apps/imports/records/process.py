@@ -18,6 +18,24 @@ class ProcessCells():
         """ Gets dict object of unique field records, dict has a
             list of row_nums where each unique record value appears """
         distinct_records = False
+        field_cells = self.get_field_row_records(field_num,
+                                                 in_rows)
+        if len(field_cells) > 0:
+            distinct_records = {}
+            for cell in field_cells:
+                # iterate through cells to get list of row_nums for each distinct value
+                if cell.rec_hash not in distinct_records:
+                    distinct_records[cell.rec_hash] = {}
+                    distinct_records[cell.rec_hash]['rows'] = []
+                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
+                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
+        return distinct_records
+
+    def get_field_row_records(self,
+                              field_num,
+                              in_rows=False):
+        """ Gets a list of import cells """
+        field_cells = []
         if in_rows is False:
             field_cells = ImportCell.objects\
                                     .filter(source_id=self.source_id,
@@ -30,13 +48,4 @@ class ProcessCells():
                                     .filter(source_id=self.source_id,
                                             field_num=field_num,
                                             row_num__in=in_rows)
-        if len(field_cells) > 0:
-            distinct_records = {}
-            for cell in field_cells:
-                # iterate through cells to get list of row_nums for each distinct value
-                if cell.rec_hash not in distinct_records:
-                    distinct_records[cell.rec_hash] = {}
-                    distinct_records[cell.rec_hash]['rows'] = []
-                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
-                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
-        return distinct_records
+        return field_cells

@@ -1,8 +1,12 @@
 import uuid as GenUUID
+import re
+import datetime
+from dateutil.parser import *
 from django.conf import settings
 from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.assertions.predicatetype import PredicateTypeAssertions
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
@@ -36,6 +40,7 @@ class ProcessDescriptions():
         self.example_size = 5
         self.reconciled_predicates = {}
         self.reconciled_types = {}
+        self.field_valueofs = {}
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -46,7 +51,7 @@ class ProcessDescriptions():
             # will clear an import of descriptions
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
-            unimport.delete_descibe_assertions()
+            unimport.delete_describe_assertions()
             unimport.delete_predicate_vars()
             unimport.delete_types_entities()
             unimport.delete_strings()
@@ -145,9 +150,12 @@ class ProcessDescriptions():
             for subj_field_num, ent_obj in self.des_rels.items():
                 # loop through the fields that describe the subj_field_num
                 self.reconcile_descriptive_predicates(ent_obj['des_by_fields'])
-            # reconciles types by looping through reconciled predicate fields
+            # --------
+            # reconciles types and strings by looping through reconciled predicate fields
             self.reconcile_types_strings()
+            # --------
             for subj_field_num, ent_obj in self.des_rels.items():
+                subj_field_type = ent_obj['field'].field_type
                 # get records for the subject of the description
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
@@ -157,9 +165,40 @@ class ProcessDescriptions():
                     distinct_records = self.order_distinct_records(distinct_records)
                     for row_key, dist_rec in distinct_records.items():
                         if dist_rec['imp_cell_obj'].cell_ok:
+                            subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
                             # the subject record is OK to use for creating
                             # description records
-                            pass
+                            for des_field_obj in ent_obj['des_by_fields']:
+                                des_field_num = des_field_obj.field_num
+                                if des_field_obj.obs_num < 1:
+                                    obs_num = 1
+                                else:
+                                    obs_num = des_field_obj.obs_num
+                                obs_node = '#obs-' + str(obs_num)
+                                # get the 'value-of' import cell objects for the current
+                                # 'descriptive' or 'variable' field_num
+                                # 'variable' field_nums may make multiple 'value-of' import_cell_objs
+                                object_imp_cell_objs = self.get_assertion_object_values(field_num,
+                                                                                        dist_rec['rows'])
+                                for imp_cell_obj in object_imp_cell_objs:
+                                    row_num = imp_cell_obj.row_num
+                                    predicate = self.look_up_predicate(des_field_num,
+                                                                       row_num)
+                                    if predicate is not False:
+                                        cd = CandidateDescription()
+                                        cd.source_id = self.source_id
+                                        cd.project_uuid = self.project_uuid
+                                        cd.subject_uuid = subject_uuid
+                                        cd.subject_type = subj_field_type
+                                        cd.obs_num = obs_num
+                                        cd.obs_node = obs_node
+                                        cd.sort = des_field_num
+                                        cd.predicte_uuid = predicate.uuid
+                                        cd.data_type = predicate.data_type
+                                        cd.record = imp_cell_obj.record
+                                        cd.fl_uuid = imp_cell.fl_uuid
+                                        cd.l_uuid = imp_cell.l_uuid
+                                        cd.create_description()
 
     def get_description_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -217,18 +256,22 @@ class ProcessDescriptions():
         """ Checks to see if the des_by_field is a variable that has designated values """
         valueof_fields = []
         if des_field_obj.field_type == 'variable':
-            # get list of field_nums that have the des_by_field as their object
-            val_annos = ImportFieldAnnotation.objects\
-                                             .filter(source_id=self.source_id,
-                                                     predicate=ImportFieldAnnotation.PRED_VALUE_OF,
-                                                     object_field_num=des_field_obj.field_num)\
-                                             .order_by(field_num)
-            if len(val_annos) > 1:
-                for val_anno in val_annos:
-                    val_obj = self.get_field_obj(val_anno.field_num)
-                    if val_obj is not False:
-                        if val_obj.field_type == 'value':
-                            valueof_fields.append(val_obj)
+            if des_field_obj.field_num in self.field_valueofs:
+                valueof_fields = self.field_valueofs[des_field_obj.field_num]
+            else:
+                # get list of field_nums that have the des_by_field as their object
+                val_annos = ImportFieldAnnotation.objects\
+                                                 .filter(source_id=self.source_id,
+                                                         predicate=ImportFieldAnnotation.PRED_VALUE_OF,
+                                                         object_field_num=des_field_obj.field_num)\
+                                                 .order_by(field_num)
+                if len(val_annos) > 1:
+                    for val_anno in val_annos:
+                        val_obj = self.get_field_obj(val_anno.field_num)
+                        if val_obj is not False:
+                            if val_obj.field_type == 'value':
+                                valueof_fields.append(val_obj)
+                self.field_valueofs[des_field_obj.field_num] = valueof_fields
         return valueof_fields
 
     def get_field_obj(self, field_num):
@@ -248,11 +291,13 @@ class ProcessDescriptions():
             if field_num not in self.reconciled_predicates:
                 recon_predicate = {'predicate': False,
                                    'field_obj': des_field_obj,
+                                   'valueof_fields': [],
                                    'rows': False}
                 if des_field_obj.field_type == 'description':
                     # straight forward. Predicate label from the Import Field label
                     cdp = CandidateDescriptivePredicate()
                     cdp.reconcile_predicate_var(des_field_obj)
+                    self.field_valueofs[field_num] = [field_num] # store information about where to get values
                     recon_predicate['predicate'] = cpd.predicate
                 elif des_field_obj.field_type == 'variable':
                     # Predicate label in Records of Import cells
@@ -336,24 +381,240 @@ class ProcessDescriptions():
                             cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
                             content_uuid = cs.uuid  # string content uuid
                             if data_type == 'id':
-                                for row_num in val_dist_rec['rows']:
-                                    predicate = self.look_up_predicate(field_num,
-                                                                       row_num)
+                                if recon_predicate['rows'] is not False:
+                                    # need to create types row by row, because the predicate
+                                    # comes from import cell records, not the import field
+                                    for row_num in val_dist_rec['rows']:
+                                        predicate = self.look_up_predicate(field_num,
+                                                                           row_num)
+                                        if predicate is not False:
+                                            ct = CandidateType()
+                                            ct.reconcile_type_cell(predicate.uuid,
+                                                                   content_uuid,
+                                                                   val_dist_rec['imp_cell_obj'],
+                                                                   row_num)
+                                elif recon_predicate['predicate'] is not False:
+                                    # predicate comes from the import field
+                                    # no need to worry about individual rows
+                                    predicate = recon_predicate['predicate']
+                                    ct = CandidateType()
+                                    ct.reconcile_type_cell(predicate.uuid,
+                                                           content_uuid,
+                                                           val_dist_rec['imp_cell_obj'],
+                                                           False)
+
+    def get_assertion_object_values(self, field_num, in_rows):
+        """ Gets the import_cell_objects for a given field and row constraint """
+        object_imp_cell_objs = []
+        if field_num in self.field_valueofs:
+            valueof_fields = self.field_valueofs[field_num]
+            for valueof_field in valueof_fields:
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                cells = pc.get_field_row_records(valueof_field,
+                                                            in_rows)
+                for cell in cells:
+                    object_imp_cell_objs.append(cell)
+        return object_imp_cell_objs
 
 
 class CandidateDescription():
-
-    DEFAULT_BLANK = '[Blank]'
 
     def __init__(self):
         self.project_uuid = False
         self.source_id = False
         self.subject_uuid = False
+        self.subject_type = False
+        self.obs_node = False
+        self.obs_num = 0
+        self.sort = 0
         self.predicate_uuid = False
         self.object_uuid = False
         self.object_type = False
-        self.data_num = False
-        self.data_date = False
+        self.data_type = False
+        self.data_num = None
+        self.data_date = None
+        self.record = False
+        self.fl_uuid = False
+        self.l_uuid = False
+
+    def create_description(self):
+        """ Creates a new descriptive assertion if data is valid """
+        is_valid = self.validate_creation()
+        if is_valid:
+            new_ass = Assertion()
+            new_ass.uuid = self.subject_uuid
+            new_ass.subject_type = self.subject_type
+            new_ass.project_uuid = self.project_uuid
+            new_ass.source_id = self.source_id
+            new_ass.obs_node = self.obs_node
+            new_ass.obs_num = self.obs_num
+            new_ass.sort = self.sort
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = self.predicate_uuid
+            new_ass.object_type = self.object_type
+            if self.object_uuid is not False:
+                new_ass.object_uuid = self.object_uuid
+            if self.data_num is not None:
+                new_ass.data_num = self.data_num
+            if self.data_date is not None:
+                new_ass.data_date = self.data_date
+            new_ass.save()
+
+    def validate_creation(self):
+        """Validates to see if it's OK to create a new descriptive assertion
+        """
+        is_valid = False
+        if self.subject_uuid is not False \
+           and self.predicate_uuid is not False \
+           and len(self.record) > 0:
+            if self.data_type == 'id':
+                self.object_type = 'types'
+                # use the field-literal combination uuid
+                self.object_uuid = self.fl_uuid
+            else:
+                self.object_type = self.data_type
+                if self.data_type == 'xsd:string':
+                    # use the literal uuid
+                    self.object_uuid = self.l_uuid
+                elif self.data_type == 'xsd:integer':
+                    int_literal = self.validate_integer(self.record)
+                    if int_literal is not None:
+                        self.data_num = int_literal
+                    else:
+                        # record of the data_type. Need to make a related
+                        # predicate to save this as a string
+                        self.make_datatype_wrong_assertion(self.predicate_uuid,
+                                                           self.record)
+                elif self.data_type == 'xsd:double':
+                    d_literal = self.validate_numeric(self.record)
+                    if d_literal is not None:
+                        self.data_num = d_literal
+                    else:
+                        # record of the data_type. Need to make a related
+                        # predicate to save this as a string
+                        self.make_datatype_wrong_assertion(self.predicate_uuid,
+                                                           self.record)
+                elif self.data_type == 'xsd:date':
+                    pass
+            if self.check_description_new(self.subject_uuid,
+                                          self.obs_num,
+                                          self.predicate_uuid,
+                                          self.object_uuid,
+                                          self.data_num,
+                                          self.data_date):
+                is_valid = True
+            else:
+                is_valid = False
+        return is_valid
+
+    def validate_integer(self, record):
+        """ validates a string to be an integer
+            returns None if not
+        """
+        output = None
+        float_record = self.validate_numeric(record)
+        if float_record is not None:
+            try:
+                output = int(float_record)
+            except ValueError:
+                output = None
+        return output
+
+    def validate_numeric(self, record):
+        """ validates a string to be a number
+            returns None if not
+        """
+        if record.isdigit():
+            try:
+                output = float(record)
+            except ValueError:
+                output = None
+        else:
+            output = None
+        return output
+
+    def check_description_new(self,
+                              subject_uuid,
+                              obs_num,
+                              predicate_uuid,
+                              object_uuid,
+                              data_num,
+                              data_date):
+        """Checks to see if it's OK to create a new descriptive assertion
+           with an identifier as the object
+        """
+        is_new = True
+        if object_uuid is not False:
+            old_ass = Assertion.objects\
+                               .filter(uuid=subject_uuid,
+                                       obs_num=obs_num,
+                                       predicate_uuid=predicate_uuid,
+                                       object_uuid=object_uuid)[:1]
+            if len(old_ass) < 1:
+                is_new = False
+        elif data_num is not None:
+            old_ass = Assertion.objects\
+                               .filter(uuid=subject_uuid,
+                                       obs_num=obs_num,
+                                       predicate_uuid=predicate_uuid,
+                                       data_num=data_num)[:1]
+            if len(old_ass) < 1:
+                is_new = False
+        elif data_date is not None:
+            old_ass = Assertion.objects\
+                               .filter(uuid=subject_uuid,
+                                       obs_num=obs_num,
+                                       predicate_uuid=predicate_uuid,
+                                       data_date=data_date)[:1]
+            if len(old_ass) < 1:
+                is_new = False
+        else:
+            is_new = None
+        return is_new
+
+    def make_datatype_wrong_assertion(self, predicate_uuid, content):
+        """ Makes an assertion for records that don't fit the
+            expected data_type / object_type
+        """
+        pm = PredicateManagement()
+        pm.project_uuid = self.project_uuid
+        pm.source_id = self.source_id
+        pm.sort = self.sort
+        new_note_predicate = pm.get_make_related_note_predicate(predicate_uuid, ' (Note)')
+        if new_note_predicate is not False:
+            note_pred_uuid = new_note_predicate.uuid
+            # save a skos:related assertion linking the old and new predicates
+            ptm = PredicateTypeAssertions()
+            ptm.skos_relate_old_new_predicates(self.project_uuid,
+                                               self.source_id,
+                                               predicate_uuid,
+                                               note_pred_uuid)
+            sm = StringManagement()
+            sm.project_uuid = imp_cell.project_uuid
+            sm.source_id = imp_cell.source_id
+            oc_string = sm.get_make_string(imp_cell.record)
+            object_uuid = oc_string.uuid
+            if self.check_description_new(self.subject_uuid,
+                                          self.obs_num,
+                                          note_pred_uuid,
+                                          object_uuid,
+                                          None,
+                                          None):
+                # this asertion does not exist yet, OK to make it
+                new_ass = Assertion()
+                new_ass.uuid = self.subject_uuid
+                new_ass.subject_type = self.subject_type
+                new_ass.project_uuid = self.project_uuid
+                new_ass.source_id = self.source_id
+                new_ass.obs_node = self.obs_node
+                new_ass.obs_num = self.obs_num
+                new_ass.sort = self.sort + .1
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = note_pred_uuid
+                new_ass.object_uuid = object_uuid
+                new_ass.object_type = 'xsd:string'
+                new_ass.save()
 
 
 class CandidateDescriptivePredicate():
@@ -444,7 +705,6 @@ class CandidateString():
             sm = StringManagement()
             sm.project_uuid = imp_cell.project_uuid
             sm.source_id = imp_cell.source_id
-            sm.candidate_uuid = imp_cell.l_uuid
             self.oc_string = sm.get_make_string(imp_cell.record)
             self.uuid = oc_string.uuid
             self.content = oc_string.content
@@ -471,29 +731,38 @@ class CandidateType():
         self.uuid = False
 
     def reconcile_type_cell(self,
-                            recon_predicate,
+                            predicate_uuid,
                             content_uuid,
-                            val_dist_rec):
+                            imp_cell,
+                            row_num=False):
         """ reconciles a distinct type,
             with consideration for how the 
         """
         output = False
-        if len(imp_cell.record) > 0:
+        if len(imp_cell.record) > 0 \
+           and predicate_uuid is not False \
+           and content_uuid is not False:
             output = True
-            sm = StringManagement()
-            sm.project_uuid = imp_cell.project_uuid
-            sm.source_id = imp_cell.source_id
-            self.oc_string = sm.get_make_string(imp_cell.record)
-            self.uuid = oc_string.uuid
-            self.content = oc_string.content
-            if self.uuid != imp_cell.l_uuid:
-                # update the reconcilted UUID for import cells with same rec_hash
-                up_cells = ImportCell.objects\
-                                     .filter(source_id=self.source_id,
-                                             field_num=imp_cell.field_num,
-                                             rec_hash=imp_cell.rec_hash)
+            tm = TypeManagement()
+            tm.project_uuid = imp_cell.project_uuid
+            tm.source_id = imp_cell.source_id
+            self.oc_type = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
+                                                                   content_uuid)
+            if self.oc_type.uuid != imp_cell.fl_uuid \
+               or self.oc_type.content_uuid != imp_cell.l_uuid:    # update the reconcilted UUID for import cells with same rec_hash
+                if row_num is False:
+                    up_cells = ImportCell.objects\
+                                         .filter(source_id=self.source_id,
+                                                 field_num=imp_cell.field_num,
+                                                 rec_hash=imp_cell.rec_hash)
+                else:
+                    up_cells = ImportCell.objects\
+                                         .filter(source_id=self.source_id,
+                                                 field_num=imp_cell.field_num,
+                                                 row_num=row_num)
                 for up_cell in up_cells:
                     # save each cell with the correct UUID
-                    up_cell.l_uuid = self.uuid
+                    up_cell.fl_uuid = self.oc_type.uuid
+                    up_cell.l_uuid = self.oc_type.content_uuid
                     up_cell.save()
         return output

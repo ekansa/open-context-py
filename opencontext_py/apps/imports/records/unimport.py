@@ -30,10 +30,9 @@ class UnImport():
                                           object_type='subjects')\
                                   .delete()
 
-    def delete_descibe_assertions(self):
+    def delete_describe_assertions(self):
         """ Deletes an import of description assertions
         """
-        ip = ImportProfile()
         rem_assertions = Assertion.objects\
                                   .filter(source_id=self.source_id,
                                           project_uuid=self.project_uuid,

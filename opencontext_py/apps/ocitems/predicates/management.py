@@ -19,6 +19,24 @@ class PredicateManagement():
         self.data_type = "xsd:string"
         self.sort = 0
 
+    def get_make_related_note_predicate(self, original_predicate_uuid, label_suffix=''):
+        """
+        gets or makes a related 'note' predicate, useful for storing values
+        that don't fit a data-type
+        """
+        output = False
+        try:
+            pman = Manifest.objects.get(uuid=original_predicate_uuid)
+        except Manifest.DoesNotExist:
+            pman = False
+        if pman is not False:
+            if pman.class_uri == 'variable':
+                new_predicate_label = pman.label + label_suffix
+                output = self.get_make_predicate(new_predicate_label,
+                                                 'variable',
+                                                 'xsd:string')
+        return output
+
     def get_make_predicate(self, predicate_label, predicate_type, data_type=False):
         """
         gets a predicate, filtered by label, predicate_type, and data_type

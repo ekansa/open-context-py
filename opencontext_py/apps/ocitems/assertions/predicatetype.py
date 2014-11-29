@@ -89,14 +89,10 @@ class PredicateTypeAssertions():
                 print('---- New predicates: ' + str(len(new_rel_predicates)))
                 for new_pred_uuid in new_rel_predicates:
                     print('New predicate: ' + str(new_pred_uuid))
-                    la = LinkAnnotation()
-                    la.subject = new_pred_uuid
-                    la.subject_type = 'predicates'
-                    la.project_uuid = pman.project_uuid
-                    la.source_id = pman.source_id
-                    la.predicate_uri = 'skos:related'
-                    la.object_uri = URImanagement.make_oc_uri(predicate_uuid, 'predicates')
-                    la.save()
+                    self.skos_relate_old_new_predicates(pman.project_uuid,
+                                                        pman.source_id,
+                                                        predicate_uuid,
+                                                        new_pred_uuid)
                 alist = Assertion.objects.filter(predicate_uuid=predicate_uuid).exclude(object_type=pdata_type)
                 for aitem in alist:  # list of assertions that are not using the good data type
                     pm = PredicateManagement()
@@ -113,6 +109,28 @@ class PredicateTypeAssertions():
                         aitem.save()  # save the assertion with the new predicate
             else:
                 print('--OK Predicate--: ' + str(predicate_uuid))
+
+    def skos_relate_old_new_predicates(self,
+                                       projec_uuid,
+                                       source_id,
+                                       predicate_uuid,
+                                       new_pred_uuid):
+        """ Makes a new Link Annotation to relate a new predicate_uuid with an
+            existing predicate
+        """
+        la = LinkAnnotation()
+        la.subject = new_pred_uuid
+        la.subject_type = 'predicates'
+        la.project_uuid = project_uuid
+        la.source_id = source_id
+        la.predicate_uri = 'skos:related'
+        la.object_uri = URImanagement.make_oc_uri(predicate_uuid, 'predicates')
+        try:
+            la.save()
+            output = True
+        except:
+            output = False
+        return output
 
     def fix_inconsistent_data_types(self, data_type):
         """ fixes all predicates of a certain data_type and separates
