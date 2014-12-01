@@ -1,7 +1,7 @@
 import uuid as GenUUID
 import re
 import datetime
-from dateutil.parser import *
+from dateutil.parser import parse
 from django.conf import settings
 from django.db import models
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -477,6 +477,15 @@ class CandidateDescription():
                 if self.data_type == 'xsd:string':
                     # use the literal uuid
                     self.object_uuid = self.l_uuid
+                elif self.data_type == 'xsd:boolean':
+                    boolean_literal = self.validate_convert_boolean(self.record)
+                    if boolean_literal is not None:
+                        self.data_num = boolean_literal
+                    else:
+                        # record of the data_type. Need to make a related
+                        # predicate to save this as a string
+                        self.make_datatype_wrong_assertion(self.predicate_uuid,
+                                                           self.record)
                 elif self.data_type == 'xsd:integer':
                     int_literal = self.validate_integer(self.record)
                     if int_literal is not None:
@@ -496,7 +505,13 @@ class CandidateDescription():
                         self.make_datatype_wrong_assertion(self.predicate_uuid,
                                                            self.record)
                 elif self.data_type == 'xsd:date':
-                    pass
+                    try:
+                        date_obj = parse(self.record)
+                        self.data_date = date_obj
+                    except:
+                        # no date could be derived from the record
+                        self.make_datatype_wrong_assertion(self.predicate_uuid,
+                                                           self.record)
             if self.check_description_new(self.subject_uuid,
                                           self.obs_num,
                                           self.predicate_uuid,
@@ -572,6 +587,28 @@ class CandidateDescription():
         else:
             is_new = None
         return is_new
+
+    def validate_convert_boolean(self, record):
+        """ Validates boolean values for a record
+            returns a boolean 0 or 1 if
+        """
+        output = None
+        record = record.lower()
+        booleans = {'n': 0,
+                    'no': 0,
+                    'none': 0,
+                    'absent': 0,
+                    'false': 0,
+                    'f': 0,
+                    '0': 0,
+                    'y': 1,
+                    'yes': 1,
+                    'present': 1,
+                    'true': 1,
+                    't': 1}
+        if record in booleans:
+            output = booleans[record]
+        return output
 
     def make_datatype_wrong_assertion(self, predicate_uuid, content):
         """ Makes an assertion for records that don't fit the
