@@ -36,7 +36,7 @@ class UnImport():
         rem_assertions = Assertion.objects\
                                   .filter(source_id=self.source_id,
                                           project_uuid=self.project_uuid,
-                                          object_type__in=ip.DEFAULT_DESCRIBE_OBJECT_TYPES)\
+                                          object_type__in=ImportProfile.DEFAULT_DESCRIBE_OBJECT_TYPES)\
                                   .delete()
 
     def delete_predicate_vars(self):
