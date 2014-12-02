@@ -1,5 +1,6 @@
 import itertools
 import django.utils.http as http
+from django.http import Http404
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 
@@ -56,7 +57,7 @@ def _get_valid_context_slugs(contexts):
 
 def _get_parent_slug(slug):
     '''
-    Takes a slug and returns the slug of its parent. It returns 'root' if
+    Takes a slug and returns the slug of its parent. Returns 'root' if
     a slug has no parent.
     '''
     parent_slug = Containment().get_parent_slug_by_slug(slug)
@@ -73,7 +74,6 @@ def _prepare_filter_query(parent_child_slug):
 
 
 def _process_spatial_context(spatial_context=None):
-
     context = {}
 
     if spatial_context:
@@ -99,6 +99,10 @@ def _process_spatial_context(spatial_context=None):
                 [_prepare_filter_query(slug_set) for slug_set
                     in parent_child_slugs]
                 )
+        # If we cannot find a valid context, raise a 404
+            if not fq_string:
+                raise Http404
+
             context['fq'] = '(' + fq_string + ')'
 
         context['facet.field'] = facet_field
