@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,127 +67,127 @@
     "uuid": "3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
     "slug": "13-san-diego-archaeological-center",
     "label": "San Diego Archaeological Center",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Polygon",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     [
                         [
-                            -118.506775,
-                            32.930895
+                            -117.238,
+                            32.6812
                         ],
                         [
-                            -118.506775,
-                            33.321431
+                            -117.238,
+                            32.7508
                         ],
                         [
-                            -117.005,
-                            33.321431
+                            -117.113,
+                            32.7508
                         ],
                         [
-                            -117.005,
-                            32.930895
+                            -117.113,
+                            32.6812
                         ],
                         [
-                            -118.506775,
-                            32.930895
+                            -117.238,
+                            32.6812
                         ]
                     ]
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         },
         {
+            "type": "Feature",
             "id": "#geo-derived-1",
-            "geometry": {
-                "id": "#geo-derived-geom-1",
-                "type": "Point",
-                "coordinates": [
-                    -117.35896442857143,
-                    33.168794142857145
-                ]
-            },
             "properties": {
                 "id": "#geo-derived-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
-                "type": "oc-gen:geo-coverage",
                 "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
-            },
-            "type": "Feature"
-        },
-        {
-            "id": "#geo-2",
-            "geometry": {
-                "id": "#geo-geom-2",
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [
-                            -117.238,
-                            32.6812
-                        ],
-                        [
-                            -117.238,
-                            32.7508
-                        ],
-                        [
-                            -117.113,
-                            32.7508
-                        ],
-                        [
-                            -117.113,
-                            32.6812
-                        ],
-                        [
-                            -117.238,
-                            32.6812
-                        ]
-                    ]
-                ]
-            },
-            "properties": {
-                "id": "#geo-props-2",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
                 "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10"
             },
-            "type": "Feature"
-        },
-        {
-            "id": "#geo-derived-2",
             "geometry": {
-                "id": "#geo-derived-geom-2",
                 "type": "Point",
+                "id": "#geo-derived-geom-1",
                 "coordinates": [
                     -117.15666666666668,
                     32.70885555555555
                 ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
             },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            -118.506775,
+                            32.930895
+                        ],
+                        [
+                            -118.506775,
+                            33.321431
+                        ],
+                        [
+                            -117.005,
+                            33.321431
+                        ],
+                        [
+                            -117.005,
+                            32.930895
+                        ],
+                        [
+                            -118.506775,
+                            32.930895
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
             "properties": {
                 "id": "#geo-derived-props-2",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
-                "type": "oc-gen:geo-coverage",
                 "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10"
             },
-            "type": "Feature"
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    -117.35896442857143,
+                    33.168794142857145
+                ]
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2010-02-01",
     "description": "Collections maintained by the San Diego Archaeological Center",
     "dc-terms:abstract": "<p>The San Diego Archaeological Center (SDAC) is a nationally recognized leader in the curation of archaeological collections, curating collections for the Department of Defense, City of San Diego and private parties. The Center accepts for accession archaeological collections to preserve in perpetuity for the benefit of the public. The Center is dedicated to making the collections available to the public as a cultural resource through educational programming and exhibits, research projects, tours, volunteer opportunities, student internships and cultural use.</p>\r\n<br/>\r\n<p>This sample of SDAC collections published in Open Context represents only a portion of the overall collections managed by the SDAC.</p>\r\n<br/>\r\n<p>For more information, please visit the <a href='http://www.sandiegoarchaeology.org/'>SDAC Website</a>.</p>",
@@ -263,5 +263,5 @@
             "label": "Archaeological collections"
         }
     ],
-    "time": 2.7019050121307373
+    "time": 4.322009086608887
 }

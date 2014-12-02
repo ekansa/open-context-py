@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,12 +67,21 @@
     "uuid": "F905BD53-C843-4349-0A46-48FF32B5F1BE",
     "slug": "53-alabama-site-files",
     "label": "Alabama Site Files",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Polygon",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     [
                         [
@@ -81,11 +90,11 @@
                         ],
                         [
                             -88.505859375,
-                            32.800579071045
+                            34.957963654889
                         ],
                         [
                             -84.814453125,
-                            32.800579071045
+                            34.957963654889
                         ],
                         [
                             -84.814453125,
@@ -97,97 +106,29 @@
                         ]
                     ]
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         },
         {
+            "type": "Feature",
             "id": "#geo-derived-1",
-            "geometry": {
-                "id": "#geo-derived-geom-1",
-                "type": "Point",
-                "coordinates": [
-                    -86.79995194444145,
-                    31.76783938736887
-                ]
-            },
             "properties": {
                 "id": "#geo-derived-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE",
-                "type": "oc-gen:geo-coverage",
                 "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
-            },
-            "type": "Feature"
-        },
-        {
-            "id": "#geo-2",
-            "geometry": {
-                "id": "#geo-geom-2",
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [
-                            -88.330078125,
-                            32.836919784546
-                        ],
-                        [
-                            -88.330078125,
-                            34.957963654889
-                        ],
-                        [
-                            -85.166015625,
-                            34.957963654889
-                        ],
-                        [
-                            -85.166015625,
-                            32.836919784546
-                        ],
-                        [
-                            -88.330078125,
-                            32.836919784546
-                        ]
-                    ]
-                ]
-            },
-            "properties": {
-                "id": "#geo-props-2",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE",
                 "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE"
             },
-            "type": "Feature"
-        },
-        {
-            "id": "#geo-derived-2",
             "geometry": {
-                "id": "#geo-derived-geom-2",
                 "type": "Point",
+                "id": "#geo-derived-geom-1",
                 "coordinates": [
-                    -86.81814998451476,
-                    33.892694883898784
+                    -86.80853535334269,
+                    32.770062896565456
                 ]
-            },
-            "properties": {
-                "id": "#geo-derived-props-2",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "description": "Alabama State Archaeological Site Files",
     "dc-terms:abstract": "",
     "bibo:status": [
@@ -210,5 +151,5 @@
         }
     ],
     "dc-terms:creator": [],
-    "time": 1.9812028408050537
+    "time": 2.0788040161132812
 }

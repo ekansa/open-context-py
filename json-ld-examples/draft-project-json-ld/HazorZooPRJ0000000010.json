@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "HazorZooPRJ0000000010",
     "slug": "5-hazor-zooarchaeology",
     "label": "Hazor: Zooarchaeology",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/HazorZooPRJ0000000010",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Point",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     35.5433,
                     32.9792
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/HazorZooPRJ0000000010",
-                "type": "oc-gen:geo-coverage",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2006-05-12",
     "description": "Zooarchaeological observations for Late Bronze Age and Iron Age Hazor, Israel",
     "dc-terms:abstract": "<strong> The Hazor Excavations in memory of Yigael Yadin </strong><br/>\r\n<em> Zooarchaeological Analyses </em><br/>\r\n\r\nThis dataset represents the zooarchaeological identification and analysis conducted by Justin Lev-Tov as part of the <strong> The Hazor Excavations in memory of Yigael Yadin </strong>. The majority of the faunal remains come from Late Bronze Age and Iron Age contexts.<br/><br/>\r\n\r\nThese ongoing excavations are led and directed by Professor Amnon Ben-Tor of the Hebrew University of Jerusalem, Israel. The majority of the excavation staff as well as the director are affiliated with the Institute of Archaeology at Hebrew University.  <br/><br/>\r\n\r\nAdditional web resources:<br/>\r\n<a href=\"http://archaeology.huji.ac.il/depart/biblical/amnonb/amnonb.html\">Prof. Amnon Ben-Tors Website</a><br/>\r\n\r\n<a href=\"http://hazor.huji.ac.il/\">Hazor Excavation Website</a>",
@@ -171,5 +171,5 @@
             "label": "Subsistence economy"
         }
     ],
-    "time": 0.07800006866455078
+    "time": 0.08000016212463379
 }

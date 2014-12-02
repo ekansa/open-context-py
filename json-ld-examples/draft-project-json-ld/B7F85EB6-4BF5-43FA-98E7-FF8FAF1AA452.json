@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,12 +67,21 @@
     "uuid": "B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452",
     "slug": "52-illinois-site-files",
     "label": "Illinois Site Files",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Polygon",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     [
                         [
@@ -97,38 +106,29 @@
                         ]
                     ]
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         },
         {
+            "type": "Feature",
             "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452"
+            },
             "geometry": {
-                "id": "#geo-derived-geom-1",
                 "type": "Point",
+                "id": "#geo-derived-geom-1",
                 "coordinates": [
                     -89.2142163616928,
                     40.06166068088972
                 ]
-            },
-            "properties": {
-                "id": "#geo-derived-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2014-03-15",
     "dc-terms:isPartOf": [
         {
@@ -225,5 +225,5 @@
             "label": "State historic preservation office"
         }
     ],
-    "time": 2.5462090969085693
+    "time": 2.803255081176758
 }

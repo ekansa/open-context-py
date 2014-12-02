@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "DTrev1PRJ0000000014",
     "slug": "7-corneal-ulceration-in-south-east-asia",
     "label": "Corneal Ulceration in South East Asia",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/DTrev1PRJ0000000014",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Point",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     78.1,
                     9.55
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/DTrev1PRJ0000000014",
-                "type": "oc-gen:geo-coverage",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2006-07-11",
     "description": "Epidemiology and Etiology of Corneal Ulcers in South India",
     "dc-terms:abstract": "<strong>This dataset has been added as an experimental use of <em>Open Context</em> for public health data sharing applications</strong> <br/><br/>\r\n\r\nCorneal ulceration is a major cause of blindness in many parts of the world, but in South East Asia the WHO estimates that there are as many as 12 million blinding ulcers every year in a population of 1.6 billion. Now that we know the main causes of these ulcers it is possible to prevent the occurrence of most of them with simple, grass-roots, public health measures. The development of these public health programs were a result of findings of this corneal ulcer study in Madurai, India in 1994. \r\n<br/>\r\nSubsequent studies in Nepal, Bhutan, Myanmar (Burma), and other parts of India have confirmed the validity of this database.",
@@ -166,5 +166,5 @@
             "label": "Developing countries"
         }
     ],
-    "time": 0.07800006866455078
+    "time": 0.07799983024597168
 }

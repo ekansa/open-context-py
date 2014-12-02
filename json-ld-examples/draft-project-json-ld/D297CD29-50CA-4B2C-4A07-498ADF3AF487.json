@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "D297CD29-50CA-4B2C-4A07-498ADF3AF487",
     "slug": "36-ilipinar-zooarchaeology",
     "label": "Ilıpınar Zooarchaeology",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/D297CD29-50CA-4B2C-4A07-498ADF3AF487",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Point",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     29.309099,
                     40.468303
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/D297CD29-50CA-4B2C-4A07-498ADF3AF487",
-                "type": "oc-gen:geo-coverage",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2013-08-12",
     "description": "This dataset contains faunal data recorded by Hijlke Buitenhuis from the site of Ilıpınar, Turkey",
     "dc-terms:abstract": "<div>\n    <h4>Introduction</h4>\n    <p>Archaeological investigations at Ilıpınar in Northwest Anatolia were carried out by the Netherlands Institute at Leiden/Istanbul from 1987 to 2002. The excavations of Ilıpınar (supplemented with soundings at nearby Menteşe) have yielded new insight into the spread of Neolithic farming from the Near East to the European continent, and in particular has thrown light on the position of the eastern Marmara region in terms of intercultural relations. Occupation deposits at Ilıpınar date to the late Neolithic to the early Byzantine period. The project has been of major importance in terms of providing information on early agricultural practices, as well as outlining a framework for the pre-Troy chronology of north-west Anatolia and Turkish Thrace.</p>\n\n    <p>Ilıpınar’s environment was advantageous for an economy based on crop cultivation and stock breeding. Founded at the start of the sixth millennium BCE as a settlement with a handful of houses centered around a spring, it gradually expanded into a village covering one hectare until it was deserted 500 years later. Afterward the mound was used as a burial ground in the second quarter of the fourth millennium BCE (Late Chalcolithic), the second quarter of the third millennium BCE (Early Bronze Age), and in the sixth–seventh centuries CE (Early Byzantine). Moreover there were traces of ephemeral habitation during these intervals. The total occupation deposit measured more than seven meters, the total surface nearly three hectares.</p>\n\n    <h5>Geography and Environment:</h5>\n    <p>The approximately 5 m high; broad mound; covering an area of 2-2.5 hectares; is located approximately 1.5 km away from the western shore of Iznik Lake. There is a strong fresh water source near the mound.</p>\n\n    <h5>History of Excavations:</h5>\n    <p>Excavations between 1987 and 1995 have been conducted under the leadership of J. Roodenberg of the Istanbul Dutch Archaeology Institute. Approximately 1200 square meters were excavated. The excavations mainly took part in the central; eastern and southwestern parts of the mound. The profile exposed by the highway has been cleaned to help in understanding the stratigraphy of the site. It takes place in the registered archaeological sites list prepared by Ministry of Culture and Tourism. </p>\n\n    <h5>Stratigraphy:</h5>\n    <p>From the top of the mound to virgin soil, the excavations have discovered a total of 10 layers:</p> \n    <ul>\n        <li>Layer I: The entire mound was used as a cemetery at the beginning of the seventh century and the end of the sixth century A.D. The graves belonged to the Byzantine settlers in Orhangazi. Approximately 200 graves have been excavated so far. </li> \n        <li>Layer II: This layer yielded stone walls which date to the Early Roman Period. In terms of construction technique; these walls resemble the stone walls near the water source. The pottery from this period has been assigned to the first and second centuries A.D. </li> \n        <li>\n        Layer III: This layer; assigned to the end of the Bronze Age; is the layer where silos and trash pits with Inegöl Gray Ware were found. The architecture in this phase which must have existed during this period was probably destroyed by the Byzantine cemetery. Some bronze weapons dating to this period were found in the central part of the mound. \n        </li> \n        <li>Layer IV: This is an old cemetery layer. Some of the 40 graves have yielded grave-goods such as vessels and bronze objects. The bodies are in flexed position. Some of the black burnished ware has been decorated with filled-in excised decoration. These graves have been assigned to the Late Chalcolithic and are dated to the end of the fourth millennium B.C. (3,100-2,900 B.C.). \n        </li> \n        <li>Layer V: The ceramic finds from this layer; where large trash pits were found; have close affinity with Balkan Karanovo III and Early Vinca wares as well as with Ilıpınar Layer VI. ware. This layer is dated to the second half of the fifth millennium B.C. \n        </li> \n        <li>Layer VI: This layer, where burnt mud brick architecture was found, is dated to the fifth millennium B.C. and is assigned to the Early Chalcolithic Period. \n        </li> \n        <li>Layer VII: This layer, dated to the first half of the fifth millennium B.C., is an Early Chalcolithic mudbrick architectural phase. \n        </li> \n        <li>Layer VIII-IX: These layers yielded pisé hut-like structures supported by wooden construction elements. They have been assigned to the transitional phase at the end of the Neolithic and the beginning of the Early Chalcolithic Periods. The finds from this layer, which date to the beginning of the fifth millennium B.C., resemble those from Fikirtepe and the Balkans. \n        </li> \n        <li>Layer X: This is the Late Neolithic Phase, dated to the end of the sixth millennium B.C. where Hacilar and Fikirtepe horizon styles can be found. Layer X at Ilıpınar shows similarities with Fikirtepe/Pendik and Hacilar in Anatolia. An uncalibrated C-14 date from this layer dates to 7,100-6,900 B.P. The calibrated date is 5,900-5,700 B.C. [Roodenberg 1993:259]. </li> \n    </ul>\n\n    <h4>Methodological Notes</h4>\n    <p>The data author submitted a coded spreadsheet with detailed observations on 37,058 specimens, mainly from layers X-IX (Late Neolithic – transitional end of Neolithic / beginning of Chalcolithic). He also submitted a 90-page codebook. Open Context editors decoded the dataset with input by the data author.</p>\n    \n    <p>Note: Some of this information is based on the Ilıpınar page in the <a href=\"http://www.tayproject.org/TAYages.fm$Retrieve?CagNo=1384&amp;html=ages_detail_e.html&amp;layout=web\">Archaeological Settlements of Turkey TAY Project</a>.  \n    </p>\n\n <div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n\n<h5>Image Credit</h5>\n<p class=\"muted\">\nCredit for this project's illustrative image \n<a href=\"http://www.flickr.com/photos/ganbei/2466841386\">Camera on autopilot (Via Flickr)</a>\n(CC-BY)\n</p>\n\n</div>",
@@ -174,5 +174,5 @@
             "label": "Mammal remains (archaeology)"
         }
     ],
-    "time": 0.08100509643554688
+    "time": 0.07800006866455078
 }

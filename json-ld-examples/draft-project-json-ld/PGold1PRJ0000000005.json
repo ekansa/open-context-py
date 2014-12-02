@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "PGold1PRJ0000000005",
     "slug": "3-geissenklosterle-micromorphology",
     "label": "Geissenklosterle: Micromorphology",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/PGold1PRJ0000000005",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Point",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     9.77036,
                     48.4021
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/PGold1PRJ0000000005",
-                "type": "oc-gen:geo-coverage",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2006-04-04",
     "description": "Micromorphology samples for an Upper Paleolithic cave site in the Ach Valley of Germany",
     "dc-terms:abstract": "",
@@ -156,5 +156,5 @@
             "label": "Geology"
         }
     ],
-    "time": 0.07800006866455078
+    "time": 0.06240081787109375
 }

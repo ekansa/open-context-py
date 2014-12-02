@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@id": "oc-gen:category",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:category"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@id": "geojson:bbox",
-            "@container": "@list"
+            "@container": "@list",
+            "@id": "geojson:bbox"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@id": "geojson:features",
-            "@container": "@set"
+            "@container": "@set",
+            "@id": "geojson:features"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@id": "oc-gen:reference-type",
-            "@type": "@id"
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,12 +67,21 @@
     "uuid": "TESTPRJ0000000004",
     "slug": "2-pinarbasi-1994-animal-bones",
     "label": "Pınarbaşı 1994: Animal Bones",
+    "type": "FeatureCollection",
     "features": [
         {
+            "type": "Feature",
             "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/TESTPRJ0000000004",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
             "geometry": {
-                "id": "#geo-geom-1",
                 "type": "Polygon",
+                "id": "#geo-geom-1",
                 "coordinates": [
                     [
                         [
@@ -97,38 +106,29 @@
                         ]
                     ]
                 ]
-            },
-            "properties": {
-                "id": "#geo-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/TESTPRJ0000000004",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision"
-            },
-            "type": "Feature"
+            }
         },
         {
+            "type": "Feature",
             "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/TESTPRJ0000000004"
+            },
             "geometry": {
-                "id": "#geo-derived-geom-1",
                 "type": "Point",
+                "id": "#geo-derived-geom-1",
                 "coordinates": [
                     33.017731,
                     37.49414666666667
                 ]
-            },
-            "properties": {
-                "id": "#geo-derived-props-1",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/TESTPRJ0000000004",
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item"
-            },
-            "type": "Feature"
+            }
         }
     ],
-    "type": "FeatureCollection",
     "dc-terms:published": "2006-03-25",
     "description": "Analysis of faunal remains from prehistoric contexts at Pınarbaşı in central Turkey",
     "dc-terms:abstract": "<strong>1994 Excavations at Pınarbaşı, Karaman Province, Turkey:</strong>\r\n\r\nExcavations began at Pinarbasi in August and September 1994, and continued in September 1995. The site is in the lands of Suleimanhaci village, Karaman province, on the south side of the central Anatolian plateau, only about 20 km from Çatalhöyük. This is a salvage excavation, jointly organised by the University of Edinburgh, Department of Archaeology (Dr Trevor Watkins) and the Karaman Museum (Cengiz Topal). The group of sites at Pinarbasi is of particular interest because there appears to be a series of rock-shelters occupied in final pleistocene and early neolithic times, and an open village settlement of epi-palaeolithic or early neolithic date (i.e. possibly greater than 10,000 years old).\r\n\r\nThe work is being carried out as part of the Çatalhöyük Research Project, and the sites were identified by Drs Douglas Baird and Trevor Watkins in September 1993 as part of the Çatalhöyük Regional Survey. In the first season, the main objective was to assess two parts of the site which were most at risk. Area A is the open village settlement, situated below the cliffs and the rock-shelters, on an isthmus surrounded by a small lake. Area B is one of the rock-shelters.\r\n\r\nIn the open village settlement the 1994 sounding showed superficial remains of classical date, a thin stratum of early third millennium BC occupation, and a thicker deposit representing structures, a burial and occupation deposit of a settlement of early prehistoric date. The first radiocarbon dates are in the late 8th millennium BC (uncalibrated). The rock-shelter has an isolated pit which has produced the fourth millennium BC date, and coherent strata of occupation deposit and a large, stone-built structure that date to the sixth millennium BC. The indications from the chipped stone assemblage are of an industry similar to that at Çatalhöyük, but there are also strong residual elements of earlier assemblages, representing probably an earlier, aceramic neolithic occupation.\r\n<br/><br/>\r\n<a href=\"http://www.arcl.ed.ac.uk/arch/pinarbasi/abstract.htm\">1994 Project Website</a>\r\n<br/><br/>\r\n<a href=\"http://www.liv.ac.uk/sace/research/projects/pinarbasi/\">2003 - 2004 Pınarbaşı Project Website</a>",
@@ -211,5 +211,5 @@
             "label": "Hunting and gathering societies"
         }
     ],
-    "time": 2.1552090644836426
+    "time": 3.4684741497039795
 }
