@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@type": "@id",
-            "@id": "oc-gen:category"
+            "@id": "oc-gen:category",
+            "@type": "@id"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@container": "@list",
-            "@id": "geojson:bbox"
+            "@id": "geojson:bbox",
+            "@container": "@list"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@container": "@set",
-            "@id": "geojson:features"
+            "@id": "geojson:features",
+            "@container": "@set"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@type": "@id",
-            "@id": "oc-gen:reference-type"
+            "@id": "oc-gen:reference-type",
+            "@type": "@id"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,19 +67,11 @@
     "uuid": "D42FC0EB-61B0-4937-700E-4EFEAB008677",
     "slug": "52-indiana-site-files",
     "label": "Indiana Site Files",
-    "type": "FeatureCollection",
     "features": [
         {
-            "type": "Feature",
             "id": "#geo-1",
-            "properties": {
-                "type": "oc-gen:geo-coverage",
-                "location-precision-note": "Location data available with no intentional reduction in precision",
-                "href": "http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677",
-                "id": "#geo-props-1",
-                "reference-type": "specified"
-            },
             "geometry": {
+                "id": "#geo-geom-1",
                 "type": "Polygon",
                 "coordinates": [
                     [
@@ -104,31 +96,39 @@
                             37.686056137085
                         ]
                     ]
-                ],
-                "id": "#geo-geom-1"
-            }
+                ]
+            },
+            "properties": {
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677",
+                "type": "oc-gen:geo-coverage",
+                "location-precision-note": "Location data available with no intentional reduction in precision"
+            },
+            "type": "Feature"
         },
         {
-            "type": "Feature",
             "id": "#geo-derived-1",
-            "properties": {
-                "type": "oc-gen:geo-coverage",
-                "href": "http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677",
-                "location-precision-note": "Location data available with no intentional reduction in precision",
-                "location-region-note": "This point represents the center of the region defining the location of this item",
-                "id": "#geo-derived-props-1",
-                "reference-type": "specified"
-            },
             "geometry": {
+                "id": "#geo-derived-geom-1",
                 "type": "Point",
                 "coordinates": [
                     -86.2847441723655,
                     39.804787306943766
-                ],
-                "id": "#geo-derived-geom-1"
-            }
+                ]
+            },
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677",
+                "type": "oc-gen:geo-coverage",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "location-region-note": "This point represents the center of the region defining the location of this item"
+            },
+            "type": "Feature"
         }
     ],
+    "type": "FeatureCollection",
     "dc-terms:published": "2014-02-05",
     "dc-terms:isPartOf": [
         {
@@ -225,5 +225,5 @@
             "label": "State historic preservation office"
         }
     ],
-    "time": 1.9152119159698486
+    "time": 1.887603998184204
 }

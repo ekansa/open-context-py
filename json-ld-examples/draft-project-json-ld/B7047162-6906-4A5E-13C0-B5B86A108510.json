@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@type": "@id",
-            "@id": "oc-gen:category"
+            "@id": "oc-gen:category",
+            "@type": "@id"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@container": "@list",
-            "@id": "geojson:bbox"
+            "@id": "geojson:bbox",
+            "@container": "@list"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@container": "@set",
-            "@id": "geojson:features"
+            "@id": "geojson:features",
+            "@container": "@set"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@type": "@id",
-            "@id": "oc-gen:reference-type"
+            "@id": "oc-gen:reference-type",
+            "@type": "@id"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "B7047162-6906-4A5E-13C0-B5B86A108510",
     "slug": "18-zooarchaeology-of-medieval-emden",
     "label": "Zooarchaeology of Medieval Emden",
-    "type": "FeatureCollection",
     "features": [
         {
-            "type": "Feature",
             "id": "#geo-1",
-            "properties": {
-                "type": "oc-gen:geo-coverage",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510",
-                "id": "#geo-props-1",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
             "geometry": {
+                "id": "#geo-geom-1",
                 "type": "Point",
                 "coordinates": [
                     7.203392,
-                    7.203392
-                ],
-                "id": "#geo-geom-1"
-            }
+                    53.365588
+                ]
+            },
+            "properties": {
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510",
+                "type": "oc-gen:geo-coverage",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "type": "Feature"
         }
     ],
+    "type": "FeatureCollection",
     "dc-terms:published": "2010-10-29",
     "description": "Animal Bone Analysis in medieval Emden, Germany",
     "dc-terms:abstract": "<p>This data set represents faunal remains from several excavations in the centre of the medieval\r\ntown of Emden (Lower Saxony, Germany). The data set was used for the PhD thesis of Jessica Grimm (University of Groningen) with the title <a href='http://dissertations.ub.rug.nl/faculties/arts/2010/j.m.grimm/' title='Link to dissertation'><em>Animal keeping and the use of animal products in medieval Emden (Lower Saxony, Germany)</em></a></p>\r\n\r\n<p>Grimm's research addressed questions concerning the development of animal husbandry and the use of animal products in the medieval period with the aim of obtaining a better understanding of the functions of a medieval town occupied by different groups of people and the contrast with the countryside over a period of about 900 years\r\n(9th-17th century). In addition to the thesis, preliminary reports of this study have also been published (GRIMM 2005, 2006 and 2008)</p>\r\n\r\n\r\n\r\n<p><span style='text-decoration:underline;'>Publications:</span></p>\r\n\r\n<p>Grimm, Jessica Marije</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://dissertations.ub.rug.nl/faculties/arts/2010/j.m.grimm/' title='Link to dissertation'><em>Animal keeping and the use of animal products in medieval Emden (Lower Saxony, Germany)</em></a>  Dissertaties - Rijksuniversiteit Groningen</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75818/Break_a_leg_animal_health_and_welfare_in_medieval_Emden_Germany' title='Link to abstract'>Break a leg: animal health and welfare in medieval Emden, Germany</a>  <em>Veterinarija ir Zootechnika</em>41(63) </div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2006</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75968/Silence_of_the_Lambs_Archaozoologische_Untersuchungen_an_mittelalterlichem_Knochenmaterial_aus_Emden' title='Link to abstract'>Silence of the Lambs, Archäozoologische Untersuchungen an mittelalterlichem Knochenmaterial aus Emden.</a> In: E. van Rossenberg, J. Hendriks, A. Bright and D. Smal (eds). <em>SOJAbundel 2002/2003</em>Amsterdam/Leiden, Pp. 109-116.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2005</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75964/Silence_of_the_Lambs_archeozoologisch_onderzoek_aan_middeleeuws_botmateriaal_uit_Emden_Duitsland_' title='Link to abstract'>Silence of the Lambs: archeozoölogisch onderzoek aan middeleeuws botmateriaal uit Emden (Duitsland).</a> In: E. van Rossenberg, J. Hendriks, A. Bright and D. Smal (eds). <em>SOJAbundel 2002/2003</em>Amsterdam/Leiden, Pp. 109-116.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>",
@@ -154,5 +154,5 @@
             "label": "Subsistence economy"
         }
     ],
-    "time": 0.07800006866455078
+    "time": 0.062400102615356445
 }

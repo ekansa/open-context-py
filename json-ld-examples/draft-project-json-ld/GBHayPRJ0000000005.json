@@ -20,8 +20,8 @@
         "slug": "oc-gen:slug",
         "type": "@type",
         "category": {
-            "@type": "@id",
-            "@id": "oc-gen:category"
+            "@id": "oc-gen:category",
+            "@type": "@id"
         },
         "Feature": "geojson:Feature",
         "FeatureCollection": "geojson:FeatureCollection",
@@ -35,16 +35,16 @@
         "Point": "geojson:Point",
         "Polygon": "geojson:Polygon",
         "bbox": {
-            "@container": "@list",
-            "@id": "geojson:bbox"
+            "@id": "geojson:bbox",
+            "@container": "@list"
         },
         "circa": "geojson:circa",
         "coordinates": "geojson:coordinates",
         "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
         "description": "dc-terms:description",
         "features": {
-            "@container": "@set",
-            "@id": "geojson:features"
+            "@id": "geojson:features",
+            "@container": "@set"
         },
         "geometry": "geojson:geometry",
         "properties": "geojson:properties",
@@ -53,8 +53,8 @@
         "title": "dc-terms:title",
         "when": "geojson:when",
         "reference-type": {
-            "@type": "@id",
-            "@id": "oc-gen:reference-type"
+            "@id": "oc-gen:reference-type",
+            "@type": "@id"
         },
         "inferred": "oc-gen:inferred",
         "specified": "oc-gen:specified",
@@ -67,28 +67,28 @@
     "uuid": "GBHayPRJ0000000005",
     "slug": "4-hayonim-micromorphology",
     "label": "Hayonim: Micromorphology",
-    "type": "FeatureCollection",
     "features": [
         {
-            "type": "Feature",
             "id": "#geo-1",
-            "properties": {
-                "type": "oc-gen:geo-coverage",
-                "reference-type": "specified",
-                "href": "http://opencontext.org/projects/GBHayPRJ0000000005",
-                "id": "#geo-props-1",
-                "location-note": "Location data available with no intentional reduction in precision"
-            },
             "geometry": {
+                "id": "#geo-geom-1",
                 "type": "Point",
                 "coordinates": [
                     35.3081,
-                    35.3081
-                ],
-                "id": "#geo-geom-1"
-            }
+                    33.0323
+                ]
+            },
+            "properties": {
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/GBHayPRJ0000000005",
+                "type": "oc-gen:geo-coverage",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "type": "Feature"
         }
     ],
+    "type": "FeatureCollection",
     "dc-terms:published": "2006-04-05",
     "description": "Micromorphology samples from Mousterian, Kebaran, Natufian, and Byzantine contexts at Hayonim, Israel",
     "dc-terms:abstract": "",
@@ -171,5 +171,5 @@
             "label": "Soil micromorphology"
         }
     ],
-    "time": 0.07800006866455078
+    "time": 0.07800102233886719
 }
