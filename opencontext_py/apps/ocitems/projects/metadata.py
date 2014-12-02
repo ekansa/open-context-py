@@ -236,11 +236,13 @@ class ProjectMeta():
         overlap = False
         overlap_lon = False
         overlap_lat = False
-        if (min_lon >= ch_box['min_lon'] and min_lon <= ch_box['max_lon'])\
-           or (max_lon >= ch_box['min_lon'] and max_lon <= ch_box['max_lon']):
+        dist = self.get_point_distance(min_lon, min_lat, max_lon, max_lat)
+        blur = dist * .025
+        if (min_lon + blur >= ch_box['min_lon'] and min_lon - blur <= ch_box['max_lon'])\
+           or (max_lon + blur >= ch_box['min_lon'] and max_lon - blur <= ch_box['max_lon']):
             overlap_lon = True
-        if (min_lat >= ch_box['min_lat'] and min_lat <= ch_box['max_lat'])\
-           or (max_lat >= ch_box['min_lat'] and max_lat <= ch_box['max_lat']):
+        if (min_lat + blur >= ch_box['min_lat'] and min_lat - blur <= ch_box['max_lat'])\
+           or (max_lat + blur >= ch_box['min_lat'] and max_lat - blur <= ch_box['max_lat']):
             overlap_lat = True
         if overlap_lon and overlap_lat:
             overlap = True
