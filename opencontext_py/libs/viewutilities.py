@@ -50,7 +50,6 @@ def _get_valid_context_slugs(contexts):
         # Verify that the contexts are valid
         found = entity.context_dereference(context)
         if found:
-            # If so, we want their slugs
             valid_context_slugs.append(entity.slug)
     return valid_context_slugs
 
@@ -74,13 +73,23 @@ def _prepare_filter_query(parent_child_slug):
 
 
 def _process_spatial_context(spatial_context=None):
+
+    context = {}
+
     if spatial_context:
-        context = {}
         context_paths = _get_context_paths(spatial_context)
         context_slugs = _get_valid_context_slugs(context_paths)
-        parent_child_slugs = [
-            _get_parent_slug(slug) + '___' + slug for slug in context_slugs
-            ]
+        # Solr 'fq' parameters
+        parent_child_slugs = []
+        # Solr 'facet.field' parameters
+        facet_field = []
+
+        for slug in context_slugs:
+            # fq parameters
+            parent_child_slugs.append(_get_parent_slug(slug) + '___' + slug)
+            # facet.field parameters
+            facet_field.append(slug.replace('-', '_') + '___context_id')
+
         # First, handle the most likely scenario of a single context
         if len(parent_child_slugs) == 1:
             context['fq'] = _prepare_filter_query(parent_child_slugs[0])
@@ -91,7 +100,11 @@ def _process_spatial_context(spatial_context=None):
                     in parent_child_slugs]
                 )
             context['fq'] = '(' + fq_string + ')'
-        return context
+
+        context['facet.field'] = facet_field
+
     else:
-        pass
-    # TODO: handle facet.field
+        context['fq'] = None
+        context['facet.field'] = 'root___context_id'
+
+    return context
