@@ -9,6 +9,7 @@ static/exports/
 static/bootstrap/
 static/jquery/
 static/angularjs/
+static/exports/
 *.pyc
 solr-config/schema.xml.old
 secrets*
