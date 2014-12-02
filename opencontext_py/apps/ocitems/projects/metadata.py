@@ -77,7 +77,7 @@ class ProjectMeta():
             if self.max_geo_range == 0:
                 # only 1 geopoint known for the project
                 lon_lat = [self.geo_range['longitude__min'],
-                           self.geo_range['longitude__max']]
+                           self.geo_range['latitude__max']]
                 clusts = {'centroids': [lon_lat],
                           'boxes': []}
             else:
@@ -91,6 +91,7 @@ class ProjectMeta():
         geo_objs = []
         if len(clusts['boxes']) == 0:
             # no bounding box polygons, just a simple point to add
+            print(str(clusts))
             geo_obj = self.make_geo_obj(1,
                                         clusts['centroids'][0][0],
                                         clusts['centroids'][0][1]
