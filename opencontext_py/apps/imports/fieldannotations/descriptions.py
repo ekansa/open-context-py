@@ -751,8 +751,6 @@ class CandidateString():
             self.content = self.oc_string.content
             self.source_id = self.oc_string.source_id
             if self.uuid != imp_cell.l_uuid:
-                imp_cell.l_uuid = str(self.uuid)
-                # imp_cell.save()
                 # update the reconcilted UUID for import cells with same rec_hash
                 up_cells = ImportCell.objects\
                                      .filter(source_id=self.source_id,
@@ -795,9 +793,6 @@ class CandidateType():
             self.source_id = self.oc_type.source_id
             if self.oc_type.uuid != imp_cell.fl_uuid \
                or self.oc_type.content_uuid != imp_cell.l_uuid:    # update the reconcilted UUID for import cells with same rec_hash
-                imp_cell.fl_uuid = self.oc_type.uuid
-                imp_cell.l_uuid = self.oc_type.content_uuid
-                # imp_cell.save()
                 if row_num is False:
                     up_cells = ImportCell.objects\
                                          .filter(source_id=self.source_id,
