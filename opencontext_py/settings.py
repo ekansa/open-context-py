@@ -138,6 +138,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     '/static/',
 )
+STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
 import socket
 
 #get the local host server name
