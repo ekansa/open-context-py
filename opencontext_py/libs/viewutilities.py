@@ -79,6 +79,11 @@ def _process_spatial_context(spatial_context=None):
     if spatial_context:
         context_paths = _get_context_paths(spatial_context)
         context_slugs = _get_valid_context_slugs(context_paths)
+
+        # If we cannot find a valid context, raise a 404
+        if not context_slugs:
+            raise Http404
+
         # Solr 'fq' parameters
         parent_child_slugs = []
         # Solr 'facet.field' parameters
@@ -93,20 +98,19 @@ def _process_spatial_context(spatial_context=None):
         # First, handle the most likely scenario of a single context
         if len(parent_child_slugs) == 1:
             context['fq'] = _prepare_filter_query(parent_child_slugs[0])
+
         # Otherwise, combine multiple contexts into an OR filter
         else:
             fq_string = ' OR '.join(
                 [_prepare_filter_query(slug_set) for slug_set
                     in parent_child_slugs]
                 )
-        # If we cannot find a valid context, raise a 404
-            if not fq_string:
-                raise Http404
 
             context['fq'] = '(' + fq_string + ')'
 
         context['facet.field'] = facet_field
 
+    # No spatial context provided
     else:
         context['fq'] = None
         context['facet.field'] = 'root___context_id'
