@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
@@ -23,6 +24,39 @@ class ProcessGeneral():
             self.project_uuid = fields[0].project_uuid
             self.fields = fields
             output = True
+        return output
+
+    def order_distinct_records(self, distinct_records):
+        """ returns distict records in their proper order """
+        row_key_recs = {}
+        row_key_list = []
+        for rec_hash, dist_rec in distinct_records.items():
+            row_key = dist_rec['rows'][0]
+            row_key_recs[row_key] = dist_rec
+            row_key_list.append(row_key)
+        row_key_list = sorted(row_key_list)
+        row_key_ordered_recs = LastUpdatedOrderedDict()
+        for row_key in row_key_list:
+            row_key_ordered_recs[row_key] = row_key_recs[row_key]
+        return row_key_ordered_recs
+
+    def get_first_distinct_record(self, distinct_records):
+        """ returns the first distinct record dictionary object """
+        output = False
+        if distinct_records is not False:
+            for rec_hash, dist_rec in distinct_records.items():
+                output = dist_rec
+                break
+        return output
+
+    def get_field_obj(self, field_num):
+        """ Gets a field object based on a field_num """
+        output = False
+        f_objs = ImportField.objects\
+                            .filter(source_id=self.source_id,
+                                    field_num=field_num)[:1]
+        if len(f_objs) > 0:
+            output = f_objs[0]
         return output
 
     def check_blank_required(self,

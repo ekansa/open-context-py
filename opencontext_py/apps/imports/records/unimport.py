@@ -9,6 +9,7 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.imports.fields.templating import ImportProfile
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 
 
 # Removes the import of a from a source_id
@@ -60,7 +61,18 @@ class UnImport():
                                 .delete()
             man_obj.delete()
 
-    def delete_predicate_links(self):
+    def delete_links_assertions(self):
+        """ Deletes assertions usig linking predicates
+        """
+        rem_assertions = Assertion.objects\
+                                  .filter(source_id=self.source_id,
+                                          project_uuid=self.project_uuid,
+                                          subject_type__in=ImportProfile.DEFAULT_SUBJECT_TYPE_FIELDS,
+                                          object_type__in=ImportProfile.DEFAULT_SUBJECT_TYPE_FIELDS)\
+                                  .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)\
+                                  .delete()
+
+    def delete_predicate_links(self, delete_custom=True):
         """ Deletes predicates that are links
         """
         man_pred_vars = Manifest.objects\
@@ -69,17 +81,31 @@ class UnImport():
                                         item_type='predicates',
                                         class_uri='link')
         for man_obj in man_pred_vars:
+            # delete assertions using linking predicates from this source
             rem_assertions = Assertion.objects\
                                       .filter(source_id=self.source_id,
                                               project_uuid=self.project_uuid,
                                               predicate_uuid=man_obj.uuid)\
                                       .delete()
-            rem_pred = Predicate.objects\
-                                .filter(source_id=self.source_id,
-                                        project_uuid=self.project_uuid,
-                                        uuid=man_obj.uuid)\
-                                .delete()
-            man_obj.delete()
+            if delete_custom:
+                ok_pred_delete = True
+            else:
+                # Only delete custom, user added linking predicate if it is not
+                # in use for an import
+                impf_use = ImportFieldAnnotation.objects\
+                                                .filter(source_id=self.source_id,
+                                                        predicate=man_obj.uuid)[:1]
+                if len(impf_use) < 1:
+                    ok_pred_delete = True
+                else:
+                    ok_pred_delete = False
+            if ok_pred_delete:
+                rem_pred = Predicate.objects\
+                                    .filter(source_id=self.source_id,
+                                            project_uuid=self.project_uuid,
+                                            uuid=man_obj.uuid)\
+                                    .delete()
+                man_obj.delete()
 
     def delete_subjects_entities(self):
         """ Deletes subjects entities

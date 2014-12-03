@@ -1,3 +1,4 @@
+
 var start_data = [{label: 'Containment Hierarchy'}];
 var tree_app;
 var tree_service;
@@ -13,26 +14,7 @@ var act_tree_root = false;
 	app = angular.module('TreeApp', deps);
 	tree_app = app.controller('TreeController', function($scope, $timeout) {
 		$scope.my_tree_handler = function(branch) {
-			/*
-			if (branch.id != null) {	
-				var act_domID = "tree-sel-label";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = branch.label;
-				var act_domID = "tree-sel-id";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = branch.id;
-				if (branch.icon != false) {
-					var act_domID = "tree-sel-icon";
-					var act_dom = document.getElementById(act_domID);
-					act_dom.innerHTML = "<img src=\"" + branch.icon + "\" alt=\"Icon\"/>";
-				}
-			}
-			else{
-				var act_domID = "tree-sel-label";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = "Select a field first.";
-			}
-			*/
+
 		};
 		$scope.tree_data = start_data;
 		$scope.tree_service = function(data) {
@@ -50,11 +32,15 @@ var act_tree_root = false;
 
 
 function getSubjectsHierarchy() {
+	exec_getSubjectsHierarchy().then(get_other_links);
+}
+
+function exec_getSubjectsHierarchy() {
 	/* Gets the hiearchy of subject entities to be imported,
 	 * as modeled by field containment relatinships
 	*/
 	var url = "../../imports/subjects-hierarchy-examples/" + encodeURIComponent(source_id);
-	var req = $.ajax({
+	return $.ajax({
 		type: "GET",
 		url: url,
 		dataType: "json",
@@ -68,6 +54,81 @@ function getSubjectsHierarchyDone(data){
 	tree_service(data);
 }
 
+function get_other_links(data){
+	/* Gets the hiearchy of subject entities to be imported,
+	 * as modeled by field containment relatinships
+	*/
+	var url = "../../imports/field-linked-examples/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "GET",
+		url: url,
+		dataType: "json",
+		success: get_other_links_Done
+	});
+}
+
+function get_other_links_Done(data){
+	/* Updates the other links display with new JSON data */
+	if (data.length > 0) {
+		var example_HTML = "";
+		for (var i = 0, length = data.length; i < length; i++) {
+			example_HTML += generate_example_link_tabHTML(data[i]);
+		}
+	}
+	else{
+		var example_HTML = [
+			"<div class=\"alert alert-info\" role=\"alert\">",
+			"[No descriptions assigned yet]",
+			"</div>"
+		].join("\n");
+	}
+	var example_DomID = "other-links-outer";
+	var example_dom = document.getElementById(example_DomID);
+	example_dom.innerHTML = example_HTML;
+}
+
+function generate_example_link_tabHTML(entity){
+	var rowsHTML = generate_example_link_rowsHTML(entity);
+	var tab_HTML = [
+		"<h5>" + entity.label + "</h5>",
+		"<table id=\"" + entity.id + "-des-tab\" class=\"table table-condensed table-bordered table-striped\">",
+			"<thead>",
+				"<th class=\"col-sm-6\">Link Predicate</th>",
+				"<th class=\"col-sm-6\">Object(s)</th>",
+			"</thead>",
+			"<tbody>",
+				rowsHTML,
+			"</tbody>",
+		"</table>",
+	].join("\n");
+	return tab_HTML;
+}
+
+function generate_example_link_rowsHTML(entity){
+	var rowsHTML = "";
+	for (var i = 0, length = entity.links.length; i < length; i++) {
+		var act_link = entity.links[i];
+		if (act_link.object != false){
+			var valsHTML = act_link.object.label;
+			if (valsHTML.length > 144) {
+				valsHTML = valsHTML.substring(0, 144) + "...";	
+			}
+		}
+		else{
+			var valsHTML = "[Missing object]";
+		}
+		var rowHTML = [
+			"<tr>",
+				"<td>" + act_link.predicate.label,
+				"</td>",
+				"<td>" + valsHTML,
+				"</td>",
+			"</tr>"
+		].join("\n");
+		rowsHTML += rowHTML;
+	}
+	return rowsHTML;
+}
 
 
 /* ----------------------------------------------------

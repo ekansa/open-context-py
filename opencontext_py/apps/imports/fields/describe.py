@@ -4,7 +4,7 @@ from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.imports.fieldannotations.links import CandidateLink
+from opencontext_py.apps.imports.fieldannotations.links import CandidateLinkPredicate
 
 
 # Methods to describe import fields and their annotations
@@ -239,11 +239,11 @@ class ImportFieldDescribe():
                 # make sure project uuid is the one associated
                 # with the source_id
                 project_uuid = self.project_uuid
-            cl = CandidateLink()
-            cl.project_uuid = project_uuid
-            cl.source_id = self.source_id
-            cl.make_reconcile_link_pred(label)
-            output = cl.uuid
+            clp = CandidateLinkPredicate()
+            clp.project_uuid = project_uuid
+            clp.source_id = self.source_id
+            clp.make_reconcile_link_pred(label)
+            output = clp.uuid
         return output
 
     def delete_field_annotation(self, annotation_id):
