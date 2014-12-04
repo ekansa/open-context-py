@@ -188,11 +188,11 @@ class ProcessSubjects():
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 if cs.uuid is not False:
                     if cs.is_new:
-                        self.new_entities.append({'uuid': cs.uuid,
-                                                  'context': cs.context})
+                        self.new_entities.append({'id': cs.uuid,
+                                                  'label': cs.context})
                     else:
-                        self.reconciled_entities.append({'uuid': cs.uuid,
-                                                         'context': cs.context})
+                        self.reconciled_entities.append({'id': cs.uuid,
+                                                         'label': cs.context})
                     if field_num in self.contain_ordered_subjects:
                         if self.contain_ordered_subjects[field_num] is not False:
                             # subject entity successfully reconciled or created
@@ -203,7 +203,9 @@ class ProcessSubjects():
                                                              cs.context,
                                                              dist_rec['rows'])
                 else:
-                    self.not_reconciled_entities.append(dist_rec['imp_cell_obj'].record)
+                    bad_id = str(dist_rec['imp_cell_obj'].field_num) + '-' + str(dist_rec['imp_cell_obj'].row_num)
+                    self.not_reconciled_entities.append({'id': bad_id,
+                                                         'label': dist_rec['imp_cell_obj'].record})
 
     def process_non_contain_subjects(self):
         """ processes subject entitites that are not in
@@ -236,10 +238,13 @@ class ProcessSubjects():
                         cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                         cs.reconcile_item(dist_rec['imp_cell_obj'])
                         if cs.uuid is not False:
-                            self.reconciled_entities.append({'uuid': cs.uuid,
-                                                             'context': cs.label})
+                            self.reconciled_entities.append({'id': cs.uuid,
+                                                             'label': cs.label})
                         else:
-                            self.not_reconciled_entities.append(dist_rec['imp_cell_obj'].record)
+                            bad_id = str(dist_rec['imp_cell_obj'].field_num)
+                            bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
+                            self.not_reconciled_entities.append({'id': bad_id,
+                                                                 'label': dist_rec['imp_cell_obj'].record})
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy
