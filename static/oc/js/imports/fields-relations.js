@@ -206,7 +206,9 @@ function displayAnnotations(data){
 			"</td>"
 		].join("\n");
 		newRow.innerHTML = rowString;
-		tbodyDom.appendChild(newRow);
+		if (anno.predicate.id != 'oc-gen:describes') {
+			tbodyDom.appendChild(newRow);
+		}
 	}
 }
 

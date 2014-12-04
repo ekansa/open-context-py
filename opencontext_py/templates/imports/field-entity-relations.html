@@ -28,6 +28,7 @@
                     </thead>
                     <tbody id="fieldAnnotationsTbody">
                     {% for anno in ip.field_annotations %}
+                        {% if anno.predicate.id != 'oc-gen:describes' %}
                         <tr id="anno-num-{{ anno.id }}">
                             <td>
                                 <button onclick="javascript:deleteAnnotation({{ anno.id }});" type="button" class="btn btn-warning btn-xs">
@@ -76,6 +77,7 @@
                                 </samp>
                             </td>
                         </tr>
+                        {%endif%}
                     {% endfor %}
                     </tbody>
                 </table>
