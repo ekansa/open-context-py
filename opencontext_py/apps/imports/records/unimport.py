@@ -5,6 +5,7 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
@@ -123,6 +124,22 @@ class UnImport():
                                      project_uuid=self.project_uuid)\
                              .delete()
 
+    def delete_person_entities(self):
+        """ Deletes subjects entities
+            import
+        """
+         #get rid of "persons" manifest records from this source
+        rem_manifest = Manifest.objects\
+                               .filter(source_id=self.source_id,
+                                       project_uuid=self.project_uuid,
+                                       item_type='persons')\
+                               .delete()
+        #get rid of person records from this source
+        rem_persons = Person.objects\
+                            .filter(source_id=self.source_id,
+                                    project_uuid=self.project_uuid)\
+                            .delete()
+        
     def delete_types_entities(self):
         """ Deletes types entities from an
             import
