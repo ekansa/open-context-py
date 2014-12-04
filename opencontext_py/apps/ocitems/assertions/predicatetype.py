@@ -1,6 +1,7 @@
 import hashlib
 from django.conf import settings
 from django.db import models
+from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.octypes.management import TypeManagement
@@ -111,7 +112,7 @@ class PredicateTypeAssertions():
                 print('--OK Predicate--: ' + str(predicate_uuid))
 
     def skos_relate_old_new_predicates(self,
-                                       projec_uuid,
+                                       project_uuid,
                                        source_id,
                                        predicate_uuid,
                                        new_pred_uuid):
