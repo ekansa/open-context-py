@@ -80,6 +80,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.imports.fields',
     'opencontext_py.apps.imports.fieldannotations',
     'opencontext_py.apps.imports.records',
+    'opencontext_py.apps.imports.sources',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
     'opencontext_py.apps.exports.fields',
