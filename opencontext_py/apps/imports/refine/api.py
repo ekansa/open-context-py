@@ -94,3 +94,13 @@ class RefineAPI():
         r.raise_for_status()
         self.refine_model = r.json()
         return self.refine_model
+
+    def get_projects(self):
+        """
+        gets project metadata from refine
+        """
+        url = self.refine_base_url + '/command/core/get-all-project-metadata'
+        r = requests.get(url, timeout=240)
+        r.raise_for_status()
+        refine_projects = r.json()
+        return refine_projects
