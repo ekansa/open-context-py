@@ -24,7 +24,7 @@ from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.records.unimport import UnImport
 
 
-# Processes to generate descriptions 
+# Processes to generate descriptions
 class ProcessDescriptions():
 
     def __init__(self, source_id):
@@ -41,6 +41,7 @@ class ProcessDescriptions():
         self.reconciled_predicates = {}
         self.reconciled_types = {}
         self.field_valueofs = {}
+        self.count_active_fields = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -145,7 +146,7 @@ class ProcessDescriptions():
     def process_description_batch(self):
         """ processes fields describing a subject (subjects, media, documents, persons, projects)
             entity field.
-            if start_row is 1, then this makes new predicate entities
+            if start_row is 1, then previous imports of this source are cleared
         """
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
@@ -214,6 +215,7 @@ class ProcessDescriptions():
                                                                     predicate=ImportFieldAnnotation.PRED_DESCRIBES)\
                                                             .order_by('field_num')
         if len(self.description_annotations) > 0:
+            self.count_active_fields = len(self.description_annotations)
             self.des_rels = LastUpdatedOrderedDict()
             for des_anno in self.description_annotations:
                 add_descriptor_field = False
@@ -349,34 +351,35 @@ class ProcessDescriptions():
                                       self.start_row)
                     distinct_records = pc.get_field_records(valueof_field,
                                                             False)
-                    for row_key, val_dist_rec in distinct_records.items():
-                        if len(val_dist_rec['imp_cell_obj'].record) > 0:
-                            # found a non-blank type item
-                            cs = CandidateString()
-                            cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
-                            content_uuid = cs.uuid  # string content uuid
-                            if data_type == 'id':
-                                if recon_predicate['rows'] is not False:
-                                    # need to create types row by row, because the predicate
-                                    # comes from import cell records, not the import field
-                                    for row_num in val_dist_rec['rows']:
-                                        predicate = self.look_up_predicate(field_num,
-                                                                           row_num)
-                                        if predicate is not False:
-                                            ct = CandidateType()
-                                            ct.reconcile_type_cell(predicate.uuid,
-                                                                   content_uuid,
-                                                                   val_dist_rec['imp_cell_obj'],
-                                                                   row_num)
-                                elif recon_predicate['predicate'] is not False:
-                                    # predicate comes from the import field
-                                    # no need to worry about individual rows
-                                    predicate = recon_predicate['predicate']
-                                    ct = CandidateType()
-                                    ct.reconcile_type_cell(predicate.uuid,
-                                                           content_uuid,
-                                                           val_dist_rec['imp_cell_obj'],
-                                                           False)
+                    if distinct_records is not False:
+                        for row_key, val_dist_rec in distinct_records.items():
+                            if len(val_dist_rec['imp_cell_obj'].record) > 0:
+                                # found a non-blank type item
+                                cs = CandidateString()
+                                cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
+                                content_uuid = cs.uuid  # string content uuid
+                                if data_type == 'id':
+                                    if recon_predicate['rows'] is not False:
+                                        # need to create types row by row, because the predicate
+                                        # comes from import cell records, not the import field
+                                        for row_num in val_dist_rec['rows']:
+                                            predicate = self.look_up_predicate(field_num,
+                                                                               row_num)
+                                            if predicate is not False:
+                                                ct = CandidateType()
+                                                ct.reconcile_type_cell(predicate.uuid,
+                                                                       content_uuid,
+                                                                       val_dist_rec['imp_cell_obj'],
+                                                                       row_num)
+                                    elif recon_predicate['predicate'] is not False:
+                                        # predicate comes from the import field
+                                        # no need to worry about individual rows
+                                        predicate = recon_predicate['predicate']
+                                        ct = CandidateType()
+                                        ct.reconcile_type_cell(predicate.uuid,
+                                                               content_uuid,
+                                                               val_dist_rec['imp_cell_obj'],
+                                                               False)
 
     def get_assertion_object_values(self, field_num, in_rows):
         """ Gets the import_cell_objects for a given field and row constraint """
@@ -605,9 +608,9 @@ class CandidateDescription():
                                                predicate_uuid,
                                                note_pred_uuid)
             sm = StringManagement()
-            sm.project_uuid = imp_cell.project_uuid
-            sm.source_id = imp_cell.source_id
-            oc_string = sm.get_make_string(imp_cell.record)
+            sm.project_uuid = self.project_uuid
+            sm.source_id = self.source_id
+            oc_string = sm.get_make_string(content)
             object_uuid = oc_string.uuid
             if self.check_description_new(self.subject_uuid,
                                           self.obs_num,

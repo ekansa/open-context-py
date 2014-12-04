@@ -12,6 +12,7 @@ from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
+from opencontext_py.apps.imports.fieldannotations.subjects import CandidateSubject
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 
 
@@ -35,6 +36,7 @@ class ProcessLinks():
         self.end_row = self.batch_size
         self.example_size = 5
         self.link_rels = False
+        self.count_active_fields = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -54,7 +56,6 @@ class ProcessLinks():
         """
         example_entities = []
         self.get_link_annotations()
-        print(str(self.link_rels))
         if self.link_rels is not False:
             for subj_field_num, rels in self.link_rels.items():
                 # get some example records 
@@ -139,6 +140,81 @@ class ProcessLinks():
                             example_entities.append(entity)
         return example_entities
 
+    def process_link_batch(self):
+        """ processes fields describing linking relations
+            between subjects, media, documents, persons, projects entities.
+            If start_row is 1, then previous imports of this source are cleared
+        """
+        self.clear_source()  # clear prior import for this source
+        self.end_row = self.start_row + self.batch_size
+        self.get_link_annotations()
+        if self.link_rels is not False:
+            for subj_field_num, rels in self.link_rels.items():
+                # get some example records
+                sub_field_obj = rels['sub_field_obj']
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                distinct_records = pc.get_field_records(subj_field_num,
+                                                        False)
+                if distinct_records is not False:
+                    # sort the list in row_order from the import table
+                    pg = ProcessGeneral(self.source_id)
+                    distinct_records = pg.order_distinct_records(distinct_records)
+                    for row_key, dist_rec in distinct_records.items():
+                        subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
+                        subject_type = sub_field_obj.field_type
+                        subject_ok = dist_rec['imp_cell_obj'].cell_ok
+                        sort = 0
+                        in_rows = dist_rec['rows']
+                        for pred_obj in rels['pred_objs']:
+                            act_preds = {}
+                            obs_num = 1  # default observation number
+                            if pred_obj['predicate_uuid'] is not False:
+                                act_preds[pred_obj['predicate_uuid']] = in_rows
+                            elif pred_obj['pred_field_obj'] is not False:
+                                # linking predicate is in a field
+                                if pred_obj['pred_field_obj'].obs_num > 0:
+                                    obs_num = pred_obj['pred_field_obj'].obs_num
+                                sort = pred_obj['pred_field_obj'].field_num
+                                pc = ProcessCells(self.source_id,
+                                                  self.start_row)
+                                pred_recs = pc.get_field_records(pred_obj['pred_field_obj'].field_num,
+                                                                 in_rows)
+                                for pred_rec in pred_recs:
+                                    clp = CandidateLinkPredicate()
+                                    clp.source_id = self.source_id
+                                    clp.project_uuid = self.project_uuid
+                                    clp.make_reconcile_link_pred(pred_rec['imp_cell_obj'].record)
+                                    if clp.uuid is not False:
+                                        act_preds[clp.uuid] = pred_rec['rows']
+                            obs_node = '#obs-' + str(obs_num)
+                            for predicate_uuid, act_in_rows in act_preds.items():
+                                obj_field_obj = pred_obj['obj_field_obj']
+                                # now get a value for the object from the imported cells
+                                pc = ProcessCells(self.source_id,
+                                                  self.start_row)
+                                obj_recs = pc.get_field_records(obj_field_obj.field_num,
+                                                                act_in_rows)
+                                if sort < 1:
+                                    sort = obj_field_obj.field_num
+                                for obj_rec in obj_recs:
+                                    object_uuid = obj_rec['imp_cell_obj'].fl_uuid
+                                    object_type = obj_rec.field_type
+                                    object_ok = obj_rec['imp_cell_obj'].cell_ok
+                                    cla = CandidateLinkAssersion()
+                                    cla.project_uuid = self.project_uuid
+                                    cla.source_id = self.source_id
+                                    cla.subject_uuid = subject_uuid
+                                    cla.subject_type = subject_type
+                                    cla.obs_node = obs_node
+                                    cla.obs_num = obs_num
+                                    cla.sort = sort
+                                    cla.predicate_uuid = predicate_uuid
+                                    cla.object_uuid = object_uuid
+                                    cla.object_type = object_type
+                                    if subject_ok and object_ok and predicte_uuid is not False:
+                                        cla.create_link()
+
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 
             or a list of fields that are not in containment relationships
@@ -148,6 +224,7 @@ class ProcessLinks():
                                                 .exclude(predicate__in=self.DEFAULT_EXCLUSION_PREDS)\
                                                 .order_by('field_num', 'object_field_num')
         if len(link_annotations) > 0:
+            self.count_active_fields = len(link_annotations)
             self.link_rels = LastUpdatedOrderedDict()
             for link_anno in link_annotations:
                 pg = ProcessGeneral(self.source_id)
@@ -188,8 +265,8 @@ class CandidateLinkAssersion():
         self.object_uuid = False
         self.object_type = False
 
-    def create_description(self):
-        """ Creates a new descriptive assertion if data is valid """
+    def create_link(self):
+        """ Creates a new link assertion if data is valid """
         is_valid = self.validate_creation()
         if is_valid:
             new_ass = Assertion()
@@ -280,6 +357,7 @@ class CandidateLinkPredicate():
 
     def make_reconcile_link_pred(self, label):
         """ Makes a linking predicate from a given predicate label """
+        self.label = label
         pm = PredicateManagement()
         pm.project_uuid = self.project_uuid
         pm.source_id = self.source_id

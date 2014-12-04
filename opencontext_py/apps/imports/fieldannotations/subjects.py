@@ -33,8 +33,10 @@ class ProcessSubjects():
         self.batch_size = 250
         self.end_row = self.batch_size
         self.example_size = 5
-        self.new_subjects = []
-        self.reconciled_subjects = []
+        self.new_entities = []
+        self.reconciled_entities = []
+        self.not_reconciled_entities = []
+        self.count_active_fields = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -126,17 +128,21 @@ class ProcessSubjects():
                             unique_labels.append(entity_label)
         return contain_nodes
 
-    def process_contained_batch(self):
+    def process_subjects_batch(self):
         """ processes containment fields for subject
             entities starting with a given row number.
             This iterates over all containment fields, starting
             with the root subjhect field
+
+            Once containment subjects are done, this looks up
+            subjects entities not in a containment hierarchy
         """
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
+        self.process_non_contain_subjects()
 
     def process_field_hierarchy(self,
                                 field_num,
@@ -182,10 +188,10 @@ class ProcessSubjects():
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 if cs.uuid is not False:
                     if cs.is_new:
-                        self.new_subjects.append({'uuid': cs.uuid,
+                        self.new_entities.append({'uuid': cs.uuid,
                                                   'context': cs.context})
                     else:
-                        self.reconciled_subjects.append({'uuid': cs.uuid,
+                        self.reconciled_entities.append({'uuid': cs.uuid,
                                                          'context': cs.context})
                     if field_num in self.contain_ordered_subjects:
                         if self.contain_ordered_subjects[field_num] is not False:
@@ -196,6 +202,44 @@ class ProcessSubjects():
                                                              cs.uuid,
                                                              cs.context,
                                                              dist_rec['rows'])
+                else:
+                    self.not_reconciled_entities.append(dist_rec['imp_cell_obj'].record)
+
+    def process_non_contain_subjects(self):
+        """ processes subject entitites that are not in
+            containment relations.
+            This only allows reconciliation based
+            on subject labels, it does not allow
+            creation of new subjects.
+            Subjects can only be created if they are
+            defined in a spatial hierarchy
+        """
+        if len(self.non_contain_subjects) > 1:
+            for field_num in self.non_contain_subjects:
+                pc = ProcessCells(self.source_id,
+                                  self.start_row)
+                distinct_records = pc.get_field_records(field_num,
+                                                        in_rows)
+                if distinct_records is not False:
+                    field_obj = self.subjects_fields[field_num]
+                    for rec_hash, dist_rec in distinct_records.items():
+                        cs = CandidateSubject()
+                        cs.project_uuid = self.project_uuid
+                        cs.source_id = self.source_id
+                        cs.obs_node = 'obs-' + str(field_obj.obs_num)
+                        cs.obs_num = field_obj.obs_num
+                        cs.parent_context = False
+                        cs.parent_uuid = False
+                        cs.label_prefix = field_obj.value_prefix
+                        cs.allow_new = False  # do not allow new, not in a hierarchy
+                        cs.class_uri = field_obj.field_value_cat
+                        cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                        cs.reconcile_item(dist_rec['imp_cell_obj'])
+                        if cs.uuid is not False:
+                            self.reconciled_entities.append({'uuid': cs.uuid,
+                                                             'context': cs.label})
+                        else:
+                            self.not_reconciled_entities.append(dist_rec['imp_cell_obj'].record)
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy
@@ -205,6 +249,7 @@ class ProcessSubjects():
                                 .filter(source_id=self.source_id,
                                         field_type='subjects')
         if len(sub_fields) > 0:
+            self.count_active_fields = len(sub_fields)
             self.subjects_fields = {}
             # Assertion.PREDICATES_CONTAINS
             for sub_field in sub_fields:
@@ -231,13 +276,15 @@ class ProcessSubjects():
                         # field has no child fields.
                         self.contain_ordered_subjects[sub_field.field_num] = False
                     else:
-                        # field has no containment relations
-                        self.non_contain_subjects.append(sub_field.field_num)
                         # check to see if the uncontained field has a parent entity
-                        self.get_field_parent_entity(sub_field.field_num)
+                        parent_entity_found = self.get_field_parent_entity(sub_field.field_num)
+                        if parent_entity_found is False:
+                            # field has no containment relations
+                            self.non_contain_subjects.append(sub_field.field_num)
 
     def get_field_parent_entity(self, field_num):
         """ Get's a parent entity named for a given field """
+        parent_entity_found = False
         self.field_parent_entities[field_num] = False
         parent_anno = ImportFieldAnnotation.objects\
                                            .filter(source_id=self.source_id,
@@ -249,30 +296,8 @@ class ProcessSubjects():
             found = ent.dereference(parent_anno[0].object_uuid)
             if found:
                 self.field_parent_entities[field_num] = ent
-
-    def get_field_subjects(self):
-        distinct_records = False
-        if self.in_rows is False:
-            field_cells = ImportCell.objects\
-                                    .filter(source_id=self.source_id,
-                                            field_num=self.field_num,
-                                            row_num_gte=self.start_row,
-                                            row_num_lt=self.end_row)
-        else:
-            field_cells = ImportCell.objects\
-                                    .order_by()\
-                                    .filter(source_id=self.source_id,
-                                            field_num=self.field_num,
-                                            row_num__in=self.in_rows)
-        if len(field_cells) > 0:
-            distinct_records = {}
-            for cell in field_cells:
-                # iterate through cells to get list of row_nums for each distinct value
-                if cell.rec_hash not in distinct_records:
-                    distinct_records[cell.rec_hash]['rows'] = []
-                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
-                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
-        return distinct_records
+                parent_entity_found = True
+        return parent_entity_found
 
 
 class CandidateSubject():
