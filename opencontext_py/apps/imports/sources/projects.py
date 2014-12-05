@@ -41,6 +41,7 @@ class ImportProjects():
                                     .filter(project_uuid=project_uuid)
             act_item['sources'] = p_sources
             act_item['refines'] = refine_sources
+            act_item['ref_baseurl'] = RefineAPI().get_project_base_url()
         return act_item
 
     def relate_refine_local_sources(self):
@@ -48,9 +49,21 @@ class ImportProjects():
         unused_refine_sources = []
         r_sources = self.get_refine_sources()
         if r_sources is not False:
-            unused_refine_sources = []
-            r_api = RefineAPI()
+            # now sort these in reverse order of last updated
+            date_proj_keyed = {}
+            date_proj_keys = []
             for refine_project, ref_meta in r_sources.items():
+                modified = ref_meta['modified']
+                date_proj = str(ref_meta['modified']) + ':ref:' + str(refine_project)
+                ref_meta['id'] = refine_project
+                date_proj_keyed[date_proj] = ref_meta
+                date_proj_keys.append(date_proj)
+            date_proj_keys.sort()
+            date_proj_keys[::-1]  # reverse the sorting
+            r_api = RefineAPI()
+            for date_proj in date_proj_keys:
+                ref_meta = date_proj_keyed[date_proj]
+                refine_project = ref_meta['id']
                 source_id = r_api.convert_refine_to_source_id(refine_project)
                 ref_created = parse(ref_meta['created'])
                 ref_mod_date = parse(ref_meta['modified'])
@@ -70,7 +83,6 @@ class ImportProjects():
                 else:
                     # the source_id is not improted yet, so it's still usable
                     # as a new import
-                    ref_meta['id'] = refine_project
                     ref_meta['created'] = ref_created
                     ref_meta['modified'] = ref_mod_date
                     unused_refine_sources.append(ref_meta)

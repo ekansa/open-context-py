@@ -53,7 +53,11 @@
                                 <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-upload"></span></button>
                             </a>
                         </td>
-                        <td class="col-sm-3" id="ref-name-{{ refine.id }}">{{ refine.name }}</td>
+                        <td class="col-sm-3" >
+                            <a title="Review in Refine" target="_blank" href="{{ proj.ref_baseurl }}{{ refine.id }}">
+                                <span id="ref-name-{{ refine.id }}">{{ refine.name }}</span> <span class="glyphicon glyphicon-new-window"></span>
+                            </a>
+                        </td>
                         <td class="col-sm-1">-</td>
                         <td class="col-sm-1">-</td>
                         <td class="col-sm-2">Not imported</td>

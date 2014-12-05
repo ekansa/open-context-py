@@ -123,3 +123,9 @@ class RefineAPI():
         except:
             refine_projects = False
         return refine_projects
+
+    def get_project_base_url(self):
+        """
+            gets the project base url
+        """
+        return self.refine_base_url + '/project?project='
