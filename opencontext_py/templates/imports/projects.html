@@ -12,48 +12,55 @@
      </div>
      <div class="row">
         <div class="col-sm-9">
-            <table id="fieldstabhead" class="table table-condensed table-hover">
-                <thead>
-                    <th class="col-sm-1">Select</th>
-                    <th class="col-sm-2">Project</th>
-                    <th class="col-sm-3">Description</th>
-                    <th class="col-sm-1">Edit Status</th>
-                    <th class="col-sm-2">Published</th>
-                    <th class="col-sm-2">Revised</th>
-                    <th class="col-sm-1" style="text-align: center;">Count Imports</th>
-                </thead>
-            </table>
-            <div style="overflow-y:auto; max-height:500px;">    
-            <table id="fieldstab" class="table table-condensed table-hover">
-                <tbody id="fieldtabfields">
-                {% for proj in projs %}
-                    <tr>
-                        <td class="col-sm-1">
-                            <a title="Import to this project" href="../../imports/project/{{ proj.uuid }}">
-                                <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-upload"></span></button>
-                            </a>
-                        </td>
-                        <td class="col-sm-2">
-                            <a title="View project page" target="_blank" href="{% url 'projects_html' proj.uuid %}">{{ proj.label }} <span class="glyphicon glyphicon-new-window"></span> 
-                            </a>
-                        </td>
-                        <td class="col-sm-3"><small>{{ proj.short_des }}</small></td>
-                        <td class="col-sm-1">
-                            {% with label=proj.label %}
-                            {% with edit_status=proj.edit_status %}
-                            {% with label_status=False %}
-                            {% include 'items/editorial-symbols.html' %}
-                            {% endwith %}
-                            {% endwith %}
-                            {% endwith %}
-                        </td>
-                        <td class="col-sm-2"><small>{{ proj.published|date:'Y-m-d H:i' }}</small></td>
-                        <td class="col-sm-2"><small>{{ proj.revised|date:'Y-m-d H:i' }}</small></td>
-                        <td class="col-sm-1" style="text-align: center;">{{ proj.count_imp }}</td>
-                    </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Projects in Open Context</h4>
+                </div>
+                <div class="panel-body">
+                    <table id="fieldstabhead" class="table table-condensed table-hover">
+                        <thead>
+                            <th class="col-sm-1">Select</th>
+                            <th class="col-sm-2">Project</th>
+                            <th class="col-sm-3">Description</th>
+                            <th class="col-sm-1">Edit Status</th>
+                            <th class="col-sm-2">Published</th>
+                            <th class="col-sm-2">Revised</th>
+                            <th class="col-sm-1" style="text-align: center;">Count Imports</th>
+                        </thead>
+                    </table>
+                    <div style="overflow-y:auto; max-height:500px;">    
+                    <table id="fieldstab" class="table table-condensed table-hover">
+                        <tbody id="fieldtabfields">
+                        {% for proj in projs %}
+                            <tr>
+                                <td class="col-sm-1">
+                                    <a title="Import to this project" href="../../imports/project/{{ proj.uuid }}">
+                                        <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-upload"></span></button>
+                                    </a>
+                                </td>
+                                <td class="col-sm-2">
+                                    <a title="View project page" target="_blank" href="{% url 'projects_html' proj.uuid %}">{{ proj.label }} <span class="glyphicon glyphicon-new-window"></span> 
+                                    </a>
+                                </td>
+                                <td class="col-sm-3"><small>{{ proj.short_des }}</small></td>
+                                <td class="col-sm-1">
+                                    {% with label=proj.label %}
+                                    {% with edit_status=proj.edit_status %}
+                                    {% with label_status=False %}
+                                    {% include 'items/editorial-symbols.html' %}
+                                    {% endwith %}
+                                    {% endwith %}
+                                    {% endwith %}
+                                </td>
+                                <td class="col-sm-2"><small>{{ proj.published|date:'Y-m-d H:i' }}</small></td>
+                                <td class="col-sm-2"><small>{{ proj.revised|date:'Y-m-d H:i' }}</small></td>
+                                <td class="col-sm-1" style="text-align: center;">{{ proj.count_imp }}</td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-sm-3">
