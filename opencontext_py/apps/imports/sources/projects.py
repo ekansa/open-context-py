@@ -40,7 +40,7 @@ class ImportProjects():
             p_sources = ImportSource.objects\
                                     .filter(project_uuid=project_uuid)
             act_item['sources'] = p_sources
-            act_item['refine'] = refine_sources
+            act_item['refines'] = refine_sources
         return act_item
 
     def relate_refine_local_sources(self):
@@ -52,6 +52,7 @@ class ImportProjects():
             r_api = RefineAPI()
             for refine_project, ref_meta in r_sources.items():
                 source_id = r_api.convert_refine_to_source_id(refine_project)
+                ref_created = parse(ref_meta['created'])
                 ref_mod_date = parse(ref_meta['modified'])
                 try:
                     p_source = ImportSource.objects.get(source_id=source_id)
@@ -70,6 +71,8 @@ class ImportProjects():
                     # the source_id is not improted yet, so it's still usable
                     # as a new import
                     ref_meta['id'] = refine_project
+                    ref_meta['created'] = ref_created
+                    ref_meta['modified'] = ref_mod_date
                     unused_refine_sources.append(ref_meta)
         return unused_refine_sources
 

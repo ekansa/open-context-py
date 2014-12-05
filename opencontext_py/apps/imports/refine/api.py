@@ -116,7 +116,10 @@ class RefineAPI():
         gets project metadata from refine
         """
         url = self.refine_base_url + '/command/core/get-all-project-metadata'
-        r = requests.get(url, timeout=240)
-        r.raise_for_status()
-        refine_projects = r.json()
+        try:
+            r = requests.get(url, timeout=240)
+            r.raise_for_status()
+            refine_projects = r.json()
+        except:
+            refine_projects = False
         return refine_projects

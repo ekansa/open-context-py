@@ -28,7 +28,34 @@
                 <tbody>
                 {% for source in proj.sources %}
                     <tr>
-                        
+                        <td class="col-sm-1"></td>
+                        <td class="col-sm-3">{{ source.label }}</td>
+                        <td class="col-sm-1">Fields</td>
+                        <td class="col-sm-1">Records</td>
+                        <td class="col-sm-2">Status</td>
+                        <td class="col-sm-2">Current?</td>
+                        <td class="col-sm-2">Updated</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            </div>
+            <div style="overflow-y:auto; max-height:500px;">    
+            <table class="table table-condensed table-hover">
+                <tbody>
+                {% for refine in proj.refines %}
+                    <tr>
+                         <td class="col-sm-1">
+                            <a title="Import these data" onclick="javascript:import_dialogue('{{ refine.id }}');">
+                                <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-upload"></span></button>
+                            </a>
+                        </td>
+                        <td class="col-sm-3" id="ref-name-{{ refine.id }}">{{ refine.name }}</td>
+                        <td class="col-sm-1">-</td>
+                        <td class="col-sm-1">-</td>
+                        <td class="col-sm-2">Not imported</td>
+                        <td class="col-sm-2">-</td>
+                        <td class="col-sm-2">{{ refine.modified|date:'Y-m-d H:i' }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
