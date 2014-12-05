@@ -21,7 +21,7 @@ def _get_context_paths(spatial_context):
     # Split the context path by '/' and then by '||'
     context_lists = (value.split('||') for value in
                      spatial_context.split('/'))
-    # Create lists of the various permutations
+    # Create a list of the various permutations
     context_tuple_list = list(itertools.product(*context_lists))
     # Turn the lists back into URIs
     return ('/'.join(value) for value in context_tuple_list)
@@ -74,7 +74,44 @@ def _prepare_filter_query(parent_child_slug):
         parent_child_set[1]
 
 
-def _process_prop(prop):
+def _process_multi_select_prop(prop):
+    prop_dict = {}
+    # Modify the prop so each property is in its own list
+    prop_list = [item.split('||') for item in prop]
+    # Generate a list of the various permutations of multi-selected properties
+    prop_tuple_list = list(itertools.product(*prop_list))
+    # Turn the resulting list of tuples into a list of lists
+    prop_list = [list(item) for item in prop_tuple_list]
+
+    prop_facet_field_list = []
+    prop_fq_list = []
+    for prop in prop_list:
+        value = prop.pop()
+        if len(prop) == 0:
+            if 'root___pred_id' not in prop_facet_field_list:
+                prop_facet_field_list.append('root___pred_id')
+            prop_fq_list.append('root___pred_id_fq:' + value)
+        else:
+            facet_field = ''
+            for property in range(len(prop)):
+                facet_field += prop.pop().replace('-', '_') + '___'
+                facet_field += 'pred_id'
+                if facet_field not in prop_facet_field_list:
+                    prop_facet_field_list.append(facet_field)
+                fq = facet_field + '_fq:' + value
+                prop_fq_list.append(fq)
+
+    prop_dict['facet.field'] = prop_facet_field_list
+
+    # Create fq string of multi-selected OR props
+    prop_fq_string = ' OR '.join(fq for fq in prop_fq_list)
+    prop_fq_string = '(' + prop_fq_string + ')'
+    prop_dict['fq'] = prop_fq_string
+
+    return prop_dict
+
+
+def _process_single_select_prop(prop):
     prop_dict = {}
     # Get the value
     value = prop.pop()

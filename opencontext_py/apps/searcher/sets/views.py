@@ -1,7 +1,5 @@
 import json
-from django.http import HttpResponse, Http404
-import django.utils.http as http
-from opencontext_py.apps.entities.entity.models import Entity
+from django.http import HttpResponse
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs import viewutilities
 
@@ -27,15 +25,26 @@ def json_view(request, spatial_context=None):
 
     # Handle descriptive properties
 
-    # Since multiple 'prop' parameters are possible, get all of them
+    # Query string may contain multiple 'prop' parameters, so get all of them
     proplist = request.GET.getlist('prop')
+    # Then each &prop gets its own list
     props = [prop.split(' ') for prop in proplist]
+
     prop_dict_list = []
     for prop in props:
-        prop_dict_list.append(viewutilities._process_prop(prop))
+        # If multi-select
+        if any('||' in property for property in prop):
+            prop_dict_list.append(
+                viewutilities._process_multi_select_prop(prop))
+        else:
+            # Otherwise, if single-select
+            prop_dict_list.append(
+                viewutilities._process_single_select_prop(prop)
+                )
 
     # return HttpResponse(prop_dict_list)
 
+    # Handle Spatial Context
     context = viewutilities._process_spatial_context(spatial_context)
     # build solr query
     # TODO field list (fl)
@@ -46,10 +55,13 @@ def json_view(request, spatial_context=None):
     query['fq'].append(context['fq'])
     query['facet.field'] = []
     query['facet.field'].append(context['facet.field'])
+
     if prop_dict_list:
         for prop in prop_dict_list:
-            query['fq'].append(prop['fq'])
-            query['facet.field'].append(prop['facet.field'])
+            if prop['fq'] not in query['fq']:
+                query['fq'].append(prop['fq'])
+            if prop['facet.field'] not in query['facet.field']:
+                query['facet.field'].append(prop['facet.field'])
     query['rows'] = 10
     query['start'] = 0
     query['debugQuery'] = 'true'
