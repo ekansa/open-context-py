@@ -30,17 +30,21 @@
                 {% for source in proj.sources %}
                     <tr>
                         <td class="col-sm-1">
+                            <div style="display:none;">
+                                <div id="source-id-{{ forloop.counter }}">{{ source.source_id }}</div>
+                                <div id="source-refine-{{ forloop.counter }}">{{ source.refine_id }}</div>
+                            </div>
                             <button title="Options for this import"
-                                    onclick="javascript:source_dialogue('{{ source.source_id }}', '{{ source.refine_id }}');"
+                                    onclick="javascript:source_dialogue({{ forloop.counter }});"
                                     type="button" class="btn btn-info">
                                 <span class="glyphicon glyphicon-wrench"></span>
                             </button>
                         </td>
-                        <td class="col-sm-3" id="source-label-{{ source.source_id }}">{{ source.label }}</td>
+                        <td class="col-sm-3" id="source-label-{{ forloop.counter }}">{{ source.label }}</td>
                         <td class="col-sm-1">{{ source.field_count }}</td>
                         <td class="col-sm-1">{{ source.row_count }}</td>
-                        <td class="col-sm-2">{{ source.imp_status }}</td>
-                        <td class="col-sm-2">{{ source.is_current }}</td>
+                        <td class="col-sm-2" id="source-status-{{ forloop.counter }}">{{ source.imp_status }}</td>
+                        <td class="col-sm-2" id="source-current-{{ forloop.counter }}">{{ source.is_current }}</td>
                         <td class="col-sm-2">{{ source.updated|date:'Y-m-d H:i' }}</td>
                     </tr>
                 {% endfor %}
