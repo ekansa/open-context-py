@@ -68,12 +68,34 @@ def _get_parent_slug(slug):
 
 
 def _prepare_filter_query(parent_child_slug):
+    # TODO docstring
     parent_child_set = parent_child_slug.split('___')
     return parent_child_set[0].replace('-', '_') + '___context_id_fq:' + \
         parent_child_set[1]
 
 
+def _process_prop(prop):
+    prop_dict = {}
+    # Get the value
+    value = prop.pop()
+    # A single property (e.g., ?prop=24--object-type)
+    if len(prop) == 0:
+        prop_dict['fq'] = 'root___pred_id_fq:' + value
+        prop_dict['facet.field'] = 'root___pred_id'
+    # Multiple properties
+    else:
+        facet_field = ''
+        for property in range(len(prop)):
+            facet_field += prop.pop().replace('-', '_') + '___'
+        facet_field += 'pred_id'
+        prop_dict['facet.field'] = facet_field
+        fq = facet_field + '_fq:' + value
+        prop_dict['fq'] = fq
+    return prop_dict
+
+
 def _process_spatial_context(spatial_context=None):
+    # TODO docstring
     context = {}
 
     if spatial_context:
