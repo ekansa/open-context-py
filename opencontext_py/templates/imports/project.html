@@ -31,11 +31,11 @@
                     <tr>
                         <td class="col-sm-1"></td>
                         <td class="col-sm-3">{{ source.label }}</td>
-                        <td class="col-sm-1">Fields</td>
-                        <td class="col-sm-1">Records</td>
-                        <td class="col-sm-2">Status</td>
-                        <td class="col-sm-2">Current?</td>
-                        <td class="col-sm-2">Updated</td>
+                        <td class="col-sm-1">{{ source.field_count }}</td>
+                        <td class="col-sm-1">{{ source.row_count }}</td>
+                        <td class="col-sm-2">{{ source.imp_status }}</td>
+                        <td class="col-sm-2">{{ source.is_current }}</td>
+                        <td class="col-sm-2">{{ source.updated|date:'Y-m-d H:i' }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -69,7 +69,14 @@
             </table>
             </div>
             {% else %}
-            <div class="alert alert-warning" role="alert">Don't see data to import? Try turning on Refine first!</div>
+            <div class="alert alert-warning" role="alert">
+                <p>Don't see data in Refine you'd like to import?</p>
+                {% if proj.refine_ok %}
+                <p><strong>Load data into Refine first!</strong></p>
+                {% else %}
+                <p><strong>Try turning on Refine first!</strong></p>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
         <div class="col-sm-3">

@@ -1,3 +1,4 @@
+import time
 import uuid as GenUUID
 from dateutil.parser import parse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -12,7 +13,7 @@ from opencontext_py.apps.imports.refine.api import RefineAPI
 class ImportProjects():
 
     def __init__(self):
-        pass
+        self.refine_ok = False  # is Refine up and running?
 
     def get_project(self, project_uuid):
         """ Processes the current batch, determined by the row number
@@ -42,6 +43,7 @@ class ImportProjects():
             act_item['sources'] = p_sources
             act_item['refines'] = refine_sources
             act_item['ref_baseurl'] = RefineAPI().get_project_base_url()
+            act_item['refine_ok'] = self.refine_ok
         return act_item
 
     def relate_refine_local_sources(self):
@@ -54,12 +56,16 @@ class ImportProjects():
             date_proj_keys = []
             for refine_project, ref_meta in r_sources.items():
                 modified = ref_meta['modified']
-                date_proj = str(ref_meta['modified']) + ':ref:' + str(refine_project)
+                ref_mod_date = parse(ref_meta['modified'])
+                unix_mod = time.mktime(ref_mod_date.timetuple())
+                # keep the project_id in to insure unique keys
+                date_proj = str(unix_mod) + '00' + str(refine_project)
+                date_proj = float(date_proj)
                 ref_meta['id'] = refine_project
                 date_proj_keyed[date_proj] = ref_meta
                 date_proj_keys.append(date_proj)
-            date_proj_keys.sort()
-            date_proj_keys[::-1]  # reverse the sorting
+            date_proj_keys.sort(reverse=True)
+            print(str(date_proj_keys))
             r_api = RefineAPI()
             for date_proj in date_proj_keys:
                 ref_meta = date_proj_keyed[date_proj]
@@ -93,6 +99,7 @@ class ImportProjects():
         r_api = RefineAPI()
         r_sources = r_api.get_projects()
         if isinstance(r_sources, dict):
+            self.refine_ok = True
             output = r_sources['projects']
         else:
             output = False
