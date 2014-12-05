@@ -23,6 +23,7 @@
                     <th class="col-sm-2">Updated</th>
                 </thead>
             </table>
+            {% if proj.sources|length > 0 %}
             <div style="overflow-y:auto; max-height:500px;">    
             <table class="table table-condensed table-hover">
                 <tbody>
@@ -40,6 +41,8 @@
                 </tbody>
             </table>
             </div>
+            {% endif %}
+            {% if proj.refines|length > 0 %}
             <div style="overflow-y:auto; max-height:500px;">    
             <table class="table table-condensed table-hover">
                 <tbody>
@@ -61,6 +64,9 @@
                 </tbody>
             </table>
             </div>
+            {% else %}
+            <div class="alert alert-warning" role="alert">Don't see data to import? Try turning on Refine first!</div>
+            {% endif %}
         </div>
         <div class="col-sm-3">
             <div class="panel panel-default">
