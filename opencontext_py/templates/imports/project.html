@@ -29,8 +29,14 @@
                 <tbody>
                 {% for source in proj.sources %}
                     <tr>
-                        <td class="col-sm-1"></td>
-                        <td class="col-sm-3">{{ source.label }}</td>
+                        <td class="col-sm-1">
+                            <button title="Options for this import"
+                                    onclick="javascript:source_dialogue('{{ source.source_id }}', '{{ source.refine_id }}');"
+                                    type="button" class="btn btn-info">
+                                <span class="glyphicon glyphicon-wrench"></span>
+                            </button>
+                        </td>
+                        <td class="col-sm-3" id="source-label-{{ source.source_id }}">{{ source.label }}</td>
                         <td class="col-sm-1">{{ source.field_count }}</td>
                         <td class="col-sm-1">{{ source.row_count }}</td>
                         <td class="col-sm-2">{{ source.imp_status }}</td>
@@ -49,9 +55,11 @@
                 {% for refine in proj.refines %}
                     <tr>
                          <td class="col-sm-1">
-                            <a title="Import these data" onclick="javascript:import_dialogue('{{ refine.id }}');">
-                                <button type="button" class="btn btn-primary"><span class="glyphicon glyphicon-upload"></span></button>
-                            </a>
+                            <button title="Import these data"
+                                    onclick="javascript:load_dialogue('{{ refine.id }}');"
+                                    type="button" class="btn btn-primary">
+                                <span class="glyphicon glyphicon-upload"></span>
+                            </button>
                         </td>
                         <td class="col-sm-3" >
                             <a title="Review in Refine" target="_blank" href="{{ proj.ref_baseurl }}{{ refine.id }}">

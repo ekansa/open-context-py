@@ -14,6 +14,7 @@ class ImportProjects():
 
     def __init__(self):
         self.refine_ok = False  # is Refine up and running?
+        self.refine_reloadable = {}
 
     def get_project(self, project_uuid):
         """ Processes the current batch, determined by the row number
@@ -38,13 +39,28 @@ class ImportProjects():
                 act_item['short_des'] = ''
             # get sources from refine first, since it lets us know if updated
             refine_sources = self.relate_refine_local_sources()
-            p_sources = ImportSource.objects\
-                                    .filter(project_uuid=project_uuid)
+            raw_p_sources = ImportSource.objects\
+                                        .filter(project_uuid=project_uuid)
+            p_sources = self.note_reloadable_sources(raw_p_sources)
             act_item['sources'] = p_sources
             act_item['refines'] = refine_sources
             act_item['ref_baseurl'] = RefineAPI().get_project_base_url()
             act_item['refine_ok'] = self.refine_ok
         return act_item
+
+    def note_reloadable_sources(self, raw_p_sources):
+        """ Notes if items in a list of sources
+            can be reloaded now from Refine
+        """
+        p_sources = []
+        for p_source in raw_p_sources:
+            # checks to see if the source can be reloaded from Refine
+            if p_source.source_id in self.refine_reloadable:
+                p_source.refine_id = self.refine_reloadable[p_source.source_id]
+            else:
+                p_source.refine_id = False
+            p_sources.append(p_source)
+        return p_sources
 
     def relate_refine_local_sources(self):
         """ Relates Refine sources with Sources already loaded from Refine """
@@ -78,6 +94,7 @@ class ImportProjects():
                 except ImportSource.DoesNotExist:
                     p_source = False
                 if p_source is not False:
+                    self.refine_reloadable[source_id] = refine_project
                     if ref_mod_date > p_source.updated:
                         # Refine data updated since the last time the source was updated
                         p_source.is_current = False
