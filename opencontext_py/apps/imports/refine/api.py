@@ -9,15 +9,31 @@ class RefineAPI():
     """ Interacts with Open (Google) Refine for importing and updating data """
     DEFAULT_REFINE_BASE_URL = 'http://127.0.0.1:3333'
 
-    def __init__(self, refine_project):
+    def __init__(self, refine_project=False):
         self.refine_model = False
         self.col_schema = False
         self.json_r = False
         self.refine_base_url = self.DEFAULT_REFINE_BASE_URL
         self.refine_project = str(refine_project)
-        self.source_id = 'ref:' + str(refine_project)
+        self.source_id = self.convert_refine_to_source_id(refine_project)
         self.row_request_limit = 500
         self.data = False
+
+    def convert_refine_to_source_id(self, refine_project):
+        """ converts a refine project id to a source_id for opencontext """
+        if refine_project is not False:
+            source_id = 'ref:' + str(refine_project)
+        else:
+            source_id = False
+        return source_id
+
+    def convert_source_id_to_refine(self, source_id):
+        """ converts a refine project id to a source_id for opencontext """
+        if 'ref:' in source_id:
+            refine_project = source_id.replace('ref:' , '')
+        else:
+            refine_project = source_id
+        return refine_project
 
     def get_data_to_model(self, start=0):
         """ gets rows, aligns them to the schema for easy use """

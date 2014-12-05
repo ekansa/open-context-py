@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
+from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 
@@ -51,9 +52,15 @@ urlpatterns = patterns('',
                        url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
                        url(r'^types', OCtypeViews.index, name='types_index'),
-                       # Importer views for controlled vocabulary entities from OC contributors
-                       url(r'^imports/field-types/(?P<source_id>\S+)', Imp_fields.field_types,
-                           name='imp_field_types'),
+                       # Importer views for publishing data
+                       url(r'^imports/create-project', Imp_sources.create_project,
+                           name='imp_sources_create_project'),
+                       url(r'^imports/edit-project/(?P<project_uuid>\S+)', Imp_sources.edit_project,
+                           name='imp_sources_edit_project'),
+                       url(r'^imports/project/(?P<project_uuid>\S+)',  Imp_sources.project,
+                           name='imp_sources_project'),
+                       url(r'^imports/', Imp_sources.index,
+                           name='imp_sources_index'),
                        url(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_fields.field_types_more,
                            name='imp_field_types_more'),
                        url(r'^imports/field-entity-relations/(?P<source_id>\S+)', Imp_fields.field_entity_relations,

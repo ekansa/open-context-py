@@ -1,32 +1,10 @@
 {% block editorial-status %}
 <h4>Editorial Status</h4>
-{% if item.project.edit_status == 5 %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9679;&#9679;</a>
-    <br/>
-    <small>Peer-reviewed</small>
-{% elif item.project.edit_status == 4 %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9679;&#9675;</a>
-    <br/>
-    <small>Editorial board reviewed</small>
-{% elif item.project.edit_status == 3 %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9675;&#9675;</a>
-    <br/>
-    <small>Managing editor reviewed</small>
-{% elif item.project.edit_status == 2 %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9675;&#9675;&#9675;</a>
-    <br/>
-    <small>Minimal editorial acceptance</small>
-{% elif item.project.edit_status == 1 %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9675;&#9675;&#9675;&#9675;</a>
-    <br/>
-    <small>Demonstration, Minimal editorial acceptance</small>
-{% else %}
-    {% if item.project.label != False %}
-    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9675;&#9675;&#9675;&#9675;&#9675;</a>
-    <br/>
-    <small>In preparation, draft-stage</small>
-    {% else %}
-    <small>Page created by Open Context editors. Not reviewed.</small>
-    {%endif%}
-{%endif%}
+{% with label=item.project.label %}
+{% with edit_status=item.project.edit_status %}
+{% with label_status=True %}   
+{% include 'items/editorial-symbols.html' %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
 {% endblock %}

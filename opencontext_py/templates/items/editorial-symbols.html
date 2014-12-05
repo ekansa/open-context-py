@@ -1,0 +1,45 @@
+{% block editorial-symbols %}
+{% if edit_status == 5 %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9679;&#9679;</a>
+    {% if label_status %}
+    <br/>
+    <small>Peer-reviewed</small>
+    {%endif%}
+{% elif edit_status == 4 %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9679;&#9675;</a>
+    {% if label_status %}
+    <br/>
+    <small>Editorial board reviewed</small>
+    {%endif%}
+{% elif edit_status == 3 %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9679;&#9675;&#9675;</a>
+    {% if label_status %}
+    <br/>
+    <small>Managing editor reviewed</small>
+    {%endif%}
+{% elif edit_status == 2 %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9679;&#9675;&#9675;&#9675;</a>
+    {% if label_status %}
+    <br/>
+    <small>Minimal editorial acceptance</small>
+    {%endif%}
+{% elif edit_status == 1 %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9679;&#9675;&#9675;&#9675;&#9675;</a>
+    {% if label_status %}
+    <br/>
+    <small>Demonstration, Minimal editorial acceptance</small>
+    {%endif%}
+{% else %}
+    {% if label != False %}
+    <a class="project-edit-stars" href="../../about/publishing#editorial-status" title="Learn more about editorial and peer-review">&#9675;&#9675;&#9675;&#9675;&#9675;</a>
+        {% if label_status %}
+    <br/>
+    <small>In preparation, draft-stage</small>
+        {%endif%}
+    {% else %}
+        {% if label_status %}
+    <small>Page created by Open Context editors. Not reviewed.</small>
+        {%endif%}
+    {%endif%}
+{%endif%}
+{% endblock %}
