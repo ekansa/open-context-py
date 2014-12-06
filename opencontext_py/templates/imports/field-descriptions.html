@@ -3,15 +3,14 @@
 
 {% block itemcontent %}
      <div class="row">
-         <div class="col-sm-9">
-            <h2>Assign Entity Descriptions</h2>
+         <div class="col-sm-5">
+            <h2>Assign Descriptions</h2>
          </div>
-         <div class="col-sm-3">
-            <ul class="pagination">
-                <li><a href="../../imports/field-entity-relations/{{ ip.source_id }}">Previous</a></li>
-                <li><a href="#">Next</a></li>
-              </ul>
-         </div>
+         <!-- <div "col-sm-7"> -->
+         {% with nav=ip.nav %}
+         {% include 'imports/import-nav.html' %}
+         {% endwith %}
+         <!-- </div> -->
      </div>
      <div class="row">
         <div class="col-sm-5" id="description_fields_outer">

@@ -3,6 +3,7 @@ import uuid as GenUUID
 from dateutil.parser import parse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.sources.models import ImportSource
+from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.entities.entity.models import Entity
@@ -40,7 +41,9 @@ class ImportProjects():
             # get sources from refine first, since it lets us know if updated
             refine_sources = self.relate_refine_local_sources()
             raw_p_sources = ImportSource.objects\
-                                        .filter(project_uuid=project_uuid)
+                                        .filter(project_uuid=project_uuid)\
+                                        .order_by('-updated')
+            raw_p_sources = self.note_unimport_ok(raw_p_sources)
             p_sources = self.note_reloadable_sources(raw_p_sources)
             act_item['sources'] = p_sources
             act_item['refines'] = refine_sources
@@ -59,6 +62,17 @@ class ImportProjects():
                 p_source.refine_id = self.refine_reloadable[p_source.source_id]
             else:
                 p_source.refine_id = False
+            p_sources.append(p_source)
+        return p_sources
+
+    def note_unimport_ok(self, raw_p_sources):
+        """ Checks to see if it's OK to unimport a given source """
+        p_sources = []
+        for p_source in raw_p_sources:
+            # checks to see if the source can be reloaded from Refine
+            unimp = UnImport(p_source.source_id,
+                             p_source.project_uuid)
+            p_source.undo_ok = unimp.delete_ok
             p_sources.append(p_source)
         return p_sources
 

@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 
 
@@ -14,6 +15,14 @@ class ImportSource(models.Model):
     imp_status = models.CharField(max_length=50)
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        """
+        saves with created time if None
+        """
+        if self.created is None:
+            self.created = datetime.now()
+        super(Manifest, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'imp_sources'

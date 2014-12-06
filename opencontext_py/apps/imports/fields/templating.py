@@ -49,6 +49,7 @@ class ImportProfile():
         self.PREDICATE_CONTAINED_IN = ImportFieldAnnotation.PRED_CONTAINED_IN
         self.PRED_DESCRIBES = ImportFieldAnnotation.PRED_DESCRIBES
         self.PRED_VALUE_OF = ImportFieldAnnotation.PRED_VALUE_OF
+        self.nav = False
 
     def get_fields(self, field_num_list=False):
         """ Gets a list of field objects, limited by a list of field_num if not false """

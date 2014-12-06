@@ -1,0 +1,34 @@
+<div class="col-sm-1">
+    <nav>
+        <ul class="pager">
+            {% if nav.act_page == 'index' %}
+            <li class="active">Import Home</li>
+            {% else %}    
+            <li><a href="../../imports/">Import Home</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+<div class="col-sm-6">
+    <nav>
+        <ul class="pagination pagination pagination-sm">
+        {% if nav.prev_s.class == None %}
+            <li><a href="{{ nav.prev_s.url }}"><span aria-hidden="true">&laquo;</span></a></li>
+        {% else %}    
+            <li class="disabled"><span aria-hidden="true">&laquo;</span></li>
+        {% endif %}
+        {% for s_nav in nav.source_navs %}
+            {% if s_nav.class == None %}
+            <li><a href="{{ s_nav.url }}">{{ s_nav.label }}</a></li>
+        {% else %}    
+            <li class="{{ s_nav.class }}"><a href="#">{{ s_nav.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if nav.next_s.class == None %}
+            <li><a href="{{ nav.next_s.url }}"><span aria-hidden="true">&raquo;</span></a></li>
+        {% else %}    
+            <li class="disabled"><span aria-hidden="true">&raquo;</span></li>
+        {% endif %}
+        </ul>
+    </nav>
+</div>

@@ -2,6 +2,9 @@ import json
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from opencontext_py.apps.imports.sources.projects import ImportProjects
 from opencontext_py.apps.imports.sources.models import ImportSource
+from opencontext_py.apps.imports.sources.navtemplate import ImportNavigation
+from opencontext_py.apps.imports.fields.templating import ImportProfile
+from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -85,9 +88,99 @@ def project(request, project_uuid):
     ipr = ImportProjects()
     proj = ipr.get_project(project_uuid)
     if proj is not False:
+        imnav = ImportNavigation()
+        proj['nav'] = imnav.set_nav('project',
+                                    project_uuid,
+                                    False)
         template = loader.get_template('imports/project.html')
         context = RequestContext(request,
                                  {'proj': proj})
+        return HttpResponse(template.render(context))
+    else:
+        raise Http404
+
+
+@ensure_csrf_cookie
+def field_types(request, source_id):
+    """ Show HTML form listing fields classified by field type """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        imnav = ImportNavigation()
+        ip.nav = imnav.set_nav('field-types',
+                               ip.project_uuid,
+                               source_id)
+        template = loader.get_template('imports/field-types.html')
+        context = RequestContext(request,
+                                 {'ip': ip})
+        return HttpResponse(template.render(context))
+    else:
+        raise Http404
+
+
+@ensure_csrf_cookie
+def field_types_more(request, source_id):
+    """ Show HTML form further classifying subject fields """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_subject_type_fields()
+        imnav = ImportNavigation()
+        ip.nav = imnav.set_nav('field-types-more',
+                               ip.project_uuid,
+                               source_id)
+        if len(ip.fields) > 0:
+            template = loader.get_template('imports/field-types-more.html')
+            context = RequestContext(request,
+                                     {'ip': ip})
+            return HttpResponse(template.render(context))
+        else:
+            redirect = '../../imports/field-types/' + source_id
+            return HttpResponseRedirect(redirect)
+    else:
+        raise Http404
+
+
+@ensure_csrf_cookie
+def field_entity_relations(request, source_id):
+    """ Show HTML form to change relationships for entities
+        to be created / or updated from an import table
+    """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        if len(ip.fields) > 0:
+            ip.get_field_annotations()
+            ip.jsonify_field_annotations()
+            imnav = ImportNavigation()
+            ip.nav = imnav.set_nav('field-entity-relations',
+                                   ip.project_uuid,
+                                   source_id)
+            template = loader.get_template('imports/field-entity-relations.html')
+            context = RequestContext(request,
+                                     {'ip': ip})
+            return HttpResponse(template.render(context))
+        else:
+            redirect = '../../imports/field-types/' + source_id
+            return HttpResponseRedirect(redirect)
+    else:
+        raise Http404
+
+
+@ensure_csrf_cookie
+def field_descriptions(request, source_id):
+    """ Show HTML form to change relationships for entities
+        to be created / or updated from an import table
+    """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        imnav = ImportNavigation()
+        ip.nav = imnav.set_nav('field-descriptions',
+                               ip.project_uuid,
+                               source_id)
+        template = loader.get_template('imports/field-descriptions.html')
+        context = RequestContext(request,
+                                 {'ip': ip})
         return HttpResponse(template.render(context))
     else:
         raise Http404

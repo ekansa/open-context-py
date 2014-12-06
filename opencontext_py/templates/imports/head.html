@@ -15,8 +15,13 @@
     <script src="../../static/bootstrap/3.2.0/js/bootstrap.js"></script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
+        {% if ip %}
         var source_id = '{{ ip.source_id }}';
         var project_uuid = '{{ ip.project_uuid }}';
+        {% endif %}
+        {% if proj %}
+        var project_uuid = '{{ proj.uuid }}';
+        {% endif %}
     </script>
     <style type="text/css">
         #fieldtabfields .ui-selecting { background: #FFFF99; }

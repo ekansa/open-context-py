@@ -1,5 +1,6 @@
 import re
 import roman
+import datetime
 from math import pow
 from unidecode import unidecode
 from django.utils import timezone
@@ -89,6 +90,8 @@ class Manifest(models.Model):
             self.views = 0
         self.label = self.validate_label()
         self.make_slug_and_sort()
+        if self.revised is None:
+            self.revised = datetime.now()
         super(Manifest, self).save(*args, **kwargs)
 
     def slug_save(self, project_indices=False):

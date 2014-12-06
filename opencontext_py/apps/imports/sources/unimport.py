@@ -1,5 +1,6 @@
+import datetime
 from django.db import models
-from django.db.models import Q
+from django.db.models import Q, Max
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
@@ -175,6 +176,30 @@ class UnImport():
                                  .filter(source_id=self.source_id,
                                          project_uuid=self.project_uuid)\
                                  .delete()
+
+    def roubust_check_unimport_ok(self):
+        """ Checks to see if it is OK to allow an unimport
+        """
+        ok = None
+        source_last = False
+        man_sums = Manifest.objects\
+                           .filter(project_uuid=self.project_uuid)\
+                           .values('source_id')\
+                           .annotate(last=Max('revised'))
+        for man_sum in man_sums:
+            if man_sum['source_id'] == self.source_id:
+                source_last = man_sum['last']
+                break
+        if source_last is not None and source_last is not False:
+            for man_sum in man_sums:
+                if source_last < man_sum['last']:
+                    ok = False
+                    break
+            if ok is None:
+                ok = True
+        else:
+            ok = self.check_unimport_ok()
+        return ok
 
     def check_unimport_ok(self):
         """ Checks to see if it is OK to allow an unimport

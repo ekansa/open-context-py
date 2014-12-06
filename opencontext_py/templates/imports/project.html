@@ -38,6 +38,7 @@
                                     <div style="display:none;">
                                         <div id="source-id-{{ forloop.counter }}">{{ source.source_id }}</div>
                                         <div id="source-refine-{{ forloop.counter }}">{{ source.refine_id }}</div>
+                                        <div id="source-undo-{{ forloop.counter }}">{{ source.undo_ok }}</div>
                                     </div>
                                     <button title="Options for this import"
                                             onclick="javascript:source_dialogue({{ forloop.counter }});"
