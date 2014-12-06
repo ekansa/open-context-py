@@ -74,6 +74,19 @@ def _prepare_filter_query(parent_child_slug):
         parent_child_set[1]
 
 
+def _process_prop_list(prop_list):
+    props = [prop.split(' ') for prop in prop_list]
+    prop_dict_list = []
+    for prop in props:
+        # If multi-select
+        if any('||' in property for property in prop):
+            prop_dict_list.append(_process_multi_select_prop(prop))
+        else:
+            # Otherwise, if single-select
+            prop_dict_list.append(_process_single_select_prop(prop))
+    return prop_dict_list
+
+
 def _process_multi_select_prop(prop):
     prop_dict = {}
     # Modify the prop so each property is in its own list
