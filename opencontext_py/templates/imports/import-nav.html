@@ -1,3 +1,4 @@
+<!--
 <div class="col-sm-1">
     <nav>
         <ul class="pager">
@@ -9,7 +10,8 @@
         </ul>
     </nav>
 </div>
-<div class="col-sm-6">
+-->
+<div class="col-sm-7" style="text-align: right;">
     <nav>
         <ul class="pagination pagination pagination-sm">
         {% if nav.prev_s.class == None %}
@@ -17,6 +19,25 @@
         {% else %}    
             <li class="disabled"><span aria-hidden="true">&laquo;</span></li>
         {% endif %}
+        
+        {% if nav.act_page == 'index' %}
+            <li class="active">Import Home</li>
+            {% else %}    
+            <li><a href="../../imports/">Import Home</a></li>
+        {% endif %}
+        
+        {% if nav.proj_nav.class == None %}
+            <li><a href="{{ nav.proj_nav.url }}">{{ nav.proj_nav.sublabel }}</a></li>
+        {% else %}    
+            <li class="{{ nav.proj_nav.class }}">
+                {% if nav.act_page != 'index' %}
+                {{ nav.proj_nav.sublabel }}
+                {% else %}
+                {{ nav.proj_nav.label }}
+                {% endif %}
+            </li>
+        {% endif %}
+        
         {% for s_nav in nav.source_navs %}
             {% if s_nav.class == None %}
             <li><a href="{{ s_nav.url }}">{{ s_nav.label }}</a></li>

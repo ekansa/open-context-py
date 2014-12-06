@@ -7,7 +7,7 @@ from opencontext_py.apps.imports.sources.models import ImportSource
 class ImportNavigation():
 
     PROJ_NAV = {'key': 'projects',
-                'url': '../../imports/projects/',
+                'url': '../../imports/project/',
                 'label': 'Project',
                 'sublabel': False}
     SOURCE_NAVS = [{'key': 'field-types',
@@ -61,6 +61,8 @@ class ImportNavigation():
         if self.project_uuid is False:
             output['class'] = 'disabled'
         else:
+            if self.project_uuid not in output['url']:
+                output['url'] += self.project_uuid
             output['sublabel'] = self.project_label
             if self.act_page == 'project':
                 output['class'] = 'active'
