@@ -3,12 +3,14 @@
 
 {% block itemcontent %}
      <div class="row">
-         <div class="col-sm-9">
+         <div class="col-sm-5">
             <h2>Import Data to: '{{ proj.label }}'</h2>
          </div>
-         <div class="col-sm-3">
-            {{ proj.short_des }}
-         </div>
+         <!-- <div "col-sm-7"> -->
+         {% with nav=proj.nav %}
+         {% include 'imports/import-nav.html' %}
+         {% endwith %}
+         <!-- </div> -->
      </div>
      <div class="row">
         <div class="col-sm-9">
@@ -119,6 +121,14 @@
             
         </div>
         <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Summary</h4>
+                </div>
+                <div class="panel-body">
+                    {{ proj.short_des }}
+                </div>
+            </div>
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h4 class="panel-title">Edit Project</h4>

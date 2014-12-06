@@ -16,9 +16,13 @@ def index(request):
     """ Index for sources is going to be a list of projects """
     ipr = ImportProjects()
     projs = ipr.get_all_projects()
+    imnav = ImportNavigation()
+    proj = {}
+    proj['nav'] = imnav.set_nav('index')
     template = loader.get_template('imports/projects.html')
     context = RequestContext(request,
-                             {'projs': projs})
+                             {'projs': projs,
+                              'proj': proj})
     return HttpResponse(template.render(context))
 
 

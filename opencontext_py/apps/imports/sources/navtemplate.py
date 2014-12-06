@@ -52,6 +52,8 @@ class ImportNavigation():
         output['prev_s'] = self.prev_source_nav
         output['next_s'] = self.next_source_nav
         output['source_navs'] = self.act_source_navs
+        output['proj_label'] = self.project_label
+        output['s_label'] = self.source_label
         return output
 
     def create_proj_nav(self):
@@ -113,8 +115,11 @@ class ImportNavigation():
         if act_index is False or self.source_id is False:
             act_nav = {}
             act_nav['class'] = 'disabled'
-            self.prev_source_nav = act_nav
+            if self.project_uuid is not False:
+                act_nav['class'] = None
+                act_nav['url'] = '../../imports/'
             self.next_source_nav = act_nav
+            self.prev_source_nav = act_nav
         else:
             if act_index < 1:
                 self.prev_source_nav = self.create_proj_nav()
