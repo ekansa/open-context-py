@@ -35,6 +35,19 @@ class RefineAPI():
             refine_project = source_id
         return refine_project
 
+    def get_data_batch_to_model(self, start=0):
+        """ gets a batch of rows, aligns them to the schema for easy use """
+        self.prepare_model()
+        if self.col_schema is not False:
+            self.data = []
+            json_r = self.get_rows(start)
+            if 'rows' in json_r:
+                num_rows = len(json_r['rows'])
+                if num_rows > 0:
+                    self.schematize_json_rows(json_r['rows'])
+        else:
+            print('Don\'t have a schema')
+
     def get_data_to_model(self, start=0):
         """ gets rows, aligns them to the schema for easy use """
         self.prepare_model()
@@ -63,13 +76,15 @@ class RefineAPI():
         for row in json_rows:
             row_cell_count = len(row['cells'])
             record = LastUpdatedOrderedDict()
+            record['row_num'] = int(float(row['i'])) + 1  # saves the row number (i + 1)
+            record['cells'] = LastUpdatedOrderedDict()
             for col_index, col in self.col_schema.items():
-                record[col_index] = ''  # defaults to blank data
+                record['cells'][col_index] = ''  # defaults to blank data
                 col_cell_index = int(float(col['cellIndex']))
                 if col_cell_index < row_cell_count and col_cell_index >= 0:
                     if row['cells'][col_cell_index] is not None:
                         # get the trimmed value for the cell
-                        record[col_index] = str(row['cells'][col_cell_index]['v']).strip()
+                        record['cells'][col_index] = str(row['cells'][col_cell_index]['v']).strip()
             self.data.append(record)
 
     def prepare_model(self):
@@ -86,13 +101,39 @@ class RefineAPI():
             output = True
         return output
 
-    def get_rows(self, start):
+    def get_size(self):
+        """ Makes requests to get the size of the refine dataset """
+        output = False
+        self.get_model()
+        if self.refine_model is not False:
+            field_count = len(self.refine_model['columnModel']['columns'])
+            json_r = self.get_rows(0, 0)
+            if json_r is not False:
+                if 'total' in json_r:
+                    row_count = int(float(json_r['total']))
+                    output = {'field_count': field_count,
+                              'row_count': row_count}
+        return output
+
+    def get_metadata(self):
+        """ simple request to get project metadata """
+        payload = {'project': self.refine_project}
+        url = self.refine_base_url + '/command/core/get-rows'
+        r = requests.get(url, params=payload, timeout=240)
+        r.raise_for_status()
+        json_r = r.json()
+        self.json_r = json_r
+        return json_r
+
+    def get_rows(self, start, limit=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
+        if limit is False:
+            limit = self.row_request_limit
         payload = {'project': self.refine_project,
                    'start': start,
-                   'limit': self.row_request_limit}
+                   'limit': limit}
         url = self.refine_base_url + '/command/core/get-rows'
         r = requests.get(url, params=payload, timeout=240)
         r.raise_for_status()
