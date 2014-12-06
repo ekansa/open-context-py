@@ -17,7 +17,7 @@ def json_view(request, spatial_context=None):
     # Connect to Solr
     solr = SolrConnection().connection
 
-    # Start building up our solr query
+    # Start building solr query
     query = {}
     # TODO field list (fl)
     #query['fl'] = ['uuid']
@@ -39,17 +39,18 @@ def json_view(request, spatial_context=None):
 
     # Descriptive Properties
     prop_list = request.GET.getlist('prop')
-    props = viewutilities._process_prop_list(prop_list)
-    if props:
+    if prop_list:
+        props = viewutilities._process_prop_list(prop_list)
         for prop in props:
             if prop['fq'] not in query['fq']:
                 query['fq'].append(prop['fq'])
             if prop['facet.field'] not in query['facet.field']:
                 query['facet.field'].append(prop['facet.field'])
+
     response = solr.search(**query)
     #return HttpResponse(json.dumps(response.facets['facet_fields'],
     #                    ensure_ascii=False, indent=4),
     #                    content_type="application/json; charset=utf8")
     return HttpResponse(json.dumps(response.raw_content,
                         ensure_ascii=False, indent=4),
-                        content_type="application/json")
+                        content_type="application/json; charset=utf8")
