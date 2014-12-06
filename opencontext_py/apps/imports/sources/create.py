@@ -5,7 +5,7 @@ from django.db.models import Q
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.records.models import ImportCell
-from opencontext_py.apps.imports.records.models import ImportRecords
+from opencontext_py.apps.imports.records.create import ImportRecords
 from opencontext_py.apps.imports.fields.create import ImportFields
 from opencontext_py.apps.imports.refine.api import RefineAPI
 
@@ -26,9 +26,9 @@ class ImportRefineSource():
     def gen_obsolete_source_id(self):
         self.obsolete_source_id = 'obs-' + self.source_id
 
-    def import_refine_to_projecct(self,
-                                  refine_project,
-                                  project_uuid):
+    def import_refine_to_project(self,
+                                 refine_project,
+                                 project_uuid):
         """ Imports data from refine.
             The start of each batch is determined by a
             database call.
