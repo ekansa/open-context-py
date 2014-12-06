@@ -75,26 +75,28 @@ def _prepare_filter_query(parent_child_slug):
 
 
 def _process_prop_list(prop_list):
-    props = [prop.split(' ') for prop in prop_list]
+    # TODO docstring
+    props = (prop.split(' ') for prop in prop_list)
     prop_dict_list = []
     for prop in props:
         # If multi-select
         if any('||' in property for property in prop):
             prop_dict_list.append(_process_multi_select_prop(prop))
         else:
-            # Otherwise, if single-select
+            # Otherwise, single-select
             prop_dict_list.append(_process_single_select_prop(prop))
     return prop_dict_list
 
 
 def _process_multi_select_prop(prop):
+    # TODO docstring
     prop_dict = {}
     # Modify the prop so each property is in its own list
-    prop_list = [item.split('||') for item in prop]
+    prop_list = (item.split('||') for item in prop)
     # Generate a list of the various permutations of multi-selected properties
     prop_tuple_list = list(itertools.product(*prop_list))
     # Turn the resulting list of tuples into a list of lists
-    prop_list = [list(item) for item in prop_tuple_list]
+    prop_list = (list(item) for item in prop_tuple_list)
 
     prop_facet_field_list = []
     prop_fq_list = []
@@ -125,6 +127,7 @@ def _process_multi_select_prop(prop):
 
 
 def _process_single_select_prop(prop):
+    # TODO docstring
     prop_dict = {}
     # Get the value
     value = prop.pop()
@@ -174,10 +177,9 @@ def _process_spatial_context(spatial_context=None):
         # Otherwise, combine multiple contexts into an OR filter
         else:
             fq_string = ' OR '.join(
-                [_prepare_filter_query(slug_set) for slug_set
-                    in parent_child_slugs]
+                (_prepare_filter_query(slug_set) for slug_set
+                    in parent_child_slugs)
                 )
-
             context['fq'] = '(' + fq_string + ')'
 
         context['facet.field'] = facet_field

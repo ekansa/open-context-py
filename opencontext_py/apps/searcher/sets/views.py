@@ -48,9 +48,9 @@ def json_view(request, spatial_context=None):
                 query['facet.field'].append(prop['facet.field'])
 
     response = solr.search(**query)
-    #return HttpResponse(json.dumps(response.facets['facet_fields'],
-    #                    ensure_ascii=False, indent=4),
-    #                    content_type="application/json; charset=utf8")
-    return HttpResponse(json.dumps(response.raw_content,
+    return HttpResponse(json.dumps(response.facets['facet_fields'],
                         ensure_ascii=False, indent=4),
                         content_type="application/json; charset=utf8")
+    #return HttpResponse(json.dumps(response.raw_content,
+    #                    ensure_ascii=False, indent=4),
+    #                    content_type="application/json; charset=utf8")
