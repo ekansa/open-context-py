@@ -280,17 +280,50 @@ function make_unload_controlHTML(undo, source_id){
  * --------------------------------------------------------------
  */
 function generateRefineBody(id){
-	/* changes global varaiables from entities.js */
+	var act_dom_id = "ref-name-" + id;
+	var label = document.getElementById(act_dom_id).innerHTML;
+	var act_dom_id = "ref-url-" + id;
+	var url = document.getElementById(act_dom_id).href;
+	
 	var bodyString = [
 		"<div class=\"container-fluid\">",
-			"<div id=\"action-div\">",	
+			"<div class=\"row\">",	
+				"<div class=\"col-xs-7\">",
+					"<h4>Load Data from Refine</h4>",
+					"<div id=\"ref-button-outer\" style=\"padding-bottom:2%;\">",
+						"<button title=\"Start Loading from Refine\" onclick=\"javascript:accessionAllData('" + id + "');\" ",
+						" type=\"button\" class=\"btn btn-primary\" id=\"ref-load-button\">",
+                            "<span class=\"glyphicon glyphicon-upload\"></span>",
+							"Load Data Now",
+						"</button>",
+					"</div>",
+				"</div>",
+				"<div class=\"col-xs-5\">",
+					"<h4>Import from Refine:</h4>",
+					"<p>",
+						"<a target=\"_blank\" href=\"" + url + "\">" + label + "</a>",
+					"</p>",
+				"</div>",
 			"</div>",
 			"<div class=\"row\">",	
-				"<div class=\"col-xs-6\">",
-					"refine-stuff: "+ id,
+				"<div class=\"col-xs-7\">",
+					"<div class=\"row\">",
+						"<div id=\"ref-prog-spin-outer\" class=\"col-xs-4\">",
+						"</div>",
+						"<div id=\"ref-prog-data-outer\" class=\"col-xs-8\">",
+						"</div>",
+					"</div>",
+					"<div class=\"row\">",
+						"<div id=\"ref-load-prog-bar-outer\" class=\"col-xs-12\">",
+						"</div>",
+					"</div>",
+					"<div class=\"row\">",
+						"<div id=\"ref-uuid-prog-bar-outer\" class=\"col-xs-12\">",
+						"</div>",
+					"</div>",
 				"</div>",
-				"<div class=\"col-xs-6\">",
-					"refine-stuff: "+ id,
+				"<div class=\"col-xs-5\">",
+					"Refine 'project' identifier: "+ id,
 				"</div>",
 			"</div>",
 		"</div>"

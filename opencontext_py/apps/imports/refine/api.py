@@ -118,7 +118,7 @@ class RefineAPI():
     def get_metadata(self):
         """ simple request to get project metadata """
         payload = {'project': self.refine_project}
-        url = self.refine_base_url + '/command/core/get-rows'
+        url = self.refine_base_url + '/command/core/get-project-metadata'
         r = requests.get(url, params=payload, timeout=240)
         r.raise_for_status()
         json_r = r.json()

@@ -13,6 +13,10 @@ from opencontext_py.apps.imports.refine.api import RefineAPI
 # Imports records, doing the appropriate lookups for uuids
 class ImportRefineSource():
 
+    DEFAULT_LOADING_STATUS = 'loading'
+    DEFAULT_FIELD_UUID_ASSIGN = 'field-uuid:'
+    DEFAULT_LOADING_DONE_STATUS = 'loading-done'
+
     def __init__(self):
         self.source_id = False
         self.refine_project = False
@@ -20,7 +24,9 @@ class ImportRefineSource():
         self.project_uuid = False
         self.related_fields = {}
         self.imp_source_obj = False
+        self.imp_status = False
         self.row_count = False
+        self.act_uuid_field = False
         self.do_batch = True
 
     def gen_obsolete_source_id(self):
@@ -33,15 +39,51 @@ class ImportRefineSource():
             The start of each batch is determined by a
             database call.
 
-            This defaults to importing in batches,
-            but 
+            This defaults to importing in batches!
         """
+        self.refine_project = refine_project
         self.project_uuid = project_uuid
-        start = False
-        last_row = False
         r_api = RefineAPI(refine_project)
         self.source_id = r_api.source_id
         self.gen_obsolete_source_id()
+        self.get_refine_source_meta()  # get's metadata about the refine source as stored in the database
+        if self.imp_status is False:
+            # new import, create a new refine source metadata record
+            self.create_new_refine_source()
+        if self.imp_status == self.DEFAULT_LOADING_STATUS:
+            # still have records to import from refine
+            output = self.execute_import_refine_to_project(refine_project,
+                                                           r_api)
+        elif self.DEFAULT_FIELD_UUID_ASSIGN in self.imp_status:
+            # records are imported from refine, but still have uuids to assign
+            done = self.field_make_perserve_uuids()
+            output = {'refine': refine_project,
+                      'source_id': self.source_id,
+                      'row_count': self.row_count,
+                      'batch_size': r_api.row_request_limit,
+                      'start': self.row_count,
+                      'end': self.row_count,
+                      'field_count': self.imp_source_obj.field_count,
+                      'act_uuid_field': self.act_uuid_field,
+                      'done': done}
+        else:
+            output = {'refine': refine_project,
+                      'source_id': self.source_id,
+                      'row_count': self.row_count,
+                      'batch_size': r_api.row_request_limit,
+                      'start': self.row_count,
+                      'end': self.row_count,
+                      'field_count': self.imp_source_obj.field_count,
+                      'act_uuid_field': self.imp_source_obj.field_count,
+                      'done': True}
+        return output
+
+    def execute_import_refine_to_project(self,
+                                         refine_project,
+                                         r_api):
+        """ Executes the data import from Refine"""
+        start = False
+        last_row = False
         imp_f = ImportFields()
         imp_f.source_id = self.source_id
         imp_f.project_uuid = self.project_uuid
@@ -56,8 +98,6 @@ class ImportRefineSource():
             start = self.get_max_row_num()
             # ok, refine works, schema is OK. Save old project data as obsolute source_id
             if start == 0:
-                self.create_new_refine_source()
-                self.update_obsolete_source()
                 # now save the current schema for this project
                 imp_f.obsolete_source_id = self.obsolete_source_id
                 model_ok = imp_f.save_refine_model(refine_project)
@@ -71,16 +111,39 @@ class ImportRefineSource():
                 else:
                     last_row = self.row_count
         if last_row >= self.row_count:
-            self.imp_source_obj.imp_status = 'preparation'
-            self.imp_source.save()
-            self.make_or_preserve_obsolete_uuids()
-            self.delete_obsolete_source()
+            self.imp_source_obj.imp_status = self.DEFAULT_FIELD_UUID_ASSIGN + '1'
+            self.imp_source_obj.save()
+            done = False
+        else:
+            done = False
         output = {'refine': refine_project,
+                  'source_id': self.source_id,
                   'row_count': self.row_count,
                   'batch_size': r_api.row_request_limit,
                   'start': start,
-                  'end': last_row}
+                  'end': last_row,
+                  'field_count': self.imp_source_obj.field_count,
+                  'act_uuid_field': self.act_uuid_field,
+                  'done': done}
         return output
+
+    def field_make_perserve_uuids(self):
+        """ Field-by-field making and preservation of uuids """
+        done = False
+        self.act_uuid_field = int(float(self.imp_source_obj\
+                                            .imp_status\
+                                            .replace(self.DEFAULT_FIELD_UUID_ASSIGN, '')))
+        if self.act_uuid_field <= self.imp_source_obj.field_count:
+            self.make_or_preserve_obsolete_uuids(self.act_uuid_field)
+            next_field_num = self.act_uuid_field + 1
+            if next_field_num <= self.imp_source_obj.field_count:
+                self.imp_source_obj.imp_status = self.DEFAULT_FIELD_UUID_ASSIGN + str(next_field_num)
+            else:
+                self.imp_source_obj.imp_status = self.DEFAULT_LOADING_DONE_STATUS
+                self.delete_obsolete_source()
+                done = True
+            self.imp_source_obj.save()
+        return done
 
     def update_obsolete_source(self):
         """ Changes an old import to have a different source_id
@@ -102,11 +165,16 @@ class ImportRefineSource():
                    .filter(source_id=self.obsolete_source_id)\
                    .delete()
 
-    def make_or_preserve_obsolete_uuids(self):
+    def make_or_preserve_obsolete_uuids(self, act_field_num=False):
         """ Makes uuids, considering obsolete uuids 
         """
-        w_fields = ImportField.objects\
-                              .filter(source_id=self.source_id)
+        if act_field_num is False:
+            w_fields = ImportField.objects\
+                                  .filter(source_id=self.source_id)
+        else:
+            w_fields = ImportField.objects\
+                                  .filter(source_id=self.source_id,
+                                          field_num=act_field_num)
         for imp_field in w_fields:
             field_num = imp_field.field_num
             print('Applying uuids to field: ' + str(field_num))
@@ -219,7 +287,7 @@ class ImportRefineSource():
                             .filter(source_id=self.source_id)\
                             .order_by('-row_num')[:1]
         if len(max_rec) > 0:
-            max_row = max_rec[0]['row_num']
+            max_row = max_rec[0].row_num
         return max_row
 
     def get_refine_source_meta(self):
@@ -227,24 +295,27 @@ class ImportRefineSource():
         try:
             self.imp_source_obj = ImportSource.objects.get(source_id=self.source_id)
             self.row_count = self.imp_source_obj.row_count
+            self.imp_status = self.imp_source_obj.imp_status
         except ImportSource.DoesNotExist:
             self.imp_source_obj = False
 
     def create_new_refine_source(self):
         """ Saves a record of a new Refine data source """
-        r_api = RefineAPI(self.refine_project)
-        meta = r_api.get_metadata()
-        size = r_api.get_size()
-        if meta is not False and size is not False:
-            imp_s = ImportSource
-            imp_s.source_id = self.source_id
-            imp_s.project_uuid = self.project_uuid
-            imp_s.label = meta['name']
-            imp_s.field_count = size['field_count']
-            imp_s.row_count = size['row_count']
-            imp_s.source_type = 'refine'
-            imp_s.is_current = True
-            imp_s.imp_status = 'loading'
-            imp_s.save()
-            self.imp_source_obj = imp_s
-            self.row_count = imp_s.row_count
+        if self.imp_source_obj is False:
+            r_api = RefineAPI(self.refine_project)
+            meta = r_api.get_metadata()
+            size = r_api.get_size()
+            if meta is not False and size is not False:
+                imp_s = ImportSource()
+                imp_s.source_id = self.source_id
+                imp_s.project_uuid = self.project_uuid
+                imp_s.label = meta['name']
+                imp_s.field_count = size['field_count']
+                imp_s.row_count = size['row_count']
+                imp_s.source_type = 'refine'
+                imp_s.is_current = True
+                imp_s.imp_status = self.DEFAULT_LOADING_STATUS
+                imp_s.save()
+                self.imp_source_obj = imp_s
+                self.row_count = imp_s.row_count
+                self.imp_status = self.DEFAULT_LOADING_STATUS

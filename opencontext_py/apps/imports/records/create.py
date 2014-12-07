@@ -33,6 +33,7 @@ class ImportRecords():
             r_api.get_data_to_model()
         if len(r_api.data) > 0:
             print('Records to import: ' + str(len(r_api.data)))
+            bulk_list = []
             for record in r_api.data:
                 row_num = record['row_num']
                 for field_num, cell_value in record['cells'].items():
@@ -41,9 +42,15 @@ class ImportRecords():
                     imp_cell.project_uuid = self.project_uuid
                     imp_cell.row_num = row_num
                     imp_cell.field_num = int(float(field_num))
+                    imp_cell.rec_hash = ImportCell().make_rec_hash(self.project_uuid,
+                                                                   str(cell_value))
                     imp_cell.fl_uuid = False
                     imp_cell.l_uuid = False
                     imp_cell.cell_ok = True  # default to Import OK
                     imp_cell.record = str(cell_value)
-                    imp_cell.save()
+                    # imp_cell.save()
+                    bulk_list.append(imp_cell)
+            ImportCell.objects.bulk_create(bulk_list)
+            bulk_list = None
+            print('Done with: ' + str(row_num))
         return row_num

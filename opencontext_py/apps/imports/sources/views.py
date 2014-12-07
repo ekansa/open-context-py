@@ -70,15 +70,13 @@ def project_import_refine(request, project_uuid):
     valid_post = False
     if request.method == 'POST':
         refine_project = False
-        if 'refine' in request.POST:
-            refine_project = request.POST['refine']
+        if 'refine_project' in request.POST:
+            refine_project = request.POST['refine_project']
             valid_post = True
     if valid_post:
         ipr = ImportProjects()
-        ok = ipr.edit_project(project_uuid,
-                              label,
-                              short_des)
-        if ok:
+        proj = ipr.get_project(project_uuid)
+        if proj is not False:
             # the project actually exists
             irs = ImportRefineSource()
             result = irs.import_refine_to_project(refine_project,

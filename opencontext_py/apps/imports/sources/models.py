@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 from django.db import models
 
 
@@ -22,7 +22,7 @@ class ImportSource(models.Model):
         """
         if self.created is None:
             self.created = datetime.now()
-        super(Manifest, self).save(*args, **kwargs)
+        super(ImportSource, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'imp_sources'

@@ -74,7 +74,7 @@
                                     </button>
                                 </td>
                                 <td class="col-sm-3" >
-                                    <a title="Review in Refine" target="_blank" href="{{ proj.ref_baseurl }}{{ refine.id }}">
+                                    <a id="ref-url-{{ refine.id }}" title="Review in Refine" target="_blank" href="{{ proj.ref_baseurl }}{{ refine.id }}">
                                         <span id="ref-name-{{ refine.id }}">{{ refine.name }}</span> <span class="glyphicon glyphicon-new-window"></span>
                                     </a>
                                 </td>
@@ -155,4 +155,5 @@
     </div>
     
     <script src="../../static/oc/js/imports/project-sources.js"></script>
+    <script src="../../static/oc/js/imports/refine-sources.js"></script>
 {% endblock %} 
