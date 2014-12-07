@@ -76,22 +76,32 @@ function showAccessionProgress(data){
 	/* Displays feedback on progress regarding an import of data
 	from refine to a project
 	*/
+	if (data.make_uuids) {
+		// only makes responses to uuids if they are already generated
+		// this defualts to off because it takes a long time
+		var uuidsHTML = [
+			"<dt>Total Number of Fields:</dt>",
+			"<dd>" + data.field_count + "</dd>",
+			"<dt>Fields with UUIDs Assigned:</dt>",
+			"<dd>" + data.act_uuid_field + "</dd>"
+		].join('\n');
+		uuid_progress_HTML(data.act_uuid_field, data.field_count);
+	}
+	else{
+		var uuidsHTML = "";
+	}
 	var statsHTML = [
 		"<dl>",
 			"<dt>Total Number of Rows:</dt>",
 			"<dd>" + data.row_count + "</dd>",
 			"<dt>Rows Imported:</dt>",
 			"<dd>" + data.end + "</dd>",
-			"<dt>Total Number of Fields:</dt>",
-			"<dd>" + data.field_count + "</dd>",
-			"<dt>Fields with UUIDs Assigned:</dt>",
-			"<dd>" + data.act_uuid_field + "</dd>",
+			uuidsHTML,
 		"</dl>"
 	].join("\n");
 	var act_dom_id = "ref-prog-data-outer";
 	document.getElementById(act_dom_id).innerHTML = statsHTML;
 	load_progress_HTML(data.end, data.row_count);
-	uuid_progress_HTML(data.act_uuid_field, data.field_count);
 }
 
 function load_progress_HTML(act_val, total_val){

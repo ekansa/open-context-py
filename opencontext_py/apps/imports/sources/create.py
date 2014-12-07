@@ -28,6 +28,7 @@ class ImportRefineSource():
         self.row_count = False
         self.act_uuid_field = False
         self.do_batch = True
+        self.make_uuids = False
 
     def gen_obsolete_source_id(self):
         self.obsolete_source_id = 'obs-' + self.source_id
@@ -54,7 +55,7 @@ class ImportRefineSource():
             # still have records to import from refine
             output = self.execute_import_refine_to_project(refine_project,
                                                            r_api)
-        elif self.DEFAULT_FIELD_UUID_ASSIGN in self.imp_status:
+        elif self.DEFAULT_FIELD_UUID_ASSIGN in self.imp_status and self.make_uuids:
             # records are imported from refine, but still have uuids to assign
             done = self.field_make_perserve_uuids()
             output = {'refine': refine_project,
@@ -65,6 +66,7 @@ class ImportRefineSource():
                       'end': self.row_count,
                       'field_count': self.imp_source_obj.field_count,
                       'act_uuid_field': self.act_uuid_field,
+                      'make_uuids': self.make_uuids,
                       'done': done}
         else:
             output = {'refine': refine_project,
@@ -75,6 +77,7 @@ class ImportRefineSource():
                       'end': self.row_count,
                       'field_count': self.imp_source_obj.field_count,
                       'act_uuid_field': self.imp_source_obj.field_count,
+                      'make_uuids': self.make_uuids,
                       'done': True}
         return output
 
@@ -111,9 +114,14 @@ class ImportRefineSource():
                 else:
                     last_row = self.row_count
         if last_row >= self.row_count:
-            self.imp_source_obj.imp_status = self.DEFAULT_FIELD_UUID_ASSIGN + '1'
-            self.imp_source_obj.save()
-            done = False
+            if self.make_uuids:
+                self.imp_source_obj.imp_status = self.DEFAULT_FIELD_UUID_ASSIGN + '1'
+                self.imp_source_obj.save()
+                done = False
+            else:
+                self.imp_source_obj.imp_status = self.DEFAULT_LOADING_DONE_STATUS
+                self.imp_source_obj.save()
+                done = True
         else:
             done = False
         output = {'refine': refine_project,
@@ -124,6 +132,7 @@ class ImportRefineSource():
                   'end': last_row,
                   'field_count': self.imp_source_obj.field_count,
                   'act_uuid_field': self.act_uuid_field,
+                  'make_uuids': self.make_uuids,
                   'done': done}
         return output
 
