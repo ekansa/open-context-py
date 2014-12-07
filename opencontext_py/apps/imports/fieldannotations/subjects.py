@@ -423,7 +423,7 @@ class CandidateSubject():
             if self.import_rows is False:
                 # only update the current import cell object
                 self.imp_cell_obj.fl_uuid = self.uuid
-                self.imp_cell_obj.save()
+                self.imp_cell_obj.uuids_save()
             else:
                 # update all the import cells in the list of rows
                 # to have the relevant uuid
@@ -436,7 +436,7 @@ class CandidateSubject():
                 for up_cell in up_cells:
                     # save each cell with the correct UUID
                     up_cell.fl_uuid = self.uuid
-                    up_cell.save()
+                    up_cell.uuids_save()
 
     def match_against_subjects(self, context):
         """ Checks to see if the item exists in the subjects table """
