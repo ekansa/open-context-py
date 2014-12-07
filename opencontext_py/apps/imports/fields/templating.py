@@ -127,8 +127,7 @@ class ImportProfile():
     def get_field_object(self, field_num):
         """ gets the field object for a specific field_num """
         output = False
-        if len(self.fields) < 1:
-            self.get_fields()
+        self.get_fields()
         for field_obj in self.fields:
             if field_obj.field_num == field_num:
                 output = field_obj
@@ -189,6 +188,7 @@ class ImportProfile():
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False
         if anno_obj.object_field_num > 0:
+            print('trouble here: '+ str(anno_obj.object_field_num))
             obj_field_obj = self.get_field_object(anno_obj.object_field_num)
             anno_dict['object'] = self.make_dict_from_field_obj(obj_field_obj)
             anno_dict['object']['id'] = anno_obj.object_field_num

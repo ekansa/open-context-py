@@ -648,6 +648,7 @@ class CandidateDescriptivePredicate():
         self.sort = 0
         self.des_import_cell = False
         self.predicate = False
+        self.candidate_uuid = False
 
     def setup_field(self, des_field_obj):
         """ sets up, with slightly different patterns for
@@ -701,7 +702,7 @@ class CandidateDescriptivePredicate():
                     for up_cell in up_cells:
                         # save each cell with the correct UUID
                         up_cell.fl_uuid = self.uuid
-                        up_cell.save()
+                        up_cell.uuids_save()
         return output
 
 
@@ -737,7 +738,7 @@ class CandidateString():
                 for up_cell in up_cells:
                     # save each cell with the correct UUID
                     up_cell.l_uuid = str(self.uuid)
-                    up_cell.save()
+                    up_cell.uuids_save()
         return output
 
 
@@ -785,5 +786,5 @@ class CandidateType():
                     # save each cell with the correct UUID
                     up_cell.fl_uuid = self.oc_type.uuid
                     up_cell.l_uuid = self.oc_type.content_uuid
-                    up_cell.save()
+                    up_cell.uuids_save()
         return output
