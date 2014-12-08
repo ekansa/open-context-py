@@ -234,6 +234,7 @@ class SolrDocument:
 
     def _process_core_solr_fields(self):
         self.fields['uuid'] = self.oc_item.uuid
+        self.fields['slug_type_uri_label'] = self.make_slug_type_uri_label()
         self.fields['project_uuid'] = self.oc_item.project_uuid
         self.fields['published'] = self.oc_item.published.strftime(
             '%Y-%m-%dT%H:%M:%SZ'
@@ -256,6 +257,18 @@ class SolrDocument:
             self.oc_item.json_ld['label'])
         self.fields['item_type'] = self.oc_item.item_type
         self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
+
+    def make_slug_type_uri_label(self):
+        """ makes a slug_type_uri_label field for solr """
+        parts = []
+        parts.append(self.oc_item.json_ld['slug'])
+        if self.oc_item.item_type == 'predicates':
+            parts.append('id')  # TODO change this to use predicate data types
+        else:
+            parts.append('id')
+        parts.append('/' + self.oc_item.item_type + '/' + self.oc_item.uuid)
+        parts.append(self.oc_item.json_ld['label'])
+        return '___'.join(parts)
 
     def _process_context_path(self):
         if self.context_path is not None:
