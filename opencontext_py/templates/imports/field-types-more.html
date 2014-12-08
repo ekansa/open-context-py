@@ -69,6 +69,19 @@
             </div>
         </div>
         <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Importing to:</h4>
+                </div>
+                <div class="panel-body">
+                    <dl>
+                        <dt>Project:</dt>
+                        <dd><a target="_blank" href="{% url 'projects_html' ip.nav.project_uuid %}">{{ ip.nav.proj_label }}</a></dd>
+                        <dt>Data Source</dt>
+                        <dd>{{ ip.nav.s_label }}</dd>
+                    </dl>
+                </div>
+            </div>
             <div class="panel panel-default" ng-app="TreeApp">
                 <div class="panel-heading">
                     <h4 class="panel-title">Open Context Item Categories</h4>

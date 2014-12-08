@@ -53,6 +53,7 @@ class ImportNavigation():
         output['next_s'] = self.next_source_nav
         output['source_navs'] = self.act_source_navs
         output['proj_label'] = self.project_label
+        output['project_uuid'] = self.project_uuid
         output['s_label'] = self.source_label
         return output
 
@@ -66,6 +67,7 @@ class ImportNavigation():
             if self.project_uuid not in output['url']:
                 output['url'] += self.project_uuid
             output['sublabel'] = self.project_label
+            output['sublabel'] = output['label']
             if self.act_page == 'project':
                 output['class'] = 'active'
             else:

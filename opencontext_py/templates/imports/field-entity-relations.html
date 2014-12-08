@@ -122,6 +122,19 @@
         <div class="col-sm-4">
             <div class="panel panel-default">
                 <div class="panel-heading">
+                    <h4 class="panel-title">Data Source</h4>
+                </div>
+                <div class="panel-body">
+                    <dl>
+                        <dt>Project:</dt>
+                        <dd><a target="_blank" href="{% url 'projects_html' ip.nav.project_uuid %}">{{ ip.nav.proj_label }}</a></dd>
+                        <dt>Data Source</dt>
+                        <dd>{{ ip.nav.s_label }}</dd>
+                    </dl>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
                     <h4 class="panel-title">Add Field Annotations / Relations</h4>
                 </div>
                 <div class="panel-body">
