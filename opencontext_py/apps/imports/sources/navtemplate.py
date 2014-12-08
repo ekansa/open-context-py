@@ -112,6 +112,7 @@ class ImportNavigation():
                 else:
                     act_nav['class'] = None
             navs.append(act_nav)
+        print('Active nav index is: ' + str(act_index))
         if act_index is False or self.source_id is False:
             act_nav = {}
             act_nav['class'] = 'disabled'
@@ -125,7 +126,8 @@ class ImportNavigation():
                 self.prev_source_nav = self.create_proj_nav()
             else:
                 self.prev_source_nav = navs[act_index - 1]
-            if act_index >= len(navs):
+            if (act_index + 1) not in navs:
+                print('Active nav index is: ' + str(act_index + 1) + ' not in: ' + str(len(navs)))
                 self.next_source_nav = self.create_proj_nav()
             else:
                 self.next_source_nav = navs[act_index + 1]
