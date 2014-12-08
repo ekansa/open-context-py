@@ -23,11 +23,11 @@ def json_view(request, spatial_context=None):
     #query['fl'] = ['uuid']
     query['facet'] = 'true'
     query['facet.mincount'] = 1
-    query['fq'] = []
-    query['facet.field'] = []
     query['rows'] = 10
     query['start'] = 0
     query['debugQuery'] = 'true'
+    query['fq'] = []
+    query['facet.field'] = []
 
     # If the user does not provide a search term, search for everything
     query['q'] = request.GET.get('q', default='*:*')
@@ -48,9 +48,9 @@ def json_view(request, spatial_context=None):
                 query['facet.field'].append(prop['facet.field'])
 
     response = solr.search(**query)
-    return HttpResponse(json.dumps(response.facets['facet_fields'],
-                        ensure_ascii=False, indent=4),
-                        content_type="application/json; charset=utf8")
-    #return HttpResponse(json.dumps(response.raw_content,
+    #return HttpResponse(json.dumps(response.facets['facet_fields'],
     #                    ensure_ascii=False, indent=4),
     #                    content_type="application/json; charset=utf8")
+    return HttpResponse(json.dumps(response.raw_content,
+                        ensure_ascii=False, indent=4),
+                        content_type="application/json; charset=utf8")
