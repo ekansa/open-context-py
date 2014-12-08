@@ -223,3 +223,23 @@ def field_descriptions(request, source_id):
         return HttpResponse(template.render(context))
     else:
         raise Http404
+
+
+@ensure_csrf_cookie
+def finalize(request, source_id):
+    """ Show HTML form to change relationships for entities
+        to be created / or updated from an import table
+    """
+    ip = ImportProfile(source_id)
+    if ip.project_uuid is not False:
+        ip.get_fields()
+        imnav = ImportNavigation()
+        ip.nav = imnav.set_nav('finalize',
+                               ip.project_uuid,
+                               source_id)
+        template = loader.get_template('imports/finalize.html')
+        context = RequestContext(request,
+                                 {'ip': ip})
+        return HttpResponse(template.render(context))
+    else:
+        raise Http404

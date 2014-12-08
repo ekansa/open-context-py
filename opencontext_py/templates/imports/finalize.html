@@ -1,0 +1,40 @@
+{% extends 'imports.html' %}
+<!DOCTYPE html>
+
+{% block itemcontent %}
+     <div class="row">
+         <div class="col-sm-5">
+            <h2>Finalize Import</h2>
+         </div>
+         <!-- <div "col-sm-7"> -->
+         {% with nav=ip.nav %}
+         {% include 'imports/import-nav.html' %}
+         {% endwith %}
+         <!-- </div> -->
+     </div>
+     <div class="row">
+        <div class="col-sm-9">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Datasets for Import</h4>
+                </div>
+                <div class="panel-body">
+                    
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Finalize Import</h4>
+                </div>
+                <div class="panel-body">
+                    {{ ip.nav.source_label }}
+                </div>
+            </div>
+        </div>    
+    </div>
+    
+    <script src="../../static/oc/js/imports/project-sources.js"></script>
+    <script src="../../static/oc/js/imports/refine-sources.js"></script>
+{% endblock %} 

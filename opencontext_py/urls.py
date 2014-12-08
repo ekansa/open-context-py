@@ -52,13 +52,9 @@ urlpatterns = patterns('',
                        url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
                        url(r'^types', OCtypeViews.index, name='types_index'),
-                       # Importer views for publishing data
-                       url(r'^imports/create-project', Imp_sources.create_project,
-                           name='imp_sources_create_project'),
-                       url(r'^imports/edit-project/(?P<project_uuid>\S+)', Imp_sources.edit_project,
-                           name='imp_sources_edit_project'),
-                       url(r'^imports/project-import-refine/(?P<project_uuid>\S+)', Imp_sources.project_import_refine,
-                           name='imp_sources_project_import_refine'),
+                       # --------------------------
+                       # IMPORTER INTERFACE PAGES
+                       # --------------------------
                        url(r'^imports/project/(?P<project_uuid>\S+)',  Imp_sources.project,
                            name='imp_sources_project'),
                        url(r'^imports/field-types/(?P<source_id>\S+)', Imp_sources.field_types,
@@ -69,6 +65,20 @@ urlpatterns = patterns('',
                            name='field_entity_relations'),
                        url(r'^imports/field-descriptions/(?P<source_id>\S+)', Imp_sources.field_descriptions,
                            name='field_descriptions'),
+                       url(r'^imports/finalize/(?P<source_id>\S+)', Imp_sources.finalize,
+                           name='imp_source_finalize'),
+                       # --------------------------
+                       # IMPORTER PROJECT POST REQUESTS
+                       # --------------------------
+                       url(r'^imports/create-project', Imp_sources.create_project,
+                           name='imp_sources_create_project'),
+                       url(r'^imports/edit-project/(?P<project_uuid>\S+)', Imp_sources.edit_project,
+                           name='imp_sources_edit_project'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR IMPORTER AJAX REQUESTS
+                       # --------------------------
+                       url(r'^imports/project-import-refine/(?P<project_uuid>\S+)', Imp_sources.project_import_refine,
+                           name='imp_sources_project_import_refine'),
                        url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
                            name='imp_field_classify'),
                        url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
