@@ -20,9 +20,14 @@
                 </div>
                 <div class="panel-body">
                     <div class="row">
-                        <div class="col-sm-3">
+                        <div class="col-sm-4">
+                            <button title="Finalize import" id="ref-final-button"
+                                    onclick="javascript:start_finalization();"
+                                    type="button" class="btn btn-info btn-lg">
+                                    <span class="glyphicon glyphicon-cog"></span> Finalize + Add Data
+                            </button>
                         </div>
-                        <div class="col-sm-9">
+                        <div class="col-sm-8">
                             <p>This step completes the import process by creating new
                             records in Open Context and by addition additional
                             descriptive and linking assertions to already existing
@@ -31,6 +36,14 @@
                             imported into Open Context. Because of these dependencies,
                             this import process will only run if this dataset is
                             the most recent dataset staged for import.</p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-4" id="ref-final-spin-outer" >
+                            
+                        </div>
+                        <div class="col-sm-8" id="ref-final-spin-outer" >
+                            
                         </div>
                     </div>
                 </div>
@@ -53,6 +66,5 @@
         </div>    
     </div>
     
-    <script src="../../static/oc/js/imports/project-sources.js"></script>
-    <script src="../../static/oc/js/imports/refine-sources.js"></script>
+    <script src="../../static/oc/js/imports/refine-finalize.js"></script>
 {% endblock %} 
