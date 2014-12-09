@@ -1,0 +1,10 @@
+{% block editorial-status %}
+<h4>Editorial Status</h4>
+{% with label=item.project.label %}
+{% with edit_status=item.project.edit_status %}
+{% with label_status=True %}   
+{% include 'items/editorial-symbols.html' %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endblock %}

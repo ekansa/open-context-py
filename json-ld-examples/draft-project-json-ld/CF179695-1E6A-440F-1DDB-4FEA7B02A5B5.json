@@ -1,0 +1,196 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5",
+    "uuid": "CF179695-1E6A-440F-1DDB-4FEA7B02A5B5",
+    "slug": "23-hacksilber-project",
+    "label": "Hacksilber Project",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    9.01586,
+                    38.984685
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2012-09-19",
+    "description": "Lead isotope and other analyses of metal objects from the Near East and Mediterranean (1500 - 500 BCE)",
+    "dc-terms:abstract": "Introduction\n        The Hacksilber Project documents metals in Mediterranean and Near Eastern contexts dating between 1500 and 500 BCE, using lead isotope and other analyses to address long-standing questions of trade, connectivity, ideology and economy. \n \n        The Project's flagship archaeometallurgical study centers on the Cisjordan Corpus of Iron Age hacksilber hoards, and its identity as the only coherent body of silver artifacts in the Mediterranean and Near East recognized for its capacity to shed light, within a sequential, chronological framework, on the question of whether the Phoenicians had been engaged in long-distance silver-trade prior to their colonization of the western Mediterranean. The Cisjordan Corpus was identified in 2003 in the Oxford Journal of Archaeology (22.1 67-107), and now comprises 36 silver hoards that span the entire Levantine Iron Age from c. 1200 to 586 BCE. The hoards have been recovered from 14 sites between Akko and Arad in today's Israel and Palestinian territories, and the Corpus remains the largest identified concentration of pre-coinage silver hoards in the ancient Near East.\n \n         In a recent article in the Journal of Internet Archaeology, the Phoenician inscription on the Nora Stone has been combined with metallic evidence from the Cisjordan Corpus and other ancient documentary sources to indicate that the lost region of Tarshish, which the biblical tradition remembers as a supplier of silver to King Solomon, was a large island in the western Mediterranean Sea - the island of Sardinia.\n\n        Nora Stone: c. 9th century Phoenician inscription [Link]\n        \n \n        Lead isotope analyses of the silver objects in the hoards determine the extent to which the ratios of hacksilber artifacts are consistent with ore-bodies in the western and eastern Mediterranean. These data provide a basis for investigating a diachronic increase in the incorporation of silver or lead from places like Spain, Sardinia and the Aegean into the networks that reached the Levant. Related research identifies silver, gold, copper, bronze and lead in other sealed contexts from the same period, particularly graves and hoards, to define comparative data-sets. These comparanda are integrated with the data from the Cisjordan Corpus to reconstruct diachronic, contextual and regional variations in metallic preferences that reflect shifting patterns of circulation, connectivity and, sometimes, ideology.\n    \n        Project Publications\n        \n                \n\n            \n                \n                \n                       \n                        Thompson, C. and Skaggs, S.\n                        \n                            2013\n                            King Solomon's Silver? Southern Phoenician Hacksilber Hoards and the Location of Tarshish. Internet Archaeology 35.\n                            \n                        \n                    \n                    \n                        [DOI]\n                        [Issue]\n                    \n                \n            \n            \n            \n            \n                \n                \n                       \n                        Thompson, Christine M.\n                        \n                            2011\n                            'Silver in the age of iron: an overview',  in C. Giardino (ed) Archeometallurgia: dalla conoscenza alla fruizione. Atti del convegno Cavallino, Lecce, 22-25/05/2006 Bari: Edipuglia. 121-32.\n                            \n                        \n                    \n                    \n                        [WorldCat]\n                    \n                \n            \n            \n            \n                \n                \n                       \n                        Thompson, Christine M.\n                        \n                            2009\n                            'Three Twentieth Dynasty silver hoards from the Egyptian garrison', in N. Panitz-Cohen and A. Mazar (eds) Excavations at Tel Beth-Shean 1989-1996. III, The 13th - 11th century BCE strata in areas N and S Jerusalem: Israel Exploration Society. 597-607.\n                            \n                        \n                    \n                    \n                        [WorldCat]\n                    \n                \n            \n            \n            \n                \n                \n                       \n                        Thompson, Christine M.\n                        \n                            2003\n                            Sealed Silver in Iron Age Cisjordan and the 'Invention' of Coinage. Oxford Journal of Archaeology 22(1):67-107.\n                            \n                        \n                    \n                    \n                        [DOI]\n                        [Issue]\n                    \n                \n            \n            \n            \n                \n                \n                       \n                        Balmuth, M.S. (ed)\n                        \n                            2001\n                            Hacksilber to Coinage: New Insights Into the Monetary History of the Near East and Greece. Numismatic Studies no. 24, New York: American Numismatic Society.\n                            \n                        \n                    \n                    \n                        [WorldCat]\n                    \n                \n            \n            \n            \n                \n                \n                       \n                        Balmuth, M.S. and Thompson, C.M.\n                        \n                            2000\n                            'Hacksilber: recent approaches to the study of hoards of uncoined silver', in B. Klengel and B. Weisser (eds) Acts of the XIIth International Numismatic Congress, 9-13th September, Berlin, 1997 = XII. Internationaler Numismatischer Kongress, Akten Berlin. 159-69.\n                            \n                        \n                    \n                    \n                        [WorldCat]\n                    \n                \n            \n\n        Related Coverage\n\n\nC. McCall on 'Solomon's Silver' in Current World Archaeology, 62.6.2, 10. News from Around the World, published December 2013/January 2014. Excerpt: Researchers investigating silver hoards found in Phoenicia have identified the lost island of Tarshish, the legendary source of King Solomon's silver, as present-day Sardinia . . .  read more\n\n\nG. Riddihough on 'King Solomon's Silver' in Science 342.6163. Editors' Choice, published 6 December 2013. Excerpt: Isotope analysis of archaeological materials can play critical roles in both dating of the artifacts and identification of their origin. Thompson and Skaggs use the lead isotope ratios in silver from silver hoards to investigate trade patterns during a Mediterranean \"Dark Age\" between 1200 and 800 BCE precipitated by the collapse of palace-based economies in the Near East...' read more\n\n\nΠΛΗΡΟΦΟΡΙΑΚΟ ΔΕΛΤΙΟ ΤΗΣ ΕΛΛΗΝΙΚΗΣ ΑΡΧΑΙΟΜΕΤΡΙΚΗΣ ΕΤΑΙΡΕΙΑΣ – ΙΑΝΟΥΑΡΙΟΣ 2014 \nNEWSLETTER OF THE HELLENIC SOCIETY OF ARCHAEOMETRY, January 2014, No. 154, pgs. 18, 26. Read more",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M74M92GB"
+        },
+        {
+            "id": "http://opencontext.org/projects/23-hacksilber-project"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        },
+        {
+            "id": "http://pleiades.stoa.org/vocabularies/time-periods/archaic",
+            "slug": "pleiades-tp-archaic",
+            "label": "Archaic"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/7773315C-55F7-4146-35DE-A85A68722641",
+            "slug": "23-christine-thompson",
+            "label": "Christine Thompson",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/7773315C-55F7-4146-35DE-A85A68722641",
+            "slug": "23-christine-thompson",
+            "label": "Christine Thompson",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85132707",
+            "slug": "loc-sh-sh85132707",
+            "label": "Tartessos (Kingdom)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85028901",
+            "slug": "loc-sh-sh85028901",
+            "label": "Commerce"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85086790",
+            "slug": "loc-sh-sh85086790",
+            "label": "Money"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh92000827",
+            "slug": "loc-sh-sh92000827",
+            "label": "Ingots"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85027797",
+            "slug": "loc-sh-sh85027797",
+            "label": "Coins"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85084158",
+            "slug": "loc-sh-sh85084158",
+            "label": "Metallurgy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85027783",
+            "slug": "loc-sh-sh85027783",
+            "label": "Coin hoards"
+        }
+    ],
+    "time": 0.09560108184814453
+}

@@ -1,0 +1,160 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63",
+    "uuid": "D6B25EC9-2884-4E3C-00E8-0C5A6472FA63",
+    "slug": "19-tal-e-malyan-zooarchaeology",
+    "label": "Tal-e Malyan Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    52.4086,
+                    30.0116
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2011-06-18",
+    "description": "Zooarchaeology of Tel-e Malyan",
+    "dc-terms:abstract": "<h3>The Site:</h3>\r\n<p>Tal-e Malyan, located 46 km north of Shiraz in the Zagros mountains of Fars Province, is the site of Anshan, a great city, comparable to Elamite Susa and the Sumerian cities of Mesopotamia in size and importance. The ancient city wall embankment encloses more than 200 hectares, and the habitation mound within the wall occupies 130 hectares.  Tal-e Malyan was dominant in the Kur River Basin from the late fourth millennium until shortly before the establishment of the Achaemenid empire in the first millennium. Tal-e Malyan has been identified as the site of the ancient Anshan (Hansman 1972; Reiner 1973; Sumner 1974; Stopler 1976), a powerful antagonist to mid-third-millennium city-states in lowland Mesopotamia. During the second millennium, Anshan is frequently listed with Susa as the co-capital of Elam - a polity whose political and economic influence in the region often rivaled and at times surpassed that of the Mesopotamian states. The role of Malyan as a major and early participant in the interregional affairs of Greater Mesopotamian urban society make it an ideal focus for a study of early urban economic organization.\r\n<br/>\r\n</p>\r\n\r\n\r\n<h3>The Assemblage:</h3>\r\n<p>Animal bones are the most direct means at an archaeologist's disposal for the study of animal exploitation in urban contexts. They provide information about the total range of economic relations likely to exist in urban contexts, rather than just the administered activities documented in texts. Tal-e Malyan is one of the few major Greater Mesopotamian urban centers from which a large assemblage of faunal remains has been systematically collected and studied.</p>\r\n \r\n<p>Sampling and analytic procedures for the Tal-e Malyan faunal remains are described in detail by the author in chapter 4 of her 1990 book Feeding Cities. The author used a coding system, which can be found in her PhD dissertation (Zeder 1985, appendix I-a through I-c).</p> \r\n\r\n<p>All data were translated by the editor before being published in Open Context.</p>\r\n\r\n<h3>Support:</h3>\r\n<p>Institutional support for the Malyan Expedition was provided by the University of Pennsylvania, the Ohio State University, the Metropolitan Museum of Art, the National Science foundation (Grants BNS76-6455 and BNS 79-05860), the National Geographic Society, and the University of Michigan. The author's analysis of the Malyan animal bones was supported by a grant from the National Science Foundation (Grant SOC75-01483) and a Smithsonian Institution predoctoral fellowship (1981). (See Zeder 1991: xvii)</p> \r\n\r\n\r\n<h3><span style='text-decoration:underline;'>Publications:</span></h3>\r\n\r\n<p>Carter, E. and M.W. Stolper.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1976</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Middle Elamite Malyan,\" <em>Expedition</em> 19:33-42</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Hansman, J.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1972</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Elamites, Achaemenians and Anshan,\" <em>Iran</em> 10:101-135</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div> \r\n\r\n<p><br/></p>\r\n<p>Reiner, E.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1973</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Location of Ansan,\" <em>Revue d’Assyriologie</em> 67:57-62</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div> \r\n\r\n<p><br/></p>\r\n<p>Stopler, M.W.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1976</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Preliminary Report on Texts from Tal-e Malyan, 1971-74,\" pp. 89-100 in F. Bagherzadeh, ed., <em>Proceedings of the 4th Annual Symposium on Archaeological Research in Iran,</em> Iranian Center for Archaeological Research, Tehran.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1974</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Excavations at Tall-I Malyan,\" <em>Iran</em> 12:163-188</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>    \r\n    \r\n<p><br/></p>\r\n<p>Zeder, M.A.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1985</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Urbanism and Animal Exploitation in Southwest Highland Iran, 3400-1500 B.C.</em> Ph.D. dissertation, University of Michigan. University Microfilms, Ann Arbor.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1991</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Feeding Cities: Specialized Animal Economy in the Ancient Near East.</em> Smithsonian Institution Press, Washington, D.C.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/Elam#Middle_Elamite_Period",
+            "slug": "wiki-elam-middle-elamite-period",
+            "label": "Middle Elamite Period"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/86143188-96C9-4423-4BD3-0BE3ABD55750",
+            "slug": "19-melinda-a-zeder",
+            "label": "Melinda A. Zeder",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/86143188-96C9-4423-4BD3-0BE3ABD55750",
+            "slug": "19-melinda-a-zeder",
+            "label": "Melinda A. Zeder",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/130758",
+            "slug": "geonames-130758",
+            "label": "Iran"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 0.07799983024597168
+}

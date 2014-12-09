@@ -13,6 +13,7 @@ class LinkRecursion():
     """
     def __init__(self):
         self.parent_entities = []
+        self.child_entities = LastUpdatedOrderedDict()
 
     def get_jsonldish_entity_parents(self, identifier, add_original=True):
         """
@@ -106,3 +107,69 @@ class LinkRecursion():
                     self.parent_entities.append(parent_id)
             self.parent_entities = self.get_entity_parents(parent_id)
         return self.parent_entities
+
+    def get_entity_children(self, identifier):
+        """
+        Gets parent concepts for a given URI or UUID identified entity
+        """
+        p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
+        p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
+        alt_identifier_a = identifier
+        alt_identifier_b = identifier
+        act_children = []
+        # a little something to allow searches of either UUIDs or full URIs
+        if(':' in identifier):
+            alt_identifier_b = URImanagement.convert_prefix_to_full_uri(identifier)
+            if(len(identifier) > 8):
+                if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
+                    alt_identifier_a = URImanagement.get_uuid_from_oc_uri(identifier)
+                    if(alt_identifier_a is False):
+                        alt_identifier_a = identifier
+                    alt_identifier_b = URImanagement.prefix_common_uri(identifier)
+        try:
+            # look for child items in the objects of the assertion
+            subobjs_anno = LinkAnnotation.objects.filter(Q(subject=identifier) |
+                                                         Q(subject=alt_identifier_a) |
+                                                         Q(subject=alt_identifier_b),
+                                                         predicate_uri__in=p_for_subobjs)
+            if(len(subobjs_anno) < 1):
+                subobjs_anno = False
+        except LinkAnnotation.DoesNotExist:
+            subobjs_anno = False
+        if subobjs_anno is not False:
+            for sub_obj in subobjs_anno:
+                child_id = sub_obj.object_uri
+                act_children.append(child_id)
+        try:
+            """
+            Now look for subordinate entities in the subject, not the object
+            """
+            subsubj_anno = LinkAnnotation.objects.filter(Q(object_uri=identifier) |
+                                                         Q(object_uri=alt_identifier_a) |
+                                                         Q(object_uri=alt_identifier_b),
+                                                         predicate_uri__in=p_for_superobjs)
+            if len(subsubj_anno) < 1:
+                subsubj_anno = False
+        except LinkAnnotation.DoesNotExist:
+            subsubj_anno = False
+        if subsubj_anno is not False:
+            for sub_sub in subsubj_anno:
+                child_id = sub_sub.subject
+                act_children.append(child_id)
+        if len(act_children) > 0:
+            identifier_children = []
+            for child_id in act_children:
+                if child_id.count('/') > 1:
+                    oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
+                    if oc_uuid is not False:
+                        child_id = oc_uuid
+                identifier_children.append(child_id)
+                # recursively get the children of the child
+                self.get_entity_children(child_id)
+            # same the list of children of the current identified item
+            if identifier not in self.child_entities:
+                self.child_entities[identifier] = identifier_children
+        else:
+            # save a False for the current identified item. it has no children
+            if identifier not in self.child_entities:
+                self.child_entities[identifier] = False

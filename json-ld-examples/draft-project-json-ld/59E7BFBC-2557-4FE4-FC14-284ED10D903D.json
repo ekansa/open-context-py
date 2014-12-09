@@ -1,0 +1,163 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D",
+    "uuid": "59E7BFBC-2557-4FE4-FC14-284ED10D903D",
+    "slug": "25-west-stow-west-zooarchaeology",
+    "label": "West Stow West Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    0.668,
+                    52.302
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-02-23",
+    "description": "West Stow, Suffolk County, UK Rescue excavations conducted at the site in advance of the construction of a new Visitor Centre",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>These faunal remains were collected from excavations conducted in advance of the construction of a new Visitors' Centre at West Stow.\n        The excavations uncovered early Anglo-Saxon structures as well as a substantial quantity of animal remains. These are part of the same site\n        that was excavated by Stanley West from 1965-72. The new data suggest that the site was far larger than was originally thought.</p>\n        \n        <p>Data from West Stow West are also included in the following forthcoming publication: Crabtree, P. J. And Campana, D. V., 2013: Wool Production, Wealth and Trade in Middle Saxon England  In Arbuckle, B. S. and McCarty, S., eds. <em>Animals and Inequality in the Ancient World</em>. Boulder: University Press of Colorado, in press. Available for purchase at: <a href=\"http://www.upcolorado.com/book/2856\" target=\"_blank\" title=\"Online purchase\">http://www.upcolorado.com/book/2856</a></p>\n        \n        <p>A preliminary report has been submitted to the Suffolk County Archaeological Unit, and we expect that the final publication will\n        be included in a future volume of East Anglian Archaeology.</p>\n        \n        <h4>Methodology</h4>\n        \n        <p>The methods used are the same as those that were used to describe the original West Stow faunal assemblage. These are described in detail\n        in Crabtree (1990, see below). Ribs and vertebrae (except for atlas, axis, and sacrum) were excluded from the calculations of species ratios\n        in the published data in order to make these results comparable to those from the original West Stow excavations.</p>\n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>These data add to the increasing body of evidence for early Anglo-Saxon animal husbandry and hunting.</p>\n\n\n        \n        <h4>Related Publications</h4>\n        <div resource=\"http://opencontext.org/subjects/B3EAA455-B714-49AC-6A7C-63E3B0F211F4\">\n            \n            <div id=\"pub-2012-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2012-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2012-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Crabtree, P.</p>\n                        <div>\n                            <div class=\"pub-date\">2012</div>\n                            <div class=\"ref-title-pub\">Middle Saxon Animal Husbandry in East Anglia. <span class=\"collection-title\">East Anglian Archaeology</span> 143.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\"http://www.worldcat.org/oclc/800634424\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-1990-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-1990-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-1990-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Crabtree, P.</p>\n                        <div>\n                            <div class=\"pub-date\">1990</div>\n                            <div class=\"ref-title-pub\">West Stow: Early Anglo-Saxon Animal Husbandry. <span class=\"collection-title\">East Anglian Archaeology</span> 47.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                         [<a rel=\"bibo:uri\" href=\"http://www.worldcat.org/oclc/225014154\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n            \n        </div>    \n        \n<h5>Image Credit</h5>\n<p class=\"muted\">Credit for this project's illustrative image belongs to Dick Penn via <a href=\"http://www.flickr.com/photos/dickpenn/5588606751\">Flickr</a> (CC-BY license)</p>\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7QC01DG"
+        },
+        {
+            "id": "http://opencontext.org/projects/25-west-stow-west-zooarchaeology"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85056730",
+            "slug": "loc-sh-sh85056730",
+            "label": "Great Britain--History--Anglo-Saxon period, 449-1066"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/4639BA12-CDF5-452E-E9FE-F31543E6B937",
+            "slug": "25-pamela-crabtree",
+            "label": "Pamela Crabtree",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/4639BA12-CDF5-452E-E9FE-F31543E6B937",
+            "slug": "25-pamela-crabtree",
+            "label": "Pamela Crabtree",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/7292583",
+            "slug": "geonames-7292583",
+            "label": "West Stow"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        }
+    ],
+    "time": 0.07120299339294434
+}

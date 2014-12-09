@@ -1,0 +1,766 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+    "uuid": "3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+    "slug": "22-kenan-tepe",
+    "label": "Kenan Tepe",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            40.813539,
+                            37.830333
+                        ],
+                        [
+                            40.813539,
+                            37.830708
+                        ],
+                        [
+                            40.813736,
+                            37.830708
+                        ],
+                        [
+                            40.813736,
+                            37.830333
+                        ],
+                        [
+                            40.813539,
+                            37.830333
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    40.81367941666666,
+                    37.83061250000001
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            40.812816,
+                            37.830078
+                        ],
+                        [
+                            40.812816,
+                            37.830265
+                        ],
+                        [
+                            40.813319,
+                            37.830265
+                        ],
+                        [
+                            40.813319,
+                            37.830078
+                        ],
+                        [
+                            40.812816,
+                            37.830078
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    40.81304166666666,
+                    37.830179333333334
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-3",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-3"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-3",
+                "coordinates": [
+                    [
+                        [
+                            40.813084,
+                            37.830613
+                        ],
+                        [
+                            40.813084,
+                            37.830727
+                        ],
+                        [
+                            40.813373,
+                            37.830727
+                        ],
+                        [
+                            40.813373,
+                            37.830613
+                        ],
+                        [
+                            40.813084,
+                            37.830613
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-3",
+            "properties": {
+                "id": "#geo-derived-props-3",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-3",
+                "coordinates": [
+                    40.81323042857143,
+                    37.83067571428571
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-4",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-4"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-4",
+                "coordinates": [
+                    [
+                        [
+                            40.814369,
+                            37.83063
+                        ],
+                        [
+                            40.814369,
+                            37.831376
+                        ],
+                        [
+                            40.814822,
+                            37.831376
+                        ],
+                        [
+                            40.814822,
+                            37.83063
+                        ],
+                        [
+                            40.814369,
+                            37.83063
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-4",
+            "properties": {
+                "id": "#geo-derived-props-4",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-4",
+                "coordinates": [
+                    40.814572250000005,
+                    37.83091533333333
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-5",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-5"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-5",
+                "coordinates": [
+                    [
+                        [
+                            40.8149065,
+                            37.8314555
+                        ],
+                        [
+                            40.8149065,
+                            37.8318375
+                        ],
+                        [
+                            40.8151715,
+                            37.8318375
+                        ],
+                        [
+                            40.8151715,
+                            37.8314555
+                        ],
+                        [
+                            40.8149065,
+                            37.8314555
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-5",
+            "properties": {
+                "id": "#geo-derived-props-5",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-5",
+                "coordinates": [
+                    40.815059000000005,
+                    37.8316023125
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-6",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-6"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-6",
+                "coordinates": [
+                    [
+                        [
+                            40.813042,
+                            37.830826
+                        ],
+                        [
+                            40.813042,
+                            37.8312
+                        ],
+                        [
+                            40.81362,
+                            37.8312
+                        ],
+                        [
+                            40.81362,
+                            37.830826
+                        ],
+                        [
+                            40.813042,
+                            37.830826
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-6",
+            "properties": {
+                "id": "#geo-derived-props-6",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-6",
+                "coordinates": [
+                    40.813368399999995,
+                    37.8309712
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-7",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-7"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-7",
+                "coordinates": [
+                    [
+                        [
+                            40.812783,
+                            37.830558
+                        ],
+                        [
+                            40.812783,
+                            37.830645
+                        ],
+                        [
+                            40.812998,
+                            37.830645
+                        ],
+                        [
+                            40.812998,
+                            37.830558
+                        ],
+                        [
+                            40.812783,
+                            37.830558
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-7",
+            "properties": {
+                "id": "#geo-derived-props-7",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-7",
+                "coordinates": [
+                    40.812878500000004,
+                    37.8306
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-8",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-8"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-8",
+                "coordinates": [
+                    [
+                        [
+                            40.815315,
+                            37.8312865
+                        ],
+                        [
+                            40.815315,
+                            37.8315515
+                        ],
+                        [
+                            40.8155805,
+                            37.8315515
+                        ],
+                        [
+                            40.8155805,
+                            37.8312865
+                        ],
+                        [
+                            40.815315,
+                            37.8312865
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-8",
+            "properties": {
+                "id": "#geo-derived-props-8",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-8",
+                "coordinates": [
+                    40.81542091666666,
+                    37.83141466666667
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-9",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-9"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-9",
+                "coordinates": [
+                    [
+                        [
+                            40.81233,
+                            37.830658
+                        ],
+                        [
+                            40.81233,
+                            37.83093
+                        ],
+                        [
+                            40.812707,
+                            37.83093
+                        ],
+                        [
+                            40.812707,
+                            37.830658
+                        ],
+                        [
+                            40.81233,
+                            37.830658
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-9",
+            "properties": {
+                "id": "#geo-derived-props-9",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-9",
+                "coordinates": [
+                    40.81257442857143,
+                    37.83081085714286
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-10",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-10"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-10",
+                "coordinates": [
+                    [
+                        [
+                            40.813699,
+                            37.831196
+                        ],
+                        [
+                            40.813699,
+                            37.831619
+                        ],
+                        [
+                            40.814135,
+                            37.831619
+                        ],
+                        [
+                            40.814135,
+                            37.831196
+                        ],
+                        [
+                            40.813699,
+                            37.831196
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-10",
+            "properties": {
+                "id": "#geo-derived-props-10",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-10",
+                "coordinates": [
+                    40.81390555555556,
+                    37.831340999999995
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2012-02-27",
+    "description": "The Upper Tigris Archaeological Research Project’s Excavations at Kenan Tepe in Southeastern Turkey",
+    "dc-terms:abstract": "<div class=\"bodyText\">\r\n<h3> The Upper Tigris Archaeological Research Project Information System (UIS)</h3> \r\n    <p>\r\nThe following pages contain a complete record of the data accumulated during the Upper Tigris Archaeological Research Project’s excavations at the archaeological site of Kenan Tepe in southeastern Turkey. This includes all context information, photographs, day plans, journals, drawings and analyses generated over the course of ten years of field work.</p>\r\n\r\n<h3> The Archaeological Site of Kenan Tepe</h3> \r\n    <p>\r\nKenan Tepe is a multi-period archaeological site located on the north bank of the Tigris River 18 kilometers west of the Tigris-Batman confluence and 12 kilometers east of the modern town of Bismil in Diyarbakır Province, southeastern Turkey. Archaeological research conducted between 2000 and 2011 indicates that Kenan Tepe was occupied during five broad time periods. The earliest remains unearthed at Kenan Tepe belong to the Ubaid period. These remains are concentrated on the eastern slopes of Kenan Tepe’s main mound (Area D). Carbon samples taken from outside three Ubaid structures in trenches D5, D8 and E2 yielded 2-sigma calibrated dates ranging around 4650 BCE, while seriation analysis suggests that Ubaid occupation terminates in the Terminal Ubaid period at approximately 4300 BCE (Parker and Kennedy 2010). Remains dating to the Late Chalcolithic period have been discovered in abundance in the easternmost area of Kenan Tepe’s lower town (Area F) and in several soundings near the high mound (Parker et al. 2003; 2006). Carbon-14 analyses from Late Chalcolithic contexts have yielded dates in the late LC 3 or early LC 4 period (between ca. 3600 and 3500 BCE) and the LC 5 period (ca. 3100 BCE [Creekmore 2007; Parker et al. 2006]). Four more carbon dates from fortification/retaining walls on the high mound show that occupation continued through the Late Chalcolithic to Early Bronze Age transition (ca. 3000 BCE [Parker et al. 2006; Parker and Dodd 2005]). An analysis of the ceramics from various areas at Kenan Tepe combined with two carbon dates confirms that occupation at the site probably continued at least through the first half of the Early Bronze Age. Middle Bronze Age remains have been recovered on the eastern, western and northern slopes of the high mound (Areas A, B, C). Carbon-14 analysis places these remains around 1800 BCE (Parker et al. 2003; Parker and Dodd 2003). Kenan Tepe was again occupied in the Early Iron Age as evidenced by the presence of Early Iron Age Corrugated Wares dating between ca. 1050 and 900 B.C. (Parker et al. 2004. Also see Parker 2003). </p>\r\n\r\n<h3> Geomorphological Description of the Site</h3> \r\n    <p>\r\nMeasuring approximately 4.5 hectares in total size, Kenan Tepe is composed of a 32-meter high main mound and a lower town stretching off to the northeast of the main mound. The site is situated on a Pleistocene terrace composed of interspersed siltstones and sedimentary conglomerates close to the geographic center of the Upper Tigris River Valley. Virgin soil, which was reached in several trenches in the eastern portion of Kenan Tepe’s lower town, is 23.7m above the current level of the Tigris River. The top of Kenan Tepe’s main mound is 56.3m above the Tigris and rises 32.6m above the ground surface at the far eastern end of Kenan Tepe’s lower town. Kenan Tepe’s main datum, which is located at the top of the main mound (in Area A), is 37 49 50.11634 N by 40 48 47.59917 E and is 603.724 m in elevation relative to WGS84.</p>\r\n<p>Kenan Tepe presently overlooks a broad bend in the Tigris River. This area, known today as the Osman Merçalı, contains a number of gravel bars, channel islands and meander scars suggesting that the reach of the river was likely much broader in antiquity. Kenan Tepe lies on the cutbank side of a current sharp meander loop in the Tigris River: at Kenan Tepe the Tigris River turns abruptly from ca. 335° north/northwest to ca. 53° east in a stretch of only 0.6 kilometers. The energy created by this abrupt river course change has incised a deep channel close to the north bank of the river undercutting part of the eastern boundaries of the site. This being the case, it is impossible to determine Kenan Tepe’s total area in antiquity. However, visible mounding extends for ca. 225m from southeast to northwest and ca. 350m from southwest to northeast (Parker et al. 2006).</p>\r\n\r\n<h3> History of the Excavation</h3> \r\n    <p>\r\n\tExcavations at Kenan Tepe took place under the aegis of the Upper Tigris Archaeological Research Project (UTARP). The project’s director (Bradley Parker) founded UTARP in the winter of 1998 as a multi-year survey and excavation project in an area of the Tigris River Valley that will be flooded by the construction of two dams on the river north of the Iraqi border. This area was targeted based on previous reconnaissance surveys that had identified the rich but undocumented cultural heritage of the Upper Tigris River region (Algaze 1989; Kolars and Mitchell 1992). UTARP began with intensive surveys at three sites: Boztepe, Talavaş Tepe and Kenan Tepe. Exploratory excavations were carried out at the site of Boztepe (Parker and Creekmore 2002; Parker Creekmore and Easton 2001a, 2001b). Then in 2000, the focus of research shifted to the larger multi-period mound of Kenan Tepe (Parker et al. 2002a, 2002b).</p>\r\n<p>UTARP team members carried out archaeological field research at Kenan Tepe from 2000 to 2008. Over the course of these nine seasons, which included six seasons of excavation (2000, 2001, 2002, 2004, 2005 and 2007) and three study seasons (2003, 2006 and 2008), the team extensively explored various aspects of Kenan Tepe’s occupational history by excavating 68 trenches of varying sizes and depths (including 1 by 1, 2 by 2 and 3 by 3 meter soundings, 5 by 5, 3 by 10, 5 by 10 and 10 by 10 meter trenches). Further study of the material remains recovered from the site continued for a number of years after the ten-year anniversary of the project as the director, staff and specialists prepared the final publications of the excavations.  </p>\r\n\r\n<h3> The Kenan Tepe Information System</h3> \r\n    <p>\r\nAt the founding of UTARP, the director prioritized the comprehensive digital recording of the project as a model of information sharing in archaeology. Since the very first season of excavation at Kenan Tepe in 2000, UTARP team members have meticulously digitized all of their excavation data, usually on the same day they were collected. All of the photographs of loci and objects were captured with digital cameras. Each evening in the field dighouse, team members entered their paper forms into a database, typed up their hand-written journal entries, and scanned their hand-drawn daily trench plans. Specialists also collected their detailed data digitally and merged these with the central excavation database. The data were interconnected using a tree of related tables in order to organize the individual pieces of information about each stage of excavation and analysis (Parker et al. 2003). The results are presented here as a complete digital record of UTARP’s excavations at Kenan Tepe.</p>\r\n\r\n<h3>Archaeological Research Program</h3>\r\n<p>\r\nThe research agenda at Kenan Tepe was divided into two phases. Because so little was known about the site and the region when this research began, the goal of the first phase of research at Kenan Tepe (2000-2003) was to define aspects of the archaeological record recoverable at Kenan Tepe that might be applicable to the region as a whole and to characterize aspects of the archaeological record that could aid us in later problem-oriented research. To reach this goal the first four field seasons were meant to define the ceramic chronology of the site and the region, to precisely determine the nature and locational focus of settlement at Kenan Tepe during each period it was occupied, and to quickly publish our data in preliminary reports from each field season. </p>\r\n<p>During the second phase of the project (2004-2008), UTARP team members focused on broad theoretical issues that could be addressed through further excavation at the site. Bradley Parker spearheaded research on the nature of society in the upper Tigris River region during the Ubaid period, addressing such questions as how the advancements in subsistence production achieved during the preceding periods was applied during the Ubaid period and how those advances affected community organization and cohesion (Parker 2010; 2011; Parker and Kennedy 2010). Catherine Foster led research into Kenan Tepe’s Late Chalcolithic remains addressing the issue of if, or how, the Uruk expansion affected local Late Chalcolithic communities on the northern fringes of the Mesopotamian periphery (Foster 2009; 2011). And finally, Lynn Dodd directed research on interregional interaction during the Middle Bronze Age focusing particularly on ceramic production and metallurgy (Parker and Dodd 2003). </p>\r\n\r\n<h3>Gazetteer of UTARP Publications</h3>\r\n<p> The director and staff of UTARP felt a responsibility to make the results of our research available to the wider archaeological community in a timely manner. We approached this goal from two directions. First, we committed to publishing preliminary reports from each of our field seasons (preferably in English and Turkish), and achieved this through the collaborative effort by various UTARP team members. Second, we endeavored to make analyses of the emerging data available as quickly as possible. Synthetic research that either integrates UTARP data into larger studies or focuses on specific categories of data was more difficult to produce, nevertheless a number of synthetic articles and book chapters have appeared in a variety of venues. Many of the reports and other studies are available on the UTARP website at http://www.utarp.org/. </p>\r\n<p>A number of detailed studies of this data are still under way.  Due to the diachronic and preliminary nature of UTARP’s past publications, there will obviously be some overlap in the information published in different articles, and our conclusions have evolved as we collected and analyzed additional data each season. The data and analysis that appear in our final reports should be seen as the last and most complete word on the topic. </p>\r\n<p>The following is a list of publications resulting from UTARP’s excavations at Kenan Tepe. The list is broken down into Reports, Dissertations and Synthetic Studies and is presented chronologically from newest to oldest. Publications that appeared in the same year are listed alphabetically. </p>\r\n\r\n\r\n\r\n<div resource=\"http://opencontext.org/subjects/5D6B6454-017A-43C1-9F15-6DFE36C3558F\" >\n    <h3><span style='text-decoration:underline;'>Reports:</span></h3>\n    \n    <div id=\"pub-2012-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2012-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2012-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2012 forthcoming</div>\n                    <div class=\"ref-title-pub\">Yukarı Dicle Arkeolojik Araştırma Projesi (YDAAP/UTARP): Kenan Tepe’de On Yıllık Araştırmalara Kısaca Bir Bakış (The Upper Tigris Archaeological Research Project [UTARP]: A Brief Overview of a Decade of Research at Kenan Tepe). In <span class=\"collection-title\">Ilısu ve Karkamış Baraj Gölleri Altında Kalacak Arkoelojiik ve Kültür Varlıklarını Kurtarma Projesi 2000-2008 Yılı Çalişmaları (Salvage Project of the Archaeological Heritage of the Ilısu and Carchemish Dam Reservoirs 2000-2008)</span>. Ankara: Middle East Technical University.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n        \n    <div id=\"pub-2011-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2011-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2011-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B.J. and L. S. Dodd, with Contributions from A. Creekmore, R. Paine, E. Moseman and M. Marley </p>\n                <div>\n                    <div class=\"pub-date\">2011</div>\n                    <div class=\"ref-title-pub\">Yukarı Dicle Arkeolojik Araştırma Projesi (UTARP): 2002 Yılı Kenan Tepe Kazilarina Genal Bakış (The Upper Tigris Archaeological Reseach Project [UTARP]: An Overview of the 2002 Excavations at Kenan Tepe). In <span class=\"collection-title\">Ilısu ve Karkamış Baraj Gölleri Altında Kalacak Arkoelojiik ve Kültür Varlıklarını Kurtarma Projesi 2002 Yılı Çalişmaları (Salvage Project of the Archaeological Heritage of the Ilısu and Carchemish Dam Reservoirs Activities in 2002)</span>, edited by N. Tuna and O. Doonan, pp. 703-756. Ankara: Middle East Technical University.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5873\">Open Access</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2009-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2009-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., C. P. Foster, K. Nicoll, J. R. Kennedy, P. Graham, A. Smith, D. E. Hopwood, M. Hopwood, K. Butler, E. Healey, M. B. Uzel, and R. Jensen</p>\n                <div>\n                    <div class=\"pub-date\">2009</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Report from the 2007 and 2008 Field Seasons at Kenan Tepe. <span class=\"collection-title\">Anatolica</span> 35:85-152.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2038073\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.35.0.2038073\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2008-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2008-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2008-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., C. P. Foster, J. Henecke, M. Hopwood, D. Hopwood, A. Creekmore, A. Demirergi, and M. Eppihimer </p>\n                <div>\n                    <div class=\"pub-date\">2008</div>\n                    <div class=\"ref-title-pub\">A Preliminary Report from the 2005 and 2006 Field Seasons at Kenan Tepe. <span class=\"collection-title\">Anatolica</span> 34:103-176.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2031566\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.34.0.2031566\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2007-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2007-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2007-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Creekmore, A. </p>\n                <div>\n                    <div class=\"pub-date\">2007</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Summary and Synthesis of the Late Chalcolithic and Early Bronze Age Remains from the First Three Seasons at Kenan Tepe. <span class=\"collection-title\">Anatolica</span> 33:75-128.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2021755\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.33.0.2021755\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2007-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2007-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2007-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J.</p>\n                <div>\n                    <div class=\"pub-date\">2007</div>\n                    <div class=\"ref-title-pub\">Yukarı Dicle Arkeolojik Araştirma Projesi (UTARP): 2005 Yili Kenan Tepe Arazi Çalışması Raporu. In <span class=\"collection-title\">28. Kazi Sonuçları Toplantısı</span>, edited by in B. Koral and H. Dönmez, pp. 323-340. Ankara: Kultur ve Turizm Bakanlığı Dosimm Başimevi.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-2006-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2006-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2006-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., L. Dodd, A. Creekmore, E. Healey, and C. Painter</p> \n                <div>\n                    <div class=\"pub-date\">2006</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Report from the 2003 and 2004 Field Seasons. <span class=\"collection-title\">Anatolica </span>32:71-151.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2012554\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.32.0.2012554\">DOI</a>]\n            </div>\n        </div>\n    </div>\n        \n    <div id=\"pub-2005-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2005-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2005-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Dodd, L. S., B. J. Parker, A. Creekmore, and E. Healey </p>\n                <div>\n                    <div class=\"pub-date\">2005</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): Excavations at Kenan Tepe in 2003. In <span class=\"collection-title\">26. Kazı Sonuçları Toplantısı</span>, Pp. 357-370. Ankara: Kültür Bakanlığı Anıtlar ve Müzeler Genel Müdürlüğü.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2005-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2005-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2005-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., and L. S. Dodd </p>\n                <div>\n                    <div class=\"pub-date\">2005</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Report from the 2002 Field Season. <span class=\"collection-title\">Anatolica</span> 31:69-110.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2011752\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.31.0.2011752\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2004-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2004-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2004-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., and L. S. Dodd</p> \n                <div>\n                    <div class=\"pub-date\">2004</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Report from the 2002 Excavations at Kenan Tepe. In <span class=\"collection-title\">25. Kazı Sonuçları Toplantısı</span>, pp. 471-482. Ankara: Kültür Bakanlığı Anıtlar ve Müzeler Genal Müdürlüğü.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n     <div id=\"pub-2004-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2004-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2004-1\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., A. Creekmore, L. S. Dodd, E. Moseman, C. Meegan, and P. Cobb</p>\n                <div>\n                    <div class=\"pub-date\">2004</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Synthesis of the Cultural History of Kenan Tepe. In <span class=\"collection-title\">Salvage Project of the Archaeological Heritage of the Ilısu and Carchemish Dam Reservoirs Activities in 2001</span>, edited by N. Tuna, J. Öztürk, and J. Velibeyoğlu, pp. 547-602. Ankara: Middle East Technical University.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5661\">Open Access</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-2003-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2003-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2003-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J., A. Creekmore, L. S. Dodd, R. Paine, C. Meegan, E. Moseman, M. Abraham, and P. Cobb </p>\n                <div>\n                    <div class=\"pub-date\">2003</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Preliminary Report from the 2001 Field Season. <span class=\"collection-title\">Anatolica </span>29:103-174.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&id=2015514\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.29.0.2015514\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2003-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2003-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2003-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J., A. Creekmore, L. S. Dodd, R. Paine, and M. Abraham</p>\n                <div>\n                    <div class=\"pub-date\">2003</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): An Overview of Archaeological Research Conducted at Kenan Tepe during the 2001 Field Season. In <span class=\"collection-title\">24. Kazı Sonuçları Toplantısı</span>, pp. 1-20. Ankara: T.C. Ankara, T.C. Kültür Bakanlığı Anıtlar ve Müzeler Genel Müdürlügü.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2002-3\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2002-3\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2002-3\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., and A. Creekmore </p>\n                <div>\n                    <div class=\"pub-date\">2002</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): A Final Report from the 1999 Field Season. <span class=\"collection-title\">Anatolian Studies </span>52:19-74.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5963\">Open Access</a>]\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/3643077\">JSTOR</a>]\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i287459\">Issue</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2002-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2002-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2002-2\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J., A. Creekmore, E. Moseman, and R. Sasaki </p>\n                <div>\n                    <div class=\"pub-date\">2002</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): Preliminary Report from the Year 2000 Excavations at Kenan Tepe. In <span class=\"collection-title\">Salvage Project of the Archaeological Heritage of the Ilısu and Carchemish Dam Reservoirs. Activities in 2000</span>, edited by N. Tuna, J. Öztürk, and J. Velibeyoğlu, pp. 613-643. Ankara: Middle East Technical University.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5698\">Open Access</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2002-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2002-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2002-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., A. Creekmore, L. S. Dodd, E. Moseman, M. Abraham, and J. Schnereger </p>\n                <div>\n                    <div class=\"pub-date\">2002</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): Year 2000 Excavations at Kenan Tepe. In <span class=\"collection-title\">23. Kazı Sonuçları Toplantısı. </span>, pp. 435-444. Ankara: Kültür Bakanlığı Millî Kütüphane Başımevi.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-2001-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2001-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2001-2\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., A. Creekmore, and C. Easton </p>\n                <div>\n                    <div class=\"pub-date\">2001a</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP) Excavations and Survey at Boztepe and Intensive Survey at Talavaş Tepe, 1999: A Preliminary Report. In <span class=\"collection-title\">Salvage Project of the Archaeological Heritage of the Ilısu and Carchemish Dam Reservoirs Activities in 1999</span>, edited by N. Tuna, J. Öztürk, and J. Velibeyoğlu, pp. 565-591. Ankara: Middle East Technical University.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5659\">Open Access</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-2001-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-2001-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2001-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., A. Creekmore, and C. Easton </p>\n                <div>\n                    <div class=\"pub-date\">2001b</div>\n                    <div class=\"ref-title-pub\">The Upper Tigris Archaeological Research Project (UTARP): 1999 Excavations at Boztepe and Surveys at Talavaş Tepe. In <span class=\"collection-title\">18.Araştirma Sonuçları Toplantısı</span>, pp. 23-36. Ankara: T.C. Kültür Bakanlığı Anıtlar ve Müzeler Genal Müdürlüğü.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n     \n    <h3><span style='text-decoration:underline;'>Dissertations:</span></h3>\n    \n    <div id=\"pub-d-2011-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-d-2011-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-d-2011-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Graham, Philip J.  </p>\n                <div>\n                    <div class=\"pub-date\">2011</div>\n                    <div class=\"ref-title-pub\"><span class=\"collection-title\">Ubaid Agriculture at Kenan Tepe, Southeastern Turkey.</span> Ph.D. dissertation, University of Connecticut.  Ann Arbor: ProQuest/UMI.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://digitalcommons.uconn.edu/dissertations/AAI3492058/\">Abstract</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-d-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-d-2009-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-d-2009-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Foster, C. P. </p>\n                <div>\n                    <div class=\"pub-date\">2009</div>\n                    <div class=\"ref-title-pub\"><span class=\"collection-title\">Household Archaeology and the Uruk Phenomenon: A Case Study from Kenan Tepe, Turkey.</span> Unpublished doctoral dissertation, University of California, Berkeley.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/257270/Household_Archaeology_and_the_Uruk_Phenomenon_A_Case_Study_from_Kenan_Tepe_Turkey\">Open Access</a>]\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://gradworks.umi.com/33/83/3383066.html\">Abstract</a>]\n            </div>\n        </div>\n    </div>\n     \n    \n    \n    <h3><span style='text-decoration:underline;'>Synthetic Studies:</span></h3>\n    <div id=\"pub-s-2012-4\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2012-4\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2012-4\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Dodd, L.S. </p>\n                <div>\n                    <div class=\"pub-date\">2012</div>\n                    <div class=\"ref-title-pub\">Filling a Niche: Settlement Expansion and Innovation in the Upper Tigris River Valley during the Middle Bronze Age. In <span class=\"collection-title\">Looking North: The Socio-economic Dynamics of the Northern Mesopotamian and Anatolian Regions during the Late Third and Early Second Millennium BC</span>, edited by N. Laneri,  P. Pfälzner ­ S. Valentini.  Pp. 213-228. Wiesbaden: Harrassowitz Verlag.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-s-2012-3\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2012-3\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2012-3\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Foster, C.P. </p>\n                <div>\n                    <div class=\"pub-date\">2012 forthcoming</div>\n                    <div class=\"ref-title-pub\">The Uruk Phenomenon: A View from the Household. In <span class=\"collection-title\">New Perspectives in Household Archaeology</span>, edited by B.J. Parker and C.P. Foster. Winona Lake: Eisenbrauns.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2012-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2012-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2012-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Graham, P. and Alexia Smith</p>\n                <div>\n                    <div class=\"pub-date\">2012 forthcoming</div>\n                    <div class=\"ref-title-pub\">Integrating Household Archaeology and Archaeobotany: A Case Study from Ubaid Kenan Tepe, Southeastern Anatolia. In <span class=\"collection-title\">New Perspectives in Household Archaeology</span>, edited by B.J. Parker and C.P. Foster. Winona Lake: Eisenbrauns.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2012-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2012-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2012-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2012 forthcoming</div>\n                    <div class=\"ref-title-pub\">Domestic Production and Subsistence in an Ubaid Household in Upper Mesopotamia. In <span class=\"collection-title\">New Perspectives in Household Archaeology</span>, edited by B.J. Parker and C.P. Foster. Winona Lake: Eisenbrauns.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                \n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2011-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2011-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2011-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2011</div>\n                    <div class=\"ref-title-pub\">Bread Ovens, Social Networks and Gendered Space: An Ethnoarchaeological Study of <span class=\"collection-title\">Tandır</span> Ovens in Southeastern Anatolia. <span class=\"collection-title\">American Antiquity </span>76(4):603-627.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"bibo:uri\" href=\"http://saa.metapress.com/content/u7737111318325p8/\">Article</a>]\n                [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.7183/0002-7316.76.4.603\">DOI</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2010-5\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2010-5\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2010-5\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Berthon, R. </p>\n                <div>\n                    <div class=\"pub-date\">2010</div>\n                    <div class=\"ref-title-pub\">Animal Exploitation in the Upper Tigris River Valley during the Middle Bronze Age: A First Comparison of Hirbemerdon Tepe and Kenan Tepe / Yukarı Dicle Vadisi'nde Orta Tunç Çağı'nda Hayvan Kullanımı: Hirbemerdon Tepe ve Kenan Tepe'nin Karşılaştırması. In <span class=\"collection-title\">Studies in Southeastern Anatolia Graduate Symposium / Güney Doğu Anadolu Araştırmaları Sempozyumu</span>, edited by D. B. Erciyas. Istanbul, Ege Yayınları.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/651093185\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2010-4\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2010-4\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2010-4\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Healey, E. </p>\n                <div>\n                    <div class=\"pub-date\">2010</div>\n                    <div class=\"ref-title-pub\">Ubaid Lithics Revised: Their Significance for the Interpretation of Ubaid Society. In <span class=\"collection-title\">Beyond the Ubaid: Transformation and Integration in the Late Prehistoric Societies of the Middle East, Studies in Ancient Oriental Civilization 63</span>, edited by R. A. Carter and G. Philip, pp. 181-200. Chicago: The Oriental Institute.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/646401242\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2010-3\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2010-3\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2010-3\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2010</div>\n                    <div class=\"ref-title-pub\">Networks of Interregional Interaction during Mesopotamia's Ubaid Period: A Study Sponsored by the Curtiss T. and Mary G. Brennan Foundation. In <span class=\"collection-title\">Beyond the Ubaid: Transformation and Integration in the Late Prehistoric Societies of the Middle East, Studies in Ancient Oriental Civilization 63</span>, edited by R. A. Carter and G. Philip, pp. 339-360. Chicago: The Oriental Institute.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/646401242\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2010-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2010-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2010-2\">\n            <div property=\"dcterms:bibliographicCitation\">\n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2010</div>\n                    <div class=\"ref-title-pub\">Setting the Stage for a More Productive Ethnoarchaeology. In <span class=\"collection-title\">Proceedings of the 6th International Congress of the Archaeology of the Ancient Near East, Rome, May 5th-10th, 2008</span>, edited by P. Matthiae, pp. 507-519. Roma: 'La Sapeinza'.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/680654466\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-s-2010-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2010-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2010-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., and J. R. Kennedy </p>\n                <div>\n                    <div class=\"pub-date\">2010</div>\n                    <div class=\"ref-title-pub\">A Quantitative Attribute Analysis of the Ubaid-Period Ceramic Corpus from Kenan Tepe. <span class=\"collection-title\">Bulletin of the American Schools of Oriental Research </span>358:1-26.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/25741804\">JSTOR</a>]\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i25741802\">Issue</a>]\n            </div>\n        </div>\n    </div>\n    \n    <div id=\"pub-s-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2009-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2009-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J., and C. P. Foster. </p>\n                <div>\n                    <div class=\"pub-date\">2009</div>\n                    <div class=\"ref-title-pub\">An Overview of the Ceramic Sequence at Kenan Tepe. In <span class=\"collection-title\">Studies in Honour of Altan Çilingiroglu: A Life Dedicated to Urartu on the Shores of the Upper Sea</span>, edited by H. Sağlatimur, E. Abay, Z. Derin, A. Erden, A, Batmaz, F. Dedeoğu, M. Erdalkıran, M. Baştürk, and E. Konakçı, pp. 505-531. Istanbul: Arkeoloji ve Sanat Yayinlari.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/465215353\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2008-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2008-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2008-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Hopwood, D. E. </p>\n                <div>\n                    <div class=\"pub-date\">2008</div>\n                    <div class=\"ref-title-pub\">The Changing Relationship Between the Living and the Dead: Child Burial at the Site of Kenan Tepe, Turkey. In <span class=\"collection-title\">Babies Reborn: Infant/child Burials in Pre- and Protohistory, B.A.R. International Series</span>, edited by K. Bacvarov, pp. 113-121. Oxford: Archaeopress.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/262718398\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2007-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2007-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2007-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., and M. B. Uzel </p>\n                <div>\n                    <div class=\"pub-date\">2007</div>\n                    <div class=\"ref-title-pub\">The Tradition of Tandır Cooking in Southeastern Anatolia: An Ethnoarchaeological Perspective. In <span class=\"collection-title\">Ethnoarchaeological Investigations in Rural Anatolia</span> (Vol. 4), edited by T. Takaoğl, pp.7-43. Istanbul: Ege Yayınları.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/60349282\">WorldCat</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2006-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2006-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2006-1\">\n            <div property=\"dcterms:bibliographicCitation\">   \n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2006</div>\n                    <div class=\"ref-title-pub\">Toward An Understanding of Borderland Processes. <span class=\"collection-title\">American Antiquity</span> 71(1):77-100.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/40024322\">JSTOR</a>]\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i40001865\">Issue</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2003-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2003-2\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2003-2\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2003</div>\n                    <div class=\"ref-title-pub\">Archaeological Manifestations of Empire: Assyria's Imprint on Southeastern Anatolia. <span class=\"collection-title\">American Journal of Archaeology </span>107:525-557.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5995\">Open Access</a>]\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/40035322\">JSTOR</a>]\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i40001334\">Issue</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2003-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2003-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2003-1\">\n            <div property=\"dcterms:bibliographicCitation\">  \n                <p class=\"authors\">Parker, B. J., and L. S. Dodd </p>\n                <div>\n                    <div class=\"pub-date\">2003</div>\n                    <div class=\"ref-title-pub\">The Early Second Millennium Ceramic Assemblage from Kenan Tepe, Southeastern Turkey: A Preliminary Assessment. <span class=\"collection-title\">Anatolian Studies </span>53:33-69.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://content.lib.utah.edu/cdm/ref/collection/uspace/id/5998\">Open Access</a>]\n                [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/3643086\">JSTOR</a>]\n                [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i287460\">Issue</a>]\n            </div>\n        </div>\n    </div>\n    \n    \n    <div id=\"pub-s-2002-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n        <a style=\"display:none;\" href=\"#pub-s-2002-1\" ></a>\n        <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2002-1\">\n            <div property=\"dcterms:bibliographicCitation\"> \n                <p class=\"authors\">Parker, B. J. </p>\n                <div>\n                    <div class=\"pub-date\">2002</div>\n                    <div class=\"ref-title-pub\">At the Edge of Empire: Conceptualizing Assyria's Anatolian Frontier ca. 700 B.C. <span class=\"collection-title\">Journal of Anthropological Archaeology </span>21(3):371-95.</div>\n                    <div class=\"ref-end\"></div>\n                </div>\n            </div>\n            <div class=\"ref-links\">\n                [<a rel=\"dcterms:hasVersion\" href=\"http://arcserver.usc.edu/team/publications/Parker2002.pdf\">Open Access</a>]\n            </div>\n        </div>\n    </div>\n\n\n</div>\n<h3>Acknowledgements</h3>\r\n<p>Archaeological research is by definition a team effort. Looking back over more than a decade of research it is gratifying to list numerous individuals, institutions and organizations who contributed to the success to the Upper Tigris Archaeological Research Project. It is our firm belief that progress in the understanding of the human past can only be made through the cooperation and collaboration of scholars and students within specific research groups, between various research projects and among numerous disciplines. It is our hope that the UTARP project stands as a testament to this belief, especially with our timely open publication of our entire dataset. </p>\r\n<p>We would like to thank the Turkish Ministry of Culture and Tourism for granting us permission to conduct this research. We would also like to thank Necdet İnal and Nevin Soyukaya of the Diyarbakır Museum for their assistance to the project. We are also indebted to our government representatives: Hamdi Ekiz (2000), Latif Özer (2001), Musa Tombul (2002), Melek Çanga (2003), Ömür Tufan (2004), Erdal Savim (2005), Ferat Çokun (2006), Resul İbiş (2007), Suat Şahin (2008), Ali Altay (2010), Melek Çanga (2011). The UTARP staff was made up of: Bradley Parker (Director and Founder), Lynn Dodd (Co-director), Catherine Foster (Assistant Director), Andrew Creekmore (Assistant Director). Specialists included: Phillip Graham (Archaeobotonist), Alexia Smith (Archaeobotanist), Jason Kennedy (Ceramicist), Peter Cobb (Information Architect), Elizabeth Healey (Lithic Specialist), Margaret Abraham (Metalurgist), David Hopwood (Oseologist), Drew McGaraghan (Visual Artist), Richard Paine (Osteologist), Remi Berthon (Zooarchaeologist), Chiara Cavallo (Zooarchaeologist), Jenni Heneke (Zooarchaeologist), Sarah Kansa (Zooarchaeologists). Trench supervisors included: Diana Backus, Marco Baldi, Brian Bingham, Kristen Butler, Elizabeth Clark, Elvan Cobb, Debbie Dillie, Chuck Easton, Melissa Eppihimer, Tuba Gencler, Bekir Gürdil, Marie Hopwood, Phil Jones, David Lunt, Cathryn Meegan, Chris Moon, Eleanor Moseman, Jeanne Nijhowne, Emily Ogle, Jacob Pawlowicz, Greer Rabicca, Ashley Sands, Randy Sasaki, Jonathan Schnereger, Rob Sinnot, Katie Smith, Amy Stevens, Michaelle Stikich, Dawnelle Sommerville-Moon, Sibel Torpil, Mila Tzvetkova-Hover, Andrew Ugan, Barish Uzel, Jonathan Vidar. </p>\r\n<p>We would like to offer our sincere gratitude to the many institutions and agencies that helped fund the Upper Tigris Archaeological Research Project (UTARP) over more than a decade of research. These include the University of Utah, the University of Southern California, the National Science Foundation, the National Endowment for the Humanities, the National Geographic Society, the American Research Institute in Turkey, the American Schools of Oriental Research, the Curtiss T. and Mary G. Brennan Foundation and the American Philosophical Society. </p>\r\n<p>Finally, we would like to thank Eric Kansa for the countless hours he spent aiding us in the integration of our database with Open Context.</p>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-4",
+            "slug": "oc-gen-edit-level-4",
+            "label": "Editorial board reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7H41PBJ"
+        },
+        {
+            "id": "http://opencontext.org/projects/22-kenan-tepe"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh88001122",
+            "slug": "loc-sh-sh88001122",
+            "label": "Ubaid culture"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85032338",
+            "slug": "loc-sh-sh85032338",
+            "label": "Copper age"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/21_DT_Person",
+            "slug": "1-bradley-parker",
+            "label": "Bradley Parker",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/3BDBEC0E-8D0F-484F-DBD9-985F3D0915F6",
+            "slug": "22-peter-cobb",
+            "label": "Peter Cobb",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/21_DT_Person",
+            "slug": "1-bradley-parker",
+            "label": "Bradley Parker",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/3BDBEC0E-8D0F-484F-DBD9-985F3D0915F6",
+            "slug": "22-peter-cobb",
+            "label": "Peter Cobb",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        },
+        {
+            "id": "http://www.geonames.org/99237",
+            "slug": "geonames-99237",
+            "label": "Iraq"
+        },
+        {
+            "id": "http://www.geonames.org/96998",
+            "slug": "geonames-96998",
+            "label": "Tigris River"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        }
+    ],
+    "time": 0.4680008888244629
+}

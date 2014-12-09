@@ -7,7 +7,7 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.management import TypeManagement
 
 
-class PredicateManage():
+class PredicateManagement():
     """ Class for helping to create and edit data about predicates
     """
 
@@ -18,6 +18,24 @@ class PredicateManage():
         self.source_id = False
         self.data_type = "xsd:string"
         self.sort = 0
+
+    def get_make_related_note_predicate(self, original_predicate_uuid, label_suffix=''):
+        """
+        gets or makes a related 'note' predicate, useful for storing values
+        that don't fit a data-type
+        """
+        output = False
+        try:
+            pman = Manifest.objects.get(uuid=original_predicate_uuid)
+        except Manifest.DoesNotExist:
+            pman = False
+        if pman is not False:
+            if pman.class_uri == 'variable':
+                new_predicate_label = pman.label + label_suffix
+                output = self.get_make_predicate(new_predicate_label,
+                                                 'variable',
+                                                 'xsd:string')
+        return output
 
     def get_make_predicate(self, predicate_label, predicate_type, data_type=False):
         """

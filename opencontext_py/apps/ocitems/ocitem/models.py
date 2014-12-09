@@ -207,6 +207,33 @@ class OCitem():
             except OCtype.DoesNotExist:
                 self.octype = False
 
+    def add_related_predicate(self,
+                              item_con,
+                              json_ld):
+        """ Adds a skos:related to the predicate used with this type """
+        output = False
+        if self.octype is not False:
+            rel_predicate = LastUpdatedOrderedDict()
+            uri = URImanagement.make_oc_uri(self.octype.predicate_uuid,
+                                            'predicates')
+            rel_predicate['id'] = URImanagement.prefix_common_uri(uri)
+            rel_predicate['owl:sameAs'] = uri
+            rel_predicate['slug'] = False
+            rel_predicate['label'] = False
+            ent = Entity()
+            found = ent.dereference(self.octype.predicate_uuid)
+            if found:
+                rel_predicate['id'] = 'oc-pred:' + str(ent.slug)
+                rel_predicate['slug'] = ent.slug
+                rel_predicate['label'] = ent.label
+                item_con.predicates[self.octype.predicate_uuid] = rel_predicate['id']
+            if 'skos:related' not in json_ld:
+                json_ld['skos:related'] = []
+            json_ld['skos:related'].append(rel_predicate)
+            output = {'item_con': item_con,
+                      'json_ld': json_ld}
+        return output
+
     def get_link_anotations(self):
         self.link_annotations = LinkAnnotation.objects.filter(subject=self.uuid)
 
@@ -226,6 +253,12 @@ class OCitem():
         if(len(self.manifest.class_uri) > 0):
             json_ld['category'] = [self.manifest.class_uri]
             item_con.class_type_list.append(self.manifest.class_uri)
+        # add related type data
+        rel_pred = self.add_related_predicate(item_con,
+                                              json_ld)
+        if rel_pred is not False:
+            item_con = rel_pred['item_con']
+            json_ld = rel_pred['json_ld']
         # add context data
         json_ld = item_con.add_contexts(json_ld,
                                         self.PREDICATES_OCGEN_HASCONTEXTPATH,
@@ -549,8 +582,9 @@ class ItemConstruction():
                     item_type = False
                 else:
                     item_type = tcheck['item_type']
+                act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
                 act_dict = self.add_json_predicate_list_ocitem(act_dict,
-                                                               la.predicate_uri,
+                                                               act_pred,
                                                                la.object_uri,
                                                                item_type)
         return act_dict

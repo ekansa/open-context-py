@@ -1,5 +1,6 @@
 import re
 import roman
+import datetime
 from math import pow
 from unidecode import unidecode
 from django.utils import timezone
@@ -19,6 +20,7 @@ class Manifest(models.Model):
     slug = models.SlugField(max_length=70, unique=True)
     label = models.CharField(max_length=200)
     des_predicate_uuid = models.CharField(max_length=50)
+    sort = models.SlugField(max_length=70, db_index=True)
     views = models.IntegerField()
     indexed = models.DateTimeField(blank=True, null=True)
     vcontrol = models.DateTimeField(blank=True, null=True)
@@ -32,32 +34,81 @@ class Manifest(models.Model):
             self.label = self.label[:172] + '...'
         return self.label
 
-    def make_slug(self):
+    def make_slug_and_sort(self):
+        """ Makes both a slug and a sort value, done this way
+           with the same ManifiestGeneration object so
+           we don't have to look up the project index twice """
+        man_gen = ManifestGeneration()
+        slug = man_gen.make_manifest_slug(self.uuid,
+                                          self.label,
+                                          self.item_type,
+                                          self.project_uuid)
+        sort = man_gen.gen_sort_from_label(self.label,
+                                           self.class_uri,
+                                           self.item_type,
+                                           self.project_uuid)
+        self.slug = slug
+        self.sort = sort
+
+    def make_slug(self, project_indices=False):
         """
         creates a unique slug for a label with a given type
         """
         man_gen = ManifestGeneration()
+        if project_indices is not False:
+            man_gen.project_indices = project_indices
         slug = man_gen.make_manifest_slug(self.uuid,
                                           self.label,
                                           self.item_type,
                                           self.project_uuid)
         return slug
 
+    def make_sort(self, project_indices=False):
+        """
+        creates a unique slug for a label with a given type
+        """
+        man_gen = ManifestGeneration()
+        if project_indices is not False:
+            man_gen.project_indices = project_indices
+        sort = man_gen.gen_sort_from_label(self.label,
+                                           self.class_uri,
+                                           self.item_type,
+                                           self.project_uuid)
+        if len(sort) != man_gen.DEFAULT_EXPECTED_SORT_LEN:
+            raise Exception(str(unidecode(self.label))
+                            + ' wrong length (Chars: '
+                            + str(len(sort)) + ', Dashes: '
+                            + str(sort.count('-'))
+                            + ') for sort: ' + sort)
+        return sort
+
     def save(self, *args, **kwargs):
         """
         saves a manifest item with a good slug
         """
+        if self.views is None:
+            self.views = 0
         self.label = self.validate_label()
-        self.slug = self.make_slug()
+        self.make_slug_and_sort()
+        if self.revised is None:
+            self.revised = datetime.now()
         super(Manifest, self).save(*args, **kwargs)
 
-    def slug_save(self):
+    def slug_save(self, project_indices=False):
         """
         save only slug value
         """
         self.label = self.validate_label()
         self.slug = self.make_slug()
         super(Manifest, self).save(update_fields=['slug'])
+
+    def sort_save(self, project_indices=False):
+        """
+        save only slug value
+        """
+        self.sort = self.make_sort()
+        print(str(unidecode(self.label)) + ' has sort: ' + str(self.sort))
+        super(Manifest, self).save(update_fields=['sort'])
 
     class Meta:
         db_table = 'oc_manifest'
@@ -87,6 +138,13 @@ class ManifestGeneration():
                      'class_uri': 'link'},
                     {'item_type': 'types',
                      'class_uri': False}]
+
+    DEFAULT_LABEL_SORT_LEN = 6
+    DEFAULT_LABEL_DELIMS = 9
+    DEFAULT_EXPECTED_SORT_LEN = 63
+
+    def __init__(self):
+        self.project_indices = {}
 
     def make_manifest_slug(self, uuid, label, item_type, project_uuid):
         """
@@ -143,7 +201,9 @@ class ManifestGeneration():
             no_slugs = False
         if(no_slugs is not False):
             for nslug in no_slugs:
-                nslug.slug_save()
+                # build up project_indices to avoid future database lookups
+                self.get_project_index(nslug.uuid)
+                nslug.slug_save(self.project_indices)
                 cc += 1
         print('Working on everything else...')
         no_slugs = Manifest.objects\
@@ -153,7 +213,33 @@ class ManifestGeneration():
                            .iterator()
         for nslug_uuid in no_slugs:
             nslug = Manifest.objects.get(uuid=nslug_uuid)
-            nslug.slug_save()
+            nslug.slug_save(self.project_indices)
+            print('Item: ' + nslug.label + ' has slug: ' + nslug.slug)
+            cc += 1
+        return cc
+
+    def fix_blank_sorts(self):
+        cc = 0
+        try:
+            no_sorts = Manifest.objects.filter(item_type='projects')
+            print('Making sorts for projects: ' + str(len(no_sorts)))
+        except Manifest.DoesNotExist:
+            no_sorts = False
+        if(no_sorts is not False):
+            for nsort in no_sorts:
+                # build up project_indices to avoid future database lookups
+                self.get_project_index(nsort.uuid)
+                nsort.sort_save(self.project_indices)
+                cc += 1
+        print('Working on everything else...')
+        no_sorts = Manifest.objects\
+                           .all()\
+                           .values_list('uuid', flat=True)\
+                           .exclude(sort__isnull=False)\
+                           .iterator()
+        for nsort_uuid in no_sorts:
+            nsort = Manifest.objects.get(uuid=nsort_uuid)
+            nsort.sort_save(self.project_indices)
             cc += 1
         return cc
 
@@ -161,11 +247,15 @@ class ManifestGeneration():
         """ Gets the sort - index number for a project """
         act_proj_short_id = False
         if(project_uuid != '0'):
-            try:
-                act_proj = Project.objects.get(uuid=project_uuid)
-                act_proj_short_id = act_proj.short_id
-            except Project.DoesNotExist:
-                act_proj_short_id = 0
+            if project_uuid in self.project_indices:
+                act_proj_short_id = self.project_indices[project_uuid]
+            else:
+                try:
+                    act_proj = Project.objects.get(uuid=project_uuid)
+                    act_proj_short_id = act_proj.short_id
+                except Project.DoesNotExist:
+                    act_proj_short_id = 0
+                self.project_indices[project_uuid] = act_proj_short_id
         return act_proj_short_id
 
     def gen_sort_from_label(self,
@@ -189,10 +279,50 @@ class ManifestGeneration():
         type_index = self.get_type_sort_val(item_type, class_uri)
         prefix = self.prepend_zeros(type_index, 2)
         proj_index = self.get_project_index(project_uuid)
+        if proj_index is False:
+            proj_index = 0
         prefix += '-' + self.prepend_zeros(proj_index, 4)
+        label_part = self.make_label_sortval(label)
+        act_label = prefix + '-' + label_part
+        if act_label.count('-') < self.DEFAULT_LABEL_DELIMS:
+            while act_label.count('-') < self.DEFAULT_LABEL_DELIMS:
+                act_label += '-' + self.prepend_zeros(0)
+        if act_label.count('-') > self.DEFAULT_LABEL_DELIMS:
+            label_list = act_label.split('-')
+            act_label = '-'.join(label_list[:(self.DEFAULT_LABEL_DELIMS+1)])
+        return act_label
 
-    def make_label_sortval(self, label):
+    def make_label_sortval(self, rawlabel):
         """ Make a sort value from a label """
+        rawlabel = unidecode(rawlabel)
+        rawlabel = str(rawlabel)
+        label = ''
+        i = 0
+        prev_type = False
+        if len(rawlabel) > 0:
+            # this section checks for changes between numbers and letters, adds a
+            # break if there's a change
+            while i < len(rawlabel):
+                act_char = rawlabel[i]
+                char_val = ord(act_char)
+                if char_val >= 49 and char_val <= 57:
+                    act_type = 'number'
+                elif char_val >= 65 and char_val <= 122:
+                    act_type = 'letter'
+                else:
+                    act_type = False
+                if act_type is not False and\
+                   prev_type is not False:
+                    if act_type != prev_type:
+                        # case where switching between number and letter
+                        # so add a seperator to make it a hierarchy
+                        act_char = '-' + act_char
+                label += act_char
+                prev_type = act_type
+                i += 1
+        else:
+            label = '0'
+        print('Sort label is: ' + label)
         try_roman = True
         label_parts = re.split(':|\ |\.|\,|\;|\-|\(|\)|\_|\[|\]|\/',
                                label)
@@ -221,40 +351,55 @@ class ManifestGeneration():
                         max_char_index = len(part)
                         continue_sort = True
                         char_index = 0
+                        part_sort = ''
                         part_sort_parts = []
                         num_char_found = False
                         while continue_sort:
-                            act_char = part[char_index]
-                            char_val = ord(act_char) - 48
-                            if char_val > 9:
-                                act_part_sort_part = self.sort_digits(char_val, 3)
+                            if char_index < len(part):
+                                act_char = part[char_index]
+                                char_val = ord(act_char) - 48
+                                if char_val > 9:
+                                    act_part_sort_part = self.sort_digits(char_val, 3)
+                                else:
+                                    num_char_found = True
+                                    act_part_sort_part = str(char_val)
+                                part_sort_parts.append(act_part_sort_part)
+                                part_sort = ''.join(part_sort_parts)
+                                char_index += 1
                             else:
-                                num_char_found = True
-                                act_part_sort_part = str(char_val)
-                            part_sort_parts.append(act_part_sort_part)
-                            part_sort = ''.join(part_sort_parts)
-                            char_index += 1
+                                continue_sort = False
                             if char_index >= max_char_index:
                                 continue_sort = False
-                        if len(part_sort) > 6 and num_char_found:
+                        if len(part_sort) > self.DEFAULT_LABEL_SORT_LEN and\
+                           num_char_found:
                             # print('Gotta split: ' + part_sort)
                             start_index = 0
                             max_index = len(part_sort)
                             while start_index < max_index:
-                                end_index = start_index + 6
+                                end_index = start_index + self.DEFAULT_LABEL_SORT_LEN
                                 if end_index > max_index:
                                     end_index = max_index
                                 new_part = part_sort[start_index:end_index]
                                 new_part = self.prepend_zeros(new_part)
                                 sorts.append(new_part)
                                 start_index = end_index
-                        elif len(part_sort) > 6 and num_char_found is False:
-                            part_sort = part_sort[:6]
+                        elif len(part_sort) > self.DEFAULT_LABEL_SORT_LEN and\
+                                num_char_found is False:
+                            part_sort = part_sort[:self.DEFAULT_LABEL_SORT_LEN]
                             sorts.append(part_sort)
                         else:
                             part_sort = self.prepend_zeros(part_sort)
                             sorts.append(part_sort)
-        return '-'.join(sorts)
+        final_sort = []
+        for sort_part in sorts:
+            if len(sort_part) > self.DEFAULT_LABEL_SORT_LEN:
+                sort_part = sort_part[:self.DEFAULT_LABEL_SORT_LEN]
+            elif len(sort_part) < self.DEFAULT_LABEL_SORT_LEN:
+                sort_part = self.prepend_zeros(sort_part, self.DEFAULT_LABEL_SORT_LEN)
+            final_sort.append(sort_part)
+        if len(final_sort) < 1:
+            final_sort.append(self.prepend_zeros(0, self.DEFAULT_LABEL_SORT_LEN))
+        return '-'.join(final_sort)
 
     def get_type_sort_val(self, item_type, class_uri=False):
         """ Gets the index number (sort) for a given item_type """
@@ -272,16 +417,21 @@ class ManifestGeneration():
             i += 1
         return output
 
-    def sort_digits(self, index, digit_length=6):
+    def sort_digits(self, index, digit_length=False):
         """ Makes a 3 digit sort friendly string from an index """
+        if digit_length is False:
+            digit_length = self.DEFAULT_LABEL_SORT_LEN
         if index >= pow(10, digit_length):
             index = pow(10, digit_length) - 1
         sort = str(index)
         sort = self.prepend_zeros(sort, digit_length)
         return sort
 
-    def prepend_zeros(self, sort, digit_length=6):
+    def prepend_zeros(self, sort, digit_length=False):
         """ prepends zeros if too short """
+        if digit_length is False:
+            digit_length = self.DEFAULT_LABEL_SORT_LEN
+        sort = str(sort)
         if len(sort) < digit_length:
             while len(sort) < digit_length:
                 sort = '0' + sort

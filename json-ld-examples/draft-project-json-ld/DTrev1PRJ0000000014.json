@@ -1,0 +1,170 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/DTrev1PRJ0000000014",
+    "uuid": "DTrev1PRJ0000000014",
+    "slug": "7-corneal-ulceration-in-south-east-asia",
+    "label": "Corneal Ulceration in South East Asia",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/DTrev1PRJ0000000014",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    78.1,
+                    9.55
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2006-07-11",
+    "description": "Epidemiology and Etiology of Corneal Ulcers in South India",
+    "dc-terms:abstract": "<strong>This dataset has been added as an experimental use of <em>Open Context</em> for public health data sharing applications</strong> <br/><br/>\r\n\r\nCorneal ulceration is a major cause of blindness in many parts of the world, but in South East Asia the WHO estimates that there are as many as 12 million blinding ulcers every year in a population of 1.6 billion. Now that we know the main causes of these ulcers it is possible to prevent the occurrence of most of them with simple, grass-roots, public health measures. The development of these public health programs were a result of findings of this corneal ulcer study in Madurai, India in 1994. \r\n<br/>\r\nSubsequent studies in Nepal, Bhutan, Myanmar (Burma), and other parts of India have confirmed the validity of this database.",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-1",
+            "slug": "oc-gen-edit-level-1",
+            "label": "Demonstration, Minimal editorial acceptance"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/nonPeerReviewed",
+            "slug": "bibo-status-nonpeerreviewed",
+            "label": "Non peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/DTrev1PER0000003284",
+            "slug": "7-mathuiah-srinivasan",
+            "label": "Mathuiah Srinivasan",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/DTrev1PER0000003283",
+            "slug": "7-john-p-whitcher",
+            "label": "John P. Whitcher",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/DTrev1PER0000003284",
+            "slug": "7-mathuiah-srinivasan",
+            "label": "Mathuiah Srinivasan",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/DTrev1PER0000003283",
+            "slug": "7-john-p-whitcher",
+            "label": "John P. Whitcher",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/1269750",
+            "slug": "geonames-1269750",
+            "label": "India"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85095071",
+            "slug": "loc-sh-sh85095071",
+            "label": "Ophthalmology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85108638",
+            "slug": "loc-sh-sh85108638",
+            "label": "Public health"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85029015",
+            "slug": "loc-sh-sh85029015",
+            "label": "Communicable diseases"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85037341",
+            "slug": "loc-sh-sh85037341",
+            "label": "Developing countries"
+        }
+    ],
+    "time": 0.07799983024597168
+}

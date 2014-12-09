@@ -1,13 +1,14 @@
 import hashlib
 from django.conf import settings
 from django.db import models
+from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.octypes.management import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.predicates.manage import PredicateManage
+from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
 
@@ -76,7 +77,7 @@ class PredicateTypeAssertions():
                                  .order_by('object_type')\
                                  .distinct('object_type')  # get distinct list of object_types
             for aitem in adistinct:  # list of assertions that are not using the good data type
-                pm = PredicateManage()
+                pm = PredicateManagement()
                 pm.source_id = pman.source_id
                 pm.project_uuid = pman.project_uuid
                 pm.sort = pred.sort
@@ -89,17 +90,13 @@ class PredicateTypeAssertions():
                 print('---- New predicates: ' + str(len(new_rel_predicates)))
                 for new_pred_uuid in new_rel_predicates:
                     print('New predicate: ' + str(new_pred_uuid))
-                    la = LinkAnnotation()
-                    la.subject = new_pred_uuid
-                    la.subject_type = 'predicates'
-                    la.project_uuid = pman.project_uuid
-                    la.source_id = pman.source_id
-                    la.predicate_uri = 'skos:related'
-                    la.object_uri = URImanagement.make_oc_uri(predicate_uuid, 'predicates')
-                    la.save()
+                    self.skos_relate_old_new_predicates(pman.project_uuid,
+                                                        pman.source_id,
+                                                        predicate_uuid,
+                                                        new_pred_uuid)
                 alist = Assertion.objects.filter(predicate_uuid=predicate_uuid).exclude(object_type=pdata_type)
                 for aitem in alist:  # list of assertions that are not using the good data type
-                    pm = PredicateManage()
+                    pm = PredicateManagement()
                     pm.source_id = pman.source_id
                     pm.project_uuid = pman.project_uuid
                     pm.sort = pred.sort
@@ -113,6 +110,28 @@ class PredicateTypeAssertions():
                         aitem.save()  # save the assertion with the new predicate
             else:
                 print('--OK Predicate--: ' + str(predicate_uuid))
+
+    def skos_relate_old_new_predicates(self,
+                                       project_uuid,
+                                       source_id,
+                                       predicate_uuid,
+                                       new_pred_uuid):
+        """ Makes a new Link Annotation to relate a new predicate_uuid with an
+            existing predicate
+        """
+        la = LinkAnnotation()
+        la.subject = new_pred_uuid
+        la.subject_type = 'predicates'
+        la.project_uuid = project_uuid
+        la.source_id = source_id
+        la.predicate_uri = 'skos:related'
+        la.object_uri = URImanagement.make_oc_uri(predicate_uuid, 'predicates')
+        try:
+            la.save()
+            output = True
+        except:
+            output = False
+        return output
 
     def fix_inconsistent_data_types(self, data_type):
         """ fixes all predicates of a certain data_type and separates

@@ -1,0 +1,175 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/HazorZooPRJ0000000010",
+    "uuid": "HazorZooPRJ0000000010",
+    "slug": "5-hazor-zooarchaeology",
+    "label": "Hazor: Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/HazorZooPRJ0000000010",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    35.5433,
+                    32.9792
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2006-05-12",
+    "description": "Zooarchaeological observations for Late Bronze Age and Iron Age Hazor, Israel",
+    "dc-terms:abstract": "<strong> The Hazor Excavations in memory of Yigael Yadin </strong><br/>\r\n<em> Zooarchaeological Analyses </em><br/>\r\n\r\nThis dataset represents the zooarchaeological identification and analysis conducted by Justin Lev-Tov as part of the <strong> The Hazor Excavations in memory of Yigael Yadin </strong>. The majority of the faunal remains come from Late Bronze Age and Iron Age contexts.<br/><br/>\r\n\r\nThese ongoing excavations are led and directed by Professor Amnon Ben-Tor of the Hebrew University of Jerusalem, Israel. The majority of the excavation staff as well as the director are affiliated with the Institute of Archaeology at Hebrew University.  <br/><br/>\r\n\r\nAdditional web resources:<br/>\r\n<a href=\"http://archaeology.huji.ac.il/depart/biblical/amnonb/amnonb.html\">Prof. Amnon Ben-Tors Website</a><br/>\r\n\r\n<a href=\"http://hazor.huji.ac.il/\">Hazor Excavation Website</a>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/HazorZooPER0000003276",
+            "slug": "5-justin-lev-tov",
+            "label": "Justin Lev-Tov",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/HazorZooPER0000003276",
+            "slug": "5-justin-lev-tov",
+            "label": "Justin Lev-Tov",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/6269133",
+            "slug": "geonames-6269133",
+            "label": "Middle East"
+        },
+        {
+            "id": "http://www.geonames.org/293365",
+            "slug": "geonames-293365",
+            "label": "Tel Hazor (ancient site)"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85046105",
+            "slug": "loc-sh-sh85046105",
+            "label": "Excavations (Archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85013580",
+            "slug": "loc-sh-sh85013580",
+            "label": "Bible--antiquities"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 0.08000016212463379
+}

@@ -1,0 +1,383 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+    "uuid": "4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+    "slug": "28-asian-stoneware-jars",
+    "label": "Asian Stoneware Jars",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            117.246094,
+                            8.135367
+                        ],
+                        [
+                            117.246094,
+                            43.715535
+                        ],
+                        [
+                            141.811523,
+                            43.715535
+                        ],
+                        [
+                            141.811523,
+                            8.135367
+                        ],
+                        [
+                            117.246094,
+                            8.135367
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    123.18110245454545,
+                    19.631695727272728
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            -122.946625,
+                            38.013747
+                        ],
+                        [
+                            -122.946625,
+                            49.936111
+                        ],
+                        [
+                            -6.322778,
+                            49.936111
+                        ],
+                        [
+                            -6.322778,
+                            38.013747
+                        ],
+                        [
+                            -122.946625,
+                            38.013747
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    -64.6347015,
+                    43.974929
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-3",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-3"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-3",
+                "coordinates": [
+                    [
+                        [
+                            97.965088,
+                            -33.300691
+                        ],
+                        [
+                            97.965088,
+                            19.373341
+                        ],
+                        [
+                            114.971924,
+                            19.373341
+                        ],
+                        [
+                            114.971924,
+                            -33.300691
+                        ],
+                        [
+                            97.965088,
+                            -33.300691
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-3",
+            "properties": {
+                "id": "#geo-derived-props-3",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-3",
+                "coordinates": [
+                    104.82049933333333,
+                    0.2748588333333331
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-4",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-4"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-4",
+                "coordinates": [
+                    [
+                        [
+                            -5.471191,
+                            -34.831841
+                        ],
+                        [
+                            -5.471191,
+                            -10.37166
+                        ],
+                        [
+                            57.86499,
+                            -10.37166
+                        ],
+                        [
+                            57.86499,
+                            -34.831841
+                        ],
+                        [
+                            -5.471191,
+                            -34.831841
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-4",
+            "properties": {
+                "id": "#geo-derived-props-4",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-4",
+                "coordinates": [
+                    25.568613625,
+                    -27.12293825
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-03-05",
+    "description": "Element composition of Asian Stoneware Jars from the 9th - 19th centuries CE",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>Asian production and trade in plain and decorated porcelain tablewares become increasingly prominent in the Asian and later international maritime economy from as early as the 9th century CE. One of the less well understood aspects of this trade was the production of large stoneware jars. This project seeks to elementally characterize a wide and diverse range of these jars using inductively coupled plasma optical emission spectrometry (ICP-OES) and neutron activation analysis (NAA), and proton-induced X-ray and γ-ray emission spectrometry (PIXE-PIGE) to better understand likely provenance as well as production dynamics over this period.</p>\n        \n        <p>Over twenty Asian and European wreck assemblages were sampled with the majority ranging in date from the fourteenth to the seventeenth century. The sample also includes a substantial sample from a National Museum of the Philippines and the University of Michigan collections of stoneware jars from Philippine burials as well as other terrestrial collections in the Southeast Asian region. The establishment of clear compositional groups provides a basis for assigning provenance and the postulation of seventeen discrete production zones ranging from southern China to Burma, but for which precise production locations remain largely unknown or unverified. In combination with typological information and chronological organization, these groups provide a valuable proxy for assessing changes in regional production strategies through the transition to the modern era.</p>\n\n        <p>ICP-OES, cross validated with NAA and PIXE-PIGE was used to generate a robust elemental dataset for this assemblage. This comprehensive database is designed to enable comparison and incorporation with ongoing analyses of archaeological stoneware samples from new archaeological excavations. The scale of this work is currently unsurpassed but nonetheless it must be considered as a preliminary attempt to develop a new perspective on the social, economic, and political dynamics of this time and region.</p>\n\n        <h5>Notes about Context and Geo-locations</h5>\n        <p>Individual vessels samples originally came from either terrestrial or ship-wreck sources. This project provides only general contextual information. For more specific information about the archaeological context of the objects sampled, please refer to documentation maintained by relevant museums.</p>\n        <p>Because of site security risks and other factors, all location information presented in this project is approximate. Indicated locations may be over 100 km. from their true positions.  Analytic uses of these location data should account for these inaccuracies. </p>\n\n        <h4>Related References</h4>\n        <div resource=\"http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA\">  \n<div id=\"pub-2013-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2013-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2013-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Grave, Peter, and  McNiven, Ian J.</p>\n                        <div>\n                            <div class=\"pub-date\">2013</div>\n                            <div class=\"ref-title-pub\">Geochemical provenience of 16th–19th century C.E. Asian ceramics from Torres Strait, northeast Australia.\n                            <span class=\"collection-title\">Journal of Archaeological Science</span> 40:12 Pages 4538–4551.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.1016/j.jas.2013.06.021\">DOI</a>]\n                    </div>\n                </div>\n            </div>  \n            <div id=\"pub-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2009-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2009-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Grave, Peter, and Maccheroni, Michael</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">Characterizing Asian Stoneware Jar Production at the Transition to the Early Modern Period, 1550-1650.\n                            <span class=\"collection-title\">Scientific research on historic Asian ceramics: proceedings of the Fourth Forbes Symposium at the Freer Gallery of Art</span>.\n                            edited by Blythe Ellen McCarthy, pp. 186-204. London, Archetype Publications in association with the Freer Gallery of Art, Smithsonian Institution.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/457193665\">WorldCat</a>]\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://www.une.edu.au/humanities/archpal/publications/CharacterisingAsianJars.PDF\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n        </div>\n        \n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7057CVH"
+        },
+        {
+            "id": "http://opencontext.org/projects/28-asian-stoneware-jars"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://en.wikipedia.org/wiki/Early_modern",
+            "slug": "wiki-early-modern",
+            "label": "Early modern period"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/F5803FF2-C57A-4D94-ED16-0F72FD9BCD84",
+            "slug": "28-peter-grave",
+            "label": "Peter Grave",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/F5803FF2-C57A-4D94-ED16-0F72FD9BCD84",
+            "slug": "28-peter-grave",
+            "label": "Peter Grave",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh97005966",
+            "slug": "loc-sh-sh97005966",
+            "label": "Inductively coupled plasma spectrometry"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85110592",
+            "slug": "loc-sh-sh85110592",
+            "label": "Neutron activation analysis"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85028901",
+            "slug": "loc-sh-sh85028901",
+            "label": "Commerce"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85128343",
+            "slug": "loc-sh-sh85128343",
+            "label": "Stoneware"
+        }
+    ],
+    "time": 3.3384058475494385
+}

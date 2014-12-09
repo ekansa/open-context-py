@@ -1,0 +1,30 @@
+<head>
+    <title>Import Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="../../static/oc/images/oc-favicon.ico">
+    <link rel="stylesheet" href="../../static/bootstrap/3.2.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../../static/angularjs/abn_tree.css">
+    <link rel="stylesheet" href="../../static/oc/general.css">
+    <link rel="stylesheet" href="../../static/oc/imports.css">
+    <script src="../../static/jquery/jquery-1.11.1.min.js"></script>
+    <script src="../../static/jquery/jquery.cookie.js"></script>
+    <script src="../../static/jquery/ui/jquery-ui.min.js"></script>
+    <script src="../../static/angularjs/angular.js"></script>
+    <script src="../../static/angularjs/angular-animate.js"></script>
+    <script src="../../static/angularjs/abn_tree_directive.js"></script>
+    <script src="../../static/bootstrap/3.2.0/js/bootstrap.js"></script>
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+        {% if ip %}
+        var source_id = '{{ ip.source_id }}';
+        var project_uuid = '{{ ip.project_uuid }}';
+        {% endif %}
+        {% if proj %}
+        var project_uuid = '{{ proj.uuid }}';
+        {% endif %}
+    </script>
+    <style type="text/css">
+        #fieldtabfields .ui-selecting { background: #FFFF99; }
+        #fieldtabfields .ui-selected { background: #FFFF66; }
+    </style>
+</head>

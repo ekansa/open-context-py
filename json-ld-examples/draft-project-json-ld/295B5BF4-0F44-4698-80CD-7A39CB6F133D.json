@@ -1,0 +1,918 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+    "uuid": "295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+    "slug": "21-rough-cilicia",
+    "label": "Rough Cilicia",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            32.41039508,
+                            36.4123183
+                        ],
+                        [
+                            32.41039508,
+                            36.42750482
+                        ],
+                        [
+                            32.43201038,
+                            36.42750482
+                        ],
+                        [
+                            32.43201038,
+                            36.4123183
+                        ],
+                        [
+                            32.41039508,
+                            36.4123183
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    32.413647416,
+                    36.4251895
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            32.59235023,
+                            36.187165
+                        ],
+                        [
+                            32.59235023,
+                            36.19066242
+                        ],
+                        [
+                            32.59299924,
+                            36.19066242
+                        ],
+                        [
+                            32.59299924,
+                            36.187165
+                        ],
+                        [
+                            32.59235023,
+                            36.187165
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    32.59269364428575,
+                    36.18838106
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-3",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-3"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-3",
+                "coordinates": [
+                    [
+                        [
+                            32.51663318,
+                            36.15574615
+                        ],
+                        [
+                            32.51663318,
+                            36.18116639
+                        ],
+                        [
+                            32.53139554,
+                            36.18116639
+                        ],
+                        [
+                            32.53139554,
+                            36.15574615
+                        ],
+                        [
+                            32.51663318,
+                            36.15574615
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-3",
+            "properties": {
+                "id": "#geo-derived-props-3",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-3",
+                "coordinates": [
+                    32.52320436131114,
+                    36.174299692444464
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-4",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-4"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-4",
+                "coordinates": [
+                    [
+                        [
+                            32.3307079,
+                            36.21947946
+                        ],
+                        [
+                            32.3307079,
+                            36.23610138
+                        ],
+                        [
+                            32.35963565,
+                            36.23610138
+                        ],
+                        [
+                            32.35963565,
+                            36.21947946
+                        ],
+                        [
+                            32.3307079,
+                            36.21947946
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-4",
+            "properties": {
+                "id": "#geo-derived-props-4",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-4",
+                "coordinates": [
+                    32.332704901137234,
+                    36.2346186047843
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-5",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-5"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-5",
+                "coordinates": [
+                    [
+                        [
+                            32.28438214,
+                            36.25900177
+                        ],
+                        [
+                            32.28438214,
+                            36.2996285
+                        ],
+                        [
+                            32.33115461,
+                            36.2996285
+                        ],
+                        [
+                            32.33115461,
+                            36.25900177
+                        ],
+                        [
+                            32.28438214,
+                            36.25900177
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-5",
+            "properties": {
+                "id": "#geo-derived-props-5",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-5",
+                "coordinates": [
+                    32.2864152485635,
+                    36.26101497543651
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-6",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-6"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-6",
+                "coordinates": [
+                    [
+                        [
+                            32.38167228,
+                            36.17206632
+                        ],
+                        [
+                            32.38167228,
+                            36.23125166
+                        ],
+                        [
+                            32.40818976,
+                            36.23125166
+                        ],
+                        [
+                            32.40818976,
+                            36.17206632
+                        ],
+                        [
+                            32.38167228,
+                            36.17206632
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-6",
+            "properties": {
+                "id": "#geo-derived-props-6",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-6",
+                "coordinates": [
+                    32.389036357357156,
+                    36.18342540724207
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-7",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-7"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-7",
+                "coordinates": [
+                    [
+                        [
+                            32.41537695,
+                            36.15337764
+                        ],
+                        [
+                            32.41537695,
+                            36.16944976
+                        ],
+                        [
+                            32.43093904,
+                            36.16944976
+                        ],
+                        [
+                            32.43093904,
+                            36.15337764
+                        ],
+                        [
+                            32.41537695,
+                            36.15337764
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-7",
+            "properties": {
+                "id": "#geo-derived-props-7",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-7",
+                "coordinates": [
+                    32.42221544244447,
+                    36.15643074604446
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-8",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-8"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-8",
+                "coordinates": [
+                    [
+                        [
+                            32.45317858,
+                            36.18892947
+                        ],
+                        [
+                            32.45317858,
+                            36.24028746
+                        ],
+                        [
+                            32.489841,
+                            36.24028746
+                        ],
+                        [
+                            32.489841,
+                            36.18892947
+                        ],
+                        [
+                            32.45317858,
+                            36.18892947
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-8",
+            "properties": {
+                "id": "#geo-derived-props-8",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-8",
+                "coordinates": [
+                    32.46338129667333,
+                    36.21614243040887
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-9",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-9"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-9",
+                "coordinates": [
+                    [
+                        [
+                            32.3749303,
+                            36.42258018
+                        ],
+                        [
+                            32.3749303,
+                            36.42437486
+                        ],
+                        [
+                            32.3766624,
+                            36.42437486
+                        ],
+                        [
+                            32.3766624,
+                            36.42258018
+                        ],
+                        [
+                            32.3749303,
+                            36.42258018
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-9",
+            "properties": {
+                "id": "#geo-derived-props-9",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-9",
+                "coordinates": [
+                    32.375751826999995,
+                    36.423474933
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-10",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-10"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-10",
+                "coordinates": [
+                    [
+                        [
+                            32.43266883,
+                            36.33089568
+                        ],
+                        [
+                            32.43266883,
+                            36.339140318
+                        ],
+                        [
+                            32.43293473,
+                            36.339140318
+                        ],
+                        [
+                            32.43293473,
+                            36.33089568
+                        ],
+                        [
+                            32.43266883,
+                            36.33089568
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-10",
+            "properties": {
+                "id": "#geo-derived-props-10",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-10",
+                "coordinates": [
+                    32.43276297685714,
+                    36.332178223999996
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-11",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-11"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-11",
+                "coordinates": [
+                    [
+                        [
+                            32.23677626,
+                            36.31980843
+                        ],
+                        [
+                            32.23677626,
+                            36.33895096
+                        ],
+                        [
+                            32.28214012,
+                            36.33895096
+                        ],
+                        [
+                            32.28214012,
+                            36.31980843
+                        ],
+                        [
+                            32.23677626,
+                            36.31980843
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-11",
+            "properties": {
+                "id": "#geo-derived-props-11",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-11",
+                "coordinates": [
+                    32.239774163164476,
+                    36.32165263546711
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-12",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-12"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-12",
+                "coordinates": [
+                    [
+                        [
+                            32.53824087,
+                            36.2591877
+                        ],
+                        [
+                            32.53824087,
+                            36.2596593
+                        ],
+                        [
+                            32.53874892,
+                            36.2596593
+                        ],
+                        [
+                            32.53874892,
+                            36.2591877
+                        ],
+                        [
+                            32.53824087,
+                            36.2591877
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-12",
+            "properties": {
+                "id": "#geo-derived-props-12",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-12",
+                "coordinates": [
+                    32.53850336777781,
+                    36.2593951322222
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-13",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-13"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-13",
+                "coordinates": [
+                    [
+                        [
+                            32.36847144,
+                            36.38820506
+                        ],
+                        [
+                            32.36847144,
+                            36.39066554
+                        ],
+                        [
+                            32.37634877,
+                            36.39066554
+                        ],
+                        [
+                            32.37634877,
+                            36.38820506
+                        ],
+                        [
+                            32.36847144,
+                            36.38820506
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-13",
+            "properties": {
+                "id": "#geo-derived-props-13",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-13",
+                "coordinates": [
+                    32.37289356830954,
+                    36.388992173130966
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2012-04-28",
+    "description": "Survey exploring Roman provincial acculturation through the lens of Rough Cilician material and cultural remains",
+    "dc-terms:abstract": "<div>\r\n    <p><em>Editor's Note: This project is released in a preliminary draft stage for demonstration purposes. Additional documentation and content is forthcomming.</em> [April 28, 2012]</p>\r\n    <p>The data represents a sub-sample of recorded architectural features, tombs or funerary monuments that have been investigated by the Rough Cilicia Archaeological Survey Project. Over 13 field seasons, the survey has assembled records for 231 funerary monuments or tombs at 26 discrete and named locations. These include a wide variety of tombs, including temple tombs, grabhaus or mausoleum tombs, mortar constructed, vaulted chambers, rock cut tombs, smaller Lycian-style house tombs, pedestals, altars, and stone carved ossuary boxes knows as larnaces or ostothekai. The purpose of the Rough Cilicia Archaeological Survey Project is to examine the process of Roman provincial acculturation through the lens of Rough Cilician material and cultural remains. Conceived as a regional survey in western Rough Cilicia (a mountainous coastal region along the south coast of modern Turkey, modern Antalya Province, Gazipasha District), the Rough Cilicia team has investigated some 300 km2 of archaeological terrain in thirteen seasons (1996-2011).</p> \r\n    \r\n    <p>The team has mapped and processed surface remains at approximately 150 \"loci\" (including 10 small urban sites) of past human activity. It has constructed plans for 12 selected built environments ranging from large urban settlements along the coast (Selinus, Iotape, Kestros, Antioch) to isolated farms in the hinterland.</p> \r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025419",
+            "slug": "loc-sh-sh85025419",
+            "label": "Chronology, Roman"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/11C2C2EE-6994-433C-D4C3-0AF5153AB801",
+            "slug": "21-nicholas-k-rauh",
+            "label": "Nicholas K. Rauh",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/11C2C2EE-6994-433C-D4C3-0AF5153AB801",
+            "slug": "21-nicholas-k-rauh",
+            "label": "Nicholas K. Rauh",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://pleiades.stoa.org/places/648600",
+            "slug": "pleiades-p-648600",
+            "label": "Cilicia"
+        },
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85115064",
+            "slug": "loc-sh-sh85115064",
+            "label": "Romans"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006504",
+            "slug": "loc-sh-sh85006504",
+            "label": "Archaeological surveying"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85000442",
+            "slug": "loc-sh-sh85000442",
+            "label": "Acculturation"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh90003660",
+            "slug": "loc-sh-sh90003660",
+            "label": "Pastoral systems"
+        }
+    ],
+    "time": 0.31200098991394043
+}

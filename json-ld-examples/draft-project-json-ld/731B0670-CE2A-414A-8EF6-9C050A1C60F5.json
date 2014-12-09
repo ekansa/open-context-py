@@ -1,0 +1,183 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5",
+    "uuid": "731B0670-CE2A-414A-8EF6-9C050A1C60F5",
+    "slug": "26-zooarchaeology-of-karain-cave-b",
+    "label": "Zooarchaeology of Karain Cave B",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    30.5708,
+                    37.077589
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-02-25",
+    "description": "Changes in hunter-gatherer lifestyles that may have led to sedentary agricultural economies in SW Anatolia",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>Karain (“Black Cave”) is located in the foothills of the Taurus Mountains, some 30 km northwest of Antalya and of Mediterranean coast in southwest Turkey. The site is a complex of several interconnected chambers (A-G currently known) that are located 450 m above the sea level and 150 m above the travertine plain. Karain Cave was discovered in 1947 by Turkish prehistorian Kılıç Kökten who conducted excavations in B chamber between 1955 and 1973. After Kökten, excavations at Karain B intermittently continued by different teams. First his successor Işın Yalçınkaya of Ankara University and a German team from Tübingen University excavated the cave between 1985 and 1988. Then, in 1996, a large interdisciplinary team restarted excavations that are still ongoing.</p>\n        <p>The sequence at Karain B includes both Holocene and Pleistocene strata. The Holocene component is divided into four geological horizons (GH): the Middle Ages, Roman Period, Iron and Bronze Ages, Chalcolithic, and Neolithic. Underlying deposits have yielded a Pleistocene component divided into three GHs: Epipaleolithic (PI.1 and PI.2), Upper Paleolithic (P.II), and Middle Paleolithic (P.III). This research includes faunal remains only from the Epipaleolithic strata PI.1 and PI.2. Radiometric range for the Epipaleolithic strata is from ca. 19,950 to 19,250 calibrated years BP. </p>\n        <p>The primary focus of the zooarchaeological research at Karain B was to examine a series of related topics such as: (1) Assemblage composition and characterization, (2) Changes in animal exploitation patterns and hunting strategies through time, (3) Mobility patterns, site function and inter-site variation, and (4) Periodicity in animal exploitation..</p>\n        \n        <h4>Methodology</h4>\n        \n        <p>The recording process involved two stages: </p>\n        <ol>\n            <li>General documentation of the entire assemblage for the purpose of assemblage characterization (e.g., degree of fragmentation, skeletal part representation, etc.). This level included every element, element portion, and nonidentified fragments and splinters recovered.\n            </li>\n            <li>Particular documentation of pre-determined attributes in relation to the particular questions that are being asked (e.g., kill-off patterns, seasonality, etc.). This level targeted selected elements and portions such as mandibles with teeth, loose mandibular teeth, pelvic acetabula, and all limb epiphyses.</li>\n        </ol>\n        \n        \n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>These data add to the increasing body of evidence for epipaleolithic subsistence in western Anatolia.</p>\n        \n        \n        <h4>Current Disposition of the Collections</h4>\n        \n        <p>The Karain B Cave specimens included in this data publication are housed in the storage facility of the Karain Cave Project Dig House near Yagca Village, Antalya, Turkey.</p>        \n\n\n        <h4>Related Publications</h4>\n        \n        <div resource=\"http://opencontext.org/subjects/E465CC5E-FE3E-493E-CBA6-CD655ABE5310\">    \n            <div id=\"pub-2011-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2011-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2011-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2011</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Before the Revolution: Epipaleolithic Subsistence in the Western Taurus</span>. British Archaeological Reports International Monograph Series 2251. Oxford: Archaeopress.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/753957180\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2011-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2011-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2011-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2011</div>\n                            <div class=\"ref-title-pub\">Epipaleolithic Archaeology in Turkey. <span class=\"collection-title\">Studies in Honour of Işın Yalçınkaya</span>, pp. 27-47. Kızılay, Ankara: Bilgin Kültür Sanat Yayınları, 2011.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/759991683\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2009-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2009-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">Implications of Age Structures for Epipaleolithic Hunting Strategies in the Western Taurus Mountains, Southwest Turkey. <span class=\"collection-title\">Anthropozoologica</span> 44(1):13-39.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.5252/az2009n1a1\">DOI</a>]\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/231772/Implications_of_Age_Structures_for_Epipaleolithic_Hunting_Strategies_in_the_Western_Taurus_Mountains_Southwest_Turkey\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2009-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2009-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2009-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">Specialization &amp; diversification: animal exploitation strategies in the terminal Pleistocene, Mediterranean Turkey. <span class=\"collection-title\">Before Farming</span> 2009/3 article 1.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                      [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/724457232\">WorldCat</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://www.waspress.co.uk/journals/beforefarming/journal_20093/abstracts/index.php\">Publisher Version</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/231775/Specialisation_and_diversification_animal_exploitation_strategies_in_the_terminal_Pleistocene_Mediterranean_Turkey\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n            \n            <div id=\"pub-2007-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2007-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-2007-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2007</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Before the revolution: a comprehensive zooarchaeological approach to terminal Pleistocene forager adaptations in the western Taurus Mountains, Turkey</span> Thesis (Ph. D.)--Harvard University, 2007.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                      [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/217277015\">WorldCat</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://proquest.umi.com/pqdweb?did=1354130461&amp;sid=1&amp;Fmt=2&amp;clientId=17675&amp;RQT=309&amp;VName=PQD\">ProQuest</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n        </div>    \n \n<div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n       \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7CC0XMT"
+        },
+        {
+            "id": "http://opencontext.org/projects/26-zooarchaeology-of-karain-cave-b"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85097106",
+            "slug": "loc-sh-sh85097106",
+            "label": "Paleolithic"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002005536",
+            "slug": "loc-sh-sh2002005536",
+            "label": "Pleistocene-Holocene boundary"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/76ACE7D8-D5B9-40BC-F848-E739DCFC4B58",
+            "slug": "26-levent-atici",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/76ACE7D8-D5B9-40BC-F848-E739DCFC4B58",
+            "slug": "26-levent-atici",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        },
+        {
+            "id": "http://www.geonames.org/298930",
+            "slug": "geonames-298930",
+            "label": "Taurus Mountains"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85063134",
+            "slug": "loc-sh-sh85063134",
+            "label": "Hunting and gathering societies"
+        },
+        {
+            "id": "http://eol.org/pages/2851411",
+            "slug": "eol-p-2851411",
+            "label": "Caprinae"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 0.07800006866455078
+}

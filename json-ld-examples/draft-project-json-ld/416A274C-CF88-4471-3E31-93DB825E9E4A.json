@@ -1,0 +1,216 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/416A274C-CF88-4471-3E31-93DB825E9E4A",
+    "uuid": "416A274C-CF88-4471-3E31-93DB825E9E4A",
+    "slug": "52-digital-index-of-north-american-archaeology-dinaa",
+    "label": "Digital Index of North American Archaeology (DINAA)",
+    "description": "Publication and integration of North American archaeological site file records",
+    "dc-terms:abstract": "",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:contributor": [
+        {
+            "id": "http://opencontext.org/persons/888860FE-6C4E-4340-8587-B2ACDA200E56",
+            "slug": "52-thaddeus-geoffrey-bissett",
+            "label": "Thaddeus Geoffrey Bissett",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/4250CEBE-56BC-4667-CA0E-0A67FA04F7D7",
+            "slug": "52-robert-carl-demuth",
+            "label": "Robert Carl DeMuth",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/057668A6-99B8-4B2E-B7A5-A5C20E7B1EC3",
+            "slug": "52-kelsey-noack-myers",
+            "label": "Kelsey Noack Myers",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/C1F04FDD-A829-4A04-F6B4-670AD6C580B0",
+            "slug": "24-sarah-whitcher-kansa",
+            "label": "Sarah Whitcher Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BA0DC9B3-7D8A-47C3-E179-8ED9B294D6D6",
+            "slug": "10-eric-c-kansa",
+            "label": "Eric C. Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BE40A767-B045-47F5-CA55-B196D758F98B",
+            "slug": "52-stephen-yerka",
+            "label": "Stephen Yerka",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/CE3E13CB-C7B6-4D61-55FE-BB0D52A8374A",
+            "slug": "52-david-g-anderson",
+            "label": "David G. Anderson",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/998F9030-2A57-4ECC-AA38-D8F236946510",
+            "slug": "52-joshua-wells",
+            "label": "Joshua Wells",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/C1F04FDD-A829-4A04-F6B4-670AD6C580B0",
+            "slug": "24-sarah-whitcher-kansa",
+            "label": "Sarah Whitcher Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BA0DC9B3-7D8A-47C3-E179-8ED9B294D6D6",
+            "slug": "10-eric-c-kansa",
+            "label": "Eric C. Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BE40A767-B045-47F5-CA55-B196D758F98B",
+            "slug": "52-stephen-yerka",
+            "label": "Stephen Yerka",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/CE3E13CB-C7B6-4D61-55FE-BB0D52A8374A",
+            "slug": "52-david-g-anderson",
+            "label": "David G. Anderson",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/998F9030-2A57-4ECC-AA38-D8F236946510",
+            "slug": "52-joshua-wells",
+            "label": "Joshua Wells",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:hasPart": [
+        {
+            "id": "http://opencontext.org/projects/4B5721E9-2BB3-423F-5D04-1B948FA65FAB",
+            "slug": "52-missouri-site-files",
+            "label": "Missouri Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49",
+            "slug": "52-georgia-archaeological-site-file-gasf",
+            "label": "Georgia Archaeological Site File (GASF)"
+        },
+        {
+            "id": "http://opencontext.org/projects/81204AF8-127C-4686-E9B0-1202C3A47959",
+            "slug": "52-florida-site-files",
+            "label": "Florida Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/8492AEC3-E406-44C6-03CA-2BF280D8F5B0",
+            "slug": "52-iowa-site-files",
+            "label": "Iowa Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452",
+            "slug": "52-illinois-site-files",
+            "label": "Illinois Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677",
+            "slug": "52-indiana-site-files",
+            "label": "Indiana Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7",
+            "slug": "52-kentucky-site-files",
+            "label": "Kentucky Site Files"
+        },
+        {
+            "id": "http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E",
+            "slug": "52-south-carolina-shpo",
+            "label": "South Carolina SHPO"
+        }
+    ],
+    "time": 0.09359979629516602
+}

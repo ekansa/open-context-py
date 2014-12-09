@@ -77,12 +77,22 @@
             <tbody>
                 {% for prop in obs.properties %}
                     <tr>
-                        <td class="col-sm-4"><a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a></td>
+                        <td class="col-sm-4">
+							{% if prop.varslug != False %}
+							<a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a>
+							{% else %}
+							{{ prop.varlabel }}
+							{%endif%}
+						</td>
                         <td class="col-sm-8">
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
                                 {% if prop.values.0.uri != False %}
+									{% if prop.values.0.item_type == 'predicates' %}
+									<a href="{% url 'predicates_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
+									{% else %}
                                     <a href="{% url 'types_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
+									{%endif%}
                                 {% else %}
 									{% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
                                 {%endif%}
@@ -91,7 +101,11 @@
                                 {% for propval in prop.values %}
                                 <li>
                                     {% if propval.uri != False %}
+                                    {% if propval.item_type == 'predicates' %}
+									<a href="{% url 'predicates_html' propval.uuid %}">{{ propval.val }}</a>
+									{% else %}
                                     <a href="{% url 'types_html' propval.uuid %}">{{ propval.val }}</a>
+									{%endif%}
                                     {% else %}
                                         {% autoescape off %}{{ propval.val }}{% endautoescape %}
                                     {%endif%}

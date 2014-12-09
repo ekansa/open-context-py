@@ -124,13 +124,10 @@
 
     <!-- slug_label is string for storing JSON encoded key value pairs of item slugs and labels {slug-key:label-value},
     useful for Join replaces with other fields.  -->
-    <field name="slug_label" type="string" indexed="true" stored="false" required="true" multiValued="false" />
+    <field name="slug_type_uri_label" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
-
-    <!-- project_uuid is required, identifies the project owning the solr doc with {slug-key:label-value} -->
-    <field name="project_slug" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
     <!-- table_id identifies a related downloadable table. not required. don't store, since only want facets of these -->
     <field name="table_id" type="string" indexed="true" stored="false" multiValued="true" />

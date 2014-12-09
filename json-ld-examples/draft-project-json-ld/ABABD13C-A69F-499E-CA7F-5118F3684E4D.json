@@ -1,0 +1,143 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/ABABD13C-A69F-499E-CA7F-5118F3684E4D",
+    "uuid": "ABABD13C-A69F-499E-CA7F-5118F3684E4D",
+    "slug": "39-ceramics-trade-provenience-and-geology-cyprus-in-the",
+    "label": "Ceramics, Trade, Provenience and Geology: Cyprus in the Late Bronze Age",
+    "dc-terms:published": "2013-09-21",
+    "description": "NAA data to firmly establish the geological provenience of Cypriot ceramics",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>During the Late Bronze Age (LBA: c. 1500-1200 BCE) the Eastern Mediterranean region underwent large scale economic and political changes (Oren, 2000, Sherratt, 1998). These transformations involved the elaboration of a metals-based economy supporting a dense and complex network that linked Europe, Africa, and Asia for the first time (Edens, 1992). In an environment where the palatial societies of the Hittites, Mycenaeans and Egyptians were major beneficiaries of this early maritime “World System,” Cyprus stands out as a key supplier (Knapp, 2008). The distribution of Cypriot “ox hide” copper ingots (both as artefacts and in representations) highlights the island’s importance in the operation of the wider metals-based exchange system (Budd, 1995, Gale, 1991). In addition to the exploitation of raw materials (i.e. precious minerals, ivory, wood), many other novel manufactured goods also circulated in the LBA economy (Keswani, 1993). With few exceptions, however, specific locations, or even general regions for the production of these goods remains uncertain. In this paper we combine new Neutron Activation Analyses (NAA) of both sediments and ceramics with a large legacy NAA dataset of Cypriot ceramics from the Lawrence Berkeley National Laboratories. These combined NAA datasets (available for download through Open Context) enable us to establish the geological origins of a wide range of Late Bronze Age Cypriot ceramics. We highlight the varying scales of resolution inherent in ceramic proveniencing of different clay sources and address the long standing issue of the provenience of a unique class of ritual ceramic, Red Lustrous Wheelmade ware (RLW). RLW was one of the most widely distributed elite items in the Eastern Mediterranean LBA trade whose provenience  has continued to be a source of conjecture (Eriksson, 2007). We identify the origin of RLW in a geologically highly localised and geochemically distinctive precinct in western Cyprus. This finding substantially alters our perspective on the level of geospatial organization of LBA Cypriot economies in relation to the production and exchange of elite goods around the eastern Mediterranean at this time.</p>\n        \n\n        <h4>Related References</h4>\n        <div resource=\"http://opencontext.org/projects/ABABD13C-A69F-499E-CA7F-5118F3684E4D\">    \n            <div id=\"pub-2011-1\" rel=\"dcterms:references\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2011-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource dcmitype:Dataset\" resource=\"#pub-2011-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Matthew Boulanger</p>\n                        <div>\n                            <div class=\"pub-date\">2011</div>\n                            <div class=\"ref-title-pub\">Cypriot Ceramics: Compositional and Descriptive Database.\n                            <span class=\"collection-title\">Lawrence Berkeley National Laboratory</span>. (tDAR ID: 372330); doi:10.6067/XCV8K35SJ5</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:isPartOf\" href=\"http://core.tdar.org/project/371571\">tDAR project record</a>]\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://core.tdar.org/dataset/372330\">tDAR dataset</a>]\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.6067/XCV8K35SJ5\">DOI</a>]\n                    </div>\n                </div>\n            </div>\n        </div>\n        \n        <h5>Acknowledgments</h5>\n        <p>This research was funded by the Australian Research Council (DP0558992) and the National Science Foundation (0401220). Support for replicate NAA was through the Australian Institute for Nuclear Science and Engineering (12060). We thank Dr. Pam Watson for her generous assistance with sediment collection, Dr. Eric Kansa for facilitating open access to the NAA datasets used in this study through Open Context, Kim Newman for drafting Fig 1 and Edward Rayner for Fig 2.</p>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M70V89RM"
+        },
+        {
+            "id": "http://opencontext.org/projects/39-ceramics-trade-provenience-and-geology-cyprus-in-the"
+        }
+    ],
+    "dc-terms:creator": [],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/146669",
+            "slug": "geonames-146669",
+            "label": "Republic of Cyprus"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85105729",
+            "slug": "loc-sh-sh85105729",
+            "label": "Pottery"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85088390",
+            "slug": "loc-sh-sh85088390",
+            "label": "Multivariate analysis"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85110592",
+            "slug": "loc-sh-sh85110592",
+            "label": "Neutron activation analysis"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2001001474",
+            "slug": "loc-sh-sh2001001474",
+            "label": "Art--Provenance"
+        }
+    ],
+    "time": 0.07800102233886719
+}

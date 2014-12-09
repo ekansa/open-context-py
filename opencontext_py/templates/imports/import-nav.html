@@ -1,0 +1,42 @@
+<div class="col-sm-7" style="text-align: right;">
+    <nav>
+        <ul class="pagination pagination pagination-sm">
+        {% if nav.prev_s.class == None %}
+            <li><a href="{{ nav.prev_s.url }}"><span aria-hidden="true">&laquo;</span></a></li>
+        {% else %}    
+            <li class="disabled"><span aria-hidden="true">&laquo;</span></li>
+        {% endif %}
+        
+        {% if nav.act_page == 'index' %}
+            <li class="active"><a href="#">Import Home</a></li>
+        {% else %}    
+            <li><a href="../../imports/">Import Home</a></li>
+        {% endif %}
+        
+        {% if nav.proj_nav.class == None %}
+            <li><a href="{{ nav.proj_nav.url }}">{{ nav.proj_nav.sublabel }}</a></li>
+        {% else %}    
+            <li class="{{ nav.proj_nav.class }}">
+                {% if nav.act_page != 'index' %}
+                <a href="#">{{ nav.proj_nav.sublabel }}</a>
+                {% else %}
+                <a href="#">{{ nav.proj_nav.label }}</a>
+                {% endif %}
+            </li>
+        {% endif %}
+        
+        {% for s_nav in nav.source_navs %}
+            {% if s_nav.class == None %}
+            <li><a href="{{ s_nav.url }}">{{ s_nav.label }}</a></li>
+        {% else %}    
+            <li class="{{ s_nav.class }}"><a href="#">{{ s_nav.label }}</a></li>
+        {% endif %}
+        {% endfor %}
+        {% if nav.next_s.class == None %}
+            <li><a href="{{ nav.next_s.url }}"><span aria-hidden="true">&raquo;</span></a></li>
+        {% else %}    
+            <li class="disabled"><span aria-hidden="true">&raquo;</span></li>
+        {% endif %}
+        </ul>
+    </nav>
+</div>

@@ -1,0 +1,217 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/CF6E1364-D6EF-4042-B726-82CFB73F7C9D",
+    "uuid": "CF6E1364-D6EF-4042-B726-82CFB73F7C9D",
+    "slug": "29-miktsqaq-angayuk-finds",
+    "label": "Mikt’sqaq Angayuk Finds",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/CF6E1364-D6EF-4042-B726-82CFB73F7C9D",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    -152.448703,
+                    57.72507
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-03-07",
+    "description": "Finds catalog from Mikt’sqaq Angayuk, an historic Alutiiq settlement of the early 19th century, Alaska",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>Mikt’sqaq Angayuk (KOD-014) was an historic Alutiiq settlement occupied by a small group of Native people in the early 19th century. The settlement, with sod houses and midden deposits, was likely home to Alutiiqs conscripted into service for the Russian American Company (RAC). Located on the eastern edge of Alaska’s Kodiak Island just outside the City of Kodiak, Mikt’sqaq Angayuk (“Little Friend”) was excavated in 2009 as part of the Alutiiq Museum and Archaeological Repository’s annual Community Archaeology program. The excavation was conducted with the aid of numerous community and visiting volunteers, and directed by Patrick Saltonstall (Alutiiq Museum), Mark Rusk (independent archaeologist), and Amy Margaris (Oberlin College). This project is part of the Alutiiq Museum’s (<a href=\"http://alutiiqmuseum.org/\">http://alutiiqmuseum.org/</a>) ongoing research to reconstruct Alutiiq subsistence patterns over several millennia and across the variety of environmental settings in Womens Bay. As a small, seasonal encampment that was probably established to provision the residents of Russia’s first colonial capital in Alaska (St. Paul Harbor, now the City of Kodiak), the site offers a unique perspective on Alutiiq life under Russian rule.</p>\n        \n        <p>Mikt’sqaq Angayuk was situated along the shore of Chiniak Bay, which provided access to an array of seasonal resources. The 2009 excavation focused on a single house structure and associated midden. Artifact and faunal finds, including an abundance of cod remains (family Gadidae) recovered from the midden, suggest this was a spring-time encampment occupied only briefly by a small number of individuals. The semi-subterranean house (ciqlluaq) structure was of typical 19th century Alutiiq construction, with a timber-supported thatched roof, rectangular main room and an attached sod-covered sideroom.  Adjacent to the house, excavators also uncovered a second, unattached room which could be affiliated with a neighboring residence. A midden was positioned between the house structure and nearby shoreline, and contained large quantities of fire-cracked rock along with a well-preserved faunal assemblage. A full faunal analysis is currently underway, conducted by Molly Odell (University of Washington). All matrix from the 1 x 1 meter square excavation units was excavated by hand and ½ inch screened. Finds from the floor of the structure were point provenienced; all other artifacts were bagged by square and level.</p>\n\n        <p>Our analysis of artifacts from Mikt’sqaq Angayuk is ongoing, but the remains clearly reflect 19th century Kodiak as a crossroads of Alutiiq and Russian cultures, as well as a destination for commodities shipped from Western Europe and China. Domestic goods recovered from the house and midden include ceramics of Russian, British, and Chinese origin, knapped bottle glass, lithic scrapers and abraders of traditional Alutiiq design, and a variety of metal cooking implements. Glass trade beads provide further evidence of long-distance trade ties, and the period of site occupation. Finally, birdshot and other hunting equipment, along with fishing and trapping gear such as iron fox trap prongs, suggest how Alutiiqs provisioned themselves onsite and the types of resources they obtained for transport to larger settlements.  </p>\n\n        <p>Here we present the full artifact catalog for the site’s historic (L1) component, representative artifact images, and site and house maps. Prehistoric artifact-bearing deposits into which the Mikt’sqaq Angayuk house was dug, and which underlie the midden’s historic component, likely date to the Kachemak tradition (roughly 3500-800 BP) and are not reported here. Pottery coding and descriptions are after Thompson (2002). </p>\n\n        <h4>Related Literature</h4>\n        <div resource=\"http://opencontext.org/subjects/CDBEEBB5-BE51-4933-5472-E0CE92A3F005\">    \n            <div id=\"pub-2002-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2002-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Report\" resource=\"#pub-20022-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Thompson, D.</p>\n                        <div>\n                            <div class=\"pub-date\">2002</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Archaeological Data Recovery at Baranof Castle State \nHistoric Site, Sitka, Alaska: Final Report of Investigations (ADOT&amp;PF Project No. 71817/TEA-000-3[43])</span>. OFFICE OF HISTORY AND ARCHAEOLOGY REPORT NUMBER 84. Division of Parks and Outdoor Recreation, Alaska Department of Natural Resources. Anchorage, Alaska.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://dnr.alaska.gov/parks/oha/castlehill/pdfdocuments/chapter0.pdf\">Report</a>]\n                    </div>\n                </div>\n            </div>\n        </div>\n        \n        <h5>Acknowledgements</h5>\n        <p>We thank the Open Context staff for creating this tremendous opportunity to broaden awareness of Alutiiq heritage among the public and scholarly communities. Alutiiq Museum staff, including Jill Lipka and Marnie Leist, offered valuable assistance with the Mikt’sqaq Angayuk collections and their analysis, and funding for this project was provided by a Grant-in-Aid to A. Margaris from the Oberlin College Office of Sponsored Programs. We offer special gratitude to Leisnoi, Inc., for permission to excavate the Mikt’sqaq Angayuk site, work with the recovered materials, and undertake new ways of learning and sharing research results. Leisnoi, Inc. retains ownership of the Mikt’sqaq Angayuk artifact collection; inquiries regarding appropriate use of images found on this website should be directed to the Alutiiq Museum at <a href=\"http://www.alutiiqmuseum.org\">http://www.alutiiqmuseum.org</a> or Phone: 907-486-7004. Please contact the Alutiiq Museum to obtain and use higher-resolution images.</p>\n\n\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7VD6WC7"
+        },
+        {
+            "id": "http://opencontext.org/projects/29-miktsqaq-angayuk-finds"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/795A3C09-0907-42B0-5B08-4347910CC6C5",
+            "slug": "29-amy-v-margaris",
+            "label": "Amy V. Margaris",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/2157254C-0A19-4F4C-382C-F717DCE1C799",
+            "slug": "29-fanny-ballantine-himberg",
+            "label": "Fanny Ballantine-Himberg",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/0D30035A-E164-499D-0D95-C04CDC41F340",
+            "slug": "29-mark-rusk",
+            "label": "Mark Rusk",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/59CBB779-A19F-4274-AAEF-4FA4FA995252",
+            "slug": "29-patrick-saltonstall",
+            "label": "Patrick Saltonstall",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/795A3C09-0907-42B0-5B08-4347910CC6C5",
+            "slug": "29-amy-v-margaris",
+            "label": "Amy V. Margaris",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/2157254C-0A19-4F4C-382C-F717DCE1C799",
+            "slug": "29-fanny-ballantine-himberg",
+            "label": "Fanny Ballantine-Himberg",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/0D30035A-E164-499D-0D95-C04CDC41F340",
+            "slug": "29-mark-rusk",
+            "label": "Mark Rusk",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/59CBB779-A19F-4274-AAEF-4FA4FA995252",
+            "slug": "29-patrick-saltonstall",
+            "label": "Patrick Saltonstall",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/5879092",
+            "slug": "geonames-5879092",
+            "label": "Alaska"
+        },
+        {
+            "id": "http://www.geonames.org/5866573",
+            "slug": "geonames-5866573",
+            "label": "Kodiak"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85071468",
+            "slug": "loc-sh-sh85071468",
+            "label": "Alutiiq Eskimos"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85028562",
+            "slug": "loc-sh-sh85028562",
+            "label": "Colonies"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85028901",
+            "slug": "loc-sh-sh85028901",
+            "label": "Commerce"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006513",
+            "slug": "loc-sh-sh85006513",
+            "label": "Archaeology and history"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002007889",
+            "slug": "loc-sh-sh2002007889",
+            "label": "Archaeological collections"
+        }
+    ],
+    "time": 0.09300494194030762
+}

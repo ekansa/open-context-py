@@ -77,11 +77,20 @@ class TemplateItem():
         """
         Adds observation objects if json_ld describes such
         """
+        if self.act_nav == 'types':
+            if self.observations is False:
+                self.observations = []
+            act_obs = Observation()
+            act_obs.obs_num = 1
+            act_obs.make_type_obs(json_ld)
+            if act_obs.properties is not False:
+                self.observations.append(act_obs)
         if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
             context = json_ld['@context']
-            self.observations = []
-            obs_num = 1
+            if self.observations is False:
+                self.observations = []
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+                obs_num = len(self.observations) + 1
                 act_obs = Observation()
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.obs_num = obs_num
@@ -99,7 +108,6 @@ class TemplateItem():
                    self.act_nav == 'projects'):
                     self.use_accordions = True
                 self.observations.append(act_obs)
-                obs_num += 1
             if len(self.linked_data.annotations) > 0:
                 # make a special observation for linked data annotations
                 act_obs = Observation()
@@ -122,6 +130,9 @@ class TemplateItem():
         """ Makes an instance of a project class, with data from the JSON_LD
         """
         proj = Project()
+        proj.item_type = self.act_nav
+        if proj.item_type == 'projects':
+            proj.uuid = self.uuid
         proj.make_project(json_ld)
         self.project = proj
 
@@ -177,7 +188,7 @@ class TemplateItem():
             if self.content is False:
                 self.content = {}
             self.content['main_text'] = json_ld['dc-terms:abstract']
-        elif 'description' in json_ld:
+        if 'description' in json_ld:
             # content for project descriptions
             if self.content is False:
                 self.content = {}
@@ -286,19 +297,20 @@ class Children():
         if(OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld):
             self.contype = 'Context'
             act_children = json_ld[OCitem.PREDICATES_OCGEN_HASCONTENTS]
-            self.id = act_children['id']
-            self.children = []
-            for child_item in act_children[OCitem.PREDICATES_OCGEN_CONTAINS]:
-                act_child = {}
-                act_child['uri'] = child_item['id']
-                act_child['label'] = child_item['label']
-                act_child['altlabel'] = None
-                act_child['linkslug'] = None
-                act_child['linklabel'] = None
-                act_child['type'] = ItemMetadata.get_item_type(child_item)
-                act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
-                act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
-                self.children.append(act_child)
+            if OCitem.PREDICATES_OCGEN_CONTAINS in act_children:
+                self.id = act_children['id']
+                self.children = []
+                for child_item in act_children[OCitem.PREDICATES_OCGEN_CONTAINS]:
+                    act_child = {}
+                    act_child['uri'] = child_item['id']
+                    act_child['label'] = child_item['label']
+                    act_child['altlabel'] = None
+                    act_child['linkslug'] = None
+                    act_child['linklabel'] = None
+                    act_child['type'] = ItemMetadata.get_item_type(child_item)
+                    act_child['uuid'] = URImanagement.get_uuid_from_oc_uri(child_item['id'])
+                    act_child = ItemMetadata.get_class_meta(act_child, class_type_metadata)
+                    self.children.append(act_child)
 
 
 class Observation():
@@ -326,6 +338,37 @@ class Observation():
         self.annotations = False
         self.class_type_metadata = False
         self.use_accordions = False
+
+    def make_type_obs(self, json_ld):
+        """ Makes an observation with some metadata
+            specifically for display of information related
+            to types
+        """
+        self.id = 'type-data'
+        self.source_id = 'project'
+        self.obs_status = 'active'
+        self.obs_type = 'contributor'
+        self.label = 'Description of this Category / Type'
+        if 'skos:related' in json_ld:
+            for rel_item in json_ld['skos:related']:
+                if 'oc-pred:' in rel_item['id']:
+                    if self.properties is False:
+                        self.properties = []
+                        act_prop = Property()
+                        act_prop.varlabel = 'Related Property'
+                        act_prop.varuri = False
+                        act_prop.varslug = False
+                        act_prop.vartype = False
+                        act_prop.values = []
+                        act_val = PropValue()
+                        act_val.vartype = 'id'
+                        act_val.item_type = 'predicates'
+                        act_val.uri = rel_item['owl:sameAs']
+                        act_val.id = rel_item['owl:sameAs']
+                        act_val.uuid = URImanagement.get_uuid_from_oc_uri(rel_item['owl:sameAs'])
+                        act_val.val = rel_item['label']
+                        act_prop.values.append(act_val)
+                        self.properties.append(act_prop)
 
     def make_linked_data_obs(self, annotations):
         """ Makes an observation with some metadata
@@ -355,6 +398,8 @@ class Observation():
                 self.label = 'Main Observation'
             else:
                 self.label = 'Obs (' + str(self.obs_num) + ')'
+        if self.source_id == 'http://arachne.dainst.org/data/search':
+            self.label = 'Arachne Comparanda'
         self.properties = self.make_properties(obs_dict)
         self.links = self.make_links(obs_dict)
         if self.properties is not False and self.links is not False:
@@ -527,16 +572,22 @@ class PropValue():
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.uri = val_item['id']
                     uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
-                    self.item_type = uri_item['item_type']
-                    self.uuid = uri_item['uuid']
+                    if uri_item is not False:
+                        self.item_type = uri_item['item_type']
+                        self.uuid = uri_item['uuid']
+                    else:
+                        self.item_type = 'external-resource'
+                        self.uuid = None
                 else:
                     self.id = val_item['id'].replace('#', '')
+            if 'type' in val_item:
+                self.type = val_item['type']
             if('label' in val_item):
                 self.val = val_item['label']
-            if('type' in val_item):
-                self.type = val_item['type']
             if 'oc-gen:thumbnail-uri' in val_item:
                 self.thumbnail = val_item['oc-gen:thumbnail-uri']
+                if self.item_type == 'external-resource':
+                    self.item_type = 'media'
             if('xsd:string' in val_item):
                 self.val = val_item['xsd:string']
         else:
@@ -556,6 +607,7 @@ class Project():
         self.slug = False
         self.label = False
         self.edit_status = False
+        self.item_type = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -573,6 +625,12 @@ class Project():
                             self.edit_status = project.edit_status
                         except ModProject.DoesNotExist:
                             project = False
+                        break
+            if self.item_type == 'projects' and 'bibo:status' in json_ld:
+                for bibo_status in json_ld['bibo:status']:
+                    if 'edit-level' in bibo_status['id']:
+                        # get the number at the end of edit-level
+                        self.edit_status = float(bibo_status['id'].split('-')[-1])
                         break
 
 
@@ -612,7 +670,10 @@ class Citation():
                         self.ark = s_item['id']
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
-            published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            if 'dc-terms:published' in json_ld:
+                published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            else:
+                published = datetime.datetime.now()
             if len(self.item_authors) > 0:
                 self.cite_authors = ', '.join(self.item_authors)
             else:
@@ -686,9 +747,9 @@ class LinkedData():
         output = False
         ld_found = self.make_linked_data_lists(json_ld)
         if ld_found:
+            # using an ordered dict to make sure we can more easily have unique combos of preds and objects
+            temp_annotations = LastUpdatedOrderedDict()
             if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
-                # using an ordered dict to make sure we can more easily have unique combos of preds and objects
-                temp_annotations = LastUpdatedOrderedDict()
                 for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                     for link_pred in self.linked_predicates:
                         if link_pred['subject'] in obs_item:
@@ -732,28 +793,28 @@ class LinkedData():
                                         # makes sure we've got unique value literals
                                         act_annotation['literals'].append(act_val)
                             temp_annotations[link_pred['id']] = act_annotation
-                if len(temp_annotations) > 0:
-                    output = True
-                    for pred_uri_key, act_annotation in temp_annotations.items():
-                        if len(act_annotation['literals']) < 1:
-                            act_annotation['literals'] = None
-                        if len(act_annotation['objects']) > 0:
-                            objects_list = []
-                            for obj_uri_key, act_obj in act_annotation['objects'].items():
-                                objects_list.append(act_obj)
-                            act_annotation['objects'] = objects_list
-                        if len(act_annotation['oc_objects']) > 0:
-                            oc_objects_list = []
-                            for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
-                                oc_objects_list.append(act_obj)
-                            act_annotation['oc_objects'] = oc_objects_list
-                        if len(act_annotation['objects']) < 1:
-                            if len(act_annotation['oc_objects']) < 1:
-                                act_annotation['objects'] = None
-                                act_annotation['oc_objects'] = None
-                            else:
-                                act_annotation['objects'] = act_annotation['oc_objects']
-                        self.annotations.append(act_annotation)
+            if len(temp_annotations) > 0:
+                output = True
+                for pred_uri_key, act_annotation in temp_annotations.items():
+                    if len(act_annotation['literals']) < 1:
+                        act_annotation['literals'] = None
+                    if len(act_annotation['objects']) > 0:
+                        objects_list = []
+                        for obj_uri_key, act_obj in act_annotation['objects'].items():
+                            objects_list.append(act_obj)
+                        act_annotation['objects'] = objects_list
+                    if len(act_annotation['oc_objects']) > 0:
+                        oc_objects_list = []
+                        for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
+                            oc_objects_list.append(act_obj)
+                        act_annotation['oc_objects'] = oc_objects_list
+                    if len(act_annotation['objects']) < 1:
+                        if len(act_annotation['oc_objects']) < 1:
+                            act_annotation['objects'] = None
+                            act_annotation['oc_objects'] = None
+                        else:
+                            act_annotation['objects'] = act_annotation['oc_objects']
+                    self.annotations.append(act_annotation)
         return output
 
     def make_linked_data_lists(self, json_ld):
@@ -770,7 +831,7 @@ class LinkedData():
                     if '@id' in ld_item:
                         subject_id = ld_item['@id']
                     elif 'id' in ld_item:
-                        subject_id = ld_item['@id']
+                        subject_id = ld_item['id']
                     else:
                         subject_id = False
                     if subject_id is not False:

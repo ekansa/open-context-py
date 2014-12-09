@@ -1,0 +1,252 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749",
+    "uuid": "A3CBADB6-6CD4-4099-9FE2-A33757EAB749",
+    "slug": "15-dove-mountain-groundstone",
+    "label": "Dove Mountain Groundstone",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            -111.0924,
+                            32.4733
+                        ],
+                        [
+                            -111.0924,
+                            32.4796
+                        ],
+                        [
+                            -111.0894,
+                            32.4796
+                        ],
+                        [
+                            -111.0894,
+                            32.4733
+                        ],
+                        [
+                            -111.0924,
+                            32.4733
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    -111.09073333333333,
+                    32.47643333333334
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            -111.0515,
+                            32.4824
+                        ],
+                        [
+                            -111.0515,
+                            32.4838
+                        ],
+                        [
+                            -111.0464,
+                            32.4838
+                        ],
+                        [
+                            -111.0464,
+                            32.4824
+                        ],
+                        [
+                            -111.0515,
+                            32.4824
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    -111.04816666666666,
+                    32.48316666666667
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-04-03",
+    "description": "Analysis of groundstone finds from the Dove Mountain Project in the Tucson Basin",
+    "dc-terms:abstract": "<p>The Dove Mountain project was conducted by <a href='http://www.desert.com/' title='Company Website'>Desert Archaeology, Inc.</a> during two seasons in 2001 and 2005. Deborah Swartz was Project Director and the editor of the published volume (Swartz 2008). The project area covers 87m2  in the upper bajada of the Tortolita Mountains, which form part of the northern boundary of the Tucson Basin. Drainages cross the area flowing from northeast to southwest, the largest of which are Ruelas, Wild Burro, and Cochie canyons. These canyons are narrow near the source and widen into broad, sandy washes as they leave the mountains and drain into the Santa Cruz River. All three canyons contain semipermanent water. Recorded springs are upstream from the sites in these three canyons.</p>\n<p> \nMost of the sites in the Dove Mountain parcel are situated along these three drainages, including all the current project sites. These sites lie near the juncture of the steep foothills with the more gradual bajada slopes. The foothills are covered with granite boulders associated with bedrock outcrops, and it is in these locations that petroglyphs were found. The remaining sites lie in the more gently sloping bajada areas on Pleistocene alluvial fans with well-entrenched washes below the fan surfaces. Elevations of the project sites range from 2,780 ft to 2,900 ft (847-884 m) above sea level (asl) in Wild Burro Canyon and from 3,420 ft to 3490 ft (1,042-1,064 m) asl in Ruelas Canyon.\nThis assemblage from the Dove Mountain sites is useful for assessing various theories about how bajada settlements fit into the regional settlement system of the Tucson Basin, as proposed in the project research design. One theory that has been proposed is that the bajada settlements were locations of limited activity related to seasonal resource procurement for more permanently inhabited settlements in the floodplain of the major Tucson Basin drainages (Roth 1995). A second theory is that these were permanent settlements, complete with all the activities that commonly occurred year-round. Ground stone assemblages recovered from limited-activity sites are expected to be much different from assemblages of continuous occupations. Differences in the assemblages are reflected in artifact design strategy, wear amounts, use strategies, and activity diversity.</p>\n<p>\nGround stone artifacts analyzed for this chapter were collected from six excavated sites: Atlatl Ridge, AZ AA:12:84 (ASM); Desert Tortoise, AZ AA:12:83 (ASM); Wild Burro Canyon, AZ AA:12:170 (ASM); Ruelas Canyon, AZ AA:12:785 (ASM); AZ AA:12:783 (ASM); and AZ AA:12:787 (ASM) (Appendix Table D.1). Atlatl Ridge was partially excavated in 1985 and 1987, with results published in 1995 (Roth 1995). During a testing phase of the Dove Mountain project, Atlatl Ridge was again partially excavated, in addition to Desert Tortoise, Wild Burro Canyon, and 13 other sites (Vint 2000). Ground stone items recovered during the testing phase are described elsewhere (Adams and Sliva 2000); however, those from the testing phase at Atlatl Ridge, Desert Tortoise, and Wild Burro Canyon are included here.</p>\n<p>\nAs a result of the Desert Archaeology excavations at Dove Mountain, there is now a clearer picture of ground stone technology development in the Tortolita bajadas, which contributes to a better understanding of the development of grinding technology in the greater Tucson Basin. The use of the bajadas was probably significantly more complex than previously realized, and the ground stone assemblage reflects this complexity.</p>\n\n<p><span style='text-decoration:underline;'>Publications:</span></p>\n\n<p>Adams, Jenny L.</p>\n    <div>\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\n        <div style='margin-right:2px;float:right;width:75%;'>\"Grinding Technology in the Tortolita Mountain Bajadas,\" pp. 307-342 in D. L. Swartz, ed., <em>Life in the Foothills: Archaeological Investigations in the Tortolita Mountains of Southern Arizona,</em> Anthropological Papers No. 46. Center for Desert Archaeology, Tucson.</div>\n        <div style='clear:both;width:90%;'></div>\n    </div>\n\n<p><br/></p>\n\n<p>Adams, Jenny L., and R. Jane Sliva</p>\n    <div>\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\n        <div style='margin-right:2px;float:right;width:75%;'>\"Artifact Analyses: Ground Stone and Flaked Stone,\" pp. 41-45 in J. H. Thiel and H. D. Wallace, eds., <em>Archaeological Investigations at a Portion of the Julian Wash Site, AZ BB:13:17 (ASM), Pima County, Arizona,</em> Technical Report No. 2005-02. Desert Archaeology, Inc., Tucson.</div>\n        <div style='clear:both;width:90%;'></div>\n    </div>\n\n<p><br/></p>\n\n<p>Roth, Barbara J.</p>\n    <div>\n        <div style='margin-right:5px;width:12%;float:left;'>1995</div>\n        <div style='margin-right:2px;float:right;width:75%;'>\"Late Archaic Occupation of the Upper Bajada: Excavations at AZ AA:12:84 (ASM), Tucson Basin,\" <em>Kiva</em> 61:189-207</div>\n        <div style='clear:both;width:90%;'></div>\n    </div>\n\n<p><br/></p>\n\n<p>Swartz, Deborah L., <span>(editor)</span></p>\n    <div>\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\n        <div style='margin-right:2px;float:right;width:75%;'><em>Life in the Foothills: Archaeological Investigations in the Tortolita Mountains of Southern Arizona,</em> Anthropological Papers No. 46. Center for Desert Archaeology, Tucson.</div>\n        <div style='clear:both;width:90%;'></div>\n    </div>\n    \n<p><br/></p>\n\n<p>Vint, James M.</p>\n    <div>\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\n        <div style='margin-right:2px;float:right;width:75%;'><em>Archaeological Testing at Sixteen Sites in the Southern Foothills of the Tortolita Mountains,</em> Technical Report No. 98-11. Desert Archaeology, Inc., Tucson.</div>\n        <div style='clear:both;width:90%;'></div>\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-4",
+            "slug": "oc-gen-edit-level-4",
+            "label": "Editorial board reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/C35EC624-27CE-42F9-9AF4-6017B00025E4",
+            "slug": "15-jenny-adams",
+            "label": "Jenny  Adams",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/C35EC624-27CE-42F9-9AF4-6017B00025E4",
+            "slug": "15-jenny-adams",
+            "label": "Jenny  Adams",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://en.wikipedia.org/wiki/Southwestern_United_States",
+            "slug": "wiki-southwestern-united-states",
+            "label": "Southwestern United States"
+        },
+        {
+            "id": "http://www.geonames.org/5551752",
+            "slug": "geonames-5551752",
+            "label": "Arizona"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85061402",
+            "slug": "loc-sh-sh85061402",
+            "label": "Hohokam culture"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        }
+    ],
+    "time": 5.352551221847534
+}

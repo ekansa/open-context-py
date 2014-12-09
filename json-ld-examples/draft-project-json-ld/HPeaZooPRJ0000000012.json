@@ -1,0 +1,173 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/HPeaZooPRJ0000000012",
+    "uuid": "HPeaZooPRJ0000000012",
+    "slug": "6-harvard-peabody-mus-zooarchaeology",
+    "label": "Harvard Peabody Mus. Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/HPeaZooPRJ0000000012",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    -71.115,
+                    42.378
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2006-05-15",
+    "description": "Harvard Peabody Museum Zooarchaeology Laboratory Reference Collection",
+    "dc-terms:abstract": "<strong>The Zooarchaeology Laboratory of the Peabody Museum of Archaeology and Ethnology, Harvard University</strong><br/><br/>\r\n\r\nThe Zooarchaeology Laboratory of the Peabody Museum of Archaeology and Ethnology, Harvard University, was established in 1981 in order to facilitate the analysis of faunal remains from archaeological sites (also called Archaeozoology). Presently covering more than 850 square feet (79 square meters) on the third floor of the museum, the laboratory provides working and storage space for students and researchers who carry out studies on animal bones and teeth from around the world. It is also a teaching facility that is used for an intensive course on osteoarchaeology that is taught every second year by the laboratory's director, Dr. Richard H. Meadow, who is also available to consult with students and researchers using the laboratory and to assist in designing appropriate research protocols, in identifying specimens, and in evaluating research results.\r\n<br/><br/>\r\nThe most important resources of the laboratory are its archaeological and modern comparative collections. The ancient faunal materials are part of the vast archaeological collections of the Peabody Museum and come from sites excavated over the years by museum staff and affiliates. Remains from New England, the American Southwest, Mesoamerica, Eastern Europe, the Middle East, and South Asia are particularly well represented. The Peabody Museum has a tradition reaching back into the 19th century of encouraging the recovery and ensuring the subsequent preservation and storage of archaeological faunal collections. The Zooarchaeology Laboratory provides the facilities necessary for the study of these collections.\r\n<br/><br/>\r\nAbsolutely essential to the success of any zooarchaeological endeavor is the availability of a comparative collection. The bones and teeth of modern animals of known species, age, and sex are compared to the archaeological faunal remains in order to permit identification and characterization of those remains. Since 1981 the Zooarchaeology Laboratory, through the efforts of research and curatorial assistants such as Tonya Largy and Peter Burns, has been engaged in establishing a collection of mammals, birds, and fish. Now numbering more than 1221 specimens, this collection is particularly strong in domestic species (especially sheep, goat, cattle and water buffalo) and in the wild fauna of New England. These materials supplement those housed in the Museum of Comparative Zoology (MCZ), a world-renowned collection that can also be used by students and researchers. The MCZ's collections from North America, Mesoamerica, and Asia are particularly noteworthy. The Zooarchaeology Laboratory also houses a working library of sourcebooks for comparative osteology as well as a large reprint file of articles dealing with faunal analysis.\r\n<br/><br/>\r\nAlso accessible to students and researchers who are interested in carrying out technical studies on faunal remains are facilities of the Department of Anthropology, Harvard University, including the Stone Age, Environmental Archaeology, GIS, and Specimen Preparation Laboratories.\r\n<br/><br/><br/>\r\n\r\n<strong>Address:</strong><br/>\r\nZooarchaeology Laboratory, Peabody Museum, Harvard University, 11 Divinity Avenue Cambridge, MA 02138, USA<br/><br/>\r\n<strong>Phone:</strong> 617 495-8317 <br/>\r\n<strong>Fax: </strong>617 495-7535 <br/>\r\n<strong>Email:</strong> <a href=\"mailto:zooarch@fas.harvard.edu\">zooarch@fas.harvard.edu</a><br/>\r\n<br/>\r\n<br/>\r\n\r\n<strong>Web Link</strong><br/>\r\n<a href=\"http://www.peabody.harvard.edu/zooarchaeology/index2.html\">Harvard Zooarchaeology Website</a>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-2",
+            "slug": "oc-gen-edit-level-2",
+            "label": "Minimal editorial acceptance"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/nonPeerReviewed",
+            "slug": "bibo-status-nonpeerreviewed",
+            "label": "Non peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/HPeaZooPER0000003281",
+            "slug": "6-richard-meadow",
+            "label": "Richard Meadow",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/HPeaZooPER0000003280",
+            "slug": "6-levent-atici-2",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/HPeaZooPER0000003281",
+            "slug": "6-richard-meadow",
+            "label": "Richard Meadow",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/HPeaZooPER0000003280",
+            "slug": "6-levent-atici-2",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002007889",
+            "slug": "loc-sh-sh2002007889",
+            "label": "Archaeological collections"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85149983",
+            "slug": "loc-sh-sh85149983",
+            "label": "Zoology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2007006623",
+            "slug": "loc-sh-sh2007006623",
+            "label": "Archaeological assemblages"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85015539",
+            "slug": "loc-sh-sh85015539",
+            "label": "Bones"
+        }
+    ],
+    "time": 0.09360003471374512
+}

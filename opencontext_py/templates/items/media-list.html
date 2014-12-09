@@ -4,7 +4,11 @@
     <div class="row media-list-row">
         {% for media in row %}
         <div class="col-xs-6 col-md-3 media-thumb">
-            <a class="thumbnail" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
+            {% if media.uuid == None %}   
+            <a target="_blank" class="thumbnail" title="{{ media.val }}" href="{{  media.uri }}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
+            {% else %}
+            <a class="thumbnail" title="{{ media.val }}" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>

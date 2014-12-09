@@ -1,0 +1,211 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F",
+    "uuid": "DF043419-F23B-41DA-7E4D-EE52AF22F92F",
+    "slug": "24-murlo",
+    "label": "Murlo",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            11.391043,
+                            43.14836024
+                        ],
+                        [
+                            11.391043,
+                            43.16873
+                        ],
+                        [
+                            11.42091502,
+                            43.16873
+                        ],
+                        [
+                            11.42091502,
+                            43.14836024
+                        ],
+                        [
+                            11.391043,
+                            43.14836024
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    11.402196204090501,
+                    43.15289728290115
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2012-07-06",
+    "description": "Poggio Civitate Excavation Project",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        \n        <p>Poggio Civitate first emerges as a major settlement in the late 8th century BCE. The hill is situated at the edge of Tuscany's metal rich Colline Metalifere and commands a view of the Ombrone river valley. The Colline Metalifere is a chain of hills stretching from the Ombrone Valley to the Tuscan coast that contains some of the Mediterranean's richest deposits of copper and iron ore, a fact that likely contributed to the site's emergence during the socially and economically dynamic Orientalizing and Archaic periods.</p>\n        \n        <h4>Phase 1: 675-600 BCE</h4>\n        \n        <p>Although some sporadic evidence suggests human occupation of Poggio Civitate at a point as early as the 10<sup>th</sup> or 9<sup>th</sup> centuries BCE, the first evidence of dramatic, monumental architectural development dates to the Orientalizing Period. Originally discovered in 1970, a structure now known as OC1/Residence served as an opulent residential structure for members of the site's social elite. In addition to an elaborate sculptural decorative program that adorned the building's tiled, terracotta roof, a number of materials recovered from the structure's floor point to the daily life of aristocrats of this period. Large volumes of cooking equipment, massive storage vessels, a banquet service of imported Greek and locally produced fine wares, bone, antler and ivory inlays that once decorated furniture, as well as numerous objects of personal ornamentation and everyday use were found on the building's floor. The Greek pottery found on the building's floor indicates that the building destruction by fire occurred around the end of the seventh century BCE. Other ceramic evidence, somewhat more controversial, suggests that the building may have been constructed some time in the second quarter of the seventh century BCE.</p>\n        \n        <p>In the early 1980s, excavation along the southeast flank of Piano del Tesoro revealed the presence of another building that was contemporary with OC1/Residence. This building stretched a remarkable 52 meters in length, considerably larger than the largest structures in the Greek world with which it was contemporary. Like OC1/Residence, this building also employed a tiled terracotta roof that was similarly decorated with akroteria and a sculpted lateral sima. However, in spite of the building's ornamentation, it clearly served as the site's primary area of industry. As a result, this structure is now known as OC2/Workshop.</p>\n        \n        <img src=\"http://artiraq.org/static/opencontext/poggio-civitate/full/overview/poggio-reconstruction.jpg\" alt=\"Reconstruction of Phase I structures at Poggio Civitate\"/>\n        \n        <p>The pavilion-style building housed numerous types of manufacturing, including bronze casting, bone and antler carving, terracotta manufacture, ceramics production, food processing and textile manufacture. This building is currently the earliest example of such a multifunctional workshop known in Central Italy. However, it is striking that given of the volume of materials this building produced, virtually nothing manufactured at Poggio Civitate has been found at other sites in the region. Instead, current evidence suggests the building was intended primarily to support the community of Poggio Civitate itself and perhaps the surrounding hinterland, with virtually all production being locally consumed.</p>\n        \n        <p>In 1996 through 1999, excavation immediately to the south of OC1/Residence revealed the presence of a third building of this complex - a large Tripartite building which is now called OC3/Tripartite. Although much of the building was destroyed in the subsequent building of the later phase of the site, enough of the floor plan was preserved to allow the reconstruction of a building with a large central cella flanked by two chambers precisely half the dimensions of the central room. Both the building's tripartite form and examples of luxurious inscribed vessels found resting on the floor of the central cella suggest this building may have been an early example of a temple, making it one of the earliest examples of monumental religious architecture in Italy known to date.</p>\n        \n        <p>All three of these buildings of this Orientalizing period complex were destroyed in a single fire that appears to have been accidental. While there can be little certainty on this point, it is remarkable that the day the building's burned down, workers in the Workshop were manufacturing roofing tiles and had placed several on the floor to dry in the shade of the roof. In the panic of the unexpected fire, workers fled and stepped on the drying clay, firing their footprints into the floor.</p>\n        \n        <h4>Phase 2: 600-535 BCE</h4>\n        \n        <p>In the aftermath of the conflagration that destroyed the 7<sup>th</sup> century complex, the survivors appear to have combed through the destruction to salvage anything of value.</p>\n        \n        <img src=\"http://artiraq.org/static/opencontext/poggio-civitate/full/overview/poggio-phase-2.jpg\" alt=\"Reconstruction of Phase II structures at Poggio Civitate\"/>\n        \n        <p>The debris of the earlier complex was scraped to level and flatten the plateau in preparation for the construction of a massive four-winged building enclosing central and southern courtyards. Each wing was 60m in length and a western defensive work extended that façade an additional 30m. Like the buildings of the earlier complex, this structure was also elaborately decorated with terracotta sculpture in the round that sat along the pitch of the roof. In addition, frieze plaques were nailed to exposed wooden beams, a sculpted lateral sima system ornamented the courtyard while gorgon antefixes decorated the building's perimeter.</p>\n        \n        <p>This remarkable building, far larger than any known in the Mediterranean for its time period, has been the subject of considerable debate. Speculation as to its function has lead to such theories suggesting it functioned as a political meeting hall, a religious sanctuary, a palazzo and even an Etruscan version of an agora. Currently, the excavators believe that the building combined the functions of the disparate structures of the earlier phase into a single edifice, dating to the early 6<sup>th</sup> century BCE.</p>\n        \n        <p>Perhaps the most enigmatic feature of the building involves its destruction. Based on the latest pottery from the site, some time shortly after the middle of the 6th century BCE, the building was dismantled. The statuary was removed from the roof and smashed, the fragments separated and then buried in pits around the perimeter of the building. The walls were knocked over and the site was never reoccupied from that point on.</p>\n        \n        <h4>Phase 3: Post 535 BCE</h4>\n        \n        <p>The socio-political community of this region was almost certainly not limited to Poggio Civitate itself. Limited evidence of occupation contemporary with both phases of development on Poggio Civitate are known from communities in the immediate vicinity of the hill. Vescovado di Murlo, Lupompesi, Murlo, Castelnouvo Tancredi and Montepescini all preserve indication communities contemporary with Poggio Civitate, although only limited archaeological exploration of these areas has been undertaken.</p>\n        \n        <p>Chamber tombs dating to the 4<sup>th</sup> to 3<sup>rd</sup> centuries were found in Vescovado di Murlo in 1960 and a ceramic kiln dating to approximately the middle of the 5<sup>th</sup> century BCE discovered during road construction in 1970. In 2006, excavators were given permission to further explore the area around the kiln. This worked revealed traces of domestic architecture contemporary with the kilns as well as sporadic evidence of an occupation horizon for this area contemporary with the at least the Archaic phase of occupation of Poggio Civitate.</p>\n        \n        <img src=\"http://artiraq.org/static/opencontext/poggio-civitate/full/overview/vescovado-di-murlo.jpg\" alt=\"Vescovado di Murlo excavations\"/>\n        \n        <p>This evidence suggests that not only did ancient occupation of the region continue after the final destruction of Poggio Civitate, but also that the monumental buildings of the site did not stand alone in isolation. They can rather be thought to have formed a nucleus of a broader community, with the elites of Poggio Civitate at the center of a dispersed population clustered around the hill.</p>\n        \n        <h4>Poggio Civitate Data in Open Context</h4>\n        \n        <p>The Poggio Civitate Excavation Project maintains a <a href=\"http://poggiocivitate.classics.umass.edu\" title=\"U-Mass Amherst Poggio Civitate Website\">rich database</a> referenced by researchers across the world. To augment this database and to enable greater interoperability, work began in the summer of 2012 to use Open Context as an additional data dissemination channel. The data published in Open Context currently focuses on the Poggio Civitate object catalog. Trench descriptions, locus descriptions, and excavation logs are forthcoming. In addition to reproducing the object catalog shared at the Poggio Civitate Excavation Project website, the catalog data published in Open Context includes additional descriptions using a controlled vocabulary, developed by Anthony Tuck, Teresa Huntsman, and Eric Kansa. The controlled vocabulary provides additional precision to querying the object catalog data. To promote greater semantic interoperability of these data, Eric Kansa then related terms in this controlled vocabulary to the <a href=\"http://collection.britishmuseum.org/\" title=\"British Museum Semantic Web Collection\">British Museum's Thesaurus</a>. </p>\n        \n        <p>In addition to augmenting the object catalog with a controlled vocabulary, the Poggio Civitate data in Open Context includes a comprehensive zooarchaeological dataset developed by Sarah Whitcher Kansa between 2011 and 2012. This zooarchaeological assemblage is the first such dataset aligned to the <a href=\"http://uberon.org/\" title=\"UBERON phenotype ontology\">UBERON</a> phenotype and anatomy ontology in Open Context. It is probably the first application of UBERON for any zooarchaeological dataset.</p>\n        \n        <p>This release of Poggio Civitate Excavation Project data in Open Context is still at a preliminary stage. Open Context does not yet provide all the information in the catalog database because data cleaning and modeling efforts have yet to be completed. Additional documentation and context descriptions are forthcoming as well, as are additional geo-spatial data and querying and visualization features.</p>\n        \n        <h5>Acknowledgements</h5>\n        \n        <p>Poggio Civitate Excavation Project data in Open Context is made possible through financial support of the Poggio Civitate Excavation Project, a <a href=\"http://www.acls.org/research/fellow.aspx?cid=0bd7685e-d76d-e111-bd9e-000c293a51f7\" title=\"More about the fellowship\">Digital Innovation Fellowship</a> from the American Council for Learned Societies, and a National Endowment for the Humanities <a href=\"http://www.neh.gov/divisions/odh/grant-news/announcing-7-digital-humanities-implementation-grant-awards-july-2012\" title=\"2012 NEH grant awards\">Digital Humanities Implementation Grant</a>.</p>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M77P8W98"
+        },
+        {
+            "id": "http://opencontext.org/projects/24-murlo"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/61D87033-881E-48B9-FF27-27337BBCDAA0",
+            "slug": "24-anthony-tuck",
+            "label": "Anthony Tuck",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/61D87033-881E-48B9-FF27-27337BBCDAA0",
+            "slug": "24-anthony-tuck",
+            "label": "Anthony Tuck",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85045470",
+            "slug": "loc-sh-sh85045470",
+            "label": "Civilization, Etruscan"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85062894",
+            "slug": "loc-sh-sh85062894",
+            "label": "Human settlements"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006611",
+            "slug": "loc-sh-sh85006611",
+            "label": "Architecture"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 1.5756030082702637
+}

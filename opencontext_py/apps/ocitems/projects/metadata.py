@@ -77,7 +77,7 @@ class ProjectMeta():
             if self.max_geo_range == 0:
                 # only 1 geopoint known for the project
                 lon_lat = [self.geo_range['longitude__min'],
-                           self.geo_range['longitude__max']]
+                           self.geo_range['latitude__max']]
                 clusts = {'centroids': [lon_lat],
                           'boxes': []}
             else:
@@ -91,6 +91,7 @@ class ProjectMeta():
         geo_objs = []
         if len(clusts['boxes']) == 0:
             # no bounding box polygons, just a simple point to add
+            print(str(clusts))
             geo_obj = self.make_geo_obj(1,
                                         clusts['centroids'][0][0],
                                         clusts['centroids'][0][1]
@@ -235,11 +236,13 @@ class ProjectMeta():
         overlap = False
         overlap_lon = False
         overlap_lat = False
-        if (min_lon >= ch_box['min_lon'] and min_lon <= ch_box['max_lon'])\
-           or (max_lon >= ch_box['min_lon'] and max_lon <= ch_box['max_lon']):
+        dist = self.get_point_distance(min_lon, min_lat, max_lon, max_lat)
+        blur = dist * .025
+        if (min_lon + blur >= ch_box['min_lon'] and min_lon - blur <= ch_box['max_lon'])\
+           or (max_lon + blur >= ch_box['min_lon'] and max_lon - blur <= ch_box['max_lon']):
             overlap_lon = True
-        if (min_lat >= ch_box['min_lat'] and min_lat <= ch_box['max_lat'])\
-           or (max_lat >= ch_box['min_lat'] and max_lat <= ch_box['max_lat']):
+        if (min_lat + blur >= ch_box['min_lat'] and min_lat - blur <= ch_box['max_lat'])\
+           or (max_lat + blur >= ch_box['min_lat'] and max_lat - blur <= ch_box['max_lat']):
             overlap_lat = True
         if overlap_lon and overlap_lat:
             overlap = True

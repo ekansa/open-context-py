@@ -1,0 +1,136 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/0404C6DC-A467-421E-47B8-D68F7090FBCC",
+    "uuid": "0404C6DC-A467-421E-47B8-D68F7090FBCC",
+    "slug": "40-osteometric-database-of-south-american-camelids",
+    "label": "Osteometric Database of South American Camelids",
+    "dc-terms:published": "2013-10-16",
+    "description": "Osteometric measurements on South American camelids",
+    "dc-terms:abstract": "<div>\n        <h4>Introduction [<em>Versión en castellano <a href=\"#es\">más abajo</a></em>]</h4>\n        <p>At the First Academic Meeting of ICAZ Neotropical Zooarchaeology Working Group (Santiago de Chile, June 2012), a proposal was issued that the Working Group implements an open-access database of osteometric measurements on South American camelids that can in turn be properly cited, considering that most publications do not allow for raw data such as these to be fully detailed for extent restrictions. This database allows access to osteometric data that at present are informally circulating or that are scattered in a range of different publications, and even some that would be published for the first time here. It will include not only modern specimens, but also archaeological and palaeontological ones. </p>\n\n        <h4>Citation and Credit:</h4> \n        <p>Open Context values the importance of recognition and credit in data publishing. There are several ways that data authors can be clearly credited for their contributions. Each record will have clear authorship indicated. In addition, each contributed dataset making up the larger camelid database will be made available as an individually citable resource.</p>\n        <ol>\n            <li>\n            The entire <em>Osteometric Database of South American Camelids</em> project will be published as a citable resource. All data contributors will be listed as co-authors on the project. As the project grows, so will the list of co-authors (updates to the citation will be made biannually).</li>\n            \n            <li>\n            The <em>Osteometric Database of South American Camelids</em> project will be subject to strict version control. Version control allows this resource to be citable while still enabling revisions to accommodate new data and corrections of errors. While we expect the database to expand, all versions of the database will be archived and available for researchers to retrieve prior versions of data. Thus, researchers following a citation to these data can retrieve the dataset as it existed at an earlier time, before later additions or changes were introduced.</li>\n            \n            <li>Each individual specimen in the <em>Osteometric Database of South American Camelids</em> project has a citation, which is provided on the \"item view\" page. This provides a way for users of the system to cite a specific specimen. The person who contributed the individual specimen is cited as the author of that individual specimen.</li>\n            \n            <li>Data authors have the option of publishing a subset of their data as a component of the <em>Osteometric Database of South American Camelids</em>, or they can publish interoperable data as separate projects in Open Context. Researchers should consider publishing separate projects if they want to disseminate findings that go beyond the scope of the <em>Osteometric Database of South American Camelids</em> (as would be the case with zooarchaeological observations that document speciment other than camelids). Separate projects will be published as other \"data publications\" with their own citations. To promote interoperability, Open Context editors will work with authors of separate projects to make relevant camelid measurements compatible with the expectations of the <em>Osteometric Database of South American Camelids</em> project.</li>\n        </ol>\n\n        <h4>How to Submit Data:</h4> \n        <p>Those interested in submitting data to the <em>Osteometric Database of South American Camelids</em> project can use the Excel template that will soon be available on this page. This spreadsheet will include all the required fields for inclusion in the project. However, you may include additional fields if your specimens contain additional data you would like to share. You will be able to enter your data and send the spreadsheet by email to any of the database Editors (<a href=\"mailto:mmondini@filo.uba.ar\">Mariana Mondini</a>, <a href=\"mailto: amunoz@filo.uba.ar\"> A. Sebastián Muñoz </a>, <a href=\"mailto:pfernand@retina.ar\">Pablo M. Fernández</a>, or <a href=\"mailto:skansa@alexandriaarchive.org\">Sarah Whitcher Kansa</a>.)</p> \n        \n\n        <h4>What Kinds of Data Can I Submit?</h4>\n        <p>You may submit any data for which you are the author, previously published or unpublished.</p>\n\n        <h4>Can I Submit Data Later?</h4>\n        <p>The <em>Osteometric Database of South American Camelids</em> project is ongoing. You may submit data at any time and it will be added to the next version of the database. Updates will occur twice a year in the beginning, in April and October, and then yearly in October. We realize that some people do not have data in digital format. We are currently working on this issue by seeking funding opportunities and volunteers to help digitize and upload this valuable information.</p>\n\n\n        <h5>Acknowledgements</h5>\n        <p>We thank the Open Context staff for providing all of us with this amazing opportunity to share the so-far sparse osteometric data on South American camelids. An open access database to house and link a significant amount of metric data on these native herbivores is an invaluable tool. Also, we express very special thanks to all contributors; this is a collective effort, and the database can only become significant with their involvement. Last but not least, we thank the International Council for Archaeozoology (ICAZ) for supporting the Neotropical Zooarchaeology Working Group (NZWG).</p> \n        \n        \n        <br/>\n        <br/>\n        <!-- Spanish version -->\n        <h4 id=\"es\">Introducción</h4>\n        \n        <blockquote>\n            <p>Conjunto de datos métricos de huesos de camélidos sudamericanos reunidos en una base de datos colectivamente construida</p>\n        </blockquote>\n        \n        <p>En la Primer Reunión Académica del Grupo de Trabajo de Zooarqueología Neotropical (NZWG) del ICAZ (Santiago de Chile, Junio 2012), se lanzó la propuesta de que el NZWG implementase una base de datos de medidas osteométricas de camélidos sudamericanos, de acceso libre y que pudiera ser adecuadamente citada, teniendo en cuenta que la mayoría de las publicaciones no permiten incluir datos crudos como estos en todo su detalle por razones de espacio. Este proyecto busca permitir el acceso a datos osteométricos que actualmente están circulando informalmente o que están dispersos en un abanico de diferentes publicaciones, e incluso algunos que serían publicados por primera vez aquí. La Base de Datos contempla no sólo especímenes modernos, sino también arqueológicos y paleontológicos. </p>\n\n        <h4>Citación y acreditación:</h4> \n        <p>Open Context valora la importancia del reconocimiento y acreditación en la publicación de datos. Hay diversas maneras en que las contribuciones a la Base de Datos Osteométricos de Camélidos Sudamericanos podrán ser claramente acreditadas a los autores de los datos. Cada registro tendrá una autoría claramente indicada. Además, cada conjunto de datos aportado a la Base de Datos estará disponible como un recurso citable individualmente.</p>\n        <ol>\n            <li>\n            La Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em> completa será publicada como un recurso citable. Todos los aportantes de datos serán indicados como co-autores del mismo. A medida que el proyecto crezca, también crecerá la lista de co-autores (se realizarán dos actualizaciones por año del mismo).</li>\n            \n            <li>\n            El proyecto de la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em> estará sujeto a un estricto control de versiones. El control de versiones permite que el recurso sea citable a la vez que admite revisiones para proveer nuevos datos y la corrección de errores. Esperamos que la Base de Datos se vaya expandiendo con el tiempo, pero de todos modos todas las versiones serán archivadas y estarán disponibles para que los investigadores puedan recuperar estados previos de los datos. Por lo tanto, los investigadores que sigan una referencia a esos datos pueden recuperarlos tal como existían en un momento previo, antes de ulteriores adiciones o cambios.</li>\n            \n            <li>Cada espécimen individual incorporado a la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em> tendrá una referencia citable, provista en la página \"vista del ítem\" (\"item view\"). Esto brinda una manera en que los usuarios del sistema pueden citar un espécimen específico.  La persona que aportó la información del espécimen es citada como autora del registro de ese espécimen particular. </li>\n            \n            <li>Los autores de los datos tienen la opción de publicar un subconjunto de sus datos como un componente de la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em>, o bien pueden publicar datos inter-operables como un proyecto/s aparte en Open Context. Los investigadores cuentan con la posibilidad de publicar sus propios proyectos si quieren difundir datos que trascienden el alcance de la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em> (por ejemplo en el caso de observaciones zooarqueológicas que documentan especímenes que no son sólo de camélidos). Los proyectos individuales serán publicados en forma separada, como otra \"publicación de datos\" con su propia referencia citable. Para promover la inter-operabilidad, los editores de Open Context trabajarán con los autores de estos proyectos individuales para hacer que las medidas relevantes sean compatibles con la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em>.</li>\n        </ol>\n\n        <h4>Cómo publicar datos:</h4> \n        <p>Aquellos interesados en enviar datos para la Base de <em>Datos Osteométricos de Camélidos Sudamericanos</em> pueden usar una planilla de Excel que pronto estará disponible en esta página. Esta hoja de cálculo incluirá todos los campos requeridos para la inclusión de los datos en la Base. De todos modos también se podrán agregar otros campos si los autores quieren aportar información adicional sobre los especímenes. Los autores podrán ingresar sus datos y enviar la hoja de cálculo por correo electrónico a cualquier de los Editores de la Base de Datos (<a href=\"mailto:mmondini@filo.uba.ar\">Mariana Mondini</a>, <a href=\"mailto: amunoz@filo.uba.ar\"> A. Sebastián Muñoz </a>, <a href=\"mailto:pfernand@retina.ar\">Pablo M. Fernández</a>, o <a href=\"mailto:skansa@alexandriaarchive.org\">Sarah Whitcher Kansa</a>.)</p> \n        \n\n        <h4>Qué tipos de datos pueden enviarse:</h4>\n        <p>Puede enviarse cualquier dato de los que usted sea el autor, esté o no previamente publicado. </p>\n        \n        \n        <h4>¿Pueden enviarse datos más adelante?:</h4>\n        <p>La Base de Datos Osteométricos de Camélidos Sudamericanos es un proyecto en curso. Los autores pueden aportar datos en cualquier momento y serán agregados en la próxima versión de la Base de Datos. Las actualizaciones se harán en un comienzo dos veces al año, en Abril y Octubre, y más adelante anualmente en Octubre. Sabemos que muchos investigadores no tienen sus datos osteométricos en formato digital, y actualmente estamos trabajando en el tema, buscando financiamiento y voluntarios para ayudar a digitalizar y poder cargar esta valiosa información en la Base de Datos. </p>\n\n\n        <h5>Agradecimientos</h5>\n        <p>Estamos muy agradecidos al personal de Open Context por proporcionarnos esta maravillosa oportunidad de compartir los hasta ahora dispersos datos osteométricos sobre los camélidos sudamericanos. Una base de datos de acceso libre que albergue y relacione una cantidad significativa de datos métricos sobre estos herbívoros autóctonos es una herramienta sumamente valiosa. También estamos especialmente agradecidos a todos los autores que participan en el proyecto. Este es un esfuerzo colectivo, y la base de datos sólo podrá volverse significativa con su aporte. Asimismo estamos muy agradecidos al International Council for Archaeozoology (ICAZ) por su apoyo al Neotropical Zooarchaeology Working Group (NZWG).</p>\n        \n        \n        \n        \n        \n        \n        \n        <h5>Image Credit</h5>\n        <p class=\"muted\">\n        Credit for this project's illustrative image \n        <a href=\"http://en.wikipedia.org/wiki/File:Guanaco_09.24.jpg\">Wikipedia</a>\n        (Public Domain)\n        </p>\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/C1F04FDD-A829-4A04-F6B4-670AD6C580B0",
+            "slug": "24-sarah-whitcher-kansa",
+            "label": "Sarah Whitcher Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/C1F04FDD-A829-4A04-F6B4-670AD6C580B0",
+            "slug": "24-sarah-whitcher-kansa",
+            "label": "Sarah Whitcher Kansa",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/6255150",
+            "slug": "geonames-6255150",
+            "label": "South America"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85019112",
+            "slug": "loc-sh-sh85019112",
+            "label": "Camelidae"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006517",
+            "slug": "loc-sh-sh85006517",
+            "label": "Archaeometry"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2010014388",
+            "slug": "loc-sh-sh2010014388",
+            "label": "Data integration (Computer science)"
+        }
+    ],
+    "time": 0.09359979629516602
+}

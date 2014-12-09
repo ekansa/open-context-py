@@ -7,9 +7,16 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate
 
 
 class AssertionSorting():
-    """ Class for managing data_types for predicates, make sure consistency in data types
-        used for predicates across manifest, predicate, and assertions tables
+    """ Class for managing sorting for asseritions based on rankings of types
+    and manifest entities.
     """
+    TYPES_SORT_BY_MANIFEST = ['documents',
+                              'media',
+                              'subjects']
+
+    def __init__(self):
+        self.problems = []
+
     def sort_ranked_types_for_project(self, project_uuid):
         """Changes sort order for assertions with ranked types in a project """
         act_preds = self.get_preds_with_ranked_types(project_uuid)
@@ -61,4 +68,93 @@ class AssertionSorting():
         for r_type in ranked_types:
             if r_type.predicate_uuid not in act_preds:
                 act_preds.append(r_type.predicate_uuid)
+        return act_preds
+
+    def sort_ranked_manifest_for_all(self):
+        """Changes sort order for assertions with ranked manifiest items in ALL projects """
+        projs = Manifest.objects\
+                        .filter(item_type='projects')\
+                        .values_list('uuid', flat=True)
+        for project_uuid in projs:
+            print('\n\n\n Working on project: ' + project_uuid)
+            self.sort_ranked_manifest_for_project(project_uuid)
+
+    def sort_ranked_manifest_for_project(self, project_uuid):
+        """Changes sort order for assertions with ranked manifiest items in a project """
+        act_preds = self.get_preds_with_ranked_manifest_objs(project_uuid)
+        for predicate_uuid in act_preds:
+            print('Working on predicate: ' + predicate_uuid)
+            self.re_rank_manifest_assertions_by_predicate(predicate_uuid,
+                                                          project_uuid)
+
+    def re_rank_manifest_assertions_by_predicate(self,
+                                                 predicate_uuid,
+                                                 project_uuid):
+        """ Reranks objects of assertions made using a given
+        predicate for a given project by the order in the manifest
+        table
+        """
+        change_count = 0
+        act_subjects = Assertion.objects\
+                                .values_list('uuid', flat=True)\
+                                .filter(project_uuid=project_uuid,
+                                        predicate_uuid=predicate_uuid)\
+                                .distinct('uuid')\
+                                .iterator()
+        for uuid in act_subjects:
+            print('Work - predicate: ' + predicate_uuid + ' - subject: ' + uuid)
+            # get all assertions for this subject uuid and predicate_uuid
+            presort_assertions = Assertion.objects\
+                                          .filter(uuid=uuid,
+                                                  predicate_uuid=predicate_uuid,
+                                                  object_type__in=self.TYPES_SORT_BY_MANIFEST)\
+                                          .order_by('sort')
+            # make a list of objects to request from the manifest tab
+            act_objects = []
+            start_sort = False
+            for pre_ass in presort_assertions:
+                if start_sort is False:
+                    start_sort = round(pre_ass.sort, 0)
+                act_objects.append(pre_ass.object_uuid)
+            # get sorted list of objects from the manifest tab
+            sorted_objects = Manifest.objects\
+                                     .values_list('uuid', flat=True)\
+                                     .filter(uuid__in=act_objects)\
+                                     .order_by('sort')
+            # make a dictionary object for easy lookups of manifest sort rank
+            manifest_rank = 0
+            manifest_sort = {}
+            for sorted_manifest_uuid in sorted_objects:
+                manifest_rank += 1
+                manifest_sort[sorted_manifest_uuid] = manifest_rank
+            # iterate through assertions to save sort order
+            for act_ass in presort_assertions:
+                if act_ass.object_uuid in manifest_sort:
+                    manifest_rank = manifest_sort[act_ass.object_uuid]
+                else:
+                    self.problems.append({'Error': 'Missing object',
+                                          'uuid': uuid,
+                                          'predicate_uuid': predicate_uuid,
+                                          'object_uuid': act_ass.object_uuid,
+                                          'object_type': act_ass.object_type})
+                    manifest_rank = len(manifest_sort) + 1
+                act_ass.sort = float(start_sort) + (manifest_rank / 1000)
+                act_ass.sort_save()
+                change_count += 1
+        print('Predicate: ' + predicate_uuid
+              + ', assertions changed:'
+              + str(change_count))
+
+    def get_preds_with_ranked_manifest_objs(self, project_uuid):
+        """ Gets list of predicate_uuids used in a project
+        from the assertions table where the predicates have objects
+        of types that get sorted by the manifest
+        """
+
+        act_preds = Assertion.objects\
+                             .values_list('predicate_uuid', flat=True)\
+                             .filter(project_uuid=project_uuid,
+                                     object_type__in=self.TYPES_SORT_BY_MANIFEST)\
+                             .distinct('predicate_uuid')\
+                             .order_by('predicate_uuid')
         return act_preds

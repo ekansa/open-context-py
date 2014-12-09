@@ -1,0 +1,267 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+    "uuid": "3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+    "slug": "13-san-diego-archaeological-center",
+    "label": "San Diego Archaeological Center",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            -117.238,
+                            32.6812
+                        ],
+                        [
+                            -117.238,
+                            32.7508
+                        ],
+                        [
+                            -117.113,
+                            32.7508
+                        ],
+                        [
+                            -117.113,
+                            32.6812
+                        ],
+                        [
+                            -117.238,
+                            32.6812
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    -117.15666666666668,
+                    32.70885555555555
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            -118.506775,
+                            32.930895
+                        ],
+                        [
+                            -118.506775,
+                            33.321431
+                        ],
+                        [
+                            -117.005,
+                            33.321431
+                        ],
+                        [
+                            -117.005,
+                            32.930895
+                        ],
+                        [
+                            -118.506775,
+                            32.930895
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    -117.35896442857143,
+                    33.168794142857145
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-02-01",
+    "description": "Collections maintained by the San Diego Archaeological Center",
+    "dc-terms:abstract": "<p>The San Diego Archaeological Center (SDAC) is a nationally recognized leader in the curation of archaeological collections, curating collections for the Department of Defense, City of San Diego and private parties. The Center accepts for accession archaeological collections to preserve in perpetuity for the benefit of the public. The Center is dedicated to making the collections available to the public as a cultural resource through educational programming and exhibits, research projects, tours, volunteer opportunities, student internships and cultural use.</p>\r\n<br/>\r\n<p>This sample of SDAC collections published in Open Context represents only a portion of the overall collections managed by the SDAC.</p>\r\n<br/>\r\n<p>For more information, please visit the <a href='http://www.sandiegoarchaeology.org/'>SDAC Website</a>.</p>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/B6F0FCF3-5EAA-40E3-05C0-0F69DE0FB4F5",
+            "slug": "13-san-diego-archaeological-center-3",
+            "label": "San Diego Archaeological Center",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/B6F0FCF3-5EAA-40E3-05C0-0F69DE0FB4F5",
+            "slug": "13-san-diego-archaeological-center-3",
+            "label": "San Diego Archaeological Center",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/5391811",
+            "slug": "geonames-5391811",
+            "label": "San Diego"
+        },
+        {
+            "id": "http://www.geonames.org/5332921",
+            "slug": "geonames-5332921",
+            "label": "California"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006513",
+            "slug": "loc-sh-sh85006513",
+            "label": "Archaeology and history"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/California_history",
+            "slug": "wiki-california-history",
+            "label": "California History"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh99005758",
+            "slug": "loc-sh-sh99005758",
+            "label": "Education"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85116926",
+            "slug": "loc-sh-sh85116926",
+            "label": "Salvage archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002007889",
+            "slug": "loc-sh-sh2002007889",
+            "label": "Archaeological collections"
+        }
+    ],
+    "time": 4.322009086608887
+}

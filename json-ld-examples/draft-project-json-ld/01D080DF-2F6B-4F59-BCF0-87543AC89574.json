@@ -1,0 +1,207 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574",
+    "uuid": "01D080DF-2F6B-4F59-BCF0-87543AC89574",
+    "slug": "20-dhiban-excavation-and-development-project",
+    "label": "Dhiban Excavation and Development Project",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    35.7833,
+                    31.5
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2011-08-05",
+    "description": "Archaeology of an Early Bronze through Islamic settlement south of Amman, Jordan",
+    "dc-terms:abstract": "<h3>Introduction</h3> \r\n    <p>The Dhiban Excavation and Development Project (DEDP) investigates the archaeology, environment, and history of Dhiban, a Middle Eastern town located today in west-central Jordan. Dhiban has been settled intermittently over the past five millennia and is today the largest town on the Dhiban Plateau.  Started in 2004, the DEDP is a collaborative project involving scholars from Europe, the Middle East, and North America, and is directed by Katherine Adelsberger (Knox College), Danielle S. Fatkin (Knox College), Benjamin W. Porter (University of California, Berkeley), and Bruce Routledge (University of Liverpool).</p>\r\n\r\n<p>A durable and persistent attachment to place is readily observed at Dhiban, located approximately 70 kilometers south of 'Amman, Jordan's capital city. Over the last five millennia, Dhiban has seen repeated attempts to organize large sedentary populations in unique configurations, only to see these efforts languish after only a few centuries. Physical evidence for these trials are found throughout Dhiban's vicinity, but are most concentrated in a 15-hectare tall adjacent to the modern settlement. Here, physical evidence from the Early Bronze Age, the Iron Age, the Nabataean, Roman, Byzantine, and Islamic settlements can be recovered using archaeological research methods.</p>\r\n\r\n<p>\r\nThe Dhiban Excavation and Development Project's research design reflects its multi-disciplinary concerns that span history, geology, anthropology, tourism studies, and the materials sciences. The following five goals currently shape the project's research design. More information can be found in the DEDP's publications.</p>\r\n\r\n<h3>Determining the size, date, and nature of Dhiban's various settlement episodes</h3>\r\n\r\n<p>\r\nAn important goal of any archaeological project is to define the size, location, and nature of each settlement episode. This goal is particularly challenging at Dhiban, where most evidence is found in stratified contexts. The careful excavation of particular kinds of organic evidence allows the DEDP to date each settlement episode using radiocarbon dating techniques. The DEDP is also determining the size and nature of each settlement episode using surface survey and excavation of randomly selected units.</p>\r\n\r\n<h3>Documenting landscape use in Dhiban's vicinity</h3>\r\n\r\n<p>\r\nWhile its position on the King's Highway in part explains why this location witnessed repeated settlement, Dhiban is barely suitable for large-scale human habitation. No natural springs are found at Dhiban and the area receives less than 300 millimeters of precipitation per year, making rain-fed agricultural production risky and successful water storage a necessity. Why, despite these adverse conditions, did Middle Easterners return--and indeed, continue to return--to this place is an intriguing question that drives us to explore Dhiban's ancient and modern communities.</p>\r\n\r\n<h3>Reconstructing agricultural, pastoralist, and craft economies</h3>\r\n\r\n<p>\r\nA number of agricultural, pastoral, and craft industries were organized at Dhiban over the past five millennia. Sheep and goat, wheat and barley, commonly produced products in Near Eastern societies, were popular at Dhiban, as were other niche industries. Excavations indicate that the various communities consumed ceramic, stone, metal, and glass objects, some of which were likely produced at or near the settlement. Paleoethnobotanical (i.e., the study of ancient carbonized seeds), zooarchaeological (i.e., the study of ancient animal remains), and materials scientific analytical techniques help piece together how these industries were organized, what resources were used, and how they changed over time.</p>\r\n\r\n<h3>Measuring the impacts of imperial interventions</h3>\r\n\r\n<p>\r\nLike the rest of the Levant, Dhiban fell under the sway of different empires throughout its history. Written sources and archaeological evidence suggest that at least seven empires were present at Dhiban, from the Assyrian, Roman, and Byzantine to the Ummayad, Mamluk, Ottoman, and finally, the British Empires. The effects these empires had on Dhiban's society and economy, however, differed depending on a number of factors. In some instances, empires introduced new economic demands that led to an increase in Dhiban's population and the intensification of its industries. Just how these processes unfolded at the local level demand careful investigation, making it a key concern for the DEDP.</p>\r\n\r\n<h3>Understanding the contemporary community's relationship with ancient Dhiban</h3>\r\n\r\n<p>\r\nSitting south of Tall Dhiban is a thriving Jordan community mainly consisting of families from the Bani Hamida tribe, one of the largest tribes in the kingdom. The community was founded during the British Mandate Period (1918-1948) by nomadic pastoralists. Given the ancient site's proximity to the current town, the two spaces are intertwined in a number of interesting relationships. The site is still used as a park for children and picnickers, and grazing ground for pastoralists living near the site. The DEDP is exploring how the site is used as well as the narratives that circulate about ancient Dhiban.</p>\r\n\r\n<h3>Planning Dhiban's development as an interpretive site and tourism destination</h3>\r\n\r\n<p>\r\nDhiban's abundant archaeological resources and its position on a well travelled tourism route, the King's Highway, makes it an ideal destination where guests can learn about Jordan's cultural history as well as how a community with limited natural resources has persisted for the last five millennia. Plans are underway to develop ancient Dhiban's archaeological resources.</p>\r\n\r\n\r\n<h3><strong>Acknowledgements</strong></h3>\r\n<p>The project wishes to thank the Jordanian Department of Antiquities, particularly its director, Dr. Ziad al-Sa’ad, the American Center of Oriental Research in 'Amman, and the Council for British Research in the Levant.  A complete list of project sponsors is listed here:</p>\r\n\r\n\r\n\r\n<h3><span style='text-decoration:underline;'>Bibliography:</span></h3>\r\n\r\n<p>Fatkin, Danielle Steen, Benjamin W. Porter, Katherine Adelsberger, Bruce Routledge, Alan Farahani, and Warren Schultz</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Dhiban Excavation and Development Project's 2009 season\" <em>Annual of the Department of Antiquities, Jordan</em>.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n<p>Fatkin, Danielle Steen, Katherine Adelsberger, Alan Farahani, Alysia Fischer, Sarah Whitcher Kansa, Justin Lev-Tov, Colleen Morgan, Benjamin W. Porter, Bruce Routledge, and Andrew T. Wilson</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Digging deeper: Technical reports from the Dhiban Excavation and Development Project (2004-2009)\" <em>Annual of the Department of Antiquities, Jordan</em>.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Routledge, Bruce </p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Water management in the Mesha Inscription and in Moab.\" <em>Journal of Near Eastern Studies</em>.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Routledge, Bruce </p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"State formation on the edges of Empire: The case of Iron Age Moab.\" in L. Tramontini, C. Maier and W. Sommerfeld editors, <em>Staatenbildung und Staatenzerfall im Nahen und Mittleren Osten in Antike und Moderne</em>. Wiesbaden: Harrasowitz.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Routledge, Bruce, Benjamin W. Porter, Danielle S. Fatkin, Katherine Adelsberger, and Andrew Wilson</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"A Centre in the Periphery: Recent Research on Middle Islamic Dhiban.\" <em>Proceedings of the 7th International Congress on the Archaeology of the Ancient Near East.</em>. Wiesbaden: Harrassowitz Verlag.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Routledge, Bruce, Danielle S. Fatkin, Benjamin W. Porter, Katherine Adelsberger, and Andrew Wilson</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Long-term settlement change at Tall Dhiban.\" <em>Studies in the History and Archaeology of Jordan XI.</em>. 'Amman: Department of Antiquities of Jordan.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Pearson, Jeffrey, Colleen Morgan, Alan Farahani, Antonietti Catanzariti, and Benjamin Porter</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>In press</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Dhiban Excavation and Development Project: Contributions from Berkeley archaeologists.\" <em>Journal of Associated Graduates in Near Eastern Studies.</em></div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Adelsberger, Katherine A., Bruce Routledge, Benjamin W. Porter, Danielle S. Fatkin and Andrew Wilson</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Identification of Occupational Contexts at Tall Dhiban, Jordan.\" <em>Geological Society of America Abstracts with Programs.</em> 42(7): 153.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin, Bruce Routledge, Danielle Fatkin, William Zimmerle, John Hakes, Johanna Salvant, and Warren Schultz</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Dhiban Excavation and Development Project's 2005 Season.\" <em>Annual of the Department of Antiquities, Jordan.</em></div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Dry dig: Ethics and alcohol in Middle Eastern archaeological practice.\" <em>Society for American Archaeology’s Archaeological Record</em> 10(5): 7-11. Link: <a href='http://escholarship.org/uc/item/37w0t9kr'>http://escholarship.org/uc/item/37w0t9kr</a></div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Locating Middle Islamic Dhiban on the Mamluk imperial periphery.\" <em>Fondation Max van Berchem Bulletin</em> 24: 5-7. Link: <a href='http://escholarship.org/uc/item/61c6k3qj'>http://escholarship.org/uc/item/61c6k3qj</a></div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin, Bruce Routledge, Danielle Fatkin, William Zimmerle, John Hakes, Johanna Salvant, and Warren Schultz</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Dhiban Excavation and Development Project's 2005 Season.\" <em>Annual of the Department of Antiquities, Jordan</em>.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Fatkin, Danielle, Jennifer Jacobs, Benjamin Porter, and Bruce Routledge</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Exploring heritage discourses in Central Jordan.\" Pp. 159-177 in R. Boytner, L. S. Dodd, and B. Parker, editors. <em>Controlling the past, owning the future: The political uses of archaeology in the Middle East</em>. Tucson: University of Arizona Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Jacobs, Jennifer, and Benjamin Porter</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2009</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Excavating turaath: Documenting local and national heritage discourses in Jordan.\" Pp. 71-88 in L. Mortenson and J. Hollowell, editors. <em>Ethnographies and Archaeologies: Iterations of the Past</em>. University Press of of Florida.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin and Robert J. Speakman</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Reading Moabite pigments with Laser Ablation ICP-MS: A New Archaeometric Technique for Near Eastern Archaeology.\" <em>Near Eastern Archaeology</em>. 71(4): 238-242.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin, Bruce Routledge, Danielle Steen, and Firas al-Kawamlha</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2007</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The power of place: The Dhiban community through the ages.\" Pp. 315-322 in T. Levy, P. M. Daviau, R. Younker and M. Shaer editors <em>Crossing Jordan: North American Contributions to the Archaeology of Jordan</em>. London: Equinox.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin, Bruce Routledge, Danielle Steen, Carla Parslow, Lidewijde DeJong, and William Zimmerle</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2005</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tall Dhiban 2004 pilot season: Prospection, preservation, and planning.\" <em>Annual of the Department of Antiquities of Jordan</em> 49: 201-216. Link: <a href='http://escholarship.org/uc/item/2t1020jf'>http://escholarship.org/uc/item/2t1020jf</a></div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n\r\n\r\n<p>Porter, Benjamin, Bruce Routledge, and Danielle Steen</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2005</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tall Dhiban.\" <em>American Journal of Archaeology</em> 109(3): 542-544.</div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2005</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tall Dhiban.\" <em>Munjazat</em> 28-29.</div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2004</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Prospection, preservation and planning at Dhiban.\" <em>Munjazat</em> 26-27.</div>\r\n    </div>\r\n    <div style='clear:both;width:90%;'></div>\r\n    \r\n<p><br/></p>\r\n\r\n\r\n<p>Routledge, Bruce E.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2004</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Moab in the Iron Age: Hegemony, Polity, Archaeology</em> Philadelphia: University of Pennsylvania Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/Nabataeans",
+            "slug": "wiki-nabataeans",
+            "label": "Nabateans"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025419",
+            "slug": "loc-sh-sh85025419",
+            "label": "Chronology, Roman"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025408",
+            "slug": "loc-sh-sh85025408",
+            "label": "Chronology, Byzantine"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025414",
+            "slug": "loc-sh-sh85025414",
+            "label": "Islamic Chronology"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/FC1D53D3-2EB8-4607-2721-7997F14788DD",
+            "slug": "16-benjamin-porter-1",
+            "label": "Benjamin Porter",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/5D416B52-3E2B-48F2-B29C-B142A4EBF3C2",
+            "slug": "16-bruce-routledge-1",
+            "label": "Bruce Routledge",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/FC1D53D3-2EB8-4607-2721-7997F14788DD",
+            "slug": "16-benjamin-porter-1",
+            "label": "Benjamin Porter",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/5D416B52-3E2B-48F2-B29C-B142A4EBF3C2",
+            "slug": "16-bruce-routledge-1",
+            "label": "Bruce Routledge",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/248816",
+            "slug": "geonames-248816",
+            "label": "Jordan"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85054037",
+            "slug": "loc-sh-sh85054037",
+            "label": "Geology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005581",
+            "slug": "loc-sh-sh85005581",
+            "label": "Anthropology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85136255",
+            "slug": "loc-sh-sh85136255",
+            "label": "Tourism"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85061212",
+            "slug": "loc-sh-sh85061212",
+            "label": "History"
+        }
+    ],
+    "time": 0.09800601005554199
+}

@@ -1,0 +1,210 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D",
+    "uuid": "B1DAC335-4DC6-4A57-622E-75BF28BA598D",
+    "slug": "11-aegean-archaeomalacology",
+    "label": "Aegean Archaeomalacology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            25.8943,
+                            38.46
+                        ],
+                        [
+                            25.8943,
+                            40.22
+                        ],
+                        [
+                            27.35,
+                            40.22
+                        ],
+                        [
+                            27.35,
+                            38.46
+                        ],
+                        [
+                            25.8943,
+                            38.46
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    26.42786925,
+                    39.66022125
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-01-10",
+    "description": "Mollusk Shells in Troia, Yenibademli, and Ulucak:\nAn Archaeomalacological Approach to\nEnvironment and Economy in the Aegean",
+    "dc-terms:abstract": "<p>This study investigates the archaeomalacological assemblages from three primary sites in the Aegean: Troia, Yenibademli, and Ulucak. The principle aim of the study is to reveal the environmental factors, and cultural and economic stimuli that may have affected the temporal and spatial patterns in the role and nature of shellfishing as an economic activity and the role of shellfish as an element of human nutrition. Archaeological mollusk shells are additionally treated as palaeoenvironmental archives; enhancing and complementing the studies of past coastal environments in the Aegean. The strong relationship between the coastal environment and human subsistence strategies is demonstrated within a greater framework by reviewing the available data from other archaeomalacological studies from the Aegean.</p> \r\n\r\n<p>Although the chronological focus of the study is the Bronze Age, results from Post-Bronze Age Troia and from Chalcolithic Ulucak are included in the dissertation, in order to add perspective to temporal and spatial patterns.</p> \r\n\r\n<p>Methods included the chronological analyses of the proportion of mollusk remains within the faunal assemblages, analyses of calculations of relative abundance of mollusk taxa, taphonomic analyses, contextual analysis, statistical analyses of the morphometric properties of important mollusk species, periodic sampling and examination of modern mollusk populations, stable isotopic analyses, seasonality analysis of incremental shell growth, and employment of ethnographic analogies. </p>\r\n\r\n<p>Prey species were identified, the environments exploited for mollusk foraging were reconstructed, and gathering and processing techniques were explained. The factors affecting the decisions concerning harvest times were discussed. The evidence for the \"murex\" dye production in Troia was evaluated. </p>\r\n\r\n<p>The changes in the size of <em>Cerastoderma glaucum</em> shells in Troia and <em>Patella caerulea</em> in Yenibademli indicate chronological changes in mollusk exploitation modes and demonstrate the consequences of human exploitation pressure on mollusk populations. Changes in the demographic structure of <em>C. glaucum</em> populations in Troia support this view. Seasonal incremental analysis of <em>C. glaucum</em> populations in Troia revealed that harvesting of this species took place year-around, with increased activity during warmer months. Changes in the growth pattern of <em>C. glaucum</em> may be indicative of changes in local climatic conditions. A major morphological difference is observed between the archaeological and modern populations of <em>C. glaucum</em> in the Troad. This situation is attributed to environmental changes.</p> \r\n\r\n<p>This study should be considered as a pilot study for the archaeomalacology of the Eastern Mediterranean. The palaeoeconomic and palaeoenvironmental implications that emerged from this study can only be tested and improved if further morphometric, stable isotopic and incremental growth analyses on the archaeomalacological material from the region are carried out in conjunction with regional research on extant mollusk populations.</p> \r\n<br/>\r\n<p><span style='text-decoration:underline;'>Related Publication</span></p>\r\n    <p>Çakırlar, Canan</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Mollusk Shells in Troia, Yenibademli and Ulucak: An Archaeomalacological Approach to Environment and Economy in the Aegean. </em>British Archaeological Reports S2051. John and Erica Hedges Publishers.</div>\r\n<div style='clear:both;width:90%;'></div>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85032338",
+            "slug": "loc-sh-sh85032338",
+            "label": "Copper age"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/67303C62-0129-48BF-45D3-A15172495D61",
+            "slug": "11-canan-cakirlar-1",
+            "label": "Canan Çakırlar",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/67303C62-0129-48BF-45D3-A15172495D61",
+            "slug": "11-canan-cakirlar-1",
+            "label": "Canan Çakırlar",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        },
+        {
+            "id": "http://www.geonames.org/265695",
+            "slug": "geonames-265695",
+            "label": "Aegean Sea"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85086611",
+            "slug": "loc-sh-sh85086611",
+            "label": "Mollusks"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85040752",
+            "slug": "loc-sh-sh85040752",
+            "label": "Ecology"
+        }
+    ],
+    "time": 4.4719789028167725
+}

@@ -1,0 +1,150 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7",
+    "uuid": "C5B4F73B-5EF8-4099-590E-B0275EDBA2A7",
+    "slug": "12-presidio-of-san-francisco",
+    "label": "Presidio of San Francisco",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    -122.455925,
+                    37.800154
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-01-25",
+    "description": "Ongoing investigations of El Presidio de San Francisco and other archaeological resources at the Presidio of San Francisco",
+    "dc-terms:abstract": "<p>The Presidio of San Francisco is a national park site measuring 1491 acres, administered jointly by the Presidio Trust and the National Park Service. The Presidio was in continuous use as a military post from 1776 to 1994, serving under the flags of Spain, Mexico, and the United States. During the transition from an active Army Post to a National Park, an update to the Presidios National Historic Landmark designation was undertaken. This effort documented nearly 4000 sites, buildings, structures, and objects as contributing features to the Landmark, and the Presidio was reclassified as a National Historic Landmark Districtthe highest designation. Included were 54 locations of predicted archaeological significance, including forgotten cemeteries, shipwrecks, native shell mounds, coastal fortifications and the cornerstone of the Presidio Trusts Archaeology Programthe Spanish Colonial site <em>El Presidio de San Francisco</em>. Due to the Presidios long continuum of history from colonialism till the Cold War, there is an array of important sites beyond the temporal and spatial boundaries of El Presidio which make this park exceptional as an archaeological resource.</p>  \r\n\r\n<p>The Presidio Archaeology Lab is home to the Archaeology Program of the Presidio Trust. It is the nexus of all archaeological efforts at the Presidio where a lively community engages in the stewardship of the Presidios rich archaeological heritage. <em>El Presidio de San Francisco</em> is the only one of four Spanish fortifications and twenty-one missions in California located in a National Park. This results in an opportunity to reach and teach a large audience about this irreplaceable resource, the Spanish Colonial episode in our nations heritage, as well as the methods of archaeology, history, and related sciences. The mission of the Presidio Archaeology Lab is to demonstrate leadership in the field of archaeology and enhance the understanding of our shared cultural heritage.</p>    \r\n\r\n<p>The goals of the Presidio Archaeology Lab are:</p>\r\n<ul>\r\n    <li>To create a compelling destination at the site of <em>El Presidio de San Francisco</em>, one that instills visitors with the imaginative tools necessary to explore a broader range of the American experience.</li>\r\n    <li>To encourage a sense of collective ownership for the past, and this park, by involving diverse members of the public in all our programs and enabling them to make their own connections to this place.</li>\r\n    <li>To preserve the integrity of the archaeological sites, features, and artifacts, which form the foundation of our programs, ensuring that authentic experiences are available to future generations.</li>\r\n</ul>\r\n\r\n<br/>\r\n<p class='subHeader'>Additional Web Resources:</p>\r\n<ul>\r\n    <li><a href='http://www.presidio.gov/history/archaeology/'>Presidio Archaeology Lab Website</a></li> \r\n    <li><a href='http://library.presidio.gov/archive/documents/Levantar-pt1.pdf'>Levantar, The Presidio of San Francisco Archaeological Management Strategy</a> (PDF)</li>\r\n    <li><a href='http://www.presidio.gov/'>Presidio Trust Website</a></li> \r\n</ul>\r\n\r\n<br/>\r\n<p class='subHeader'>Additional Web Resources:</p>\r\n<p>Presidio Archaeology Lab<br/>\r\nPresidio Trust<br/> \r\nPO Box 29052<br/>\r\nSan Francisco, CA 94129 USA<br/>\r\nPhone: (415) 561-ARCH<br/>\r\nFax: (415) 561-5089<br/>\r\narchaeology@presidiotrust.gov<br/> \r\n</p>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/5391959",
+            "slug": "geonames-5391959",
+            "label": "San Francisco"
+        },
+        {
+            "id": "http://www.geonames.org/5332921",
+            "slug": "geonames-5332921",
+            "label": "California"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006513",
+            "slug": "loc-sh-sh85006513",
+            "label": "Archaeology and history"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/History_of_California",
+            "slug": "wiki-history-of-california",
+            "label": "History of California"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85140642",
+            "slug": "loc-sh-sh85140642",
+            "label": "United States. Army--History"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh99005758",
+            "slug": "loc-sh-sh99005758",
+            "label": "Education"
+        }
+    ],
+    "time": 0.07800006866455078
+}

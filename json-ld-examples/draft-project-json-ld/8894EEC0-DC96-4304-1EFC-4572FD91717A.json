@@ -1,0 +1,178 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A",
+    "uuid": "8894EEC0-DC96-4304-1EFC-4572FD91717A",
+    "slug": "27-zooarchaeology-of-okuzini-cave",
+    "label": "Zooarchaeology of Öküzini Cave",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    30.579436,
+                    37.08335
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-02-25",
+    "description": "Animal exploitation patterns in SW Anatolia during the Epipaleolithic from assemblages excavated from a finely-stratified cave",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>Understanding Epipaleolithic hunter-gatherer lifestyles and changes in their subsistence patterns in relation to environmental fluctuations is pivotal in understanding one of the milestones in the human evolution, namely, the transformation from exploitation of wild plant and animal resources to the production of domestic variants of these resources.</p>\n        <p>Öküzini Cave was initially subject to limited and occasional investigation by Ismail Kılıç Kökten from the mid-1950s to 1973. Excavations were resumed by a short-lived Turkish-German collaboration in 1985. Large-scale and systematic excavations in Öküzini were conducted by a large international team under the direction of the Museum of Antalya and supervised by Işın Yalçınkaya between 1989 and 1999. The last project resulted in exhaustive studies including geology, lithic techno-typology, archaeobotany, archaeometry, malacology, and palynology of the site, and was published as a monograph. The new excavations revealed 13 discrete geological horizons (GH 0 through XII) within a 3.5-meter Epipaleolithic sequence including a mixed protohistoric or Neolithic/Chalcolithic level disturbed by human burials preceded by Epipaleolithic layers that have been subdivided into four cultural phases or archaeological units (AUs 1, 2, 3, 4) based on characteristics of the lithic assemblages. The designated AUs at Öküzini cover a temporal range from 16,460 to 12,000 uncalibrated years BP or from 19,790 to 12,900 calibrated years BP.</p>\n        <p>The primary focus of the zooarchaeological research at Öküzini was to examine a series of related topics such as: (1) Assemblage composition and characterization, (2) Changes in animal exploitation patterns and hunting strategies through time, (3) Mobility patterns, site function and inter-site variation, and (4) Periodicity in animal exploitation.</p>\n        \n        <h4>Methodology</h4>\n        \n        <p>The recording process involved two stages: </p>\n        <ol>\n            <li>General documentation of the entire assemblage for the purpose of assemblage characterization (e.g., degree of fragmentation, skeletal part representation, etc.). This level included every element, element portion, and nonidentified fragments and splinters recovered.\n            </li>\n            <li>Particular documentation of pre-determined attributes in relation to the particular questions that are being asked (e.g., kill-off patterns, seasonality, etc.). This level targeted selected elements and portions such as mandibles with teeth, loose mandibular teeth, pelvic acetabula, and all limb epiphyses.</li>\n        </ol>\n        \n        \n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>These data add to the increasing body of evidence for epipaleolithic subsistence in western Anatolia.</p>\n        \n        <h4>Current Disposition of the Collections</h4>\n        \n        <p>The Öküzini Cave specimens included in this data publication are housed in the storage facility of the Karain Cave Project Dig House near Yagca Village, Antalya, Turkey.</p>\n\n\n        <h4>Related Publications</h4>\n        \n        <div resource=\"http://opencontext.org/subjects/2D5EC703-DDBB-4ADB-F786-4669F2DC8918\">    \n            <div id=\"pub-2011-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2011-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2011-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2011</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Before the Revolution: Epipaleolithic Subsistence in the Western Taurus</span>. British Archaeological Reports International Monograph Series 2251. Oxford: Archaeopress.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/753957180\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2011-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2011-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2011-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2011</div>\n                            <div class=\"ref-title-pub\">Epipaleolithic Archaeology in Turkey. <span class=\"collection-title\">Studies in Honour of Işın Yalçınkaya</span>, pp. 27-47. Kızılay, Ankara: Bilgin Kültür Sanat Yayınları, 2011.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/759991683\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2009-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2009-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">Implications of Age Structures for Epipaleolithic Hunting Strategies in the Western Taurus Mountains, Southwest Turkey. <span class=\"collection-title\">Anthropozoologica</span> 44(1):13-39.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.5252/az2009n1a1\">DOI</a>]\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/231772/Implications_of_Age_Structures_for_Epipaleolithic_Hunting_Strategies_in_the_Western_Taurus_Mountains_Southwest_Turkey\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2009-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2009-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2009-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">Specialization &amp; diversification: animal exploitation strategies in the terminal Pleistocene, Mediterranean Turkey. <span class=\"collection-title\">Before Farming</span> 2009/3 article 1.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                      [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/724457232\">WorldCat</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://www.waspress.co.uk/journals/beforefarming/journal_20093/abstracts/index.php\">Publisher Version</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/231775/Specialisation_and_diversification_animal_exploitation_strategies_in_the_terminal_Pleistocene_Mediterranean_Turkey\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n            \n            <div id=\"pub-2007-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2007-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-2007-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent</p>\n                        <div>\n                            <div class=\"pub-date\">2007</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Before the revolution: a comprehensive zooarchaeological approach to terminal Pleistocene forager adaptations in the western Taurus Mountains, Turkey</span> Thesis (Ph. D.)--Harvard University, 2007.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                      [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/217277015\">WorldCat</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://proquest.umi.com/pqdweb?did=1354130461&amp;sid=1&amp;Fmt=2&amp;clientId=17675&amp;RQT=309&amp;VName=PQD\">ProQuest</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n            <div id=\"pub-2002-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2002-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2002-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent., and Stutz, Aaron. J.</p>\n                        <div>\n                            <div class=\"pub-date\">2002</div>\n                            <div class=\"ref-title-pub\">Mortality Profile Analysis of the Ungulate Fauna from Öküzini: A Preliminary Reconstruction of Site Use, Seasonality, and Mobility Patterns. <span class=\"collection-title\">La Grotte öküzini: Evolution du Paleolithique Final du Sud-Ouest de l'Anatolie (Öküzini: Final Paleolithic Evolution in Southwest Anatolia)</span>, ERAUL 96, pp. 101-108. Liège: Universite de Liège.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/50811498\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2002-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2002-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2002-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Yalçınkaya, I., Otte, M., Kozlowski, J., and Bar-Yosef, O. (Editors)</p>\n                        <div>\n                            <div class=\"pub-date\">2002</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">La Grotte öküzini: Evolution du Paleolithique Final du Sud-Ouest de l'Anatolie (Öküzini: Final Paleolithic Evolution in Southwest Anatolia)</span>, ERAUL 96, pp. 101-108. Liège: Universite de Liège.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/50811498\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n            \n        </div>    \n\n<div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M73X84KX"
+        },
+        {
+            "id": "http://opencontext.org/projects/27-zooarchaeology-of-okuzini-cave"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85097106",
+            "slug": "loc-sh-sh85097106",
+            "label": "Paleolithic"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002005536",
+            "slug": "loc-sh-sh2002005536",
+            "label": "Pleistocene-Holocene boundary"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/CABB34F2-F360-405A-A7BE-0898A89193B8",
+            "slug": "27-levent-atici",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/CABB34F2-F360-405A-A7BE-0898A89193B8",
+            "slug": "27-levent-atici",
+            "label": "Levent Atici",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298930",
+            "slug": "geonames-298930",
+            "label": "Taurus Mountains"
+        },
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85063134",
+            "slug": "loc-sh-sh85063134",
+            "label": "Hunting and gathering societies"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 0.07799983024597168
+}

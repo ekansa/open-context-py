@@ -1,0 +1,180 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857",
+    "uuid": "A5DDBEA2-B3C8-43F9-8151-33343CBDC857",
+    "slug": "10-petra-great-temple-excavations",
+    "label": "Petra Great Temple Excavations",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    35.4421,
+                    30.3287
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2007-11-11",
+    "description": "Brown University Excavations at the Great Temple of Petra, Jordan",
+    "dc-terms:abstract": "<p><strong>Great Temple Excavation Database:</strong></p>\r\nThis project represents the comprehensive results of Brown University excavations at Petra's Great Temple from 1993 - 2006.  \r\n<br/><br/>\r\nAbout the Great Temple:\r\nThe Great Temple contains eclectic exquisite art and architecture from the Nabataean period and demonstrates that the values of the Nabataeans of Petra during this period who felt that aesthetic decoration of structures with frescos and architectural sculpture was sufficiently significant on which to expend time, money and energy. This blending of different cultures is seen in this palatial building and its precinct with the use of elephant heads, frescos, elegantly carved pilasters and capitals. There is a high level of skill and technology possessed by her builders as well as the high level of organized government that would be needed to plan the building of this monumental structure. The Great Temple is one of the key sites in the Nabataean Petra, and it is a significant site for our knowledge of the development of Petra. The lives of the Nabataeans were influenced by a unique blend of cultures. The study of the Great Temple is essential to the understanding of many different aspects of the archaeology of Petra. Such an interpretation when considered in relation to what is known about other Nabataean sites can effectively enrich the web of knowledge we possess regarding both Petra and the people whose lives ultimately created it. Each of our seasons of excavation has proved to be provocative and propitious as many questions were raised and many extraordinary artifacts were recovered.\r\n<br/><br/>\r\nThe Great Temple represents one of the major archaeological and architectural components of central Petra. Located to the south of the Colonnaded Street and southeast of the Temenos Gate, this 75602 m precinct is comprised of a Propylaeum (monumental entryway), a Lower Temenos, and monumental east and west Stairways which in turn lead to the Upper Temenos — the sacred enclosure for the Temple proper.\r\n<br/><br/>\r\nThe Petra Great Temple was first explored by R. E. Brünnow and A. von Domaszewski in the 1890s; but it was W. Bachmann, in his 1921 revision of the Petra city plan, who postulated the existence of a \\\"Great Temple.\\\" No structures were evident before the Brown University 1993 excavations under the direction of Martha Sharp Joukowsky, and the precinct which is constructed on an artificial terrace was littered with carved architectural fragments toppled by one of the earthquakes which rocked the site.\r\n<br/><br/>\r\nIn the Lower Temenos are triple colonnades on the east and west with a total of 96 to 120 columns! These lead into east and west semi-circular buttressed Exedrae. Here in the Lower Temenos, large, white hexagonal pavers were positioned above an extensive subterranean canalization system which has been traced from the Temple Forecourt under the Lower Temenos, the\r\nAerial photograph of the Great Temple, looking South Looking south from the Lower Temenos at the temple Propylaeum, and the Colonnaded Street to the Wadi Musa. Discovered near the West Exedra was a capital decorated with Asian elephant-heads; in addition to the thousands of architectural fragments, there are coins, limestone facial frieze elements, lamps, Roman glass, and ceramics which include figurines, Nabataean bowls, small cups, and juglets. Elaborate floral friezes and acanthus-laden limestone capitals suggest the temple was constructed in the beginning of the last quarter of the first century BCE by the Nabataeans who combined their native traditions with the classical spirit. The structure was enlarged later in the Nabataean period in the first century CE. The Great Temple was in use until some point in the fifth century CE, the Byzantine period.\r\n<br/><br/>\r\nThe Great Temple had its columns and walls red-and-white-stuccoed which must have had a dramatic impact when set against its rose-red environment. It is tetrastyle in antis (four columns at the front) with widely-spaced (ca. seven meters, 21 ft.) central columns at the entrance, and two end columns located about five meters (15 ft.) to the east and west, respectively. Approximately 15 meters (45 ft.) in height, the porch columns plus the triangular pediment and the entablature, hypothetically place its height to a minimum of 19 meters (57 ft.).\r\n<br/><br/>\r\nThe Great Temple measures 35 meters (105 ft.) east-west, and is some 42.5 meters (127.5 ft.) in length making it the largest freestanding structure in Petra.The podium rests on a forecourt of hexagonal pavers; a stairway approaches a broad deep pronaos (entry), which in turn leads into side corridors that access a 550-630 seat bouleuterion (council chamber), theatron/ odeum discovered in 1997. The Pronaos entry is marked by two columns which are the same diameter (1.50 meters, 4.5 ft.) as those at the temple entrance, but are larger than either the eight flanking the cella walls or the six at the temple rear which have diameters of 1.20 meters (3.6 ft.). In the interior north are massive anta walls resting on a finely carved attic bases. To the south is a two-or-three-storied complex dominated by a large, central vaulted arch and twin stepped arched passages leading to paved platforms, plus a series of steps which accessed the rear of the bouleuterion, plus a series of steps which access the temple corridors and exit. There are exterior paved walkways on the temple east and west, where sculpted facial fragments and fine deeply-carved architectural elements have been recovered. \r\n<br/><br/>\r\nSponsors and Acknowledgments:\r\nThis campaign would not have been possible without the generous assistance of the Jordanian Department of Antiquities, Fawwaz al-Kraysheh, Director, and Suleiman Farajat Director of the Petra National Park, Sami Al-Nawafleh our Department of Antiquities Representative and the American Center of Oriental Research, Pierre M. Bikai, Director. We would also like to express our thanks to Brown University for making this season possible.\r\n<br/><br/>\r\nWe were supported by a work force of 50 devoted Bedouin, directed by Dakhilallah Qublan, Foreman. The Petra Crowne Plaza Hotel and the American Center of Oriental Research in Amman, to whom we are most grateful, also provided additional support.\r\n\r\n<br/><br/>\r\nThe Alexandria Archive Institute would like to thank Mhairi Campbell for her role in organizing contextual information in this dataset.",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://pleiades.stoa.org/vocabularies/time-periods/hellenistic-republican",
+            "slug": "pleiades-tp-hellenistic-republican",
+            "label": "Hellenistic Greek, Roman Republic"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025419",
+            "slug": "loc-sh-sh85025419",
+            "label": "Chronology, Roman"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/Nabataeans",
+            "slug": "wiki-nabataeans",
+            "label": "Nabateans"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/1EFB20BC-BE05-486A-C434-988892277ED5",
+            "slug": "10-martha-sharp-joukowsky",
+            "label": "Martha Sharp Joukowsky",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/1EFB20BC-BE05-486A-C434-988892277ED5",
+            "slug": "10-martha-sharp-joukowsky",
+            "label": "Martha Sharp Joukowsky",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/248816",
+            "slug": "geonames-248816",
+            "label": "Jordan"
+        },
+        {
+            "id": "http://www.geonames.org/8354456",
+            "slug": "geonames-8354456",
+            "label": "Roman Empire (historical political entity)"
+        },
+        {
+            "id": "http://www.geonames.org/250745",
+            "slug": "geonames-250745",
+            "label": "Petra (ancient site)"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85112549",
+            "slug": "loc-sh-sh85112549",
+            "label": "Religion"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006611",
+            "slug": "loc-sh-sh85006611",
+            "label": "Architecture"
+        }
+    ],
+    "time": 0.07800006866455078
+}

@@ -1,0 +1,250 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6",
+    "uuid": "B4345F6A-F926-4062-144E-3FBC175CC7B6",
+    "slug": "14-bade-museum",
+    "label": "Bade Museum",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            35.216886089459,
+                            30.938100814819
+                        ],
+                        [
+                            35.216886089459,
+                            32.5
+                        ],
+                        [
+                            45.852199554443,
+                            32.5
+                        ],
+                        [
+                            45.852199554443,
+                            30.938100814819
+                        ],
+                        [
+                            35.216886089459,
+                            30.938100814819
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    43.5372471287804,
+                    31.6283431998804
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-02-16",
+    "description": "Tell en-Nasbeh Collection at the Badè Museum of Biblical Archaeology",
+    "dc-terms:abstract": "<p>This project is a digital catalog of all the artifacts, archives, and photographs from the Tell en-Nasbeh Collection at the Badè Museum of Biblical Archaeology at Pacific School of Religion in Berkeley, CA. This collection derives from the excavations of Tell en-Nasbeh conducted by William Frederic Badè between 1926 and 1935. The project was jointly sponsored by the Pacific School of Religion (PSR) and the American Schools of Oriental Research (ASOR) and represents one of the earliest scientific excavations in Israel/Palestine.</p>  \r\n\r\n<p>Tell en-Nasbeh, likely the biblical city of Mizpah, is a 3.2 hectare (8 acre) tell located 12 kilometers (8 miles) northwest of Jerusalem on a low plateau. The site lies adjacent to an ancient roadway connecting Jerusalem with the northern hill country, which is how Tell en-Nasbeh gained importance as Judahs northern border fortress during its prime phase of occupation in the Iron Age (Strata 3A-C; 1000-586 BCE). There are also archaeological remains at the site and in surrounding cave tombs that have been dated to Early Bronze I (Stratum 5; 3500-3300 BCE), Iron I (Stratum 4; 1200-100 BCE), Babylonian and Persian (Stratum 2; 586-323 BCE), Hellenistic, Roman and Byzantine Periods (Stratum 1; 323-630 CE).</p>    \r\n\r\n<p>At the conclusion of five seasons, Dr. Badè and his team had excavated approximately two-thirds of the ancient town to reveal a massive fortification wall, impressive gateway, three and four-room houses, family tombs, and hundreds of lamps, pitchers, bowls, jars, jewelry, metal objects, stamped jar handles, ceramic figurines (including Judean pillar figurines), and cosmetic items. While many of these artifacts were deposited at the Rockefeller Museum in Jerusalem, the majority were shipped back to Berkeley for further analysis and conservation, leading to the publication of two final report volumes (McCown 1947, Wampler 1947). These 5,800 archaeological artifacts and the projects accompanying documentation, including the field notebooks, architectural drawings, and photographs, form the core of the Badè Museum's holdings.</p>  \r\n\r\n\r\n<p><span style='text-decoration:underline;'>Publications:</span></p>\r\n\r\n<p>Arnold, P.M.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1992</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mizpah,\" pp. 879-881 in D. N. Freedman, ed., <em>Anchor Bible Dictionary,</em> Vol III. New York: Doubleday.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Avigad, N.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1958</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"New Light on the MSH Impressions,\" <em>Israel Exploration Journal</em> 8:113-119</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Badè, W.F.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1927</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Excavation of Tell en-Nasbeh,\" <em>Bulletin of the American Schools of Oriental Reasearch</em> 26:1-7</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1927</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Excavations at Tell en-Nasbeh,\" <em>PEFQS</em> 1927:7-13.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1927</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Excavations at Tell en-Nasbeh, 1926 and 1927: A Preliminary Report.</em> Palestine Institute Publications No. 1. Berkeley.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1929</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Excavations at Tell en-Nasbeh,\" <em>RB</em> 38:317-319.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1929</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh in 1929,\" <em>Bulletin of Pacific School of Religion</em> 8(3):3-12.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1930</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Tell en-Nasbeh Excavations of 1929, A Preliminary Report,\" <em>PEFQS</em> 1930:8-19.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1930</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Tell en-Nasbeh Excavations of 1929, A Preliminary Report,\" <em>Annual Report of the Board of Regents of the Smithsonian Institution,</em> pp 483-494.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1931</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Some Tombs of Tell en-Nasbeh Discovered in 1929</em> Palestine Institute Publications No. 2. Berkeley.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1932</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"A Jar Handle from Tell en-Nasbeh,\" <em>ZAW</em>51:150-156.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1932</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tall en Nasba,\" <em>QDAP</em> 2:147, 192-193.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1933</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Seal of Jaazaniah,\" <em>ZAW</em> 51:150-156.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n     <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1934</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em> A Manual of Excavation in the Near East</em> Berkeley: University of California Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1935</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"New Discoveries at Tell en-Nasbeh,\" <em>Werden und Wesen des Alten Testaments</em> 66:30-36.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Bothmer, D. von</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1941</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Greek Pottery from Tell en-Nasbeh,\" <em>BASOR</em> 83:25-30.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Branigan, K.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1966</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Four-Room Buildings of Tell en-Nasbeh,\" <em>IEJ</em> 16:206-208.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n<p><br/></p>\r\n<p>Branigan, K.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1966</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Four-Room Buildings of Tell en-Nasbeh,\" <em>IEJ</em> 16:206-208.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n<p><br/></p>\r\n<p>Brody, A. J.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2009</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"'Those Who Add House to House': Household Archaeology and the Use of Domestic Space in an Iron II Residential Compound at Tell en-Nasbeh,\" pp. 45-56 in D. J. Schloen, ed., <em>Exploring the Longue Dure: Essays in Honor of Lawrence E. Stager.</em> Winona Lake, IN: Eisenbrauns.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Brody, A. J. and Friedman, E.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2007</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Bronze Bangles from Tell en-Nasbeh: Cultural and Economic Observations on an Artifact Type from the Time of the Prophets,\" pp. 97-114 in R. B. Coote and N. K. Gottwald, eds., <em>To Break Every Yoke Essays in Honor of Marvin L. Chaney.</em> Sheffield: Sheffield Phoenix Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Broshi, M.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1977</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Nasbeh, Tel En-\" pp. 912-918 in M. Avi-Yonah and E. Stern, eds., <em>EAEHL,</em> Vol. III. Jerusalem: Massada Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1992</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Nabeh, Tell en-\" pp. 1027-1029 in D. N. Freedman, ed., <em>Anchor Bible Dictionary,</em> Vol IV. New York: Doubleday.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Cross, F.M.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1969</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Two Notes on Palestinian Inscriptions of the Persian Age,\" <em>BASOR</em> 193:19-24.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Diringer, D.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1967</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mizpah,\" pp. 309-328 in D.W. Thomas, ed., <em>Archaeology and Old Testament Study</em> Oxford: Clarendon Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Grant, E.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1927</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh Expedition of the Pacific School of Religion,\" <em>PEFQS</em> (1927):159-161.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Gunneweg, J., Asaro, F., Michel, H.V. and Perlman, I.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1994</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Interregional Contacts between Tell en-Nasbeh and Littoral Philistine Centres in Canaan during Early Iron I,\" <em>Archaeometry</em> 36:227-240.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Katz, H.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1998</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"A Note on the Date of the Great Wall of Tell en-Nasbeh,\" <em>TA</em> 25:131-133.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>McClellan, T.L.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1984</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Town Planning at Tell en-Nasbeh,\" <em>ZDPV</em> 100:53-69.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>McCown, C.C.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1945</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Long-Room House at Tell en-Nasbeh,\" <em>BASOR</em> 98:2-15.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1947</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Tell en-Nasbeh I: Archaeological and Historical Results.</em> Pacific Institute of Pacific School of Religion and American Schools of Oriental Research, Berkeley and New Haven.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Masterman, E.W.G.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1929</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Excavations at Tell en-Nasbeh, 1926-7,\" <em>PEFQS</em> (1929):56-57.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Muilenburg, J.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1954-55</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mizpah of Benjamin,\" <em>Studia Theologica</em> 8:25-42.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Naish, J.P.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1932</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh,\" <em>PEFQS</em> (1932):204-209.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Vanderhooft, D. and Horowitz, W.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2002</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Cuneiform Inscription from Tell en Nabeh: The Demise of an Unknown King,\" <em>TA</em> 29:318-327.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Wampler, J.C.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1940</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Triangular Impressed Design in Palestinian Pottery,\" <em>BASOR</em> 80:13-16.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1941</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Three Cistern Groups from Tell en-Nasbeh,\" <em>BASOR</em> 82:25-43.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1947</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Tell en-Nasbeh II: The Pottery.</em> Palestine Institute of Pacific School of Religion and American Schools of Oriental Research, Berkeley and New Haven.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Wright, G.E.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1947</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh,\" <em>BA</em> 10:69-77.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n\r\n<p><br/></p>\r\n<p>Zink, J.H.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1947</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh,\" pp. 569-571 in C.F. Pfeiffer, ed., <em>The Biblical World.</em> Grand Rapids: Baker Books.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    \r\n<p><br/></p>\r\n<p>Zorn, J.R.</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1988</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"William Frederic Badè,\" <em>BA</em> 51:28-35.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1988</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Badè Institute of Biblical Archaeology,\" <em>BA</em> 51:36-45.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1993</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><em>Tell en Nasbeh: A Re-evaluation of the Architecture and Stratigraphy of the Early Bronze Age, Iron Age and Later Periods.</em> Berkeley: University of California doctoral dissertation.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1993</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Nabeh, Tell en-,\" pp. 1098-1102 in <em>The New Encyclopedia of Archaeological Excavations in the Holy Land,</em> edited by E. Stern, vol. 3. Jerusalem: Carta, 1993b.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1993</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mesopotamian-style Ceramic Bathtub Coffins from Tell en-Nasbeh,\" <em>TA</em> 22: 98-106.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1994</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Two Rosette Stamp Impressions from Tell en-Nasbeh,\" <em>BASOR</em> 293:81-82.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1994</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The M(W)SH Stamp Impressions and the Neo-Babylonian Period,\" <em>IEJ</em> 44: 161-183. With J. Yellin and J. Hayes.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1995</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Three Cross-Shaped Tet Stamp Impressions from Tell en-Nasbeh,\" <em>TA</em> 22: 98-106.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1996</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Date of A Bronze Vase from Tell en-Nasbeh,\" <em>TA</em> 23:209-212.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1997</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nasbeh,\" pp. 101-103 in <em>The Oxford Encyclopedia of the Ancient Near East.</em> edited by E. Meyers, vol. 4. Oxford: Oxford University Press.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1997</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mizpah: Newly Discovered Stratum Reveals Judahs other Capital,\" <em>BAR</em> 23(5):28-38, 66.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1997</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"An Inner and Outer Gate Complex at Tell en-Nasbeh,\" <em>BASOR</em> 307:53-66.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1998</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"The Dating of an Early Iron Age Kiln from Tell al-Nasbah,\" <em>Levant</em> 30:199-202.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>1999</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"A Note on the Date of the Great Wall of Tell en-Nasbeh: A Rejoinder.\" <em>Tel Aviv</em> 26:146-150.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2001</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Wedge- and Circle-Impressed Pottery: An Arabian Connection.\" pp. 689-698 in <em>Studies in the Archaeology of Israel and Neighboring Lands in Memory of Douglas. L. Esse,</em> edited by S. R. Wolff. Chicago: Oriental Institute.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2003</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Tell en-Nabeh and the Problem of the Material Culture of the 6th Century.\" pp. 413-447 in <em>Judah and the Judeans in the Neo-Babylonian Period,</em> edited by O. Lipschits and J. Blenkinsopp. Winona Lake, IN: Eisenbrauns.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'>\"Mizpah, Mizpah Wherefore Art Thou Mizpah? Tell enNabeh, Nebi Samwil and the Identification of a Biblical Site,\" <em>BAR</em> Web Extra August.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-4",
+            "slug": "oc-gen-edit-level-4",
+            "label": "Editorial board reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85068153",
+            "slug": "loc-sh-sh85068153",
+            "label": "Iron age"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        },
+        {
+            "id": "http://pleiades.stoa.org/vocabularies/time-periods/neo-babylonian-achaemenid-southern-levant",
+            "slug": "pleiades-tp-neo-babylonian-achaemenid-southern-levant",
+            "label": "Neo-Babylonian—Achaemenid Southern Levant"
+        },
+        {
+            "id": "http://pleiades.stoa.org/vocabularies/time-periods/hellenistic-republican",
+            "slug": "pleiades-tp-hellenistic-republican",
+            "label": "Hellenistic Greek, Roman Republic"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025419",
+            "slug": "loc-sh-sh85025419",
+            "label": "Chronology, Roman"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025408",
+            "slug": "loc-sh-sh85025408",
+            "label": "Chronology, Byzantine"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/21A750F6-7D23-4663-11BA-F35307B6300F",
+            "slug": "14-aaron-brody-1",
+            "label": "Aaron Brody",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/21A750F6-7D23-4663-11BA-F35307B6300F",
+            "slug": "14-aaron-brody-1",
+            "label": "Aaron Brody",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/294640",
+            "slug": "geonames-294640",
+            "label": "Israel"
+        },
+        {
+            "id": "http://www.geonames.org/6254930",
+            "slug": "geonames-6254930",
+            "label": "Palestine"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/Southern_Levant",
+            "slug": "wiki-southern-levant",
+            "label": "Southern Levant"
+        },
+        {
+            "id": "http://pleiades.stoa.org/places/687934",
+            "slug": "pleiades-p-687934",
+            "label": "Judah"
+        },
+        {
+            "id": "http://www.geonames.org/6269133",
+            "slug": "geonames-6269133",
+            "label": "Middle East"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85013580",
+            "slug": "loc-sh-sh85013580",
+            "label": "Bible--antiquities"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85026130",
+            "slug": "loc-sh-sh85026130",
+            "label": "Cities and towns"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh00006370",
+            "slug": "loc-sh-sh00006370",
+            "label": "Tomb"
+        }
+    ],
+    "time": 4.517364978790283
+}

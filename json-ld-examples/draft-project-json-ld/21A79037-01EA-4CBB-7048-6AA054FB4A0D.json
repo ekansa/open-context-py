@@ -1,0 +1,102 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D",
+    "uuid": "21A79037-01EA-4CBB-7048-6AA054FB4A0D",
+    "slug": "38-archaeology-of-mesoamerican-animals",
+    "label": "Archaeology of Mesoamerican Animals",
+    "dc-terms:published": "2013-09-16",
+    "description": "Datasets and media with 'The Archaeology of Mesoamerican Animals' (Lockwood Press)",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>This represents a forthcoming publication of datasets and other media that will supplement some chapters of <em>The Archaeology of Mesoamerican Animals</em> (Christopher Götz and Kitty F. Emery, eds.), to be published by <a href=\"http://www.lockwoodpress.com/\">Lockwood Press</a>. <em>The Archaeology of Mesoamerican Animals</em> is an edited volume that links many of its chapters to rich digital content published open access with Open Context. The authors have chosen to link their chapters to related online content (including primary data, maps, and additional images) in order to provide additional research resources in their subject area. A list of content associated with each chapter can be found on the book's <a href=\"http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D\">project page</a>. <em>The Archaeology of Mesoamerican Animals</em> is <a href=\"https://www.isdistribution.com/BookDetail.aspx?aId=23181\">available for purchase</a> from ISD.</p>\n        \n        <h5>Book Reference</h5>\n        <div resource=\"http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D\" style=\"margin-bottom: 2%;\">\n            \n            <div id=\"pub-2013-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2013-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2013-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Götz, Christopher M., and Kitty F. Emery (Editors)</p>\n                        <div>\n                            <div class=\"pub-date\">2013</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">The Archaeology of Mesoamerican Animals (La arqueología de los animales de Mesoamérica)</span>, Atlanta, GA, Lockwood Press.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\"http://www.lockwoodpress.com/211301.html\">Abstract</a>]\n\n[<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/698332454\">WorldCat</a>]\n\n                    </div>\n                </div>\n            </div>\n            \n        </div>\n       \n        <h4>Book Abstract (from <a href=\"http://www.lockwoodpress.com/211301.html\">Lockwood's Website</a>)</h4>\n        <p style=\"margin-bottom: 2%;\">Recognition of the role of animals in ancient diet, economy, politics, and ritual is vital to understanding ancient cultures fully,\n        while following the clues available from animal remains in reconstructing environments is vital to understanding the ancient\n        relationship between humans and the world around them. In response to the growing interest in the field of zooarchaeology,\n        this volume presents current research from across the many cultures and regions of Mesoamerica, dealing specifically with\n        the most current issues in zooarchaeological literature. Geographically, the essays collected here index the different\n        aspects of animal use by the indigenous populations of the entire area between the northern borders of Mexico and the southern\n        borders of lower Central America. This includes such diverse cultures as the Olmec, Maya, Zapotec, Mixtec, and Central American Indians.\n        The time frame of the volume extends from the Preclassic to recent times. The book’s chapters, written by experts in the field of\n        Mesoamerican zooarchaeology, provide important general background on the domestic and ritual use of animals in early and classic\n        Mesoamerica and Central America, but deal also with special aspects of human-animal relationships such as early domestication and\n        symbolism of animals, and important yet otherwise poorly represented aspects of taphonomy and zooarchaeological methodology.</p>\n        \n        <h4>Forthcoming Digital Content</h4>\n        <ul>\n            <li id=\"chapter2\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 2</strong> Elizabeth S. Wing, <em>Digital Companion to 'Dog Remains from the Marismas Nacionales'</em>. DOI:10.6078/M7BG2KWR\n            </li>\n            <li id=\"chapter5\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 5</strong> Tanya M. Peres, Amber M. VanDerwarker, and Christopher A. Pool, <em>Digital Companion to\n                'The Zooarchaeology of Olmec and Epi-Olmec Foodways along Mexico’s Gulf Coast'</em>. DOI:10.6078/M76Q1V5F\n            </li>\n<li id=\"chapter8\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 8</strong> Christopher M. Götz, and Travis W. Stanton, <em> Digital Companion to\n                'The Use of Animals by the pre-Hispanic Maya of the Northern Lowlands'</em>. DOI:10.6078/M77H1GG5\n            </li>\n            <li id=\"chapter9\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 9</strong> Marilyn A. Masson and Carlos Peraza Lope, <em>Digital Companion to\n                'Animal Consumption at the Monumental Center of Mayapán'</em>. DOI:10.6078/M76Q1V5F\n            </li>\n            <li id=\"chapter10\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 10</strong> Rani T. Alexander, John A. Hunter, Sean Arata, Ruth Martínez Cervantes, and Kristen Scudder, <em>Digital Companion to\n                'Archaeofauna at Isla Cilvituk, Campeche, Mexico: Residential Site Structure\n                and Taphonomy in Postclassic Mesoamerica'</em>. DOI:10.6078/M7Z60KZQ\n            </li>\n            <li id=\"chapter11\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 11</strong> Coral Montero López, <em>Digital Companion to\n                'Inferring the Archaeological Context through Taphonomy: The Use of the White-Tailed Deer\n                (Odocoileus Virginianus) in Chinikihá, Chiapas'</em>. DOI:10.6078/M7TD9V7V\n            </li>\n            <li id=\"chapter12\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 12</strong> Erin Kennedy Thornton and Olivia Ng Cackler, <em>Digital Companion to\n                'Late Nineteenth and Early Twentieth-Century Animal Use by San Pedro Maya and British\n                Populations at Holotunich, Belize'</em>. DOI:10.6078/M7PN93HH\n            </li>\n            <li id=\"chapter13\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 13</strong> Kitty F. Emery, Erin Kennedy Thornton, Nicole R. Cannarozzi,\n                Stephen Houston, and Héctor Escobedo, <em>Digital Companion to\n                'Archaeological Animals of the Southern Maya Highlands: Zooarchaeology of Kaminaljuyu'</em>.\n                DOI:10.6078/M7G44N65\n            </li>\n            <li id=\"chapter14\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 14</strong> David N. Rewniak, Paul F. Healy, and Morgan Tamplin,\n                <em>Digital Companion to\n                'Preliminary Analysis of the Zooarchaeology of the San Cristóbal Site,\n                Nicaragua: The Bounty of Mohammed’s Paradise'</em>.\n                DOI:10.6078/M7JW8BSS\n            </li>\n            <li id=\"chapter15\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 15</strong> Diana Rocío Carvajal Contreras,\n                <em>Digital Companion to 'Molluscs as Food in a Prolific Coastal Environment:\n                Evidence for Selective Foraging and Taphonomy from Cueva de los Vampiros (Central Panama)'</em>.\n                DOI:10.6078/M7F769G3\n            </li>\n            <li id=\"chapter16\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 16</strong> Richard Cooke, David Steadman, Máximo Jiménez and Ilean Isaza-Aizpurúa,\n                <em>Digital Companion to 'Pre-Columbian Exploitation of Birds Around Panama Bay'</em>.\n                DOI:10.6078/M79G5JRC\n            </li>\n            <li id=\"chapter17\" style=\"margin-bottom: 2%;\">\n                <strong>Chapter 17</strong> Elizabeth Ramos Roca, <em>Digital Companion to 'Crawling and Walking at the Same Time:\n                Challenges in \"Animal Archaeology\" in Northern South America'</em>.\n                DOI:10.6078/M75Q4T12\n            </li>\n        </ul>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7KW5CX5"
+        },
+        {
+            "id": "http://opencontext.org/projects/38-archaeology-of-mesoamerican-animals"
+        }
+    ],
+    "dc-terms:creator": [],
+    "time": 0.062400102615356445
+}

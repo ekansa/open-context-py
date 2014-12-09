@@ -1,0 +1,253 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1",
+    "uuid": "1B426F7C-99EC-4322-4069-E8DBD927CCF1",
+    "slug": "34-catalhoyuk-zooarchaeology",
+    "label": "Çatalhöyük Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            32.8225,
+                            37.666389
+                        ],
+                        [
+                            32.8225,
+                            37.668196
+                        ],
+                        [
+                            32.828333,
+                            37.668196
+                        ],
+                        [
+                            32.828333,
+                            37.666389
+                        ],
+                        [
+                            32.8225,
+                            37.666389
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    32.826008,
+                    37.667361666666665
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-02-13",
+    "description": "Faunal data from Neolithic Çatalhöyük and Chalcolithic Çatalhöyük West, Konya, Turkey.",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>This is a large dataset extracted for the purpose of an Anatolian Neolithic zooarchaeological meta-analysis. It is part of an even larger database containing all the zooarchaeological results thus far recorded from the UNESCO World Heritage Site of Çatalhöyük, Konya province, Turkey. The data presented here is the result of almost twenty years' work (1995-2012) by several main analysts and numerous students and assistants, but is neither complete nor final. Accordingly, users are requested (a) to take care to cite the correct analysts for each area, and (b) to read the associated documentation carefully in order to avoid misinterpretation.</p>\n        \n        <h4>Methodology</h4>\n        \n        <p>The Çatalhöyük excavation and recording system has developed over the course of the project. Rather than repeating its history here, users are advised to read the reports listed below. The process of selecting data for the current analysis is explained below, while the field descriptions provide some information on recording methodology.</p>\n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>This dataset is designed primarily for analyses of NISP, herd structure, and biometry in a large and long-lived Neolithic settlement. It's availability online is aimed at facilitating inter-site comparisons within Central Anatolia and the wider region.</p>\n        \n        <h4>Represented Excavation Areas, Recording, and Sampling</h4>\n        <p>Çatalhöyük is a large and complex excavation project involving numerous site areas and several sub-projects. The data presented here includes the following areas:</p>\n        <ul>\n            <li><strong>East Mound</strong>\n                <ul>\n                    <li>North/4040 (up to 2008 excavation year)</li>\n                    <li>South/Summit (up to 2008 excavation year)</li>\n                    <li>BACH</li>\n                    <li>IST</li>\n                    <li>Kopal</li>\n                </ul>\n            </li>\n            <li><strong>West Mound</strong>\n                <ul>\n                    <li>Trenches 1, 5, and 7</li>\n                </ul>\n            </li>\n        </ul>\n        \n        <p>Data from excavation in the main project areas (ie. North and South) since 2008 are excluded since they are as yet unpublished and analysis is at an early stage. Likewise the TP area is not included. Note that the West Mound data is also currently unpublished, and in the case of Trench 5 is also a work in progress. Units were also excluded if their 'Hodder phase' field included the words 'Post-Chalcolithic', 'Unstratified', or 'Scrape' (i.e. recovered during surface scraping).</p>\n        \n        <p>Only the mammalian fauna is represented here, although completely unidentified fragments are also included. Mammals make up the overwhelming majority of faunal remains on both mounds. Microfauna are excluded, except for a few cases where for various reasons they were recorded into the main database rather than the dedicated microfauna system.</p>\n        \n        <p>The Çatalhöyük faunal data presented here has been simplified somewhat. The necessary fields for analysis of NISP, age and sex, biometry, and basic taphonomy have all been included, as have basic unit-level summaries. More detailed taphonomic information exists in the original database but has been omitted to avoid confusion, since the use of fields has changed somewhat over time.  Butchery data are the subject of an ongoing PhD and are omitted accordingly, as is detailed information on bone artefacts. However, fields have been inserted to indicate where butchery and bone-working records are available in the original database.</p>\n        \n        <p>A two-tier recording system has been used through much of the Çatalhöyük project, with some units recorded in full while others are 'assessed' and given a priority rating of 1-5 based on taphonomy, faunal content, and stratigraphic integrity. Units rated A1 are typically recorded in full as soon as possible, while A5 indicates a unit with very low potential that will normally not be studied further (e.g. tertiary deposit, disturbance, uncertain stratigraphy, extreme attrition). In recent years the assessment process has routinely involved recording of all measurable specimens, in order to increase the available samples for biometric analysis.</p>\n        \n        <p>The presence of records representing selected specimens from incompletely studied units obviously introduces a risk of bias, and the safest option would have been to include only fully recorded units here. However, since biometry will be a major component of the meta-analysis, all measured specimens from units rated A1 to A4 have also been included (excepting measurements that relate only to bone working). These specimens should only be used for biometry, and have been flagged as such in the specimen table (see below). Specimens from unstudied units that were recorded for any purpose other than biometry (e.g. bone working, dating, biomolecular sampling) are not included here.</p>\n        \n        <p>During the extraction process, various errors and ambiguities were inevitably encountered. Wherever possible these were corrected/clarified using the available information. In some cases this was not possible, however, and a small amount of nonsensical or potentially misleading data has been deleted as a result. Given its sheer size, further errors almost certainly exist within the dataset presented here.</p>\n        \n<p>Open Context has published an additional related dataset documenting results of zooarchaeological studies from <a href=\"http://opencontext.org/projects/02594C48-7497-40D7-11AE-AB942DC513B8\">Çatalhöyük Area TP</a>.</p>\n\n        <h4>Bibliography</h4>\n        <div resource=\"http://opencontext.org/subjects/E44A115A-DFCB-4971-6750-40955DF2C062\">    \n            <div id=\"pub-2013-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2013-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2013-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Russell, N., K. Twiss, D. Orton, and A. Demirergi</p>\n                        <div>\n                            <div class=\"pub-date\">In Press</div>\n                            <div class=\"ref-title-pub\">More on the Çatalhöyük mammal remains.\n                            <span class=\"collection-title\">Humans and Landscapes of Çatalhöyük: reports from the 2000-2008 seasons</span>, edited by I. Hodder. Los Angeles: Cotsen Institute.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:publisher\" href=\"http://www.ioa.ucla.edu/publications/\">Publisher</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2013-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2013-2\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2013-2\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Russell, N., K. Twiss, D. Orton, and A. Demirergi</p>\n                        <div>\n                            <div class=\"pub-date\">In press</div>\n                            <div class=\"ref-title-pub\">Changing Neolithic animal use at Çatalhöyük, Turkey. \n                            <span class=\"collection-title\">Archaeozoology of the Near East 10</span>, edited by B. De Cupere and  V. Linseele. Leuven: Peeters.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://www.peeters-leuven.be/boekoverz.asp?nr=9315\">Publisher Summary</a>]\n                        [<a rel=\"dcterms:publisher\" href=\"http://www.peeters-leuven.be/\">Publisher</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2005-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2005-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2005-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Russell, N. and L. Martin</p>\n                        <div>\n                            <div class=\"pub-date\">2005</div>\n                            <div class=\"ref-title-pub\">'The Çatalhöyük mammal remains. <span class=\"collection-title\">Inhabiting Çatalhöyük: reports from the 1995-1999 seasons</span>, edited by I. Hodder, pp. 35-95. Cambridge: McDonald Institute.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/151746/The_Catalhoyuk_mammal_remains\">Open Access</a>]\n                        [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/57639757\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n        </div>    \n         <div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n\n<h5>Image Credit</h5>\n<p class=\"muted\">\nCredit for this project's illustrative image \n<a href=\"http://www.flickr.com/photos/catalhoyuk/9184503529\">Çatalhöyük Project (via Flickr)</a>\n(CC-By-NC-SA)\n</p>\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85090768",
+            "slug": "loc-sh-sh85090768",
+            "label": "Neolithic"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/2664C6A9-3867-4EC7-C7A6-F60C688E7008",
+            "slug": "34-david-orton",
+            "label": "David Orton",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/94AA8533-450D-4FC7-4DC1-3CB12A3FE52C",
+            "slug": "34-nerissa-russell",
+            "label": "Nerissa Russell",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/7CDF91A1-3230-41FB-274A-E927734F8DE6",
+            "slug": "34-katheryn-twiss",
+            "label": "Katheryn Twiss",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/193BC120-D87D-4122-1877-A8BA4999BCDA",
+            "slug": "34-louise-martin",
+            "label": "Louise Martin",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/D210F391-6424-4E14-FA35-F4F5C4627EA2",
+            "slug": "34-sheelagh-frame",
+            "label": "Sheelagh Frame",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/2664C6A9-3867-4EC7-C7A6-F60C688E7008",
+            "slug": "34-david-orton",
+            "label": "David Orton",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/94AA8533-450D-4FC7-4DC1-3CB12A3FE52C",
+            "slug": "34-nerissa-russell",
+            "label": "Nerissa Russell",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/7CDF91A1-3230-41FB-274A-E927734F8DE6",
+            "slug": "34-katheryn-twiss",
+            "label": "Katheryn Twiss",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/193BC120-D87D-4122-1877-A8BA4999BCDA",
+            "slug": "34-louise-martin",
+            "label": "Louise Martin",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/D210F391-6424-4E14-FA35-F4F5C4627EA2",
+            "slug": "34-sheelagh-frame",
+            "label": "Sheelagh Frame",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        },
+        {
+            "id": "http://www.geonames.org/6940561",
+            "slug": "geonames-6940561",
+            "label": "Çatalhöyük"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2005020452",
+            "slug": "loc-sh-sh2005020452",
+            "label": "Mammal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 3.4894931316375732
+}

@@ -1,0 +1,316 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2",
+    "uuid": "3F6DCD13-A476-488E-ED10-47D25513FCB2",
+    "slug": "42-pyla-koutsopetria-archaeological-project",
+    "label": "Pyla-Koutsopetria Archaeological Project",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            33.710812115218,
+                            34.980697492536
+                        ],
+                        [
+                            33.710812115218,
+                            34.99167440562
+                        ],
+                        [
+                            33.718324079964,
+                            34.99167440562
+                        ],
+                        [
+                            33.718324079964,
+                            34.980697492536
+                        ],
+                        [
+                            33.710812115218,
+                            34.980697492536
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    33.71438421353773,
+                    34.986491042604634
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-2",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-2"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-2",
+                "coordinates": [
+                    [
+                        [
+                            33.700717657011,
+                            34.980201824909
+                        ],
+                        [
+                            33.700717657011,
+                            34.997396958236
+                        ],
+                        [
+                            33.710404741428,
+                            34.997396958236
+                        ],
+                        [
+                            33.710404741428,
+                            34.980201824909
+                        ],
+                        [
+                            33.700717657011,
+                            34.980201824909
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-2",
+            "properties": {
+                "id": "#geo-derived-props-2",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-2",
+                "coordinates": [
+                    33.706772300486534,
+                    34.98639404147021
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-10-25",
+    "description": "Pedestrian survey, geophysical prospecting, and excavation near Pyla, on the southern coast of Cyprus",
+    "dc-terms:abstract": "<div>\n        \n        <p>The dataset collected by the Pyla-Koutsopetria Archaeological Project (PKAP) documents fieldwork that began in the summer of 2004 near the modern village of Pyla on the southern coast of Cyprus. Over seven field seasons, PKAP teams documented the coastal zone of Pyla using a combination of intensive pedestrian survey, geophysical prospecting, and excavation. We systematically sampled 100 ha in the area, recorded hundreds of thousands of artifacts on the surface, and described hundreds of cut blocks and <em>in situ</em> architectural features. After fieldwork, we studied over 15,000 of the artifacts. We recorded the finds and features in a relational database (Microsoft Access) and plotted them on a Cyprus Land Survey 1:5000 map using Geographic Information System software (ArcGIS).\n        </p>\n        \n        <p>\n        We developed a distributional approach that would produce a high-resolution assemblage without overwhelming our logistical system. Across the coastal plain where artifact densities were highest, we chose grid units of 40 x 40 m (1,600 sq m), which were smaller than typical siteless / non-site survey units (3,000-10,000 sq m) but larger than the units used in intensive gridded collection of small sites (25-100 sq m). Across the ridges and the lower density areas of the plain, we broke with a standard grid and increased our unit size to about 5,000 sq m on average, which is more typical of distributional survey generally. In both the 1,600 sq m grid units and the larger non-gridded units, teams of four field walkers traversed the unit at 10 m intervals with each walker covering a 2 m wide swath through the unit.    \n        </p>\n        \n        <p>To sample the site for artifacts, we employed a high-resolution collection method called the \"chronotype system\" which other projects had employed in Cyprus and Greece with much success. The chronotype system assigns every artifact type (i.e., chronotype) to a chronological and descriptive hierarchy based on specific physical typological characteristics. Chronotypes range from the very precise (e.g., \"African Red Slip Form 99 – Rim Sherd,\" or \"Micaceous Water Jar – body sherd\") to the very imprecise (e.g., \"Medium Coarse body sherd – Post-Prehistoric,\" or \"Ancient Millstone\"), but are always assigned to a period, however narrow or broad. During survey near Pyla, walkers collected at least one example of each part (rim, base, handle, sherd) of each chronotype present in their transects. Especially diagnostic sherds were then pulled for cataloguing, photographing, illustrating, and publication.</p>\n        \n        <p>In addition to artifact data, fieldwalkers also recorded features in the unit (e.g., cut stone blocks and walls), as well as information to locate the unit in space or contribute to the later interpretation of artifact patterns: location and toponym, evidence of current land use (e.g., olives, wheat, and barren), vegetation cover (e.g., weeds, trees, and phrygana), vegetation height in relation to the field walker (e.g., ankle high, knee high, waist high), the condition of the soil, the surface clast composition, and surface visibility (recorded at 10% intervals). These data offer environmental contexts for assessing artifact densities across the whole of the site. </p>\n        \n        <h4>Potential Applications of the Data</h4>\n        <p>The collection from the Pyla-Koutsopetria Archaeological Project is particularly useful for researchers investigating diachronic change in Mediterranean coastal settlement throughout Antiquity and settlement patterns on Cyprus more specifically. The assemblage of Late Roman fine ware is particularly robust and important for the distribution of these high-visibility artifacts in the Eastern Mediterranean. The collection also presents important dataset for critiques of intensive pedestrian survey methods and practices in the Mediterranean.</p>\n        \n        <h4>Current Disposition of the Collections</h4>\n        <p>Approximately 20% of the collected finds are stored at the Larnaka District Archaeological Museum in Larnaka Cyprus and labelled according to unit and batch. The Elwyn B. Robinson Department of Special Collections at the Chester Fritz Library at the University of North Dakota houses paper copies of all records from the project. No complete archive of the digital records presently exists.</p>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7B56GNS"
+        },
+        {
+            "id": "http://opencontext.org/projects/42-pyla-koutsopetria-archaeological-project"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85026692",
+            "slug": "loc-sh-sh85026692",
+            "label": "Classical antiquities"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85025419",
+            "slug": "loc-sh-sh85025419",
+            "label": "Chronology, Roman"
+        },
+        {
+            "id": "http://pleiades.stoa.org/vocabularies/time-periods/hellenistic-republican",
+            "slug": "pleiades-tp-hellenistic-republican",
+            "label": "Hellenistic Greek, Roman Republic"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/8C74D664-03DC-43C1-64EC-2FFC019FCB26",
+            "slug": "42-william-r-caraher",
+            "label": "William R. Caraher",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/C6F7A46C-EA79-4000-D67D-B686F6CFFDA9",
+            "slug": "42-r-scott-moore",
+            "label": "R. Scott Moore",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/01B146EA-9654-4A13-FE59-DEA17A785EFE",
+            "slug": "42-david-k-pettegrew",
+            "label": "David K. Pettegrew",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/8C74D664-03DC-43C1-64EC-2FFC019FCB26",
+            "slug": "42-william-r-caraher",
+            "label": "William R. Caraher",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/C6F7A46C-EA79-4000-D67D-B686F6CFFDA9",
+            "slug": "42-r-scott-moore",
+            "label": "R. Scott Moore",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/01B146EA-9654-4A13-FE59-DEA17A785EFE",
+            "slug": "42-david-k-pettegrew",
+            "label": "David K. Pettegrew",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/146669",
+            "slug": "geonames-146669",
+            "label": "Republic of Cyprus"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006504",
+            "slug": "loc-sh-sh85006504",
+            "label": "Archaeological surveying"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85046127",
+            "slug": "loc-sh-sh85046127",
+            "label": "Excavations (Archaeology)--Cyprus"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh94001190",
+            "slug": "loc-sh-sh94001190",
+            "label": "Landscape archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85062894",
+            "slug": "loc-sh-sh85062894",
+            "label": "Human settlements"
+        }
+    ],
+    "time": 0.7332010269165039
+}

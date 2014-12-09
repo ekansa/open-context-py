@@ -1,0 +1,166 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32",
+    "uuid": "8F947319-3C69-4847-B7A2-09E00ED90B32",
+    "slug": "41-balance-pan-weights-from-nippur",
+    "label": "Balance Pan Weights from Nippur",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    45.230833,
+                    32.126944
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-10-08",
+    "description": "Physical measurements and photographs of weights (and possible weights) from a single site, multiple excavations from 1889-1972.",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>This dataset formed the basis of research into weights and weighing at the site of Nippur and is part of ongoing research into weights of the ancient Near East in general. Balance pan weights are used in both manufacture (for example, measuring amounts for mixing metals to create alloys) and trade (evaluation of goods by weight to establish equivalence in an exchange) and can thus be seen as a correlate of economic activity. Ancient examples can provide insight into the nature and extent of ancient economies. Nippur was a religious center through much of the Bronze Age and religious institutions are known to have played a role in Bronze Age economics. This role may have been in opposition to or in cooperation with that of private and state enterprise. Common weight forms at Nippur are those that are typical across the ancient Near East, but a single system of weight measurement is strongly indicated in statistical analysis of the known weights from the site. This is in contradiction to most analyzed sites further north, where many systems are simultaneously in play. It seems to indicate Nippur’s relative isolation within a socio-economic system, reflecting a general lack of incoming merchants or craftsmen from distant regions.</p>\n        \n        <h4>Methodology</h4>\n        \n        <p>Objects in this dataset were observed and measured in the University of Pennsylvania Museum and in the Oriental Institute of the University of Chicago in 2003. Weighing accuracy was determined by equipment limits, Ohaus and Acculab scales to one hundredth of a gram below 10 grams, one tenth of a gram between 10 and 600 grams, and to one gram over this number. Analysis has been conducted with simple fitting sequences and with advanced statistical techniques (particularly the Kendall statistic for determining quantal structure). Some data from the Iraq museum have now been added to this set. These objects were studied by Thelma Akrawi in the 1970s at the Iraq Museum but her data were never published. She has graciously given permission for their inclusion.</p>\n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>The most important further application of this dataset is likely in comparing it with other weights data, combining with material from other sites to arrive at a larger understanding of use-patterns--economic connections potentially indicated by combining, adapting, or adopting standards of mensuration. </p>\n        \n        <h4>Related Publications</h4>\n        <p>Most of the Nippur weights in this dataset were published in:</p>\n        <div resource=\"http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32\">\n            \n            <div id=\"pub-2005-1\" rel=\"dcterms:references\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2005-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2005-1\">\n                    <div property=\"dcterms:bibliographicCitation\">   \n                        <p class=\"authors\">Hafford, William B. </p>\n                        <div>\n                            <div class=\"pub-date\">2005</div>\n                            <div class=\"ref-title-pub\">Mesopotamian Mensuration: Balance Pan Weights from Nippur. <span class=\"collection-title\">Journal of the Economic and Social History of the Orient</span> 48(3):345-387.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"rdfs:isDefinedBy\" href=\"http://www.jstor.org/stable/25165105\">JSTOR</a>]\n                        [<a rel=\"dcterms:isPartOf\" href=\"http://www.jstor.org/stable/i25165103\">Issue</a>]\n                    </div>\n                </div>\n            </div>\n            \n        </div>     \n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7FT8HZG"
+        },
+        {
+            "id": "http://opencontext.org/projects/41-balance-pan-weights-from-nippur"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/99237",
+            "slug": "geonames-99237",
+            "label": "Iraq"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/DEF7332D-967E-43A9-151B-036093EB526A",
+            "slug": "41-william-b-hafford",
+            "label": "William B. Hafford",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/DEF7332D-967E-43A9-151B-036093EB526A",
+            "slug": "41-william-b-hafford",
+            "label": "William B. Hafford",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85080305",
+            "slug": "loc-sh-sh85080305",
+            "label": "Tools, Prehistoric"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2002006552",
+            "slug": "loc-sh-sh2002006552",
+            "label": "Weight"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85083608",
+            "slug": "loc-sh-sh85083608",
+            "label": "Measurement"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        }
+    ],
+    "time": 0.07800507545471191
+}

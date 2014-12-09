@@ -1,0 +1,213 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846",
+    "uuid": "CDD40C27-62ED-4966-AF3D-E781DD0D4846",
+    "slug": "33-erbaba-hoyuk-and-suberde-zooarchaeology",
+    "label": "Erbaba Höyük and Suberde Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            31.681153,
+                            37.35
+                        ],
+                        [
+                            31.681153,
+                            37.759171
+                        ],
+                        [
+                            31.933333,
+                            37.759171
+                        ],
+                        [
+                            31.933333,
+                            37.35
+                        ],
+                        [
+                            31.681153,
+                            37.35
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    31.807243,
+                    37.5545855
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-05-17",
+    "description": "Faunal data from Erbaba Höyük, Turkey, supplemented by additional data from Suberde",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>This dataset was created as part of the Benjamin Arbuckle's PhD dissertation entitled: \"The Evolution of Sheep and Goat Pastoralism and Social Complexity in Central Anatolia\" (Harvard University, 2006). It records faunal remains recovered from Erbaba Höyük in the 1970s with a focus of sheep, goat, cattle and red deer remains. One dataset records detailed information regarding sheep and goat remains, while the other records detailed information regarding the cattle and red deer remains.</p>\n        \n        <h4>Goals of the Project</h4>\n        <p>Record and interpret data describing the animal economy at Neolithic Erbaba Höyük with a focus on sheep and goat pastoralism and early cattle management.</p>\n        \n        <h4>History of the Assemblage</h4>\n        <p>The assemblage was initially sorted in the field by Dexter Perkins in the 1970s during the excavation and 'diagnostic' specimens were transported back to the US. The assemblage was analyzed and partially sorted by Dexter Perkins. Material from some loci is bagged together while in some cases specimens representing specific species or elements were separated and bagged together. This is particularly true for Red deer, small carnivores and rare taxa (e.g., beaver). Most specimens are labeled with their context information or they are in a bag which is labeled; in many cases colored ink was used to label specimens, which is now illegible. The assemblage was stored in a basement and was affected by flooding. Some context information was lost and some of the storage bags decayed under these conditions. The assemblage was eventually recovered and transferred into large plastic storage crates where it is currently stored at Harvard University.</p> \n        \n        <h4>Methodology</h4>\n        <ul>\n            <li><strong>Collection and recording procedures:</strong> The faunal assemblage was collected via hand-picking. The extent of screening is unknown.</li> \n\n            <li><strong>Recording system:</strong>\n            Standard zooarchaeologica data were recorded for sheep and goat remains and also for cattle remains. Please note: in certain contexts, select taxa were specifically sampled as <a href=\"http://opencontext.org/properties/59D0E59E-0104-4D2A-36A1-E256C35A97EC\">described here</a>.</li>\n        </ul>\n\n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>[Forthcoming]</p>\n        \n        <h4>Related Publications</h4>\n        <div resource=\"http://opencontext.org/subjects/1F7FEABA-D8BB-40AE-98BF-4E87401FF8E4\">\n            \n            <div id=\"pub-s-2009-2\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-s-2009-2\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2009-2\">\n                    <div property=\"dcterms:bibliographicCitation\"> \n                        <p class=\"authors\">Arbuckle, B.S., Makarewicz, C.A.</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">The early management of cattle <em>Bos taurus</em>. <span class=\"collection-title\">Antiquity </span>83:669-686.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\" http://www.academia.edu/921614/The_early_management_of_cattle_Bos_taurus_in_Neolithic_central_Anatolia \">Article</a>]\n                    </div>\n                </div>\n            </div>\n\n            \n            <div id=\"pub-s-2009-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-s-2009-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-s-2009-1\">\n                    <div property=\"dcterms:bibliographicCitation\"> \n                        <p class=\"authors\">Arbuckle, B.S., Öztan, A., Gulçur, S.</p>\n                        <div>\n                            <div class=\"pub-date\">2009</div>\n                            <div class=\"ref-title-pub\">The evolution of sheep and goat husbandry in central Anatolia. <span class=\"collection-title\">Anthropozoologica </span>44:129-157.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\"http://www.mnhn.fr/museum/front/medias/publication/19965_AZ_44-1-Arbuckle_et_al..pdf\">Open Access</a>]\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.5252/az2009n1a6\">DOI</a>]\n                    </div>\n                </div>\n            </div>\n\n            \n\n            <div id=\"pub-s-2008-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-s-2008-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-s-2008-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Arbuckle, B.S.</p>\n                        <div>\n                            <div class=\"pub-date\">2008</div>\n                            <div class=\"ref-title-pub\"> Caprine exploitation at Erbaba Hoyuk: a Pottery Neolithic village in Central Anatolia. In <span class=\"collection-title\"> Archaeozoology of southwestern Asia and adjacent areas VIII. </span>, edited by L.Gourichon and E. Vila.  Pp. 345-365. Travaux de la Maison de l’Orient, Paris.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\" http://www.academia.edu/921640/Caprine_exploitation_at_Erbaba_Hoyuk_A_pottery_Neolithic_village_in_central_Anatolia\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n\n            \n            <div id=\"pub-d-2006-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-d-2006-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-d-2006-1\">\n                    <div property=\"dcterms:bibliographicCitation\"> \n                        <p class=\"authors\">Arbuckle, B.S. </p>\n                        <div>\n                            <div class=\"pub-date\">2006</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">The Evolution of Sheep and Goat Pastoralism and Social Complexity in Central Anatolia.</span>  \n        PhD Dissertation. Harvard University, Department of Anthropology. Ann Arbor: University Microfilms.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/165066200\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n        \n        </div>\n\n<div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n            \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M70Z715B"
+        },
+        {
+            "id": "http://opencontext.org/projects/33-erbaba-hoyuk-and-suberde-zooarchaeology"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85090768",
+            "slug": "loc-sh-sh85090768",
+            "label": "Neolithic"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/8CFA04D7-F9F2-4336-6B14-0057FCB6D97F",
+            "slug": "33-benjamin-s-arbuckle",
+            "label": "Benjamin S. Arbuckle",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/8CFA04D7-F9F2-4336-6B14-0057FCB6D97F",
+            "slug": "33-benjamin-s-arbuckle",
+            "label": "Benjamin S. Arbuckle",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85143356",
+            "slug": "loc-sh-sh85143356",
+            "label": "Hamlets (villages)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2005020452",
+            "slug": "loc-sh-sh2005020452",
+            "label": "Mammal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85038949",
+            "slug": "loc-sh-sh85038949",
+            "label": "Domestication"
+        }
+    ],
+    "time": 2.4336040019989014
+}

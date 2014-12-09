@@ -12,7 +12,10 @@ from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
-
+from opencontext_py.apps.entities.entity import views as EntityViews
+from opencontext_py.apps.imports.sources import views as Imp_sources
+from opencontext_py.apps.imports.fields import views as Imp_fields
+from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 
 urlpatterns = patterns('',
                        # Examples:
@@ -49,6 +52,58 @@ urlpatterns = patterns('',
                        url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
                        url(r'^types', OCtypeViews.index, name='types_index'),
+                       # --------------------------
+                       # IMPORTER INTERFACE PAGES
+                       # --------------------------
+                       url(r'^imports/project/(?P<project_uuid>\S+)',  Imp_sources.project,
+                           name='imp_sources_project'),
+                       url(r'^imports/field-types/(?P<source_id>\S+)', Imp_sources.field_types,
+                           name='field_types'),
+                       url(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_sources.field_types_more,
+                           name='field_types_more'),
+                       url(r'^imports/field-entity-relations/(?P<source_id>\S+)', Imp_sources.field_entity_relations,
+                           name='field_entity_relations'),
+                       url(r'^imports/field-descriptions/(?P<source_id>\S+)', Imp_sources.field_descriptions,
+                           name='field_descriptions'),
+                       url(r'^imports/finalize/(?P<source_id>\S+)', Imp_sources.finalize,
+                           name='imp_source_finalize'),
+                       # --------------------------
+                       # IMPORTER PROJECT POST REQUESTS
+                       # --------------------------
+                       url(r'^imports/create-project', Imp_sources.create_project,
+                           name='imp_sources_create_project'),
+                       url(r'^imports/edit-project/(?P<project_uuid>\S+)', Imp_sources.edit_project,
+                           name='imp_sources_edit_project'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR IMPORTER AJAX REQUESTS
+                       # --------------------------
+                       url(r'^imports/project-import-refine/(?P<project_uuid>\S+)', Imp_sources.project_import_refine,
+                           name='imp_sources_project_import_refine'),
+                       url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
+                           name='imp_field_classify'),
+                       url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
+                           name='imp_field_meta_update'),
+                       url(r'^imports/field-list/(?P<source_id>\S+)', Imp_fields.field_list,
+                           name='imp_field_list'),
+                       url(r'^imports/field-annotations/(?P<source_id>\S+)', Imp_field_annos.view,
+                           name='imp_field_annos_view'),
+                       url(r'^imports/subjects-hierarchy-examples/(?P<source_id>\S+)', Imp_field_annos.subjects_hierarchy_examples,
+                           name='imp_field_annos_subjects_hierarchy_examples'),
+                       url(r'^imports/field-described-examples/(?P<source_id>\S+)', Imp_field_annos.described_examples,
+                           name='imp_field_annos_described_examples'),
+                       url(r'^imports/field-linked-examples/(?P<source_id>\S+)', Imp_field_annos.linked_examples,
+                           name='imp_field_annos_linked_examples'),
+                       url(r'^imports/field-annotation-delete/(?P<source_id>\S+)/(?P<annotation_id>\S+)', Imp_field_annos.delete,
+                           name='imp_field_annos_delete'),
+                       url(r'^imports/field-annotation-create/(?P<source_id>\S+)', Imp_field_annos.create,
+                           name='imp_field_annos_create'),
+                       url(r'^imports/', Imp_sources.index,
+                           name='imp_sources_index'),
+                       url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
+                           name='entity_hierarchy_children'),
+                       url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
+                           name='entity_look_up'),
+                       # Admin route
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

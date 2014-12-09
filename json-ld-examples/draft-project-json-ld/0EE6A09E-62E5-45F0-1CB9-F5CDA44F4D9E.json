@@ -1,0 +1,237 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E",
+    "uuid": "0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E",
+    "slug": "52-south-carolina-shpo",
+    "label": "South Carolina SHPO",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "href": "http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E",
+                "reference-type": "specified",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "id": "#geo-props-1"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    [
+                        [
+                            -83.408203125,
+                            32.026675985173
+                        ],
+                        [
+                            -83.408203125,
+                            35.245587323619
+                        ],
+                        [
+                            -78.486328125,
+                            35.245587323619
+                        ],
+                        [
+                            -78.486328125,
+                            32.026675985173
+                        ],
+                        [
+                            -83.408203125,
+                            32.026675985173
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "properties": {
+                "id": "#geo-derived-props-1",
+                "location-precision-note": "Location data available with no intentional reduction in precision",
+                "type": "oc-gen:geo-coverage",
+                "reference-type": "specified",
+                "location-region-note": "This point represents the center of the region defining the location of this item",
+                "href": "http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-derived-geom-1",
+                "coordinates": [
+                    -80.9220437979024,
+                    33.887677042014865
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2014-01-21",
+    "dc-terms:isPartOf": [
+        {
+            "id": "http://opencontext.org/projects/416A274C-CF88-4471-3E31-93DB825E9E4A",
+            "slug": "52-digital-index-of-north-american-archaeology-dinaa",
+            "label": "Digital Index of North American Archaeology (DINAA)"
+        }
+    ],
+    "description": "Archaeological site information managed and maintained by the South Carolina Institute of Archaeology and Anthropology (SCIAA)",
+    "dc-terms:abstract": "<div>\n<p>This dataset within the Digital Index of North American Archaeology (DINAA) represents archaeological site definitions in the state of South Carolina, United States of America. The source data are provided as a public service by the Office of the State Archaeologist, South Carolina Institute of Archaeology and Anthropology, and the South Carolina Department of Archives and History, where they are used to help record cultural resources and ascertain compliance with federal, state, and local statutes regarding the protection of those resources. The representation of these source data in DINAA is limited to definitions of archaeological cultures, site use types, diagnostic artifacts, and fields related to the quality of information preservation at each site. The original source data contain many other elements that are not present in DINAA, including those that may be improper for Web-publication such as precise location coordinates. As such, DINAA data are not suitable for records checks or other activities to demonstrate compliance with federal, state, or local regulations. DINAA data are useful for recognizing trends among archaeological site characteristics in various spatial and temporal combinations, for research and educational purposes. Any user who wishes to investigate the source data in detail for legal compliance or research purposes, or wishes to learn more about the important work of archaeological preservation in South Carolina, should <a href=\"http://artsandsciences.sc.edu/sciaa/\">contact the South Carolina Institute of Archaeology and Anthropology</a> directly.</p>\n\n<h4>Publication Note</h4>\n<p>Open Context published this dataset as part of a larger, multi-state data sharing and integration project, the Digital Index of North American Archaeology (DINAA), funded in 2012 by the National Science Foundation (award # 1216819 and 1217240). DINAA's team of university, public, and private sector researchers is developing models to publish and index archaeological information from large areas of eastern North America for free of charge access and reuse by all researchers, students, and enthusiasts. For more about the DINAA project, <a href=\"http://ux.opencontext.org/blog/archaeology-site-data/\">visit the project website</a>.</p>\n</div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M7WW7FK2"
+        },
+        {
+            "id": "http://opencontext.org/projects/52-south-carolina-shpo"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/C1F04FDD-A829-4A04-F6B4-670AD6C580B0",
+            "slug": "24-sarah-whitcher-kansa",
+            "label": "Sarah Whitcher Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BA0DC9B3-7D8A-47C3-E179-8ED9B294D6D6",
+            "slug": "10-eric-c-kansa",
+            "label": "Eric C. Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/BE40A767-B045-47F5-CA55-B196D758F98B",
+            "slug": "52-stephen-yerka",
+            "label": "Stephen Yerka",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/CE3E13CB-C7B6-4D61-55FE-BB0D52A8374A",
+            "slug": "52-david-g-anderson",
+            "label": "David G. Anderson",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/998F9030-2A57-4ECC-AA38-D8F236946510",
+            "slug": "52-joshua-wells",
+            "label": "Joshua Wells",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/DE9A2751-68FF-49F3-165B-AC1EA4E05B6C",
+            "slug": "45-south-carolina-institute-of-archaeology-and-anthropolog",
+            "label": "South Carolina Institute of Archaeology and Anthropology (SCIAA)",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/6255149",
+            "slug": "geonames-6255149",
+            "label": "North America"
+        },
+        {
+            "id": "http://www.geonames.org/4597040",
+            "slug": "geonames-4597040",
+            "label": "South Carolina"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85116926",
+            "slug": "loc-sh-sh85116926",
+            "label": "Salvage archaeology"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/State_historic_preservation_office",
+            "slug": "wiki-state-historic-preservation-office",
+            "label": "State historic preservation office"
+        }
+    ],
+    "time": 1.5474028587341309
+}

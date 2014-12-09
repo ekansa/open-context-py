@@ -1,0 +1,129 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/MHS1PRJ0000000021",
+    "uuid": "MHS1PRJ0000000021",
+    "slug": "8-lake-carlos-beach-site-1992-and-1996",
+    "label": "Lake Carlos Beach Site, 1992 and 1996",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/MHS1PRJ0000000021",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    -95.3,
+                    45.9
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2006-11-01",
+    "description": "Descriptions and provenience information for 7837 artifacts",
+    "dc-terms:abstract": "<p class='subHeader'><strong>21DL2, Lake Carlos Beach Site, 1992 and 1996</strong></p>\r\n\r\n\r\n\r\n<br/>Catalog of Collections, 21DL2, 1992 & 1996\r\n\r\n\r\n\r\n<br/><br/><em>Dataset provided by the <a href=\"http://www.mnhs.org/index.htm\">Minnesota Historical Society</a>\r\n\r\n\r\n\r\n</em><br/><br/>\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n<p class='bodyText'>In 1992 formal test units and shovel tests examined an area of 45 by 74 meters.  Ceramics, lithics, and bone were common in all units. The investigation recovered a wide variety of local and non-local lithic material, including quartz, quartzite, chert, Tongue River silica, Knife River flint, and obsidian.  Lithic tool forms included scrapers, bifaces, and five projectile points, three of which are Paleo-Indian lanceolate style points. The only complete lanceolate point falls in the range of Angostura points dated to around 9000 B.P.  A Madison type triangular projectile point dated to 300-1200 B.P. and a small side-notched point, possibly associated with Late Woodland or Plains Village, were also recovered.</p>\r\n\r\n\r\n\r\n<p class='bodyText'>Ceramics consisted primarily of net-impressed body sherds, although some also exhibited cord-impressed, fabric-impressed, parallel-grooved, and smooth surface treatments. Two pre-contact features were excavated; both rock hearths composed of fire-cracked rock.</p>  \r\n\r\n\r\n\r\n<br/><br/>\r\n\r\n\r\n\r\n<p class='bodyText'>In 1996, 38 square meters of the site area were excavated.  The excavation revealed two significant pre-contact occupations situated on the ancient shorelines of Lake Carlos.  The first is a Late Paleo-Indian occupation (9,000-10,000 B.P. based upon cross-dating of the projectile point style).  The second and most substantial occupation is from a later part of the Early Woodland Period called the Elk Lake culture (1700-3400 B.P.).  The investigation also yielded historic artifacts associated with the European settlement of the area.</p>\r\n\r\n\r\n\r\n<p class='bodyText'>The Paleo-Indian component is the only Paleo-Indian habitation site excavated in west-central Minnesota. A lanceolate spear point (Angostura) and specialized tool kits indicated by the recovery of a prismatic blade, Paleo-Indian end scrapers, and backed knives, were associated with this occupation. The Early Woodland Brainerd component apparently comprises the most intensive occupation of the site. Artifacts recovered from the late Early Woodland component include: Brainerd horizontal-corded and parallel-grooved ceramics, expanding stem or corner notched projectile points, a variety of scrapers, and pitted hammerstones.  Brainerd ceramic surface treatments identified include horizontal-corded and parallel-grooved sherds, but horizontal-corded sherds dominate the assemblage.  Some of the parallel-grooved ceramics from the late Early Woodland Brainerd component were previously unknown in Brainerd sites and undocumented in Minnesota. Carbonized residue from a Brainerd horizontal-corded sherd was radiocarbon dated to 1980+/-50 B.P.  Residue from a Brainerd or Avonlea-related parallel-grooved vessel was dated to 1880+/-50 B.P.  This parallel-grooved ceramic may represent a transitional decorative element that has been identified at only three Minnesota sites. This investigation yielded the only radiocarbon date for this style of ceramic.  A sherd from a Brainerd parallel-grooved vessel contained a sample of numerous wild rice phytoliths. This sample was radiocarbon dated to 1850+/-50 B.P. The dates from the horizontal-corded and parallel-grooved vessels both fall within the end of the Elk Lake culture, which overlaps the beginning of the Middle Woodland Period. Obsidian X-Ray fluorescence employed to source an obsidian flake from the site revealed a match with materials from Yellowstone National Park in Wyoming.</p>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/MHS1PER0000003295",
+            "slug": "8-state-of-minnesota-department-of-natural-resources-di",
+            "label": "State of Minnesota, Department of Natural Resources, Division of Parks and Recreation, Minnesota State Parks Cultural Resource Management Program staff",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/MHS1PER0000003295",
+            "slug": "8-state-of-minnesota-department-of-natural-resources-di",
+            "label": "State of Minnesota, Department of Natural Resources, Division of Parks and Recreation, Minnesota State Parks Cultural Resource Management Program staff",
+            "type": "foaf:Person"
+        }
+    ],
+    "time": 0.07800006866455078
+}

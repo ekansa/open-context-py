@@ -1,0 +1,120 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9",
+    "uuid": "42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9",
+    "slug": "51-faunal-data-from-neolithic-mentese",
+    "label": "Faunal Data from Neolithic Menteşe",
+    "dc-terms:published": "2014-05-12",
+    "description": "Zooarchaeology data for Neolithic Menteşe Höyük, a site in NW Anatolia",
+    "dc-terms:abstract": "<div>\n    <h4>Introduction</h4>\n    <p>The faunal sample of Menteşe comprised primary mammal bones, as well as some bird bones, and various other remains, inlcuding: spur-thighed tortoise, amphibian bones, fish elements and shells of molluscs.</p>\n\n    <p>The wild mammals (wild cat, fox, polecat, red deer, fallow deer, roe deer, wild boar, horse and hare) are only represented in low numbers. The major part of the mammal assemblages are composed of domestic animals: cattle, sheep, goats and some pigs. The dog is also present. The avifauna is mainly constituted by waterfowl or birds species related to wetlands (ducks, geese, common crane and moorhen).</p>\n\n    <p>The purposes of the cattle herding were the exploitation for milk, meat and labour force. For the caprines, the flock management focused on milk and tender meat. The statistical study (correspondence analysis) of the different occupation levels of Menteşe shows that cattle herding was predominant in the oldest levels (130 to 122) and that sheep herding became more significant in the upper levels. Moreover, the results clearly indicate that part of the taxa frequencies are identical at Fikirtepe and within the levels 130 to 122 of Menteşe and levels 121 to 100 are similar to Ilıpınar X and IX. At Menteşe, the transition from an economy based on cattle herding to a caprine-based economy could be explained by an overexploitation of the surrounding environment and a probable increase of the village population.</p>\n\n<br/>\n    <h5>Phasing (from Roodenberg et al. 2003):</h5>\n    <table>\n        <thead>\n            <tr><th>Phase</th><th>Levels</th><th>Contemporaneous to</th></tr>\n        </thead>\n        <tbody>\n            <tr><td>Late (Layer 1)</td><td>100 to 109</td><td>Ilıpınar VA</td></tr>\n            <tr><td>Middle (Layer 2)</td><td>110 to 125</td><td> </td></tr>\n            <tr><td>Early (Layer 3)</td><td>126 to 130</td><td>Fikirtepe</td></tr>\n        </tbody>\n    </table>\n    <br/>\n    <br/>\n    <h4>Bibliography</h4>\n        <div resource=\"http://opencontext.org/subjects/AF6F6BD2-6387-4FBB-74D4-FD054C08EF79\">    \n            \n            <div id=\"pub-2003-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2003-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:Journal\" resource=\"#pub-2003-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Roodenberg, J., Van As, A., Jacobs, L., and Wijnen, M.</p>\n                        <div>\n                            <div class=\"pub-date\">2003</div>\n                            <div class=\"ref-title-pub\"> Early settlement in the Plain of Yenişehir (NW Anatolia). The basal occupation layers at Menteşe. <span class=\"collection-title\">Anatolica</span> 29: 17-59.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"bibo:uri\" href=\"http://poj.peeters-leuven.be/content.php?url=article&amp;id=2015511\">Article</a>]\n                        [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.2143/ANA.29.0.2015511\">DOI</a>]\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2008-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2008-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:BookSection\" resource=\"#pub-2008-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Gourichon, L. and Helmer, D</p>\n                        <div>\n                            <div class=\"pub-date\">2008</div>\n                            <div class=\"ref-title-pub\">Étude de la faune Neolithique de Menteşe. <span class=\"collection-title\">Life and Death in a Prehistoric Settlement in Northwest Anatolia: The Ilıpınar Excavations, Volume III</span>, edited by Roodenberg, J. and Alpaslan-Roodenberg, S., pp. 435-448. Leiden and Istanbul: Nederlands Instituut in Turkije.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:isPartOf\" href=\"http://www.worldcat.org/oclc/231718051\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n            \n        </div>\n    \n    <div id=\"eol-note\">\n    <h4>Publication Note</h4>\n    <p>Open Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\" was funded with a Computable Data Challenge <a href=\"http://eol.org/info/345\">award</a> from the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via <a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>. \n    </p>\n    </div>\n\n\n</div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-0",
+            "slug": "oc-gen-edit-level-0",
+            "label": "In preparation, Forthcoming"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/forthcoming",
+            "slug": "bibo-status-forthcoming",
+            "label": "Forthcoming"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85090768",
+            "slug": "loc-sh-sh85090768",
+            "label": "Neolithic"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2005020452",
+            "slug": "loc-sh-sh2005020452",
+            "label": "Mammal remains (archaeology)"
+        }
+    ],
+    "time": 0.07799983024597168
+}

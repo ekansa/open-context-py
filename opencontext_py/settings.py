@@ -77,6 +77,10 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.identifiers',
     'opencontext_py.apps.ocitems.obsmetadata',
     'opencontext_py.apps.imports.ocmysql',
+    'opencontext_py.apps.imports.fields',
+    'opencontext_py.apps.imports.fieldannotations',
+    'opencontext_py.apps.imports.records',
+    'opencontext_py.apps.imports.sources',
     'opencontext_py.apps.ldata.linkannotations',
     'opencontext_py.apps.ldata.linkentities',
     'opencontext_py.apps.exports.fields',
@@ -135,6 +139,7 @@ STATICFILES_DIRS = (
     os.path.join(BASE_DIR, 'static'),
     '/static/',
 )
+STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
 import socket
 
 #get the local host server name

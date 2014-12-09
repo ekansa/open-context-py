@@ -1,0 +1,168 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E",
+    "uuid": "74749949-4FD4-4C3E-C830-5AA75703E08E",
+    "slug": "31-barcin-hoyuk-zooarchaeology",
+    "label": "Barçın Höyük Zooarchaeology",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    29.602058,
+                    40.267036
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2013-02-25",
+    "description": "Zooarchaeology of Neolithic Phases at Barçın Höyük, Turkey",
+    "dc-terms:abstract": "<div>\n        \n        <h4>Introduction</h4>\n        <p>Barçın Höyük lies 5 km from the modern town of Yenişehir and south of the lake İznik. Barçın Höyük has evidence for occupation and use across a wide spectrum of archaeological periods. The site has a Byzantine graveyard, deposits from the Roman, Middle and Early Bronze Age, as well as deposits dating to the Chalcolithic and Neolithic periods. The Neolithic at Barçın Höyük is characterized by domestic refuse assigned to Phase VI. Excavators further subdivided Phase VI into multiple sub-phases, ranging from VIA (the latest sub-phase) to VIE (the earliest sub-phase). The complete time span for Phase VI lasts from 6000 to 6500 cal BC. </p>\n        <p>The archaeozoological material presented in this project covers phase VIA or VIB from trench L11, VIB from trench L11 (ca. 6200-5800) and phase VID out of trenches L13 and M10 (6500-6200).</p>\n        <p>The excavations are carried out as a part of the Eastern Mediterranean Early Farming Project by the Netherlands Institute in Turkey, under the direction Fokke Gerritsen.\n        The archaeozoological investigations are undertaken as a cooperation of the Netherlands Institute with Fokke Gerritsen and funded by the Austrian Science Fund Project no. P 19859-G02, the Start-Award of the Austrian Science Fund <em>Sesshafte bis protourbane Gesellschaften in Westanatolien</em> and the ERC-Project \"From Sedentism to Protourban Societies in Western Anatolia\", under direction of Barbara Horejs (Austrian Archaeological Institute, Vienna). </p>\n        \n        <h4>Methodology</h4>\n        \n        <p>[Forthcoming]</p>\n        \n        <h4>Potential Applications of Data</h4>\n        \n        <p>[Forthcoming]</p>\n        \n        <div resource=\"http://opencontext.org/subjects/3D2B02B5-B466-4679-A640-D8DF79B7AF1F\">    \n            <div id=\"pub-2012-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2012-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Thesis\" resource=\"#pub-2012-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Würtenberger, Doris Anna</p>\n                        <div>\n                            <div class=\"pub-date\">2012</div>\n                            <div class=\"ref-title-pub\"><span class=\"collection-title\">Archäozoologische Analysen am Fundmaterial des Barcın Höyüks im Vergleich mit ausgewählten Fundstellen des 7. und 6. Jt. v. Chr. in Nordwest- und Westanatolien.</span>. [Unpublished] Diplomathesis, University of Vienna. </div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            \n            <div id=\"pub-2010-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2010-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2010-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Gerritsen, F., Özbal R.,</p>\n                        <div>\n                            <div class=\"pub-date\">2010</div>\n                            <div class=\"ref-title-pub\">2009 Yili Barcın Höyük Kazıları. <span class=\"collection-title\">Kazı Sonuçları Toplantasi</span>, 32(Cilt 2): 198–208.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:isPartOf\" href=\"http://www.kulturvarliklari.gov.tr/sempozyum_pdf/kazilar/32_kazi_2.pdf\">Publisher Site (Open Access)</a>]\n                       [<a rel=\"dcterms:hasVersion\" href=\"http://www.academia.edu/2419280/2009_YILI_BARCIN_HOYUK_KAZILARI\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n             <div id=\"pub-2008-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2008-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2008-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Gerritsen, F., Özbal R.,</p>\n                        <div>\n                            <div class=\"pub-date\">2008</div>\n                            <div class=\"ref-title-pub\">Barcin Höyük Excavations, 2007. <span class=\"collection-title\">Kazı Sonuçları Toplantasi</span>, 30(Cilt 3): 457–464.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                       [<a rel=\"dcterms:isPartOf\" href=\"http://www.kulturvarliklari.gov.tr/sempozyum_pdf/kazilar/30_kazi_3.pdf\">Publisher Site (Open Access)</a>]\n                       [<a rel=\"dcterms:hasVersion\" href=\"http://www.nit-istanbul.org/GerritsenOzbalKST2009.pdf\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n            \n        </div>    \n\n<div id=\"eol-note\">\n<h4>Publication Note</h4>\n<p>\nOpen Context published this dataset as part of a larger data integration project involving participants in the Anatolia Zooarchaeology Working Group (led by Benjamin Arbuckle). The project \"\n<a href=\"http://alexandriaarchive.org/projects/linked-data/\">Biogeography of Early Domestic Animals using Linked Open Data</a>\n\" was funded with a Computable Data Challenge\n<a href=\"http://eol.org/info/345\">award</a>\nfrom the Encyclopedia of Life. The project published and integrated zooarchaeological data from 13 sites in Turkey, spanning the Epipaleolithic through the Bronze Age. Open Context editors made the integrated and published data in this study available for convenient mass-download in tabular (CSV) form via\n<a href=\"https://github.com/ekansa/opencontext-eol-zooarch\">GitHub</a>\n.\n</p>\n</div>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "owl:sameAs": [
+        {
+            "id": "http://dx.doi.org/10.6078/M78G8HM0"
+        },
+        {
+            "id": "http://opencontext.org/projects/31-barcin-hoyuk-zooarchaeology"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85090768",
+            "slug": "loc-sh-sh85090768",
+            "label": "Neolithic"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/4454975A-7847-47B5-C867-DC828582E1EF",
+            "slug": "31-alfred-galik",
+            "label": "Alfred Galik",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/4454975A-7847-47B5-C867-DC828582E1EF",
+            "slug": "31-alfred-galik",
+            "label": "Alfred Galik",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/298795",
+            "slug": "geonames-298795",
+            "label": "Turkey"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85002415",
+            "slug": "loc-sh-sh85002415",
+            "label": "Agriculture"
+        }
+    ],
+    "time": 0.07800006866455078
+}

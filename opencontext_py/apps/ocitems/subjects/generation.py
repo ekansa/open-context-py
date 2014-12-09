@@ -5,13 +5,16 @@ from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
-from opencontext_py.apps.ocitems.assertions.models import Assertion, Containment
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.entities.entity.models import Entity
 
 
 # Some functions for processing subject items
 class SubjectGeneration():
-    error_uuids = dict()
+
+    def __init__(self):
+        self.error_uuids = dict()
 
     def get_most_recent_subject(self):
         """
@@ -58,10 +61,12 @@ class SubjectGeneration():
         """
         path = False
         act_contain = Containment()
-        act_contain.contexts = []
+        contexts = []
         r_contexts = act_contain.get_parents_by_child_uuid(uuid)
-        # now reverse the list of contexts, so top most context is first, followed by children contexts
-        contexts = r_contexts[::-1]
+        for tree_node, r_parents in r_contexts.items():
+            # now reverse the list of parent contexts, so top most parent context is first,
+            # followed by children contexts
+            contexts = r_parents[::-1]
         if(include_self):
             contexts.append(uuid)
         if(len(contexts) > 0):
@@ -74,6 +79,52 @@ class SubjectGeneration():
                     return False
             path = delim.join(path_items)
         return path
+
+    def generate_save_context_path_from_uuid(self, uuid):
+        """ Generates and saves a context path for a subject item by uuid """
+        output = False
+        try:
+            man_obj = Manifest.objects.get(uuid=uuid)
+        except Manifest.DoesNotExist:
+            man_obj = False
+        if man_obj is not False:
+            output = self.generate_save_context_path_from_manifest_obj(man_obj)
+        return output
+
+    def generate_save_context_path_from_manifest_obj(self, man_obj):
+        """ Generates a context path for a manifest object, then saves it to the Subjects """
+        output = False
+        act_context = self.generate_context_path(man_obj.uuid)
+        if(act_context is not False):
+            new_context = True
+            exist_sub_obj = False
+            try:
+                exist_sub_obj = Subject.objects.get(uuid=man_obj.uuid)
+            except Subject.DoesNotExist:
+                exist_sub_obj = False
+            if exist_sub_obj is not False:
+                if act_context != exist_sub_obj.context:
+                    new_context = False
+                else:
+                    output = exist_sub_obj
+            if new_context:
+                new_saved = False
+                sub = Subject(uuid=man_obj.uuid,
+                              project_uuid=man_obj.project_uuid,
+                              source_id=man_obj.source_id,
+                              context=act_context)
+                try:
+                    sub.save()
+                    output = sub
+                    new_saved = True
+                except IntegrityError as e:
+                    self.error_uuids[sub_item.uuid] = {'context': act_context,
+                                                       'error': e}
+                    output = False
+        else:
+            self.error_uuids[sub_item.uuid] = {'context': act_context,
+                                               'error': 'bad path'}
+        return output
 
     def process_manifest_for_subjects(self):
         """

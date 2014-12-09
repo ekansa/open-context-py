@@ -1,0 +1,158 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510",
+    "uuid": "B7047162-6906-4A5E-13C0-B5B86A108510",
+    "slug": "18-zooarchaeology-of-medieval-emden",
+    "label": "Zooarchaeology of Medieval Emden",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    7.203392,
+                    53.365588
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-10-29",
+    "description": "Animal Bone Analysis in medieval Emden, Germany",
+    "dc-terms:abstract": "<p>This data set represents faunal remains from several excavations in the centre of the medieval\r\ntown of Emden (Lower Saxony, Germany). The data set was used for the PhD thesis of Jessica Grimm (University of Groningen) with the title <a href='http://dissertations.ub.rug.nl/faculties/arts/2010/j.m.grimm/' title='Link to dissertation'><em>Animal keeping and the use of animal products in medieval Emden (Lower Saxony, Germany)</em></a></p>\r\n\r\n<p>Grimm's research addressed questions concerning the development of animal husbandry and the use of animal products in the medieval period with the aim of obtaining a better understanding of the functions of a medieval town occupied by different groups of people and the contrast with the countryside over a period of about 900 years\r\n(9th-17th century). In addition to the thesis, preliminary reports of this study have also been published (GRIMM 2005, 2006 and 2008)</p>\r\n\r\n\r\n\r\n<p><span style='text-decoration:underline;'>Publications:</span></p>\r\n\r\n<p>Grimm, Jessica Marije</p>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2010</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://dissertations.ub.rug.nl/faculties/arts/2010/j.m.grimm/' title='Link to dissertation'><em>Animal keeping and the use of animal products in medieval Emden (Lower Saxony, Germany)</em></a>  Dissertaties - Rijksuniversiteit Groningen</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2008</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75818/Break_a_leg_animal_health_and_welfare_in_medieval_Emden_Germany' title='Link to abstract'>Break a leg: animal health and welfare in medieval Emden, Germany</a>  <em>Veterinarija ir Zootechnika</em>41(63) </div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2006</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75968/Silence_of_the_Lambs_Archaozoologische_Untersuchungen_an_mittelalterlichem_Knochenmaterial_aus_Emden' title='Link to abstract'>Silence of the Lambs, Archäozoologische Untersuchungen an mittelalterlichem Knochenmaterial aus Emden.</a> In: E. van Rossenberg, J. Hendriks, A. Bright and D. Smal (eds). <em>SOJAbundel 2002/2003</em>Amsterdam/Leiden, Pp. 109-116.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>\r\n    <div>\r\n        <div style='margin-right:5px;width:12%;float:left;'>2005</div>\r\n        <div style='margin-right:2px;float:right;width:75%;'><a href='http://rug.academia.edu/JessicaGrimm/Papers/75964/Silence_of_the_Lambs_archeozoologisch_onderzoek_aan_middeleeuws_botmateriaal_uit_Emden_Duitsland_' title='Link to abstract'>Silence of the Lambs: archeozoölogisch onderzoek aan middeleeuws botmateriaal uit Emden (Duitsland).</a> In: E. van Rossenberg, J. Hendriks, A. Bright and D. Smal (eds). <em>SOJAbundel 2002/2003</em>Amsterdam/Leiden, Pp. 109-116.</div>\r\n        <div style='clear:both;width:90%;'></div>\r\n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-4",
+            "slug": "oc-gen-edit-level-4",
+            "label": "Editorial board reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/A8474C2C-A080-4E03-82A9-4B99393BC609",
+            "slug": "18-jessica-grimm",
+            "label": "Jessica Grimm",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/A8474C2C-A080-4E03-82A9-4B99393BC609",
+            "slug": "18-jessica-grimm",
+            "label": "Jessica Grimm",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/2862926",
+            "slug": "geonames-2862926",
+            "label": "Lower Saxony"
+        },
+        {
+            "id": "http://www.geonames.org/2921044",
+            "slug": "geonames-2921044",
+            "label": "Germany"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006512",
+            "slug": "loc-sh-sh85006512",
+            "label": "Archaeology, Medieval"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        }
+    ],
+    "time": 0.07800006866455078
+}

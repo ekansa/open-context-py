@@ -1,0 +1,160 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5",
+    "uuid": "497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5",
+    "slug": "17-chogha-mish-fauna",
+    "label": "Chogha Mish Fauna",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    48.555927684174,
+                    32.224015410069
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2010-08-24",
+    "description": "Zooarchaeological observations from Prehistoric and Achaemenid levels at Chogha Mish, Iran.",
+    "dc-terms:abstract": "<div>\n        <p>This project uses the publicly available dataset of over 30,000 animal bone specimens from excavations at Chogha Mish, Iran during the 1960s and 1970s.</p>\n\n        <p>The specimens were identified by Jane Wheeler Pires-Ferreira in the 1960s and though she never analyzed the data or produced a report, her identifications were saved and later transferred to punch cards and then to Excel. This 'orphan' dataset was made available on the web in 2008 by Abbas Alizadeh (University of Chicago) at the time of his publication of Chogha Mish, Volume II.</p>\n\n        <p>The site of Chogha Mish spans the time period from Archaic through Elamite periods, with also later Achaemenid occupation.  These phases subdived further into several subphases, and some of those chronological divisions are also represented in this dataset. Thus the timespan present begins at the mid-seventh millennium and continues into the third millennium B.C.E. In terms of cultural development in the region, these periods are key, spanning the later Neolithc (after the period of caprid and cattle domestication, but possibly during the eras in which pigs and horses were domesticated) through the development of truly settled life, cities, supra-regional trade and even the early empires or state societies of Mesopotamia and Iran. Therefore potential questions of relevance to address with this data collection are as follows:</p> \n\n        <ol> \n            <li>The extent to which domesticated animals were utilized, and how/whether this changed over time</li>\n            <li>The development of centralized places</li>\n            <li>Increasing economic specialization</li>\n            <li>General changes in subsistence economy</li>\n            <li>The development of social complexity/stratification.</li>\n        </ol>\n\n        <p>Publication of this dataset accompanied a study of data-sharing needs in zooarchaeology. Preliminary results of this study were presented as a poster titled: \"Other People's Data: Blind Analysis and Report Writing as a Demonstration of the Imperative of Data Publication\". The poster was presented at the 11th ICAZ International Conference of ICAZ (International Council for Archaeozoology), in Paris (August 2010), in Session 2-4, \"Archaeozoology in a Digital World : New Approaches to Communication and Collaboration\". The poster presented at this conference accompanies this project.</p>\n\n        <p><em>Note:</em> Open Context editors assigned date ranges for the different stratigraphic phases contained in this dataset based on Alizadeh (2008:Table 1). The data published these data following an editorial process described in <a href=\"http://opencontext.org/media/1B937408-370B-4221-FA7A-A2787B6C4BF1\" target=\"_blank\">this document</a>.</p>  \n\n        <h4>Publications:</h4>\n        <div resource=\"http://opencontext.org/opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5\">\n\n<div id=\"pub-2013-1\" rel=\"dcterms:isReferencedBy\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2013-1\"> </a>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2013-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Atici, Levent., Sarah Kansa, Justin Lev-Tov, and Eric Kansa</p>\n                        <div>\n                            <div class=\"pub-date\">2013</div>\n                            <div class=\"ref-title-pub\"> Other People's Data: A Demonstration of the Imperative of Publishing Primary Data. <span class=\"collection-title\">Journal of Archaeological Method and Theory</span>1(3): 1-19.</div>\n                            <div class=\"ref-end\"> </div>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                      [<a rel=\"dcterms:identifier\" href=\"http://dx.doi.org/10.1007/s10816-012-9132-9\">DOI</a>]\n                      [<a rel=\"bibo:uri\" href=\"http://www.springerlink.com/content/61636x6w32662243/\">Publisher Version</a>]\n                      [<a rel=\"dcterms:hasVersion\" href=\"http://escholarship.org/uc/item/1nt1v9n2\">Open Access</a>]\n                    </div>\n                </div>\n            </div>\n    \n            <div id=\"pub-2008-1\" rel=\"dcterms:references\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2008-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:Book\" resource=\"#pub-2008-1\">\n                    <div property=\"dcterms:bibliographicCitation\">\n                        <p class=\"authors\">Alizadeh, Abbas</p>\n                        <div>\n                            <div class=\"pub-date\">2008</div>\n                            <div class=\"ref-title-pub\">\n                            <span class=\"collection-title\">Chogha Mish II: The Development of a Prehistoric Regional Center in Lowland Susiana, Southwestern Iran</span>. The University of Chicago, Oriental Insitute. Oriental Institute Publication Vol. 130. Chicago.</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                    <div class=\"ref-links\">\n                        [<a rel=\"dcterms:identifier\" href=\"http://www.worldcat.org/oclc/644473013\">WorldCat</a>]\n                    </div>\n                </div>\n            </div>\n        </div>\n        \n    </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-5",
+            "slug": "oc-gen-edit-level-5",
+            "label": "Peer-reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh2009117649",
+            "slug": "loc-sh-sh2009117649",
+            "label": "Bronze Age--Middle East"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/1A2F7786-0BC7-11DF-933B-E95756D89593",
+            "slug": "22-sarah-w-kansa",
+            "label": "Sarah W. Kansa",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/1A2F7786-0BC7-11DF-933B-E95756D89593",
+            "slug": "22-sarah-w-kansa",
+            "label": "Sarah W. Kansa",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/130758",
+            "slug": "geonames-130758",
+            "label": "Iran"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85005230",
+            "slug": "loc-sh-sh85005230",
+            "label": "Animal remains (archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85129537",
+            "slug": "loc-sh-sh85129537",
+            "label": "Subsistence economy"
+        },
+        {
+            "id": "http://en.wikipedia.org/wiki/Elam",
+            "slug": "wiki-elam",
+            "label": "Elam"
+        }
+    ],
+    "time": 0.062399864196777344
+}

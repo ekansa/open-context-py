@@ -1,0 +1,182 @@
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@container": "@list",
+            "@id": "geojson:bbox"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@container": "@set",
+            "@id": "geojson:features"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note"
+    },
+    "id": "http://opencontext.org/projects/3",
+    "uuid": "3",
+    "slug": "1-domuztepe-excavations",
+    "label": "Domuztepe Excavations",
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "id": "#geo-1",
+            "properties": {
+                "type": "oc-gen:geo-coverage",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "href": "http://opencontext.org/projects/3",
+                "location-note": "Location data available with no intentional reduction in precision"
+            },
+            "geometry": {
+                "type": "Point",
+                "id": "#geo-geom-1",
+                "coordinates": [
+                    37.043998718262,
+                    37.330001831055
+                ]
+            }
+        }
+    ],
+    "dc-terms:published": "2006-02-28",
+    "description": "Excavations of a Late Neolithic site in south-central Turkey",
+    "dc-terms:abstract": "<div>\n        <h4>Overview</h4>\n        <p><a href=\"http://opencontext.org/subjects/1_DT_Spatial\">Domuztepe</a>\nis a large (20 hectares) site, dating to the Halaf period of the 6th millennium BC. It has extensive prehistoric architectural, burial, and occupational remains. The site also has evidence of Roman and Medieval occupation, including a cemetery dating to the 9th-10th centuries AD and an Early Medieval building with thick plaster mortar walls. Joint excavations led by Elizabeth Carter of the University of California, Los Angeles and Stuart Campbell of the University of Manchester have been underway since 1995.</p>\n\n\n        <p>The fifth millennium is a key period in the development of complex societies in the Near East. Domuztepe, situated in southeastern Turkey on the northwestern edge of the traditional heartlands of the Halaf, is one of the largest sites known from this period. The investigation of this site is providing new details of the organization of society at the site and its relationship with the surrounding environment. The settlement seems to have been a focus of long-distance exchange, with evidence for the manufacture and manipulation of status items. Stamp seals occur remarkably frequently and ceramics seem to have been used in a complex way, indicating shifting external relations over time. There is also evidence for economic intensification, notably the possible use of secondary products.</p>\n\n\n        <p>A large burial pit (the \"Death Pit\"), may have evidence of feasting/butchery of cattle and other animals. A large number of human remains, representing at least 40 individuals, was also recovered from the Death Pit. </p>\n\n        <h4>Current Disposition of the Collections</h4>\n\n        <p>The specimens included in this data publication are housed in the Kahramanmaraş Museum, Kahramanmaraş, Turkey. In addition, a small amount of material is housed at the Cotsen Institute of Archaeology, UCLA, Los Angeles, USA and at the School of Arts, Languages, and Cultures, University of Manchester, UK.</p> \n        \n        <h4>Bibliography</h4>        \n        <div resource=\"http://opencontext.org/projects/3\">\n            \n            <div id=\"pub-2004-1\" rel=\"dcterms:references\" class=\"biblio-item\">\n                <a style=\"display:none;\" href=\"#pub-2004-1\"/>\n                <div typeof=\"dcterms:BibliographicResource bibo:Article\" resource=\"#pub-2004-1\">\n                    <div property=\"dcterms:bibliographicCitation\">   \n                        <p class=\"authors\">Stuart Campbell</p>\n                        <div>\n                            <div class=\"pub-date\">2004</div>\n                            <div class=\"ref-title-pub\">Domuztepe 2004 Excavation Season. <span class=\"collection-title\">Anatolian Archaeology</span> 10:4-6</div>\n                            <div class=\"ref-end\"/>\n                        </div>\n                    </div>\n                </div>\n            </div>\n            \n        </div>\n        \n  </div>",
+    "bibo:status": [
+        {
+            "id": "http://opencontext.org/vocabularies/oc-general/edit-level-3",
+            "slug": "oc-gen-edit-level-3",
+            "label": "Managing editor reviewed"
+        },
+        {
+            "id": "http://purl.org/ontology/bibo/status/peerReviewed",
+            "slug": "bibo-status-peerreviewed",
+            "label": "Peer reviewed"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:coverage": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh90004411",
+            "slug": "loc-sh-sh90004411",
+            "label": "Halaf culture"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85090768",
+            "slug": "loc-sh-sh85090768",
+            "label": "Neolithic"
+        }
+    ],
+    "dc-terms:creator": [
+        {
+            "id": "http://opencontext.org/persons/4_DT_Person",
+            "slug": "1-stuart-campbell",
+            "label": "Stuart Campbell",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/20_DT_Person",
+            "slug": "1-elizabeth-carter",
+            "label": "Elizabeth Carter",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/4_DT_Person",
+            "slug": "1-stuart-campbell",
+            "label": "Stuart Campbell",
+            "type": "foaf:Person"
+        },
+        {
+            "id": "http://opencontext.org/persons/20_DT_Person",
+            "slug": "1-elizabeth-carter",
+            "label": "Elizabeth Carter",
+            "type": "foaf:Person"
+        }
+    ],
+    "dc-terms:spatial": [
+        {
+            "id": "http://www.geonames.org/6269133",
+            "slug": "geonames-6269133",
+            "label": "Middle East"
+        },
+        {
+            "id": "http://www.geonames.org/310858",
+            "slug": "geonames-310858",
+            "label": "Kahramanmaras"
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85006507",
+            "slug": "loc-sh-sh85006507",
+            "label": "Archaeology"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85046105",
+            "slug": "loc-sh-sh85046105",
+            "label": "Excavations (Archaeology)"
+        },
+        {
+            "id": "http://id.loc.gov/authorities/subjects/sh85143356",
+            "slug": "loc-sh-sh85143356",
+            "label": "Hamlets (villages)"
+        }
+    ],
+    "time": 0.09360098838806152
+}

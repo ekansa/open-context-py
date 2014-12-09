@@ -13,19 +13,19 @@ class OCstring(models.Model):
 
     def make_hash_id(self):
         """
-        creates a hash-id to insure unique combinations of project_uuids and contexts
+        creates a hash-id to insure unique combinations of project_uuids and content
         """
         hash_obj = hashlib.sha1()
         concat_string = self.project_uuid + " " + self.content
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
 
-    def save(self):
+    def save(self, *args, **kwargs):
         """
-        creates the hash-id on saving to insure a unique assertion
+        creates the hash-id on saving to insure a unique string for a project
         """
         self.hash_id = self.make_hash_id()
-        super(OCstring, self).save()
+        super(OCstring, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_strings'
