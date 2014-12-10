@@ -79,6 +79,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^imports/project-import-refine/(?P<project_uuid>\S+)', Imp_sources.project_import_refine,
                            name='imp_sources_project_import_refine'),
+                       url(r'^imports/import-finalize/(?P<source_id>\S+)', Imp_sources.import_finalize,
+                           name='imp_sources_import_finalize'),
                        url(r'^imports/field-classify/(?P<source_id>\S+)', Imp_fields.field_classify,
                            name='imp_field_classify'),
                        url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
@@ -97,8 +99,14 @@ urlpatterns = patterns('',
                            name='imp_field_annos_delete'),
                        url(r'^imports/field-annotation-create/(?P<source_id>\S+)', Imp_field_annos.create,
                            name='imp_field_annos_create'),
+                       # --------------------------
+                       # BELOW IS THE INDEX PAGE FOR THE IMPORTER
+                       # --------------------------
                        url(r'^imports/', Imp_sources.index,
                            name='imp_sources_index'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
+                       # --------------------------
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
                            name='entity_hierarchy_children'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,

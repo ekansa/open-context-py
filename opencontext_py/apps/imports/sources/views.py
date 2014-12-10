@@ -4,6 +4,7 @@ from opencontext_py.apps.imports.sources.projects import ImportProjects
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.sources.navtemplate import ImportNavigation
 from opencontext_py.apps.imports.sources.create import ImportRefineSource
+from opencontext_py.apps.imports.sources.finalize import FinalizeImport
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import RequestContext, loader
@@ -82,6 +83,26 @@ def project_import_refine(request, project_uuid):
             result = irs.import_refine_to_project(refine_project,
                                                   project_uuid)
             json_output = json.dumps(result,
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            raise Http404
+    else:
+        return HttpResponseForbidden
+
+
+def import_finalize(request, source_id):
+    """ Finalizes an import """
+    if request.method == 'POST':
+        fi = FinalizeImport(source_id)
+        if fi.project_uuid is not False:
+            if 'reset_state' in request.POST:
+                fi.reset_state()
+                fi = FinalizeImport(source_id)
+            output = fi.test_process()
+            json_output = json.dumps(output,
                                      indent=4,
                                      ensure_ascii=False)
             return HttpResponse(json_output,

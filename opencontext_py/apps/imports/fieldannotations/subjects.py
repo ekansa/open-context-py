@@ -33,10 +33,10 @@ class ProcessSubjects():
         self.batch_size = 250
         self.end_row = self.batch_size
         self.example_size = 5
+        self.count_active_fields = 0
         self.new_entities = []
         self.reconciled_entities = []
         self.not_reconciled_entities = []
-        self.count_active_fields = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -188,10 +188,10 @@ class ProcessSubjects():
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 if cs.uuid is not False:
                     if cs.is_new:
-                        self.new_entities.append({'id': cs.uuid,
+                        self.new_entities.append({'id': str(cs.uuid),
                                                   'label': cs.context})
                     else:
-                        self.reconciled_entities.append({'id': cs.uuid,
+                        self.reconciled_entities.append({'id': str(cs.uuid),
                                                          'label': cs.context})
                     if field_num in self.contain_ordered_subjects:
                         if self.contain_ordered_subjects[field_num] is not False:
@@ -204,7 +204,7 @@ class ProcessSubjects():
                                                              dist_rec['rows'])
                 else:
                     bad_id = str(dist_rec['imp_cell_obj'].field_num) + '-' + str(dist_rec['imp_cell_obj'].row_num)
-                    self.not_reconciled_entities.append({'id': bad_id,
+                    self.not_reconciled_entities.append({'id': str(bad_id),
                                                          'label': dist_rec['imp_cell_obj'].record})
 
     def process_non_contain_subjects(self):
@@ -221,7 +221,7 @@ class ProcessSubjects():
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 distinct_records = pc.get_field_records(field_num,
-                                                        in_rows)
+                                                        False)
                 if distinct_records is not False:
                     field_obj = self.subjects_fields[field_num]
                     for rec_hash, dist_rec in distinct_records.items():
@@ -359,7 +359,7 @@ class CandidateSubject():
         else:
             if self.label is not False:
                 # only allow matches on non-blank items when not creating a record
-                match_found = self.match_against_mainfest(self.label,
+                match_found = self.match_against_manifest(self.label,
                                                           self.class_uri)
         self.update_import_cell_uuid()
         self.add_contain_assertion()

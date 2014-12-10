@@ -1,22 +1,27 @@
-function start_finalization(){
-	alert('Feature not ready, use the Python shell to complete import on: ' + source_id);
-}
-
-
-function exe_start_finalization() {
+function start_finalization() {
 	// Does AJAX POST requests until the response says done=True
-	loadingStartHTML();
+	finalizeStartHTML();
+	var loop = 0;
+	var reset_state = true;
     function finalizeData() {
-		var url = "../../imports/project-import-refine/" + encodeURIComponent(source_id);
+		loop += 1;
+		var url = "../../imports/import-finalize/" + encodeURIComponent(source_id);
+		var post_data = {'csrfmiddlewaretoken': csrftoken}
+		if (reset_state) {
+			post_data['reset_state'] = reset_state
+			reset_state = false
+		}
         $.ajax({
             url: url,
 			type: 'POST',
             method: 'POST',
             async: true,
 			dataType: "json",
-			data: {csrfmiddlewaretoken: csrftoken},
+			data: post_data,
             success: function(data) {
-                if (!data.done) {
+				data.loop = loop;
+				console.log(data)
+                if (!data.done && data.ok) {
                     showProgress(data);
                     finalizeData();
                 }
@@ -36,11 +41,16 @@ function demo_start_finalization() {
 	 */
 	finalizeStartHTML();
 	data = {'source_id': source_id,
-			'done': true,
+			'ok': true,
+			'done': false,
+			'done_stage': 'verify',
+			'next_stage': 'subjects',
+			'done_stage_num': 2,
+			'total_stages': 5,
 			'end': 5,
 			'row_count': 25};
-	showAccessionProgress(data);
-	loadingDoneHTML(data);
+	showProgress(data);
+	finalizeDoneHTML(data);
 }
 
 function finalizeStartHTML(){
@@ -53,88 +63,104 @@ function finalizeStartHTML(){
 	document.getElementById(act_dom_id).innerHTML = loadImageHTML;
 	var act_dom_id = "ref-final-button";
 	document.getElementById(act_dom_id).disabled = "disabled";
+	var actionHTML = [
+		"<dl>",
+			"<dt>Action:</dt>",
+			"<dd>Checking if import ok to continue...</dd>",
+		"</dl>"
+	].join('\n');
+	var act_dom_id = "ref-final-prog-stage-note-outer";
+	document.getElementById(act_dom_id).innerHTML = actionHTML;
 }
 
-function loadingDoneHTML(data){
-	showAccessionProgress(data);
-	var act_dom_id = "ref-prog-spin-outer";
-	var loadImageHTML = [
-		"<div style=\"text-align:center; padding-top:10%;\">",
-			"<span style=\"font-size:36px;\" class=\"glyphicon glyphicon-ok-circle\"></span>",
-		"</div>"
-	].join('\n');
-	document.getElementById(act_dom_id).innerHTML = loadImageHTML;
-	var act_dom_id = "ref-button-outer";
-	var buttonHTML = [
-		"<a title=\"Prepare these data for import\" href=\"../../imports/field-types/" + data.source_id + "\" ",
-			" role=\"button\" class=\"btn btn-primary\" id=\"ref-load-button\">",
-            "<span class=\"glyphicon glyphicon-wrench\"></span>",
-			"Describe Data",
-		"</a>",
-	].join('\n');
-	document.getElementById(act_dom_id).innerHTML = buttonHTML;
+function finalizeDoneHTML(data){
+	showProgress(data);
+	if (data.ok) {
+		var act_dom_id = "ref-final-spin-outer";
+		var loadImageHTML = [
+			"<div style=\"text-align:center; padding-top:10%;\">",
+				"<span style=\"font-size:36px;\" class=\"glyphicon glyphicon-ok-circle\"></span>",
+			"</div>"
+		].join('\n');
+		document.getElementById(act_dom_id).innerHTML = loadImageHTML;
+		var act_dom_id = "ref-final-button";
+		document.getElementById(act_dom_id).innerHTML = "Import Done!";
+	}
+	else{
+		var act_dom_id = "ref-final-spin-outer";
+		var loadImageHTML = [
+			"<div style=\"text-align:center; padding-top:10%;\">",
+				"<span style=\"font-size:36px;\" class=\"glyphicon glyphicon-exclamation-sign\"></span>",
+			"</div>"
+		].join('\n');
+		document.getElementById(act_dom_id).innerHTML = loadImageHTML;
+		var act_dom_id = "ref-final-button";
+		document.getElementById(act_dom_id).innerHTML = "Import Failed!";
+	}
 }
 
 function showProgress(data){
 	/* Displays feedback on progress regarding an import of data
 	from refine to a project
 	*/
-	if (data.make_uuids) {
-		// only makes responses to uuids if they are already generated
-		// this defualts to off because it takes a long time
-		var uuidsHTML = [
-			"<dt>Total Number of Fields:</dt>",
-			"<dd>" + data.field_count + "</dd>",
-			"<dt>Fields with UUIDs Assigned:</dt>",
-			"<dd>" + data.act_uuid_field + "</dd>"
+	var badHTML = "";
+	if (!data.ok) {
+		var badHTML = [
+			"<dt>ERROR:</dt>",
+			"<dd>" + data.error + "</dd>"
 		].join('\n');
-		uuid_progress_HTML(data.act_uuid_field, data.field_count);
 	}
-	else{
-		var uuidsHTML = "";
-	}
+	var actionHTML = [
+		"<dl>",
+			badHTML,
+			"<dt>Completed Action:</dt>",
+			"<dd>Import - " + data.done_stage + "</dd>",
+			"<dt>Next Action:</dt>",
+			"<dd>Import - " + data.next_stage + "</dd>",
+		"</dl>"
+	].join('\n');
+	var act_dom_id = "ref-final-prog-stage-note-outer";
+	document.getElementById(act_dom_id).innerHTML = actionHTML;
+	
+	stage_progress_HTML(data.done_stage_num, data.total_stages);
+	
 	var statsHTML = [
 		"<dl>",
 			"<dt>Total Number of Rows:</dt>",
 			"<dd>" + data.row_count + "</dd>",
 			"<dt>Rows Imported:</dt>",
 			"<dd>" + data.end + "</dd>",
-			uuidsHTML,
 		"</dl>"
 	].join("\n");
-	var act_dom_id = "ref-prog-data-outer";
+	var act_dom_id = "ref-final-prog-all-nums-outer";
 	document.getElementById(act_dom_id).innerHTML = statsHTML;
-	load_progress_HTML(data.end, data.row_count);
+	
+	import_progress_HTML(data.end, data.row_count);
 }
 
-function load_progress_HTML(act_val, total_val){
+function stage_progress_HTML(act_val, total_val){
 	//makes a progress bar 	
-	var act_dom_id = "ref-load-prog-bar-outer";
+	var act_dom_id = "ref-final-prog-stage-bar-outer";
 	var act_dom = document.getElementById(act_dom_id);
 	if (act_val < total_val) {
-		var titleHTML = "<h5>Loading Data from Refine...</h5>";
+		var titleHTML = "<h5>Process stage in this batch...</h5>";
 	}
 	else{
-		var titleHTML = "<h5>Refine Data Loaded</h5>";	
+		var titleHTML = "<h5>Batch completed</h5>";	
 	}
 	var barHTML = progress_HTML(act_val, total_val);
 	act_dom.innerHTML = titleHTML + barHTML;
 }
 
-function uuid_progress_HTML(act_val, total_val){
-	//makes a uuid progress bar 	
-	var act_dom_id = "ref-uuid-prog-bar-outer";
+function import_progress_HTML(act_val, total_val){
+	//makes a progress bar 	
+	var act_dom_id = "ref-final-prog-all-bar-outer";
 	var act_dom = document.getElementById(act_dom_id);
-	if (!act_val) {
-		var titleHTML = "<h5>Waiting for Load to Complete</h5>";
+	if (act_val < total_val) {
+		var titleHTML = "<h5>Importing data from source...</h5>";
 	}
 	else{
-		if (act_val < total_val) {
-			var titleHTML = "<h5>Adding Preliminary Identifiers...</h5>";
-		}
-		else{
-			var titleHTML = "<h5>Preliminary Identifier Assignment Done</h5>";	
-		}	
+		var titleHTML = "<h5>Import concluded</h5>";	
 	}
 	var barHTML = progress_HTML(act_val, total_val);
 	act_dom.innerHTML = titleHTML + barHTML;
