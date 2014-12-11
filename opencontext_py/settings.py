@@ -40,6 +40,8 @@ def get_secret(setting, secrets=secrets):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_secret('SECRET_KEY')
 
+SOLR_PORT = get_secret('SOLR_PORT')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -249,3 +251,25 @@ NAV_ITEMS = [{'key': 'home',
               'display': 'Vocabulary / Ontology',
               'always': False,
               'urls': None}]
+
+LOGGING_DIR = BASE_DIR + '/logs/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'error.log'),
+            'maxBytes': 1024*1024*15,  # 15MB
+            'backupCount': 10
+            }
+        },
+    'loggers': {
+        'opencontext_py.apps.indexer.crawler': {
+            'handlers': ['file'],
+            'level': 'DEBUG'
+            }
+        }
+    }

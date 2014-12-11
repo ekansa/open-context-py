@@ -1,5 +1,6 @@
 import time
 from itertools import islice
+import logging
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
 from opencontext_py.apps.indexer.uuidlist import UUIDList
@@ -42,6 +43,9 @@ class Crawler():
         crawler.crawl(500)
         '''
 
+        # Get a logger
+        logger = logging.getLogger(__name__)
+
         start_time = time.time()
         print('\n\nStarting crawl...\n')
         print("(#)\tUUID")
@@ -62,6 +66,7 @@ class Crawler():
                               'mismatch -----> ' + uuid)
                 except Exception as error:
                     print("Error: {0}".format(error) + " -----> " + uuid)
+                    logger.error('Error: ' + str(error) + ' => ' + uuid)
             # Send the documents to Solr while saving the
             # response status code (e.g, 200, 400, etc.)
             solr_status = self.solr.update(documents, 'json',

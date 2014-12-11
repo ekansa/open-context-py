@@ -1,4 +1,5 @@
 import sys
+from django.conf import settings
 import requests
 from mysolr import Solr
 
@@ -8,7 +9,7 @@ class SolrConnection():
     Provides a connection to our Solr instance. This is useful for both
     crawling and searching.
     '''
-    def __init__(self, solr_host='localhost', solr_port='8983'):
+    def __init__(self, solr_host='localhost', solr_port=settings.SOLR_PORT):
         self.session = requests.Session()
         solr_connection_string = 'http://' + solr_host + ':' + solr_port \
             + '/solr'
