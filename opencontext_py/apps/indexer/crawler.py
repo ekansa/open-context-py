@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 from itertools import islice
+from django.conf import settings
 import logging
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
@@ -67,8 +68,9 @@ class Crawler():
                               'mismatch -----> ' + uuid)
                 except Exception as error:
                     print("Error: {0}".format(error) + " -----> " + uuid)
-                    logger.error('[' + datetime.now().strftime('%x %X UTC') +
-                                 '] Error: ' + str(error) + ' => ' + uuid)
+                    logger.error('[' + datetime.now().strftime('%x %X ') +
+                                 settings.TIME_ZONE + '] Error: ' + str(error)
+                                 + ' => ' + uuid)
             # Send the documents to Solr while saving the
             # response status code (e.g, 200, 400, etc.)
             solr_status = self.solr.update(documents, 'json',
