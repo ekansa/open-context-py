@@ -42,6 +42,7 @@ class ProcessDescriptions():
         self.reconciled_types = {}
         self.field_valueofs = {}
         self.count_active_fields = 0
+        self.count_new_assertions = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -205,6 +206,8 @@ class ProcessDescriptions():
                                         cd.fl_uuid = imp_cell_obj.fl_uuid
                                         cd.l_uuid = imp_cell_obj.l_uuid
                                         cd.create_description()
+                                        if cd.is_valid:
+                                            self.count_new_assertions += 1
 
     def get_description_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -415,11 +418,12 @@ class CandidateDescription():
         self.record = False
         self.fl_uuid = False
         self.l_uuid = False
+        self.is_valid = False
 
     def create_description(self):
         """ Creates a new descriptive assertion if data is valid """
-        is_valid = self.validate_creation()
-        if is_valid:
+        self.is_valid = self.validate_creation()
+        if self.is_valid:
             new_ass = Assertion()
             new_ass.uuid = self.subject_uuid
             new_ass.subject_type = self.subject_type

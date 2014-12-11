@@ -101,7 +101,7 @@ def import_finalize(request, source_id):
             if 'reset_state' in request.POST:
                 fi.reset_state()
                 fi = FinalizeImport(source_id)
-            output = fi.test_process()
+            output = fi.process_current_batch()
             json_output = json.dumps(output,
                                      indent=4,
                                      ensure_ascii=False)

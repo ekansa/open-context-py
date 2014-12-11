@@ -38,6 +38,7 @@ class ProcessLinks():
         self.example_size = 5
         self.link_rels = False
         self.count_active_fields = 0
+        self.count_new_assertions = 0
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -198,9 +199,10 @@ class ProcessLinks():
                                                                 act_in_rows)
                                 if sort < 1:
                                     sort = obj_field_obj.field_num
-                                for obj_rec in obj_recs:
+                                for hash_key, obj_rec in obj_recs.items():
+                                    print('Worry about: ' + str(obj_rec))
                                     object_uuid = obj_rec['imp_cell_obj'].fl_uuid
-                                    object_type = obj_rec.field_type
+                                    object_type = obj_field_obj.field_type
                                     object_ok = obj_rec['imp_cell_obj'].cell_ok
                                     cla = CandidateLinkAssersion()
                                     cla.project_uuid = self.project_uuid
@@ -213,8 +215,10 @@ class ProcessLinks():
                                     cla.predicate_uuid = predicate_uuid
                                     cla.object_uuid = object_uuid
                                     cla.object_type = object_type
-                                    if subject_ok and object_ok and predicte_uuid is not False:
+                                    if subject_ok and object_ok and predicate_uuid is not False:
                                         cla.create_link()
+                                        if cla.is_valid:
+                                            self.count_new_assertions += 1
 
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -265,6 +269,7 @@ class CandidateLinkAssersion():
         self.predicate_uuid = False
         self.object_uuid = False
         self.object_type = False
+        self.is_valid = False
 
     def create_link(self):
         """ Creates a new link assertion if data is valid """
@@ -283,6 +288,7 @@ class CandidateLinkAssersion():
             new_ass.object_type = self.object_type
             new_ass.object_uuid = self.object_uuid
             new_ass.save()
+            self.is_valid = True
 
     def validate_creation(self):
         """Validates to see if it's OK to create a new descriptive assertion

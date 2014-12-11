@@ -18,8 +18,8 @@ class FinalizeImport():
     # list of processes to run, in order, to complete the import of data
     DEFAULT_PROCESS_STAGES = ['subjects',
                               'persons',
-                              'descriptions',
-                              'links']
+                              'links',
+                              'descriptions']
     # prefix to save the state of the import process
     DEFAULT_STAGE_ROW_PREFIX = 'imp-stage-row'
     DEFAULT_DONE_STATUS = 'import-done'
@@ -44,7 +44,13 @@ class FinalizeImport():
         self.get_refine_source_meta()
         self.get_active_stage_row()
 
-    def test_process(self):
+    def process_current_batch(self):
+        """ Processes the current batch, of a given batch size
+            start_row, and stage.
+            State determinations (stage, start_row) are made once
+            this class is initialized, with get_define_source_meta()
+            and get_active_stage_row()
+        """
         if self.start_row is not False:
             self.end_row = self.start_row + self.batch_size
             self.save_next_process_state()
@@ -89,14 +95,45 @@ class FinalizeImport():
         p_outcome = LastUpdatedOrderedDict()
         p_outcome['label'] = p_label
         if p_label == 'subjects':
-            ps = ProcessSubjects(self.source_id)
-            ps.start_row = self.start_row
-            ps.batch_size = self.batch_size
-            ps.process_subjects_batch()
-            p_outcome['count_active_fields'] = ps.count_active_fields
-            p_outcome['new_entities'] =ps.new_entities
-            p_outcome['reconciled_entities'] = ps.reconciled_entities
-            p_outcome['reconciled_entities'] = ps.not_reconciled_entities
+            p_act = ProcessSubjects(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_subjects_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = p_act.new_entities
+            p_outcome['reconciled_entities'] = p_act.reconciled_entities
+            p_outcome['not_reconciled_entities'] = p_act.not_reconciled_entities
+            p_outcome['count_new_assertions'] = 0
+        elif p_label == 'persons':
+            p_act = ProcessPersons(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_persons_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = p_act.new_entities
+            p_outcome['reconciled_entities'] = p_act.reconciled_entities
+            p_outcome['not_reconciled_entities'] = p_act.not_reconciled_entities
+            p_outcome['count_new_assertions'] = 0
+        elif p_label == 'links':
+            p_act = ProcessLinks(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_link_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = []
+            p_outcome['reconciled_entities'] = []
+            p_outcome['not_reconciled_entities'] = []
+            p_outcome['count_new_assertions'] = p_act.count_new_assertions
+        elif p_label == 'descriptions':
+            p_act = ProcessDescriptions(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_description_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = []
+            p_outcome['reconciled_entities'] = []
+            p_outcome['not_reconciled_entities'] = []
+            p_outcome['count_new_assertions'] = p_act.count_new_assertions
         return p_outcome
 
     def get_active_stage_row(self):
