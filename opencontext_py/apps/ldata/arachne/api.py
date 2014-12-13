@@ -72,10 +72,13 @@ class ArachneAPI():
         if self.filter_by_images:
             payload['fq'] = 'facet_image:ja'
         url = self.DEFAULT_API_BASE_URL
-        r = requests.get(url, params=payload, timeout=240)
-        self.set_arachne_search_urls(r.url)
-        r.raise_for_status()
-        json_r = r.json()
+        try:
+            r = requests.get(url, params=payload, timeout=240)
+            self.set_arachne_search_urls(r.url)
+            r.raise_for_status()
+            json_r = r.json()
+        except:
+            json_r = False
         self.arachne_json_r = json_r
         return json_r
 
