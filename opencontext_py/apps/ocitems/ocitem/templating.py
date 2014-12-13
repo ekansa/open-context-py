@@ -78,7 +78,15 @@ class TemplateItem():
         """
         Adds observation objects if json_ld describes such
         """
-        if self.act_nav == 'types':
+        if self.act_nav == 'predicates':
+            if self.observations is False:
+                self.observations = []
+            act_obs = Observation()
+            act_obs.obs_num = 1
+            act_obs.make_predicate_obs(json_ld)
+            if act_obs.properties is not False:
+                self.observations.append(act_obs)
+        elif self.act_nav == 'types':
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
@@ -341,6 +349,37 @@ class Observation():
         self.class_type_metadata = False
         self.use_accordions = False
 
+    def make_predicate_obs(self, json_ld):
+        """ Makes an observation with some metadata
+            specifically for display of information related
+            to predicates
+        """
+        self.id = 'predicate-data'
+        self.source_id = 'project'
+        self.obs_status = 'active'
+        self.obs_type = 'contributor'
+        self.label = 'Description of this Property / Relation'
+        if 'rdfs:range' in json_ld:
+            range_values = []
+            for rel_item in json_ld['rdfs:range']:
+                act_val = PropValue()
+                act_val.vartype = 'id'
+                act_val.item_type = 'external-resource'
+                act_val.uri = URImanagement.convert_prefix_to_full_uri(rel_item['id'])
+                act_val.id = URImanagement.convert_prefix_to_full_uri(rel_item['id'])
+                act_val.uuid = False
+                act_val.val = rel_item['label']
+                range_values.append(act_val)
+            if self.properties is False:
+                self.properties = []
+            act_prop = Property()
+            act_prop.varlabel = 'Range and type of values'
+            act_prop.varuri = False
+            act_prop.varslug = False
+            act_prop.vartype = False
+            act_prop.values = range_values
+            self.properties.append(act_prop)
+
     def make_type_obs(self, json_ld):
         """ Makes an observation with some metadata
             specifically for display of information related
@@ -579,7 +618,7 @@ class PropValue():
                         self.uuid = uri_item['uuid']
                     else:
                         self.item_type = 'external-resource'
-                        self.uuid = None
+                        self.uuid = False
                 else:
                     self.id = val_item['id'].replace('#', '')
             if 'type' in val_item:

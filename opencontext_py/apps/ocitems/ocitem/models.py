@@ -207,6 +207,27 @@ class OCitem():
             except OCtype.DoesNotExist:
                 self.octype = False
 
+    def add_predicate_datatype(self, json_ld):
+        """ Adds a rdfs:range to predicate items to indicate
+            data types
+        """
+        if self.predicate is not False:
+            p_range = LastUpdatedOrderedDict()
+            p_range['id'] = self.predicate.data_type
+            if self.predicate.data_type == 'id':
+                p_range['id'] = 'http://opencontext.org/vocabularies/oc-general/items'
+                p_range['label'] = 'URI identified items'
+            elif self.predicate.data_type == 'xsd:string':
+                p_range['label'] = 'Alphanumeric text strings'
+            elif self.predicate.data_type == 'xsd:double':
+                p_range['label'] = 'Decimal values'
+            elif self.predicate.data_type == 'xsd:integer':
+                p_range['label'] = 'Integer values'
+            elif self.predicate.data_type == 'xsd:date':
+                p_range['label'] = 'Calendar / date values'
+            json_ld['rdfs:range'] = [p_range]
+        return json_ld
+
     def add_related_predicate(self,
                               item_con,
                               json_ld):
@@ -259,6 +280,8 @@ class OCitem():
         if rel_pred is not False:
             item_con = rel_pred['item_con']
             json_ld = rel_pred['json_ld']
+        # add predicate type data
+        json_ld = self.add_predicate_datatype(json_ld)
         # add context data
         json_ld = item_con.add_contexts(json_ld,
                                         self.PREDICATES_OCGEN_HASCONTEXTPATH,
