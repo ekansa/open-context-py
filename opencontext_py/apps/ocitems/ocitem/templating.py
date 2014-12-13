@@ -34,6 +34,7 @@ class TemplateItem():
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
+        self.item_linked_data = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -159,6 +160,7 @@ class TemplateItem():
         linked_data.project = self.project
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
+        self.item_linked_data = linked_data.get_item_annotations(json_ld)
 
     def create_content(self, json_ld):
         """
@@ -734,11 +736,16 @@ class GeoMap():
 class LinkedData():
 
     REL_PREDICATES = ['skos:closeMatch']
+    ITEM_REL_PREDICATES = ['skos:closeMatch',
+                           'owl:sameAs',
+                           'skos:related',
+                           'skos:broader']
 
     def __init__(self):
         self.linked_predicates = False
         self.linked_types = False
-        self.annotations = []
+        self.annotations = []  # annotations on entities found in observations
+        self.item_annotaions = []  # annotations on the main entity of the JSON-LD
         self.project = False
 
     def make_linked_data(self, json_ld):
@@ -870,3 +877,28 @@ class LinkedData():
                     output = True
         return output
 
+    def get_item_annotations(self, json_ld):
+        """ Gets annotations made on this specific item """
+        self.item_assertions = []
+        if isinstance(json_ld, dict):
+            for act_pred in self.ITEM_REL_PREDICATES:
+                if act_pred in json_ld:
+                    p_uri = act_pred
+                    p_label = act_pred
+                    ent = Entity()
+                    found = ent.dereference(act_pred)
+                    if found:
+                        p_uri = ent.uri
+                        p_label = ent.label
+                    act_i_ass = {'predicate': {'id': act_pred,
+                                               'uri': p_uri,
+                                               'label': p_label},
+                                 'objects': []}
+                    for ld_obj in json_ld[act_pred]:
+                        act_i_ass['objects'].append(ld_obj)
+                    self.item_assertions.append(act_i_ass)
+        if len(self.item_assertions) > 0:
+            output = self.item_assertions
+        else:
+            output = False
+        return output

@@ -1,6 +1,8 @@
+import json
 from django.http import HttpResponse, Http404
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
-import json
+from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
+from django.template import RequestContext, loader
 
 
 # A predicate is a descriptive variable or linking relation that originates from
@@ -15,7 +17,12 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid, True)
     if(ocitem.manifest is not False):
-        return HttpResponse("Hello, world. You're at the predicate htmlView of " + str(uuid))
+        temp_item = TemplateItem()
+        temp_item.read_jsonld_dict(ocitem.json_ld)
+        template = loader.get_template('predicates/view.html')
+        context = RequestContext(request,
+                                 {'item': temp_item})
+        return HttpResponse(template.render(context))
     else:
         raise Http404
 

@@ -21,6 +21,11 @@
             <li><strong>Category or Type:</strong></li>
             <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
         </ol>
+        {% elif item.act_nav == 'predicates' %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Descriptive Property or Relation:</strong></li>
+            <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
+        </ol> 
         {% else %}    
         <ol id="context" class="breadcrumb">
             <li><strong>Context:</strong></li>
