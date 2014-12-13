@@ -212,6 +212,7 @@ class OCitem():
             data types
         """
         if self.predicate is not False:
+            json_ld['oc-gen:data-type'] = self.predicate.data_type
             p_range = LastUpdatedOrderedDict()
             p_range['id'] = self.predicate.data_type
             if self.predicate.data_type == 'id':

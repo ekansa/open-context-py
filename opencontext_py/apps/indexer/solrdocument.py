@@ -258,7 +258,13 @@ class SolrDocument:
         parts = []
         parts.append(self.oc_item.json_ld['slug'])
         if self.oc_item.item_type == 'predicates':
-            parts.append('id')  # TODO change this to use predicate data types
+            if self.oc_item.json_ld['oc-gen:data-type']:
+                # Looks up the predicte type mapped to Solr types
+                parts.append(self._get_predicate_type_string(self.oc_item\
+                                                                 .json_ld['oc-gen:data-type']))
+            else:
+                # Defaults to ID
+                parts.append('id')
         else:
             parts.append('id')
         parts.append('/' + self.oc_item.item_type + '/' + self.oc_item.uuid)
