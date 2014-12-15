@@ -82,7 +82,7 @@ class TemplateItem():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
-            act_obs.obs_num = 1
+            act_obs.obs_num = len(self.observations) + 1
             act_obs.make_predicate_obs(json_ld)
             if act_obs.properties is not False:
                 self.observations.append(act_obs)
@@ -90,7 +90,7 @@ class TemplateItem():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
-            act_obs.obs_num = 1
+            act_obs.obs_num = len(self.observations) + 1
             act_obs.make_type_obs(json_ld)
             if act_obs.properties is not False:
                 self.observations.append(act_obs)
@@ -123,17 +123,26 @@ class TemplateItem():
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.make_linked_data_obs(self.linked_data.annotations)
                 self.observations.append(act_obs)
-            # for when to add a 'more' drop down list
-            all_labels = ''
-            obs_num = 1
-            for obs in self.observations:
-                # gap at end to approximate spacing between tabs
-                all_labels += obs.label + '     '
-                if len(all_labels) < 90:
-                    self.obs_more_tab = obs_num
-                obs_num += 1
+        if self.item_linked_data is not False:
+            # create an observation out of the item annoations
+            if self.observations is False:
+                self.observations = []
+            act_obs = Observation()
+            act_obs.obs_num = len(self.observations) + 1
+            act_obs.make_item_annotation_obs(self.item_linked_data)
+            if act_obs.annotations is not False:
+                self.observations.append(act_obs)
+        # for when to add a 'more' drop down list
+        all_labels = ''
+        obs_num = 1
+        for obs in self.observations:
+            # gap at end to approximate spacing between tabs
+            all_labels += obs.label + '     '
             if len(all_labels) < 90:
-                self.obs_more_tab += 1
+                self.obs_more_tab = obs_num
+            obs_num += 1
+        if len(all_labels) < 90:
+            self.obs_more_tab += 1
 
     def create_project(self, json_ld):
         """ Makes an instance of a project class, with data from the JSON_LD
@@ -168,7 +177,7 @@ class TemplateItem():
         linked_data.project = self.project
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
-        self.item_linked_data = linked_data.get_item_annotations(json_ld)
+        self.item_linked_data = linked_data.get_item_annotations(self.act_nav, json_ld)
 
     def create_content(self, json_ld):
         """
@@ -346,8 +355,24 @@ class Observation():
         self.documents_link_count = 0
         self.persons_link_count = 0
         self.annotations = False
+        self.item_annotations = False
         self.class_type_metadata = False
         self.use_accordions = False
+
+    def make_item_annotation_obs(self, item_annotations):
+        """ Makes an observation with some metadata
+            specifically for display of information related
+            to predicates
+        """
+        self.id = 'item-annotations'
+        self.source_id = 'project'
+        self.obs_status = 'active'
+        self.obs_type = 'contributor'
+        self.label = 'Item Annotations'
+        for item_anno in item_annotations:
+            if self.annotations is False:
+                self.annotations = []
+            self.annotations.append(item_anno)
 
     def make_predicate_obs(self, json_ld):
         """ Makes an observation with some metadata
@@ -784,7 +809,7 @@ class LinkedData():
         self.linked_predicates = False
         self.linked_types = False
         self.annotations = []  # annotations on entities found in observations
-        self.item_annotaions = []  # annotations on the main entity of the JSON-LD
+        self.item_annotations = []  # annotations on the main entity of the JSON-LD
         self.project = False
 
     def make_linked_data(self, json_ld):
@@ -916,26 +941,46 @@ class LinkedData():
                     output = True
         return output
 
-    def get_item_annotations(self, json_ld):
+    def get_item_annotations(self, item_type, json_ld):
         """ Gets annotations made on this specific item """
         self.item_assertions = []
         if isinstance(json_ld, dict):
             for act_pred in self.ITEM_REL_PREDICATES:
                 if act_pred in json_ld:
+                    add_annotation = True
                     p_uri = act_pred
                     p_label = act_pred
+                    p_vocab = False
+                    p_vocab_uri = False
                     ent = Entity()
                     found = ent.dereference(act_pred)
                     if found:
                         p_uri = ent.uri
                         p_label = ent.label
-                    act_i_ass = {'predicate': {'id': act_pred,
-                                               'uri': p_uri,
-                                               'label': p_label},
+                        p_vocab = ent.vocabulary
+                        p_vocab_uri = ent.vocab_uri
+                    act_i_ass = {'id': p_uri,
+                                 'label': p_label,
+                                 'vocabulary': p_vocab,
+                                 'vocab_uri': p_vocab_uri,
                                  'objects': []}
                     for ld_obj in json_ld[act_pred]:
+                        uri = ld_obj['id']
+                        if item_type == 'types'\
+                           and act_pred == 'skos:related'\
+                           and ('/predicates/' in uri or 'oc-pred' in uri):
+                            # this is a type related to a predicate, don't consider as an annotaiton
+                            add_annotation = False
+                        ld_obj['vocabulary'] = False
+                        ld_obj['vocab_uri'] = False
+                        ent = Entity()
+                        found = ent.dereference(uri)
+                        if found:
+                            ld_obj['vocabulary'] = ent.vocabulary
+                            ld_obj['vocab_uri'] = ent.vocab_uri
                         act_i_ass['objects'].append(ld_obj)
-                    self.item_assertions.append(act_i_ass)
+                    if add_annotation:
+                        self.item_assertions.append(act_i_ass)
         if len(self.item_assertions) > 0:
             output = self.item_assertions
         else:
