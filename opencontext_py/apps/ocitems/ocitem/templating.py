@@ -132,17 +132,18 @@ class TemplateItem():
             act_obs.make_item_annotation_obs(self.item_linked_data)
             if act_obs.annotations is not False:
                 self.observations.append(act_obs)
-        # for when to add a 'more' drop down list
-        all_labels = ''
-        obs_num = 1
-        for obs in self.observations:
-            # gap at end to approximate spacing between tabs
-            all_labels += obs.label + '     '
+        if self.observations is not False:
+            # for when to add a 'more' drop down list
+            all_labels = ''
+            obs_num = 1
+            for obs in self.observations:
+                # gap at end to approximate spacing between tabs
+                all_labels += obs.label + '     '
+                if len(all_labels) < 90:
+                    self.obs_more_tab = obs_num
+                obs_num += 1
             if len(all_labels) < 90:
-                self.obs_more_tab = obs_num
-            obs_num += 1
-        if len(all_labels) < 90:
-            self.obs_more_tab += 1
+                self.obs_more_tab += 1
 
     def create_project(self, json_ld):
         """ Makes an instance of a project class, with data from the JSON_LD
