@@ -801,6 +801,9 @@ class GeoMap():
 class LinkedData():
 
     REL_PREDICATES = ['skos:closeMatch']
+    REL_MEASUREMENTS = ['cidoc-crm:P45_consists_of',
+                        'oc-gen:has-technique',
+                        'rdfs:range']
     ITEM_REL_PREDICATES = ['skos:closeMatch',
                            'owl:sameAs',
                            'skos:related',
@@ -811,6 +814,7 @@ class LinkedData():
         self.linked_types = False
         self.annotations = []  # annotations on entities found in observations
         self.item_annotations = []  # annotations on the main entity of the JSON-LD
+        self.measurement_meta = {}  # measurement metadata for predicates
         self.project = False
 
     def make_linked_data(self, json_ld):
@@ -919,6 +923,7 @@ class LinkedData():
                             subject_type = False
                     if subject_type is not False:
                         for rel_predicate in self.REL_PREDICATES:
+                            # find equivalence standards annotations
                             if rel_predicate in ld_item:
                                 for link_assertion in ld_item[rel_predicate]:
                                     link_assertion['subject'] = subject_id
@@ -933,6 +938,22 @@ class LinkedData():
                                         linked_predicates.append(link_assertion)
                                     else:
                                         linked_types[link_assertion['subject']] = link_assertion
+                        if subject_type == 'predicates':
+                            # find measurement type and range metadata
+                            self.measurement_meta[subject_id] = False
+                            for mes_pred in self.REL_MEASUREMENTS:
+                                if mes_pred in ld_item:
+                                    if self.measurement_meta[subject_id] is False:
+                                        self.measurement_meta[subject_id] = []
+                                    for act_metadata in ld_item[mes_pred]:
+                                        act_metadata['vocab_uri'] = False
+                                        act_metadata['vocabulary'] = False
+                                        ent = Entity()
+                                        found = ent.dereference(act_metadata['id'])
+                                        if found:
+                                            act_metadata['vocab_uri'] = ent.vocab_uri
+                                            act_metadata['vocabulary'] = ent.vocabulary
+                                        self.measurement_meta[subject_id].append(act_metadata)
                 if len(linked_predicates) > 0:
                     self.linked_predicates = linked_predicates
                     self.linked_types = {}
