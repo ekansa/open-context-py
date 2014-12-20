@@ -947,6 +947,7 @@ class ItemConstruction():
                     item_f_point.properties.update(geo_props)
                     if(uuid == geo.uuid):
                         #the item itself has the polygon as it's feature
+                        item_db = Point((float(geo.longitude), float(geo.latitude)))
                         if(geo.ftype == 'Polygon'):
                             coord_obj = json.loads(geo.coordinates)
                             item_db = Polygon(coord_obj)

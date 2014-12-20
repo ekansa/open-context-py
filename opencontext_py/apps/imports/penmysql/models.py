@@ -87,6 +87,13 @@ class PenMysql():
         """ Gets all the data belonging to a project """
         after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
+            self.get_project_tab_record(project_uuid, act_table)
+
+    def get_project_tab_records(self, project_uuid, act_table):
+        """ Gets all the data belonging to a project for a particular table """
+        after = '2001-01-01'
+        if act_table in self.REQUEST_TABLES:
+            sub_dict = self.REQUEST_TABLES[act_table]
             for sub_table in sub_dict['sub']:
                 if self.start_table is False:
                     print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
@@ -155,6 +162,7 @@ class PenMysql():
         if project_uuids is not False:
             payload['project_uuids'] = project_uuids
         r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
+        print('Getting data: ' + r.url)
         r.raise_for_status()
         json_r = r.json()
         self.json_r = json_r
