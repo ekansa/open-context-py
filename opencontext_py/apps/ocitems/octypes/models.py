@@ -22,4 +22,4 @@ class OCtype(models.Model):
     class Meta:
         db_table = 'oc_types'
         ordering = ['rank']
-        unique_together = ("predicate_uuid", "content_uuid")
+        unique_together = ('predicate_uuid', 'content_uuid')

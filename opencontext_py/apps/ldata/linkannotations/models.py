@@ -46,3 +46,4 @@ class LinkAnnotation(models.Model):
 
     class Meta:
         db_table = 'link_annotations'
+        unique_together = ('subject', 'predicate_uri', 'object_uri')

@@ -801,7 +801,7 @@ class GeoMap():
 class LinkedData():
 
     REL_PREDICATES = ['skos:closeMatch']
-    REL_MEASUREMENTS = ['cidoc-crm:P45_consists_of',
+    REL_MEASUREMENTS = ['cidoc-crm:P67_refers_to',
                         'oc-gen:has-technique',
                         'rdfs:range']
     ITEM_REL_PREDICATES = ['skos:closeMatch',
@@ -938,22 +938,6 @@ class LinkedData():
                                         linked_predicates.append(link_assertion)
                                     else:
                                         linked_types[link_assertion['subject']] = link_assertion
-                        if subject_type == 'predicates':
-                            # find measurement type and range metadata
-                            self.measurement_meta[subject_id] = False
-                            for mes_pred in self.REL_MEASUREMENTS:
-                                if mes_pred in ld_item:
-                                    if self.measurement_meta[subject_id] is False:
-                                        self.measurement_meta[subject_id] = []
-                                    for act_metadata in ld_item[mes_pred]:
-                                        act_metadata['vocab_uri'] = False
-                                        act_metadata['vocabulary'] = False
-                                        ent = Entity()
-                                        found = ent.dereference(act_metadata['id'])
-                                        if found:
-                                            act_metadata['vocab_uri'] = ent.vocab_uri
-                                            act_metadata['vocabulary'] = ent.vocabulary
-                                        self.measurement_meta[subject_id].append(act_metadata)
                 if len(linked_predicates) > 0:
                     self.linked_predicates = linked_predicates
                     self.linked_types = {}
@@ -967,7 +951,8 @@ class LinkedData():
         """ Gets annotations made on this specific item """
         self.item_assertions = []
         if isinstance(json_ld, dict):
-            for act_pred in self.ITEM_REL_PREDICATES:
+            preds = self.ITEM_REL_PREDICATES + self.REL_MEASUREMENTS
+            for act_pred in preds:
                 if act_pred in json_ld:
                     add_annotation = True
                     p_uri = act_pred
@@ -992,6 +977,9 @@ class LinkedData():
                            and act_pred == 'skos:related'\
                            and ('/predicates/' in uri or 'oc-pred' in uri):
                             # this is a type related to a predicate, don't consider as an annotaiton
+                            add_annotation = False
+                        elif item_type == 'predicates' and act_pred == 'rdfs:range':
+                             # this is a range for a predicate, don't consider as an annotaiton
                             add_annotation = False
                         ld_obj['vocabulary'] = False
                         ld_obj['vocab_uri'] = False
