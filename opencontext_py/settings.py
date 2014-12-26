@@ -55,6 +55,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.auth',
+    # 'django.contrib.staticfiles',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
@@ -134,7 +135,7 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-
+ADMIN_MEDIA_PREFIX = '/static/admin/'
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR + '/static/'
 STATICFILES_DIRS = (

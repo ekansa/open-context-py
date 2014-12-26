@@ -5,6 +5,7 @@
 __pycache__/
 testing.txt
 db-logs/
+static/admin/
 static/exports/
 static/bootstrap/
 static/jquery/
