@@ -14,7 +14,7 @@ class ProjectPermissions():
 
     def view_allowed(self, request):
         """ Checks to see if a user is allowed to edit a project """
-        output = False
+        output = True  # default to visible
         projs = Project.objects\
                        .filter(uuid=self.project_uuid)[:1]
         if len(projs) > 0:
@@ -22,15 +22,18 @@ class ProjectPermissions():
             if proj.view_group_id <= 0:
                 output = True
             else:
+                print('Project view permission in group: ' + str(proj.view_group_id))
                 if request.user.is_authenticated():
                     if request.user.is_superuser:
                         # super users are super!
                         output = True
                     else:
                         # check to see if the user is in a view_group
-                        output = user.groups\
-                                     .filter(id=proj.view_group_id)\
-                                     .exists()
+                        output = request.user.groups\
+                                        .filter(id=proj.view_group_id)\
+                                        .exists()
+                else:
+                    output = False
         return output
 
     def edit_allowed(self, request):

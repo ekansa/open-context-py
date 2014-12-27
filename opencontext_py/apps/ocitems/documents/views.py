@@ -16,12 +16,18 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
-        temp_item = TemplateItem()
-        temp_item.read_jsonld_dict(ocitem.json_ld)
-        template = loader.get_template('documents/view.html')
-        context = RequestContext(request,
-                                 {'item': temp_item})
-        return HttpResponse(template.render(context))
+        temp_item = TemplateItem(request)
+        if temp_item.view_permitted:
+            temp_item.read_jsonld_dict(ocitem.json_ld)
+            template = loader.get_template('documents/view.html')
+            context = RequestContext(request,
+                                     {'item': temp_item})
+            return HttpResponse(template.render(context))
+        else:
+            template = loader.get_template('items/view401.html')
+            context = RequestContext(request,
+                                     {'item': temp_item})
+            return HttpResponse(template.render(context), status=401)
     else:
         raise Http404
 

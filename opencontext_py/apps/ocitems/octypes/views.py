@@ -20,12 +20,18 @@ def html_view(request, uuid):
     if(ocitem.manifest is not False):
         ts = TypeSupplement(ocitem.json_ld)
         ocitem.json_ld = ts.get_arachne_comparanda()
-        temp_item = TemplateItem()
+        temp_item = TemplateItem(request)
         temp_item.read_jsonld_dict(ocitem.json_ld)
-        template = loader.get_template('types/view.html')
-        context = RequestContext(request,
-                                 {'item': temp_item})
-        return HttpResponse(template.render(context))
+        if temp_item.view_permitted:
+            template = loader.get_template('types/view.html')
+            context = RequestContext(request,
+                                     {'item': temp_item})
+            return HttpResponse(template.render(context))
+        else:
+            template = loader.get_template('items/view401.html')
+            context = RequestContext(request,
+                                     {'item': temp_item})
+            return HttpResponse(template.render(context), status=401)
     else:
         raise Http404
 
