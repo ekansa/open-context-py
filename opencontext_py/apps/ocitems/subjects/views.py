@@ -1,6 +1,7 @@
 import json
 from django.http import HttpResponse, Http404
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from django.template import RequestContext, loader
 
@@ -17,12 +18,16 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
-        temp_item = TemplateItem()
-        temp_item.read_jsonld_dict(ocitem.json_ld)
-        template = loader.get_template('subjects/view.html')
-        context = RequestContext(request,
-                                 {'item': temp_item})
-        return HttpResponse(template.render(context))
+        pp = ProjectPermissions(ocitem.manifest.project_uuid)
+        if not pp.view_allowed(request):
+            return HttpResponse('Unauthorized', status=401)
+        else:
+            temp_item = TemplateItem()
+            temp_item.read_jsonld_dict(ocitem.json_ld)
+            template = loader.get_template('subjects/view.html')
+            context = RequestContext(request,
+                                     {'item': temp_item})
+            return HttpResponse(template.render(context))
     else:
         raise Http404
 

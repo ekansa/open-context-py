@@ -16,6 +16,8 @@ class Project(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     updated = models.DateTimeField(auto_now=True)
     short_id = models.IntegerField(unique=True)
+    view_group_id = models.IntegerField()
+    edit_group_id = models.IntegerField()
     edit_status = models.IntegerField()
     label = models.CharField(max_length=200)
     short_des = models.CharField(max_length=200)

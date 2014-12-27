@@ -14,44 +14,69 @@ def index(request):
 
 def field_classify(request, source_id):
     """ Classifies one or more fields with posted data """
-    if request.method == 'POST':
-        ip = ImportProfile(source_id)
-        if ip.project_uuid is not False:
-            ifd = ImportFieldDescribe(source_id)
-            if 'field_type' in request.POST and 'field_num' in request.POST:
-                ifd.update_field_type(request.POST['field_type'],
-                                      request.POST['field_num'])
-            elif 'field_data_type' in request.POST and 'field_num' in request.POST:
-                ifd.update_field_data_type(request.POST['field_data_type'],
-                                           request.POST['field_num'])
-            ip.get_fields(ifd.field_num_list)
-            json_output = json.dumps(ip.jsonify_fields(),
-                                     indent=4,
-                                     ensure_ascii=False)
-            return HttpResponse(json_output,
-                                content_type='application/json; charset=utf8')
-        else:
-            raise Http404
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
     else:
-        return HttpResponseForbidden
+        if request.method == 'POST':
+            ip = ImportProfile(source_id)
+            if ip.project_uuid is not False:
+                ifd = ImportFieldDescribe(source_id)
+                if 'field_type' in request.POST and 'field_num' in request.POST:
+                    ifd.update_field_type(request.POST['field_type'],
+                                          request.POST['field_num'])
+                elif 'field_data_type' in request.POST and 'field_num' in request.POST:
+                    ifd.update_field_data_type(request.POST['field_data_type'],
+                                               request.POST['field_num'])
+                ip.get_fields(ifd.field_num_list)
+                json_output = json.dumps(ip.jsonify_fields(),
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                raise Http404
+        else:
+            return HttpResponseForbidden
 
 
 def field_meta_update(request, source_id):
     """ Classifies one or more fields with posted data """
-    if request.method == 'POST':
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
+    else:
+        if request.method == 'POST':
+            ip = ImportProfile(source_id)
+            if ip.project_uuid is not False:
+                ifd = ImportFieldDescribe(source_id)
+                if 'label' in request.POST and 'field_num' in request.POST:
+                    ifd.update_field_label(request.POST['label'],
+                                           request.POST['field_num'])
+                elif 'value_prefix' in request.POST and 'field_num' in request.POST:
+                    ifd.update_field_value_prefix(request.POST['value_prefix'],
+                                                  request.POST['field_num'])
+                elif 'field_value_cat' in request.POST and 'field_num' in request.POST:
+                    ifd.update_field_value_cat(request.POST['field_value_cat'],
+                                               request.POST['field_num'])
+                ip.get_subject_type_fields()
+                json_output = json.dumps(ip.jsonify_fields(),
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                raise Http404
+        else:
+            return HttpResponseForbidden
+
+
+def field_list(request, source_id):
+    """ Gets list of fields with annotations from source table """
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
+    else:
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
-            ifd = ImportFieldDescribe(source_id)
-            if 'label' in request.POST and 'field_num' in request.POST:
-                ifd.update_field_label(request.POST['label'],
-                                       request.POST['field_num'])
-            elif 'value_prefix' in request.POST and 'field_num' in request.POST:
-                ifd.update_field_value_prefix(request.POST['value_prefix'],
-                                              request.POST['field_num'])
-            elif 'field_value_cat' in request.POST and 'field_num' in request.POST:
-                ifd.update_field_value_cat(request.POST['field_value_cat'],
-                                           request.POST['field_num'])
-            ip.get_subject_type_fields()
+            ip.get_fields()
             json_output = json.dumps(ip.jsonify_fields(),
                                      indent=4,
                                      ensure_ascii=False)
@@ -59,19 +84,3 @@ def field_meta_update(request, source_id):
                                 content_type='application/json; charset=utf8')
         else:
             raise Http404
-    else:
-        return HttpResponseForbidden
-
-
-def field_list(request, source_id):
-    """ Classifies one or more fields with posted data """
-    ip = ImportProfile(source_id)
-    if ip.project_uuid is not False:
-        ip.get_fields()
-        json_output = json.dumps(ip.jsonify_fields(),
-                                 indent=4,
-                                 ensure_ascii=False)
-        return HttpResponse(json_output,
-                            content_type='application/json; charset=utf8')
-    else:
-        raise Http404
