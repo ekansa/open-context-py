@@ -9,6 +9,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 
 
 # Help organize the code, with a class to make templating easier
@@ -16,7 +17,7 @@ class TemplateItem():
     """ This class makes an object useful for templating, since
     the JSON-LD object can't be read by the django template system """
 
-    def __init__(self):
+    def __init__(self, request=False):
         self.label = False
         self.uuid = False
         self.id = False
@@ -35,6 +36,8 @@ class TemplateItem():
         self.act_nav = False
         self.use_accordions = False
         self.item_linked_data = False
+        self.request = request
+        self.view_permitted = True  # defaults to allow views
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -48,6 +51,7 @@ class TemplateItem():
         self.id = json_ld['id']
         self.store_class_type_metadata(json_ld)
         self.create_project(json_ld)
+        self.check_view_permission()
         self.create_context(json_ld)
         self.create_children(json_ld)
         self.create_linked_data(json_ld)
@@ -154,6 +158,13 @@ class TemplateItem():
             proj.uuid = self.uuid
         proj.make_project(json_ld)
         self.project = proj
+
+    def check_view_permission(self):
+        """ Checkes to see if viewing the item is permitted
+        """
+        if self.project is not False and self.request is not False:
+            pp = ProjectPermissions(self.project.uuid)
+            self.view_permitted = pp.view_allowed(self.request)
 
     def create_citation(self, json_ld):
         """ Makes an instance of a citation class, with data from the JSON_LD
@@ -675,6 +686,7 @@ class Project():
         self.label = False
         self.edit_status = False
         self.item_type = False
+        self.view_authorized = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
