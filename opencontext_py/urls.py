@@ -111,6 +111,11 @@ urlpatterns = patterns('',
                        url(r'^edit/items/(?P<uuid>\S+)', EditItemViews.html_view,
                            name='edit_item_html_view'),
                        # --------------------------
+                       # BELOW ARE URLs FOR ENTITY EDITS AJAX REQUESTS
+                       # --------------------------
+                       url(r'^edit/update-item/(?P<uuid>\S+)', EditItemViews.update_item,
+                           name='edit_update_item'),
+                       # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
