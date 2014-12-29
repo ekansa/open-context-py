@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.db.models import Q
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.entities.entity.models import Entity
 
@@ -30,7 +31,7 @@ class ProjectPermissions():
                     else:
                         # check to see if the user is in a view_group
                         output = request.user.groups\
-                                        .filter(id=proj.view_group_id)\
+                                        .filter(Q(id=proj.view_group_id) | Q(id=proj.edit_group_id))\
                                         .exists()
                 else:
                     output = False
