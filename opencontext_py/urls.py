@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
+from opencontext_py.apps.edit.items import views as EditItemViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
@@ -104,6 +105,11 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^imports/', Imp_sources.index,
                            name='imp_sources_index'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR ENTITY EDITS INTERFACE PAGES
+                       # --------------------------
+                       url(r'^edit/items/(?P<uuid>\S+)', EditItemViews.html_view,
+                           name='edit_item_html_view'),
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------

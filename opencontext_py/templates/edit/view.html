@@ -1,0 +1,27 @@
+{% extends 'item.html' %}
+<!DOCTYPE html>
+
+{% block itemcontent %}
+     <div class="row">
+         <div class="col-sm-12">
+         {% include 'items/context.html' %}
+         </div>
+     </div>
+     <div class="row">
+          <div class="col-sm-8">
+               <div class="panel panel-default">
+                    <div class="panel-heading">
+                         <h4 class="panel-title">Item Editing</h4>
+                    </div>
+                    <div class="panel-body">
+                         <p>Edting interface here...</small>
+                    </div>
+               </div>
+         </div>
+         <div class="col-sm-4">
+         {% include 'items/citation.html' %}
+         {% include 'items/project.html' %}
+         {% include 'items/map.html' %}
+         </div>
+     </div>
+{% endblock %} 

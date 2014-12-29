@@ -38,6 +38,8 @@ class TemplateItem():
         self.item_linked_data = False
         self.request = request
         self.view_permitted = True  # defaults to allow views
+        self.edit_permitted = False
+        self.check_edit_permitted = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -52,6 +54,8 @@ class TemplateItem():
         self.store_class_type_metadata(json_ld)
         self.create_project(json_ld)
         self.check_view_permission()
+        if self.check_edit_permitted:
+            self.check_edit_permission()
         self.create_context(json_ld)
         self.create_children(json_ld)
         self.create_linked_data(json_ld)
@@ -165,6 +169,13 @@ class TemplateItem():
         if self.project is not False and self.request is not False:
             pp = ProjectPermissions(self.project.uuid)
             self.view_permitted = pp.view_allowed(self.request)
+
+    def check_edit_permission(self):
+        """ Checkes to see if editting the item is permitted
+        """
+        if self.project is not False and self.request is not False:
+            pp = ProjectPermissions(self.project.uuid)
+            self.edit_permitted = pp.edit_allowed(self.request)
 
     def create_citation(self, json_ld):
         """ Makes an instance of a citation class, with data from the JSON_LD
