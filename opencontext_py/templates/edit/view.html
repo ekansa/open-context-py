@@ -2,21 +2,39 @@
 <!DOCTYPE html>
 
 {% block itemcontent %}
-     <div class="row">
-         <div class="col-sm-12">
-         {% include 'items/context.html' %}
-         </div>
-     </div>
-     <div class="row">
-          <div class="col-sm-8">
-               <div class="panel panel-default">
-                    <div class="panel-heading">
-                         <h4 class="panel-title">Item Editing</h4>
+    <div class="row">
+        <div class="col-sm-12">
+         {% include 'edit/context.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
+            <div id="observations">
+                <ul class="nav nav-tabs" id="editTabs" data-tabs="tabs">
+                    <li class="active"><a data-toggle="tab" href="#edit-1">Edit Item</a></li>
+                    <li><a data-toggle="tab" href="#edit-2">Edit Containment</a></li>
+                </ul>
+                <div class="tab-content obs-multi">
+                    <div id="edit-1" class="tab-pane fade in active">
+                        <div class="panel panel-default top-panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Edit Basic Item Data</h4>
+                            </div>
+                            <div class="panel-body">
+                            </div>
+                        </div>
                     </div>
-                    <div class="panel-body">
-                         <p>Edting interface here...</small>
+                    <div id="edit-2" class="tab-pane fade">
+                        <div class="panel panel-default top-panel">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Edit Containment Relations</h4>
+                            </div>
+                            <div class="panel-body">
+                            </div>
+                        </div>
                     </div>
-               </div>
+                </div>
+            </div>
          </div>
          <div class="col-sm-4">
          {% include 'items/citation.html' %}

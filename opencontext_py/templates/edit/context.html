@@ -1,0 +1,36 @@
+{% block context %}
+    {% if item.context != False %}
+        <ol id="{{ item.context.id }}" class="breadcrumb">
+            <li id="context-start">Context:</li>
+        {% for par in item.context.parents %}
+            {% if forloop.counter == 1 %} 
+            <li id="context-root"><a href="{% url 'edit_item_html_view' par.uuid %}">{{ par.label }}</a></li>
+            {% else %}
+            <li><a href="{% url 'edit_item_html_view' par.uuid %}">{{ par.label }}</a></li>
+            {%endif%}
+        {% endfor %}
+            {% if item.context.type == 'context' %}
+            <li class="active" id="item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
+            {% else %}
+            <li class="active" id="rel-item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
+            {%endif%}
+        </ol>
+    {% else %}
+        {% if item.act_nav == 'types' %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Category or Type:</strong></li>
+            <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
+        </ol>
+        {% elif item.act_nav == 'predicates' %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Descriptive Property or Relation:</strong></li>
+            <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
+        </ol> 
+        {% else %}    
+        <ol id="context" class="breadcrumb">
+            <li><strong>Context:</strong></li>
+            <li id="context-root" class="active" id="item-in-context">{{ item.label }}</li>
+        </ol>
+        {%endif%}
+    {%endif%}
+{% endblock %}
