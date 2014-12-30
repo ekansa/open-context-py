@@ -27,6 +27,8 @@ function getTypeHierarchy() {
 	}
 }
 
+var select_cat_label = false;
+var select_cat_id = false;
 var start_data = [{label: 'Type Hierarchy'}];
 var tree_app;
 var tree_service;
@@ -42,7 +44,10 @@ var act_tree_root = false;
 	app = angular.module('TreeApp', deps);
 	tree_app = app.controller('TreeController', function($scope, $timeout) {
 		$scope.my_tree_handler = function(branch) {
-			if (branch.id != null) {	
+			if (branch.id != null) {
+				select_cat_label = branch.label;
+				select_cat_id = branch.id;
+				updateCategoryButton();
 				var act_domID = "tree-sel-label";
 				var act_dom = document.getElementById(act_domID);
 				act_dom.innerHTML = branch.label;
@@ -75,12 +80,29 @@ var act_tree_root = false;
 	
 }).call(this);
 
+function updateCategoryButton(){
+	var act_domID = "cat-update-button-outer";
+	var act_dom = document.getElementById(act_domID);
+	var html = "<button type=\"button\" class=\"btn btn-info\" onclick=\"javascript:updateCategory();\">Update</button>";
+	html += "<br/>Update to:<br/><small style=\"word-wrap: break-word;\">'" + select_cat_label + "'</small>";
+	act_dom.innerHTML = html;
+}
+
 function getTypeHierarchyDone(data){
 	/* Updates the Hierarchy tree with new JSON data */
 	tree_service(data)
 	var act_domID = "tree-sel-label";
 	var act_dom = document.getElementById(act_domID);
+	act_dom.innerHTML = "<small>Use the tree menu below to select a new category for this item.</small>";
+	var act_domID = "tree-sel-id";
+	var act_dom = document.getElementById(act_domID);
 	act_dom.innerHTML = "";
+	var act_domID = "tree-sel-icon";
+	var act_dom = document.getElementById(act_domID);
+	var html = "<button type=\"button\" class=\"btn btn-default btn-lg\">";
+	html += "<span class=\"glyphicon glyphicon-edit\" aria-hidden=\"true\"></span>";
+	html += "</button>";
+	act_dom.innerHTML = html;
 }
 
 
@@ -133,46 +155,30 @@ function updateLabelDone(data){
 Functions for changing categories
 ------------------------------------------------------
 */
-function assignEntityCategory() {
+function updateCategory() {
 	/* Assigns a an entity category for values of cells that are to be
 	 * reconciled in an import
 	*/
-	var scat_domID = "tree-sel-id";
-	var field_value_cat = document.getElementById(scat_domID).innerHTML;
-	if (field_value_cat.length > 0) {
-		url = "../../imports/field-meta-update/" + encodeURIComponent(source_id);
-		var selected_fields = getSelectedFieldNumbers();
+	if (select_cat_id.length > 0) {
+		url = "../../edit/update-item/" + encodeURIComponent(uuid);
 		var req = $.ajax({
 			type: "POST",
 			url: url,
 			dataType: "json",
 			data: {
-				field_value_cat: field_value_cat,
-				field_num: selected_fields,
+				class_uri: select_cat_id,
 				csrfmiddlewaretoken: csrftoken},
-			success: assignEntityCategoryDone
+			success: updateCategoryDone
 		});
 	}
 }
 
-function assignEntityCategoryDone(data){
-	/* Shows updates to the entity value category */
-	for (var i = 0, length = data.length; i < length; i++) {
-		if (data[i].field_value_cat.length > 0) {
-			var field_num = data[i].field_num
-			var act_domID = "field-value-cat-label-" + field_num;
-			var act_dom = document.getElementById(act_domID);
-			act_dom.innerHTML = data[i].field_value_cat_label;
-			var act_domID = "field-value-cat-id-" + field_num;
-			var act_dom = document.getElementById(act_domID);
-			act_dom.innerHTML = data[i].field_value_cat;
-			if (data[i].field_value_cat_icon != false) {
-				var act_domID = "field-val-cat-icon-" + field_num;
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = "<img src=\"" + data[i].field_value_cat_icon + "\" alt=\"Icon\"/>";
-			}
-		}
-	}
+function updateCategoryDone(data){
+	// reload the whole page from the server
+	// it's too complicated to change all the instances of the item category on the page,
+	// easier just to reload the whole page
+	console.log(data);
+	location.reload(true);
 }
 
 

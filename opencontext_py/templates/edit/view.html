@@ -46,8 +46,8 @@
                                         <tr>
                                             <th class="col-sm-2">Attribute</th>
                                             <th class="col-sm-4">Value</th>
-                                            <th class="col-sm-1">Action</th>
-                                            <th class="col-sm-5">Note</th>
+                                            <th class="col-sm-2">Action</th>
+                                            <th class="col-sm-4">Note</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -67,8 +67,8 @@
                                         <tr>
                                             <th>Item Category</th>
                                             <td>{{ item.act_nav }} :: <span id="">{{ item.item_category_label }}</span></td>
-                                            <td>
-                                                <button type="button" class="btn btn-info" onclick="javascript:updateLabel();">Update</button>
+                                            <td id="cat-update-button-outer">
+                                                <button type="button" class="btn btn-info" disabled="disabled">Update</button>
                                             </td>
                                             <td>
                                                 <div class="panel panel-default" ng-app="TreeApp">

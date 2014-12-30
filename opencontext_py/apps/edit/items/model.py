@@ -32,6 +32,18 @@ class ItemEdit():
         """
         old_label = self.manifest.label
         output = {'action': 'update-label',
-                  'label': label,
-                  'old_label': old_label}
+                  'change': {'prop': 'label',
+                             'new': label,
+                             'old': old_label}}
+        return output
+
+    def update_class_uri(self, class_uri):
+        """ Updates an item's label. Generally straightforward
+            except for subjects
+        """
+        old_class_uri = self.manifest.class_uri
+        output = {'action': 'update-class-uri',
+                  'change': {'prop': 'class_uri',
+                             'new': class_uri,
+                             'old': old_class_uri}}
         return output

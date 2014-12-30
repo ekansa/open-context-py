@@ -44,6 +44,8 @@ def update_item(request, uuid):
                 result = {}
                 if 'label' in request.POST:
                     result = item_edit.update_label(request.POST['label'])
+                if 'class_uri' in request.POST:
+                    result = item_edit.update_class_uri(request.POST['class_uri'])
                 json_output = json.dumps(result,
                                          indent=4,
                                          ensure_ascii=False)
