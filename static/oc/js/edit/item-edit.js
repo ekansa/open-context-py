@@ -77,7 +77,6 @@ var act_tree_root = false;
 		};
 		tree_service = $scope.tree_service;
 	});
-	
 }).call(this);
 
 function updateCategoryButton(){

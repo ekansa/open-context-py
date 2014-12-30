@@ -32,80 +32,18 @@
             <div id="observations">
                 <ul class="nav nav-tabs" id="editTabs" data-tabs="tabs">
                     <li class="active"><a data-toggle="tab" href="#edit-1">Edit Item</a></li>
-                    <li><a data-toggle="tab" href="#edit-2">Edit Context</a></li>
+                    <li><a data-toggle="tab" href="#edit-2">Context</a></li>
+                    <li><a data-toggle="tab" href="#edit-3">Description</a></li>
                 </ul>
                 <div class="tab-content obs-multi">
                     <div id="edit-1" class="tab-pane fade in active">
-                        <div class="panel panel-default top-panel">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">Edit Basic Item Data</h4>
-                            </div>
-                            <div class="panel-body">
-                                <table class="table table-condensed table-hover table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th class="col-sm-2">Attribute</th>
-                                            <th class="col-sm-4">Value</th>
-                                            <th class="col-sm-2">Action</th>
-                                            <th class="col-sm-4">Note</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <th>Item Label</th>
-                                            <td><input id="item-label" type="text" value="{{ item.label }}" style="width:100%;" /></td>
-                                            <td>
-                                                <button type="button" class="btn btn-info" onclick="javascript:updateLabel();">Update</button>
-                                            </td>
-                                            <td>
-                                                <small>A label is the primary name used for people to identify an item.
-                                                This differs from an item's UUID and URI, both of which are universally unique
-                                                identifiers used by software. Changing an item's label does not change the
-                                                item's UUID or URI, nor does it change an item's relationships with other items.</small>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>Item Category</th>
-                                            <td>{{ item.act_nav }} :: <span id="">{{ item.item_category_label }}</span></td>
-                                            <td id="cat-update-button-outer">
-                                                <button type="button" class="btn btn-info" disabled="disabled">Update</button>
-                                            </td>
-                                            <td>
-                                                <div class="panel panel-default" ng-app="TreeApp">
-                                                    <div class="panel-heading">
-                                                        <h4 class="panel-title">Open Context Item Categories</h4>
-                                                    </div>
-                                                    <div class="panel-body" ng-controller="TreeController">
-                                                        <div class="container-fluid">
-                                                            <div class="row subject-list-row" onclick="javascript:assignEntityCategory();">
-                                                                <div class="col-sm-3" id="tree-sel-icon"></div>
-                                                                <div class="col-sm-9">
-                                                                    <span id="tree-sel-label"></span>
-                                                                    <br/>
-                                                                    <samp><small id="tree-sel-id"></small></samp>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div style="background:whitesmoke;border:1px solid lightgray;border-radius:5px;">
-                                                            <abn-tree id="type-hierarchy" tree-data="tree_data" tree-control="my_tree" on-select="my_tree_handler(branch)" expand-level="2"></abn-tree>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        {% include 'edit/item-basic.html' %}
                     </div>
                     <div id="edit-2" class="tab-pane fade">
-                        <div class="panel panel-default top-panel">
-                            <div class="panel-heading">
-                                <h4 class="panel-title">Edit Context</h4>
-                            </div>
-                            <div class="panel-body">
-                            </div>
-                        </div>
+                        {% include 'edit/item-context.html' %}
+                    </div>
+                    <div id="edit-3" class="tab-pane fade">
+                        {% include 'edit/item-description.html' %}
                     </div>
                 </div>
             </div>
@@ -115,6 +53,9 @@
          {% include 'items/project.html' %}
          {% include 'items/map.html' %}
          </div>
+         <!--
+         <script src="../../static/oc/js/entities/item-json-ld.js" onload="javascript:create_item_object_locally(item_type, uuid);"></script>
+         -->
          <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:getTypeHierarchy();"></script>
      </div>
 {% endblock %} 

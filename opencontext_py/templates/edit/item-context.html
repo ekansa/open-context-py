@@ -1,0 +1,44 @@
+{% block item-context %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <h4 class="panel-title">Edit Context</h4>
+    </div>
+    <div class="panel-body">
+        <table class="table table-condensed table-hover table-striped">
+            <thead>
+                <tr>
+                    <th class="col-sm-2">Action</th>
+                    <th class="col-sm-5">Parent Context</th>
+                    <th class="col-sm-5">Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <button type="button" class="btn btn-warning" onclick="javascript:removeParent();">
+                            <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+                            Unlink
+                        </button>
+                    </td>
+                    <td>
+                        {% for par in item.context.parents %}
+                            {% if forloop.last %}
+                                {{ par.label }}
+                                <br/>
+                                <a href="{% url 'edit_item_html_view' par.uuid %}" target="_blank">
+                                    <code id="parent-uuid">{{ par.uuid }}</code>
+                                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        <small>Subjects items exist in spatial containment relationships. By clicking the 'Unlink' botton,
+                        you remove this item from its parent context. This does not delete the item or delete the parent.</small>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
