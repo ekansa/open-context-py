@@ -267,7 +267,7 @@ function addRelInterface(type){
 	act_interface_type = type;
 	var title_dom = document.getElementById(main_modal_title_domID);
 	var body_dom = document.getElementById(main_modal_body_domID);
-	if (interfaces[type] == false) {
+	if (interfaces[type] == false || interfaces[type] == null) {
 		var actInterface = new relationInterface(type);
 		interfaces[type] = actInterface; 
 	}
@@ -413,15 +413,26 @@ function addContainsDone(data){
  * Interface For "Contained-in" Relations
  * --------------------------------------------------------------
  */
+var contextSearchObj = false;
 function generateContainedInBody(){
-	/* changes global varaiables from entities.js */
-	entities_panel_title = "Select Parent Entity";
-	limit_item_type = "subjects";
-	limit_class_uri = false;
-	limit_project_uuid = "0," + project_uuid; 
-	selectFoundEntityFunction = "selectParentEntity";
+	var entityInterfaceHTML = "";
 	var subjectInterfaceHTML = generateFieldListHTML('subject', ['subjects']);
-	var entityInterfaceHTML = generateEntitiesInterface(true, false);
+	
+	/* changes global contextSearchObj from entities/entities.js */
+	contextSearchObj = new searchEntityObj();
+	contextSearchObj.name = "contextSearchObj";
+	contextSearchObj.entities_panel_title = "Select Parent Entity";
+	contextSearchObj.limit_item_type = "subjects";
+	contextSearchObj.limit_project_uuid = "0," + project_uuid;
+	var afterSelectDone = {
+		exec: function(){
+				return checkActionReady();
+			}
+		};
+	contextSearchObj.afterSelectDone = afterSelectDone;
+	var entityInterfaceHTML = contextSearchObj.generateEntitiesInterface();
+	console.log(contextSearchObj);
+
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
@@ -439,33 +450,26 @@ function generateContainedInBody(){
 	return bodyString;
 }
 
-function selectParentEntity(item_num) {
-	/* Adds selected entity label and ID to the right dom element */
-	var act_domID = "search-entity-id-" + item_num;
-	var item_id = document.getElementById(act_domID).innerHTML;
-	var sel_id_dom = document.getElementById("sel-entity-id");
-	sel_id_dom.value = item_id;
-	act_domID =  "search-entity-label-" + item_num;
-	var item_label = document.getElementById(act_domID).innerHTML;
-	var sel_label_dom = document.getElementById("sel-entity-label");
-	sel_label_dom.value = item_label;
-	checkActionReady();
-}
-
 function checkContainmentInActionReady(){
 	// Check to see if there's a selected subject field.
 	var sel_num_domID = "subject" + "-f-num";
-	var field_num = document.getElementById(sel_num_domID).value;
-	
-	// Check to see if there's a selected parent entity.
-	var sel_id_dom = document.getElementById("sel-entity-id");
-	var entity_id = sel_id_dom.value;
+	var act_dom = document.getElementById(sel_num_domID);
+	if (act_dom != null) {
+		var field_num = act_dom.value;
+		// Check to see if there's a selected parent entity.
+		var sel_id_dom = document.getElementById("contextSearchObj-sel-entity-id");
+		var entity_id = sel_id_dom.value;
+	}
+	else{
+		var field_num = 0;
+		var entity_id = false;
+	}
 	
 	if (field_num > 0 && entity_id.length > 0) {
 		// We're ready to try to create a 'contained-in' relationship
 		var sel_label_domID = "subject" + "-f-label";
 		var field_label = document.getElementById(sel_label_domID).value;
-		var sel_label_dom = document.getElementById("sel-entity-label");
+		var sel_label_dom = document.getElementById("contextSearchObj-sel-entity-label");
 		var entity_label = sel_label_dom.value;
 		
 		var button_row = document.getElementById("action-div");
@@ -498,7 +502,7 @@ function addContainedIn(){
 	var field_num = document.getElementById(sel_num_domID).value;
 	
 	// Check to see if there's a selected parent entity.
-	var sel_id_dom = document.getElementById("sel-entity-id");
+	var sel_id_dom = document.getElementById("contextSearchObj-sel-entity-id");
 	var entity_id = sel_id_dom.value;
 	
 	//Replace action button with an "updating" message
@@ -809,24 +813,38 @@ function predicateInterface(){
 	$("#myModal_b").modal("show");
 }
 
-
+var predSearchObj = false;
 function generateOtherPredicateBody(){
 	var fieldInterfaceHTML = generateFieldListHTML('linking', ['relation']);
 	var predicateHTML = generateSelectedCustomPredicateHTML();
-	entities_panel_title = "Select Link Relation Concept";
-	limit_item_type = "predicates";
-	limit_class_uri = "link";
-	limit_project_uuid = "0," + project_uuid; 
-	selectFoundEntityFunction = "selectPredicateLinkEntity";
+	
+	/* Entity search object from entities/entities.js */
 	var additionalButton = {label: "Select",
 		funct: "useSelectedLinkEnity()",
 		icon: "glyphicon glyphicon-check",
-		buttonID: "sel-entity-use-button",
+		buttonID: "predSearchObj-sel-entity-use-button",
 		buttonClass: "btn btn-info",
 		buttonText: "Use the above Link Relation",
 		buttonDisabled: true
 	}
-	var entityInterfaceHTML = generateEntitiesInterface(true, additionalButton);
+	predSearchObj = new searchEntityObj();
+	predSearchObj.name = "predSearchObj";
+	predSearchObj.entities_panel_title = "Select Link Relation Concept";
+	predSearchObj.limit_item_type = "predicates";
+	predSearchObj.limit_class_uri = "link";
+	predSearchObj.limit_project_uuid = "0," + project_uuid;
+	predSearchObj.selectReadOnly = true;
+	predSearchObj.additionalButton = additionalButton;
+	var afterSelectDone = {
+		exec: function(){
+				document.getElementById("predSearchObj-sel-entity-use-button").disabled = "";
+				return checkActionReady();
+			}
+		};
+	predSearchObj.afterSelectDone = afterSelectDone;
+	var entityInterfaceHTML = predSearchObj.generateEntitiesInterface();
+	console.log(predSearchObj);
+
 	var bodyString = [
 		"<div class=\"container-fluid\">",
 			"<div id=\"action-div\">",	
@@ -881,17 +899,6 @@ function generateSelectedCustomPredicateHTML(){
 }
 
 
-function selectPredicateLinkEntity(entity_num){
-	// Action from list of predicate entities, uses clicks to select to use a link predicate
-	var label_domID = "search-entity-label-" + entity_num;
-	var id_domID = "search-entity-id-" + entity_num;
-	var label = document.getElementById(label_domID).innerHTML;
-	var id = document.getElementById(id_domID).innerHTML;
-	document.getElementById("sel-entity-label").value = label;
-	document.getElementById("sel-entity-id").value = id;
-	document.getElementById("sel-entity-use-button").disabled = "";
-}
-
 var doNewLinkPredicateLabel = true;
 function useSelectedLinkEnity(){
 	// Action to use a predicate entity, either previously selected from a list
@@ -901,8 +908,8 @@ function useSelectedLinkEnity(){
 	//newLinkPredicateLabel() function
 	doNewLinkPredicateLabel = false;
 	
-	other_predicate_label = document.getElementById("sel-entity-label").value;
-	other_predicate_id = document.getElementById("sel-entity-id").value;
+	other_predicate_label = document.getElementById("predSearchObj-sel-entity-label").value;
+	other_predicate_id = document.getElementById("predSearchObj-sel-entity-id").value;
 	other_predicate_type = "predicates";
 	var predicateHTML = generateSelectedCustomPredicateHTML();
 	document.getElementById("other-predicate-interface-outer").innerHTML = predicateHTML;
