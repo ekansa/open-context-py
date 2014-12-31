@@ -1,6 +1,28 @@
 /*
  * Functions to edit an item
  */
+var contextSearchObj = false;
+function start(){
+	/* Thing to do on page load 
+	*/
+	getTypeHierarchy();
+	if (item_type == 'subjects') {
+		// var act_domID = "sel-parent-entities";
+		// var act_dom = document.getElementById(act_domID);
+		// act_dom.innerHTML = generateEntitiesInterface(true, false); // function defined in entities/entities.js
+		contextSearchObj = new searchEntityObj();
+		contextSearchObj.name = "contextSearchObj";
+		contextSearchObj.interfaceDomID = "sel-parent-entities";
+		contextSearchObj.entities_panel_title = "Context Lookup";
+		contextSearchObj.limit_item_type = "subjects";
+		contextSearchObj.generateEntitiesInterface(true, false);
+		console.log(contextSearchObj);
+	}
+	
+}
+
+
+
 
 function getTypeHierarchy() {
 	/* Gets the hiearchy of child types for the item's type 
