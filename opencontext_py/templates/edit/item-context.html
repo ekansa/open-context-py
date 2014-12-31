@@ -1,9 +1,26 @@
 {% block item-context %}
+    
+{% with top_panel_num=2 %} <!-- so this is treated as a top-panel, css shoving it up -->
+{% with idprefix='par' %}
+{% with idnum=1 %}
+{% with idsuffix='context' %}
+{% with panel_label='Edit Context' %}
+{% with panel_label_suffix=False %}
+{% include 'items/accordion-group-panel-start.html' %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+{% endwith %}
+
+<!--
 <div class="panel panel-default top-panel">
     <div class="panel-heading">
         <h4 class="panel-title">Edit Context</h4>
     </div>
     <div class="panel-body">
+-->
         <table class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
@@ -39,7 +56,7 @@
                 </tr>
                 <tr>
                     <td>
-                        <button type="button" class="btn btn-warning" onclick="javascript:changeParent();">
+                        <button id="change-parent-button" type="button" class="btn btn-warning" onclick="javascript:changeParent();" disabled="disabled">
                             <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
                             Change
                         </button>
@@ -53,6 +70,9 @@
                 </tr>
             </tbody>
         </table>
+{% include 'items/accordion-group-panel-end.html' %}
+<!--
     </div>
 </div>
+-->
 {% endblock %}

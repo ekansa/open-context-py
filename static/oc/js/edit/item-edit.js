@@ -15,6 +15,16 @@ function start(){
 		contextSearchObj.interfaceDomID = "sel-parent-entities";
 		contextSearchObj.entities_panel_title = "Context Lookup";
 		contextSearchObj.limit_item_type = "subjects";
+		var afterSelectDone = {
+		exec: function(){
+				// turn on the update button if there's an ID selected
+				var dom_id = "contextSearchObj-sel-entity-id";
+				if (document.getElementById(dom_id).value.length > 0) {
+					document.getElementById("change-parent-button").disabled = "";
+				}
+			}
+		};
+		contextSearchObj.afterSelectDone = afterSelectDone;
 		contextSearchObj.generateEntitiesInterface(true, false);
 		console.log(contextSearchObj);
 	}
