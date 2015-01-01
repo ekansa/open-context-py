@@ -1,12 +1,46 @@
 /*
  * Functions for Interacting with Open Context item JSON-LD
  */
-var item_obj = {
-	data: false,
-	uuid: false,
-	item_type: false,
-	host: '../../',
-	getParent: function(){
+function item_object(item_type, uuid){
+	this.data =  false;
+	this.error = false;
+	this.uuid = uuid;
+	this.item_type = item_type;
+	this.host = '../../';
+	this.req = false;
+	this.getItemData = function(){
+		var output = false;
+		if (!this.req) {
+			this.getItemJSON();
+		}
+		else{
+			if (!this.error) {
+				output = true;
+			}
+		}
+		return output;
+	};
+	this.getItemJSON = function(){
+		var url = this.host + this.item_type + "/" + encodeURIComponent(this.uuid) + ".json";
+		this.req =  $.ajax({
+			type: "GET",
+			url: url,
+			context: this,
+			dataType: "json",
+			//async: false,
+			error: this.getItemJSONerror,
+			success: this.getItemJSONDone
+		});
+	}
+	this.getItemJSONerror = function(data){
+		console.log(data);
+		this.error = true;
+	}
+	this.getItemJSONDone = function(data){
+		this.data = data;
+		console.log(this.data);
+	}
+	this.getParent = function(){
 		// gets a object for the item's immediate parent, if it exists
 		var output = false;
 		if (this.data != false) {
@@ -19,30 +53,5 @@ var item_obj = {
 		}
 		return output;
 	}
-}
-
-function getItemJSON(host, item_type, uuid){
-	// AJAX request to get an item's JSON-LD
-	var url = host + item_type + "/" + encodeURIComponent(uuid) + ".json";
-	return  $.ajax({
-		type: "GET",
-		url: url,
-		async: false,
-		dataType: "json",
-		success: getItemJSONDone
-	});
-}
-
-function getItemJSONDone(data){
-	// AJAX response for an item's JSON-LD
-	item_obj.data = data;
-	return data;
-}
-
-function create_item_object_locally(item_type, uuid){
-	// Calls the local server to create an item_object
-	item_obj.item_type = item_type;
-	item_obj.uuid = uuid;
-	getItemJSON(item_obj.host, item_obj.item_type, item_obj.uuid);
-	console.log(item_obj);
+	
 }

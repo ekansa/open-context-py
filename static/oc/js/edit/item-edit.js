@@ -2,9 +2,13 @@
  * Functions to edit an item
  */
 var contextSearchObj = false;
+var act_item = false;
 function start(){
 	/* Thing to do on page load 
 	*/
+	act_item = new item_object(item_type, uuid);
+	act_item.getItemData();
+	console.log(act_item);
 	getTypeHierarchy();
 	if (item_type == 'subjects') {
 		// var act_domID = "sel-parent-entities";
