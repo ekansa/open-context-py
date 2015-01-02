@@ -21,6 +21,7 @@ function item_object(item_type, uuid){
 		return output;
 	};
 	this.getItemJSON = function(){
+		/* gets the item JSON-LD from the server */
 		var url = this.host + this.item_type + "/" + encodeURIComponent(this.uuid) + ".json";
 		this.req =  $.ajax({
 			type: "GET",
@@ -33,10 +34,12 @@ function item_object(item_type, uuid){
 		});
 	}
 	this.getItemJSONerror = function(data){
+		/* something horrible happened, record it in the console log */
 		console.log(data);
 		this.error = true;
 	}
 	this.getItemJSONDone = function(data){
+		/* the JSON-LD becomes this object's data */
 		this.data = data;
 		console.log(this.data);
 	}
