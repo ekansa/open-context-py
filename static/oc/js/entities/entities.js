@@ -4,17 +4,6 @@
  * ------------------------------------------------------------------
 */
 
-/* DOM id for input element with search string */
-var search_text_domID = "entity-string"; 
-/* DOM id for <ul> element where entity search results go */
-var searchEntityListDomID = "search-entity-list";
-var selectFoundEntityFunction = "selectEntity";
-var entities_panel_title = "Entity Lookup";
-var limit_item_type = false;
-var limit_class_uri = false;
-var limit_project_uuid = false;
-var limit_vocab_uri = false;
-
 function searchEntityObj() {
 	/* Object for composing search entities */
 	this.name = "ent"; //object name, used for DOM-ID prefixes and object labeling
