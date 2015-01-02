@@ -43,6 +43,12 @@ function item_object(item_type, uuid){
 		this.data = data;
 		console.log(this.data);
 	}
+/* --------------------------------------------------
+ * Functions for getting commonly needed info from a JSON-LD object
+ *
+ *
+ * --------------------------------------------------
+ */
 	this.getParent = function(){
 		// gets a object for the item's immediate parent, if it exists
 		var output = false;
@@ -55,6 +61,51 @@ function item_object(item_type, uuid){
 			}
 		}
 		return output;
-	}
-	
+	};
+	this.getChildren = function(){
+		// gets a object for the item's immediate parent, if it exists
+		var output = false;
+		if (this.data != false) {
+			if (this.data['oc-gen:has-contents'] !== undefined) {
+				if (this.data['oc-gen:has-contents']['oc-gen:contains'] !== undefined) {
+					output = this.data['oc-gen:has-contents']['oc-gen:contains'];
+				}	
+			}
+		}
+		return output;
+	};
+	this.getCategoryIcon = function(category){
+		// gets an icon image src for a category, if it exists
+		var output = false;
+		if (this.data != false) {
+			if (this.data['@graph'] !== undefined) {
+				for (var i = 0, length = this.data['@graph'].length; i < length; i++) {
+					if (this.getIDvalue(this.data['@graph'][i]) == category) {
+						var id_match = true;
+					}
+					else {
+						var id_match = false;
+					}
+					if (this.data['@graph'][i]['oc-gen:hasIcon'] !== undefined && id_match) {
+						output = this.getIDvalue(this.data['@graph'][i]['oc-gen:hasIcon'][0]);	
+					}
+					
+				}
+			}
+		}
+		return output;
+	};
+	this.getIDvalue = function(entity_obj){
+		// gets an ID for a entity referenced in the JSON-LD
+		if (entity_obj['@id'] !== undefined) {
+			var output = entity_obj['@id'];
+		}
+		else if (entity_obj['id'] !== undefined) {
+			var output = true;
+		}
+		else {
+			var output = false;
+		}
+		return output;
+	};
 }
