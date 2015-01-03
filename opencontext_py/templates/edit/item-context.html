@@ -1,4 +1,27 @@
 {% block item-context %}
+
+
+
+
+<div class="modal fade" id="contextModal" tabindex="-1" role="dialog" aria-labelledby="modal-small-title" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="modal-small-title">Modal title</h4>
+            </div>
+            <div class="modal-body" id="modal-small-body">
+                <p>One fine body&hellip;</p>
+            </div>
+            <div class="modal-footer" id="modal-small-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" id="modal-small-foot-button" onclick="">Action</button>
+            </div>
+          </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
     
 {% with top_panel_num=2 %} <!-- so this is treated as a top-panel, css shoving it up -->
 {% with idprefix='par' %}
@@ -81,13 +104,13 @@
 {% endwith %}
 <div class="row" style="padding-bottom:3%;">
     <div class="col-sm-2">
-        <button type="button" class="btn btn-info" onclick="javascript:changeContainSort();">
+        <button type="button" class="btn btn-info" onclick="javascript:containSortDialog();">
             <span class="glyphicon glyphicon-sort" aria-hidden="true"></span>
             Resort Children
         </button>
     </div>
     <div class="col-sm-4">
-        <small>Resorts child items GLOBALLY for the entire project. This takes some time.</small>
+        <small>Resorts child items GLOBALLY for the entire project. Resorting is based on label and category.</small>    
     </div>
     <div class="col-sm-3">
         
@@ -96,6 +119,7 @@
         
     </div>
 </div>
+
 <table class="table table-condensed table-hover table-striped">
     <thead>
         <tr>

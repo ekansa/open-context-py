@@ -1,21 +1,14 @@
-{% extends 'item.html' %}
+{% extends 'edit/item.html' %}
 <!DOCTYPE html>
 
 {% block itemcontent %}
     <!-- BEGIN item edit general javascript includes -->
-    <script src="../../static/jquery/jquery-1.11.1.min.js"></script>
-    <script src="../../static/jquery/jquery.cookie.js"></script>
-    <script src="../../static/jquery/ui/jquery-ui.min.js"></script>
-    <script src="../../static/angularjs/angular.js"></script>
-    <script src="../../static/angularjs/angular-animate.js"></script>
-    <script src="../../static/angularjs/abn_tree_directive.js"></script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
         var item_type = '{{ item.act_nav }}';
         var uuid = '{{ item.uuid }}';
         var project_uuid = '{{ item.project.uuid }}';
     </script>
-    <link rel="stylesheet" href="../../static/angularjs/abn_tree.css">
     <style type="text/css">
         #fieldtabfields .ui-selecting { background: #FFFF99; }
         #fieldtabfields .ui-selected { background: #FFFF66; }
@@ -56,5 +49,6 @@
          <script src="../../static/oc/js/entities/entities.js"></script>
          <script src="../../static/oc/js/entities/item-json-ld.js"></script>
          <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:start();"></script>
+         <script src="../../static/oc/js/edit/context-edit.js"></script>
      </div>
 {% endblock %} 

@@ -286,7 +286,7 @@ function addRelInterface(type){
 	/*
 	 * var modal = $("#myModal").modal("show");
 	*/
-	$("#myModal").modal("show");
+	$("#myModal").modal('show');
 }
 
 function checkActionReady(){
