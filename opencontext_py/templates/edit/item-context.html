@@ -79,14 +79,29 @@
 {% endwith %}
 {% endwith %}
 {% endwith %}
-
+<div class="row" style="padding-bottom:3%;">
+    <div class="col-sm-2">
+        <button type="button" class="btn btn-info" onclick="javascript:changeContainSort();">
+            <span class="glyphicon glyphicon-sort" aria-hidden="true"></span>
+            Resort Children
+        </button>
+    </div>
+    <div class="col-sm-4">
+        <small>Resorts child items GLOBALLY for the entire project. This takes some time.</small>
+    </div>
+    <div class="col-sm-3">
+        
+    </div>
+    <div class="col-sm-3">
+        
+    </div>
+</div>
 <table class="table table-condensed table-hover table-striped">
     <thead>
         <tr>
-            <th class="col-sm-2">Action</th>
-            <th class="col-sm-2">Up/Down</th>
-            <th class="col-sm-8">Child Context</th>
-            
+            <th class="col-sm-3">Actions</th>
+            <th class="col-sm-4">Child Context</th>
+            <th class="col-sm-5">Note</th>
         </tr>
     </thead>
     <tbody>
@@ -96,35 +111,34 @@
         {% for row in item.children.children    %}
             <tr>
                 <td>
-                    blub
-                </td>
-                <td>
                     
                 </td>
                 <td>
                     <div class="row subject-list-row">
-                        <div class="col-sm-1">
+                        <div class="col-sm-2">
                             <a target="_blank" href="{% url 'subjects_html' row.uuid %}"><img src="{{ row.icon }}" alt="Icon for {{ row.typelabel }}"/></a>
                         </div>    
-                        <div class="col-sm-6">
-                            <div class="subject-list-text"><a target="_blank" href="{% url 'subjects_html' row.uuid %}">{{ row.label }}</a></div>
-                        </div>
-                        <div class="col-sm-5">
+                        <div class="col-sm-10">
                             <div class="subject-list-text">
-                                <a href="{% url 'edit_item_html_view' row.uuid %}" target="_blank">
-                                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
-                                    [Edit: <code>{{ row.uuid }}</code>]
-                                </a>
+                                <a target="_blank" href="{% url 'subjects_html' row.uuid %}">{{ row.label }}</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 </td>
+                <td>
+                    <div class="subject-list-text">
+                                <a href="{% url 'edit_item_html_view' row.uuid %}" target="_blank">
+                                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
+                                    [Edit: <code>{{ row.uuid }}</code>]
+                                </a>
+                            </div>
+                </td>
             </tr>
-        </div>
         {% endfor %}
         {% endif %}
         {% endif %}
+        </div>
     </tbody>
 </table>
 

@@ -3,6 +3,8 @@ from django.db.models import Q
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
+from opencontext_py.apps.ocitems.assertions.models import Assertion
 
 
 # Help organize the code, with a class to make editing items easier
@@ -55,3 +57,12 @@ class ItemEdit():
             the child_uuid goes 1 step later in the sort order.
         """
         pass
+
+    def change_global_child_order(self):
+        """ Updates the sort order of containment
+            assertions, globally for all items in the project. 
+        """
+        ass_sort = AssertionSorting()
+        ass_sort.re_rank_manifest_assertions_by_predicate(Assertion.PREDICATES_CONTAINS,
+                                                          self.manifest.project_uuid)
+
