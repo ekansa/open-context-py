@@ -47,3 +47,11 @@ class ItemEdit():
                              'new': class_uri,
                              'old': old_class_uri}}
         return output
+
+    def change_child_order(self, child_uuid, lower_sort):
+        """ Updates the sort order of containment
+            assertions. If lower_sort = true, then then child_uuid
+            becomes goes 1 step earlier in the sort order. If lower_sort = false,
+            the child_uuid goes 1 step later in the sort order.
+        """
+        pass

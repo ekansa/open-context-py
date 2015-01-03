@@ -8,6 +8,8 @@ function item_object(item_type, uuid){
 	this.item_type = item_type;
 	this.host = '../../';
 	this.req = false;
+	this.exec_before_data_get = false; // can add a function to complete before AJAX data retreval
+	this.exec_after_data_get = false; // can add a function to complete after AJAX data is retrieved
 	this.getItemData = function(){
 		var output = false;
 		if (!this.req) {
@@ -22,6 +24,12 @@ function item_object(item_type, uuid){
 	};
 	this.getItemJSON = function(){
 		/* gets the item JSON-LD from the server */
+		if (this.exec_before_data_get != false) {
+			// execute some additional supplied function
+			if (typeof(this.exec_before_data_get.exec) !== 'undefined') {
+				this.exec_before_data_get.exec();
+			}
+		}
 		var url = this.host + this.item_type + "/" + encodeURIComponent(this.uuid) + ".json";
 		this.req =  $.ajax({
 			type: "GET",
@@ -41,7 +49,12 @@ function item_object(item_type, uuid){
 	this.getItemJSONDone = function(data){
 		/* the JSON-LD becomes this object's data */
 		this.data = data;
-		console.log(this.data);
+		if (this.exec_after_data_get != false) {
+			// execute some additional supplied function
+			if (typeof(this.exec_after_data_get.exec) !== 'undefined') {
+				this.exec_after_data_get.exec();
+			}
+		}
 	}
 /* --------------------------------------------------
  * Functions for getting commonly needed info from a JSON-LD object
@@ -81,15 +94,11 @@ function item_object(item_type, uuid){
 			if (this.data['@graph'] !== undefined) {
 				for (var i = 0, length = this.data['@graph'].length; i < length; i++) {
 					if (this.getIDvalue(this.data['@graph'][i]) == category) {
-						var id_match = true;
+						if (this.data['@graph'][i]['oc-gen:hasIcon'] !== undefined) {
+							output = this.getIDvalue(this.data['@graph'][i]['oc-gen:hasIcon'][0]);
+							break;
+						}
 					}
-					else {
-						var id_match = false;
-					}
-					if (this.data['@graph'][i]['oc-gen:hasIcon'] !== undefined && id_match) {
-						output = this.getIDvalue(this.data['@graph'][i]['oc-gen:hasIcon'][0]);	
-					}
-					
 				}
 			}
 		}
