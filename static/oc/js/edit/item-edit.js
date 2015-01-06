@@ -2,18 +2,24 @@
  * Functions to edit an item
  */
 var contextSearchObj = false;
+var childSearchObj = false;
 var act_item = false;
 function start(){
 	/* Thing to do on page load 
 	*/
 	act_item = new item_object(item_type, uuid);
+	var exec_after_data_get = {
+		exec: function(){
+				// add event (geospatial, chronology) list
+				displayEvents();
+			}
+		};
+	act_item.exec_after_data_get = exec_after_data_get;
 	act_item.getItemData();
 	console.log(act_item);
 	getTypeHierarchy();
 	if (item_type == 'subjects') {
-		// var act_domID = "sel-parent-entities";
-		// var act_dom = document.getElementById(act_domID);
-		// act_dom.innerHTML = generateEntitiesInterface(true, false); // function defined in entities/entities.js
+		// add an object for searching parent entities defined in entities/entities.js
 		contextSearchObj = new searchEntityObj();
 		contextSearchObj.name = "contextSearchObj";
 		contextSearchObj.interfaceDomID = "sel-parent-entities";
@@ -30,7 +36,24 @@ function start(){
 		};
 		contextSearchObj.afterSelectDone = afterSelectDone;
 		contextSearchObj.generateEntitiesInterface(true, false);
-		console.log(contextSearchObj);
+		
+		// add an object for search for new child entities, defined in entities/entities.js
+		childSearchObj = new searchEntityObj();
+		childSearchObj.name = "childSearchObj";
+		childSearchObj.interfaceDomID = "sel-child-entities";
+		childSearchObj.entities_panel_title = "Child Item Lookup";
+		childSearchObj.limit_item_type = "subjects";
+		var afterSelectDone = {
+		exec: function(){
+				// turn on the update button if there's an ID selected
+				var dom_id = "childSearchObj-sel-entity-id";
+				if (document.getElementById(dom_id).value.length > 0) {
+					document.getElementById("add-child-button").disabled = "";
+				}
+			}
+		};
+		childSearchObj.afterSelectDone = afterSelectDone;
+		childSearchObj.generateEntitiesInterface(true, false);
 	}
 	
 }

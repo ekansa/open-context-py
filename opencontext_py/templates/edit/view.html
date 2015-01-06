@@ -27,6 +27,9 @@
                     <li class="active"><a data-toggle="tab" href="#edit-1">Edit Item</a></li>
                     <li><a data-toggle="tab" href="#edit-2">Context</a></li>
                     <li><a data-toggle="tab" href="#edit-3">Description</a></li>
+                    <li><a data-toggle="tab" href="#edit-4">Links</a></li>
+                    <li><a data-toggle="tab" href="#edit-5">Annotations</a></li>
+                    <li><a data-toggle="tab" href="#edit-6">Map and Time</a></li>
                 </ul>
                 <div class="tab-content obs-multi">
                     <div id="edit-1" class="tab-pane fade in active">
@@ -38,6 +41,15 @@
                     <div id="edit-3" class="tab-pane fade">
                         {% include 'edit/item-description.html' %}
                     </div>
+                    <div id="edit-4" class="tab-pane fade">
+                        
+                    </div>
+                    <div id="edit-5" class="tab-pane fade">
+                        
+                    </div>
+                    <div id="edit-6" class="tab-pane fade">
+                        {% include 'edit/item-geo-chrono.html' %}
+                    </div>
                 </div>
             </div>
          </div>
@@ -48,7 +60,8 @@
          </div>
          <script src="../../static/oc/js/entities/entities.js"></script>
          <script src="../../static/oc/js/entities/item-json-ld.js"></script>
-         <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:start();"></script>
          <script src="../../static/oc/js/edit/context-edit.js"></script>
+         <script src="../../static/oc/js/edit/geo-chrono-edit.js"></script>
+         <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:start();"></script>
      </div>
 {% endblock %} 

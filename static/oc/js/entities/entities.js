@@ -77,11 +77,11 @@ function searchEntityObj() {
 						"<div class=\"form-group form-group-sm\">",
 							"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
 							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"javascript:" + this.name + ".searchEntities();\" class=\"form-control input-sm\" />",
+								"<input id=\"" + this.name + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"javascript:" + this.name + ".searchEntities();\" class=\"form-control input-sm\" />",
 							"</div>",
 						"</div>",
 					"</form>",
-					"<ul id=\"" + this.searchEntityListDomID + "\">",
+					"<ul id=\"" + this.name + "-" + this.searchEntityListDomID + "\">",
 					"</ul>",
 				"</div>",
 			"</div>"].join("\n");
@@ -93,8 +93,8 @@ function searchEntityObj() {
 	};
 	this.searchEntities = function(){
 		var url = this.url;
-		var qstring = document.getElementById(this.search_text_domID).value;
-		var searchEntityListDom = document.getElementById(this.searchEntityListDomID);
+		var qstring = document.getElementById(this.name + "-" + this.search_text_domID).value;
+		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
 		searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
 		var data = { q:qstring };
 		if (this.limit_class_uri != false) {
@@ -123,7 +123,7 @@ function searchEntityObj() {
 	}
 	this.searchEntitiesDone = function(data){
 		/* Displays list of entities that meet search criteria */
-		var searchEntityListDom = document.getElementById(this.searchEntityListDomID);
+		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
 		searchEntityListDom.innerHTML = "";
 		for (var i = 0, length = data.length; i < length; i++) {
 			var newListItem = document.createElement("li");
