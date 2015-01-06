@@ -899,6 +899,8 @@ class ItemConstruction():
                 geo_props = LastUpdatedOrderedDict()
                 geo_props['href'] = URImanagement.make_oc_uri(uuid, item_type, self.cannonical_uris)
                 geo_props['type'] = geo.meta_type
+                if len(geo.note) > 0:
+                    geo_props['note'] = geo.note
                 if(uuid != geo.uuid):
                     geo_props['reference-type'] = 'inferred'
                     geo_props['reference-uri'] = URImanagement.make_oc_uri(geo.uuid, 'subjects', self.cannonical_uris)
