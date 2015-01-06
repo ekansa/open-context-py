@@ -5,6 +5,7 @@
     <!-- BEGIN item edit general javascript includes -->
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
+        var item_label = '{{ item.label }}';
         var item_type = '{{ item.act_nav }}';
         var uuid = '{{ item.uuid }}';
         var project_uuid = '{{ item.project.uuid }}';
@@ -12,6 +13,10 @@
     <style type="text/css">
         #fieldtabfields .ui-selecting { background: #FFFF99; }
         #fieldtabfields .ui-selected { background: #FFFF66; }
+        #edit-map {
+            width: 400px;
+            height: 400px;
+         }
     </style>
     <!-- END of item edit javascript includes -->
     

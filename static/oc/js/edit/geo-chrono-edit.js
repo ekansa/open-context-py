@@ -193,6 +193,135 @@ function isNumber(n) {
    return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+
+
+
+
+
+
+/* --------------------------------------------------------
+ * Functions related to making an editable map
+ * --------------------------------------------------------
+ */
+var edit_map;
+var edit_map_resized = false;
+var edit_marker = false;
+function init_edit_map(lat, lon) {
+    edit_map_resized = false; 
+	edit_map = L.map('edit-map').setView([45, 45], 4); //map the map
+	edit_map.on('layeradd', function (e) {
+		this.invalidateSize();
+	});
+	edit_map.on('move', function (e) {
+		this.invalidateSize();
+	});
+	edit_marker = L.marker(new L.LatLng(lat, lon), {
+		draggable: true
+	}).addTo(edit_map);
+	edit_marker.on('dragend', function (e) {
+		document.getElementById('edit-lat').value = edit_marker.getLatLng().lat;
+		document.getElementById('edit-lon').value = edit_marker.getLatLng().lng;
+	});
+	
+	var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+	});
+   
+	var mapboxTiles = L.tileLayer('http://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
+	    attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	});
+   
+	var ESRISatelliteTiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	    attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
+	});
+   
+	var gmapRoad = new L.Google('ROADMAP');
+	var gmapSat = new L.Google('SATELLITE');
+	var gmapTer = new L.Google('TERRAIN');
+   
+	var baseMaps = {
+		"Google-Terrain": gmapTer,
+		"Google-Satellite": gmapSat,
+		"ESRI-Satellite": ESRISatelliteTiles,
+		"Google-Roads": gmapRoad,
+		"OpenStreetMap": osmTiles,
+		"MapBox": mapboxTiles,
+	};
+	
+	edit_map._layersMaxZoom = 20;
+	L.control.layers(baseMaps).addTo(edit_map);
+	edit_map.panTo([lat, lon]);
+	edit_map.addLayer(mapboxTiles);
+}
+
+function intialize_map_marker(lat, lon){
+	// adds onchange event so a user can manually change the location
+	document.getElementById('edit-lat').value = lat;
+	document.getElementById('edit-lat').onchange = input_marker;
+	document.getElementById('edit-lon').value = lon;
+	document.getElementById('edit-lon').onchange = input_marker;
+	input_marker();
+}
+
+function input_marker(){
+	// onchange so a user can type in coordinates to change them
+	edit_map.invalidateSize();
+	var lat = document.getElementById('edit-lat').value;
+	var lon = document.getElementById('edit-lon').value;
+	edit_marker.setLatLng([lat,lon]);
+	edit_map.panTo([lat, lon]);
+}
+
+function resize_edit_map(){
+	if (!edit_map_resized) {
+		edit_map_resized = true;
+		edit_map.invalidateSize();
+	}
+}
+
+function editMapHTML(lat, lon, specificity){
+	var editMapHTML = [
+		"<div class=\"row\">",
+			"<div class=\"col-sm-5\">",
+				"<form class=\"form-horizontal\">",
+					"<div class=\"form-group\">",
+						"<label for=\"edit-lat\" class=\"col-sm-4 control-label\">Latitude</label>",
+						"<div class=\"col-sm-8\">",
+							"<input type=\"text\" class=\"form-control\" id=\"edit-lat\" value=\"" + 90 + "\">",
+						"</div>",
+					"</div>",
+					"<div class=\"form-group\">",
+						"<label for=\"edit-lon\" class=\"col-sm-4 control-label\">Longitude</label>",
+						"<div class=\"col-sm-8\">",
+							"<input type=\"text\" class=\"form-control\" id=\"edit-lon\" value=\"" + 90 + "\">",
+						"</div>",
+					"</div>",
+					"<div class=\"form-group\">",
+						"<label for=\"edit-specificity\" class=\"col-sm-4 control-label\">Specificity</label>",
+						"<div class=\"col-sm-8\">",
+							"<input type=\"text\" class=\"form-control\" id=\"edit-specificity\" value=\"" +specificity + "\">",
+							"<br/><small>Enter positive or negative integers. ",
+						"Zero (0) means specificity is not indicated. ",
+						"Negative values mean intentional reduction in spatial precision to a given tile zoom-level, done as a site security precaution.",
+						"Positive values indicate some known level of spatial precision to a given tile zoom-level. </small>",
+						"</div>",
+					"</div>",
+				"</form>",
+			"</div>",
+			"<div class=\"col-sm-5\">",
+				"<div id=\"edit-map\" style=\"width:400px; height:400px;\">",
+				"</div>",
+			"</div>",
+		"</div>"
+	].join('\n');
+	return editMapHTML;
+}
+
+
+
+
+
+
 /* --------------------------------------------------------
  * Functions related to adding new geospatial / chronological event data
  * --------------------------------------------------------
@@ -208,12 +337,17 @@ function addEventForm(){
 	action_button.innerHTML = buttonHTML;
 	action_button.onclick = addEvent;
 	var bodyHTML = [
-		'Eventually, a day will come when this will add a form that will enable a user to add space + time data. ',
-		'But today is not that day.'
+		"<div onmouseover=\"javascript:resize_edit_map();\">",
+		editMapHTML(0, 0, 0),
+		"</div>"
 	].join('\n');
 	body_dom.innerHTML = bodyHTML;
 	$("#eventModal").modal('show');
+	init_edit_map(0, 0);
+	intialize_map_marker(0, 0);
 }
+
+
 
 
 function addEvent(){
@@ -237,9 +371,9 @@ function editEventForm(geo_id, event_id){
 	action_button.innerHTML = buttonHTML;
 	action_button.onclick = addEvent;
 	var bodyHTML = [
-		'Eventually, a day will come when this will enable a user to edit space + time data for feature id: ' + geo_id + "(" + event_id + ")",
-		'But today is not that day.'
+		editMapHTML(0, 0, 0)
 	].join('\n');
 	body_dom.innerHTML = bodyHTML;
+	init_edit_map(0, 0);
 	$("#eventModal").modal('show');
 }

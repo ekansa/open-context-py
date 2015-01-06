@@ -11,7 +11,7 @@ function start(){
 	var exec_after_data_get = {
 		exec: function(){
 				// add event (geospatial, chronology) list
-				displayEvents();
+				displayEvents(); // defined in edit/geo-chrono-edit.js
 			}
 		};
 	act_item.exec_after_data_get = exec_after_data_get;
