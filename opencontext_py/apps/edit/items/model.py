@@ -5,6 +5,8 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.events.models import Event
 
 
 # Help organize the code, with a class to make editing items easier
@@ -66,3 +68,48 @@ class ItemEdit():
         ass_sort.re_rank_manifest_assertions_by_predicate(Assertion.PREDICATES_CONTAINS,
                                                           self.manifest.project_uuid)
 
+    def add_geo_chrono(self, request):
+        """ Adds geospatial and / or chronological data """
+        lat = self.request_param_val(request,
+                                     'latitude',
+                                     0)
+        lon = self.request_param_val(request,
+                                     'longitude',
+                                     0)
+        if lat != 0 or lon != 0:
+            # not in the ocean, add geospatial data.
+            geo_list = Geospace.objects\
+                               .filter(uuid=self.manifest.uuid)
+            feature_id = len(geo_list) + 1
+            geo = Geospace()
+            geo.uuid = self.manifest.uuid
+            geo.project_uuid = self.manifest.project_uuid
+            geo.source_id = self.request_param_val(request,
+                                                   'source_id',
+                                                   'manual')
+            geo.item_type = self.manifest.item_type
+            geo.feature_id = feature_id
+            geo.ftype = self.request_param_val(request,
+                                               'ftype',
+                                               'Point')
+            geo.latitude = lat
+            geo.longitude = lon
+            geo.specificity = self.request_param_val(request,
+                                                     'specificity',
+                                                     0)
+            geo.coordinates = self.request_param_val(request,
+                                                     'coordinates',
+                                                     '')
+            geo.note = self.request_param_val(request,
+                                              'geo_note',
+                                              '')
+            geo.save()
+
+    def request_param_val(self, request, param, default=False):
+        """ Gets the value for a request paramater, if parameter
+            does not exist, it returns a default value
+        """
+        output = default
+        if param in request:
+            output = output[param]
+        return output

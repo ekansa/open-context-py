@@ -1,6 +1,15 @@
 /*
  * Functions to edit spatial coodinates and time ranges
  */
+var geo_types = {
+	'oc-gen:discovey-location': 'Location of observation or discovery'
+};
+
+var chrono_types = {
+	'oc-gen:formation-use-life': 'Time of formation, use, or life'
+}
+
+
 function displayEvents() {
 	// code to display a list of events
 	if (act_item.data != false) {
@@ -115,21 +124,19 @@ function eventHTML(event){
 			"</td>",
 			"<td>" + show_id + "</td>",
 			"<td>",
-				"<table>",
-					"<tr id=\"feature-id-" + event_id + "\" >",
-						"<td class=\"col-xs-3\"><dl><dt>Location Type:</dt><dd>" + get_objval_via_keys(event, ['properties', 'type']) + "</dd></dl></td>",
-						"<td class=\"col-xs-2\"><dl><dt>Lat:</dt><dd>" + lat + "</dd></dl></td>",
-						"<td class=\"col-xs-2\"><dl><dt>Lon:</dt><dd>" + lon + "</dd></dl></td>",
-						"<td class=\"col-xs-2\"><dl><dt>Geo Precision:</dt><dd>" + get_objval_via_keys(event, ['properties', 'location-precision']) + "</dd></dl></td>",
-						"<td class=\"col-xs-3\"><dl><dt>Coodinates (GeoJSON):</dt><dd><code style=\"font-size:75%;\">" + coords + "</code></dd></dl></td>",
-					"</tr>",
-					"<tr>",
-						"<td class=\"col-xs-3\"><dl><dt>Chrono Type:</dt><dd>" + get_objval_via_keys(event, ['when', 'type']) + "</dd></dl></td>",
-						"<td class=\"col-xs-2\"><dl><dt>Start:</dt><dd>" + get_objval_via_keys(event, ['when', 'start']) + "</dd></dl></td>",
-						"<td class=\"col-xs-2\"><dl><dt>Stop:</dt><dd>" + get_objval_via_keys(event, ['when', 'stop']) + "</dd></dl></td>",
-						"<td class=\"col-xs-5\" colspan=\"2\"><dl><dt>Notes:</dt><dd>" + notesHTML + "</dd></dl></td>",
-					"</tr>",
-				"</table>",
+				"<div id=\"feature-id-" + geo_id + "\" class=\"row\">",
+					"<div class=\"col-xs-3\"><dl><dt>Location Type:</dt><dd>" + get_objval_via_keys(event, ['properties', 'type']) + "</dd></dl></div>",
+					"<div class=\"col-xs-2\"><dl><dt>Lat:</dt><dd>" + lat + "</dd></dl></div>",
+					"<div class=\"col-xs-2\"><dl><dt>Lon:</dt><dd>" + lon + "</dd></dl></div>",
+					"<div class=\"col-xs-2\"><dl><dt>Geo Precision:</dt><dd>" + get_objval_via_keys(event, ['properties', 'location-precision']) + "</dd></dl></div>",
+					"<divclass=\"col-xs-3\"><dl><dt>Coodinates (GeoJSON):</dt><dd><code style=\"font-size:75%;\">" + coords + "</code></dd></dl></div>",
+				"</div>",
+				"<div id=\"event-id-" + event_id + "\" class=\"row\">",
+					"<div class=\"col-xs-3\"><dl><dt>Chrono Type:</dt><dd>" + get_objval_via_keys(event, ['when', 'type']) + "</dd></dl></div>",
+					"<div class=\"col-xs-2\"><dl><dt>Start:</dt><dd>" + get_objval_via_keys(event, ['when', 'start']) + "</dd></dl></div>",
+					"<div class=\"col-xs-2\"><dl><dt>Stop:</dt><dd>" + get_objval_via_keys(event, ['when', 'stop']) + "</dd></dl></div>",
+					"<div class=\"col-xs-5\" colspan=\"2\"><dl><dt>Notes:</dt><dd>" + notesHTML + "</dd></dl></div>",
+				"</div>",
 			"</td>",
 		"</tr>"
 	].join('\n');
@@ -206,21 +213,22 @@ function isNumber(n) {
 var edit_map;
 var edit_map_resized = false;
 var edit_marker = false;
+var act_lat = false;
+var act_lon = false;
 function init_edit_map(lat, lon) {
     edit_map_resized = false; 
 	edit_map = L.map('edit-map').setView([45, 45], 4); //map the map
-	edit_map.on('layeradd', function (e) {
-		this.invalidateSize();
-	});
-	edit_map.on('move', function (e) {
-		this.invalidateSize();
-	});
 	edit_marker = L.marker(new L.LatLng(lat, lon), {
 		draggable: true
 	}).addTo(edit_map);
 	edit_marker.on('dragend', function (e) {
-		document.getElementById('edit-lat').value = edit_marker.getLatLng().lat;
-		document.getElementById('edit-lon').value = edit_marker.getLatLng().lng;
+		var lat = edit_marker.getLatLng().lat;
+		var lon = edit_marker.getLatLng().lng;
+		document.getElementById('edit-lat').value = lat;
+		document.getElementById('edit-lon').value = lon;
+		edit_map.panTo([lat, lon]);
+		act_lat = lat;
+		act_lon = lon;
 	});
 	
 	var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -256,6 +264,12 @@ function init_edit_map(lat, lon) {
 
 function intialize_map_marker(lat, lon){
 	// adds onchange event so a user can manually change the location
+	if (act_lat != false) {
+		lat = act_lat;
+	}
+	if (act_lon != false) {
+		lon = act_lon;
+	}
 	document.getElementById('edit-lat').value = lat;
 	document.getElementById('edit-lat').onchange = input_marker;
 	document.getElementById('edit-lon').value = lon;
@@ -270,9 +284,14 @@ function input_marker(){
 	var lon = document.getElementById('edit-lon').value;
 	edit_marker.setLatLng([lat,lon]);
 	edit_map.panTo([lat, lon]);
+	act_lat = lat;
+	act_lon = lon;
 }
 
 function resize_edit_map(){
+	// fixes a bug in Leaflet where the map tiles don't load well
+	// from a map made in a hidden div (like a modal)
+	// can't think of a more elegant way to fix this.
 	if (!edit_map_resized) {
 		edit_map_resized = true;
 		edit_map.invalidateSize();
@@ -282,23 +301,23 @@ function resize_edit_map(){
 function editMapHTML(lat, lon, specificity){
 	var editMapHTML = [
 		"<div class=\"row\">",
-			"<div class=\"col-sm-5\">",
+			"<div class=\"col-xs-5\">",
 				"<form class=\"form-horizontal\">",
 					"<div class=\"form-group\">",
-						"<label for=\"edit-lat\" class=\"col-sm-4 control-label\">Latitude</label>",
-						"<div class=\"col-sm-8\">",
+						"<label for=\"edit-lat\" class=\"col-xs-4 control-label\">Latitude</label>",
+						"<div class=\"col-xs-8\">",
 							"<input type=\"text\" class=\"form-control\" id=\"edit-lat\" value=\"" + 90 + "\">",
 						"</div>",
 					"</div>",
 					"<div class=\"form-group\">",
-						"<label for=\"edit-lon\" class=\"col-sm-4 control-label\">Longitude</label>",
-						"<div class=\"col-sm-8\">",
+						"<label for=\"edit-lon\" class=\"col-xs-4 control-label\">Longitude</label>",
+						"<div class=\"col-xs-8\">",
 							"<input type=\"text\" class=\"form-control\" id=\"edit-lon\" value=\"" + 90 + "\">",
 						"</div>",
 					"</div>",
 					"<div class=\"form-group\">",
-						"<label for=\"edit-specificity\" class=\"col-sm-4 control-label\">Specificity</label>",
-						"<div class=\"col-sm-8\">",
+						"<label for=\"edit-specificity\" class=\"col-xs-4 control-label\">Specificity</label>",
+						"<div class=\"col-xs-8\">",
 							"<input type=\"text\" class=\"form-control\" id=\"edit-specificity\" value=\"" +specificity + "\">",
 							"<br/><small>Enter positive or negative integers. ",
 						"Zero (0) means specificity is not indicated. ",
@@ -308,7 +327,7 @@ function editMapHTML(lat, lon, specificity){
 					"</div>",
 				"</form>",
 			"</div>",
-			"<div class=\"col-sm-5\">",
+			"<div class=\"col-xs-5\">",
 				"<div id=\"edit-map\" style=\"width:400px; height:400px;\">",
 				"</div>",
 			"</div>",
@@ -317,7 +336,32 @@ function editMapHTML(lat, lon, specificity){
 	return editMapHTML;
 }
 
-
+function editChronoHTML(start, stop){
+	var editChronoHTML = [
+		"<div class=\"row\" style=\"padding-top:2%;\">",
+			"<div class=\"col-xs-5\">",
+				"<form class=\"form-horizontal\">",
+					"<div class=\"form-group\">",
+						"<label for=\"edit-start\" class=\"col-xs-4 control-label\">Start Year (BCE/CE)</label>",
+						"<div class=\"col-xs-8\">",
+							"<input type=\"text\" class=\"form-control\" id=\"edit-start\" value=\"" + start + "\">",
+						"</div>",
+					"</div>",
+					"<div class=\"form-group\">",
+						"<label for=\"edit-stop\" class=\"col-xs-4 control-label\">Stop Year (BCE/CE)</label>",
+						"<div class=\"col-xs-8\">",
+							"<input type=\"text\" class=\"form-control\" id=\"edit-stop\" value=\"" + stop + "\">",
+						"</div>",
+					"</div>",
+				"</form>",
+			"</div>",
+			"<div class=\"col-xs-7\">",
+				"<small>Negative integers indicate BCE dates, positive indicate CE dates.</small>",
+			"</div>",
+		"</div>"
+	].join('\n');
+	return editChronoHTML;
+}
 
 
 
@@ -339,6 +383,7 @@ function addEventForm(){
 	var bodyHTML = [
 		"<div onmouseover=\"javascript:resize_edit_map();\">",
 		editMapHTML(0, 0, 0),
+		editChronoHTML(0,0),
 		"</div>"
 	].join('\n');
 	body_dom.innerHTML = bodyHTML;
