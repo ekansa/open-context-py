@@ -1,4 +1,6 @@
 /* Open Context Layout Main */
+
+
 #main {
 	width:98%;
 	margin-left:auto;
@@ -9,9 +11,30 @@
 	padding-bottom: 1%;
 }
 #header-oc {
+	font-family:"Palatino Linotype", "Book Antiqua", Palatino, serif;
+}
+#header-oc h1 {
+	text-transform:uppercase;
+    font-size: 1.4em;
+    letter-spacing: normal;
+    font-weight: normal;
+	color: #003B66;
+	margin-top: 12px;
+	margin-bottom: 0px;
+}
+#header-oc h5 {
+	text-align:left;
+    color: #003B66;
+    font-size: 1em;
+    letter-spacing: normal;
+    font-weight: normal;
+    padding-top:2px;
 }
 #header-label {
 }
+
+
+
 #footer-upper {
 	margin-top: 5%;
 	background-color: #666666;
