@@ -15,9 +15,9 @@
 }
 #header-oc h1 {
 	text-transform:uppercase;
-    font-size: 1.4em;
+    font-size: 1.7em;
     letter-spacing: normal;
-    font-weight: normal;
+    font-weight: 500;
 	color: #003B66;
 	margin-top: 12px;
 	margin-bottom: 0px;
@@ -28,7 +28,8 @@
     font-size: 1em;
     letter-spacing: normal;
     font-weight: normal;
-    padding-top:2px;
+    padding-top: 0px;
+	margin-top: 7px;
 }
 #header-label {
 }
