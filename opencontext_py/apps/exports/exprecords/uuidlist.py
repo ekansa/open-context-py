@@ -1,7 +1,7 @@
 from django.db.models import F
 from django.db.models import Q
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.exports.records.models import ExpCell
+from opencontext_py.apps.exports.exprecords.models import ExpCell
 
 
 class UUIDListSimple:

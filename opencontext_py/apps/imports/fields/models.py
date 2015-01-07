@@ -11,7 +11,7 @@ class ImportField(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     field_num = models.IntegerField()
-    is_keycell = models.BooleanField()
+    is_keycell = models.BooleanField(default=False)
     ref_name = models.CharField(max_length=200, db_index=True)
     ref_orig_name = models.CharField(max_length=200)
     field_type = models.CharField(max_length=50)

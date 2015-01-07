@@ -3,9 +3,9 @@ import json
 from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.exports.fields.models import ExpField
-from opencontext_py.apps.exports.records.models import ExpCell
-from opencontext_py.apps.exports.records.uuidlist import UUIDListSimple,\
+from opencontext_py.apps.exports.expfields.models import ExpField
+from opencontext_py.apps.exports.exprecords.models import ExpCell
+from opencontext_py.apps.exports.exprecords.uuidlist import UUIDListSimple,\
     UUIDListExportTable,\
     UUIDsRowsExportTable
 from opencontext_py.apps.entities.uri.models import URImanagement

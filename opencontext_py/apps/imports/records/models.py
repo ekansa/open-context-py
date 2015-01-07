@@ -11,7 +11,7 @@ class ImportCell(models.Model):
     rec_hash = models.CharField(max_length=50, db_index=True) # hash value of the record
     fl_uuid = models.CharField(max_length=50)  # field-literal uuid, uuid unique to field - literals in a proj
     l_uuid = models.CharField(max_length=50)  # literal uuid, unique to literal values in a project
-    cell_ok = models.BooleanField()  # is the record actually OK use as data, if False ignore it
+    cell_ok = models.BooleanField(default=None)  # is the record actually OK use as data, if False ignore it
     record = models.TextField()  # the actual cell value
     updated = models.DateTimeField(auto_now=True)
 

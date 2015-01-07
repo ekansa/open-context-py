@@ -2,9 +2,9 @@ import csv
 import os
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.exports.fields.models import ExpField
-from opencontext_py.apps.exports.records.models import ExpCell
-from opencontext_py.apps.exports.records.uuidlist import UUIDsRowsExportTable, ExportTableDump
+from opencontext_py.apps.exports.expfields.models import ExpField
+from opencontext_py.apps.exports.exprecords.models import ExpCell
+from opencontext_py.apps.exports.exprecords.uuidlist import UUIDsRowsExportTable, ExportTableDump
 
 
 class CSVdump():

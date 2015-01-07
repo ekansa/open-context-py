@@ -11,7 +11,7 @@ class ImportSource(models.Model):
     field_count = models.IntegerField()
     row_count = models.IntegerField()
     source_type = models.CharField(max_length=50)
-    is_current = models.BooleanField()
+    is_current = models.BooleanField(default=None)
     imp_status = models.CharField(max_length=50)
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
