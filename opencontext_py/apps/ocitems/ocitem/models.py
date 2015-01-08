@@ -37,6 +37,7 @@ class OCitem():
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
     PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
+    PREDICATES_DCTERMS_TITLE = 'dc-terms:title'
     PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
     PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
     PREDICATES_OCGEN_HASLINKEDCONTEXTPATH = 'oc-gen:has-linked-context-path'
@@ -313,6 +314,7 @@ class OCitem():
             json_ld = item_con.add_media_json(json_ld, self.media)
         if(self.document is not False):
             json_ld = item_con.add_document_json(json_ld, self.document)
+        json_ld = item_con.add_dc_title(json_ld)  # adds dublin core title information, useful for indexing
         if(self.published is not None):
             json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
         if(self.uuid != self.project_uuid):
@@ -374,6 +376,7 @@ class ItemConstruction():
         self.graph_links = list()
         self.entity_metadata = {}
         self.thumbnails = {}
+        self.parent_list = list()
         item_ns = ItemNamespaces()
         context = item_ns.namespaces
         self.namespaces = context
@@ -559,6 +562,7 @@ class ItemConstruction():
         if(raw_contexts is not False):
             if(len(raw_contexts) > 0):
                 #adds parent contents, with different treenodes
+                first_node = True;
                 act_context = LastUpdatedOrderedDict()
                 for tree_node, r_parents in raw_contexts.items():
                     act_context = LastUpdatedOrderedDict()
@@ -574,6 +578,11 @@ class ItemConstruction():
                                                                           OCitem.PREDICATES_OCGEN_HASPATHITEMS,
                                                                           parent_uuid, 'subjects')
                     act_dict[act_pred_key] = act_context
+                    if first_node:
+                        # set aside a list of parent labels to use for making a dc-term:title
+                        first_node = False
+                        for parent_obj in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
+                            self.parent_list.append(parent_obj['label'])
         return act_dict
 
     def add_stable_ids(self, act_dict, item_type, stable_ids):
@@ -593,6 +602,19 @@ class ItemConstruction():
                         act_dict[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF] = stable_id_list
                     else:
                         act_dict['owl:sameAs'] = stable_id_list
+        return act_dict
+
+    def add_dc_title(self, act_dict, title=False):
+        """
+        adds a dublin core title key and value
+        """
+        if title is False and 'label' in act_dict:
+            title = act_dict['label']
+            if len(self.parent_list) > 0:
+                parents = '/'.join(self.parent_list)
+                title += ' from ' + parents
+        if title is not False:
+            act_dict[OCitem.PREDICATES_DCTERMS_TITLE] = title
         return act_dict
 
     def add_link_annotations(self, act_dict, link_annotations):

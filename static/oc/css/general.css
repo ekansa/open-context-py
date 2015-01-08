@@ -131,6 +131,14 @@ div.subjects-links-cell {
 	text-align: left;
 }
 /* So long uri in Citation has good wrapping */
+#item-title {
+	max-width:200px;
+    word-wrap:break-word;
+}
+span.title_sep {
+	padding-left: 3px;
+	padding-right: 3px;
+}
 #item-uri {
 	max-width:200px;
     word-wrap:break-word;

@@ -768,15 +768,10 @@ class Citation():
                 self.cite_authors = ', '.join(self.item_authors)
             else:
                 self.cite_authors = 'Open Context Editors'
-            parent_prefix = False
-            if self.context is not False:
-                parent_items = self.context.parent_labels
-                if len(parent_items) > 1:
-                    # del parent_items[0]
-                    parent_prefix = ' / '.join(parent_items)
-            self.cite_title = json_ld['label']
-            if parent_prefix is not False:
-                self.cite_title += ' from ' + parent_prefix
+            if 'dc-terms:title' in json_ld:
+                self.cite_title = json_ld['dc-terms:title']
+            else:
+                self.cite_title = json_ld['label']
             self.cite_year += published.strftime('%Y')
             self.cite_released = published.strftime('%Y-%m-%d')
             self.uri = json_ld['id']

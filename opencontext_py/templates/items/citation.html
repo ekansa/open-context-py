@@ -3,8 +3,8 @@
         <div class="panel-heading">
             <h3 class="panel-title">Suggested Citation:</h3>
         </div>
-        <div class="panel-body" id="ciation">
-            {{ item.citation.cite_authors }}. "{{ item.citation.cite_title }}". ({{ item.citation.cite_year }})
+        <div class="panel-body" id="citation">
+            {{ item.citation.cite_authors }}. "<span id="item-title">{{ item.citation.cite_title }}</span>". ({{ item.citation.cite_year }})
             {% if item.citation.project.label != False %}
                 In <em>{{ item.citation.project.label  }}</em>. 
             {%endif%}
@@ -17,5 +17,9 @@
                 ARK: {{ item.citation.ark }}
             {%endif%}
         </div>
+        <script type="text/javascript">
+            var cite_title = document.getElementById("item-title");
+            cite_title.innerHTML = cite_title.innerHTML.split('/').join( '<span class="title_sep">/</span>');
+        </script>
     </div>
 {% endblock %}
