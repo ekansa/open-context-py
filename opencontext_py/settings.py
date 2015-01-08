@@ -43,7 +43,7 @@ SECRET_KEY = get_secret('SECRET_KEY')
 SOLR_PORT = get_secret('SOLR_PORT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 TEMPLATE_DEBUG = False
 
