@@ -251,7 +251,10 @@ class SolrDocument:
         #default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.item_type
-        self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
+        if 'dc-terms:title' in self.oc_item.json_ld:
+            self.fields['text'] += self.oc_item.json_ld['dc-terms:title'] + ' \n'
+        else:
+            self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
 
     def make_slug_type_uri_label(self):
         """ makes a slug_type_uri_label field for solr """
