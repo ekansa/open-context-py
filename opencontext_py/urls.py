@@ -4,6 +4,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 admin.autodiscover()
 
+from opencontext_py.apps.index import views as HomeViews
 from opencontext_py.apps.ocitems.subjects import views as SubjectViews
 from opencontext_py.apps.ocitems.mediafiles import views as MediaViews
 from opencontext_py.apps.ocitems.documents import views as DocumentViews
@@ -122,7 +123,8 @@ urlpatterns = patterns('',
                            name='entity_hierarchy_children'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
                            name='entity_look_up'),
-                       # Admin route
+                       # Index, home-page route
+                       url(r'^$', HomeViews.index, name='home_index'),
                        # Admin route
                        url(r'^admin/', include(admin.site.urls)),
                        ) + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
