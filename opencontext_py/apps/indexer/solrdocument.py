@@ -14,6 +14,11 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
     '''
 
+    # the list below defines predicates used for semantic equivalence in indexing
+    # linked data
+    LD_EQUIVALENT_PREDICATES = ['skos:closeMatch',
+                                'owl:sameAs']
+
     def __init__(self, uuid):
         '''
         Using our Python JSON-LD and other info provided in OCitem,
@@ -35,6 +40,7 @@ class SolrDocument:
         self._process_chrono()
         self._process_text_content()
         self._process_dc_terms()
+        self._process_associated_linkedata()
         self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
@@ -222,8 +228,12 @@ class SolrDocument:
         return slug.replace('-', '_')
 
     def _concat_solr_string_value(self, slug, type, id, label):
+        id_part = id
+        if 'http://opencontext.org' in id:
+            if '/vocabularies/' not in id:
+                id_part = id.split('http://opencontext.org')[1]
         return slug + '___' + type + '___' + \
-            id.split('http://opencontext.org')[1] + '___' + label
+            id_part + '___' + label
 
     def _convert_values_to_json(self, slug, id_uri, label):
         json_values = LastUpdatedOrderedDict()
@@ -535,3 +545,131 @@ class SolrDocument:
         if self.chrono_specified:
         # chrono data specified, more interesting
             self.fields['interest_score'] += 5
+
+    def _process_associated_linkedata(self):
+        """ Finds linked data to add to index
+        """
+        if '@graph' in self.oc_item.json_ld:
+            for entity in self.oc_item.json_ld['@graph']:
+                entity_id = self.get_entity_id(entity)
+                if 'oc-pred:' in entity_id:
+                    # a predicate with linked data
+                    pred_slug_id = entity_id
+                    pred_datatype = self.get_predicate_datatype(pred_slug_id)
+                    pres_solr_datatype = self._get_predicate_type_string(pred_datatype)
+                    obs_values = self.get_linked_predicate_values(pred_slug_id)  # values for predicate in observations
+                    for equiv_pred in self.LD_EQUIVALENT_PREDICATES:
+                        if equiv_pred in entity:
+                            # a semantic equivalence predicate exists for this oc-pred
+                            for equiv_entity in entity[equiv_pred]:
+                                equiv_id = self.get_entity_id(equiv_entity)
+                                parents = LinkRecursion().get_jsonldish_entity_parents(equiv_id)
+                                act_solr_field = 'linkeddata___pred_id'
+                                last_index = len(parents) - 1
+                                for index, parent in enumerate(parents):
+                                    if index == last_index:
+                                        # use the predicates solr-field type, which may be numeric, date, string, or ID
+                                        act_solr_datatype = pres_solr_datatype
+                                    else:
+                                        # use an id field type, since this is in a hierarchy that contains children
+                                        act_solr_datatype = 'id'
+                                    solr_value = self._concat_solr_string_value(parent['slug'],
+                                                                                act_solr_datatype,
+                                                                                parent['id'],
+                                                                                parent['label'])
+                                    if act_solr_field not in self.fields:
+                                        self.fields[act_solr_field] = []
+                                    self.fields[act_solr_field].append(solr_value)
+                                    last_linked_pred_label = parent['label']
+                                    act_solr_field = \
+                                        self._convert_slug_to_solr(parent['slug'])\
+                                        + '___pred_' \
+                                        + act_solr_datatype
+                                # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
+                                self.fields['text'] += last_linked_pred_label + ': \n'
+                                if act_solr_field not in self.fields:
+                                    self.fields[act_solr_field] = []
+                                # --------------------------------
+                                # Now we handle the objects of this predicate!
+                                # 1. obs_values come from the item's observations,
+                                # 2. we treat literals differently than URI objects, since URI objects maybe in a hierarchy
+                                # --------------------------------
+                                if pred_datatype != '@id':
+                                    # objects of this predicate are literals
+                                    for obs_val in obs_values:
+                                        if isinstance(obs_val, dict):
+                                            if pred_datatype in obs_val:
+                                                self.fields[act_solr_field].append(obs_val[pred_datatype])
+                                                self.fields['text'] += obs_val[pred_datatype] + '\n'
+                                        else:
+                                            self.fields[act_solr_field].append(obs_val)
+                                            self.fields['text'] += str(obs_val) + '\n'
+                                else:
+                                    # objects of this predicate IDed by URIs
+                                    for obs_val in obs_values:
+                                        object_id = self.get_entity_id(obs_val)
+                                        # URI objects can be in hierarchies, look for these!
+                                        parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
+                                        for index, parent in enumerate(parents):
+                                            solr_value = self._concat_solr_string_value(parent['slug'],
+                                                                                        'id',
+                                                                                        parent['id'],
+                                                                                        parent['label'])
+                                            if act_solr_field not in self.fields:
+                                                self.fields[act_solr_field] = []
+                                            self.fields[act_solr_field].append(solr_value)
+                                            last_object_label = parent['label']
+                                            act_solr_field = \
+                                                self._convert_slug_to_solr(parent['slug']) \
+                                                + '___' + act_solr_field
+                                        self.fields['text'] += last_object_label + '\n'
+
+    def get_linked_predicate_values(self, predicate_slug_id):
+        """ Gets all the values usef with a certain predicate
+        """
+        output = False
+        if 'oc-gen:has-obs' in self.oc_item.json_ld:
+            for obs in self.oc_item.json_ld['oc-gen:has-obs']:
+                obs_ok = True  # default, assume the observation is OK
+                if 'oc-gen:obsStatus' in obs:
+                    if obs['oc-gen:obsStatus'] != 'active':
+                        # observation should be ignored for indexing
+                        obs_ok = False
+                if predicate_slug_id in obs and obs_ok:
+                    if output is False:
+                        output = []
+                    output += obs[predicate_slug_id]
+        return output
+
+    def get_entity_linked_data(self, entity_id):
+        """ Finds linked data to add to index
+        """
+        output = False
+        if '@graph' in self.oc_item.json_ld:
+            for entity in self.oc_item.json_ld['@graph']:
+                act_entity_id = self.get_entity_id(entity) 
+                if act_entity_id == entity_id:
+                    output = entity
+                    break
+        return output
+
+    def get_predicate_datatype(self, predicate_slug_id):
+        """ Finds linked data to add to index
+        """
+        output = False
+        if '@context' in self.oc_item.json_ld:
+            for act_entity_id, entity in self.oc_item.json_ld['@context'].items():
+                if act_entity_id == predicate_slug_id and 'type' in entity:
+                    output = entity['type']
+                    break
+        return output
+
+    def get_entity_id(self, entity_dict):
+        """ Gets the ID from an entity dictionary obj """
+        if 'id' in entity_dict:
+            output = entity_dict['id']
+        elif '@id' in entity_dict:
+            output = entity_dict['@id']
+        else:
+            output = False
+        return output
