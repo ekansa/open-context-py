@@ -800,17 +800,25 @@ class GeoMap():
             if 'features' in json_ld:
                 lats = []
                 lons = []
+                use_features = []
                 for feature in json_ld['features']:
+                    show_feature = True
                     if 'Polygon' in feature['geometry']['type']:
                         self.start_zoom = 6
                     elif feature['geometry']['type'] == 'Point':
                         lats.append(feature['geometry']['coordinates'][1])
                         lons.append(feature['geometry']['coordinates'][0])
+                    if 'location-precision-note' in feature['properties']:
+                        if 'security' in feature['properties']['location-precision-note'] \
+                           and feature['geometry']['type'] == 'Point':
+                            show_feature = False
+                    if show_feature:
+                        use_features.append(feature)
                 self.start_lat = sum(lats) / float(len(lats))
                 self.start_lon = sum(lons) / float(len(lons))
                 geojson = LastUpdatedOrderedDict()
                 geojson['type'] = 'FeatureCollection'
-                geojson['features'] = json_ld['features']
+                geojson['features'] = use_features
                 self.geojson = json.dumps(geojson,
                                           indent=4,
                                           ensure_ascii=False)
