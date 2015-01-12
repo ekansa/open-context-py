@@ -1,6 +1,9 @@
+import time
 import re
 import roman
+from django.conf import settings
 from datetime import datetime
+from django.utils import timezone
 from math import pow
 from unidecode import unidecode
 from django.utils import timezone
@@ -93,6 +96,13 @@ class Manifest(models.Model):
         if self.revised is None:
             self.revised = datetime.now()
         super(Manifest, self).save(*args, **kwargs)
+
+    def indexed_save(self):
+        """
+        Updates with the last indexed time
+        """
+        self.indexed = timezone.now()
+        super(Manifest, self).save(update_fields=['indexed'])
 
     def slug_save(self, project_indices=False):
         """
