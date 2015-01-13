@@ -87,7 +87,7 @@ class PenMysql():
         """ Gets all the data belonging to a project """
         after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
-            self.get_project_tab_record(project_uuid, act_table)
+            self.get_project_tab_records(project_uuid, act_table)
 
     def get_project_tab_records(self, project_uuid, act_table):
         """ Gets all the data belonging to a project for a particular table """

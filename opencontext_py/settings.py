@@ -44,7 +44,6 @@ SOLR_PORT = get_secret('SOLR_PORT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 TEMPLATE_DEBUG = False
 
 ALLOWED_HOSTS = []
