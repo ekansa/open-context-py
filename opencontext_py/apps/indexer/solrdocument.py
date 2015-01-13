@@ -338,8 +338,8 @@ class SolrDocument:
                 self.fields[act_solr_field] = []
             self.fields[act_solr_field].append(solr_value)
             act_solr_field = \
-                self._convert_slug_to_solr(parent['slug']) + act_solr_field
-
+                self._convert_slug_to_solr(parent['slug'])\
+                + '___pred_id'
     def _process_dc_terms(self):
         """
         Finds the project that this item is part of. If not part of a
