@@ -46,7 +46,7 @@ class TypeLookup():
         """
         try:
             self.oc_type = OCtype.objects.get(uuid=uuid)
-        except OCType.DoesNotExist:
+        except OCtype.DoesNotExist:
             self.oc_type = False
         if(self.oc_type is not False):
             self.predicate_uuid = self.oc_type.predicate_uuid

@@ -28,9 +28,10 @@ class SolrDocument:
                            'n2t.net/ark:/',
                            'orcid.org']
 
+    ROOT_CONTEXT_SOLR = 'root___context_id'
     ROOT_PREDICATE_SOLR = 'root___pred_id'
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
-    ROOT_PROJECT_SOLR = 'proj___pred_id'
+    ROOT_PROJECT_SOLR = 'root___project_id'
 
     def __init__(self, uuid):
         '''
@@ -302,7 +303,7 @@ class SolrDocument:
             for index, context in enumerate(self.context_path):
                 # treat the root in its own special way
                 if index == 0:
-                        self.fields['root___context_id'] = \
+                        self.fields[self.ROOT_CONTEXT_SOLR] = \
                             self._concat_solr_string_value(
                                 self.context_path[0]['slug'],
                                 'id',
@@ -342,7 +343,7 @@ class SolrDocument:
             self.fields[act_solr_field].append(solr_value)
             act_solr_field = \
                 self._convert_slug_to_solr(parent['slug'])\
-                + '___pred_id'
+                + '___project_id'
 
     def _process_dc_terms(self):
         """

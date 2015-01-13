@@ -264,7 +264,7 @@ class PenMysql():
             allow_write = self.check_allow_write(act_table, record)
             record = self.prep_update_keep_old(act_table, record)
             if(allow_write is False and self.update_keep_old is False):
-                print('\n Not allowed to overwite record.')
+                print('\n Not allowed to overwite record.' + str(record))
             else:
                 newr = False
                 if(act_table == 'link_annotations'):
@@ -300,5 +300,8 @@ class PenMysql():
                 elif(act_table == 'oc_obsmetadata'):
                     newr = ObsMetadata(**record)
                 if(newr is not False):
-                    newr.save(force_insert=self.force_insert,
-                              force_update=self.update_keep_old)
+                    try:
+                        newr.save(force_insert=self.force_insert,
+                                  force_update=self.update_keep_old)
+                    except Exception as error:
+                        print('Something slipped past in ' + act_table + '...' + str(error))
