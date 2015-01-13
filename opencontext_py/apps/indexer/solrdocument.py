@@ -227,14 +227,15 @@ class SolrDocument:
                             predicate_type)
 
     def _get_context_path(self):
+        output = None
+        context = False
         if 'oc-gen:has-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-context-path'].get('oc-gen:has-path-items')
+            context = self.oc_item.json_ld['oc-gen:has-context-path']
         elif 'oc-gen:has-linked-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-linked-context-path'].get('oc-gen:has-path-items')
-        else:
-            return None
+            context = self.oc_item.json_ld['oc-gen:has-linked-context-path']
+        if context is not False:
+            output = context['oc-gen:has-path-items']
+        return output
 
     def _convert_slug_to_solr(self, slug):
         return slug.replace('-', '_')
@@ -302,10 +303,11 @@ class SolrDocument:
                 # treat the root in its own special way
                 if index == 0:
                         self.fields['root___context_id'] = \
-                            self.context_path[0]['slug'] + '___id___' + \
-                            self.context_path[0]['id'].split(
-                                'http://opencontext.org')[1] + '___' + \
-                            self.context_path[0]['label']
+                            self._concat_solr_string_value(
+                                self.context_path[0]['slug'],
+                                'id',
+                                self.context_path[0]['id'].split('http://opencontext.org')[1],
+                                self.context_path[0]['label'])
                 else:
                 # for others, get the parent slug and generate a
                 # dynamic field name
@@ -317,10 +319,11 @@ class SolrDocument:
                         )
                     # add field name and values
                     self.fields[solr_field_name] = \
-                        self.context_path[index]['slug'] + '___id___' + \
-                        self.context_path[index]['id'].split(
-                            'http://opencontext.org')[1] + '___' + \
-                        self.context_path[index]['label']
+                        self._concat_solr_string_value(
+                            self.context_path[index]['slug'],
+                            'id',
+                            self.context_path[index]['id'].split('http://opencontext.org')[1],
+                            self.context_path[index]['label'])
 
     def _process_projects(self):
         """
@@ -340,6 +343,7 @@ class SolrDocument:
             act_solr_field = \
                 self._convert_slug_to_solr(parent['slug'])\
                 + '___pred_id'
+
     def _process_dc_terms(self):
         """
         Finds the project that this item is part of. If not part of a
