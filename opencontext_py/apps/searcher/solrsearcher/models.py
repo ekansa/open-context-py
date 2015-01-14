@@ -1,7 +1,6 @@
 import json
 from django.conf import settings
 from opencontext_py.libs.solrconnection import SolrConnection
-from opencontext_py.libs import viewutilities
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
@@ -11,10 +10,10 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 # to get useful information about the entity
 class SolrSearch():
 
-    def __init__(self, request=False, spatial_context=None):
-        self.request = request
+    def __init__(self):
+        self.request = False
         self.internal_request = False
-        self.spatial_context = spatial_context
+        self.spatial_context = None
         self.solr = SolrConnection().connection
         self.solr_response = False
         self.json_ld = False
@@ -55,7 +54,6 @@ class SolrSearch():
             query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
         query['facet.field'].append(SolrDocument.ROOT_LINK_DATA_SOLR)
         query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
-        print(str(query['facet.field']))
         return self.solr.search(**query)
 
     def get_request_param(self, param, default, as_list=False):
