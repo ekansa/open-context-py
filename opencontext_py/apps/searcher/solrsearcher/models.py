@@ -14,9 +14,14 @@ class SolrSearch():
         self.request = False
         self.internal_request = False
         self.spatial_context = None
-        self.solr = SolrConnection().connection
+        self.solr = False
+        self.solr_connect()
         self.solr_response = False
         self.json_ld = False
+
+    def solr_connect(self):
+        """ connects to solr """
+        self.solr = SolrConnection().connection
 
     def search_solr(self):
         """searches solr to get raw solr search results"""

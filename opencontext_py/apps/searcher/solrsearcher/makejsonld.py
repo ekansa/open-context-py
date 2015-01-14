@@ -228,10 +228,10 @@ class MakeJsonLd():
                 output['rdfs:isDefinedBy'] = settings.CANONICAL_HOST + facet_key_list[2]
             output['label'] = facet_key_list[3]
             output['count'] = solr_facet_count
-            output['slug'] =slug
+            output['slug'] = slug
             output['data-type'] = facet_key_list[1]
+        fl = None
         return output
-
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """

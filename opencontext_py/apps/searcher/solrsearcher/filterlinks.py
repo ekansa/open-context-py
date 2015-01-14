@@ -23,6 +23,12 @@ class FilterLinks():
         self.atom_url = False
         self.testing = True
 
+    def __del__(self):
+        self.request = False
+        self.internal_request = False
+        self.spatial_context = None
+        self.new_request = False
+
     def make_request_urls(self):
         """ makes request urls from the new request object """
         self.html_url = self.make_request_url()

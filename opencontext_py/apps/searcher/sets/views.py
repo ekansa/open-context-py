@@ -17,6 +17,7 @@ def html_view(request, spatial_context=None):
 
 def json_view(request, spatial_context=None):
     """ API for searching Open Context """
+    new_request = LastUpdatedOrderedDict()
     solr_s = SolrSearch()
     solr_s.request = request
     solr_s.spatial_context = spatial_context
