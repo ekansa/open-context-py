@@ -19,12 +19,11 @@ def json_view(request, spatial_context=None):
     """ API for searching Open Context """
     new_request = LastUpdatedOrderedDict()
     solr_s = SolrSearch()
-    solr_s.request = request
-    solr_s.spatial_context = spatial_context
-    response = solr_s.search_solr()
-    m_json_ld = MakeJsonLd()
-    m_json_ld.request = request
-    m_json_ld.spatial_context = spatial_context
+    request_dict = solr_r.make_request_obj_dict(request,
+                                                spatial_context)
+    response = solr_s.search_solr(request_dict)
+    m_json_ld = MakeJsonLd(request_dict)
+    m_json_ld.request_full_path = request.get_full_path()
     json_ld = m_json_ld.convert_solr_json(response.raw_content)
     return HttpResponse(json.dumps(json_ld,
                         ensure_ascii=False, indent=4),

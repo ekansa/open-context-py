@@ -11,10 +11,9 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 class MakeJsonLd():
 
-    def __init__(self):
-        self.request = False
-        self.internal_request = False
-        self.spatial_context = None
+    def __init__(self, request_dict):
+        self.requst_full_path = False
+        self.request_dict = request_dict
         self.id = False
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
@@ -79,8 +78,8 @@ class MakeJsonLd():
         """ makes the ID for the document """
         if self.id is not False:
             output = self.id
-        elif self.request is not False:
-            output = settings.CANONICAL_HOST + self.request.get_full_path()
+        elif self.requst_full_path is not False:
+            output = settings.CANONICAL_HOST + self.request_full_path
         else:
             output = False
         return output
@@ -210,18 +209,15 @@ class MakeJsonLd():
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
         fl = FilterLinks()
-        fl.request = self.request
-        fl.spatial_context = self.spatial_context
-        fl.internal_request = self.internal_request
-        fl.prep_new_request_obj()
         facet_key_list = solr_facet_value_key.split('___')
         output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
             slug = facet_key_list[0]
-            fl.add_to_new_request_by_solr_field(solr_facet_key, slug)
-            fl.make_request_urls()
-            output['id'] = fl.html_url
-            output['json'] = fl.json_url
+            new_request = fl.add_to_new_request_by_solr_field(self.request_dict,
+                                                              solr_facet_key,
+                                                              slug)
+            output['id'] = fl.make_request_url(new_request)
+            output['json'] = fl.fl.make_request_url(new_request, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
                 output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:

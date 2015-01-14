@@ -11,9 +11,6 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 class SolrSearch():
 
     def __init__(self):
-        self.request = False
-        self.internal_request = False
-        self.spatial_context = None
         self.solr = False
         self.solr_connect()
         self.solr_response = False
@@ -23,9 +20,14 @@ class SolrSearch():
         """ connects to solr """
         self.solr = SolrConnection().connection
 
-    def search_solr(self):
+    def search_solr(self, request_dict):
         """searches solr to get raw solr search results"""
         # Start building solr query
+        query = self.compose_query(request_dict)
+        return self.solr.search(**query)
+
+    def compose_query(self, request_dict):
+        """ composes the search query based on the request_dict """
         qm = QueryMaker()
         query = {}
         # TODO field list (fl)
@@ -40,14 +42,21 @@ class SolrSearch():
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
         # If the user does not provide a search term, search for everything
-        query['q'] = self.get_request_param('q', '*:*')
-        query['start'] = self.get_request_param('start', '0')
+        query['q'] = self.get_request_param(request_dict,
+                                            'q',
+                                            '*:*')
+        query['start'] = self.get_request_param(request_dict,
+                                                'start',
+                                                '0')
          # Spatial Context
-        context = qm._process_spatial_context(self.spatial_context)
+        context = qm._process_spatial_context(request_dict['path'])
         query['fq'].append(context['fq'])
         query['facet.field'] += context['facet.field']  # context facet fields, always a list
         # Descriptive Properties
-        prop_list = self.get_request_param('prop', False, True)
+        prop_list = self.get_request_param(request_dict,
+                                           'prop',
+                                           False,
+                                           True)
         if prop_list:
             props = qm._process_prop_list(prop_list)
             for prop in props:
@@ -55,37 +64,50 @@ class SolrSearch():
                     query['fq'].append(prop['fq'])
                 if prop['facet.field'] not in query['facet.field']:
                     query['facet.field'].append(prop['facet.field'])
-        if SolrDocument.ROOT_PREDICATE_SOLR not in query['facet.field']:
-            query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
-        query['facet.field'].append(SolrDocument.ROOT_LINK_DATA_SOLR)
-        query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
-        return self.solr.search(**query)
+        query = self.add_default_facet_fields(query)
+        return query
 
-    def get_request_param(self, param, default, as_list=False):
+    def add_default_facet_fields(self, query):
+        """ adds additional facet fields to query """
+        default_list = [SolrDocument.ROOT_PREDICATE_SOLR,
+                        SolrDocument.ROOT_LINK_DATA_SOLR,
+                        SolrDocument.ROOT_PROJECT_SOLR]
+        for default_field in default_list:
+            if default_field not in query['facet.field']:
+                query['facet.field'].append(default_field)
+        return query
+
+    def get_request_param(self, request_dict, param, default, as_list=False):
         """ get a string or list to use in queries from either
             the request object or the internal_request object
             so we have flexibility in doing searches without
             having to go through HTTP
         """
-        output = False
-        if self.request is not False:
+        if request_dict is not False:
             if as_list:
-                output = self.request.GET.getlist(param)
-            else:
-                output = self.request.GET.get(param, default=default)
-        elif self.internal_request is not False:
-            if as_list:
-                if param in self.internal_request:
-                    param_obj = self.internal_request[param]
+                if param in request_dict:
+                    param_obj = request_dict[param]
                     if isinstance(param_obj, list):
                         output = param_obj
                     else:
                         output = [param_obj]
             else:
-                if param in self.internal_request:
-                    output = self.internal_request[param]
+                if param in request_dict:
+                    output = request_dict[param]
                 else:
                     output = default
         else:
             output = False
         return output
+
+    def make_request_obj_dict(self, request, spatial_context):
+        """ makes the Django request object into a dictionary obj """
+        new_request = LastUpdatedOrderedDict()
+        if spatial_context is not None:
+            new_request['path'] = spatial_context
+        else:
+            new_request['path'] = False
+        if request is not False:
+            for key, key_val in request.GET.items():  # "for key in request.GET" works too.
+                new_request[key] = request.GET.getlist(key)
+        return new_request

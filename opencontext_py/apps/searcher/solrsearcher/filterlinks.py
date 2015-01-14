@@ -13,37 +13,26 @@ class FilterLinks():
          '___pred_': 'prop'}
 
     def __init__(self):
-        self.request = False
-        self.internal_request = False
-        self.spatial_context = None
         self.base_search_link = '/sets/'
-        self.new_request = False
-        self.html_url = False
-        self.json_url = False
-        self.atom_url = False
+        self.base_request = False
         self.testing = True
 
-    def __del__(self):
-        self.request = False
-        self.internal_request = False
-        self.spatial_context = None
-        self.new_request = False
-
-    def make_request_urls(self):
+    def make_request_urls(self, new_request):
         """ makes request urls from the new request object """
-        self.html_url = self.make_request_url()
-        self.json_url = self.make_request_url('.json')
-        self.atom_url = self.make_request_url('.atom')
+        output = {}
+        output['html'] = self.make_request_url(new_request)
+        output['json'] = self.make_request_url(new_request, '.json')
+        output['atom'] = self.make_request_url(new_request, '.atom')
+        return output
 
-    def make_request_url(self, doc_format=''):
+    def make_request_url(self, new_request, doc_format=''):
         """ makes request urls from the new request object
             default doc_format is '' (HTML)
         """
         url = settings.CANONICAL_HOST + self.base_search_link
         if self.testing:
             url = 'http://127.0.0.1:8000' + self.base_search_link
-        new_request = self.new_request
-        if 'path' in  new_request:
+        if 'path' in new_request:
             if new_request['path'] is not None \
                and new_request['path'] is not False:
                 url += urlquote(new_request['path'])
@@ -57,6 +46,7 @@ class FilterLinks():
         return url
 
     def add_to_new_request_by_solr_field(self,
+                                         new_request,
                                          solr_facet_key,
                                          new_value):
         """ uses the solr_facet_key to determine the
@@ -69,24 +59,34 @@ class FilterLinks():
             # print('Add-to-value' + add_to_value)
         else:
             add_to_value = None
-        self.add_to_new_request(param, new_value, add_to_value)
+        new_request = self.add_to_new_request(new_request,
+                                              param,
+                                              new_value,
+                                              add_to_value)
+        return new_request
 
     def add_to_new_request(self,
+                           new_request,
                            param,
                            new_value,
                            add_to_value=None):
         """ adds to the new request object a parameter and value """
-        if param == 'path':
-            if add_to_value is not None:
-                self.new_request['path'] += '/'.new_value
+        if param not in new_request:
+            if param == 'path':
+                new_request[param] = new_value
             else:
-                self.new_request['path'] = new_value
+                new_request[param] = [new_value]
         else:
-            if param in self.new_request:
+            if param == 'path':
+                if add_to_value is not None:
+                    new_request['path'] += '/'.new_value
+                else:
+                    new_request['path'] = new_value
+            else:
                 if add_to_value is not None:
                     new_list = []
                     old_found = False
-                    for old_val in self.new_request[param]:
+                    for old_val in new_request[param]:
                         # print('Old val:' + old_val + ' add to:' + add_to_value)
                         if old_val == add_to_value:
                             old_found = True
@@ -94,11 +94,12 @@ class FilterLinks():
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)
-                    self.new_request[param] = new_list
+                    new_request[param] = new_list
                     if old_found is False:
-                        self.new_request[param].append(new_value)
+                        new_request[param].append(new_value)
                 else:
-                    self.new_request[param].append(new_value)
+                    new_request[param].append(new_value)
+        return new_request
 
     def get_param_from_solr_facet_key(self, solr_facet_key):
         """" returns the public parameter from the solr_facet_key """
@@ -133,25 +134,12 @@ class FilterLinks():
             slugs = raw_slugs[::-1]
         return slugs
 
-    def prep_new_request_obj(self):
-        """ prepares a new request object from the old request object """
-        if self.internal_request is not False:
-            new_request = self.internal_request
-            if 'path' not in new_request:
-                if self.spatial_context is not None:
-                    new_request['path'] = self.spatial_context
-                else:
-                    new_request['path'] = False
-        else:
-            new_request = LastUpdatedOrderedDict()
-            if self.spatial_context is not None:
-                new_request['path'] = self.spatial_context
-            else:
-                new_request['path'] = False
-            if self.request is not False:
-                for key, key_val in self.request.GET.items():  # "for key in request.GET" works too.
-                    new_request[key] = self.request.GET.getlist(key)
-        self.new_request = new_request
+    def prep_base_request_obj(self, request_dict):
+        """ prepares a base request object from the old request object
+            to use to create new requests
+        """
+        self.base_request = request_dict
+        return self.base_request
 
     def get_request_param(self, param, default, as_list=False):
         """ get a string or list to use in queries from either
