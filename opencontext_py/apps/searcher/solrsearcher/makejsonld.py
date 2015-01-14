@@ -6,13 +6,15 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
+from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
 class MakeJsonLd():
 
-    def __init__(self, request=False, spatial_context=None):
-        self.request = request
-        self.spatial_context = spatial_context
+    def __init__(self):
+        self.request = False
+        self.internal_request = False
+        self.spatial_context = None
         self.id = False
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
@@ -70,8 +72,7 @@ class MakeJsonLd():
         self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.make_facets(solr_json)
-        # self.json_ld['request'] = self.request.GET
-        # self.json_ld['solr'] = solr_json
+        self.json_ld['solr'] = solr_json
         return self.json_ld
 
     def make_id(self):
@@ -119,7 +120,10 @@ class MakeJsonLd():
             json_ld_facets = []
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
-                facet['oc-api:has-facet-values'] = []
+                id_options = []
+                num_options = []
+                date_options = []
+                string_options = []
                 count_raw_values = len(solr_facet_values)
                 i = -1
                 for solr_facet_value_key in solr_facet_values[::2]:
@@ -128,27 +132,64 @@ class MakeJsonLd():
                     facet_val_obj = self.make_facet_value_obj(solr_facet_key,
                                                               solr_facet_value_key,
                                                               solr_facet_count)
-                    facet['oc-api:has-facet-values'].append(facet_val_obj)
+                    val_obj_data_type = facet_val_obj['data-type']
+                    facet_val_obj.pop('data-type', None)
+                    if val_obj_data_type == 'id':
+                        id_options.append(facet_val_obj)
+                    elif val_obj_data_type == 'numeric':
+                        num_options.append(facet_val_obj)
+                    elif val_obj_data_type == 'date':
+                        date_options.append(facet_val_obj)
+                    elif val_obj_data_type == 'string':
+                        string_options.append(facet_val_obj)
+                if len(id_options) > 0:
+                    facet['oc-api:has-id-options'] = id_options
+                if len(num_options) > 0:
+                    facet['oc-api:has-numeric-options'] = num_options
+                if len(date_options) > 0:
+                    facet['oc-api:has-date-options'] = date_options
+                if len(string_options) > 0:
+                    facet['oc-api:has-text-options'] = string_options
                 json_ld_facets.append(facet)
             if len(json_ld_facets) > 0:
                 self.json_ld['oc-api:has-facets'] = json_ld_facets
 
     def get_facet_meta(self, solr_facet_key):
         facet = LastUpdatedOrderedDict()
+        if '___project_id' in solr_facet_key:
+            id_prefix = '#facet-project'
+            ftype = 'oc-api:facet-project'
+        elif '___context_id' in solr_facet_key:
+            id_prefix = '#facet-context'
+            ftype = 'oc-api:facet-context'
+        elif '___pred_' in solr_facet_key:
+            id_prefix = '#facet-prop'
+            ftype = 'oc-api:facet-prop'
+        if solr_facet_key == SolrDocument.ROOT_CONTEXT_SOLR:
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'oc-api:facet-context'
+            facet['label'] = 'Context'
+            facet['data-type'] = 'id'
         if solr_facet_key == SolrDocument.ROOT_PROJECT_SOLR:
-            facet['id'] = 'oc-api:facet-project'
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'oc-api:facet-project'
             facet['label'] = 'Project'
             facet['data-type'] = 'id'
         elif solr_facet_key == SolrDocument.ROOT_LINK_DATA_SOLR:
-            facet['id'] = 'oc-api:facet-ld'
+            facet['id'] = id_prefix + '-ld'
+            facet['rdfs:isDefinedBy'] = 'oc-api:facet-prop-ld'
             facet['label'] = 'Linked Data (Common Standards)'
             facet['data-type'] = 'id'
         elif solr_facet_key == SolrDocument.ROOT_PREDICATE_SOLR:
-            facet['id'] = 'oc-api:facet-var'
+            facet['id'] = id_prefix + '-var'
+            facet['rdfs:isDefinedBy'] = 'oc-api:facet-prop-var'
             facet['label'] = 'Descriptive Properties (Project Defined)'
             facet['data-type'] = 'id'
         else:
-            facet['id'] = ''
+            # ------------------------
+            # Facet is not at the root
+            # ------------------------
+            facet['id'] = id_prefix 
             facet['label'] = ''
             facet_key_list = solr_facet_key.split('___')
             fdtype_list = facet_key_list[1].split('_')
@@ -156,9 +197,11 @@ class MakeJsonLd():
             entity = Entity()
             found = entity.dereference(slug)
             if found:
-                facet['id'] = entity.uri
+                facet['id'] = id_prefix + '-' + entity.slug
+                facet['rdfs:isDefinedBy'] = entity.uri
                 facet['label'] = entity.label
             facet['data-type'] = fdtype_list[1]
+        facet['type'] = ftype
         return facet
 
     def make_facet_value_obj(self,
@@ -166,18 +209,29 @@ class MakeJsonLd():
                              solr_facet_value_key,
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
+        fl = FilterLinks()
+        fl.request = self.request
+        fl.spatial_context = self.spatial_context
+        fl.internal_request = self.internal_request
+        fl.prep_new_request_obj()
         facet_key_list = solr_facet_value_key.split('___')
         output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
+            slug = facet_key_list[0]
+            fl.add_to_new_request_by_solr_field(solr_facet_key, slug)
+            fl.make_request_urls()
+            output['id'] = fl.html_url
+            output['json'] = fl.json_url
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
-                output['id'] = facet_key_list[2]
+                output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:
-                output['id'] = settings.CANONICAL_HOST + facet_key_list[2]
+                output['rdfs:isDefinedBy'] = settings.CANONICAL_HOST + facet_key_list[2]
             output['label'] = facet_key_list[3]
             output['count'] = solr_facet_count
-            output['slug'] = facet_key_list[0]
-            output['filter'] = 'to do'
+            output['slug'] =slug
+            output['data-type'] = facet_key_list[1]
         return output
+
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
