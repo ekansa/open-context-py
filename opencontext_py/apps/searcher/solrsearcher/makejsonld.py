@@ -217,7 +217,7 @@ class MakeJsonLd():
                                                               solr_facet_key,
                                                               slug)
             output['id'] = fl.make_request_url(new_request)
-            output['json'] = fl.fl.make_request_url(new_request, '.json')
+            output['json'] = fl.make_request_url(new_request, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
                 output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:

@@ -25,7 +25,9 @@ class FilterLinks():
         output['atom'] = self.make_request_url(new_request, '.atom')
         return output
 
-    def make_request_url(self, new_request, doc_format=''):
+    def make_request_url(self,
+                         new_request,
+                         doc_format=''):
         """ makes request urls from the new request object
             default doc_format is '' (HTML)
         """
