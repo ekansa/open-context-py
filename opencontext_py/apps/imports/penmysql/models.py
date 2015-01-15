@@ -266,6 +266,7 @@ class PenMysql():
             if(allow_write is False and self.update_keep_old is False):
                 print('\n Not allowed to overwite record.' + str(record))
             else:
+                print('\n Adding record:' + str(record))
                 newr = False
                 if(act_table == 'link_annotations'):
                     newr = LinkAnnotation(**record)
