@@ -32,6 +32,27 @@ class LinkAnnoManagement():
                           .filter(hash_id=la_obj.hash_id).delete()
             new_la.save()
 
+    def replace_object_uri(self,
+                           old_object_uri,
+                           new_object_uri):
+        """ replaces annotations using
+        a given old_object_uri with a new one
+        """
+        alt_old_obj = self.make_alt_uri(old_object_uri)
+        la_objs = LinkAnnotation.objects\
+                                .filter(Q(object_uri=old_object_uri) |
+                                        Q(object_uri=alt_old_obj))
+        print('Change object_uri for annotations: ' + str(len(la_objs)))
+        for la_obj in la_objs:
+            new_la = la_obj
+            new_la.object_uri = new_object_uri
+            LinkAnnotation.objects\
+                          .filter(hash_id=la_obj.hash_id).delete()
+            try:
+                new_la.save()
+            except Exception as error:
+                print("Error: " + str(error))
+
     def make_alt_uri(self, uri):
         """ makes an alternative URI, changing a prefixed to a full
             uri or a full uri to a prefix
