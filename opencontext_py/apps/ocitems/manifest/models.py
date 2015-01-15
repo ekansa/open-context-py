@@ -94,7 +94,7 @@ class Manifest(models.Model):
         self.label = self.validate_label()
         self.make_slug_and_sort()
         if self.revised is None:
-            self.revised = datetime.now()
+            self.revised = timezone.now()
         super(Manifest, self).save(*args, **kwargs)
 
     def indexed_save(self):
