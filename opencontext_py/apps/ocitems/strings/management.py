@@ -33,7 +33,7 @@ class StringManagement():
             self.oc_string = newstring
         return self.oc_string
 
-    def check_string_exists(self, content):
+    def check_string_exists(self, content, show_uuid=False):
         """
         Checks to see if a given string exists in a project
         """
@@ -48,4 +48,6 @@ class StringManagement():
             self.oc_string = False
         if(self.oc_string is not False):
             found = True
+            if show_uuid:
+                found = self.oc_string.uuid
         return found
