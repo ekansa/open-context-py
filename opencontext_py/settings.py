@@ -43,10 +43,14 @@ SECRET_KEY = get_secret('SECRET_KEY')
 SOLR_PORT = get_secret('SOLR_PORT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-TEMPLATE_DEBUG = False
+if get_secret('DEBUG') == 1:
+    DEBUG = True
+    TEMPLATE_DEBUG = True
+else:
+    DEBUG = False
+    TEMPLATE_DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.opencontext.org']
 
 
 # Application definition
@@ -117,6 +121,13 @@ DATABASES = {
         'HOST': get_secret('DATABASES_HOST')
     }
 }
+
+ADMINS = (
+    (get_secret('ADMIN_NAME'), get_secret('ADMIN_EMAIL'))
+)
+MANAGERS = (
+    (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
+)
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
