@@ -11,6 +11,7 @@ static/bootstrap/
 static/jquery/
 static/angularjs/
 static/exports/
+static/robots/robots.txt
 *.pyc
 solr-config/schema.xml.old
 secrets*
