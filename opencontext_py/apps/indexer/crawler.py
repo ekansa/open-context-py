@@ -7,6 +7,7 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
 from opencontext_py.apps.indexer.uuidlist import UUIDList
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class Crawler():
@@ -60,6 +61,13 @@ class Crawler():
                 try:
                     solrdocument = SolrDocument(uuid).fields
                     if crawlutil().is_valid_document(solrdocument):
+                        try:
+                            manifest = Manifest.objects.get(uuid=uuid)
+                            manifest.indexed_save()  # saves the time this was indexed
+                        except Manifest.DoesNotExist:
+                            print("Error: {0} Database bizzare error -----> " + uuid)
+                            logger.error('[' + datetime.now().strftime('%x %X ') +
+                                         settings.TIME_ZONE + '] Error: Missing manifest record for => ' + uuid)
                         documents.append(solrdocument)
                         document_count += 1
                         print("(" + str(document_count) + ")\t" + uuid)

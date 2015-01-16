@@ -11,7 +11,7 @@ class SolrConnection():
     '''
     def __init__(self, solr_host='localhost', solr_port=settings.SOLR_PORT):
         self.session = requests.Session()
-        solr_connection_string = 'http://' + solr_host + ':' + solr_port \
+        solr_connection_string = 'http://' + solr_host + ':' + str(solr_port) \
             + '/solr'
         try:
             self.connection = Solr(solr_connection_string,

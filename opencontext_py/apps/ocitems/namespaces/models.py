@@ -13,6 +13,7 @@ class ItemNamespaces():
         context['skos'] = 'http://www.w3.org/2004/02/skos/core#'
         context['owl'] = 'http://www.w3.org/2002/07/owl#'
         context['dc-terms'] = 'http://purl.org/dc/terms/'
+        context['dcmi'] = 'http://dublincore.org/documents/dcmi-terms/'
         context['bibo'] = 'http://purl.org/ontology/bibo/'
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
         context['cidoc-crm'] = 'http://erlangen-crm.org/current/'

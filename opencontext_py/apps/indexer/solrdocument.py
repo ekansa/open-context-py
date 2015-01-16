@@ -3,6 +3,7 @@ import json
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -13,6 +14,24 @@ class SolrDocument:
     Defines the Solr Document objects that the crawler will crawl. Solr
     fields are stored in a Solr Document's "fields" property.
     '''
+
+    # the list below defines predicates used for semantic equivalence in indexing
+    # linked data
+    LD_EQUIVALENT_PREDICATES = ['skos:closeMatch',
+                                'owl:sameAs',
+                                'foaf:isPrimaryTopicOf']
+
+    LD_IDENTIFIER_PREDICATES = ['owl:sameAs',
+                                'foaf:isPrimaryTopicOf']
+
+    PERSISTENT_ID_ROOTS = ['dx.doi.org',
+                           'n2t.net/ark:/',
+                           'orcid.org']
+
+    ROOT_CONTEXT_SOLR = 'root___context_id'
+    ROOT_PREDICATE_SOLR = 'root___pred_id'
+    ROOT_LINK_DATA_SOLR = 'ld___pred_id'
+    ROOT_PROJECT_SOLR = 'root___project_id'
 
     def __init__(self, uuid):
         '''
@@ -27,7 +46,6 @@ class SolrDocument:
         self.fields['text'] = ''  # Start of full-text field
         # Start processing and adding values...
         self._process_core_solr_fields()
-        self._process_project()
         self._process_category()
         self._process_context_path()
         self._process_predicates()
@@ -35,6 +53,9 @@ class SolrDocument:
         self._process_chrono()
         self._process_text_content()
         self._process_dc_terms()
+        self._process_projects()
+        self._process_persistent_ids()
+        self._process_associated_linkedata()
         self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
@@ -147,7 +168,7 @@ class SolrDocument:
         predicates = (item for item in self.oc_item.json_ld[
             '@context'].items() if item[0].startswith('oc-pred:'))
         # We need a list for "root___pred_id" because it is multi-valued
-        self.fields['root___pred_id'] = []
+        self.fields[self.ROOT_PREDICATE_SOLR] = []
         for predicate in predicates:
             # We need the predicate's uuid to get its parents
             predicate_uuid = predicate[1]['owl:sameAs'].split('/')[-1]
@@ -165,7 +186,7 @@ class SolrDocument:
                 # Treat the first parent in a special way
                 if index == 0:
                     if link_predicate is False:
-                        self.fields['root___pred_id'].append(
+                        self.fields[self.ROOT_PREDICATE_SOLR].append(
                             self._concat_solr_string_value(
                                 parent['slug'],
                                 self._get_predicate_type_string(
@@ -198,32 +219,35 @@ class SolrDocument:
                                 self._get_predicate_type_string(
                                     parent['type']),
                                 parent['id'],
-                                parent['label']
-                                )
+                                parent['label'])
                             )
                     # If this is the last item, process the predicate values
                     if index == len(parents) - 1:
                         self._process_predicate_values(
                             parent['slug'],
-                            predicate_type
-                            )
+                            predicate_type)
 
     def _get_context_path(self):
+        output = None
+        context = False
         if 'oc-gen:has-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-context-path'].get('oc-gen:has-path-items')
+            context = self.oc_item.json_ld['oc-gen:has-context-path']
         elif 'oc-gen:has-linked-context-path' in self.oc_item.json_ld:
-            return self.oc_item.json_ld[
-                'oc-gen:has-linked-context-path'].get('oc-gen:has-path-items')
-        else:
-            return None
+            context = self.oc_item.json_ld['oc-gen:has-linked-context-path']
+        if context is not False:
+            output = context['oc-gen:has-path-items']
+        return output
 
     def _convert_slug_to_solr(self, slug):
         return slug.replace('-', '_')
 
     def _concat_solr_string_value(self, slug, type, id, label):
+        id_part = id
+        if 'http://opencontext.org' in id:
+            if '/vocabularies/' not in id:
+                id_part = id.split('http://opencontext.org')[1]
         return slug + '___' + type + '___' + \
-            id.split('http://opencontext.org')[1] + '___' + label
+            id_part + '___' + label
 
     def _convert_values_to_json(self, slug, id_uri, label):
         json_values = LastUpdatedOrderedDict()
@@ -279,11 +303,12 @@ class SolrDocument:
             for index, context in enumerate(self.context_path):
                 # treat the root in its own special way
                 if index == 0:
-                        self.fields['root___context_id'] = \
-                            self.context_path[0]['slug'] + '___id___' + \
-                            self.context_path[0]['id'].split(
-                                'http://opencontext.org')[1] + '___' + \
-                            self.context_path[0]['label']
+                        self.fields[self.ROOT_CONTEXT_SOLR] = \
+                            self._concat_solr_string_value(
+                                self.context_path[0]['slug'],
+                                'id',
+                                self.context_path[0]['id'].split('http://opencontext.org')[1],
+                                self.context_path[0]['label'])
                 else:
                 # for others, get the parent slug and generate a
                 # dynamic field name
@@ -295,36 +320,30 @@ class SolrDocument:
                         )
                     # add field name and values
                     self.fields[solr_field_name] = \
-                        self.context_path[index]['slug'] + '___id___' + \
-                        self.context_path[index]['id'].split(
-                            'http://opencontext.org')[1] + '___' + \
-                        self.context_path[index]['label']
-
-    def _process_project(self):
-        """
-        Finds the project that this item is part of. If not part of a
-        project, make the project slug the same as the item's own slug.
-        """
-        """
-        # Commented out, not used
-        if 'dc-terms:isPartOf' in self.oc_item.json_ld:
-            for proj in self.oc_item.json_ld['dc-terms:isPartOf']:
-                if 'projects' in proj['id']:
-                    self.fields['project_slug'] = \
                         self._concat_solr_string_value(
-                            proj['slug'],
+                            self.context_path[index]['slug'],
                             'id',
-                            proj['id'],
-                            proj['label'])
-                    break
-        elif self.oc_item.item_type == 'projects':
-            self.fields['project_slug'] = self._concat_solr_string_value(
-                self.oc_item.json_ld['slug'],
-                'id',
-                self.oc_item.json_ld['id'],
-                self.oc_item.json_ld['label']
-                )
+                            self.context_path[index]['id'].split('http://opencontext.org')[1],
+                            self.context_path[index]['label'])
+
+    def _process_projects(self):
         """
+        Creates a hierarchy of projects in the same way as a hierarchy of predicates
+        """
+        act_solr_field = self.ROOT_PROJECT_SOLR
+        proj_rel = ProjectRels()
+        parents = proj_rel.get_jsonldish_parents(self.oc_item.project_uuid)
+        for index, parent in enumerate(parents):
+            solr_value = self._concat_solr_string_value(parent['slug'],
+                                                        'id',
+                                                        parent['id'],
+                                                        parent['label'])
+            if act_solr_field not in self.fields:
+                self.fields[act_solr_field] = []
+            self.fields[act_solr_field].append(solr_value)
+            act_solr_field = \
+                self._convert_slug_to_solr(parent['slug'])\
+                + '___project_id'
 
     def _process_dc_terms(self):
         """
@@ -338,6 +357,7 @@ class SolrDocument:
                 self.fields['text'] += meta['label'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
+                    'id',
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
@@ -348,6 +368,7 @@ class SolrDocument:
                 self.fields['text'] += meta['label'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
+                    'id',
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
@@ -358,6 +379,7 @@ class SolrDocument:
                 self.fields['text'] += meta['label'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
+                    'id',
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
@@ -503,6 +525,21 @@ class SolrDocument:
             if pred in self.oc_item.json_ld:
                 self.fields['text'] += self.oc_item.json_ld[pred] + '\n'
 
+    def _process_persistent_ids(self):
+        """ Gets stable identifiers for indexing
+        """
+        for id_pred in self.LD_IDENTIFIER_PREDICATES:
+            if id_pred in self.oc_item.json_ld:
+                for id_entity in self.oc_item.json_ld[id_pred]:
+                    id_id = self.get_entity_id(id_entity)
+                    if id_id is not False:
+                        for act_root in self.PERSISTENT_ID_ROOTS:
+                            if act_root in id_id:
+                                if 'persistent_uri' not in self.fields:
+                                    self.fields['persistent_uri'] = []
+                                self.fields['persistent_uri'].append(id_id)
+                                self.fields['text'] += id_id + '\n'
+
     def _process_interest_score(self):
         """ Calculates the 'interest score' for sorting items with more
         documentation / description to a higher rank.
@@ -535,3 +572,156 @@ class SolrDocument:
         if self.chrono_specified:
         # chrono data specified, more interesting
             self.fields['interest_score'] += 5
+
+    def _process_associated_linkedata(self):
+        """ Finds linked data to add to index
+        """
+        if '@graph' in self.oc_item.json_ld:
+            for entity in self.oc_item.json_ld['@graph']:
+                entity_id = self.get_entity_id(entity)
+                if 'oc-pred:' in entity_id:
+                    # a predicate with linked data
+                    pred_slug_id = entity_id
+                    pred_datatype = self.get_predicate_datatype(pred_slug_id)
+                    pres_solr_datatype = self._get_predicate_type_string(pred_datatype)
+                    obs_values = self.get_linked_predicate_values(pred_slug_id)  # values for predicate in observations
+                    for equiv_pred in self.LD_EQUIVALENT_PREDICATES:
+                        if equiv_pred in entity:
+                            # a semantic equivalence predicate exists for this oc-pred
+                            for equiv_entity in entity[equiv_pred]:
+                                equiv_id = self.get_entity_id(equiv_entity)
+                                parents = LinkRecursion().get_jsonldish_entity_parents(equiv_id)
+                                act_solr_field = self.ROOT_LINK_DATA_SOLR
+                                last_index = len(parents) - 1
+                                for index, parent in enumerate(parents):
+                                    if index == last_index:
+                                        # use the predicates solr-field type, which may be numeric, date, string, or ID
+                                        act_solr_datatype = pres_solr_datatype
+                                    else:
+                                        # use an id field type, since this is in a hierarchy that contains children
+                                        act_solr_datatype = 'id'
+                                    solr_value = self._concat_solr_string_value(parent['slug'],
+                                                                                act_solr_datatype,
+                                                                                parent['id'],
+                                                                                parent['label'])
+                                    if act_solr_field not in self.fields:
+                                        self.fields[act_solr_field] = []
+                                    self.fields[act_solr_field].append(solr_value)
+                                    last_linked_pred_label = parent['label']
+                                    act_solr_field = \
+                                        self._convert_slug_to_solr(parent['slug'])\
+                                        + '___pred_' \
+                                        + act_solr_datatype
+                                # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
+                                self.fields['text'] += last_linked_pred_label + ': \n'
+                                act_pred_root_act_solr_field = act_solr_field
+                                if act_pred_root_act_solr_field not in self.fields:
+                                    self.fields[act_pred_root_act_solr_field] = []
+                                # --------------------------------
+                                # Now we handle the objects of this predicate!
+                                # 1. obs_values come from the item's observations,
+                                # 2. we treat literals differently than URI objects, since URI objects maybe in a hierarchy
+                                # --------------------------------
+                                if pred_datatype != '@id':
+                                    # objects of this predicate are literals
+                                    for obs_val in obs_values:
+                                        if isinstance(obs_val, dict):
+                                            if pred_datatype in obs_val:
+                                                self.fields[act_pred_root_act_solr_field].append(obs_val[pred_datatype])
+                                                self.fields['text'] += obs_val[pred_datatype] + '\n'
+                                        else:
+                                            self.fields[act_pred_root_act_solr_field].append(obs_val)
+                                            self.fields['text'] += str(obs_val) + '\n'
+                                else:
+                                    # objects of this predicate IDed by URIs
+                                    for obs_val in obs_values:
+                                        # gets the id for the observation object
+                                        obs_object_id = self.get_entity_id(obs_val)
+                                        # gets linked data equivalents of the obs-object-id
+                                        use_objects = self.get_equivalent_linked_data(obs_object_id)
+                                        if use_objects is False:
+                                            # no linked data equivalents found, so make a list w. 1 item
+                                            use_objects = [{'id': obs_object_id}]
+                                        for use_obj in use_objects:
+                                            # make sure the active solr field is reset to be from
+                                            # the last equivalent predicates. important if we're looping
+                                            # through multiple use_objects
+                                            act_solr_field = act_pred_root_act_solr_field
+                                            # URI objects can be in hierarchies, look for these!
+                                            object_id = self.get_entity_id(use_obj)
+                                            parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
+                                            for index, parent in enumerate(parents):
+                                                solr_value = self._concat_solr_string_value(parent['slug'],
+                                                                                            'id',
+                                                                                            parent['id'],
+                                                                                            parent['label'])
+                                                if act_solr_field not in self.fields:
+                                                    self.fields[act_solr_field] = []
+                                                self.fields[act_solr_field].append(solr_value)
+                                                last_object_label = parent['label']
+                                                act_solr_field = \
+                                                    self._convert_slug_to_solr(parent['slug']) \
+                                                    + '___' + act_solr_field
+                                            self.fields['text'] += last_object_label + '\n'
+
+    def get_linked_predicate_values(self, predicate_slug_id):
+        """ Gets all the values usef with a certain predicate
+        """
+        output = False
+        if 'oc-gen:has-obs' in self.oc_item.json_ld:
+            for obs in self.oc_item.json_ld['oc-gen:has-obs']:
+                obs_ok = True  # default, assume the observation is OK
+                if 'oc-gen:obsStatus' in obs:
+                    if obs['oc-gen:obsStatus'] != 'active':
+                        # observation should be ignored for indexing
+                        obs_ok = False
+                if predicate_slug_id in obs and obs_ok:
+                    if output is False:
+                        output = []
+                    output += obs[predicate_slug_id]
+        return output
+
+    def get_entity_linked_data(self, entity_id):
+        """ Finds linked data to add to index
+        """
+        output = False
+        if '@graph' in self.oc_item.json_ld:
+            for entity in self.oc_item.json_ld['@graph']:
+                act_entity_id = self.get_entity_id(entity) 
+                if act_entity_id == entity_id:
+                    output = entity
+                    break
+        return output
+
+    def get_equivalent_linked_data(self, oc_id):
+        """ Finds linked data asserted to be equivalent to the oc_id parameter """
+        output = False
+        entity = self.get_entity_linked_data(oc_id)
+        if entity is not False:
+            for equiv_pred in self.LD_EQUIVALENT_PREDICATES:
+                if equiv_pred in entity:
+                    if output is False:
+                        output = []
+                    output += entity[equiv_pred]  # adds list of equivalent entities
+        return output
+
+    def get_predicate_datatype(self, predicate_slug_id):
+        """ Finds linked data to add to index
+        """
+        output = False
+        if '@context' in self.oc_item.json_ld:
+            for act_entity_id, entity in self.oc_item.json_ld['@context'].items():
+                if act_entity_id == predicate_slug_id and 'type' in entity:
+                    output = entity['type']
+                    break
+        return output
+
+    def get_entity_id(self, entity_dict):
+        """ Gets the ID from an entity dictionary obj """
+        if 'id' in entity_dict:
+            output = entity_dict['id']
+        elif '@id' in entity_dict:
+            output = entity_dict['@id']
+        else:
+            output = False
+        return output

@@ -4,12 +4,14 @@ from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
 from django.db import models
 from django.db.models import Avg, Max, Min
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 class ProjectRels():
@@ -19,6 +21,8 @@ class ProjectRels():
 
     def __init__(self):
         self.sub_projects = False
+        self.parent_projects = []
+        self.child_entities = LastUpdatedOrderedDict()
 
     def get_sub_projects(self, uuid):
         """
@@ -30,6 +34,48 @@ class ProjectRels():
         else:
             self.sub_projects = False
         return self.sub_projects
+
+    def get_jsonldish_parents(self, uuid, add_original=True):
+        """
+        Gets parent projects for a project.
+        Returns a list of dictionary objects similar to JSON-LD expectations
+        This is useful for faceted search
+
+        If add_original is true, add the original UUID for the entity
+        that's the childmost item, at the bottom of the hierarchy
+        """
+        output = False
+        raw_parents = self.get_parents(uuid)
+        if(add_original):
+            # add the original identifer to the list of parents, at lowest rank
+            raw_parents.insert(0, uuid)
+        if len(raw_parents) > 0:
+            # reverse the order of the list, to make top most concept
+            # first
+            output = []
+            parents = raw_parents[::-1]
+            for par_id in parents:
+                ent = Entity()
+                found = ent.dereference(par_id)
+                if(found):
+                    p_item = LastUpdatedOrderedDict()
+                    p_item['id'] = ent.uri
+                    p_item['slug'] = ent.slug
+                    p_item['label'] = ent.label
+                    if(ent.data_type is not False):
+                        p_item['type'] = ent.data_type
+                    else:
+                        p_item['type'] = '@id'
+                    output.append(p_item)
+        return output
+
+    def get_parents(self, uuid):
+        """ gets the project parents , recursively"""
+        par_proj = Project.objects.filter(uuid=uuid).exclude(project_uuid=uuid)[:1]
+        if len(par_proj) > 0:
+            self.parent_projects.append(par_proj[0].project_uuid)
+            self.get_parents(par_proj[0].project_uuid) # recursively look for the parent of the parent
+        return self.parent_projects
 
 
 class ProjectMeta():

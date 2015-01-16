@@ -87,7 +87,7 @@ class PenMysql():
         """ Gets all the data belonging to a project """
         after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
-            self.get_project_tab_record(project_uuid, act_table)
+            self.get_project_tab_records(project_uuid, act_table)
 
     def get_project_tab_records(self, project_uuid, act_table):
         """ Gets all the data belonging to a project for a particular table """
@@ -264,8 +264,9 @@ class PenMysql():
             allow_write = self.check_allow_write(act_table, record)
             record = self.prep_update_keep_old(act_table, record)
             if(allow_write is False and self.update_keep_old is False):
-                print('\n Not allowed to overwite record.')
+                print('\n Not allowed to overwite record.' + str(record))
             else:
+                # print('\n Adding record:' + str(record))
                 newr = False
                 if(act_table == 'link_annotations'):
                     newr = LinkAnnotation(**record)
@@ -300,5 +301,8 @@ class PenMysql():
                 elif(act_table == 'oc_obsmetadata'):
                     newr = ObsMetadata(**record)
                 if(newr is not False):
-                    newr.save(force_insert=self.force_insert,
-                              force_update=self.update_keep_old)
+                    try:
+                        newr.save(force_insert=self.force_insert,
+                                  force_update=self.update_keep_old)
+                    except Exception as error:
+                        print('Something slipped past in ' + act_table + '...' + str(error))

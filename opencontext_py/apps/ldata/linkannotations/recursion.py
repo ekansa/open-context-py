@@ -26,8 +26,8 @@ class LinkRecursion():
         """
         output = False
         raw_parents = self.get_entity_parents(identifier)
-        if(add_original):# 
-            output = []  # add the original identifer to the list of parents, at lowest rank
+        if(add_original):
+            # add the original identifer to the list of parents, at lowest rank
             raw_parents.insert(0, identifier)
         if(len(raw_parents) > 0):
             output = []

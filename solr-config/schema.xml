@@ -205,6 +205,11 @@
     {"uuid as key": "label as value"}
 
 	-->
+    
+    <!-- to index parent projects which are a special kind of predicate of @type = "@id" values
+    the root context field is 'root___project_id'
+    -->
+    <dynamicField name="*___project_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
     the root context field is 'root___context_id'

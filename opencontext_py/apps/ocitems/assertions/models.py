@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime
+from django.utils import timezone
 from django.conf import settings
 from django.db import models
 
@@ -44,7 +45,7 @@ class Assertion(models.Model):
         """
         self.hash_id = self.make_hash_id()
         if self.created is None:
-            self.created = datetime.now()
+            self.created = timezone.now()
         super(Assertion, self).save(*args, **kwargs)
 
     def sort_save(self):

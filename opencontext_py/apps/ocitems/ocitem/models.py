@@ -581,8 +581,9 @@ class ItemConstruction():
                     if first_node:
                         # set aside a list of parent labels to use for making a dc-term:title
                         first_node = False
-                        for parent_obj in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
-                            self.parent_list.append(parent_obj['label'])
+                        if OCitem.PREDICATES_OCGEN_HASPATHITEMS in act_context:
+                            for parent_obj in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
+                                self.parent_list.append(parent_obj['label'])
         return act_dict
 
     def add_stable_ids(self, act_dict, item_type, stable_ids):

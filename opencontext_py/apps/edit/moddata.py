@@ -55,7 +55,7 @@ class DeleteMerge():
             output['message'] = ', merged into - '
             output['message'] += self.merge_manifest_obj.label + '(' + merge_into_uuid + ')'
             self.delete_manifest_obj.delete()  # deletes object from the manifest
-            self.delete_type_records(delete_uuid, delete_manifest_obj.item_type)
+            self.delete_type_records(delete_uuid, self.delete_manifest_obj.item_type)
             output['done'] = True
         return output
 
