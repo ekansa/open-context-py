@@ -43,16 +43,13 @@ SECRET_KEY = get_secret('SECRET_KEY')
 SOLR_PORT = get_secret('SOLR_PORT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-<<<<<<< HEAD
-DEBUG = False
-=======
 if get_secret('DEBUG') == 1:
     DEBUG = True
     TEMPLATE_DEBUG = True
 else:
     DEBUG = False
     TEMPLATE_DEBUG = False
->>>>>>> master
+
 
 ALLOWED_HOSTS = ['.opencontext.org']
 
