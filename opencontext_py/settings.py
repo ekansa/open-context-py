@@ -163,6 +163,9 @@ STATICFILES_DIRS = (
     '/static/',
 )
 STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
+if DEBUG is False:
+    STATIC_ROOT = get_secret('STATIC_ROOT')
+
 import socket
 
 #get the local host server name
