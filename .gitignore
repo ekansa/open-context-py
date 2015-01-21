@@ -17,4 +17,5 @@ solr-config/schema.xml.old
 secrets*
 secrets.json
 opencontext_py/secrets.json
+wsgi.py
 *.swp
