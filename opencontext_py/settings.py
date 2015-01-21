@@ -19,10 +19,17 @@ TEMPLATE_DIRS = (
 
 # The following reads secret settings from a JSON file called 'secrets.json'
 import json
+import os.path
 from django.core.exceptions import ImproperlyConfigured
-#get secret configuration information from the secrets.json file
-with open('secrets.json') as f:
-    secrets = json.loads(f.read())
+
+if os.path.isfile('secrets.json'):
+    # get secret configuration information from the secrets.json file
+    with open('secrets.json') as f:
+        secrets = json.loads(f.read())
+else:
+    # print('Trying ' + BASE_DIR + '/secrets.json')
+    with open(BASE_DIR + '/secrets.json') as f:
+        secrets = json.loads(f.read())
 
 
 def get_secret(setting, secrets=secrets):
@@ -39,7 +46,7 @@ def get_secret(setting, secrets=secrets):
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_secret('SECRET_KEY')
-
+SOLR_HOST = get_secret('SOLR_HOST')
 SOLR_PORT = get_secret('SOLR_PORT')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -51,7 +58,9 @@ else:
     TEMPLATE_DEBUG = False
 
 
-ALLOWED_HOSTS = ['.opencontext.org']
+ALLOWED_HOSTS = ['.opencontext.org',
+                 '195.37.231.141',
+                 '10.240.245.126']
 
 
 # Application definition
