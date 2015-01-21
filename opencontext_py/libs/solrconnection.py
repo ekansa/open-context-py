@@ -9,7 +9,7 @@ class SolrConnection():
     Provides a connection to our Solr instance. This is useful for both
     crawling and searching.
     '''
-    def __init__(self, solr_host='localhost', solr_port=settings.SOLR_PORT):
+    def __init__(self, solr_host=settings.SOLR_HOST, solr_port=settings.SOLR_PORT):
         self.session = requests.Session()
         solr_connection_string = 'http://' + solr_host + ':' + str(solr_port) \
             + '/solr'
