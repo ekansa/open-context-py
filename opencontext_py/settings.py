@@ -155,16 +155,20 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-ADMIN_MEDIA_PREFIX = '/static/admin/'
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR + '/static/'
-STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'static'),
-    '/static/',
-)
-STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
-if DEBUG is False:
+if DEBUG:
+    ADMIN_MEDIA_PREFIX = '/static/admin/'
+    STATIC_URL = '/static/'
+    STATIC_ROOT = BASE_DIR + '/static/'
+    STATICFILES_DIRS = (
+        os.path.join(BASE_DIR, 'static'),
+        '/static/',
+    )
+    STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
+else:
     STATIC_ROOT = get_secret('STATIC_ROOT')
+    STATICFILES_DIRS = (
+        normpath(join(BASE_DIR, 'static')),
+    )
 
 import socket
 
