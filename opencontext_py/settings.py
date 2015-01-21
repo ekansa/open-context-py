@@ -167,7 +167,7 @@ if DEBUG:
 else:
     STATIC_ROOT = get_secret('STATIC_ROOT')
     STATICFILES_DIRS = (
-        normpath(join(BASE_DIR, 'static')),
+        os.path.normpath(join(BASE_DIR, 'static')),
     )
 
 import socket
