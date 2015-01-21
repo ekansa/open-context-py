@@ -20,6 +20,7 @@ TEMPLATE_DIRS = (
 # The following reads secret settings from a JSON file called 'secrets.json'
 import json
 import os.path
+from os.path import abspath, basename, dirname, join, normpath
 from django.core.exceptions import ImproperlyConfigured
 
 if os.path.isfile('secrets.json'):
@@ -165,9 +166,11 @@ if DEBUG:
     )
     STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
 else:
+    ADMIN_MEDIA_PREFIX = '/static/admin/'
+    STATIC_URL = '/static/'
     STATIC_ROOT = get_secret('STATIC_ROOT')
     STATICFILES_DIRS = (
-        os.path.normpath.join(BASE_DIR, 'static'),
+        normpath(join(BASE_DIR, 'static')),
     )
 
 import socket
