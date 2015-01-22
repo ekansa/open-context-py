@@ -68,7 +68,9 @@ class Containment():
         """
         parent_uuid = False
         try:
-            parents = Assertion.objects.filter(object_uuid=child_uuid, predicate_uuid=Assertion.PREDICATES_CONTAINS)
+            parents = Assertion.objects.filter(object_uuid=child_uuid,
+                                               obs_num=1,
+                                               predicate_uuid=Assertion.PREDICATES_CONTAINS)
             for parent in parents:
                 if(parent.obs_node not in self.contexts):
                     self.contexts[parent.obs_node] = []
