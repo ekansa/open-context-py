@@ -130,7 +130,9 @@ Then clone Open Context from the GitHub repository for the project's production 
 
     git clone -b production https://github.com/ekansa/open-context-py.git
 
-Once you've used Git to clone Open Context, there are settings you need to provide. Edit "change-secrets.json" to be "secrets.json", and add the correct database passwords and other settings for your instance. Look at the Django documentation for generating a Django secret key to include in “secrets.json”.
+Once you've used Git to clone Open Context, there are settings you need to provide. Edit "change-secrets.json" to be "secrets.json", and add the correct database passwords and other settings for your instance. VERY IMPORTANT! In "secrets.json", change the "DEBUG" value to 0 so the application does not run in DEBUG mode. DEBUG mode is not safe for public exposure, since it reveals lots of details about how your site works. Look at the Django documentation for generating a Django secret key to include in “secrets.json”.
+
+You'll need to set a full path in "secrets.json" to the open-context-py/static directory. That directory contains javascript, css, and some media files. It seemed the easiest solution to deployment headaches, so that's the way it is now. Perhaps future versions will be more self-configuring.
 
 Also, here are some handy git commands to execute (assuming you are navigated into your project repository) to update your local instance of Open Context with what is on GitHub:
 
@@ -158,15 +160,110 @@ Now you can install the Python library for uWSGI:
 
     pip install uwsgi
 
-With that in place you've got an “interesting” challenge playing with the wsgi.py file in the Open Context Django app and various configuration settings with uwsgi.
+With that in place you've got an “interesting” challenge playing with the wsgi.py file in the Open Context Django app and various configuration settings with uwsgi. The open-context-py/opencontext_py/wsgi.py file has commented out code that seems useful on Linux servers. If you're having trouble getting uwsgi to work with the Open Context Django app, try using the commented out code.
 
 
-(2.2) Adding a uWSGI UNIX User:
+(2.2) Installing Nginx and Permissions Settings:
 
-Next we'll need to create a unix user for uWSGI so it can interact with the Ningx web server. To do so:
+One of the big headaches with configuration centers on read/write/execute permissions for Nginx and uWSGI for the UNIX socket that uWSGI makes for the Django application as the "upstream" source for Nginx. First of all, install the Nginx Web server if it's not already on your system:
+
+     sudo apt-get install nginx
+
+Once you've got it successfully installed. Start it up with:
+
+     sudo /etc/init.d/nginx restart
+ 
+Then you can check the unix userid for nginx:
+
+     ps aux | grep nginx
+
+Often Nginx will have a userid like "www-data". Getting the userid for Nginx is useful since it helps you set values for your uwsgi file.
+
+
+
+(2.3) Adding a uWSGI UNIX User:
+
+Next we'll need to create a unix user for uWSGI so it can interact with the Nginx web server. This assumes that your Nginx server has a userid of "www-data". To do so:
 
      sudo adduser uwsgi --no-create-home --disabled-login --disabled-password
-     sudo groupadd nginx
-     sudo usermod -a -G nginx uwsgi
+     sudo groupadd www-data
+     sudo usermod -a -G www-data uwsgi
+
+If you run onto permissions troubles, you make also want to add the Nginx userid to the "www-data" group. That way you can set group level permissions for read/write/execute. 
+
+     sudo adduser www-data --no-create-home --disabled-login --disabled-password
+     sudo usermod -a -G www-data www-data
 
 
+(2.4) Activating uWSGI with a Sample Configuration File:
+
+uWSGI can be configured in a million ways, but this describes a simple configuration to get started. We'll assume that you're putting Open Context as a sub-directory inside your virtual environment. Save the final configuration as "oc-uwsgi.ini":
+
+     [uwsgi]
+     home==/path/your-virtual-env/
+     virtualenv=/path/your-virtual-env/
+     chdir=/path/your-virtual-env/open-context-py
+     module=opencontext_py.wsgi:application
+     env=DJANGO_SETTINGS_MODULE=settings
+     uid=www-data
+     gid=www-data
+     master=true
+     vacuum=true
+     socket=/path/your-virtual-env/web/%n.sock
+     chmod-socket=666
+     pidfile=/path/your-virtual-env/web/%n.pid
+     no-site=true
+     daemonize=/path/your-virtual-env/web/%n.log
+     die-on-term = true
+     vhost=true
+
+This particular configuration seems to work on 2 different machines so far. So it seems it can't be too wrong. To start uwsgi, make sure you've activated your virtual environment then:
+
+```
+uwsgi --http-socket :8080 --ini /path/your-virtual-env/web/oc-uwsgi.ini
+```    
+
+The above starts a unix socket for servers (Nginx in our case) to use in passing HTTP requests from the outside world to the Open Context Django application. Note that the socket opperates on port 8080 in this case. Choose something that won't interfere with port 80 for outside Web requests. If all goes well, you will not see an error in the log (see the path in the "daemonize" parameter above). Use the log to help debug further, since problems with the Django app sometimes appear there. If you get uWSGI to work without error, congrats! That seems to be the hardest part.
+
+
+(2.5) Activating Nginx with a Sample Configuration File:
+
+Once you got uWSGI to work without error, you can set the configuration for Nginx. Here's a sample starter configuration that seems to work for us:
+
+```
+upstream django {
+   server unix:///var/oc-venv/oc.sock;
+}
+
+server {
+    listen  80;
+    server_name localhost;
+    charset utf-8;
+    access_log /path/your-virtual-env/web/nginx_access.log;
+    error_log /path/your-virtual-env/web/nginx_error.log;
+
+    location  /static/ {
+       autoindex on;
+       alias  /path/your-virtual-env/open-context-py/static/;
+    }
+
+    location / {
+        try_files $uri @django;
+    }
+
+    location @django {
+       uwsgi_pass django;
+       include uwsgi_params;
+    }
+}
+```
+
+You can save that file as something like "oc-nginx.conf" and leave it conveniently located in the "/path/your-virtual-env/web" directory with the other Web related configurations. Next you need to make a symbolic link so Nginx can find it and use it:
+
+    sudo ln -s /path/your-virtual-env/web/oc_nginx.conf /etc/nginx/sites-enabled/oc_nginx.conf
+
+Sometimes there's a "default" directory in "/etc/nginx/sites-enabled". This may mess things up, and if so, you may want to move or delete it. Once the symbolic link is in place, start Nginx!
+
+    sudo /etc/init.d/nginx restart
+
+If all goes well, you should be able to make Web requests to a working Open Context site. If not, then hopefully these directions will at least save a few of the many possible hours you can spend on painful configuration trouble shooting!
