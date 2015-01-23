@@ -197,7 +197,7 @@ If you run onto permissions troubles, you make also want to add the Nginx userid
 
 (2.4) Activating uWSGI with a Sample Configuration File:
 
-uWSGI can be configured in a million ways, but this describes a simple configuration to get started. We'll assume that you're putting Open Context as a sub-directory inside your virtual environment. Save the final configuration as "oc-uwsgi.ini":
+uWSGI can be configured in a million ways, but this describes a simple configuration to get started. We'll assume that you're putting Open Context as a sub-directory inside your virtual environment. Save the final configuration as "oc.ini":
 
      [uwsgi]
      home==/path/your-virtual-env/
@@ -220,7 +220,7 @@ uWSGI can be configured in a million ways, but this describes a simple configura
 This particular configuration seems to work on 2 different machines so far. So it seems it can't be too wrong. To start uwsgi, make sure you've activated your virtual environment then:
 
 ```
-uwsgi --http-socket :8080 --ini /path/your-virtual-env/web/oc-uwsgi.ini
+uwsgi --http-socket :8080 --ini /path/your-virtual-env/web/oc.ini
 ```    
 
 The above starts a unix socket for servers (Nginx in our case) to use in passing HTTP requests from the outside world to the Open Context Django application. Note that the socket opperates on port 8080 in this case. Choose something that won't interfere with port 80 for outside Web requests. If all goes well, you will not see an error in the log (see the path in the "daemonize" parameter above). Use the log to help debug further, since problems with the Django app sometimes appear there. If you get uWSGI to work without error, congrats! That seems to be the hardest part.
@@ -232,7 +232,7 @@ Once you got uWSGI to work without error, you can set the configuration for Ngin
 
 ```
 upstream django {
-   server unix:///var/oc-venv/oc.sock;
+   server unix:///path/your-virtual-env/web//oc.sock;
 }
 
 server {
