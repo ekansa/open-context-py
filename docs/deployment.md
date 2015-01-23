@@ -144,7 +144,7 @@ PART 2: WEB-SERVER CONFIGURATION
 --------------------------------
 Once you have the production source code in place, you're ready for the real fun (FUN!) of configuring this Django application to actually work on the Web. The following description centers on using uWSGI and Nginx. Though lots of Websites claim it's easy to deploy a Django application with uWSGI and Nginx, I (a novice) found it to be a confusing configuration nightmare. So, it's probably well worth sharing how I actually (finally) got this to work on a production website. 
 
-(2.1) Installing uWSGI
+(2.1) Installing uWSGI:
 
 You'll need to get uWSGI to work. uWSGI acts between the Django application and the Web server, linking requests from the server to the Django application. Configuring and trouble shooting uWSGI can be a major, major, major pain in the next for a novice. To install uWSGI, first install some libraries:
 
@@ -159,3 +159,14 @@ Now you can install the Python library for uWSGI:
     pip install uwsgi
 
 With that in place you've got an “interesting” challenge playing with the wsgi.py file in the Open Context Django app and various configuration settings with uwsgi.
+
+
+(2.2) Adding a uWSGI UNIX User:
+
+Next we'll need to create a unix user for uWSGI so it can interact with the Ningx web server. To do so:
+
+     sudo adduser uwsgi --no-create-home --disabled-login --disabled-password
+     sudo groupadd nginx
+     sudo usermod -a -G nginx uwsgi
+
+
