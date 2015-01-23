@@ -200,8 +200,8 @@ If you run onto permissions troubles, you make also want to add the Nginx userid
 uWSGI can be configured in a million ways, but this describes a simple configuration to get started. We'll assume that you're putting Open Context as a sub-directory inside your virtual environment. Save the final configuration as "oc.ini":
 
      [uwsgi]
-     home==/path/your-virtual-env/
-     virtualenv=/path/your-virtual-env/
+     home=/path/your-virtual-env
+     virtualenv=/path/your-virtual-env
      chdir=/path/your-virtual-env/open-context-py
      module=opencontext_py.wsgi:application
      env=DJANGO_SETTINGS_MODULE=settings
