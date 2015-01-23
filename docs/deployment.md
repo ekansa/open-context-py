@@ -232,7 +232,7 @@ Once you got uWSGI to work without error, you can set the configuration for Ngin
 
 ```
 upstream django {
-   server unix:///path/your-virtual-env/web//oc.sock;
+   server unix:///path/your-virtual-env/web/oc.sock;
 }
 
 server {
