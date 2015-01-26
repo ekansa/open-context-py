@@ -1,3 +1,4 @@
+from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -15,6 +16,8 @@ class FilterLinks():
     def __init__(self, request_dict=False):
         self.base_search_link = '/sets/'
         self.base_request = request_dict
+        self.base_r_full_path = False
+        self.spatial_context = False
         self.testing = True
 
     def make_request_urls(self, new_rparams):
@@ -71,8 +74,10 @@ class FilterLinks():
                        new_value,
                        add_to_value=None):
         """ adds to the new request object a parameter and value """
-        new_rparams = self.base_request
-        print(str(self.base_request))
+        if self.base_r_full_path is False:
+            new_rparams = self.base_request
+        else:
+            new_rparams = self.make_base_params_from_url(self.base_r_full_path)
         if param not in new_rparams:
             if param == 'path':
                 new_rparams[param] = new_value
@@ -102,6 +107,33 @@ class FilterLinks():
                 else:
                     new_rparams[param].append(new_value)
         return new_rparams
+
+    def make_base_params_from_url(self, request_url):
+        """ makes the base parameters from the url """
+        rparams = {}
+        url_o = urlparse(request_url)
+        rparams = parse_qs(url_o.query)
+        if self.spatial_context is False:
+            self.spatial_context = self.get_context_from_path(url_o.path)
+        rparams['path'] = self.spatial_context
+        return rparams
+
+    def get_context_from_path(self, path):
+        """ geths the spatial context from a request path """
+        context = False
+        if '.' in path:
+            pathex = path.split('.')
+            path = pathex[0]
+        if '/' in path:
+            pathex = path.split('/')
+            print(str(pathex))
+            if len(pathex) > 2:
+                # remove the part that's the first slash
+                pathex.pop(0)
+                # remove the part that's for the url of search
+                pathex.pop(0)
+            context = '/'.join(pathex)
+        return context
 
     def get_param_from_solr_facet_key(self, solr_facet_key):
         """" returns the public parameter from the solr_facet_key """

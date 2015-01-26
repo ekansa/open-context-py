@@ -13,7 +13,8 @@ class MakeJsonLd():
 
     def __init__(self, request_dict):
         self.request_dict = request_dict
-        self.requst_full_path = False
+        self.request_full_path = False
+        self.spatial_context = False
         self.id = False
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
@@ -71,14 +72,15 @@ class MakeJsonLd():
         self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.make_facets(solr_json)
-        self.json_ld['solr'] = solr_json
+        if settings.DEBUG:
+            self.json_ld['solr'] = solr_json
         return self.json_ld
 
     def make_id(self):
         """ makes the ID for the document """
         if self.id is not False:
             output = self.id
-        elif self.requst_full_path is not False:
+        elif self.request_full_path is not False:
             output = settings.CANONICAL_HOST + self.request_full_path
         else:
             output = False
@@ -209,15 +211,16 @@ class MakeJsonLd():
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
         fl = FilterLinks()
-        fl.prep_base_request_obj(self.request_dict)
+        fl.base_r_full_path = self.request_full_path
+        fl.spatial_context = self.spatial_context
         facet_key_list = solr_facet_value_key.split('___')
         output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
             slug = facet_key_list[0]
-            new_request = FilterLinks(self.request_dict).add_to_request_by_solr_field(solr_facet_key,
-                                                                                      slug)
-            output['id'] = fl.make_request_url(new_request)
-            output['json'] = fl.make_request_url(new_request, '.json')
+            new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                          slug)
+            output['id'] = fl.make_request_url(new_rparams)
+            output['json'] = fl.make_request_url(new_rparams, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
                 output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:
@@ -227,7 +230,6 @@ class MakeJsonLd():
             output['slug'] = slug
             output['data-type'] = facet_key_list[1]
             output['data-type'] = 'id'
-            output['r-s'] = self.request_dict
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):

@@ -5,6 +5,7 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
+from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
 def index(request, spatial_context=None):
@@ -24,6 +25,7 @@ def json_view(request, spatial_context=None):
     response = solr_s.search_solr(request_dict)
     m_json_ld = MakeJsonLd(request_dict)
     m_json_ld.request_full_path = request.get_full_path()
+    m_json_ld.spatial_context = spatial_context
     json_ld = m_json_ld.convert_solr_json(response.raw_content)
     return HttpResponse(json.dumps(json_ld,
                         ensure_ascii=False, indent=4),
