@@ -229,16 +229,19 @@ class MakeJsonLd():
             output['count'] = solr_facet_count
             output['slug'] = slug
             output['data-type'] = facet_key_list[1]
-            output['data-type'] = 'id'
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
         act_dict_obj = dict_obj
         for key in key_path_list:
-            if key in act_dict_obj:
-                act_dict_obj = act_dict_obj[key]
-                output = act_dict_obj
+            if isinstance(act_dict_obj, dict): 
+                if key in act_dict_obj:
+                    act_dict_obj = act_dict_obj[key]
+                    output = act_dict_obj
+                else:
+                    output = default
+                    break
             else:
                 output = default
                 break

@@ -147,6 +147,34 @@ class QueryMaker():
         output['suffix'] = self.get_solr_field_type(entity.data_type)
         return output
 
+    def _process_single_hierarchy_param(self,
+                                        hparam,
+                                        param_type='pred'):
+        # TODO docstring
+        output_dict = {}
+        # Get the value
+        hparam = prop.pop()
+        entity = Entity()
+        found = entity.dereference(value)
+        # A single property (e.g., ?prop=24--object-type)
+        if len(prop) == 0:
+            prop_dict['fq'] = 'root___pred_id_fq:' + value
+            if found:
+                field_parts = self.make_prop_solr_field_parts(entity)
+                prop_dict['facet.field'] = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+            else:
+                prop_dict['facet.field'] = SolrDocument.ROOT_PREDICATE_SOLR
+        # Multiple properties
+        else:
+            facet_field = ''
+            for property in range(len(prop)):
+                facet_field += prop.pop().replace('-', '_') + '___'
+            facet_field += 'pred_id'
+            prop_dict['facet.field'] = facet_field
+            fq = facet_field + '_fq:' + value
+            prop_dict['fq'] = fq
+        return prop_dict
+
     def _process_single_select_prop(self, prop):
         # TODO docstring
         prop_dict = {}

@@ -1,5 +1,5 @@
 from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
@@ -40,14 +40,16 @@ class FilterLinks():
         if 'path' in new_rparams:
             if new_rparams['path'] is not None \
                and new_rparams['path'] is not False:
-                url += urlquote(new_rparams['path'])
-        new_rparams.pop('path', None)
+                context_path = quote_plus(new_rparams['path'])
+                context_path = context_path.replace('%2F', '/')
+                url += context_path
         url += doc_format
         param_sep = '?'
         for param, param_vals in new_rparams.items():
-            for val in param_vals:
-                url += param_sep + param + '=' + urlquote(val)
-                param_sep = '&'
+            if param != 'path':
+                for val in param_vals:
+                    url += param_sep + param + '=' + quote_plus(val)
+                    param_sep = '&'
         return url
 
     def add_to_request_by_solr_field(self,
@@ -78,6 +80,12 @@ class FilterLinks():
             new_rparams = self.base_request
         else:
             new_rparams = self.make_base_params_from_url(self.base_r_full_path)
+        if param == 'path':
+            entity = Entity()
+            entity.get_context = True
+            found = entity.dereference(new_value)
+            if found:
+                new_value = entity.context
         if param not in new_rparams:
             if param == 'path':
                 new_rparams[param] = new_value
@@ -85,10 +93,7 @@ class FilterLinks():
                 new_rparams[param] = [new_value]
         else:
             if param == 'path':
-                if add_to_value is not None:
-                    new_rparams['path'] += '/' + new_value
-                else:
-                    new_rparams['path'] = new_value
+                new_rparams['path'] = new_value
             else:
                 if add_to_value is not None:
                     new_list = []
