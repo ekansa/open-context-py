@@ -91,6 +91,8 @@ class SolrSearch():
                         output = param_obj
                     else:
                         output = [param_obj]
+                else:
+                    output = default
             else:
                 if param in request_dict:
                     output = request_dict[param]

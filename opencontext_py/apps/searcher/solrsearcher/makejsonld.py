@@ -12,8 +12,8 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 class MakeJsonLd():
 
     def __init__(self, request_dict):
-        self.requst_full_path = False
         self.request_dict = request_dict
+        self.requst_full_path = False
         self.id = False
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
@@ -119,11 +119,11 @@ class MakeJsonLd():
             json_ld_facets = []
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
+                count_raw_values = len(solr_facet_values)
                 id_options = []
                 num_options = []
                 date_options = []
                 string_options = []
-                count_raw_values = len(solr_facet_values)
                 i = -1
                 for solr_facet_value_key in solr_facet_values[::2]:
                     i += 2
@@ -209,13 +209,13 @@ class MakeJsonLd():
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
         fl = FilterLinks()
+        fl.prep_base_request_obj(self.request_dict)
         facet_key_list = solr_facet_value_key.split('___')
         output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
             slug = facet_key_list[0]
-            new_request = fl.add_to_new_request_by_solr_field(self.request_dict,
-                                                              solr_facet_key,
-                                                              slug)
+            new_request = FilterLinks(self.request_dict).add_to_request_by_solr_field(solr_facet_key,
+                                                                                      slug)
             output['id'] = fl.make_request_url(new_request)
             output['json'] = fl.make_request_url(new_request, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
@@ -226,7 +226,8 @@ class MakeJsonLd():
             output['count'] = solr_facet_count
             output['slug'] = slug
             output['data-type'] = facet_key_list[1]
-        fl = None
+            output['data-type'] = 'id'
+            output['r-s'] = self.request_dict
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
