@@ -1,3 +1,4 @@
+import json
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
@@ -16,6 +17,7 @@ class FilterLinks():
     def __init__(self, request_dict=False):
         self.base_search_link = '/sets/'
         self.base_request = request_dict
+        self.base_request_json = False
         self.base_r_full_path = False
         self.spatial_context = False
         self.testing = True
@@ -76,15 +78,24 @@ class FilterLinks():
                        new_value,
                        add_to_value=None):
         """ adds to the new request object a parameter and value """
-        if self.base_r_full_path is False:
+        if self.base_request_json is not False:
+            # start of with JSON encoded base request parameters
+            new_rparams = json.loads(self.base_request_json)
+        elif self.base_r_full_path is not False:
+            # start of with parsing a URL string
+            new_rparams = self.make_base_params_from_url(self.base_r_full_path)
+        elif self.base_request is not False:
+            # start with a dictionary object of the base request
+            # for some reason this often leads to memory errors
             new_rparams = self.base_request
         else:
-            new_rparams = self.make_base_params_from_url(self.base_r_full_path)
+            new_rparams = {}
         if param == 'path':
             entity = Entity()
             entity.get_context = True
             found = entity.dereference(new_value)
             if found:
+                # convert the (slug) value into a context path
                 new_value = entity.context
         if param not in new_rparams:
             if param == 'path':

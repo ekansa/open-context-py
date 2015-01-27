@@ -1,5 +1,6 @@
-from datetime import datetime
 import time
+import json
+from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
@@ -13,6 +14,9 @@ class MakeJsonLd():
 
     def __init__(self, request_dict):
         self.request_dict = request_dict
+        self.request_dict_json = json.dumps(request_dict,
+                                            ensure_ascii=False,
+                                            indent=4)
         self.request_full_path = False
         self.spatial_context = False
         self.id = False
@@ -211,6 +215,7 @@ class MakeJsonLd():
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
         fl = FilterLinks()
+        fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
         fl.spatial_context = self.spatial_context
         facet_key_list = solr_facet_value_key.split('___')
