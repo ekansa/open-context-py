@@ -171,6 +171,7 @@ class GlobalMercator(object):
         # 156543.03392804062 for tileSize 256 pixels
         self.originShift = 2 * math.pi * 6378137 / 2.0
         # 20037508.342789244
+        self.MAX_ZOOM = 20
 
     def LatLonToMeters(self, lat, lon):
         "Converts given lat/lon in WGS84 Datum to XY in Spherical Mercator EPSG:900913"
@@ -281,19 +282,23 @@ class GlobalMercator(object):
             i -= 1
         ty = ((1 << zoom) - 1) - ty
         return tx, ty
-    
-    def geojson_coords_to_quadtree(self, coords, zoom = 20):
+
+    def geojson_coords_to_quadtree(self, coords, zoom=False):
         """
         Added by Eric Kansa to make it easier to get
         a quad tree from GeoJSON point coordinates
         """
+        if zoom is False:
+            zoom = self.MAX_ZOOM
         return self.lat_lon_to_quadtree(coords[1], coords[0], zoom)
 
-    def lat_lon_to_quadtree(self, lat, lon, zoom = 20):
+    def lat_lon_to_quadtree(self, lat, lon, zoom=False):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
         Converts latitude longitude coordinates to a quadtree tile
         """
+        if zoom is False:
+            zoom = self.MAX_ZOOM
         lat = float(lat)
         lon = float(lon)
         mx, my = self.LatLonToMeters(lat, lon)
