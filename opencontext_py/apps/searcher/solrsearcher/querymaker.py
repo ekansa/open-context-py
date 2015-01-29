@@ -139,6 +139,7 @@ class QueryMaker():
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
+                    proj_slug = entity.slug
                     fq_path_term = fq_field + ':' + proj_slug + '*'
                 else:
                     fq_path_term = fq_field + ':' + proj_slug
@@ -172,6 +173,7 @@ class QueryMaker():
                 if found is False:
                     found = entity.dereference(prop_slug, prop_slug)
                 if found:
+                    prop_slug = entity.slug
                     if i == 0:
                         if entity.item_type != 'uri':
                             act_field = SolrDocument.ROOT_PREDICATE_SOLR
