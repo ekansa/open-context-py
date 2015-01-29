@@ -9,9 +9,11 @@
 #header-logo {
 	padding-top: 1%;
 	padding-bottom: 1%;
+	margin-right: 4px;
 }
 #header-oc {
 	font-family:"Palatino Linotype", "Book Antiqua", Palatino, serif;
+	margin-left: 6px;
 }
 #header-oc h1 {
 	text-transform:uppercase;
