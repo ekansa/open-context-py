@@ -75,19 +75,6 @@ class QueryMaker():
         return parent_child_set[0].replace('-', '_') + '___context_id_fq:' + \
             parent_child_set[1]
 
-    def _process_prop_list(self, prop_list):
-        # TODO docstring
-        props = (prop.split(' ') for prop in prop_list)
-        prop_dict_list = []
-        for prop in props:
-            # If multi-select
-            if any('||' in property for property in prop):
-                prop_dict_list.append(self._process_multi_select_prop(prop))
-            else:
-                # Otherwise, single-select
-                prop_dict_list.append(self._process_single_select_prop(prop))
-        return prop_dict_list
-
     def expand_hierarchy_options(self,
                                  path_param_val,
                                  hier_delim=' ',
@@ -111,48 +98,12 @@ class QueryMaker():
                 path_list.append(list(item))
         return path_list
 
-    def _process_multi_select_prop(self, prop):
-        # TODO docstring
-        prop_dict = {}
-        # Modify the prop so each property is in its own list
-        prop_list = (item.split('||') for item in prop)
-        # Generate a list of the various permutations of multi-selected properties
-        prop_tuple_list = list(itertools.product(*prop_list))
-        # Turn the resulting list of tuples into a list of lists
-        prop_list = (list(item) for item in prop_tuple_list)
-        prop_facet_field_list = []
-        prop_fq_list = []
-        for prop in prop_list:
-            value = prop.pop()
-            entity = Entity()
-            found = entity.dereference(value)
-            if len(prop) == 0:
-                if found:
-                    field_parts = self.make_prop_solr_field_parts(entity)
-                    prop_facet_field_list.append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
-                prop_fq_list.append('root___pred_id_fq:' + value)
-            else:
-                facet_field = ''
-                for property in range(len(prop)):
-                    facet_field += prop.pop().replace('-', '_') + '___'
-                    facet_field += 'pred_id'
-                    if facet_field not in prop_facet_field_list:
-                        prop_facet_field_list.append(facet_field)
-                    fq = facet_field + '_fq:' + value
-                    prop_fq_list.append(fq)
-        prop_dict['facet.field'] = prop_facet_field_list
-        # Create fq string of multi-selected OR props
-        prop_fq_string = ' OR '.join(fq for fq in prop_fq_list)
-        prop_fq_string = '(' + prop_fq_string + ')'
-        prop_dict['fq'] = prop_fq_string
-        return prop_dict
-
     def get_solr_field_type(self, data_type, prefix=''):
         '''
         Defines whether our dynamic solr fields names for
         predicates end with ___pred_id, ___pred_numeric, etc.
         '''
-        if data_type in ['@id', 'id']:
+        if data_type in ['@id', 'id', False]:
             return prefix + 'id'
         elif data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
             return prefix + 'numeric'
@@ -204,6 +155,50 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
+    def process_prop(self, props):
+        # TODO docstring
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        prop_path_lists = self.expand_hierarchy_options(props)
+        for prop_path_list in prop_path_lists:
+            i = 0
+            path_list_len = len(prop_path_list)
+            fq_path_terms = []
+            act_field = SolrDocument.ROOT_PREDICATE_SOLR
+            for prop_slug in prop_path_list:
+                entity = Entity()
+                found = entity.dereference(prop_slug)
+                if found is False:
+                    found = entity.dereference(prop_slug, prop_slug)
+                if found:
+                    if i == 0:
+                        if entity.item_type != 'uri':
+                            act_field = SolrDocument.ROOT_PREDICATE_SOLR
+                        else:
+                            act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                    # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
+                    # the below is a bit of a hack. We should have a query field
+                    # as with ___pred_ to query just the slug. But this works for now
+                    fq_field = act_field + '_fq'
+                    fq_path_term = fq_field + ':' + prop_slug
+                    fq_path_terms.append(fq_path_term)
+                    field_parts = self.make_prop_solr_field_parts(entity)
+                    if i < 1:
+                        act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                    else:
+                        act_field = field_parts['prefix'] + '___' + act_field
+                i += 1
+                if i >= path_list_len and act_field not in query_dict['facet.field']:
+                    query_dict['facet.field'].append(act_field)
+            final_path_term = ' AND '.join(fq_path_terms)
+            final_path_term = '(' + final_path_term + ')'
+            fq_terms.append(final_path_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
     def make_solr_value_from_entity(self, entity, value_type='id'):
         """ makes a solr value as indexed in SolrDocument
             see _concat_solr_string_value
@@ -215,32 +210,6 @@ class QueryMaker():
         return entity.slug + '___' + value_type + '___' + \
             id_part + '___' + entity.label
         return output
-
-    def _process_single_select_prop(self, prop):
-        # TODO docstring
-        prop_dict = {}
-        # Get the value
-        value = prop.pop()
-        entity = Entity()
-        found = entity.dereference(value)
-        # A single property (e.g., ?prop=24--object-type)
-        if len(prop) == 0:
-            prop_dict['fq'] = 'root___pred_id_fq:' + value
-            if found:
-                field_parts = self.make_prop_solr_field_parts(entity)
-                prop_dict['facet.field'] = field_parts['prefix'] + '___pred_' + field_parts['suffix']
-            else:
-                prop_dict['facet.field'] = SolrDocument.ROOT_PREDICATE_SOLR
-        # Multiple properties
-        else:
-            facet_field = ''
-            for property in range(len(prop)):
-                facet_field += prop.pop().replace('-', '_') + '___'
-            facet_field += 'pred_id'
-            prop_dict['facet.field'] = facet_field
-            fq = facet_field + '_fq:' + value
-            prop_dict['fq'] = fq
-        return prop_dict
 
     def _process_spatial_context(self, spatial_context=None):
         # TODO docstring

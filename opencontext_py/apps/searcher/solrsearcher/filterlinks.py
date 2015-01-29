@@ -5,6 +5,7 @@ from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from django.utils.encoding import iri_to_uri
 
 
 class FilterLinks():
@@ -42,8 +43,9 @@ class FilterLinks():
         if 'path' in new_rparams:
             if new_rparams['path'] is not None \
                and new_rparams['path'] is not False:
-                context_path = quote_plus(new_rparams['path'])
-                context_path = context_path.replace('%2F', '/')
+                # context_path = iri_to_uri(new_rparams['path'])
+                context_path = new_rparams['path']
+                context_path = context_path.replace(' ', '+')
                 url += context_path
         url += doc_format
         param_sep = '?'

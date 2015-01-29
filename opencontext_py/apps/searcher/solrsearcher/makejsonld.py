@@ -201,6 +201,8 @@ class MakeJsonLd():
             slug = facet_key_list[0].replace('_', '-')
             entity = Entity()
             found = entity.dereference(slug)
+            if found is False:
+                found = entity.dereference(slug, slug)
             if found:
                 facet['id'] = id_prefix + '-' + entity.slug
                 facet['rdfs:isDefinedBy'] = entity.uri

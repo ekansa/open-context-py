@@ -53,6 +53,7 @@ class SolrSearch():
         query['fq'].append(context['fq'])
         query['facet.field'] += context['facet.field']  # context facet fields, always a list
         # Descriptive Properties
+        """
         prop_list = self.get_request_param(request_dict,
                                            'prop',
                                            False,
@@ -64,6 +65,16 @@ class SolrSearch():
                     query['fq'].append(prop['fq'])
                 if prop['facet.field'] not in query['facet.field']:
                     query['facet.field'].append(prop['facet.field'])
+        """
+        # Properties and Linked Data
+        props = self.get_request_param(request_dict,
+                                       'prop',
+                                       False,
+                                       True)
+        if props is not False:
+            prop_query = qm.process_prop(props)
+            query['fq'] += prop_query['fq']
+            query['facet.field'] += prop_query['facet.field']
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
