@@ -656,8 +656,14 @@ class ItemConstruction():
         creates a list for an act_predicate of the json_ld dictionary object if it doesn't exist
         adds a list item of a dictionary object for a linked Open Context item
         """
+        object_ids = []
         if act_pred_key in act_dict:
             act_list = act_dict[act_pred_key]
+            for obj in act_list:
+                if 'id' in obj:
+                    object_ids.append(obj['id'])
+                elif '@id' in obj:
+                    object_ids.append(obj['@id'])
         else:
             act_list = []
         new_object_item = LastUpdatedOrderedDict()
@@ -684,7 +690,8 @@ class ItemConstruction():
                     new_object_item['type'] = ent.class_uri
                     if(ent.class_uri not in self.class_type_list):
                         self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
-                act_list.append(new_object_item)
+                if new_object_item['id'] not in object_ids:
+                    act_list.append(new_object_item)
                 act_dict[act_pred_key] = act_list
             elif(act_pred_key == 'oc-gen:hasIcon'):
                 act_dict[act_pred_key] = [{'id': object_id}]
@@ -740,6 +747,7 @@ class ItemConstruction():
         auth = Authorship()
         auth.get_project_authors(self.project_uuid)
         proj_creators = []
+        proj_creators_ids = []
         for proj_creator in auth.creators:
             new_object_item = LastUpdatedOrderedDict()
             ent = self.get_entity_metadata(proj_creator)
@@ -749,15 +757,27 @@ class ItemConstruction():
                 new_object_item['label'] = ent.label
                 if ent.class_uri is not False:
                     new_object_item['type'] = ent.class_uri
-                proj_creators.append(new_object_item)
+                if ent.uri not in proj_creators_ids:
+                    # no duplicate IDs
+                    proj_creators_ids.append(ent.uri)
+                    proj_creators.append(new_object_item)
         if(len(self.dc_contrib_preds) > 0 or len(self.dc_creator_preds) > 0):
             contribs = self.get_dc_authorship(act_dict, self.dc_contrib_preds)
             creators = self.get_dc_authorship(act_dict, self.dc_creator_preds)
         if creators is False:
             creators = proj_creators
+            print('creators: ' + str(creators))
         else:
+            proj_creators_ids = []
             for proj_creator in proj_creators:
-                creators.append(proj_creator)
+                if 'id' in proj_creator:
+                    uri = proj_creator['id']
+                elif '@id' in proj_creator:
+                    uri = proj_creator['id']
+                if uri not in proj_creators_ids:
+                    # no duplicate IDs
+                    proj_creators_ids.append(uri)
+                    creators.append(proj_creator)
         if(contribs is not False):
             if('dc-terms:contributor' in act_dict):
                 act_dict['dc-terms:contributor'] = self.add_unique_entity_lists(act_dict['dc-terms:contributor'],
