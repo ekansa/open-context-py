@@ -64,6 +64,14 @@ class SolrSearch():
                     query['fq'].append(prop['fq'])
                 if prop['facet.field'] not in query['facet.field']:
                     query['facet.field'].append(prop['facet.field'])
+        # Project
+        proj = self.get_request_param(request_dict,
+                                      'proj',
+                                      False)
+        if proj is not False:
+            proj_query = qm.process_proj(proj)
+            query['fq'] += proj_query['fq']
+            query['facet.field'] += proj_query['facet.field']
         query = self.add_default_facet_fields(query)
         return query
 
@@ -91,6 +99,8 @@ class SolrSearch():
                         output = param_obj
                     else:
                         output = [param_obj]
+                else:
+                    output = default
             else:
                 if param in request_dict:
                     output = request_dict[param]

@@ -211,6 +211,9 @@
     -->
     <dynamicField name="*___project_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
+    <dynamicField name="*___project_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+    
+    
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
     the root context field is 'root___context_id'
     -->

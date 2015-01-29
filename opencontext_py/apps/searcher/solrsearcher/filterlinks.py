@@ -1,4 +1,6 @@
-from django.utils.http import urlquote
+import json
+from urllib.parse import urlparse, parse_qs
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
@@ -12,21 +14,24 @@ class FilterLinks():
          '___context_id': 'path',
          '___pred_': 'prop'}
 
-    def __init__(self):
+    def __init__(self, request_dict=False):
         self.base_search_link = '/sets/'
-        self.base_request = False
+        self.base_request = request_dict
+        self.base_request_json = False
+        self.base_r_full_path = False
+        self.spatial_context = False
         self.testing = True
 
-    def make_request_urls(self, new_request):
+    def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """
         output = {}
-        output['html'] = self.make_request_url(new_request)
-        output['json'] = self.make_request_url(new_request, '.json')
-        output['atom'] = self.make_request_url(new_request, '.atom')
+        output['html'] = self.make_request_url(new_rparams)
+        output['json'] = self.make_request_url(new_rparams, '.json')
+        output['atom'] = self.make_request_url(new_rparams, '.atom')
         return output
 
     def make_request_url(self,
-                         new_request,
+                         new_rparams,
                          doc_format=''):
         """ makes request urls from the new request object
             default doc_format is '' (HTML)
@@ -34,23 +39,24 @@ class FilterLinks():
         url = settings.CANONICAL_HOST + self.base_search_link
         if self.testing:
             url = 'http://127.0.0.1:8000' + self.base_search_link
-        if 'path' in new_request:
-            if new_request['path'] is not None \
-               and new_request['path'] is not False:
-                url += urlquote(new_request['path'])
-        new_request.pop('path', None)
+        if 'path' in new_rparams:
+            if new_rparams['path'] is not None \
+               and new_rparams['path'] is not False:
+                context_path = quote_plus(new_rparams['path'])
+                context_path = context_path.replace('%2F', '/')
+                url += context_path
         url += doc_format
         param_sep = '?'
-        for param, param_vals in new_request.items():
-            for val in param_vals:
-                url += param_sep + param + '=' + urlquote(val)
-                param_sep = '&'
+        for param, param_vals in new_rparams.items():
+            if param != 'path':
+                for val in param_vals:
+                    url += param_sep + param + '=' + quote_plus(val)
+                    param_sep = '&'
         return url
 
-    def add_to_new_request_by_solr_field(self,
-                                         new_request,
-                                         solr_facet_key,
-                                         new_value):
+    def add_to_request_by_solr_field(self,
+                                     solr_facet_key,
+                                     new_value):
         """ uses the solr_facet_key to determine the
            request parameter
         """
@@ -61,34 +67,49 @@ class FilterLinks():
             # print('Add-to-value' + add_to_value)
         else:
             add_to_value = None
-        new_request = self.add_to_new_request(new_request,
-                                              param,
-                                              new_value,
-                                              add_to_value)
-        return new_request
+        #print('New param: ' + param + ' new val: ' + new_value + ' len:' + str(self.base_request))
+        new_rparams = self.add_to_request(param,
+                                          new_value,
+                                          add_to_value)
+        return new_rparams
 
-    def add_to_new_request(self,
-                           new_request,
-                           param,
-                           new_value,
-                           add_to_value=None):
+    def add_to_request(self,
+                       param,
+                       new_value,
+                       add_to_value=None):
         """ adds to the new request object a parameter and value """
-        if param not in new_request:
+        if self.base_request_json is not False:
+            # start of with JSON encoded base request parameters
+            new_rparams = json.loads(self.base_request_json)
+        elif self.base_r_full_path is not False:
+            # start of with parsing a URL string
+            new_rparams = self.make_base_params_from_url(self.base_r_full_path)
+        elif self.base_request is not False:
+            # start with a dictionary object of the base request
+            # for some reason this often leads to memory errors
+            new_rparams = self.base_request
+        else:
+            new_rparams = {}
+        if param == 'path':
+            entity = Entity()
+            entity.get_context = True
+            found = entity.dereference(new_value)
+            if found:
+                # convert the (slug) value into a context path
+                new_value = entity.context
+        if param not in new_rparams:
             if param == 'path':
-                new_request[param] = new_value
+                new_rparams[param] = new_value
             else:
-                new_request[param] = [new_value]
+                new_rparams[param] = [new_value]
         else:
             if param == 'path':
-                if add_to_value is not None:
-                    new_request['path'] += '/'.new_value
-                else:
-                    new_request['path'] = new_value
+                new_rparams['path'] = new_value
             else:
                 if add_to_value is not None:
                     new_list = []
                     old_found = False
-                    for old_val in new_request[param]:
+                    for old_val in new_rparams[param]:
                         # print('Old val:' + old_val + ' add to:' + add_to_value)
                         if old_val == add_to_value:
                             old_found = True
@@ -96,12 +117,39 @@ class FilterLinks():
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)
-                    new_request[param] = new_list
+                    new_rparams[param] = new_list
                     if old_found is False:
-                        new_request[param].append(new_value)
+                        new_rparams[param].append(new_value)
                 else:
-                    new_request[param].append(new_value)
-        return new_request
+                    new_rparams[param].append(new_value)
+        return new_rparams
+
+    def make_base_params_from_url(self, request_url):
+        """ makes the base parameters from the url """
+        rparams = {}
+        url_o = urlparse(request_url)
+        rparams = parse_qs(url_o.query)
+        if self.spatial_context is False:
+            self.spatial_context = self.get_context_from_path(url_o.path)
+        rparams['path'] = self.spatial_context
+        return rparams
+
+    def get_context_from_path(self, path):
+        """ geths the spatial context from a request path """
+        context = False
+        if '.' in path:
+            pathex = path.split('.')
+            path = pathex[0]
+        if '/' in path:
+            pathex = path.split('/')
+            print(str(pathex))
+            if len(pathex) > 2:
+                # remove the part that's the first slash
+                pathex.pop(0)
+                # remove the part that's for the url of search
+                pathex.pop(0)
+            context = '/'.join(pathex)
+        return context
 
     def get_param_from_solr_facet_key(self, solr_facet_key):
         """" returns the public parameter from the solr_facet_key """

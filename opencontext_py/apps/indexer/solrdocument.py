@@ -260,9 +260,13 @@ class SolrDocument:
         self.fields['uuid'] = self.oc_item.uuid
         self.fields['slug_type_uri_label'] = self.make_slug_type_uri_label()
         self.fields['project_uuid'] = self.oc_item.project_uuid
-        self.fields['published'] = self.oc_item.published.strftime(
-            '%Y-%m-%dT%H:%M:%SZ'
-            )   # verify
+        if self.oc_item.published is not None:
+            self.fields['published'] = self.oc_item.published.strftime(
+                '%Y-%m-%dT%H:%M:%SZ'
+                ) # verify
+        else:
+            self.fields['published'] = datetime.date(2007, 1, 1).strftime(
+                '%Y-%m-%dT%H:%M:%SZ') # verify
         self.fields['updated'] = datetime.datetime.utcnow().strftime(  # verify
             '%Y-%m-%dT%H:%M:%SZ')
         # default, can add as image media links discovered

@@ -3,17 +3,19 @@
 
 {% block itemcontent %}
      <div class="row">
-        <div class="col-sm-4">
-            <h3>Project: {{ item.label }}</h3>
+        <div class="col-sm-8">
+            <h3 style="margin-top:-8px;">Project</h3>
+            <h4>{{ item.label }}</h4>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-4" style="padding-bottom:2%;">
             {% if item.content != False %}
             {% if item.content.sum_text != False %}
+            <div style="margin-top:-16px;">
+               <h5 style="font-weight: bold;">About</h5>
             {{ item.content.sum_text }}
+            </div>
             {%endif%}
             {%endif%}
-        </div>
-        <div class="col-sm-4">
         </div>
      </div>
      <div class="row">

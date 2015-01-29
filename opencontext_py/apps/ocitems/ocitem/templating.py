@@ -1007,6 +1007,10 @@ class LinkedData():
                         elif item_type == 'predicates' and act_pred == 'rdfs:range':
                              # this is a range for a predicate, don't consider as an annotaiton
                             add_annotation = False
+                        elif 'dx.doi.org' in uri and 'owl:sameAs' == act_pred:
+                            add_annotation = False
+                        elif 'n2t.net' in uri and 'owl:sameAs' == act_pred:
+                            add_annotation = False
                         ld_obj['vocabulary'] = False
                         ld_obj['vocab_uri'] = False
                         ent = Entity()

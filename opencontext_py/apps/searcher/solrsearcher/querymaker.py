@@ -88,6 +88,29 @@ class QueryMaker():
                 prop_dict_list.append(self._process_single_select_prop(prop))
         return prop_dict_list
 
+    def expand_hierarchy_options(self,
+                                 path_param_val,
+                                 hier_delim=' ',
+                                 or_delim='||'):
+        """ Exapands a hiearchic path string into a
+            list of listed hierachically ordered items.
+            This method also makes a new hiearchic ordered
+            list if there is an 'or_delim'.
+        """
+        if isinstance(path_param_val, list):
+            inital_path_list = path_param_val
+        else:
+            inital_path_list = [path_param_val]
+        path_list = []
+        for path_string in inital_path_list:
+            raw_path_list = (value.split(or_delim) for value in
+                             path_string.split(hier_delim))
+            # Create a list of the various permutations
+            path_tuple_list = list(itertools.product(*raw_path_list))
+            for item in path_tuple_list:
+                path_list.append(list(item))
+        return path_list
+
     def _process_multi_select_prop(self, prop):
         # TODO docstring
         prop_dict = {}
@@ -145,6 +168,52 @@ class QueryMaker():
         output = {}
         output['prefix'] = entity.slug.replace('-', '_')
         output['suffix'] = self.get_solr_field_type(entity.data_type)
+        return output
+
+    def process_proj(self, proj_path):
+        # TODO docstring
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        project_path_lists = self.expand_hierarchy_options(proj_path)
+        for proj_path_list in project_path_lists:
+            i = 0
+            path_list_len = len(proj_path_list)
+            fq_field = SolrDocument.ROOT_PROJECT_SOLR
+            fq_path_terms = []
+            for proj_slug in proj_path_list:
+                entity = Entity()
+                found = entity.dereference(proj_slug)
+                if found:
+                    # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
+                    # the below is a bit of a hack. We should have a query field
+                    # as with ___pred_ to query just the slug. But this works for now
+                    fq_path_term = fq_field + ':' + proj_slug + '*'
+                else:
+                    fq_path_term = fq_field + ':' + proj_slug
+                fq_path_terms.append(fq_path_term)
+                fq_field = proj_slug.replace('-', '_') + '___project_id'
+                i += 1
+                if i >= path_list_len and fq_field not in query_dict['facet.field']:
+                    query_dict['facet.field'].append(fq_field)
+            final_path_term = ' AND '.join(fq_path_terms)
+            final_path_term = '(' + final_path_term + ')'
+            fq_terms.append(final_path_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def make_solr_value_from_entity(self, entity, value_type='id'):
+        """ makes a solr value as indexed in SolrDocument
+            see _concat_solr_string_value
+        """
+        id_part = entity.uri
+        if 'http://opencontext.org' in entity.uri:
+            if '/vocabularies/' not in entity.uri:
+                id_part = entity.uri.split('http://opencontext.org')[1]
+        return entity.slug + '___' + value_type + '___' + \
+            id_part + '___' + entity.label
         return output
 
     def _process_single_select_prop(self, prop):

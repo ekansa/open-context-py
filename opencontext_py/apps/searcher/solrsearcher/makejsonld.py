@@ -1,5 +1,6 @@
-from datetime import datetime
 import time
+import json
+from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
@@ -12,8 +13,12 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 class MakeJsonLd():
 
     def __init__(self, request_dict):
-        self.requst_full_path = False
         self.request_dict = request_dict
+        self.request_dict_json = json.dumps(request_dict,
+                                            ensure_ascii=False,
+                                            indent=4)
+        self.request_full_path = False
+        self.spatial_context = False
         self.id = False
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
@@ -71,14 +76,15 @@ class MakeJsonLd():
         self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.make_facets(solr_json)
-        self.json_ld['solr'] = solr_json
+        if settings.DEBUG:
+            self.json_ld['solr'] = solr_json
         return self.json_ld
 
     def make_id(self):
         """ makes the ID for the document """
         if self.id is not False:
             output = self.id
-        elif self.requst_full_path is not False:
+        elif self.request_full_path is not False:
             output = settings.CANONICAL_HOST + self.request_full_path
         else:
             output = False
@@ -119,11 +125,11 @@ class MakeJsonLd():
             json_ld_facets = []
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
+                count_raw_values = len(solr_facet_values)
                 id_options = []
                 num_options = []
                 date_options = []
                 string_options = []
-                count_raw_values = len(solr_facet_values)
                 i = -1
                 for solr_facet_value_key in solr_facet_values[::2]:
                     i += 2
@@ -209,15 +215,17 @@ class MakeJsonLd():
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
         fl = FilterLinks()
+        fl.base_request_json = self.request_dict_json
+        fl.base_r_full_path = self.request_full_path
+        fl.spatial_context = self.spatial_context
         facet_key_list = solr_facet_value_key.split('___')
         output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
             slug = facet_key_list[0]
-            new_request = fl.add_to_new_request_by_solr_field(self.request_dict,
-                                                              solr_facet_key,
-                                                              slug)
-            output['id'] = fl.make_request_url(new_request)
-            output['json'] = fl.make_request_url(new_request, '.json')
+            new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                          slug)
+            output['id'] = fl.make_request_url(new_rparams)
+            output['json'] = fl.make_request_url(new_rparams, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
                 output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:
@@ -226,16 +234,19 @@ class MakeJsonLd():
             output['count'] = solr_facet_count
             output['slug'] = slug
             output['data-type'] = facet_key_list[1]
-        fl = None
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
         act_dict_obj = dict_obj
         for key in key_path_list:
-            if key in act_dict_obj:
-                act_dict_obj = act_dict_obj[key]
-                output = act_dict_obj
+            if isinstance(act_dict_obj, dict): 
+                if key in act_dict_obj:
+                    act_dict_obj = act_dict_obj[key]
+                    output = act_dict_obj
+                else:
+                    output = default
+                    break
             else:
                 output = default
                 break
