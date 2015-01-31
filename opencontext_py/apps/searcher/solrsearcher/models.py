@@ -90,7 +90,8 @@ class SolrSearch():
         """ adds additional facet fields to query """
         default_list = [SolrDocument.ROOT_PREDICATE_SOLR,
                         SolrDocument.ROOT_LINK_DATA_SOLR,
-                        SolrDocument.ROOT_PROJECT_SOLR]
+                        SolrDocument.ROOT_PROJECT_SOLR,
+                        'item_type']
         for default_field in default_list:
             if default_field not in query['facet.field']:
                 query['facet.field'].append(default_field)

@@ -161,6 +161,7 @@ class MakeJsonLd():
 
     def get_facet_meta(self, solr_facet_key):
         facet = LastUpdatedOrderedDict()
+        facet['solr'] = solr_facet_key
         if '___project_id' in solr_facet_key:
             id_prefix = '#facet-project'
             ftype = 'oc-api:facet-project'
@@ -170,6 +171,9 @@ class MakeJsonLd():
         elif '___pred_' in solr_facet_key:
             id_prefix = '#facet-prop'
             ftype = 'oc-api:facet-prop'
+        elif 'item_type' in solr_facet_key:
+            id_prefix = '#facet-item-type'
+            ftype = 'oc-api:item-type'
         if solr_facet_key == SolrDocument.ROOT_CONTEXT_SOLR:
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-context'
@@ -190,14 +194,20 @@ class MakeJsonLd():
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-prop-var'
             facet['label'] = 'Descriptive Properties (Project Defined)'
             facet['data-type'] = 'id'
+        elif solr_facet_key == 'item_type':
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'oc-api:facet-item-type'
+            facet['label'] = 'Item Record Type'
+            facet['data-type'] = 'id'
         else:
             # ------------------------
             # Facet is not at the root
             # ------------------------
-            facet['id'] = id_prefix 
+            facet['id'] = id_prefix
             facet['label'] = ''
             facet_key_list = solr_facet_key.split('___')
             fdtype_list = facet_key_list[1].split('_')
+            fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
             entity = Entity()
             found = entity.dereference(slug)
@@ -207,7 +217,7 @@ class MakeJsonLd():
                 facet['id'] = id_prefix + '-' + entity.slug
                 facet['rdfs:isDefinedBy'] = entity.uri
                 facet['label'] = entity.label
-            facet['data-type'] = fdtype_list[1]
+            facet['data-type'] = fsuffix_list[-1]
         facet['type'] = ftype
         return facet
 
@@ -216,13 +226,17 @@ class MakeJsonLd():
                              solr_facet_value_key,
                              solr_facet_count):
         """ Makes an last-ordered-dict for a facet """
-        fl = FilterLinks()
-        fl.base_request_json = self.request_dict_json
-        fl.base_r_full_path = self.request_full_path
-        fl.spatial_context = self.spatial_context
         facet_key_list = solr_facet_value_key.split('___')
-        output = LastUpdatedOrderedDict()
         if len(facet_key_list) == 4:
+            # ----------------------------
+            # Case where facet values are encoded as:
+            # slug___data-type___/uri-item-type/uuid___label
+            # ----------------------------
+            fl = FilterLinks()
+            fl.base_request_json = self.request_dict_json
+            fl.base_r_full_path = self.request_full_path
+            fl.spatial_context = self.spatial_context
+            output = LastUpdatedOrderedDict()
             slug = facet_key_list[0]
             new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
                                                           slug)
@@ -236,6 +250,26 @@ class MakeJsonLd():
             output['count'] = solr_facet_count
             output['slug'] = slug
             output['data-type'] = facet_key_list[1]
+        else:
+            # ----------------------------
+            # Sepcilized cases of non-encoded facet values
+            # ----------------------------
+            output['id'] = solr_facet_value_key
+            output['count'] = solr_facet_count
+            output['data-type'] = 'id'
+        return output
+
+    def make_specialized_facet_value_obj(self,
+                                         solr_facet_key,
+                                         solr_facet_value_key,
+                                         solr_facet_count,
+                                         fl):
+        """ makes a facet_value obj for specialzied solr faccets """
+        fl = FilterLinks()
+        fl.base_request_json = self.request_dict_json
+        fl.base_r_full_path = self.request_full_path
+        fl.spatial_context = self.spatial_context
+        output = LastUpdatedOrderedDict()
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
