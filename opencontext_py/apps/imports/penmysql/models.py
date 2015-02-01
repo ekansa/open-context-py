@@ -144,12 +144,36 @@ class PenMysql():
                 continue_tab = False
             start = start + recs
 
+    def get_missing_descriptions(self, project_uuid):
+        """ gets oc_annotations for items missing descriptions """
+        sql = 'SELECT oc_manifest.uuid AS uuid \
+               FROM oc_manifest \
+               LEFT JOIN oc_assertions ON \
+               (oc_manifest.uuid = oc_assertions.uuid \
+               AND oc_assertions.predicate_uuid != \'' \
+            + Assertion.PREDICATES_CONTAINS + '\') \
+               WHERE oc_manifest.project_uuid = \
+               \'' + project_uuid + '\' \
+               AND oc_assertions.uuid IS NULL; '
+        non_descript = Manifest.objects.raw(sql)
+        for dull_man in non_descript:
+            json_ok = self.get_table_records('oc_assertions',
+                                             'property',
+                                             '2001-01-01',
+                                             0,
+                                             200,
+                                             project_uuid,
+                                             dull_man.uuid)
+            if json_ok is not None:
+                continue_tab = self.store_tab_records()
+
     def get_table_records(self, act_table,
                           sub_table,
                           after,
                           start,
                           recs,
-                          project_uuids=False):
+                          project_uuids=False,
+                          uuid=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
@@ -161,6 +185,8 @@ class PenMysql():
             payload['sub'] = sub_table
         if project_uuids is not False:
             payload['project_uuids'] = project_uuids
+        if uuid is not False:
+            payload['uuid'] = uuid
         r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
         print('Getting data: ' + r.url)
         r.raise_for_status()
@@ -260,11 +286,13 @@ class PenMysql():
         """
         stores records retrieved for a given table
         """
+        i = 0
         for record in recs:
+            i += 1
             allow_write = self.check_allow_write(act_table, record)
             record = self.prep_update_keep_old(act_table, record)
             if(allow_write is False and self.update_keep_old is False):
-                print('\n Not allowed to overwite record.' + str(record))
+                print('\n Not allowed to overwite record.' + str(i))
             else:
                 # print('\n Adding record:' + str(record))
                 newr = False
