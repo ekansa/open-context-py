@@ -152,7 +152,7 @@ class SolrDocument:
         Defines whether our dynamic solr fields names for
         predicates end with ___pred_id, ___pred_numeric, etc.
         '''
-        if predicate_type in ['@id', 'id', False]:
+        if predicate_type in ['@id', 'id', 'types', False]:
             return prefix + 'id'
         elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
             return prefix + 'numeric'
