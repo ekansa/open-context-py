@@ -2,11 +2,21 @@ import itertools
 import django.utils.http as http
 from django.http import Http404
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 
 
 class QueryMaker():
+
+    # main item-types mapped to their slugs to get solr-facet field prefix
+    TYPE_MAPPINGS = {'subjects': 'oc-gen-subjects',
+                     'media': 'oc-gen-media',
+                     'documents': 'oc-gen-documents',
+                     'persons': 'oc-gen-persons',
+                     'projects': 'oc-gen-projects',
+                     'types': 'oc-gen-types',
+                     'predicates': 'oc-gen-predicates'}
 
     def __init__(self):
         self.error = False
@@ -178,7 +188,13 @@ class QueryMaker():
                         if entity.item_type != 'uri':
                             act_field = SolrDocument.ROOT_PREDICATE_SOLR
                         else:
-                            act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                            act_field = False
+                            if 'oc-gen' in prop_slug:
+                                # get the root solr facet field for the item type
+                                # associated with this category
+                                act_field = self.get_parent_item_type_facet_field(entity.uri)
+                            if act_field is False:
+                                act_field = SolrDocument.ROOT_LINK_DATA_SOLR
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
@@ -196,6 +212,41 @@ class QueryMaker():
             final_path_term = ' AND '.join(fq_path_terms)
             final_path_term = '(' + final_path_term + ')'
             fq_terms.append(final_path_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def get_parent_item_type_facet_field(self, category_uri):
+        """ Gets the parent facet field for a given
+            category_uri. This assumes the category_uri is an entity
+            that exists in the database.
+        """
+        output = False;
+        parents = LinkRecursion().get_jsonldish_entity_parents(category_uri)
+        for par in parents:
+            if par['slug'] in self.TYPE_MAPPINGS.values():
+                # the parent exists in the Type Mappings
+                output = par['slug'].replace('-', '_') + '___pred_id'
+                break
+        return output
+
+    def process_item_type(self, raw_item_type):
+        # TODO docstring
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        item_type_lists = self.expand_hierarchy_options(raw_item_type)
+        for item_type_list in item_type_lists:
+            i = 0
+            path_list_len = len(item_type_list)
+            fq_path_terms = []
+            item_type = item_type_list[0]  # no hiearchy in this field, just the type
+            fq_term = 'item_type:' + item_type
+            fq_terms.append(fq_term)
+            if item_type in self.TYPE_MAPPINGS:
+                act_field = self.TYPE_MAPPINGS[item_type].replace('-', '_') + '___pred_id'
+                query_dict['facet.field'].append(act_field)
         fq_final = ' OR '.join(fq_terms)
         fq_final = '(' + fq_final + ')'
         query_dict['fq'].append(fq_final)

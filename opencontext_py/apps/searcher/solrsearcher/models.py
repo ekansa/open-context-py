@@ -52,20 +52,6 @@ class SolrSearch():
         context = qm._process_spatial_context(request_dict['path'])
         query['fq'].append(context['fq'])
         query['facet.field'] += context['facet.field']  # context facet fields, always a list
-        # Descriptive Properties
-        """
-        prop_list = self.get_request_param(request_dict,
-                                           'prop',
-                                           False,
-                                           True)
-        if prop_list:
-            props = qm._process_prop_list(prop_list)
-            for prop in props:
-                if prop['fq'] not in query['fq']:
-                    query['fq'].append(prop['fq'])
-                if prop['facet.field'] not in query['facet.field']:
-                    query['facet.field'].append(prop['facet.field'])
-        """
         # Properties and Linked Data
         props = self.get_request_param(request_dict,
                                        'prop',
@@ -83,6 +69,16 @@ class SolrSearch():
             proj_query = qm.process_proj(proj)
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']
+        # item-types
+        item_type = self.get_request_param(request_dict,
+                                           'type',
+                                           False,
+                                           False)
+        if item_type is not False:
+            it_query = qm.process_item_type(item_type)
+            query['fq'] += it_query['fq']
+            query['facet.field'] += it_query['facet.field']
+        # Now add default facet fields
         query = self.add_default_facet_fields(query)
         return query
 

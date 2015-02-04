@@ -254,6 +254,7 @@ class MakeJsonLd():
             # ----------------------------
             # Sepcilized cases of non-encoded facet values
             # ----------------------------
+            output = LastUpdatedOrderedDict()
             output['id'] = solr_facet_value_key
             output['count'] = solr_facet_count
             output['data-type'] = 'id'
