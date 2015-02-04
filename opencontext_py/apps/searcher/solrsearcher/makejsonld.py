@@ -8,6 +8,7 @@ from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
+from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 class MakeJsonLd():
@@ -77,6 +78,7 @@ class MakeJsonLd():
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.make_facets(solr_json)
         if settings.DEBUG:
+            # self.json_ld['request'] = self.request_dict
             self.json_ld['solr'] = solr_json
         return self.json_ld
 
@@ -122,6 +124,7 @@ class MakeJsonLd():
                                                   'facet_fields'],
                                                   solr_json)
         if solr_facet_fields is not False:
+            pre_sort_facets = {}
             json_ld_facets = []
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
@@ -155,13 +158,71 @@ class MakeJsonLd():
                     facet['oc-api:has-date-options'] = date_options
                 if len(string_options) > 0:
                     facet['oc-api:has-text-options'] = string_options
-                json_ld_facets.append(facet)
+                pre_sort_facets[facet['id']] = facet
+            # now make a sorted list of facets
+            json_ld_facets = self.make_sorted_facet_list(pre_sort_facets)
             if len(json_ld_facets) > 0:
                 self.json_ld['oc-api:has-facets'] = json_ld_facets
 
+    def make_sorted_facet_list(self, pre_sort_facets):
+        """ makes a list of sorted facets based on 
+            a dictionary oject of pre_sort_facets
+        """
+        json_ld_facets = []
+        used_keys = []
+        if 'prop' in self.request_dict:
+            # first check for 'prop' related facets
+            # these get promoted to the first positions in the list
+            raw_plist = self.request_dict['prop']
+            plist = raw_plist[::-1]  # reverse the list, so last props first
+            qm = QueryMaker()
+            for param_val in plist:
+                param_paths = qm.expand_hierarchy_options(param_val)
+                for id_key, facet in pre_sort_facets.items():
+                    for param_slugs in param_paths:
+                        last_slug = param_slugs[-1]
+                        if last_slug in id_key \
+                           and id_key not in used_keys:
+                            json_ld_facets.append(facet)
+                            used_keys.append(id_key)
+        # now add facet for context
+        for id_key, facet in pre_sort_facets.items():
+            if '#facet-context' in id_key \
+               and id_key not in used_keys:
+                json_ld_facets.append(facet)
+                used_keys.append(id_key)
+        # now add facet for item-types
+        if '#facet-item-type' in pre_sort_facets \
+           and '#facet-item-type' not in used_keys:
+                json_ld_facets.append(pre_sort_facets['#facet-item-type'])
+                used_keys.append('#facet-item-type')
+        # now add facet for projects
+        for id_key, facet in pre_sort_facets.items():
+            if '#facet-project' in id_key \
+               and id_key not in used_keys:
+                json_ld_facets.append(facet)
+                used_keys.append(id_key)
+        # now add facet for root linked data
+        if '#facet-prop-ld' in pre_sort_facets \
+           and '#facet-prop-ld' not in used_keys:
+                json_ld_facets.append(pre_sort_facets['#facet-prop-ld'])
+                used_keys.append('#facet-prop-ld')
+        # now add facet for root properties
+        if '#facet-prop-var' in pre_sort_facets \
+           and '#facet-prop-var' not in used_keys:
+                json_ld_facets.append(pre_sort_facets['#facet-prop-var'])
+                used_keys.append('#facet-prop-var')
+        for id_key in used_keys:
+            # delete all the used facets by key
+            pre_sort_facets.pop(id_key, None)
+        for id_key, facet in pre_sort_facets.items():
+            # add remaining (unsorted) facets
+            json_ld_facets.append(facet)
+        return json_ld_facets
+
     def get_facet_meta(self, solr_facet_key):
         facet = LastUpdatedOrderedDict()
-        facet['solr'] = solr_facet_key
+        # facet['solr'] = solr_facet_key
         if '___project_id' in solr_facet_key:
             id_prefix = '#facet-project'
             ftype = 'oc-api:facet-project'
