@@ -183,6 +183,8 @@ class MakeJsonLd():
                         last_slug = param_slugs[-1]
                         if last_slug in id_key \
                            and id_key not in used_keys:
+                            # the facet id has the last slug id!
+                            # so add to the ordered list of facets
                             json_ld_facets.append(facet)
                             used_keys.append(id_key)
         # now add facet for context
