@@ -82,37 +82,43 @@ class PenMysql():
         self.start_table = False
         self.start_sub = False
         self.start_batch = 0
+        self.after = '2001-01-01'
 
     def get_project_records(self, project_uuid):
         """ Gets all the data belonging to a project """
-        after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
             self.get_project_tab_records(project_uuid, act_table)
 
-    def get_project_tab_records(self, project_uuid, act_table):
+    def get_project_tab_records(self, project_uuid, act_table, sub_table=False):
         """ Gets all the data belonging to a project for a particular table """
-        after = '2001-01-01'
         if act_table in self.REQUEST_TABLES:
-            sub_dict = self.REQUEST_TABLES[act_table]
-            for sub_table in sub_dict['sub']:
-                if self.start_table is False:
-                    print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
-                    self.process_request_table(act_table,
-                                               sub_table,
-                                               after,
-                                               project_uuid)
-                else:
-                    if self.start_table == act_table and sub_table == self.start_sub:
-                        # So we can start at some point in the process, useful to recover from interrupts
-                        print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
+            if sub_table is False:
+                sub_dict = self.REQUEST_TABLES[act_table]
+                for sub_table in sub_dict['sub']:
+                    if self.start_table is False:
+                        print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
                         self.process_request_table(act_table,
                                                    sub_table,
-                                                   after,
+                                                   self.after,
                                                    project_uuid)
-                        self.start_table = False
-                        self.start_sub = False
                     else:
-                        print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
+                        if self.start_table == act_table and sub_table == self.start_sub:
+                            # So we can start at some point in the process, useful to recover from interrupts
+                            print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
+                            self.process_request_table(act_table,
+                                                       sub_table,
+                                                       self.after,
+                                                       project_uuid)
+                            self.start_table = False
+                            self.start_sub = False
+                        else:
+                            print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
+            else:
+                print('Process working on: ' + act_table + ' (' + str(sub_table) + ')')
+                self.process_request_table(act_table,
+                                           sub_table,
+                                           self.after,
+                                           project_uuid)
 
     def process_request_table(self, act_table,
                               sub_table,
@@ -144,6 +150,49 @@ class PenMysql():
                 continue_tab = False
             start = start + recs
 
+    def get_missing_strings(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            sql = 'SELECT oc_assertions.hash_id, oc_assertions.object_uuid AS string_uuid \
+                   FROM oc_assertions \
+                   LEFT JOIN oc_strings ON oc_assertions.object_uuid = oc_strings.uuid \
+                   WHERE oc_assertions.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND oc_assertions.object_type = \'xsd:string\' \
+                   AND oc_strings.uuid IS NULL; '
+            no_strings = Assertion.objects.raw(sql)
+            for obj_missing in no_strings:
+                json_ok = self.get_table_records('oc_strings',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 obj_missing.string_uuid)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+            sql = 'SELECT oc_types.uuid, oc_types.content_uuid AS string_uuid \
+                   FROM oc_types \
+                   LEFT JOIN oc_strings ON oc_types.content_uuid = oc_strings.uuid \
+                   WHERE oc_types.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND oc_strings.uuid IS NULL; '
+            no_strings = OCtype.objects.raw(sql)
+            for obj_missing in no_strings:
+                json_ok = self.get_table_records('oc_strings',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 obj_missing.string_uuid)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+
     def get_missing_descriptions(self, project_uuids):
         """ gets oc_annotations for items missing descriptions """
         if ',' in project_uuids:
@@ -164,7 +213,7 @@ class PenMysql():
             for dull_man in non_descript:
                 json_ok = self.get_table_records('oc_assertions',
                                                  'property',
-                                                 '2001-01-01',
+                                                 self.after,
                                                  0,
                                                  200,
                                                  project_uuid,
