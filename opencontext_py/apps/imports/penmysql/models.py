@@ -193,6 +193,35 @@ class PenMysql():
                 if json_ok is not None:
                     continue_tab = self.store_tab_records()
 
+    def get_missing_link_entities(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            q = 'http://opencontext.org%'
+            sql = 'SELECT link_annotations.hash_id, link_annotations.object_uri AS object_uri \
+                   FROM link_annotations \
+                   LEFT JOIN link_entities ON link_annotations.object_uri = link_entities.uri \
+                   WHERE link_annotations.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND link_annotations.object_uri NOT LIKE %(my_like)s \
+                   AND link_entities.uri IS NULL; '
+            # print(str(sql))
+            no_objects = LinkAnnotation.objects.raw(sql, {'my_like': q})
+            for obj_missing in no_objects:
+                json_ok = self.get_table_records('link_entities',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 False,
+                                                 obj_missing.object_uri)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+
     def get_missing_descriptions(self, project_uuids):
         """ gets oc_annotations for items missing descriptions """
         if ',' in project_uuids:
@@ -227,7 +256,8 @@ class PenMysql():
                           start,
                           recs,
                           project_uuids=False,
-                          uuid=False):
+                          uuid=False,
+                          uri=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
@@ -241,6 +271,8 @@ class PenMysql():
             payload['project_uuids'] = project_uuids
         if uuid is not False:
             payload['uuid'] = uuid
+        if uri is not False:
+            payload['uri'] = uri
         r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
         print('Getting data: ' + r.url)
         r.raise_for_status()
