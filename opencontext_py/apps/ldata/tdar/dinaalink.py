@@ -21,8 +21,7 @@ class dinaaLink():
         """ get a key word for a site """
         found_matches = 0
         tris = Trinomial.objects.filter(trinomial__isnull=False,
-                                        tdar_checked__isnull=True,
-                                        trinomial='44PG462')[:25]
+                                        tdar_checked__isnull=True)
         for tri in tris:
             found_matches += self.match_trinomial_obj(tri)
             tri.tdar_checked_save()
@@ -66,7 +65,7 @@ class dinaaLink():
                         le.alt_label = result['label']
                         le.vocab_uri = self.TDAR_VOCAB
                         le.ent_type = 'type'
-                        # le.save()
+                        le.save()
                     # Now get some info about the linked item:
                     manifest = False
                     try:
@@ -82,7 +81,7 @@ class dinaaLink():
                         la.source_id = 'tdar-api-lookup'
                         la.predicate_uri = 'dc-terms:subject'
                         la.object_uri = result['id']
-                        # la.save()
+                        la.save()
                 if tdar_api.request_error:
                     print('HTTP request to tDAR failed!')
                     sys.exit('Quitting process')
