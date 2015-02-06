@@ -1,6 +1,7 @@
 import json
 import requests
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.generalapi import GeneralAPI
 
 
 class ArachneAPI():
@@ -73,7 +74,11 @@ class ArachneAPI():
             payload['fq'] = 'facet_image:ja'
         url = self.DEFAULT_API_BASE_URL
         try:
-            r = requests.get(url, params=payload, timeout=240)
+            gapi = GeneralAPI()
+            r = requests.get(url,
+                             params=payload,
+                             timeout=240,
+                             headers=gapi.client_headers)
             self.set_arachne_search_urls(r.url)
             r.raise_for_status()
             json_r = r.json()
