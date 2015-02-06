@@ -6,7 +6,6 @@ from datetime import datetime
 from django.utils import timezone
 from math import pow
 from unidecode import unidecode
-from django.utils import timezone
 from django.db import models
 from django.template.defaultfilters import slugify
 from opencontext_py.apps.ocitems.projects.models import Project
