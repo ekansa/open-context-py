@@ -66,6 +66,7 @@ class LinkEntityGeneration():
                         'http://www.w3.org/2004/02/skos/core': 'skos',
                         'http://en.wikipedia.org/wiki': 'wiki',
                         'http://id.loc.gov/authorities/subjects': 'loc-sh',
+                        'http://core.tdar.org/browse/site-name': 'tdar-kw-site'
                         'http://purl.org/ontology/bibo': 'bibo',
                         'http://creativecommons.org/ns#': 'cc',
                         'http://creativecommons.org/licenses': 'cc-license',
