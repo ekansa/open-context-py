@@ -1,5 +1,8 @@
 import hashlib
 from django.db import models
+from django.conf import settings
+from datetime import datetime
+from django.utils import timezone
 
 
 # A model for Smithsonian Trinomials specific to the DINAA project
@@ -16,6 +19,13 @@ class Trinomial(models.Model):
     county = models.CharField(max_length=4, null=True)
     site = models.CharField(max_length=10, null=True)
     tdar_checked = models.DateTimeField(blank=True, null=True)
+
+    def tdar_checked_save(self):
+        """
+        Updates with the last indexed time
+        """
+        self.tdar_checked = timezone.now()
+        super(Trinomial, self).save(update_fields=['tdar_checked'])
 
     class Meta:
         db_table = 'dinaa_trinomials'
