@@ -16,11 +16,14 @@ class dinaaLink():
 
     def __init__(self):
         self.request_error = False
+        self.lead_zero_check = True
+        self.max_results = 3
 
     def match_dinaa_ids(self):
         """ get a key word for a site """
         found_matches = 0
         tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                        trinomial='44WY245',
                                         tdar_checked__isnull=True)
         for tri in tris:
             found_matches += self.match_trinomial_obj(tri)
@@ -32,47 +35,48 @@ class dinaaLink():
             against tDAR, if it hasn't yet been matched
         """
         found_matches = 0
+        manifest = False
+        try:
+            manifest = Manifest.objects.get(uuid=tri.uuid)
+        except Manifest.DoesNotExist:
+            manifest = False
         la_check = LinkAnnotation.objects\
                                  .filter(subject=tri.uuid,
                                          predicate_uri='dc-terms:subject',
                                          object_uri__contains=self.TDAR_VOCAB)[:1]
-        if len(la_check) < 1:
+        if len(la_check) < 1 and manifest is not False:
             # we don't already have a tDAR id for this item, continue with matches
             tri_man = TrinomialManage()
             request_keywords = [tri.trinomial]
-            tri_parts = tri_man.parse_trinomial(tri.trinomial)
-            site = tri_parts['site']
-            site_part_len = len(site)
-            while len(site) < 4:
-                site = '0' + site
-                new_trinomial = tri_parts['state'] + tri_parts['county'] + site
-                request_keywords.append(new_trinomial)
+            if self.lead_zero_check:
+                # check multiple leading zeros
+                tri_parts = tri_man.parse_trinomial(tri.trinomial)
+                site = tri_parts['site']
+                site_part_len = len(site)
+                while len(site) < 4:
+                    site = '0' + site
+                    new_trinomial = tri_parts['state'] + tri_parts['county'] + site
+                    request_keywords.append(new_trinomial)
             for keyword in request_keywords:
                 tdar_api = tdarAPI()
-                result = tdar_api.get_site_keyword(keyword)
-                if result is not False:
-                    found_matches += 1
-                    # OK! Found a match, first save the linked entity in the link entity table
-                    le_check = False
-                    try:
-                        le_check = LinkEntity.objects.get(uri=result['id'])
-                    except LinkEntity.DoesNotExist:
+                results = tdar_api.get_site_keyword(keyword)
+                if isinstance(results, list):
+                    for result in results[:self.max_results]:
+                        found_matches += 1
+                        # OK! Found a match, first save the linked entity in the link entity table
                         le_check = False
-                    if le_check is False:
-                        le = LinkEntity()
-                        le.uri = result['id']
-                        le.label = result['label']
-                        le.alt_label = result['label']
-                        le.vocab_uri = self.TDAR_VOCAB
-                        le.ent_type = 'type'
-                        le.save()
-                    # Now get some info about the linked item:
-                    manifest = False
-                    try:
-                        manifest = Manifest.objects.get(uuid=tri.uuid)
-                    except Manifest.DoesNotExist:
-                        manifest = False
-                    if manifest is not False:
+                        try:
+                            le_check = LinkEntity.objects.get(uri=result['id'])
+                        except LinkEntity.DoesNotExist:
+                            le_check = False
+                        if le_check is False:
+                            le = LinkEntity()
+                            le.uri = result['id']
+                            le.label = result['label']
+                            le.alt_label = result['label']
+                            le.vocab_uri = self.TDAR_VOCAB
+                            le.ent_type = 'type'
+                            le.save()
                         # Now save the link annotation
                         la = LinkAnnotation()
                         la.subject = tri.uuid

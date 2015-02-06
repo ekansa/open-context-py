@@ -23,28 +23,30 @@ class tdarAPI():
 
     def get_site_keyword(self, site_keyword):
         """ get a key word for a site """
-        result = False
+        results = False
         json_r = self.get_keyword_search_json(site_keyword,
                                               'SiteNameKeyword')
         if isinstance(json_r, dict):
             if 'items' in json_r:
                 if len(json_r['items']) > 0:
-                    result = {'label': False,
-                              'id': False,
-                              'tdar': json_r['items'][0]}
-                    if 'label' in json_r['items'][0]:
-                        # get the item label
-                        result['label'] = json_r['items'][0]['label']
-                    if 'detailUrl' in json_r['items'][0]:
-                        # make a full URI for the keyword
-                        result['id'] = self.BASE_URI + json_r['items'][0]['detailUrl']
-                    if result['id'] is False \
-                       or result['label'] is False:
-                        # something wrong, incomplete data. Result is false.
-                        result = False
-        if result is not False:
-            self.best_match = result
-        return result
+                    results = []
+                    for item in json_r['items']:
+                        result = {'label': False,
+                                  'id': False,
+                                  'tdar': item}
+                        if 'label' in item:
+                            # get the item label
+                            result['label'] = item['label']
+                        if 'detailUrl' in item:
+                            # make a full URI for the keyword
+                            result['id'] = self.BASE_URI + item['detailUrl']
+                        if result['id'] is not False \
+                           and result['label'] is not False:
+                            # something wrong, incomplete data. Result is false.
+                            results.append(result)
+        if results is not False:
+            self.best_match = results[0]
+        return results
 
     def get_keyword_search_json(self, keyword, keyword_type):
         """
