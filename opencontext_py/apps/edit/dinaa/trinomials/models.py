@@ -15,9 +15,6 @@ class Trinomial(models.Model):
     state = models.CharField(max_length=4, null=True)
     county = models.CharField(max_length=4, null=True)
     site = models.CharField(max_length=10, null=True)
-    tdar_check = models.DateTimeField(blank=True, null=True)
-    tdar_match = models.CharField(max_length=50, null=True)
-    tdar_uri = models.CharField(max_length=200, null=True)
 
     class Meta:
         db_table = 'dinaa_trinomials'

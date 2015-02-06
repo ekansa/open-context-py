@@ -25,6 +25,61 @@ class TrinomialManage():
     def __init__(self):
         pass
 
+    def prepend_qualifier_dash(self):
+        """ goes through each identifier and prepends a '-' for
+           qualifiers
+        """
+        tris = Trinomial.objects.filter(trinomial__isnull=False)
+        for tri in tris:
+            tri_parts = self.parse_trinomial(tri.trinomial)
+            site_extra = re.sub(r'[0-9]', r'', tri_parts['site'])
+            if len(site_extra) > 0:
+                # the site part has some extra stuff in it.
+                # need to check if it has consistent qualifiers
+                i = 0
+                ndigit_found = False
+                new_site = ''
+                p_site = tri_parts['site']
+                site_len = len(p_site)
+                while i < site_len:
+                    if ndigit_found is False:
+                        if not p_site[i].isdigit():
+                            ndigit_found = True
+                            if p_site[i] != '-' and p_site[i] != '/':
+                                # prepend a qualifier only if it is not
+                                # already present
+                                new_site += '-'
+                    new_site += p_site[i]
+                    i += 1
+                if new_site != p_site:
+                    print('In ' + tri.trinomial + ' site: ' + p_site + ' now: ' + new_site)
+                    tri.trinomial = str(tri_parts['state']) + str(tri_parts['county']) + new_site
+                    tri.site = new_site
+                    tri.save()
+
+    def parse_trinomial(self, trinomial):
+        """ Parses a trinomial into its parts.
+            This will need modification + exceptions to handle
+            trinomials for other states. See:
+            http://en.wikipedia.org/wiki/Smithsonian_trinomial
+        """
+        tri_len = len(trinomial)
+        act_part = 'state'
+        parts = {'state': '',
+                 'county': '',
+                 'site': ''}
+        i = 0
+        while i < tri_len:
+            if act_part == 'state':
+                if not trinomial[i].isdigit():
+                    act_part = 'county'
+            if act_part == 'county':
+                if trinomial[i].isdigit():
+                    act_part = 'site'
+            parts[act_part] += trinomial[i]
+            i += 1
+        return parts
+
     def fix_missing_county_site(self):
         """ make and save missing trinomial records for Florida """
         missing = Trinomial.objects\
