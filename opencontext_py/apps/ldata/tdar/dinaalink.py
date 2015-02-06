@@ -18,6 +18,7 @@ class dinaaLink():
         """ get a key word for a site """
         tri_man = TrinomialManage()
         tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                        tdar_checked__isnull=True,
                                         trinomial='44PG462')[:25]
         for tri in tris:
             la_check = LinkAnnotation.objects\
