@@ -42,7 +42,7 @@ class tdarAPI():
                             result['id'] = self.BASE_URI + item['detailUrl']
                         if result['id'] is not False \
                            and result['label'] is not False:
-                            # something wrong, incomplete data. Result is false.
+                            # Data is complete, so we can use it. Append to results
                             results.append(result)
         if results is not False:
             self.best_match = results[0]
@@ -50,9 +50,11 @@ class tdarAPI():
 
     def get_keyword_search_json(self, keyword, keyword_type):
         """
-        gets json data from Arachne in response to a keyword search
+        gets json data from tDAR in response to a keyword search
         """
         if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
             sleep(self.delay_before_request)
         payload = {'term': keyword,
                    'keywordType': keyword_type}
