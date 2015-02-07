@@ -37,9 +37,18 @@ class AddTrinomials():
         source_index = 0
         for project_uuid in proj_uuids:
             source_index += 1
-            proj_source_id = self.source_id + '-' + str(source_index)
-            self.source_ids[project_uuid] = proj_source_id
-            self.create_obsmetadata(project_uuid)
+            # check to see if the project already has a source_id for
+            # trinomial observation assertions
+            proj_source_id = self.check_project_source_id(project_uuid)
+            if proj_source_id is False:
+                # make a new source_id for this project
+                proj_source_id = self.source_id + '-' + str(source_index)
+                self.source_ids[project_uuid] = proj_source_id
+                self.create_obsmetadata(project_uuid)
+            else:
+                # use the existing source_id for this project
+                self.source_ids[project_uuid] = proj_source_id
+            print('Project uuid: ' + project_uuid + ' source: ' + proj_source_id)
         pm = PredicateManagement()
         pm.project_uuid = self.dinaa_proj_uuid
         pm.source_id = self.source_id
@@ -75,25 +84,25 @@ class AddTrinomials():
                                                 False)
                 if ok:
                     print('Added: ' + tri.trinomial + ' to: ' + tri.uri)
-                sorting += 1
-                # add the sorting trinomial
-                sort_trinomial = self.make_sort_trinomial(tri.trinomial)
-                ok = self.add_trinomial_to_item(sort_pred,
-                                                sorting,
-                                                manifest,
-                                                sort_trinomial,
-                                                False)
-                # add a list of alternate versions
-                aux_list = self.make_aux_trinomial_list(tri.trinomial)
-                allow_multiple = False
-                for aux_trinomial in aux_list:
                     sorting += 1
-                    # if successful in creation, then allow_multiple is true
-                    allow_multiple = self.add_trinomial_to_item(aux_pred,
-                                                                sorting,
-                                                                manifest,
-                                                                aux_trinomial,
-                                                                allow_multiple)
+                    # add the sorting trinomial
+                    sort_trinomial = self.make_sort_trinomial(tri.trinomial)
+                    ok = self.add_trinomial_to_item(sort_pred,
+                                                    sorting,
+                                                    manifest,
+                                                    sort_trinomial,
+                                                    False)
+                    # add a list of alternate versions
+                    aux_list = self.make_aux_trinomial_list(tri.trinomial)
+                    allow_multiple = False
+                    for aux_trinomial in aux_list:
+                        sorting += 1
+                        # if successful in creation, then allow_multiple is true
+                        allow_multiple = self.add_trinomial_to_item(aux_pred,
+                                                                    sorting,
+                                                                    manifest,
+                                                                    aux_trinomial,
+                                                                    allow_multiple)
             else:
                 print('Bad news! Missing Manifest obj for: ' + str(tri))
 
@@ -141,12 +150,24 @@ class AddTrinomials():
             output = True
         return output
 
+    def check_project_source_id(self, project_uuid):
+        """ Checks for the project's source_id for trinomial observtions """
+        source_id = False
+        obsmeta = ObsMetadata.objects\
+                             .filter(project_uuid=project_uuid,
+                                     source_id__contains='trinomial',
+                                     obs_num=self.obs_num)[:1]
+        if len(obsmeta) > 0:
+            source_id = obsmeta[0].source_id
+        return source_id
+
     def create_obsmetadata(self, project_uuid):
         """ create metadata for trinomial observations """
         if project_uuid in self.source_ids:
             source_id = self.source_ids[project_uuid]
             obsmeta = ObsMetadata.objects\
                                  .filter(source_id=source_id,
+                                         project_uuid=project_uuid,
                                          obs_num=self.obs_num)[:1]
             if len(obsmeta) < 1:
                 obsmeta = ObsMetadata()
