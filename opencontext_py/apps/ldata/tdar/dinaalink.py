@@ -22,7 +22,7 @@ class dinaaLink():
     def match_dinaa_ids(self):
         """ get a key word for a site """
         found_matches = 0
-        tris = Trinomial.objects.filter(trinomial__isnull=False
+        tris = Trinomial.objects.filter(trinomial__isnull=False,
                                         tdar_checked__isnull=True)
         len_tris = len(tris)
         i = 1
