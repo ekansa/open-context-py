@@ -22,12 +22,15 @@ class dinaaLink():
     def match_dinaa_ids(self):
         """ get a key word for a site """
         found_matches = 0
-        tris = Trinomial.objects.filter(trinomial__isnull=False,
-                                        trinomial='44WY245',
+        tris = Trinomial.objects.filter(trinomial__isnull=False
                                         tdar_checked__isnull=True)
+        len_tris = len(tris)
+        i = 1
         for tri in tris:
             found_matches += self.match_trinomial_obj(tri)
             tri.tdar_checked_save()
+            print('Total tDAR matches: ' + str(found_matches) + ', Checked item: ' + str(i) + ' of ' + str(len_tris))
+            i += 1
         return found_matches
 
     def match_trinomial_obj(self, tri):
