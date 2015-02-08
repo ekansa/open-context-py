@@ -69,30 +69,45 @@ class dinaaLink():
                 results = tdar_api.get_site_keyword(keyword)
                 if isinstance(results, list):
                     for result in results[:self.max_results]:
-                        found_matches += 1
-                        # OK! Found a match, first save the linked entity in the link entity table
-                        le_check = False
-                        try:
-                            le_check = LinkEntity.objects.get(uri=result['id'])
-                        except LinkEntity.DoesNotExist:
+                        match_real = False
+                        if result['label'] == tri.trinomial:
+                            match_real = True
+                        else:
+                            tri_parts = tri_man.parse_trinomial(tri.trinomial)
+                            site = tri_parts['site']
+                            site_part_len = len(site)
+                            while len(site) < 5:
+                                site = '0' + site
+                                new_trinomial = tri_parts['state'] + tri_parts['county'] + site
+                                if new_trinomial == result['label']:
+                                    match_real = True
+                        if match_real:
+                            found_matches += 1
+                            # OK! Found a match, first save the linked entity in the link entity table
                             le_check = False
-                        if le_check is False:
-                            le = LinkEntity()
-                            le.uri = result['id']
-                            le.label = result['label']
-                            le.alt_label = result['label']
-                            le.vocab_uri = self.TDAR_VOCAB
-                            le.ent_type = 'type'
-                            le.save()
-                        # Now save the link annotation
-                        la = LinkAnnotation()
-                        la.subject = tri.uuid
-                        la.subject_type = manifest.item_type
-                        la.project_uuid = manifest.project_uuid
-                        la.source_id = 'tdar-api-lookup'
-                        la.predicate_uri = 'dc-terms:subject'
-                        la.object_uri = result['id']
-                        la.save()
+                            try:
+                                le_check = LinkEntity.objects.get(uri=result['id'])
+                            except LinkEntity.DoesNotExist:
+                                le_check = False
+                            if le_check is False:
+                                le = LinkEntity()
+                                le.uri = result['id']
+                                le.label = result['label']
+                                le.alt_label = result['label']
+                                le.vocab_uri = self.TDAR_VOCAB
+                                le.ent_type = 'type'
+                                le.save()
+                            # Now save the link annotation
+                            la = LinkAnnotation()
+                            la.subject = tri.uuid
+                            la.subject_type = manifest.item_type
+                            la.project_uuid = manifest.project_uuid
+                            la.source_id = 'tdar-api-lookup'
+                            la.predicate_uri = 'dc-terms:subject'
+                            la.object_uri = result['id']
+                            la.save()
+                        else:
+                            print('Almost! ' + result['label'] + ' is not exactly: ' + tri.trinomial)
                 if tdar_api.request_error:
                     print('HTTP request to tDAR failed!')
                     sys.exit('Quitting process')
