@@ -69,10 +69,13 @@ class dinaaLink():
                 results = tdar_api.get_site_keyword(keyword)
                 if isinstance(results, list):
                     for result in results[:self.max_results]:
+                        # assume it is a spurious match
                         match_real = False
                         if result['label'] == tri.trinomial:
+                            # the trinomial and the tDAR result exactly match
                             match_real = True
                         else:
+                            # check if the only difference is in leading zeros
                             tri_parts = tri_man.parse_trinomial(tri.trinomial)
                             site = tri_parts['site']
                             site_part_len = len(site)
@@ -80,6 +83,8 @@ class dinaaLink():
                                 site = '0' + site
                                 new_trinomial = tri_parts['state'] + tri_parts['county'] + site
                                 if new_trinomial == result['label']:
+                                    # A good match, the tDAR result and the trinomial
+                                    # match (but with different leading zeros)
                                     match_real = True
                         if match_real:
                             found_matches += 1
