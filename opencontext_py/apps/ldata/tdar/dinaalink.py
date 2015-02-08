@@ -19,11 +19,15 @@ class dinaaLink():
         self.lead_zero_check = True
         self.max_results = 3
 
-    def match_dinaa_ids(self):
+    def match_dinaa_ids(self, limit=False):
         """ get a key word for a site """
         found_matches = 0
-        tris = Trinomial.objects.filter(trinomial__isnull=False,
-                                        tdar_checked__isnull=True)
+        if limit is not False:
+            tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                            tdar_checked__isnull=True)[:limit]
+        else:
+            tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                            tdar_checked__isnull=True)
         len_tris = len(tris)
         i = 1
         for tri in tris:
