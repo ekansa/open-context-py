@@ -15,6 +15,7 @@ class SolrSearch():
         self.solr_connect()
         self.solr_response = False
         self.json_ld = False
+        self.entities = {}  # entities involved in a search request
 
     def solr_connect(self):
         """ connects to solr """
@@ -58,9 +59,11 @@ class SolrSearch():
                                        False,
                                        True)
         if props is not False:
-            prop_query = qm.process_prop(props)
-            query['fq'] += prop_query['fq']
-            query['facet.field'] += prop_query['facet.field']
+            for act_prop in props:
+                # process each prop independently.
+                prop_query = qm.process_prop(act_prop)
+                query['fq'] += prop_query['fq']
+                query['facet.field'] += prop_query['facet.field']
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
@@ -80,6 +83,8 @@ class SolrSearch():
             query['facet.field'] += it_query['facet.field']
         # Now add default facet fields
         query = self.add_default_facet_fields(query)
+        # Now set aside entities used as search filters
+        self.gather_entities(qm.entities)
         return query
 
     def add_default_facet_fields(self, query):
@@ -92,6 +97,16 @@ class SolrSearch():
             if default_field not in query['facet.field']:
                 query['facet.field'].append(default_field)
         return query
+
+    def gather_entities(self, entities_dict):
+        """ Gathers and stores entites found in
+            the query maker object.
+            These entities can be used in indicating
+            filters applied in a search
+        """
+        for search_key, entity in entities_dict.items():
+            if search_key not in self.entities:
+                self.entities[search_key] = entity
 
     def get_request_param(self, request_dict, param, default, as_list=False):
         """ get a string or list to use in queries from either

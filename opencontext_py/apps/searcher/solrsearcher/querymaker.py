@@ -20,6 +20,7 @@ class QueryMaker():
 
     def __init__(self):
         self.error = False
+        self.entities = {}  # keep looked up entities to save future database lookups
 
     def _get_context_paths(self, spatial_context):
         '''
@@ -66,6 +67,7 @@ class QueryMaker():
             found = entity.context_dereference(context)
             if found:
                 valid_context_slugs.append(entity.slug)
+                self.entities[context] = entity  # store entitty for later use
         return valid_context_slugs
 
     def _get_parent_slug(self, slug):
@@ -149,6 +151,7 @@ class QueryMaker():
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
+                    self.entities[proj_slug] = entity
                     proj_slug = entity.slug
                     fq_path_term = fq_field + ':' + proj_slug + '*'
                 else:
@@ -183,6 +186,7 @@ class QueryMaker():
                 if found is False:
                     found = entity.dereference(prop_slug, prop_slug)
                 if found:
+                    self.entities[prop_slug] = entity  # store entitty for later use
                     prop_slug = entity.slug
                     if i == 0:
                         if entity.item_type != 'uri':

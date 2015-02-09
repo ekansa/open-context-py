@@ -56,6 +56,35 @@ class FilterLinks():
                     param_sep = '&'
         return url
 
+    def make_request_sub(self,
+                         old_request_dict,
+                         rem_param_key,
+                         rem_param_val,
+                         sub_param_val=None):
+        """ makes a dictionary object for
+            request parameters WITHOUT the current fparam_key
+            and fparam_vals
+        """
+        filter_request = LastUpdatedOrderedDict()
+        for ch_param_key, ch_param_vals in old_request_dict.items():
+            if ch_param_key != rem_param_key:
+                # a different parameter than the one in the filter, so add
+                filter_request[ch_param_key] = ch_param_vals
+            else:
+                if rem_param_key != 'path' and len(ch_param_vals) > 1:
+                    filter_request[ch_param_key] = []
+                    for ch_param_val in ch_param_vals:
+                        if rem_param_val != ch_param_val:
+                            # the filter value for this key is not the same
+                            # as the check value for this key, so add
+                            # to the filter request
+                            filter_request[ch_param_key].append(ch_param_val)
+                        else:
+                            if sub_param_val is not None:
+                                # put in the substitute value
+                                filter_request[ch_param_key].append(sub_param_val)
+        return filter_request
+
     def add_to_request_by_solr_field(self,
                                      solr_facet_key,
                                      new_value):
