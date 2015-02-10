@@ -54,7 +54,9 @@ class FilterLinks():
         for param, param_vals in new_rparams.items():
             if param != 'path':
                 for val in param_vals:
-                    url += param_sep + param + '=' + quote_plus(val)
+                    quote_val = quote_plus(val)
+                    quote_val = quote_val.replace('%7BSearchTerm%7D', '{SearchTerm}')
+                    url += param_sep + param + '=' + quote_val
                     param_sep = '&'
         return url
 

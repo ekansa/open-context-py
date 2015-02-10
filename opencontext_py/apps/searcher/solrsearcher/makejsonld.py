@@ -73,25 +73,27 @@ class MakeJsonLd():
         """ adds JSON describing search filters """
         fl = FilterLinks()
         filters = []
+        string_fields = []  # so we have an interface for string searches
         i = 0
         for param_key, param_vals in self.request_dict.items():
             if param_key == 'path':
-                i += 1
-                f_entity = self.get_entity(param_vals, True)
-                label = http.urlunquote_plus(param_vals)
-                act_filter = LastUpdatedOrderedDict()
-                act_filter['id'] = '#filter-' + str(i)
-                act_filter['oc-api:filter'] = 'Context'
-                act_filter['label'] = label.replace('||', ' OR ')
-                if f_entity is not False:
-                    act_filter['rdfs:isDefinedBy'] = f_entity.uri
-                # generate a request dict without the context filter
-                rem_request = fl.make_request_sub(self.request_dict,
-                                                  param_key,
-                                                  param_vals)
-                act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
-                act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
-                filters.append(act_filter)
+                if param_vals is not False and param_vals is not None:
+                    i += 1
+                    f_entity = self.get_entity(param_vals, True)
+                    label = http.urlunquote_plus(param_vals)
+                    act_filter = LastUpdatedOrderedDict()
+                    act_filter['id'] = '#filter-' + str(i)
+                    act_filter['oc-api:filter'] = 'Context'
+                    act_filter['label'] = label.replace('||', ' OR ')
+                    if f_entity is not False:
+                        act_filter['rdfs:isDefinedBy'] = f_entity.uri
+                    # generate a request dict without the context filter
+                    rem_request = fl.make_request_sub(self.request_dict,
+                                                      param_key,
+                                                      param_vals)
+                    act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
+                    act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
+                    filters.append(act_filter)
             else:
                 for param_val in param_vals:
                     i += 1
@@ -106,6 +108,8 @@ class MakeJsonLd():
                         act_filter['oc-api:filter'] = 'Project'
                         label_dict = self.make_filter_label_dict(all_vals[-1])
                         act_filter['label'] = label_dict['label']
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
                     elif param_key == 'prop':
                         # prop, the first item is the filter-label
                         # the last is the filter
@@ -128,6 +132,9 @@ class MakeJsonLd():
                             act_filter['label'] = label_dict['label']
                         else:
                             act_filter['label'] = all_vals[0]
+                    elif param_key == 'q':
+                        act_filter['oc-api:filter'] = 'General Keyword Search'
+                        act_filter['label'] = 'Search Term: \'' + all_vals[0] + '\''
                     rem_request = fl.make_request_sub(self.request_dict,
                                                       param_key,
                                                       param_val)
@@ -145,6 +152,7 @@ class MakeJsonLd():
         """
         output = {'label': False,
                   'data-type': 'id',
+                  'slug': False,
                   'entities': []}
         labels = []
         if '||' in act_val:
@@ -163,6 +171,7 @@ class MakeJsonLd():
                 labels.append(f_entity.label)
                 output['entities'].append(f_entity)
         output['label'] = ' OR '.join(labels)
+        output['slug'] = '-or-'.join(vals)
         return output
 
     def get_entity(self, identifier, is_path=False):
@@ -197,6 +206,7 @@ class MakeJsonLd():
         self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.add_filters_json()
+        self.add_text_fields()
         self.make_facets(solr_json)
         if settings.DEBUG:
             # self.json_ld['request'] = self.request_dict
@@ -239,6 +249,84 @@ class MakeJsonLd():
             created = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
         return created
 
+    def add_text_fields(self):
+        """ adds text fields with query options """
+        text_fields = []
+        # first add a general key-word search option
+        fl = FilterLinks()
+        fl.base_request_json = self.request_dict_json
+        fl.base_r_full_path = self.request_full_path
+        fl.spatial_context = self.spatial_context
+        q_request_dict = self.request_dict
+        if 'q' not in q_request_dict:
+            q_request_dict['q'] = []
+        param_vals = q_request_dict['q']
+        if len(param_vals) < 1:
+            search_term = None
+        else:
+            search_term = param_vals[0]
+        field = LastUpdatedOrderedDict()
+        field['id'] = '#textfield-keyword-search'
+        field['label'] = 'General Keyword Search'
+        field['oc-api:search-term'] = search_term
+        if search_term is False or search_term is None:
+            new_rparams = fl.add_to_request_by_solr_field('q',
+                                                          '{SearchTerm}')
+            field['oc-api:template'] = fl.make_request_url(new_rparams)
+            field['oc-api:template-json'] = fl.make_request_url(new_rparams, '.json')
+        else:
+            param_search = param_val.replace(search_term, '{SearchTerm}')
+            rem_request = fl.make_request_sub(q_request_dict,
+                                              'q',
+                                              search_term,
+                                              '{SearchTerm}')
+            field['oc-api:template'] = fl.make_request_url(rem_request)
+            field['oc-api:template-json'] = fl.make_request_url(rem_request, '.json')
+        text_fields.append(field)
+        # now add an option looking in properties
+        if 'prop' in self.request_dict:
+            param_vals = self.request_dict['prop']
+            for param_val in param_vals:
+                if self.hierarchy_delim in param_val:
+                    all_vals = param_val.split(self.hierarchy_delim)
+                else:
+                    all_vals = [param_val]
+                if len(all_vals) < 2:
+                    check_field = all_vals[0]
+                    search_term = None  # no search term
+                else:
+                    check_field = all_vals[-2]  # penultimate value is the field
+                    search_term = all_vals[-1]  # last value is search term
+                check_dict = self.make_filter_label_dict(check_field)
+                if check_dict['data-type'] == 'string':
+                    fl = FilterLinks()
+                    fl.base_request_json = self.request_dict_json
+                    fl.base_r_full_path = self.request_full_path
+                    fl.spatial_context = self.spatial_context
+                    field = LastUpdatedOrderedDict()
+                    field['id'] = '#textfield-' + check_dict['slug']
+                    field['label'] = check_dict['label']
+                    field['oc-api:search-term'] = search_term
+                    if len(check_dict['entities']) == 1:
+                        field['rdfs:isDefinedBy'] = check_dict['entities'][0].uri
+                    if search_term is False or search_term is None:
+                        param_search = param_val + self.hierarchy_delim + '{SearchTerm}'
+                        new_rparams = fl.add_to_request_by_solr_field('prop',
+                                                                      param_search)
+                        field['oc-api:template'] = fl.make_request_url(new_rparams)
+                        field['oc-api:template-json'] = fl.make_request_url(new_rparams, '.json')
+                    else:
+                        param_search = param_val.replace(search_term, '{SearchTerm}')
+                        rem_request = fl.make_request_sub(self.request_dict,
+                                                          'prop',
+                                                          param_val,
+                                                          param_search)
+                        field['oc-api:template'] = fl.make_request_url(rem_request)
+                        field['oc-api:template-json'] = fl.make_request_url(rem_request, '.json')
+                    text_fields.append(field)
+        if len(text_fields) > 0:
+            self.json_ld['oc-api:has-text-search'] = text_fields
+
     def make_facets(self, solr_json):
         """ Makes a list of facets """
         solr_facet_fields = self.get_path_in_dict(['facet_counts',
@@ -255,32 +343,35 @@ class MakeJsonLd():
                 date_options = []
                 string_options = []
                 i = -1
-                for solr_facet_value_key in solr_facet_values[::2]:
-                    i += 2
-                    solr_facet_count = solr_facet_values[i]
-                    facet_val_obj = self.make_facet_value_obj(solr_facet_key,
-                                                              solr_facet_value_key,
-                                                              solr_facet_count)
-                    val_obj_data_type = facet_val_obj['data-type']
-                    facet_val_obj.pop('data-type', None)
-                    if val_obj_data_type == 'id':
-                        id_options.append(facet_val_obj)
-                    elif val_obj_data_type == 'numeric':
-                        num_options.append(facet_val_obj)
-                    elif val_obj_data_type == 'date':
-                        date_options.append(facet_val_obj)
-                    elif val_obj_data_type == 'string':
-                        string_options.append(facet_val_obj)
-                if len(id_options) > 0:
-                    facet['oc-api:has-id-options'] = id_options
-                if len(num_options) > 0:
-                    facet['oc-api:has-numeric-options'] = num_options
-                if len(date_options) > 0:
-                    facet['oc-api:has-date-options'] = date_options
-                if len(string_options) > 0:
-                    facet['oc-api:has-text-options'] = string_options
-                if count_raw_values > 0:
-                    # check so facets without options are not presented
+                if facet['data-type'] == 'id':
+                    for solr_facet_value_key in solr_facet_values[::2]:
+                        i += 2
+                        solr_facet_count = solr_facet_values[i]
+                        facet_val_obj = self.make_facet_value_obj(solr_facet_key,
+                                                                  solr_facet_value_key,
+                                                                  solr_facet_count)
+                        val_obj_data_type = facet_val_obj['data-type']
+                        facet_val_obj.pop('data-type', None)
+                        if val_obj_data_type == 'id':
+                            id_options.append(facet_val_obj)
+                        elif val_obj_data_type == 'numeric':
+                            num_options.append(facet_val_obj)
+                        elif val_obj_data_type == 'date':
+                            date_options.append(facet_val_obj)
+                        elif val_obj_data_type == 'string':
+                            string_options.append(facet_val_obj)
+                    if len(id_options) > 0:
+                        facet['oc-api:has-id-options'] = id_options
+                    if len(num_options) > 0:
+                        facet['oc-api:has-numeric-options'] = num_options
+                    if len(date_options) > 0:
+                        facet['oc-api:has-date-options'] = date_options
+                    if len(string_options) > 0:
+                        facet['oc-api:has-text-options'] = string_options
+                    if count_raw_values > 0:
+                        # check so facets without options are not presented
+                        pre_sort_facets[facet['id']] = facet
+                else:
                     pre_sort_facets[facet['id']] = facet
             # now make a sorted list of facets
             json_ld_facets = self.make_sorted_facet_list(pre_sort_facets)
@@ -401,11 +492,8 @@ class MakeJsonLd():
             fdtype_list = facet_key_list[1].split('_')
             fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
-            entity = Entity()
-            found = entity.dereference(slug)
-            if found is False:
-                found = entity.dereference(slug, slug)
-            if found:
+            entity = self.get_entity(slug)
+            if entity is not False:
                 facet['id'] = id_prefix + '-' + entity.slug
                 facet['rdfs:isDefinedBy'] = entity.uri
                 facet['label'] = entity.label

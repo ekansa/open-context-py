@@ -222,8 +222,11 @@ class QueryMaker():
                         else:
                             act_field = field_parts['prefix'] + '___' + act_field
                     i += 1
-                    if i >= path_list_len and act_field not in query_dict['facet.field']:
-                        query_dict['facet.field'].append(act_field)
+                    if i >= path_list_len \
+                            and act_field not in query_dict['facet.field']:
+                        if act_field_data_type == 'id':
+                            # only get facets for 'id' type fields
+                            query_dict['facet.field'].append(act_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
                     search_term = act_field + ':' + prop_slug
