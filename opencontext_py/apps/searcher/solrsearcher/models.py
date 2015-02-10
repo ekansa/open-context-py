@@ -72,6 +72,8 @@ class SolrSearch():
                 prop_query = qm.process_prop(act_prop)
                 query['fq'] += prop_query['fq']
                 query['facet.field'] += prop_query['facet.field']
+                query['stats.field'] += prop_query['stats.field']
+                query['facet.range'] = prop_query['facet.range']
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',

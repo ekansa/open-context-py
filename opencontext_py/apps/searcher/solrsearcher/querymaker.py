@@ -180,7 +180,9 @@ class QueryMaker():
     def process_prop(self, props):
         # TODO docstring
         query_dict = {'fq': [],
-                      'facet.field': []}
+                      'facet.field': [],
+                      'stats.field': [],
+                      'facet.range': []}
         fq_terms = []
         prop_path_lists = self.expand_hierarchy_options(props)
         for prop_path_list in prop_path_lists:
@@ -227,6 +229,8 @@ class QueryMaker():
                         if act_field_data_type == 'id':
                             # only get facets for 'id' type fields
                             query_dict['facet.field'].append(act_field)
+                        elif act_field_data_type == 'numeric':
+                            query_dict['stats.field'].append(act_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
                     search_term = act_field + ':' + prop_slug
