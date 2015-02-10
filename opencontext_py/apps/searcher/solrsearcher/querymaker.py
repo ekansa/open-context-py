@@ -18,6 +18,14 @@ class QueryMaker():
                      'types': 'oc-gen-types',
                      'predicates': 'oc-gen-predicates'}
 
+    TYPE_URIS = {'subjects': 'oc-gen:subjects',
+                 'media': 'oc-gen:media',
+                 'documents': 'oc-gen:documents',
+                 'persons': 'oc-gen:persons',
+                 'projects': 'oc-gen:projects',
+                 'types': 'oc-gen:types',
+                 'predicates': 'oc-gen:predicates'}
+
     def __init__(self):
         self.error = False
         self.entities = {}  # keep looked up entities to save future database lookups
@@ -89,7 +97,7 @@ class QueryMaker():
 
     def expand_hierarchy_options(self,
                                  path_param_val,
-                                 hier_delim=' ',
+                                 hier_delim='---',
                                  or_delim='||'):
         """ Exapands a hiearchic path string into a
             list of listed hierachically ordered items.
@@ -180,39 +188,45 @@ class QueryMaker():
             path_list_len = len(prop_path_list)
             fq_path_terms = []
             act_field = SolrDocument.ROOT_PREDICATE_SOLR
+            act_field_data_type = 'id'
             for prop_slug in prop_path_list:
-                entity = Entity()
-                found = entity.dereference(prop_slug)
-                if found is False:
-                    found = entity.dereference(prop_slug, prop_slug)
-                if found:
-                    self.entities[prop_slug] = entity  # store entitty for later use
-                    prop_slug = entity.slug
-                    if i == 0:
-                        if entity.item_type != 'uri':
-                            act_field = SolrDocument.ROOT_PREDICATE_SOLR
+                if 'q::' not in prop_slug:
+                    entity = Entity()
+                    found = entity.dereference(prop_slug)
+                    if found is False:
+                        found = entity.dereference(prop_slug, prop_slug)
+                    if found:
+                        self.entities[prop_slug] = entity  # store entitty for later use
+                        prop_slug = entity.slug
+                        if i == 0:
+                            if entity.item_type != 'uri':
+                                act_field = SolrDocument.ROOT_PREDICATE_SOLR
+                            else:
+                                act_field = False
+                                if 'oc-gen' in prop_slug:
+                                    # get the root solr facet field for the item type
+                                    # associated with this category
+                                    act_field = self.get_parent_item_type_facet_field(entity.uri)
+                                if act_field is False:
+                                    act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                        # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
+                        # the below is a bit of a hack. We should have a query field
+                        # as with ___pred_ to query just the slug. But this works for now
+                        fq_field = act_field + '_fq'
+                        fq_path_term = fq_field + ':' + prop_slug
+                        fq_path_terms.append(fq_path_term)
+                        field_parts = self.make_prop_solr_field_parts(entity)
+                        if i < 1:
+                            act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
-                            act_field = False
-                            if 'oc-gen' in prop_slug:
-                                # get the root solr facet field for the item type
-                                # associated with this category
-                                act_field = self.get_parent_item_type_facet_field(entity.uri)
-                            if act_field is False:
-                                act_field = SolrDocument.ROOT_LINK_DATA_SOLR
-                    # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
-                    # the below is a bit of a hack. We should have a query field
-                    # as with ___pred_ to query just the slug. But this works for now
-                    fq_field = act_field + '_fq'
-                    fq_path_term = fq_field + ':' + prop_slug
-                    fq_path_terms.append(fq_path_term)
-                    field_parts = self.make_prop_solr_field_parts(entity)
-                    if i < 1:
-                        act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
-                    else:
-                        act_field = field_parts['prefix'] + '___' + act_field
-                i += 1
-                if i >= path_list_len and act_field not in query_dict['facet.field']:
-                    query_dict['facet.field'].append(act_field)
+                            act_field = field_parts['prefix'] + '___' + act_field
+                    i += 1
+                    if i >= path_list_len and act_field not in query_dict['facet.field']:
+                        query_dict['facet.field'].append(act_field)
+                else:
+                    # case for a text search
+                    search_term = act_field + ':' + prop_slug.replace('q::', '') + ' '
+                    fq_path_terms.append(search_term)
             final_path_term = ' AND '.join(fq_path_terms)
             final_path_term = '(' + final_path_term + ')'
             fq_terms.append(final_path_term)

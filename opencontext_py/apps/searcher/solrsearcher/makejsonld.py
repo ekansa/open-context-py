@@ -15,6 +15,7 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 class MakeJsonLd():
 
     def __init__(self, request_dict):
+        self.hierarchy_delim = '---'
         self.request_dict = request_dict
         self.request_dict_json = json.dumps(request_dict,
                                             ensure_ascii=False,
@@ -76,7 +77,7 @@ class MakeJsonLd():
         for param_key, param_vals in self.request_dict.items():
             if param_key == 'path':
                 i += 1
-                f_entity = self.get_filter_entity(param_vals, True)
+                f_entity = self.get_entity(param_vals, True)
                 label = http.urlunquote_plus(param_vals)
                 act_filter = LastUpdatedOrderedDict()
                 act_filter['id'] = '#filter-' + str(i)
@@ -96,8 +97,8 @@ class MakeJsonLd():
                     i += 1
                     act_filter = LastUpdatedOrderedDict()
                     act_filter['id'] = '#filter-' + str(i)
-                    if ' ' in param_val:
-                        all_vals = param_val.split(' ')
+                    if self.hierarchy_delim in param_val:
+                        all_vals = param_val.split(self.hierarchy_delim)
                     else:
                         all_vals = [param_val]
                     if param_key == 'proj':
@@ -113,8 +114,11 @@ class MakeJsonLd():
                         else:
                             filt_dict = self.make_filter_label_dict(all_vals[0])
                             act_filter['oc-api:filter'] = filt_dict['label']
-                        label_dict = self.make_filter_label_dict(all_vals[-1])
-                        act_filter['label'] = label_dict['label']
+                        if 'q::' in all_vals[-1]:
+                            act_filter['label'] = all_vals[-1].replace('q::', 'Search term: \'') + '\''
+                        else:
+                            label_dict = self.make_filter_label_dict(all_vals[-1])
+                            act_filter['label'] = label_dict['label']
                     elif param_key == 'type':
                         act_filter['oc-api:filter'] = 'Open Context Type'
                         if all_vals[0] in QueryMaker.TYPE_MAPPINGS:
@@ -146,15 +150,15 @@ class MakeJsonLd():
         else:
             vals = [act_val]
         for val in vals:
-            f_entity = self.get_filter_entity(val)
+            f_entity = self.get_entity(val)
             if f_entity is not False:
                 labels.append(f_entity.label)
                 output['entities'].append(f_entity)
         output['label'] = ' OR '.join(labels)
         return output
 
-    def get_filter_entity(self, identifier, is_path=False):
-        """ looks up an entity used in a filter """
+    def get_entity(self, identifier, is_path=False):
+        """ looks up an entity """
         output = False
         identifier = http.urlunquote_plus(identifier)
         if identifier in self.entities:
@@ -412,14 +416,22 @@ class MakeJsonLd():
             # Case where facet values are encoded as:
             # slug___data-type___/uri-item-type/uuid___label
             # ----------------------------
+            data_type = facet_key_list[1]
             fl = FilterLinks()
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
             fl.spatial_context = self.spatial_context
             output = LastUpdatedOrderedDict()
             slug = facet_key_list[0]
-            new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
-                                                          slug)
+            if data_type == 'id':
+                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                              slug)
+            elif data_type == 'string':
+                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                              slug + self.hierarchy_delim + 'q::{searchTerms}')
+            else:
+                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                              slug)
             output['id'] = fl.make_request_url(new_rparams)
             output['json'] = fl.make_request_url(new_rparams, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
@@ -429,28 +441,40 @@ class MakeJsonLd():
             output['label'] = facet_key_list[3]
             output['count'] = solr_facet_count
             output['slug'] = slug
-            output['data-type'] = facet_key_list[1]
+            output['data-type'] = data_type
         else:
             # ----------------------------
             # Sepcilized cases of non-encoded facet values
             # ----------------------------
-            output = LastUpdatedOrderedDict()
-            output['id'] = solr_facet_value_key
-            output['count'] = solr_facet_count
-            output['data-type'] = 'id'
+            output = self.make_specialized_facet_value_obj(solr_facet_key,
+                                                           solr_facet_value_key,
+                                                           solr_facet_count)
         return output
 
     def make_specialized_facet_value_obj(self,
                                          solr_facet_key,
                                          solr_facet_value_key,
-                                         solr_facet_count,
-                                         fl):
+                                         solr_facet_count):
         """ makes a facet_value obj for specialzied solr faccets """
         fl = FilterLinks()
         fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
         fl.spatial_context = self.spatial_context
+        new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                      solr_facet_value_key)
         output = LastUpdatedOrderedDict()
+        output['id'] = fl.make_request_url(new_rparams)
+        output['json'] = fl.make_request_url(new_rparams, '.json')
+        output['label'] = False
+        if solr_facet_key == 'item_type':
+            if solr_facet_value_key in QueryMaker.TYPE_URIS:
+                output['rdfs:isDefinedBy'] = QueryMaker.TYPE_URIS[solr_facet_value_key]
+                entity = self.get_entity(output['rdfs:isDefinedBy'])
+                if entity is not False:
+                    output['label'] = entity.label
+        output['count'] = solr_facet_count
+        output['slug'] = solr_facet_value_key
+        output['data-type'] = 'id'
         return output
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):

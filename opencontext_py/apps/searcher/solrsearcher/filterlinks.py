@@ -13,7 +13,8 @@ class FilterLinks():
     SOLR_FIELD_PARAM_MAPPINGS = \
         {'___project_id': 'proj',
          '___context_id': 'path',
-         '___pred_': 'prop'}
+         '___pred_': 'prop',
+         'item_type': 'type'}
 
     def __init__(self, request_dict=False):
         self.base_search_link = '/sets/'
@@ -22,6 +23,7 @@ class FilterLinks():
         self.base_r_full_path = False
         self.spatial_context = False
         self.testing = True
+        self.hierarchy_delim = '---'
 
     def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """
@@ -94,7 +96,7 @@ class FilterLinks():
         param = self.get_param_from_solr_facet_key(solr_facet_key)
         slugs = self.parse_slugs_in_solr_facet_key(solr_facet_key)
         if slugs is not False:
-            add_to_value = ' '.join(slugs)
+            add_to_value = self.hierarchy_delim.join(slugs)
             # print('Add-to-value' + add_to_value)
         else:
             add_to_value = None
@@ -144,7 +146,7 @@ class FilterLinks():
                         # print('Old val:' + old_val + ' add to:' + add_to_value)
                         if old_val == add_to_value:
                             old_found = True
-                            new_list_val = old_val + ' ' + new_value
+                            new_list_val = old_val + self.hierarchy_delim + new_value
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)
