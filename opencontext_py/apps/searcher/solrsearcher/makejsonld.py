@@ -423,15 +423,8 @@ class MakeJsonLd():
             fl.spatial_context = self.spatial_context
             output = LastUpdatedOrderedDict()
             slug = facet_key_list[0]
-            if data_type == 'id':
-                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
-                                                              slug)
-            elif data_type == 'string':
-                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
-                                                              slug + self.hierarchy_delim + 'q::{searchTerms}')
-            else:
-                new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
-                                                              slug)
+            new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
+                                                          slug)
             output['id'] = fl.make_request_url(new_rparams)
             output['json'] = fl.make_request_url(new_rparams, '.json')
             if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:

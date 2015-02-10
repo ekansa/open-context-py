@@ -190,7 +190,7 @@ class QueryMaker():
             act_field = SolrDocument.ROOT_PREDICATE_SOLR
             act_field_data_type = 'id'
             for prop_slug in prop_path_list:
-                if 'q::' not in prop_slug:
+                if act_field_data_type == 'id':
                     entity = Entity()
                     found = entity.dereference(prop_slug)
                     if found is False:
@@ -216,6 +216,7 @@ class QueryMaker():
                         fq_path_term = fq_field + ':' + prop_slug
                         fq_path_terms.append(fq_path_term)
                         field_parts = self.make_prop_solr_field_parts(entity)
+                        act_field_data_type = field_parts['suffix']
                         if i < 1:
                             act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
@@ -223,9 +224,9 @@ class QueryMaker():
                     i += 1
                     if i >= path_list_len and act_field not in query_dict['facet.field']:
                         query_dict['facet.field'].append(act_field)
-                else:
+                elif act_field_data_type == 'string':
                     # case for a text search
-                    search_term = act_field + ':' + prop_slug.replace('q::', '') + ' '
+                    search_term = act_field + ':' + prop_slug
                     fq_path_terms.append(search_term)
             final_path_term = ' AND '.join(fq_path_terms)
             final_path_term = '(' + final_path_term + ')'
