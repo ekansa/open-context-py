@@ -109,14 +109,15 @@ class MakeJsonLd():
                     elif param_key == 'prop':
                         # prop, the first item is the filter-label
                         # the last is the filter
+                        act_filter['label'] = False
                         if len(all_vals) < 2:
                             act_filter['oc-api:filter'] = 'Description'
                         else:
                             filt_dict = self.make_filter_label_dict(all_vals[0])
                             act_filter['oc-api:filter'] = filt_dict['label']
-                        if 'q::' in all_vals[-1]:
-                            act_filter['label'] = all_vals[-1].replace('q::', 'Search term: \'') + '\''
-                        else:
+                            if filt_dict['data-type'] == 'string':
+                                act_filter['label'] = 'Search Term: \'' + all_vals[-1] + '\''
+                        if act_filter['label'] is False:
                             label_dict = self.make_filter_label_dict(all_vals[-1])
                             act_filter['label'] = label_dict['label']
                     elif param_key == 'type':
@@ -143,6 +144,7 @@ class MakeJsonLd():
             searchs)
         """
         output = {'label': False,
+                  'data-type': 'id',
                   'entities': []}
         labels = []
         if '||' in act_val:
@@ -152,6 +154,12 @@ class MakeJsonLd():
         for val in vals:
             f_entity = self.get_entity(val)
             if f_entity is not False:
+                qm = QueryMaker()
+                # get the solr field data type
+                ent_solr_data_type = qm.get_solr_field_type(f_entity.data_type)
+                if ent_solr_data_type is not False \
+                   and ent_solr_data_type != 'id':
+                    output['data-type'] = ent_solr_data_type
                 labels.append(f_entity.label)
                 output['entities'].append(f_entity)
         output['label'] = ' OR '.join(labels)
