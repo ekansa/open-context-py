@@ -10,12 +10,18 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 # to get useful information about the entity
 class SolrSearch():
 
+    DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_PREDICATE_SOLR,
+                            SolrDocument.ROOT_LINK_DATA_SOLR,
+                            SolrDocument.ROOT_PROJECT_SOLR,
+                            'item_type']
+
     def __init__(self):
         self.solr = False
         self.solr_connect()
         self.solr_response = False
         self.json_ld = False
         self.entities = {}  # entities involved in a search request
+        self.facet_fields = self.DEFAULT_FACET_FIELDS
 
     def solr_connect(self):
         """ connects to solr """
@@ -50,10 +56,12 @@ class SolrSearch():
                                                 'start',
                                                 '0')
          # Spatial Context
-        context = qm._process_spatial_context(request_dict['path'])
-        query['fq'].append(context['fq'])
-        query['facet.field'] += context['facet.field']  # context facet fields, always a list
-        # Properties and Linked Data
+        if 'path' in request_dict:
+            self.remove_from_default_facet_fields(SolrDocument.ROOT_CONTEXT_SOLR)
+            context = qm._process_spatial_context(request_dict['path'])
+            query['fq'].append(context['fq'])
+            query['facet.field'] += context['facet.field']  # context facet fields, always a list
+            # Properties and Linked Data
         props = self.get_request_param(request_dict,
                                        'prop',
                                        False,
@@ -69,6 +77,8 @@ class SolrSearch():
                                       'proj',
                                       False)
         if proj is not False:
+            # remove the facet field, since we're already filtering with it
+            self.remove_from_default_facet_fields(SolrDocument.ROOT_PROJECT_SOLR)
             proj_query = qm.process_proj(proj)
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']
@@ -78,6 +88,8 @@ class SolrSearch():
                                            False,
                                            False)
         if item_type is not False:
+            # remove the facet field, since we're already filtering with it
+            self.remove_from_default_facet_fields('item_type')
             it_query = qm.process_item_type(item_type)
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
@@ -87,15 +99,18 @@ class SolrSearch():
         self.gather_entities(qm.entities)
         return query
 
+    def remove_from_default_facet_fields(self, field):
+        """ removes a field from the default facet fields """
+        if isinstance(self.facet_fields, list):
+            if field in self.facet_fields:
+                self.facet_fields.remove(field)
+
     def add_default_facet_fields(self, query):
         """ adds additional facet fields to query """
-        default_list = [SolrDocument.ROOT_PREDICATE_SOLR,
-                        SolrDocument.ROOT_LINK_DATA_SOLR,
-                        SolrDocument.ROOT_PROJECT_SOLR,
-                        'item_type']
-        for default_field in default_list:
-            if default_field not in query['facet.field']:
-                query['facet.field'].append(default_field)
+        if isinstance(self.facet_fields, list):
+            for default_field in self.facet_fields:
+                if default_field not in query['facet.field']:
+                    query['facet.field'].append(default_field)
         return query
 
     def gather_entities(self, entities_dict):

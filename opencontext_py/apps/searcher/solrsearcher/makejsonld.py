@@ -77,10 +77,11 @@ class MakeJsonLd():
             if param_key == 'path':
                 i += 1
                 f_entity = self.get_filter_entity(param_vals, True)
+                label = http.urlunquote_plus(param_vals)
                 act_filter = LastUpdatedOrderedDict()
                 act_filter['id'] = '#filter-' + str(i)
                 act_filter['oc-api:filter'] = 'Context'
-                act_filter['label'] = param_vals.replace('||', ' OR ')
+                act_filter['label'] = label.replace('||', ' OR ')
                 if f_entity is not False:
                     act_filter['rdfs:isDefinedBy'] = f_entity.uri
                 # generate a request dict without the context filter
@@ -308,6 +309,12 @@ class MakeJsonLd():
            and '#facet-item-type' not in used_keys:
                 json_ld_facets.append(pre_sort_facets['#facet-item-type'])
                 used_keys.append('#facet-item-type')
+        # now add item categories
+        for id_key, facet in pre_sort_facets.items():
+            if '#facet-prop-oc-gen-' in id_key \
+               and id_key not in used_keys:
+                json_ld_facets.append(facet)
+                used_keys.append(id_key)
         # now add facet for projects
         for id_key, facet in pre_sort_facets.items():
             if '#facet-project' in id_key \
