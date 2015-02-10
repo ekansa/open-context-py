@@ -5,6 +5,8 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.ocitems.assertions.math import MathAssertions
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 
 class QueryMaker():
@@ -182,7 +184,8 @@ class QueryMaker():
         query_dict = {'fq': [],
                       'facet.field': [],
                       'stats.field': [],
-                      'facet.range': []}
+                      'facet.range': [],
+                      'ranges': {}}
         fq_terms = []
         prop_path_lists = self.expand_hierarchy_options(props)
         for prop_path_list in prop_path_lists:
@@ -223,6 +226,19 @@ class QueryMaker():
                             act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
                             act_field = field_parts['prefix'] + '___' + act_field
+                        if act_field_data_type == 'numeric':
+                            ma = MathAssertions()
+                            if entity.item_type != 'uri':
+                                summary = ma.get_numeric_range(entity.uuid)
+                            else:
+                                summary = ma.get_numeric_range_via_ldata(entity.uri)
+                            query_dict['facet.range'].append(act_field)
+                            fstart = 'f.' + act_field + '.facet.range.start'
+                            query_dict['ranges'][fstart] = summary['min']
+                            fend = 'f.' + act_field + '.facet.range.end'
+                            query_dict['ranges'][fend] = summary['max']
+                            fgap = 'f.' + act_field + '.facet.range.gap'
+                            query_dict['ranges'][fgap] = (summary['max'] - summary['min']) / 8
                     i += 1
                     if i >= path_list_len \
                             and act_field not in query_dict['facet.field']:

@@ -74,6 +74,10 @@ class SolrSearch():
                 query['facet.field'] += prop_query['facet.field']
                 query['stats.field'] += prop_query['stats.field']
                 query['facet.range'] = prop_query['facet.range']
+                if 'ranges' in prop_query:
+                    for key, value in prop_query['ranges'].items():
+                        print('Key: ' + key + ' val: ' + str(value))
+                        query[key] = value
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
