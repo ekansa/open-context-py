@@ -673,8 +673,19 @@ class SolrDocument:
                                                 self.fields['text'] += last_object_uri + ' '
                                                 self.fields['text'] += last_object_label + '\n'
 
+    def process_object_uri(self, object_uri):
+        """ Projecesses object URIs.
+            Useful to have a simple field that
+            records all the linked data objects
+            related to a subject (the documented
+            indexed by solr)
+            Also checks the vocabular for the object
+            we we can index on that.
+        """
+        pass
+
     def get_linked_predicate_values(self, predicate_slug_id):
-        """ Gets all the values usef with a certain predicate
+        """ Gets all the values used with a certain predicate
         """
         output = False
         if 'oc-gen:has-obs' in self.oc_item.json_ld:
