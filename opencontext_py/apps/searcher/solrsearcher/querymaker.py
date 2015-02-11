@@ -31,6 +31,7 @@ class QueryMaker():
     def __init__(self):
         self.error = False
         self.entities = {}  # keep looked up entities to save future database lookups
+        self.histogram_groups = 10
 
     def _get_context_paths(self, spatial_context):
         '''
@@ -227,18 +228,9 @@ class QueryMaker():
                         else:
                             act_field = field_parts['prefix'] + '___' + act_field
                         if act_field_data_type == 'numeric':
-                            ma = MathAssertions()
-                            if entity.item_type != 'uri':
-                                summary = ma.get_numeric_range(entity.uuid)
-                            else:
-                                summary = ma.get_numeric_range_via_ldata(entity.uri)
-                            query_dict['facet.range'].append(act_field)
-                            fstart = 'f.' + act_field + '.facet.range.start'
-                            query_dict['ranges'][fstart] = summary['min']
-                            fend = 'f.' + act_field + '.facet.range.end'
-                            query_dict['ranges'][fend] = summary['max']
-                            fgap = 'f.' + act_field + '.facet.range.gap'
-                            query_dict['ranges'][fgap] = (summary['max'] - summary['min']) / 8
+                            query_dict = self.add_math_facet_ranges(query_dict,
+                                                                    act_field,
+                                                                    entity)
                     i += 1
                     if i >= path_list_len \
                             and act_field not in query_dict['facet.field']:
@@ -249,6 +241,10 @@ class QueryMaker():
                             query_dict['stats.field'].append(act_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
+                    search_term = act_field + ':' + self.escape_solr_arg(prop_slug)
+                    fq_path_terms.append(search_term)
+                elif act_field_data_type == 'numeric':
+                    # numeric search. assume it's well formed solr numeric request
                     search_term = act_field + ':' + prop_slug
                     fq_path_terms.append(search_term)
             final_path_term = ' AND '.join(fq_path_terms)
@@ -257,6 +253,33 @@ class QueryMaker():
         fq_final = ' OR '.join(fq_terms)
         fq_final = '(' + fq_final + ')'
         query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def add_math_facet_ranges(self,
+                              query_dict,
+                              act_field,
+                              entity):
+        """ this does some math for facet
+            ranges for numeric fields
+        """
+        ma = MathAssertions()
+        if entity.item_type != 'uri':
+            summary = ma.get_numeric_range(entity.uuid)
+        else:
+            summary = ma.get_numeric_range_via_ldata(entity.uri)
+        if (summary['count'] / self.histogram_groups) < 3:
+            groups = 4
+        else:
+            groups = self.histogram_groups
+        query_dict['facet.range'].append(act_field)
+        fstart = 'f.' + act_field + '.facet.range.start'
+        query_dict['ranges'][fstart] = summary['min']
+        fend = 'f.' + act_field + '.facet.range.end'
+        query_dict['ranges'][fend] = summary['max']
+        fgap = 'f.' + act_field + '.facet.range.gap'
+        query_dict['ranges'][fgap] = (summary['max'] - summary['min']) / groups
+        findex = 'f.' + act_field + '.facet.sort'
+        query_dict['ranges'][findex] = 'index'  # sort by index, not by count
         return query_dict
 
     def get_parent_item_type_facet_field(self, category_uri):
@@ -340,3 +363,38 @@ class QueryMaker():
             context['fq'] = None
             context['facet.field'] = ['root___context_id']
         return context
+
+    def escaped_seq(self, term):
+        """ Yield the next string based on the
+            next character (either this char
+            or escaped version """
+        escaperules = {'+': r'\+',
+                       '-': r'\-',
+                       '&': r'\&',
+                       '|': r'\|',
+                       '!': r'\!',
+                       '(': r'\(',
+                       ')': r'\)',
+                       '{': r'\{',
+                       '}': r'\}',
+                       '[': r'\[',
+                       ']': r'\]',
+                       '^': r'\^',
+                       '~': r'\~',
+                       '*': r'\*',
+                       '?': r'\?',
+                       ':': r'\:',
+                       '"': r'\"',
+                       ';': r'\;',
+                       ' ': r'\ '}
+        for char in term:
+            if char in escaperules.keys():
+                yield escaperules[char]
+            else:
+                yield char
+
+    def escape_solr_arg(self, term):
+        """ Apply escaping to the passed in query terms
+            escaping special characters like : , etc"""
+        term = term.replace('\\', r'\\')   # escape \ first
+        return "".join([next_str for next_str in self.escaped_seq(term)])

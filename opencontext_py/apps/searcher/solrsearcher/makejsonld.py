@@ -207,6 +207,7 @@ class MakeJsonLd():
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
         self.add_filters_json()
         self.add_text_fields()
+        self.add_numeric_fields(solr_json)
         self.make_facets(solr_json)
         if settings.DEBUG:
             # self.json_ld['request'] = self.request_dict
@@ -275,7 +276,7 @@ class MakeJsonLd():
             field['oc-api:template'] = fl.make_request_url(new_rparams)
             field['oc-api:template-json'] = fl.make_request_url(new_rparams, '.json')
         else:
-            param_search = param_val.replace(search_term, '{SearchTerm}')
+            param_search = param_vals[0].replace(search_term, '{SearchTerm}')
             rem_request = fl.make_request_sub(q_request_dict,
                                               'q',
                                               search_term,
@@ -326,6 +327,49 @@ class MakeJsonLd():
                     text_fields.append(field)
         if len(text_fields) > 0:
             self.json_ld['oc-api:has-text-search'] = text_fields
+
+    def add_numeric_fields(self, solr_json):
+        """ adds numeric fields with query options """
+        num_fields = []
+        # Look for properites
+        facet_ranges = self.get_path_in_dict(['facet_counts',
+                                              'facet_ranges'],
+                                             solr_json)
+        if isinstance(facet_ranges, dict):
+            for solr_field_key, ranges in facet_ranges.items():
+                facet_key_list = solr_field_key.split('___')
+                slug = facet_key_list[0].replace('_', '-')
+                field = self.get_facet_meta(solr_field_key)
+                field['oc-api:min'] = float(ranges['start'])
+                field['oc-api:max'] = float(ranges['end'])
+                gap = float(ranges['gap'])
+                field['oc-api:gap'] = gap
+                field['oc-api:has-range-options'] = []
+                i = -1
+                for range_min_key in ranges['counts'][::2]:
+                    i += 2
+                    solr_count = ranges['counts'][i]
+                    fl = FilterLinks()
+                    fl.base_request_json = self.request_dict_json
+                    fl.base_r_full_path = self.request_full_path
+                    fl.spatial_context = self.spatial_context
+                    range_start = float(range_min_key)
+                    range_end = range_start + gap
+                    solr_range = '[' + str(range_start) + ' TO ' + str(range_end) + ' ]'
+                    param_search = slug + self.hierarchy_delim + solr_range
+                    new_rparams = fl.add_to_request_by_solr_field('prop',
+                                                                  param_search)
+                    range_dict = LastUpdatedOrderedDict()
+                    range_dict['id'] = fl.make_request_url(new_rparams)
+                    range_dict['json'] = fl.make_request_url(new_rparams, '.json')
+                    range_dict['label'] = str(round(range_start,3))
+                    range_dict['count'] = solr_count
+                    range_dict['oc-api:min'] = range_start
+                    range_dict['oc-api:max'] = range_end
+                    field['oc-api:has-range-options'].append(range_dict)
+                num_fields.append(field)
+        if len(num_fields) > 0:
+            self.json_ld['oc-api:has-numeric-facets'] = num_fields
 
     def make_facets(self, solr_json):
         """ Makes a list of facets """

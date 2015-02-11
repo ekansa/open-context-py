@@ -10,8 +10,7 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 # to get useful information about the entity
 class SolrSearch():
 
-    DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_PREDICATE_SOLR,
-                            SolrDocument.ROOT_LINK_DATA_SOLR,
+    DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
                             SolrDocument.ROOT_PROJECT_SOLR,
                             'item_type']
 
@@ -51,7 +50,9 @@ class SolrSearch():
         # If the user does not provide a search term, search for everything
         query['q'] = self.get_request_param(request_dict,
                                             'q',
-                                            '*:*')
+                                            '*:*',
+                                            False,
+                                            True)
         query['start'] = self.get_request_param(request_dict,
                                                 'start',
                                                 '0')
@@ -76,7 +77,6 @@ class SolrSearch():
                 query['facet.range'] = prop_query['facet.range']
                 if 'ranges' in prop_query:
                     for key, value in prop_query['ranges'].items():
-                        print('Key: ' + key + ' val: ' + str(value))
                         query[key] = value
         # Project
         proj = self.get_request_param(request_dict,
@@ -100,7 +100,8 @@ class SolrSearch():
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
         # Now add default facet fields
-        query = self.add_default_facet_fields(query)
+        query = self.add_default_facet_fields(query,
+                                              request_dict)
         # Now set aside entities used as search filters
         self.gather_entities(qm.entities)
         return query
@@ -111,12 +112,16 @@ class SolrSearch():
             if field in self.facet_fields:
                 self.facet_fields.remove(field)
 
-    def add_default_facet_fields(self, query):
+    def add_default_facet_fields(self,
+                                 query,
+                                 request_dict):
         """ adds additional facet fields to query """
         if isinstance(self.facet_fields, list):
             for default_field in self.facet_fields:
                 if default_field not in query['facet.field']:
                     query['facet.field'].append(default_field)
+            if 'proj' in request_dict:
+                query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
         return query
 
     def gather_entities(self, entities_dict):
@@ -129,7 +134,12 @@ class SolrSearch():
             if search_key not in self.entities:
                 self.entities[search_key] = entity
 
-    def get_request_param(self, request_dict, param, default, as_list=False):
+    def get_request_param(self,
+                          request_dict,
+                          param,
+                          default,
+                          as_list=False,
+                          solr_escape=False):
         """ get a string or list to use in queries from either
             the request object or the internal_request object
             so we have flexibility in doing searches without
@@ -142,12 +152,19 @@ class SolrSearch():
                     if isinstance(param_obj, list):
                         output = param_obj
                     else:
+                        if solr_escape:
+                            param_obj = '"' + param_obj + '"'
                         output = [param_obj]
                 else:
                     output = default
             else:
                 if param in request_dict:
                     output = request_dict[param]
+                    if isinstance(output, list):
+                        output = output[0]
+                    if solr_escape:
+                        qm = QueryMaker()
+                        output = qm.escape_solr_arg(output)
                 else:
                     output = default
         else:
