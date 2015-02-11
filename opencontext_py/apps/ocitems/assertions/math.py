@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Max, Min, Count
+from django.db.models import Max, Min, Count, Avg
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -26,8 +26,10 @@ class MathAssertions():
                            .filter(predicate_uuid__in=predicate_uuids)\
                            .aggregate(Min('data_num'),
                                       Max('data_num'),
-                                      Count('hash_id'))
+                                      Count('hash_id'),
+                                      Avg('data_num'))
         output = {}
+        output['avg'] = sum_ass['data_num__avg']
         output['min'] = sum_ass['data_num__min']
         output['max'] = sum_ass['data_num__max']
         output['count'] = sum_ass['hash_id__count']

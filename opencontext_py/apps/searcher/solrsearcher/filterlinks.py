@@ -157,7 +157,8 @@ class FilterLinks():
                             for old_val in new_rparams[param]:
                                 if add_to_value in old_val:
                                     old_found = True
-                                    new_list_val = old_val + self.hierarchy_delim + new_value
+                                    old_prefix = self.remove_solr_part(old_val)
+                                    new_list_val = old_prefix + self.hierarchy_delim + new_value
                                     # add the new item
                                     new_list.append(new_list_val)
                                     # remove the old
@@ -168,6 +169,18 @@ class FilterLinks():
                 else:
                     new_rparams[param].append(new_value)
         return new_rparams
+
+    def remove_solr_part(self, old_val):
+        """ removes part of a query parameter that
+            is in solr query syntax, inside square
+            brackets []
+        """
+        output = old_val
+        splitter = self.hierarchy_delim + '['
+        if splitter in old_val:
+            old_ex = old_val.split(splitter)
+            output = old_ex[0]
+        return output
 
     def make_base_params_from_url(self, request_url):
         """ makes the base parameters from the url """

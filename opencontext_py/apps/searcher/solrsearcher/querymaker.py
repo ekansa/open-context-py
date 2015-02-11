@@ -1,3 +1,4 @@
+import re
 import itertools
 import django.utils.http as http
 from django.http import Http404
@@ -250,7 +251,7 @@ class QueryMaker():
                             # --------------------------------------------
                             # check if the last or penultimate field has
                             # a different data-type (for linked-data)
-                            if i > (path_list_len - 2) \
+                            if i >= (path_list_len - 2) \
                                and l_data_entity:
                                 lequiv = LinkEquivalence()
                                 dtypes = lequiv.get_data_types_from_object(entity.uri)
@@ -262,18 +263,20 @@ class QueryMaker():
                                         act_field = field_parts['prefix'] + '___pred_' + act_field_data_type
                             # -------------------------------------------
                         if act_field_data_type == 'numeric':
+                            print('Numeric field: ' + act_field)
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
-                        # print('Current data type (' + str(i) + '): ' + act_field_data_type)
-                        # print('Current field (' + str(i) + '): ' + act_field)
+                            query_dict['stats.field'].append(act_field)
+                        print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        print('Current field (' + str(i) + '): ' + act_field)
                     i += 1
                     if i >= path_list_len \
                             and act_field not in query_dict['facet.field']:
                         if act_field_data_type == 'id':
                             # only get facets for 'id' type fields
                             query_dict['facet.field'].append(act_field)
-                        elif act_field_data_type == 'numeric':
+                        if act_field_data_type == 'numeric':
                             query_dict['stats.field'].append(act_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
@@ -283,6 +286,11 @@ class QueryMaker():
                     # numeric search. assume it's well formed solr numeric request
                     search_term = act_field + ':' + prop_slug
                     fq_path_terms.append(search_term)
+                    # now limit the numeric ranges for range facets
+                    query_dict = self.add_math_facet_ranges(query_dict,
+                                                            act_field,
+                                                            False,
+                                                            prop_slug)
             final_path_term = ' AND '.join(fq_path_terms)
             final_path_term = '(' + final_path_term + ')'
             fq_terms.append(final_path_term)
@@ -294,27 +302,42 @@ class QueryMaker():
     def add_math_facet_ranges(self,
                               query_dict,
                               act_field,
-                              entity):
+                              entity=False,
+                              solr_query=False):
         """ this does some math for facet
             ranges for numeric fields
         """
-        ma = MathAssertions()
-        if entity.item_type != 'uri':
-            summary = ma.get_numeric_range(entity.uuid)
-        else:
-            summary = ma.get_numeric_range_via_ldata(entity.uri)
-        if (summary['count'] / self.histogram_groups) < 3:
-            groups = 4
-        else:
-            groups = self.histogram_groups
-        query_dict['facet.range'].append(act_field)
+        groups = self.histogram_groups
         fstart = 'f.' + act_field + '.facet.range.start'
-        query_dict['ranges'][fstart] = summary['min']
         fend = 'f.' + act_field + '.facet.range.end'
-        query_dict['ranges'][fend] = summary['max']
         fgap = 'f.' + act_field + '.facet.range.gap'
-        query_dict['ranges'][fgap] = (summary['max'] - summary['min']) / groups
         findex = 'f.' + act_field + '.facet.sort'
+        if entity is not False:
+            ma = MathAssertions()
+            if entity.item_type != 'uri':
+                summary = ma.get_numeric_range(entity.uuid)
+            else:
+                summary = ma.get_numeric_range_via_ldata(entity.uri)
+            min_val = summary['min']
+            max_val = summary['max']
+            count_val = summary['count']
+            if (count_val / self.histogram_groups) < 3:
+                groups = 4
+        else:
+            if solr_query is not False:
+                vals = []
+                # get the numbers out
+                q_nums_strs = re.findall(r'[-+]?\d*\.\d+|\d+', solr_query)
+                for q_num_str in q_nums_strs:
+                    vals.append(float(q_num_str))
+                vals.sort()
+                min_val = vals[0]
+                max_val = vals[1]
+        if act_field not in query_dict['facet.range']:
+            query_dict['facet.range'].append(act_field)
+        query_dict['ranges'][fstart] = min_val
+        query_dict['ranges'][fend] = max_val
+        query_dict['ranges'][fgap] = (max_val - min_val) / groups
         query_dict['ranges'][findex] = 'index'  # sort by index, not by count
         return query_dict
 

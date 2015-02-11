@@ -339,6 +339,13 @@ class MakeJsonLd():
             for solr_field_key, ranges in facet_ranges.items():
                 facet_key_list = solr_field_key.split('___')
                 slug = facet_key_list[0].replace('_', '-')
+                # check to see if the field is a linkded data field
+                # if so, it needs some help with making Filter Links
+                linked_field = False
+                field_entity = self.get_entity(slug)
+                if field_entity is not False:
+                    if field_entity.item_type == 'uri':
+                        linked_field = True
                 field = self.get_facet_meta(solr_field_key)
                 field['oc-api:min'] = float(ranges['start'])
                 field['oc-api:max'] = float(ranges['end'])
@@ -353,12 +360,13 @@ class MakeJsonLd():
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
+                    fl.partial_param_val_match = linked_field
                     range_start = float(range_min_key)
                     range_end = range_start + gap
                     solr_range = '[' + str(range_start) + ' TO ' + str(range_end) + ' ]'
-                    param_search = slug + self.hierarchy_delim + solr_range
-                    new_rparams = fl.add_to_request_by_solr_field('prop',
-                                                                  param_search)
+                    new_rparams = fl.add_to_request('prop',
+                                                    solr_range,
+                                                    slug)
                     range_dict = LastUpdatedOrderedDict()
                     range_dict['id'] = fl.make_request_url(new_rparams)
                     range_dict['json'] = fl.make_request_url(new_rparams, '.json')
