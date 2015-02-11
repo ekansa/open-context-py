@@ -651,6 +651,8 @@ class SolrDocument:
                                                 # make sure the active solr field is reset to be from
                                                 # the last equivalent predicates. important if we're looping
                                                 # through multiple use_objects
+                                                last_object_uri = ''
+                                                last_object_label = ''
                                                 act_solr_field = act_pred_root_act_solr_field
                                                 # URI objects can be in hierarchies, look for these!
                                                 object_id = self.get_entity_id(use_obj)
@@ -664,9 +666,11 @@ class SolrDocument:
                                                         self.fields[act_solr_field] = []
                                                     self.fields[act_solr_field].append(solr_value)
                                                     last_object_label = parent['label']
+                                                    last_object_uri = parent['id']
                                                     act_solr_field = \
                                                         self._convert_slug_to_solr(parent['slug']) \
                                                         + '___' + act_solr_field
+                                                self.fields['text'] += last_object_uri + ' '
                                                 self.fields['text'] += last_object_label + '\n'
 
     def get_linked_predicate_values(self, predicate_slug_id):
