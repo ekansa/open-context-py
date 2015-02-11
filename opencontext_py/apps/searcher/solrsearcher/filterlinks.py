@@ -24,6 +24,7 @@ class FilterLinks():
         self.spatial_context = False
         self.testing = True
         self.hierarchy_delim = '---'
+        self.partial_param_val_match = False
 
     def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """
@@ -145,13 +146,22 @@ class FilterLinks():
                     new_list = []
                     old_found = False
                     for old_val in new_rparams[param]:
-                        # print('Old val:' + old_val + ' add to:' + add_to_value)
                         if old_val == add_to_value:
                             old_found = True
                             new_list_val = old_val + self.hierarchy_delim + new_value
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)
+                    if old_found is False:
+                        if self.partial_param_val_match:
+                            for old_val in new_rparams[param]:
+                                if add_to_value in old_val:
+                                    old_found = True
+                                    new_list_val = old_val + self.hierarchy_delim + new_value
+                                    # add the new item
+                                    new_list.append(new_list_val)
+                                    # remove the old
+                                    new_list.remove(old_val)
                     new_rparams[param] = new_list
                     if old_found is False:
                         new_rparams[param].append(new_value)

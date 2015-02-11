@@ -108,9 +108,9 @@ class LinkRecursion():
             self.parent_entities = self.get_entity_parents(parent_id)
         return self.parent_entities
 
-    def get_entity_children(self, identifier):
+    def get_entity_children(self, identifier, recurive=True):
         """
-        Gets parent concepts for a given URI or UUID identified entity
+        Gets child concepts for a given URI or UUID identified entity
         """
         p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
         p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
@@ -165,7 +165,7 @@ class LinkRecursion():
                         child_id = oc_uuid
                 identifier_children.append(child_id)
                 # recursively get the children of the child
-                self.get_entity_children(child_id)
+                self.get_entity_children(child_id, recurive)
             # same the list of children of the current identified item
             if identifier not in self.child_entities:
                 self.child_entities[identifier] = identifier_children

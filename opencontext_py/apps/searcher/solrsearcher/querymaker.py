@@ -6,6 +6,7 @@ from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.math import MathAssertions
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
@@ -215,22 +216,57 @@ class QueryMaker():
                                     act_field = self.get_parent_item_type_facet_field(entity.uri)
                                 if act_field is False:
                                     act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                        # use the database to look up the active field for linked data
+                        l_data_entity = False
+                        if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
+                            l_data_entity = True
+                            act_field = self.get_parent_entity_facet_field(entity.uri)
+                            # print('linked data field (' + str(i) + '): ' + str(act_field))
+                            if act_field is False:
+                                act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                        # ---------------------------------------------------
+                        # THIS PART BUILDS THE FACET-QUERY
                         # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                         # the below is a bit of a hack. We should have a query field
                         # as with ___pred_ to query just the slug. But this works for now
                         fq_field = act_field + '_fq'
                         fq_path_term = fq_field + ':' + prop_slug
                         fq_path_terms.append(fq_path_term)
+                        #---------------------------------------------------
+                        #
+                        #---------------------------------------------------
+                        # THIS PART PREPARES FOR LOOPING OR FINAL FACET-FIELDS
+                        #
                         field_parts = self.make_prop_solr_field_parts(entity)
                         act_field_data_type = field_parts['suffix']
                         if i < 1:
                             act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
-                            act_field = field_parts['prefix'] + '___' + act_field
+                            # active field for the next trip around the loop!
+                            if l_data_entity:
+                                act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                            else:
+                                act_field = field_parts['prefix'] + '___' + act_field
+                            # --------------------------------------------
+                            # check if the last or penultimate field has
+                            # a different data-type (for linked-data)
+                            if i > (path_list_len - 2) \
+                               and l_data_entity:
+                                lequiv = LinkEquivalence()
+                                dtypes = lequiv.get_data_types_from_object(entity.uri)
+                                if isinstance(dtypes, list):
+                                    # set te data type and the act-field
+                                    act_field_data_type = self.get_solr_field_type(dtypes[0])
+                                    if act_field_data_type != 'id':
+                                        # a different data-type, make an act_field to reflect it
+                                        act_field = field_parts['prefix'] + '___pred_' + act_field_data_type
+                            # -------------------------------------------
                         if act_field_data_type == 'numeric':
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
+                        # print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        # print('Current field (' + str(i) + '): ' + act_field)
                     i += 1
                     if i >= path_list_len \
                             and act_field not in query_dict['facet.field']:
@@ -294,6 +330,19 @@ class QueryMaker():
                 # the parent exists in the Type Mappings
                 output = par['slug'].replace('-', '_') + '___pred_id'
                 break
+        return output
+
+    def get_parent_entity_facet_field(self, entity_uri):
+        """ Gets the parent facet field for a given
+            category_uri. This assumes the category_uri is an entity
+            that exists in the database.
+        """
+        output = False;
+        parents = LinkRecursion().get_jsonldish_entity_parents(entity_uri)
+        if isinstance(parents, list):
+            if len(parents) > 1:
+                # get the penultimate field
+                output = parents[-2]['slug'].replace('-', '_') + '___pred_id'
         return output
 
     def process_item_type(self, raw_item_type):

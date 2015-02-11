@@ -557,17 +557,22 @@ class MakeJsonLd():
             # slug___data-type___/uri-item-type/uuid___label
             # ----------------------------
             data_type = facet_key_list[1]
+            if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
+                is_linked_data = True
+            else:
+                is_linked_data = False
             fl = FilterLinks()
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
             fl.spatial_context = self.spatial_context
+            fl.partial_param_val_match = is_linked_data  # allow partial matches of parameters.
             output = LastUpdatedOrderedDict()
             slug = facet_key_list[0]
             new_rparams = fl.add_to_request_by_solr_field(solr_facet_key,
                                                           slug)
             output['id'] = fl.make_request_url(new_rparams)
             output['json'] = fl.make_request_url(new_rparams, '.json')
-            if 'http://' in facet_key_list[2] or 'https://' in facet_key_list[2]:
+            if is_linked_data:
                 output['rdfs:isDefinedBy'] = facet_key_list[2]
             else:
                 output['rdfs:isDefinedBy'] = settings.CANONICAL_HOST + facet_key_list[2]
