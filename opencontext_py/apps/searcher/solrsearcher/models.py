@@ -42,7 +42,7 @@ class SolrSearch():
         query['facet.mincount'] = 1
         query['rows'] = 10
         query['start'] = 0
-        query['debugQuery'] = 'true'
+        query['debugQuery'] = 'false'
         query['fq'] = []
         query['facet.field'] = []
         query['stats'] = 'true'
