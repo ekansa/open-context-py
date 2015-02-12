@@ -1,4 +1,5 @@
 import re
+import datetime
 import itertools
 import django.utils.http as http
 from django.http import Http404
@@ -263,11 +264,15 @@ class QueryMaker():
                                         act_field = field_parts['prefix'] + '___pred_' + act_field_data_type
                             # -------------------------------------------
                         if act_field_data_type == 'numeric':
-                            print('Numeric field: ' + act_field)
+                            # print('Numeric field: ' + act_field)
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
-                            query_dict['stats.field'].append(act_field)
+                        elif act_field_data_type == 'date':
+                            print('Date field: ' + act_field)
+                            query_dict = self.add_date_facet_ranges(query_dict,
+                                                                    act_field,
+                                                                    entity)
                         print('Current data type (' + str(i) + '): ' + act_field_data_type)
                         print('Current field (' + str(i) + '): ' + act_field)
                     i += 1
@@ -286,8 +291,17 @@ class QueryMaker():
                     # numeric search. assume it's well formed solr numeric request
                     search_term = act_field + ':' + prop_slug
                     fq_path_terms.append(search_term)
-                    # now limit the numeric ranges for range facets
+                    # now limit the numeric ranges from query to the range facets
                     query_dict = self.add_math_facet_ranges(query_dict,
+                                                            act_field,
+                                                            False,
+                                                            prop_slug)
+                elif act_field_data_type == 'date':
+                    # date search. assume it's well formed solr request
+                    search_term = act_field + ':' + prop_slug
+                    fq_path_terms.append(search_term)
+                    # now limit the date ranges from query to the range facets
+                    query_dict = self.add_date_facet_ranges(query_dict,
                                                             act_field,
                                                             False,
                                                             prop_slug)
@@ -307,12 +321,14 @@ class QueryMaker():
         """ this does some math for facet
             ranges for numeric fields
         """
+        ok = False
         groups = self.histogram_groups
         fstart = 'f.' + act_field + '.facet.range.start'
         fend = 'f.' + act_field + '.facet.range.end'
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
         if entity is not False:
+            ok = True
             ma = MathAssertions()
             if entity.item_type != 'uri':
                 summary = ma.get_numeric_range(entity.uuid)
@@ -331,15 +347,141 @@ class QueryMaker():
                 for q_num_str in q_nums_strs:
                     vals.append(float(q_num_str))
                 vals.sort()
-                min_val = vals[0]
-                max_val = vals[1]
-        if act_field not in query_dict['facet.range']:
-            query_dict['facet.range'].append(act_field)
-        query_dict['ranges'][fstart] = min_val
-        query_dict['ranges'][fend] = max_val
-        query_dict['ranges'][fgap] = (max_val - min_val) / groups
-        query_dict['ranges'][findex] = 'index'  # sort by index, not by count
+                if len(vals) > 1:
+                    ok = True
+                    min_val = vals[0]
+                    max_val = vals[-1]
+        if ok:
+            if act_field not in query_dict['facet.range']:
+                query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fstart] = min_val
+            query_dict['ranges'][fend] = max_val
+            query_dict['ranges'][fgap] = (max_val - min_val) / groups
+            query_dict['ranges'][findex] = 'index'  # sort by index, not by count
         return query_dict
+
+    def add_date_facet_ranges(self,
+                              query_dict,
+                              act_field,
+                              entity=False,
+                              solr_query=False):
+        """ this does some math for facet
+            ranges for numeric fields
+        """
+        ok = False
+        groups = 4
+        fstart = 'f.' + act_field + '.facet.range.start'
+        fend = 'f.' + act_field + '.facet.range.end'
+        fgap = 'f.' + act_field + '.facet.range.gap'
+        findex = 'f.' + act_field + '.facet.sort'
+        if entity is not False:
+            ok = True
+            ma = MathAssertions()
+            if entity.item_type != 'uri':
+                summary = ma.get_date_range(entity.uuid)
+            else:
+                summary = ma.get_date_range_via_ldata(entity.uri)
+            min_val = summary['min']
+            max_val = summary['max']
+            count_val = summary['count']
+        else:
+            if solr_query is not False:
+                q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}[T:]\d{2}:\d{2}:\d{2}', solr_query)
+                if len(q_dt_strs) < 2:
+                    # try a less strict regular expression to get dates
+                    q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}', solr_query)
+                if len(q_dt_strs) >= 2:
+                    ok = True
+                    vals = []
+                    for q_dt_str in q_dt_strs:
+                        vals.append(q_dt_str)
+                    vals.sort()
+                    min_val = vals[0]
+                    max_val = vals[1]
+        if ok:
+            if act_field not in query_dict['facet.range']:
+                query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fstart] = self.convert_date_to_solr_date(min_val)
+            query_dict['ranges'][fend] = self.convert_date_to_solr_date(max_val)
+            query_dict['ranges'][fgap] = self.get_date_difference_for_solr(min_val, max_val, groups)
+            query_dict['ranges'][findex] = 'index'  # sort by index, not by count
+        return query_dict
+
+    def get_date_difference_for_solr(self, min_date, max_date, groups):
+        """ Gets a solr date difference from two values """
+        min_dt = self.date_convert(min_date)
+        max_dt = self.date_convert(max_date)
+        dif_dt = (max_dt - min_dt) / groups
+        if dif_dt.days >= 366:
+            solr_val = int(round((dif_dt.days / 365.25), 0))
+            solr_dif = '+' + str(solr_val) + 'YEAR'
+        elif dif_dt.days >= 31:
+            solr_val = int(round((dif_dt.days / 30), 0))
+            solr_dif = '+' + str(solr_val) + 'MONTH'
+        elif dif_dt.days >= 1:
+            solr_val = int(round(dif_dt.days, 0))
+            solr_dif = '+' + str(solr_val) + 'DAY'
+        elif dif_dt.hours >= 1:
+            solr_val = int(round(dif_dt.hours, 0))
+            solr_dif = '+' + str(solr_val) + 'HOUR'
+        elif dif_dt.minutes >= 1:
+            solr_val = int(round(dif_dt.minutes, 0))
+            solr_dif = '+' + str(solr_val) + 'MINUTE'
+        elif dif_dt.seconds >= 1:
+            solr_val = int(round(dif_dt.seconds, 0))
+            solr_dif = '+' + str(solr_val) + 'SECOND'
+        else:
+            solr_dif = '+1YEAR'
+        return solr_dif
+
+    def add_solr_gap_to_date(self, date_val, solr_gap):
+        """ adds a solr gap to a date_val """
+        solr_val = re.sub(r'[^\d.]', r'', solr_gap)
+        solr_val = int(float(solr_val))
+        dt = self.date_convert(date_val)
+        if 'YEAR' in solr_gap:
+            dt = dt + datetime.timedelta(days=int(round(solr_val * 365.25), 0))
+        elif 'MONTH' in solr_gap:
+            dt = dt + datetime.timedelta(days=(solr_val * 30))
+        elif 'DAY' in solr_gap:
+            dt = dt + datetime.timedelta(days=solr_val)
+        elif 'HOUR' in solr_gap:
+            dt = dt + datetime.timedelta(hours=solr_val)
+        elif 'MINUTE' in solr_gap:
+            dt = dt + datetime.timedelta(minutes=solr_val)
+        elif 'SECOND' in solr_gap:
+            dt = dt + datetime.timedelta(seconds=solr_val)
+        else:
+            dt = dt
+        return dt
+
+    def convert_date_to_solr_date(self, date_val):
+        """ Conversts a string for a date into
+            a Solr formated datetime string
+        """
+        dt = self.date_convert(date_val)
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def make_human_readable_date(self, date_val):
+        """ Converts a date value into something
+            easier to read
+        """
+        dt = self.date_convert(date_val)
+        check_date = dt.strftime('%Y-%m-%d')
+        check_dt = self.date_convert(date_val)
+        if check_dt == dt:
+            return check_date
+        else:
+            return dt.strftime('%Y-%m-%d:%H:%M:%S')
+
+    def date_convert(self, date_val):
+        """ converts to a python datetime if not already so """
+        if isinstance(date_val, str):
+            date_val = date_val.replace('Z', '')
+            dt = datetime.datetime.strptime(date_val, '%Y-%m-%dT%H:%M:%S')
+        else:
+            dt = date_val
+        return dt
 
     def get_parent_item_type_facet_field(self, category_uri):
         """ Gets the parent facet field for a given

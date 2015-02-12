@@ -146,9 +146,13 @@ class FilterLinks():
                     new_list = []
                     old_found = False
                     for old_val in new_rparams[param]:
+                        old_prefix = self.remove_solr_part(old_val)
                         if old_val == add_to_value:
                             old_found = True
                             new_list_val = old_val + self.hierarchy_delim + new_value
+                        elif old_prefix == add_to_value:
+                            old_found = True
+                            new_list_val = old_prefix + self.hierarchy_delim + new_value
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)

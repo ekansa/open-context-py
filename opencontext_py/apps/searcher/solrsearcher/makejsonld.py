@@ -208,6 +208,7 @@ class MakeJsonLd():
         self.add_filters_json()
         self.add_text_fields()
         self.add_numeric_fields(solr_json)
+        self.add_date_fields(solr_json)
         self.make_facets(solr_json)
         if settings.DEBUG:
             # self.json_ld['request'] = self.request_dict
@@ -328,15 +329,30 @@ class MakeJsonLd():
         if len(text_fields) > 0:
             self.json_ld['oc-api:has-text-search'] = text_fields
 
-    def add_numeric_fields(self, solr_json):
-        """ adds numeric fields with query options """
-        num_fields = []
-        # Look for properites
+    def get_solr_ranges(self, solr_json, data_type):
+        """ gets solr ranges of a specific data-type """
+        output = LastUpdatedOrderedDict()
         facet_ranges = self.get_path_in_dict(['facet_counts',
                                               'facet_ranges'],
                                              solr_json)
         if isinstance(facet_ranges, dict):
             for solr_field_key, ranges in facet_ranges.items():
+                facet_key_list = solr_field_key.split('___')
+                slug = facet_key_list[0].replace('_', '-')
+                fdata_type = facet_key_list[-1].replace('pred_', '')
+                print('Check: ' + fdata_type + ' on ' + data_type)
+                if fdata_type == data_type:
+                    output[solr_field_key] = ranges
+        if len(output) < 1:
+            output = False
+        return output
+
+    def add_numeric_fields(self, solr_json):
+        """ adds numeric fields with query options """
+        num_fields = []
+        num_facet_ranges = self.get_solr_ranges(solr_json, 'numeric')
+        if num_facet_ranges is not False:
+            for solr_field_key, ranges in num_facet_ranges.items():
                 facet_key_list = solr_field_key.split('___')
                 slug = facet_key_list[0].replace('_', '-')
                 # check to see if the field is a linkded data field
@@ -378,6 +394,55 @@ class MakeJsonLd():
                 num_fields.append(field)
         if len(num_fields) > 0:
             self.json_ld['oc-api:has-numeric-facets'] = num_fields
+
+    def add_date_fields(self, solr_json):
+        """ adds numeric fields with query options """
+        date_fields = []
+        date_facet_ranges = self.get_solr_ranges(solr_json, 'date')
+        print(str(date_facet_ranges))
+        if date_facet_ranges is not False:
+            for solr_field_key, ranges in date_facet_ranges.items():
+                facet_key_list = solr_field_key.split('___')
+                slug = facet_key_list[0].replace('_', '-')
+                # check to see if the field is a linkded data field
+                # if so, it needs some help with making Filter Links
+                linked_field = False
+                field_entity = self.get_entity(slug)
+                if field_entity is not False:
+                    if field_entity.item_type == 'uri':
+                        linked_field = True
+                field = self.get_facet_meta(solr_field_key)
+                field['oc-api:min'] = ranges['start']
+                field['oc-api:max'] = ranges['end']
+                field['oc-api:gap'] = ranges['gap']
+                field['oc-api:has-range-options'] = []
+                i = -1
+                qm = QueryMaker()
+                for range_min_key in ranges['counts'][::2]:
+                    i += 2
+                    solr_count = ranges['counts'][i]
+                    fl = FilterLinks()
+                    fl.base_request_json = self.request_dict_json
+                    fl.base_r_full_path = self.request_full_path
+                    fl.spatial_context = self.spatial_context
+                    fl.partial_param_val_match = linked_field
+                    dt_end = qm.add_solr_gap_to_date(range_min_key, ranges['gap'])
+                    range_end = qm.convert_date_to_solr_date(dt_end)
+                    solr_range = '[' + range_min_key + ' TO ' + range_end + ' ]'
+                    new_rparams = fl.add_to_request('prop',
+                                                    solr_range,
+                                                    slug)
+                    range_dict = LastUpdatedOrderedDict()
+                    range_dict['id'] = fl.make_request_url(new_rparams)
+                    range_dict['json'] = fl.make_request_url(new_rparams, '.json')
+                    range_dict['label'] = qm.make_human_readable_date(range_min_key) + ' to ' + qm.make_human_readable_date(range_end)
+                    range_dict['count'] = solr_count
+                    range_dict['oc-api:min'] = range_min_key
+                    range_dict['oc-api:max'] = range_end
+                    field['oc-api:has-range-options'].append(range_dict)
+                date_fields.append(field)
+        if len(date_fields) > 0:
+            self.json_ld['oc-api:has-date-facets'] = date_fields
 
     def make_facets(self, solr_json):
         """ Makes a list of facets """

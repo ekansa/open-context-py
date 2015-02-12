@@ -19,6 +19,12 @@ class MathAssertions():
         predicate_uuids = lequiv.get_from_object(object_uri)
         return self.get_numeric_range(predicate_uuids)
 
+    def get_date_range_via_ldata(self, object_uri):
+        """ gets predicates linked to an object_uri """
+        lequiv = LinkEquivalence()
+        predicate_uuids = lequiv.get_from_object(object_uri)
+        return self.get_date_range(predicate_uuids)
+
     def get_numeric_range(self, predicate_uuids):
         if not isinstance(predicate_uuids, list):
             predicate_uuids = [str(predicate_uuids)]
@@ -32,5 +38,19 @@ class MathAssertions():
         output['avg'] = sum_ass['data_num__avg']
         output['min'] = sum_ass['data_num__min']
         output['max'] = sum_ass['data_num__max']
+        output['count'] = sum_ass['hash_id__count']
+        return output
+
+    def get_date_range(self, predicate_uuids):
+        if not isinstance(predicate_uuids, list):
+            predicate_uuids = [str(predicate_uuids)]
+        sum_ass = Assertion.objects\
+                           .filter(predicate_uuid__in=predicate_uuids)\
+                           .aggregate(Min('data_date'),
+                                      Max('data_date'),
+                                      Count('hash_id'))
+        output = {}
+        output['min'] = sum_ass['data_date__min']
+        output['max'] = sum_ass['data_date__max']
         output['count'] = sum_ass['hash_id__count']
         return output
