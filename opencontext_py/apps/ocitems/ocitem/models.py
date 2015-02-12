@@ -766,7 +766,6 @@ class ItemConstruction():
             creators = self.get_dc_authorship(act_dict, self.dc_creator_preds)
         if creators is False:
             creators = proj_creators
-            print('creators: ' + str(creators))
         else:
             proj_creators_ids = []
             for proj_creator in proj_creators:

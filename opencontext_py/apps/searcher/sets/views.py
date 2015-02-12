@@ -24,6 +24,8 @@ def json_view(request, spatial_context=None):
                                                 spatial_context)
     response = solr_s.search_solr(request_dict)
     m_json_ld = MakeJsonLd(request_dict)
+    # share entities already looked up. Saves database queries
+    m_json_ld.entities = solr_s.entities
     m_json_ld.request_full_path = request.get_full_path()
     m_json_ld.spatial_context = spatial_context
     json_ld = m_json_ld.convert_solr_json(response.raw_content)

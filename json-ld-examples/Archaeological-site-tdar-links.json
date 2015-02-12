@@ -1,0 +1,459 @@
+﻿
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "dcmi": "http://dublincore.org/documents/dcmi-terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@type": "@id",
+            "@id": "oc-gen:category"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@id": "geojson:bbox",
+            "@container": "@list"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@id": "geojson:features",
+            "@container": "@set"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@type": "@id",
+            "@id": "oc-gen:reference-type"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note",
+        "oc-pred:54-jurisdictions": {
+            "owl:sameAs": "http://opencontext.org/predicates/52429962-7EF5-4677-CFAC-1184212B3BC0",
+            "label": "Jurisdiction(s)",
+            "slug": "54-jurisdictions",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:54-site-category": {
+            "owl:sameAs": "http://opencontext.org/predicates/39EBFA56-C57B-45AA-EDD1-C2A9AE591779",
+            "label": "Site Category",
+            "slug": "54-site-category",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-site-types": {
+            "owl:sameAs": "http://opencontext.org/predicates/43C9A7EA-F4BA-491E-4955-D947F6BB8D74",
+            "label": "Site Types",
+            "slug": "54-site-types",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:54-time-period": {
+            "owl:sameAs": "http://opencontext.org/predicates/70093626-429B-4B3F-7FA6-971A726E9A94",
+            "label": "Time Period",
+            "slug": "54-time-period",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-organization": {
+            "owl:sameAs": "http://opencontext.org/predicates/8A17C533-FB58-4E40-1A2F-6D8B2FAE2DDA",
+            "label": "Organization",
+            "slug": "54-organization",
+            "oc-gen:predType": "variable",
+            "type": "xsd:string"
+        },
+        "oc-pred:54-survey-date": {
+            "owl:sameAs": "http://opencontext.org/predicates/90E8AFB9-7022-4690-9D58-CE5659C28A85",
+            "label": "Survey Date",
+            "slug": "54-survey-date",
+            "oc-gen:predType": "variable",
+            "type": "xsd:date"
+        },
+        "oc-pred:54-survey-event-type": {
+            "owl:sameAs": "http://opencontext.org/predicates/13262DD3-12C6-4798-74F9-E083DC188D6D",
+            "label": "Survey Event Type",
+            "slug": "54-survey-event-type",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-cultural-affiliations": {
+            "owl:sameAs": "http://opencontext.org/predicates/FA0C4E5B-BA69-40BB-E7D6-958ED2CCC506",
+            "label": "Cultural Affiliations",
+            "slug": "54-cultural-affiliations",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-site-condition": {
+            "owl:sameAs": "http://opencontext.org/predicates/EF94EADA-4711-4096-2E2F-7DD3B8CE728D",
+            "label": "Site Condition",
+            "slug": "54-site-condition",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-survey-strategies": {
+            "owl:sameAs": "http://opencontext.org/predicates/99C87CA5-409D-4BAC-7867-7051F187EF97",
+            "label": "Survey Strategies",
+            "slug": "54-survey-strategies",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-site-class": {
+            "owl:sameAs": "http://opencontext.org/predicates/9A1DA751-7375-43AE-D495-6894D339CB71",
+            "label": "Site Class",
+            "slug": "54-site-class",
+            "oc-gen:predType": "variable",
+            "type": "@id"
+        },
+        "oc-pred:54-specimens-collected": {
+            "owl:sameAs": "http://opencontext.org/predicates/3C3AA9E1-4968-445D-55BF-B908B9C83750",
+            "label": "Specimens Collected",
+            "slug": "54-specimens-collected",
+            "oc-gen:predType": "variable",
+            "type": "xsd:boolean"
+        }
+    },
+    "id": "http://opencontext.org/subjects/A87D8D97-7C6B-4C73-8503-C55F4C738231",
+    "uuid": "A87D8D97-7C6B-4C73-8503-C55F4C738231",
+    "slug": "54-44pg0462",
+    "label": "44PG0462",
+    "category": [
+        "oc-gen:cat-site"
+    ],
+    "oc-gen:has-context-path": {
+        "id": "#context-1",
+        "type": "oc-gen:contexts",
+        "oc-gen:has-path-items": [
+            {
+                "id": "http://opencontext.org/subjects/2A1B75E6-8C79-49B9-873A-A2E006669691",
+                "slug": "united-states-1",
+                "label": "United States",
+                "type": "oc-gen:cat-region"
+            },
+            {
+                "id": "http://opencontext.org/subjects/FA7B837E-7012-44CE-B017-71580CFFFF01",
+                "slug": "54-virginia",
+                "label": "Virginia",
+                "type": "oc-gen:cat-region"
+            },
+            {
+                "id": "http://opencontext.org/subjects/19C03FF2-1B12-45C0-E82B-BA153D046F46",
+                "slug": "54-prince-george",
+                "label": "Prince George",
+                "type": "oc-gen:cat-region"
+            }
+        ]
+    },
+    "oc-gen:has-obs": [
+        {
+            "id": "#obs-1",
+            "oc-gen:sourceID": "z_10_2a8eb5c36",
+            "oc-gen:obsStatus": "active",
+            "type": "oc-gen:observations",
+            "oc-pred:54-jurisdictions": [
+                {
+                    "id": "#string-E63B666C-0B7D-4575-F568-47E38B4A1064",
+                    "xsd:string": "Prince George (County)"
+                }
+            ],
+            "oc-pred:54-site-category": [
+                {
+                    "id": "http://opencontext.org/types/51C1B2FD-8A41-4DA8-BBF1-F30BC10ACBD3",
+                    "slug": "54-militarydefense",
+                    "label": "Military/Defense"
+                },
+                {
+                    "id": "http://opencontext.org/types/1C3202F6-2050-4CA6-9836-4808918195E0",
+                    "slug": "54-domestic",
+                    "label": "Domestic"
+                }
+            ],
+            "oc-pred:54-site-types": [
+                {
+                    "id": "#string-39FAA059-D73D-4765-78CC-3F6074AC869B",
+                    "xsd:string": "Camp, temporary, Farmstead, Military camp"
+                }
+            ],
+            "oc-pred:54-time-period": [
+                {
+                    "id": "http://opencontext.org/types/7B7E6BC1-2EE6-4B82-8674-0E9C287E22D6",
+                    "slug": "54-20th-century1st-half-1900-1949",
+                    "label": "20th Century::1st half (1900 - 1949)"
+                },
+                {
+                    "id": "http://opencontext.org/types/673082A2-2159-49DF-DF1D-4576079C1B08",
+                    "slug": "54-early-woodland-1200-bc-299-ad",
+                    "label": "Early Woodland (1200 B.C. - 299 A.D.)"
+                },
+                {
+                    "id": "http://opencontext.org/types/33849CC2-9CB9-482D-3070-B64EF19EE944",
+                    "slug": "54-19th-century2nd3rd-quarter-1825-1874",
+                    "label": "19th Century::2nd/3rd quarter (1825 - 1874)"
+                }
+            ],
+            "oc-pred:54-organization": [
+                {
+                    "id": "#string-583A49B4-7CF4-47BC-0EE3-6C317BE2B278",
+                    "xsd:string": "Unknown (DSS)"
+                }
+            ],
+            "oc-pred:54-survey-date": [
+                "2005-07-01"
+            ],
+            "oc-pred:54-survey-event-type": [
+                {
+                    "id": "http://opencontext.org/types/1DB72583-03EA-4F12-5EFB-8A793D33995D",
+                    "slug": "54-surveyphase-ireconnaissance",
+                    "label": "Survey::Phase I/Reconnaissance"
+                }
+            ],
+            "oc-pred:54-cultural-affiliations": [
+                {
+                    "id": "http://opencontext.org/types/DC2F2DEE-BEDE-47FE-BB7C-53AE4DCFD65C",
+                    "slug": "54-euro-american",
+                    "label": "Euro-American"
+                },
+                {
+                    "id": "http://opencontext.org/types/829DD828-1A44-49C0-D592-1D6B6A5ADBC9",
+                    "slug": "54-native-american",
+                    "label": "Native American"
+                }
+            ],
+            "oc-pred:54-site-condition": [
+                {
+                    "id": "http://opencontext.org/types/22D13F5D-8E27-4D09-6B02-FAD808644EF3",
+                    "slug": "54-50-74-of-site-destroyed",
+                    "label": "50-74% of Site Destroyed"
+                }
+            ],
+            "oc-pred:54-survey-strategies": [
+                {
+                    "id": "http://opencontext.org/types/61FA9C7D-6A17-49FF-1137-46C20BD425A8",
+                    "slug": "54-subsurface-testing",
+                    "label": "Subsurface Testing"
+                },
+                {
+                    "id": "http://opencontext.org/types/24DE482E-3E82-4FD9-6A3B-D82E5AEDE1F5",
+                    "slug": "54-surface-testing",
+                    "label": "Surface Testing"
+                }
+            ],
+            "oc-pred:54-site-class": [
+                {
+                    "id": "http://opencontext.org/types/5F5815F8-BED6-4E0E-30B7-4BD29635FF9C",
+                    "slug": "54-terrestrial-open-air",
+                    "label": "Terrestrial, open air"
+                }
+            ],
+            "oc-pred:54-specimens-collected": [
+                1.0
+            ]
+        }
+    ],
+    "features": [
+        {
+            "properties": {
+                "note": "Approximated by geotile to zoom level 11",
+                "id": "#geo-derived-props-1",
+                "reference-type": "specified",
+                "location-note": "This region defines the approximate location for this item",
+                "location-precision": 11,
+                "href": "http://opencontext.org/subjects/A87D8D97-7C6B-4C73-8503-C55F4C738231",
+                "type": "oc-gen:discovey-location",
+                "location-precision-note": "Location data approximated as a security precaution"
+            },
+            "type": "Feature",
+            "id": "#geo-derived-1",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -77.34374999999999,
+                            37.16031654673677
+                        ],
+                        [
+                            -77.34374999999999,
+                            37.30027528134433
+                        ],
+                        [
+                            -77.16796875,
+                            37.30027528134433
+                        ],
+                        [
+                            -77.16796875,
+                            37.16031654673677
+                        ],
+                        [
+                            -77.34374999999999,
+                            37.16031654673677
+                        ]
+                    ]
+                ],
+                "id": "#geo-derived-geom-1"
+            }
+        },
+        {
+            "properties": {
+                "note": "Approximated by geotile to zoom level 11",
+                "id": "#geo-props-1",
+                "reference-type": "specified",
+                "location-note": "This point defines the center of the region approximating the location for this item",
+                "location-precision": 11,
+                "href": "http://opencontext.org/subjects/A87D8D97-7C6B-4C73-8503-C55F4C738231",
+                "type": "oc-gen:discovey-location",
+                "location-precision-note": "Location data approximated as a security precaution"
+            },
+            "type": "Feature",
+            "id": "#geo-1",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -77.255859375,
+                    37.230295914041
+                ],
+                "id": "#geo-geom-1"
+            }
+        }
+    ],
+    "type": "FeatureCollection",
+    "dc-terms:title": "44PG0462 from United States/Virginia/Prince George",
+    "dc-terms:isPartOf": [
+        {
+            "id": "http://opencontext.org/projects/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E",
+            "slug": "54-virginia-site-files",
+            "label": "Virginia Site Files"
+        }
+    ],
+    "dc-terms:license": [
+        {
+            "id": "http://creativecommons.org/licenses/by/4.0/",
+            "slug": "cc-license-by-4-0",
+            "label": "Attribution 4.0"
+        }
+    ],
+    "dc-terms:creator": [],
+    "@graph": [
+        {
+            "@id": "oc-pred:54-time-period",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00001",
+                    "slug": "dinaa-00001",
+                    "label": "Has period"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/7B7E6BC1-2EE6-4B82-8674-0E9C287E22D6",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00056",
+                    "slug": "dinaa-00056",
+                    "label": "Historic Non-Native American"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/673082A2-2159-49DF-DF1D-4576079C1B08",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00018",
+                    "slug": "dinaa-00018",
+                    "label": "Early Woodland"
+                }
+            ]
+        },
+        {
+            "@id": "http://opencontext.org/types/33849CC2-9CB9-482D-3070-B64EF19EE944",
+            "skos:closeMatch": [
+                {
+                    "id": "http://opencontext.org/vocabularies/dinaa/00056",
+                    "slug": "dinaa-00056",
+                    "label": "Historic Non-Native American"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-site",
+            "label": "Site",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-loc-or-context",
+                    "slug": "oc-gen-cat-loc-or-context",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/site.jpg"
+                }
+            ]
+        },
+        {
+            "@id": "oc-gen:cat-region",
+            "label": "Region",
+            "rdfs:subClassOf": [
+                {
+                    "id": "http://opencontext.org/vocabularies/oc-general/cat-loc-or-context",
+                    "slug": "oc-gen-cat-loc-or-context",
+                    "label": "Location or Context"
+                }
+            ],
+            "oc-gen:hasIcon": [
+                {
+                    "id": "http://artiraq.org/static/oc/icons/region.jpg"
+                }
+            ]
+        }
+    ],
+    "dc-terms:subject": [
+        {
+            "id": "http://core.tdar.org/browse/site-name/9685/44pg0462",
+            "slug": "tdar-kw-site-9685-44pg0462",
+            "label": "44PG0462"
+        },
+        {
+            "id": "http://core.tdar.org/browse/site-name/9706/44pg462",
+            "slug": "tdar-kw-site-9706-44pg462",
+            "label": "44PG462"
+        }
+    ],
+    "time": 0.30623602867126465
+}

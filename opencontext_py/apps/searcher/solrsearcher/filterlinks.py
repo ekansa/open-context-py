@@ -5,6 +5,7 @@ from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from django.utils.encoding import iri_to_uri
 
 
 class FilterLinks():
@@ -12,7 +13,8 @@ class FilterLinks():
     SOLR_FIELD_PARAM_MAPPINGS = \
         {'___project_id': 'proj',
          '___context_id': 'path',
-         '___pred_': 'prop'}
+         '___pred_': 'prop',
+         'item_type': 'type'}
 
     def __init__(self, request_dict=False):
         self.base_search_link = '/sets/'
@@ -21,6 +23,8 @@ class FilterLinks():
         self.base_r_full_path = False
         self.spatial_context = False
         self.testing = True
+        self.hierarchy_delim = '---'
+        self.partial_param_val_match = False
 
     def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """
@@ -42,17 +46,49 @@ class FilterLinks():
         if 'path' in new_rparams:
             if new_rparams['path'] is not None \
                and new_rparams['path'] is not False:
-                context_path = quote_plus(new_rparams['path'])
-                context_path = context_path.replace('%2F', '/')
+                # context_path = iri_to_uri(new_rparams['path'])
+                context_path = new_rparams['path']
+                context_path = context_path.replace(' ', '+')
                 url += context_path
         url += doc_format
         param_sep = '?'
         for param, param_vals in new_rparams.items():
             if param != 'path':
                 for val in param_vals:
-                    url += param_sep + param + '=' + quote_plus(val)
+                    quote_val = quote_plus(val)
+                    quote_val = quote_val.replace('%7BSearchTerm%7D', '{SearchTerm}')
+                    url += param_sep + param + '=' + quote_val
                     param_sep = '&'
         return url
+
+    def make_request_sub(self,
+                         old_request_dict,
+                         rem_param_key,
+                         rem_param_val,
+                         sub_param_val=None):
+        """ makes a dictionary object for
+            request parameters WITHOUT the current fparam_key
+            and fparam_vals
+        """
+        filter_request = LastUpdatedOrderedDict()
+        for ch_param_key, ch_param_vals in old_request_dict.items():
+            if ch_param_key != rem_param_key:
+                # a different parameter than the one in the filter, so add
+                filter_request[ch_param_key] = ch_param_vals
+            else:
+                if rem_param_key != 'path' and len(ch_param_vals) > 1:
+                    filter_request[ch_param_key] = []
+                    for ch_param_val in ch_param_vals:
+                        if rem_param_val != ch_param_val:
+                            # the filter value for this key is not the same
+                            # as the check value for this key, so add
+                            # to the filter request
+                            filter_request[ch_param_key].append(ch_param_val)
+                        else:
+                            if sub_param_val is not None:
+                                # put in the substitute value
+                                filter_request[ch_param_key].append(sub_param_val)
+        return filter_request
 
     def add_to_request_by_solr_field(self,
                                      solr_facet_key,
@@ -63,7 +99,7 @@ class FilterLinks():
         param = self.get_param_from_solr_facet_key(solr_facet_key)
         slugs = self.parse_slugs_in_solr_facet_key(solr_facet_key)
         if slugs is not False:
-            add_to_value = ' '.join(slugs)
+            add_to_value = self.hierarchy_delim.join(slugs)
             # print('Add-to-value' + add_to_value)
         else:
             add_to_value = None
@@ -110,19 +146,45 @@ class FilterLinks():
                     new_list = []
                     old_found = False
                     for old_val in new_rparams[param]:
-                        # print('Old val:' + old_val + ' add to:' + add_to_value)
+                        old_prefix = self.remove_solr_part(old_val)
                         if old_val == add_to_value:
                             old_found = True
-                            new_list_val = old_val + ' ' + new_value
+                            new_list_val = old_val + self.hierarchy_delim + new_value
+                        elif old_prefix == add_to_value:
+                            old_found = True
+                            new_list_val = old_prefix + self.hierarchy_delim + new_value
                         else:
                             new_list_val = old_val
                         new_list.append(new_list_val)
+                    if old_found is False:
+                        if self.partial_param_val_match:
+                            for old_val in new_rparams[param]:
+                                if add_to_value in old_val:
+                                    old_found = True
+                                    old_prefix = self.remove_solr_part(old_val)
+                                    new_list_val = old_prefix + self.hierarchy_delim + new_value
+                                    # add the new item
+                                    new_list.append(new_list_val)
+                                    # remove the old
+                                    new_list.remove(old_val)
                     new_rparams[param] = new_list
                     if old_found is False:
                         new_rparams[param].append(new_value)
                 else:
                     new_rparams[param].append(new_value)
         return new_rparams
+
+    def remove_solr_part(self, old_val):
+        """ removes part of a query parameter that
+            is in solr query syntax, inside square
+            brackets []
+        """
+        output = old_val
+        splitter = self.hierarchy_delim + '['
+        if splitter in old_val:
+            old_ex = old_val.split(splitter)
+            output = old_ex[0]
+        return output
 
     def make_base_params_from_url(self, request_url):
         """ makes the base parameters from the url """

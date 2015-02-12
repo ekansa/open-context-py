@@ -10,11 +10,17 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 # to get useful information about the entity
 class SolrSearch():
 
+    DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
+                            SolrDocument.ROOT_PROJECT_SOLR,
+                            'item_type']
+
     def __init__(self):
         self.solr = False
         self.solr_connect()
         self.solr_response = False
         self.json_ld = False
+        self.entities = {}  # entities involved in a search request
+        self.facet_fields = self.DEFAULT_FACET_FIELDS
 
     def solr_connect(self):
         """ connects to solr """
@@ -36,7 +42,7 @@ class SolrSearch():
         query['facet.mincount'] = 1
         query['rows'] = 10
         query['start'] = 0
-        query['debugQuery'] = 'true'
+        query['debugQuery'] = 'false'
         query['fq'] = []
         query['facet.field'] = []
         query['stats'] = 'true'
@@ -44,48 +50,96 @@ class SolrSearch():
         # If the user does not provide a search term, search for everything
         query['q'] = self.get_request_param(request_dict,
                                             'q',
-                                            '*:*')
+                                            '*:*',
+                                            False,
+                                            True)
         query['start'] = self.get_request_param(request_dict,
                                                 'start',
                                                 '0')
          # Spatial Context
-        context = qm._process_spatial_context(request_dict['path'])
-        query['fq'].append(context['fq'])
-        query['facet.field'] += context['facet.field']  # context facet fields, always a list
-        # Descriptive Properties
-        prop_list = self.get_request_param(request_dict,
-                                           'prop',
-                                           False,
-                                           True)
-        if prop_list:
-            props = qm._process_prop_list(prop_list)
-            for prop in props:
-                if prop['fq'] not in query['fq']:
-                    query['fq'].append(prop['fq'])
-                if prop['facet.field'] not in query['facet.field']:
-                    query['facet.field'].append(prop['facet.field'])
+        if 'path' in request_dict:
+            self.remove_from_default_facet_fields(SolrDocument.ROOT_CONTEXT_SOLR)
+            context = qm._process_spatial_context(request_dict['path'])
+            query['fq'].append(context['fq'])
+            query['facet.field'] += context['facet.field']  # context facet fields, always a list
+            # Properties and Linked Data
+        props = self.get_request_param(request_dict,
+                                       'prop',
+                                       False,
+                                       True)
+        if props is not False:
+            for act_prop in props:
+                # process each prop independently.
+                prop_query = qm.process_prop(act_prop)
+                query['fq'] += prop_query['fq']
+                query['facet.field'] += prop_query['facet.field']
+                query['stats.field'] += prop_query['stats.field']
+                query['facet.range'] = prop_query['facet.range']
+                if 'ranges' in prop_query:
+                    for key, value in prop_query['ranges'].items():
+                        query[key] = value
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
                                       False)
         if proj is not False:
+            # remove the facet field, since we're already filtering with it
+            self.remove_from_default_facet_fields(SolrDocument.ROOT_PROJECT_SOLR)
             proj_query = qm.process_proj(proj)
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']
-        query = self.add_default_facet_fields(query)
+        # item-types
+        item_type = self.get_request_param(request_dict,
+                                           'type',
+                                           False,
+                                           False)
+        if item_type is not False:
+            # remove the facet field, since we're already filtering with it
+            self.remove_from_default_facet_fields('item_type')
+            it_query = qm.process_item_type(item_type)
+            query['fq'] += it_query['fq']
+            query['facet.field'] += it_query['facet.field']
+        # Now add default facet fields
+        query = self.add_default_facet_fields(query,
+                                              request_dict)
+        # Now set aside entities used as search filters
+        self.gather_entities(qm.entities)
         return query
 
-    def add_default_facet_fields(self, query):
+    def remove_from_default_facet_fields(self, field):
+        """ removes a field from the default facet fields """
+        if isinstance(self.facet_fields, list):
+            if field in self.facet_fields:
+                self.facet_fields.remove(field)
+
+    def add_default_facet_fields(self,
+                                 query,
+                                 request_dict):
         """ adds additional facet fields to query """
-        default_list = [SolrDocument.ROOT_PREDICATE_SOLR,
-                        SolrDocument.ROOT_LINK_DATA_SOLR,
-                        SolrDocument.ROOT_PROJECT_SOLR]
-        for default_field in default_list:
-            if default_field not in query['facet.field']:
-                query['facet.field'].append(default_field)
+        if isinstance(self.facet_fields, list):
+            for default_field in self.facet_fields:
+                if default_field not in query['facet.field']:
+                    query['facet.field'].append(default_field)
+            if 'proj' in request_dict:
+                query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
         return query
 
-    def get_request_param(self, request_dict, param, default, as_list=False):
+    def gather_entities(self, entities_dict):
+        """ Gathers and stores entites found in
+            the query maker object.
+            These entities can be used in indicating
+            filters applied in a search
+        """
+        for search_key, entity in entities_dict.items():
+            if search_key not in self.entities:
+                self.entities[search_key] = entity
+
+    def get_request_param(self,
+                          request_dict,
+                          param,
+                          default,
+                          as_list=False,
+                          solr_escape=False):
         """ get a string or list to use in queries from either
             the request object or the internal_request object
             so we have flexibility in doing searches without
@@ -98,12 +152,19 @@ class SolrSearch():
                     if isinstance(param_obj, list):
                         output = param_obj
                     else:
+                        if solr_escape:
+                            param_obj = '"' + param_obj + '"'
                         output = [param_obj]
                 else:
                     output = default
             else:
                 if param in request_dict:
                     output = request_dict[param]
+                    if isinstance(output, list):
+                        output = output[0]
+                    if solr_escape:
+                        qm = QueryMaker()
+                        output = qm.escape_solr_arg(output)
                 else:
                     output = default
         else:

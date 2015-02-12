@@ -82,37 +82,43 @@ class PenMysql():
         self.start_table = False
         self.start_sub = False
         self.start_batch = 0
+        self.after = '2001-01-01'
 
     def get_project_records(self, project_uuid):
         """ Gets all the data belonging to a project """
-        after = '2001-01-01'
         for act_table, sub_dict in self.REQUEST_TABLES.items():
             self.get_project_tab_records(project_uuid, act_table)
 
-    def get_project_tab_records(self, project_uuid, act_table):
+    def get_project_tab_records(self, project_uuid, act_table, sub_table=False):
         """ Gets all the data belonging to a project for a particular table """
-        after = '2001-01-01'
         if act_table in self.REQUEST_TABLES:
-            sub_dict = self.REQUEST_TABLES[act_table]
-            for sub_table in sub_dict['sub']:
-                if self.start_table is False:
-                    print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
-                    self.process_request_table(act_table,
-                                               sub_table,
-                                               after,
-                                               project_uuid)
-                else:
-                    if self.start_table == act_table and sub_table == self.start_sub:
-                        # So we can start at some point in the process, useful to recover from interrupts
-                        print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
+            if sub_table is False:
+                sub_dict = self.REQUEST_TABLES[act_table]
+                for sub_table in sub_dict['sub']:
+                    if self.start_table is False:
+                        print('Working on: ' + act_table + ' (' + str(sub_table) + ')')
                         self.process_request_table(act_table,
                                                    sub_table,
-                                                   after,
+                                                   self.after,
                                                    project_uuid)
-                        self.start_table = False
-                        self.start_sub = False
                     else:
-                        print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
+                        if self.start_table == act_table and sub_table == self.start_sub:
+                            # So we can start at some point in the process, useful to recover from interrupts
+                            print('Process starts on: ' + act_table + ' (' + str(sub_table) + ')')
+                            self.process_request_table(act_table,
+                                                       sub_table,
+                                                       self.after,
+                                                       project_uuid)
+                            self.start_table = False
+                            self.start_sub = False
+                        else:
+                            print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
+            else:
+                print('Process working on: ' + act_table + ' (' + str(sub_table) + ')')
+                self.process_request_table(act_table,
+                                           sub_table,
+                                           self.after,
+                                           project_uuid)
 
     def process_request_table(self, act_table,
                               sub_table,
@@ -144,12 +150,114 @@ class PenMysql():
                 continue_tab = False
             start = start + recs
 
+    def get_missing_strings(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            sql = 'SELECT oc_assertions.hash_id, oc_assertions.object_uuid AS string_uuid \
+                   FROM oc_assertions \
+                   LEFT JOIN oc_strings ON oc_assertions.object_uuid = oc_strings.uuid \
+                   WHERE oc_assertions.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND oc_assertions.object_type = \'xsd:string\' \
+                   AND oc_strings.uuid IS NULL; '
+            no_strings = Assertion.objects.raw(sql)
+            for obj_missing in no_strings:
+                json_ok = self.get_table_records('oc_strings',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 obj_missing.string_uuid)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+            sql = 'SELECT oc_types.uuid, oc_types.content_uuid AS string_uuid \
+                   FROM oc_types \
+                   LEFT JOIN oc_strings ON oc_types.content_uuid = oc_strings.uuid \
+                   WHERE oc_types.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND oc_strings.uuid IS NULL; '
+            no_strings = OCtype.objects.raw(sql)
+            for obj_missing in no_strings:
+                json_ok = self.get_table_records('oc_strings',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 obj_missing.string_uuid)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+
+    def get_missing_link_entities(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            q = 'http://opencontext.org%'
+            sql = 'SELECT link_annotations.hash_id, link_annotations.object_uri AS object_uri \
+                   FROM link_annotations \
+                   LEFT JOIN link_entities ON link_annotations.object_uri = link_entities.uri \
+                   WHERE link_annotations.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND link_annotations.object_uri NOT LIKE %(my_like)s \
+                   AND link_entities.uri IS NULL; '
+            # print(str(sql))
+            no_objects = LinkAnnotation.objects.raw(sql, {'my_like': q})
+            for obj_missing in no_objects:
+                json_ok = self.get_table_records('link_entities',
+                                                 False,
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 False,
+                                                 obj_missing.object_uri)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+
+    def get_missing_descriptions(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            sql = 'SELECT oc_manifest.uuid AS uuid \
+                   FROM oc_manifest \
+                   LEFT JOIN oc_assertions ON \
+                   (oc_manifest.uuid = oc_assertions.uuid \
+                   AND oc_assertions.predicate_uuid != \'' \
+                + Assertion.PREDICATES_CONTAINS + '\') \
+                   WHERE oc_manifest.project_uuid = \
+                   \'' + project_uuid + '\' \
+                   AND oc_assertions.uuid IS NULL; '
+            non_descript = Manifest.objects.raw(sql)
+            for dull_man in non_descript:
+                json_ok = self.get_table_records('oc_assertions',
+                                                 'property',
+                                                 self.after,
+                                                 0,
+                                                 200,
+                                                 project_uuid,
+                                                 dull_man.uuid)
+                if json_ok is not None:
+                    continue_tab = self.store_tab_records()
+
     def get_table_records(self, act_table,
                           sub_table,
                           after,
                           start,
                           recs,
-                          project_uuids=False):
+                          project_uuids=False,
+                          uuid=False,
+                          uri=False):
         """
         gets json data for records of a mysql datatable after a certain time
         """
@@ -161,6 +269,10 @@ class PenMysql():
             payload['sub'] = sub_table
         if project_uuids is not False:
             payload['project_uuids'] = project_uuids
+        if uuid is not False:
+            payload['uuid'] = uuid
+        if uri is not False:
+            payload['uri'] = uri
         r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
         print('Getting data: ' + r.url)
         r.raise_for_status()
@@ -260,11 +372,13 @@ class PenMysql():
         """
         stores records retrieved for a given table
         """
+        i = 0
         for record in recs:
+            i += 1
             allow_write = self.check_allow_write(act_table, record)
             record = self.prep_update_keep_old(act_table, record)
             if(allow_write is False and self.update_keep_old is False):
-                print('\n Not allowed to overwite record.' + str(record))
+                print('\n Not allowed to overwite record.' + str(i))
             else:
                 # print('\n Adding record:' + str(record))
                 newr = False

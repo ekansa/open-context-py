@@ -1,15 +1,40 @@
+import re
+import datetime
 import itertools
 import django.utils.http as http
 from django.http import Http404
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.ocitems.assertions.math import MathAssertions
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 
 class QueryMaker():
 
+    # main item-types mapped to their slugs to get solr-facet field prefix
+    TYPE_MAPPINGS = {'subjects': 'oc-gen-subjects',
+                     'media': 'oc-gen-media',
+                     'documents': 'oc-gen-documents',
+                     'persons': 'oc-gen-persons',
+                     'projects': 'oc-gen-projects',
+                     'types': 'oc-gen-types',
+                     'predicates': 'oc-gen-predicates'}
+
+    TYPE_URIS = {'subjects': 'oc-gen:subjects',
+                 'media': 'oc-gen:media',
+                 'documents': 'oc-gen:documents',
+                 'persons': 'oc-gen:persons',
+                 'projects': 'oc-gen:projects',
+                 'types': 'oc-gen:types',
+                 'predicates': 'oc-gen:predicates'}
+
     def __init__(self):
         self.error = False
+        self.entities = {}  # keep looked up entities to save future database lookups
+        self.histogram_groups = 10
 
     def _get_context_paths(self, spatial_context):
         '''
@@ -56,6 +81,7 @@ class QueryMaker():
             found = entity.context_dereference(context)
             if found:
                 valid_context_slugs.append(entity.slug)
+                self.entities[context] = entity  # store entitty for later use
         return valid_context_slugs
 
     def _get_parent_slug(self, slug):
@@ -75,22 +101,9 @@ class QueryMaker():
         return parent_child_set[0].replace('-', '_') + '___context_id_fq:' + \
             parent_child_set[1]
 
-    def _process_prop_list(self, prop_list):
-        # TODO docstring
-        props = (prop.split(' ') for prop in prop_list)
-        prop_dict_list = []
-        for prop in props:
-            # If multi-select
-            if any('||' in property for property in prop):
-                prop_dict_list.append(self._process_multi_select_prop(prop))
-            else:
-                # Otherwise, single-select
-                prop_dict_list.append(self._process_single_select_prop(prop))
-        return prop_dict_list
-
     def expand_hierarchy_options(self,
                                  path_param_val,
-                                 hier_delim=' ',
+                                 hier_delim='---',
                                  or_delim='||'):
         """ Exapands a hiearchic path string into a
             list of listed hierachically ordered items.
@@ -111,48 +124,12 @@ class QueryMaker():
                 path_list.append(list(item))
         return path_list
 
-    def _process_multi_select_prop(self, prop):
-        # TODO docstring
-        prop_dict = {}
-        # Modify the prop so each property is in its own list
-        prop_list = (item.split('||') for item in prop)
-        # Generate a list of the various permutations of multi-selected properties
-        prop_tuple_list = list(itertools.product(*prop_list))
-        # Turn the resulting list of tuples into a list of lists
-        prop_list = (list(item) for item in prop_tuple_list)
-        prop_facet_field_list = []
-        prop_fq_list = []
-        for prop in prop_list:
-            value = prop.pop()
-            entity = Entity()
-            found = entity.dereference(value)
-            if len(prop) == 0:
-                if found:
-                    field_parts = self.make_prop_solr_field_parts(entity)
-                    prop_facet_field_list.append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
-                prop_fq_list.append('root___pred_id_fq:' + value)
-            else:
-                facet_field = ''
-                for property in range(len(prop)):
-                    facet_field += prop.pop().replace('-', '_') + '___'
-                    facet_field += 'pred_id'
-                    if facet_field not in prop_facet_field_list:
-                        prop_facet_field_list.append(facet_field)
-                    fq = facet_field + '_fq:' + value
-                    prop_fq_list.append(fq)
-        prop_dict['facet.field'] = prop_facet_field_list
-        # Create fq string of multi-selected OR props
-        prop_fq_string = ' OR '.join(fq for fq in prop_fq_list)
-        prop_fq_string = '(' + prop_fq_string + ')'
-        prop_dict['fq'] = prop_fq_string
-        return prop_dict
-
     def get_solr_field_type(self, data_type, prefix=''):
         '''
         Defines whether our dynamic solr fields names for
         predicates end with ___pred_id, ___pred_numeric, etc.
         '''
-        if data_type in ['@id', 'id']:
+        if data_type in ['@id', 'id', False]:
             return prefix + 'id'
         elif data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
             return prefix + 'numeric'
@@ -188,6 +165,8 @@ class QueryMaker():
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
+                    self.entities[proj_slug] = entity
+                    proj_slug = entity.slug
                     fq_path_term = fq_field + ':' + proj_slug + '*'
                 else:
                     fq_path_term = fq_field + ':' + proj_slug
@@ -204,6 +183,354 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
+    def process_prop(self, props):
+        # TODO docstring
+        query_dict = {'fq': [],
+                      'facet.field': [],
+                      'stats.field': [],
+                      'facet.range': [],
+                      'ranges': {}}
+        fq_terms = []
+        prop_path_lists = self.expand_hierarchy_options(props)
+        for prop_path_list in prop_path_lists:
+            i = 0
+            path_list_len = len(prop_path_list)
+            fq_path_terms = []
+            act_field = SolrDocument.ROOT_PREDICATE_SOLR
+            act_field_data_type = 'id'
+            for prop_slug in prop_path_list:
+                if act_field_data_type == 'id':
+                    entity = Entity()
+                    found = entity.dereference(prop_slug)
+                    if found is False:
+                        found = entity.dereference(prop_slug, prop_slug)
+                    if found:
+                        self.entities[prop_slug] = entity  # store entitty for later use
+                        prop_slug = entity.slug
+                        if i == 0:
+                            if entity.item_type != 'uri':
+                                act_field = SolrDocument.ROOT_PREDICATE_SOLR
+                            else:
+                                act_field = False
+                                if 'oc-gen' in prop_slug:
+                                    # get the root solr facet field for the item type
+                                    # associated with this category
+                                    act_field = self.get_parent_item_type_facet_field(entity.uri)
+                                if act_field is False:
+                                    act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                        # use the database to look up the active field for linked data
+                        l_data_entity = False
+                        if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
+                            l_data_entity = True
+                            act_field = self.get_parent_entity_facet_field(entity.uri)
+                            # print('linked data field (' + str(i) + '): ' + str(act_field))
+                            if act_field is False:
+                                act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                        # ---------------------------------------------------
+                        # THIS PART BUILDS THE FACET-QUERY
+                        # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
+                        # the below is a bit of a hack. We should have a query field
+                        # as with ___pred_ to query just the slug. But this works for now
+                        fq_field = act_field + '_fq'
+                        fq_path_term = fq_field + ':' + prop_slug
+                        fq_path_terms.append(fq_path_term)
+                        #---------------------------------------------------
+                        #
+                        #---------------------------------------------------
+                        # THIS PART PREPARES FOR LOOPING OR FINAL FACET-FIELDS
+                        #
+                        field_parts = self.make_prop_solr_field_parts(entity)
+                        act_field_data_type = field_parts['suffix']
+                        if i < 1:
+                            act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                        else:
+                            # active field for the next trip around the loop!
+                            if l_data_entity:
+                                act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                            else:
+                                act_field = field_parts['prefix'] + '___' + act_field
+                            # --------------------------------------------
+                            # check if the last or penultimate field has
+                            # a different data-type (for linked-data)
+                            if i >= (path_list_len - 2) \
+                               and l_data_entity:
+                                lequiv = LinkEquivalence()
+                                dtypes = lequiv.get_data_types_from_object(entity.uri)
+                                if isinstance(dtypes, list):
+                                    # set te data type and the act-field
+                                    act_field_data_type = self.get_solr_field_type(dtypes[0])
+                                    if act_field_data_type != 'id':
+                                        # a different data-type, make an act_field to reflect it
+                                        act_field = field_parts['prefix'] + '___pred_' + act_field_data_type
+                            # -------------------------------------------
+                        if act_field_data_type == 'numeric':
+                            # print('Numeric field: ' + act_field)
+                            query_dict = self.add_math_facet_ranges(query_dict,
+                                                                    act_field,
+                                                                    entity)
+                        elif act_field_data_type == 'date':
+                            print('Date field: ' + act_field)
+                            query_dict = self.add_date_facet_ranges(query_dict,
+                                                                    act_field,
+                                                                    entity)
+                        print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        print('Current field (' + str(i) + '): ' + act_field)
+                    i += 1
+                    if i >= path_list_len \
+                            and act_field not in query_dict['facet.field']:
+                        if act_field_data_type == 'id':
+                            # only get facets for 'id' type fields
+                            query_dict['facet.field'].append(act_field)
+                        if act_field_data_type == 'numeric':
+                            query_dict['stats.field'].append(act_field)
+                elif act_field_data_type == 'string':
+                    # case for a text search
+                    search_term = act_field + ':' + self.escape_solr_arg(prop_slug)
+                    fq_path_terms.append(search_term)
+                elif act_field_data_type == 'numeric':
+                    # numeric search. assume it's well formed solr numeric request
+                    search_term = act_field + ':' + prop_slug
+                    fq_path_terms.append(search_term)
+                    # now limit the numeric ranges from query to the range facets
+                    query_dict = self.add_math_facet_ranges(query_dict,
+                                                            act_field,
+                                                            False,
+                                                            prop_slug)
+                elif act_field_data_type == 'date':
+                    # date search. assume it's well formed solr request
+                    search_term = act_field + ':' + prop_slug
+                    fq_path_terms.append(search_term)
+                    # now limit the date ranges from query to the range facets
+                    query_dict = self.add_date_facet_ranges(query_dict,
+                                                            act_field,
+                                                            False,
+                                                            prop_slug)
+            final_path_term = ' AND '.join(fq_path_terms)
+            final_path_term = '(' + final_path_term + ')'
+            fq_terms.append(final_path_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def add_math_facet_ranges(self,
+                              query_dict,
+                              act_field,
+                              entity=False,
+                              solr_query=False):
+        """ this does some math for facet
+            ranges for numeric fields
+        """
+        ok = False
+        groups = self.histogram_groups
+        fstart = 'f.' + act_field + '.facet.range.start'
+        fend = 'f.' + act_field + '.facet.range.end'
+        fgap = 'f.' + act_field + '.facet.range.gap'
+        findex = 'f.' + act_field + '.facet.sort'
+        if entity is not False:
+            ok = True
+            ma = MathAssertions()
+            if entity.item_type != 'uri':
+                summary = ma.get_numeric_range(entity.uuid)
+            else:
+                summary = ma.get_numeric_range_via_ldata(entity.uri)
+            min_val = summary['min']
+            max_val = summary['max']
+            count_val = summary['count']
+            if (count_val / self.histogram_groups) < 3:
+                groups = 4
+        else:
+            if solr_query is not False:
+                vals = []
+                # get the numbers out
+                q_nums_strs = re.findall(r'[-+]?\d*\.\d+|\d+', solr_query)
+                for q_num_str in q_nums_strs:
+                    vals.append(float(q_num_str))
+                vals.sort()
+                if len(vals) > 1:
+                    ok = True
+                    min_val = vals[0]
+                    max_val = vals[-1]
+        if ok:
+            if act_field not in query_dict['facet.range']:
+                query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fstart] = min_val
+            query_dict['ranges'][fend] = max_val
+            query_dict['ranges'][fgap] = (max_val - min_val) / groups
+            query_dict['ranges'][findex] = 'index'  # sort by index, not by count
+        return query_dict
+
+    def add_date_facet_ranges(self,
+                              query_dict,
+                              act_field,
+                              entity=False,
+                              solr_query=False):
+        """ this does some math for facet
+            ranges for numeric fields
+        """
+        ok = False
+        groups = 4
+        fstart = 'f.' + act_field + '.facet.range.start'
+        fend = 'f.' + act_field + '.facet.range.end'
+        fgap = 'f.' + act_field + '.facet.range.gap'
+        findex = 'f.' + act_field + '.facet.sort'
+        if entity is not False:
+            ok = True
+            ma = MathAssertions()
+            if entity.item_type != 'uri':
+                summary = ma.get_date_range(entity.uuid)
+            else:
+                summary = ma.get_date_range_via_ldata(entity.uri)
+            min_val = summary['min']
+            max_val = summary['max']
+            count_val = summary['count']
+        else:
+            if solr_query is not False:
+                q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}[T:]\d{2}:\d{2}:\d{2}', solr_query)
+                if len(q_dt_strs) < 2:
+                    # try a less strict regular expression to get dates
+                    q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}', solr_query)
+                if len(q_dt_strs) >= 2:
+                    ok = True
+                    vals = []
+                    for q_dt_str in q_dt_strs:
+                        vals.append(q_dt_str)
+                    vals.sort()
+                    min_val = vals[0]
+                    max_val = vals[1]
+        if ok:
+            if act_field not in query_dict['facet.range']:
+                query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fstart] = self.convert_date_to_solr_date(min_val)
+            query_dict['ranges'][fend] = self.convert_date_to_solr_date(max_val)
+            query_dict['ranges'][fgap] = self.get_date_difference_for_solr(min_val, max_val, groups)
+            query_dict['ranges'][findex] = 'index'  # sort by index, not by count
+        return query_dict
+
+    def get_date_difference_for_solr(self, min_date, max_date, groups):
+        """ Gets a solr date difference from two values """
+        min_dt = self.date_convert(min_date)
+        max_dt = self.date_convert(max_date)
+        dif_dt = (max_dt - min_dt) / groups
+        if dif_dt.days >= 366:
+            solr_val = int(round((dif_dt.days / 365.25), 0))
+            solr_dif = '+' + str(solr_val) + 'YEAR'
+        elif dif_dt.days >= 31:
+            solr_val = int(round((dif_dt.days / 30), 0))
+            solr_dif = '+' + str(solr_val) + 'MONTH'
+        elif dif_dt.days >= 1:
+            solr_val = int(round(dif_dt.days, 0))
+            solr_dif = '+' + str(solr_val) + 'DAY'
+        elif dif_dt.hours >= 1:
+            solr_val = int(round(dif_dt.hours, 0))
+            solr_dif = '+' + str(solr_val) + 'HOUR'
+        elif dif_dt.minutes >= 1:
+            solr_val = int(round(dif_dt.minutes, 0))
+            solr_dif = '+' + str(solr_val) + 'MINUTE'
+        elif dif_dt.seconds >= 1:
+            solr_val = int(round(dif_dt.seconds, 0))
+            solr_dif = '+' + str(solr_val) + 'SECOND'
+        else:
+            solr_dif = '+1YEAR'
+        return solr_dif
+
+    def add_solr_gap_to_date(self, date_val, solr_gap):
+        """ adds a solr gap to a date_val """
+        solr_val = re.sub(r'[^\d.]', r'', solr_gap)
+        solr_val = int(float(solr_val))
+        dt = self.date_convert(date_val)
+        if 'YEAR' in solr_gap:
+            dt = dt + datetime.timedelta(days=int(round(solr_val * 365.25), 0))
+        elif 'MONTH' in solr_gap:
+            dt = dt + datetime.timedelta(days=(solr_val * 30))
+        elif 'DAY' in solr_gap:
+            dt = dt + datetime.timedelta(days=solr_val)
+        elif 'HOUR' in solr_gap:
+            dt = dt + datetime.timedelta(hours=solr_val)
+        elif 'MINUTE' in solr_gap:
+            dt = dt + datetime.timedelta(minutes=solr_val)
+        elif 'SECOND' in solr_gap:
+            dt = dt + datetime.timedelta(seconds=solr_val)
+        else:
+            dt = dt
+        return dt
+
+    def convert_date_to_solr_date(self, date_val):
+        """ Conversts a string for a date into
+            a Solr formated datetime string
+        """
+        dt = self.date_convert(date_val)
+        return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+    def make_human_readable_date(self, date_val):
+        """ Converts a date value into something
+            easier to read
+        """
+        dt = self.date_convert(date_val)
+        check_date = dt.strftime('%Y-%m-%d')
+        check_dt = self.date_convert(date_val)
+        if check_dt == dt:
+            return check_date
+        else:
+            return dt.strftime('%Y-%m-%d:%H:%M:%S')
+
+    def date_convert(self, date_val):
+        """ converts to a python datetime if not already so """
+        if isinstance(date_val, str):
+            date_val = date_val.replace('Z', '')
+            dt = datetime.datetime.strptime(date_val, '%Y-%m-%dT%H:%M:%S')
+        else:
+            dt = date_val
+        return dt
+
+    def get_parent_item_type_facet_field(self, category_uri):
+        """ Gets the parent facet field for a given
+            category_uri. This assumes the category_uri is an entity
+            that exists in the database.
+        """
+        output = False;
+        parents = LinkRecursion().get_jsonldish_entity_parents(category_uri)
+        for par in parents:
+            if par['slug'] in self.TYPE_MAPPINGS.values():
+                # the parent exists in the Type Mappings
+                output = par['slug'].replace('-', '_') + '___pred_id'
+                break
+        return output
+
+    def get_parent_entity_facet_field(self, entity_uri):
+        """ Gets the parent facet field for a given
+            category_uri. This assumes the category_uri is an entity
+            that exists in the database.
+        """
+        output = False;
+        parents = LinkRecursion().get_jsonldish_entity_parents(entity_uri)
+        if isinstance(parents, list):
+            if len(parents) > 1:
+                # get the penultimate field
+                output = parents[-2]['slug'].replace('-', '_') + '___pred_id'
+        return output
+
+    def process_item_type(self, raw_item_type):
+        # TODO docstring
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        item_type_lists = self.expand_hierarchy_options(raw_item_type)
+        for item_type_list in item_type_lists:
+            i = 0
+            path_list_len = len(item_type_list)
+            fq_path_terms = []
+            item_type = item_type_list[0]  # no hiearchy in this field, just the type
+            fq_term = 'item_type:' + item_type
+            fq_terms.append(fq_term)
+            if item_type in self.TYPE_MAPPINGS:
+                act_field = self.TYPE_MAPPINGS[item_type].replace('-', '_') + '___pred_id'
+                query_dict['facet.field'].append(act_field)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
     def make_solr_value_from_entity(self, entity, value_type='id'):
         """ makes a solr value as indexed in SolrDocument
             see _concat_solr_string_value
@@ -215,32 +542,6 @@ class QueryMaker():
         return entity.slug + '___' + value_type + '___' + \
             id_part + '___' + entity.label
         return output
-
-    def _process_single_select_prop(self, prop):
-        # TODO docstring
-        prop_dict = {}
-        # Get the value
-        value = prop.pop()
-        entity = Entity()
-        found = entity.dereference(value)
-        # A single property (e.g., ?prop=24--object-type)
-        if len(prop) == 0:
-            prop_dict['fq'] = 'root___pred_id_fq:' + value
-            if found:
-                field_parts = self.make_prop_solr_field_parts(entity)
-                prop_dict['facet.field'] = field_parts['prefix'] + '___pred_' + field_parts['suffix']
-            else:
-                prop_dict['facet.field'] = SolrDocument.ROOT_PREDICATE_SOLR
-        # Multiple properties
-        else:
-            facet_field = ''
-            for property in range(len(prop)):
-                facet_field += prop.pop().replace('-', '_') + '___'
-            facet_field += 'pred_id'
-            prop_dict['facet.field'] = facet_field
-            fq = facet_field + '_fq:' + value
-            prop_dict['fq'] = fq
-        return prop_dict
 
     def _process_spatial_context(self, spatial_context=None):
         # TODO docstring
@@ -276,3 +577,38 @@ class QueryMaker():
             context['fq'] = None
             context['facet.field'] = ['root___context_id']
         return context
+
+    def escaped_seq(self, term):
+        """ Yield the next string based on the
+            next character (either this char
+            or escaped version """
+        escaperules = {'+': r'\+',
+                       '-': r'\-',
+                       '&': r'\&',
+                       '|': r'\|',
+                       '!': r'\!',
+                       '(': r'\(',
+                       ')': r'\)',
+                       '{': r'\{',
+                       '}': r'\}',
+                       '[': r'\[',
+                       ']': r'\]',
+                       '^': r'\^',
+                       '~': r'\~',
+                       '*': r'\*',
+                       '?': r'\?',
+                       ':': r'\:',
+                       '"': r'\"',
+                       ';': r'\;',
+                       ' ': r'\ '}
+        for char in term:
+            if char in escaperules.keys():
+                yield escaperules[char]
+            else:
+                yield char
+
+    def escape_solr_arg(self, term):
+        """ Apply escaping to the passed in query terms
+            escaping special characters like : , etc"""
+        term = term.replace('\\', r'\\')   # escape \ first
+        return "".join([next_str for next_str in self.escaped_seq(term)])
