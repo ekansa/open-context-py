@@ -59,10 +59,14 @@ else:
     TEMPLATE_DEBUG = False
 
 
-ALLOWED_HOSTS = ['.opencontext.org',
-                 '195.37.231.141',
-                 '10.240.245.126']
+ALLOWED_HOSTS = ['.opencontext.org']
 
+# saves configuration problems
+# settings.py can be updated without upsetting
+# local deployment configurations
+added_host = get_secret('ALLOWED_HOST')
+if len(added_host) > 1:
+    ALLOWED_HOSTS.append(added_host)
 
 # Application definition
 
