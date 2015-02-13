@@ -219,13 +219,14 @@ class QueryMaker():
                                 if act_field is False:
                                     act_field = SolrDocument.ROOT_LINK_DATA_SOLR
                         # use the database to look up the active field for linked data
-                        l_data_entity = False
+                        l_prop_entity = False
                         if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
-                            l_data_entity = True
-                            act_field = self.get_parent_entity_facet_field(entity.uri)
-                            # print('linked data field (' + str(i) + '): ' + str(act_field))
-                            if act_field is False:
-                                act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                            if entity.entity_type == 'property':
+                                l_prop_entity = True
+                                act_field = self.get_parent_entity_facet_field(entity.uri)
+                                # print('linked data field (' + str(i) + '): ' + str(act_field))
+                                if act_field is False:
+                                    act_field = SolrDocument.ROOT_LINK_DATA_SOLR
                         # ---------------------------------------------------
                         # THIS PART BUILDS THE FACET-QUERY
                         # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
@@ -245,7 +246,7 @@ class QueryMaker():
                             act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
                             # active field for the next trip around the loop!
-                            if l_data_entity:
+                            if l_prop_entity:
                                 act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                             else:
                                 act_field = field_parts['prefix'] + '___' + act_field
@@ -253,7 +254,7 @@ class QueryMaker():
                             # check if the last or penultimate field has
                             # a different data-type (for linked-data)
                             if i >= (path_list_len - 2) \
-                               and l_data_entity:
+                               and l_prop_entity:
                                 lequiv = LinkEquivalence()
                                 dtypes = lequiv.get_data_types_from_object(entity.uri)
                                 if isinstance(dtypes, list):

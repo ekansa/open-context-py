@@ -24,6 +24,7 @@ class Entity():
         self.label = False
         self.item_type = False
         self.class_uri = False
+        self.entity_type = False
         self.data_type = False
         self.alt_label = False
         self.vocab_uri = False
@@ -61,6 +62,7 @@ class Entity():
                     self.label = ld_entity.label
                     self.item_type = 'uri'
                     self.alt_label = ld_entity.alt_label
+                    self.entity_type = ld_entity.ent_type
                     self.vocab_uri = ld_entity.vocab_uri
                     try:
                         vocab_entity = LinkEntity.objects.get(uri=self.vocab_uri)
