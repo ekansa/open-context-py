@@ -22,7 +22,7 @@ class FilterLinks():
         self.base_request_json = False
         self.base_r_full_path = False
         self.spatial_context = False
-        self.testing = True
+        self.testing = settings.DEBUG
         self.hierarchy_delim = '---'
         self.partial_param_val_match = False
 
@@ -41,6 +41,8 @@ class FilterLinks():
             default doc_format is '' (HTML)
         """
         url = settings.CANONICAL_HOST + self.base_search_link
+        if settings.CANONICAL_HOST != settings.DEPLOYED_HOST:
+            url = settings.DEPLOYED_HOST + self.base_search_link
         if self.testing:
             url = 'http://127.0.0.1:8000' + self.base_search_link
         if 'path' in new_rparams:
