@@ -1,4 +1,4 @@
-Directions for Deploying with Solr
+Directions for Deploying Solr for Open Context
 =======================
 
 
