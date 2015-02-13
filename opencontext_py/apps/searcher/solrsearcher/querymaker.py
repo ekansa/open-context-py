@@ -273,8 +273,8 @@ class QueryMaker():
                             query_dict = self.add_date_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
-                        print('Current data type (' + str(i) + '): ' + act_field_data_type)
-                        print('Current field (' + str(i) + '): ' + act_field)
+                        # print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        # print('Current field (' + str(i) + '): ' + act_field)
                     i += 1
                     if i >= path_list_len \
                             and act_field not in query_dict['facet.field']:

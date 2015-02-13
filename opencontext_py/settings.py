@@ -181,8 +181,19 @@ try:
 except:
     HOSTNAME = 'localhost'
 
+# assumes DEPLOYED_HOST starts with 'http://' or 'https://'
+DEPLOYED_HOST = get_secret('DEPLOYED_HOST')
+if 'http://' not in DEPLOYED_HOST and 'https://' not in DEPLOYED_HOST:
+    DEPLOYED_HOST = 'http://' + DEPLOYED_HOST
+DEPLOYED_SITE_NAME = get_secret('DEPLOYED_SITE_NAME')
+if get_secret('DEPLOYED_HOST') == 1:
+    TO_DEPLOYED_URIS = True
+else:
+    TO_DEPLOYED_URIS = False
+
 CANONICAL_HOST = 'http://opencontext.org'
 CANONICAL_SITENAME = 'Open Context'
+
 
 ITEM_TYPES = (
     ('subjects', 'subjects'),

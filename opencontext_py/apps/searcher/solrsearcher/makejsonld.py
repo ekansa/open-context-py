@@ -340,7 +340,7 @@ class MakeJsonLd():
                 facet_key_list = solr_field_key.split('___')
                 slug = facet_key_list[0].replace('_', '-')
                 fdata_type = facet_key_list[-1].replace('pred_', '')
-                print('Check: ' + fdata_type + ' on ' + data_type)
+                # print('Check: ' + fdata_type + ' on ' + data_type)
                 if fdata_type == data_type:
                     output[solr_field_key] = ranges
         if len(output) < 1:
@@ -399,7 +399,6 @@ class MakeJsonLd():
         """ adds numeric fields with query options """
         date_fields = []
         date_facet_ranges = self.get_solr_ranges(solr_json, 'date')
-        print(str(date_facet_ranges))
         if date_facet_ranges is not False:
             for solr_field_key, ranges in date_facet_ranges.items():
                 facet_key_list = solr_field_key.split('___')
@@ -412,9 +411,9 @@ class MakeJsonLd():
                     if field_entity.item_type == 'uri':
                         linked_field = True
                 field = self.get_facet_meta(solr_field_key)
-                field['oc-api:min'] = ranges['start']
-                field['oc-api:max'] = ranges['end']
-                field['oc-api:gap'] = ranges['gap']
+                field['oc-api:min-date'] = ranges['start']
+                field['oc-api:max-date'] = ranges['end']
+                field['oc-api:gap-date'] = ranges['gap']
                 field['oc-api:has-range-options'] = []
                 i = -1
                 qm = QueryMaker()
@@ -437,8 +436,8 @@ class MakeJsonLd():
                     range_dict['json'] = fl.make_request_url(new_rparams, '.json')
                     range_dict['label'] = qm.make_human_readable_date(range_min_key) + ' to ' + qm.make_human_readable_date(range_end)
                     range_dict['count'] = solr_count
-                    range_dict['oc-api:min'] = range_min_key
-                    range_dict['oc-api:max'] = range_end
+                    range_dict['oc-api:min-date'] = range_min_key
+                    range_dict['oc-api:max-date'] = range_end
                     field['oc-api:has-range-options'].append(range_dict)
                 date_fields.append(field)
         if len(date_fields) > 0:

@@ -24,7 +24,7 @@ class SolrSearch():
 
     def solr_connect(self):
         """ connects to solr """
-        self.solr = SolrConnection().connection
+        self.solr = SolrConnection(False).connection
 
     def search_solr(self, request_dict):
         """searches solr to get raw solr search results"""
