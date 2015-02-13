@@ -89,6 +89,46 @@ faceted search service data flows through the following steps:
 
 
 
+PART 3. ADDITIONAL QUERYING GUIDES
+------------------------------------------
+
+(3.1) Full-text Searches:
+
+The Open Context search service provides links with a "template" guide on how to request full-text
+searches. Certain URLs have {SearchTerm} (not URL escaped) where a client needs to insert URL escaped
+text for keyword searches. The JSON example below illustrates key-word search templating:
+
+      "oc-api:has-text-search": [
+        {
+            "id": "#textfield-keyword-search", 
+            "label": "General Keyword Search", 
+            "oc-api:search-term": null, 
+            "oc-api:template": "http://opencontext.org/sets/?q={SearchTerm}", 
+            "oc-api:template-json": "http://opencontext.org/sets/.json?q={SearchTerm}"
+        }
+      ] 
+
+
+(3.2) Numeric and Date Searches:
+
+Open Context will make "range-facets" for numeric and date fields. These range facets also serve as
+a template to pass query expressions (using Solr's syntax) to use with numeric or date fields
+exposed by Open Context's search service. Here's an example:
+
+
+      "oc-api:has-range-options": [
+        {
+          "id": "http://opencontext.org/sets/Italy?proj=24-murlo&prop=24-sd---%5B3.5+TO+7.24+%5D", 
+          "json": "http://opencontext.org/sets/Italy.json?proj=24-murlo&prop=24-sd---%5B3.5+TO+7.24+%5D", 
+          "label": "3.5", 
+          "count": 31, 
+          "oc-api:min": 3.5, 
+          "oc-api:max": 7.24
+        }, 
+
+
+
+
   
   
 
