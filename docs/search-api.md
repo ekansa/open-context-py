@@ -85,7 +85,7 @@ faceted search service data flows through the following steps:
   to navigate JSON-LD document. Relevant code is here:
   
         /open-context-py/opencontext_py/apps/searcher/solrsearcher/makejsonld.py
-        /pen-context-py/opencontext_py/apps/searcher/solrsearcher/filterlinks.py
+        /open-context-py/opencontext_py/apps/searcher/solrsearcher/filterlinks.py
 
 
 
