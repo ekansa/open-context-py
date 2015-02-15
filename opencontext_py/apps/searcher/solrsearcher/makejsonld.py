@@ -10,6 +10,7 @@ from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
 
 
 class MakeJsonLd():
@@ -68,6 +69,30 @@ class MakeJsonLd():
         context['location-precision'] = 'oc-gen:location-precision'
         context['location-note'] = 'oc-gen:location-note'
         self.base_context = context
+
+    def convert_solr_json(self, solr_json):
+        """ Converst the solr jsont """
+        self.json_ld['@context'] = self.base_context
+        self.json_ld['id'] = self.make_id()
+        self.json_ld['label'] = self.label
+        self.json_ld['opensearch:totalResults'] = self.get_path_in_dict(['response',
+                                                                         'numFound'],
+                                                                        solr_json)
+        self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
+        self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
+        self.add_filters_json()
+        self.add_text_fields()
+        self.add_numeric_fields(solr_json)
+        self.add_date_fields(solr_json)
+        self.make_facets(solr_json)
+        json_recs_obj = JsonLDrecords()
+        json_recs_obj.make_records_from_solr(solr_json)
+        if len(json_recs_obj.geojson_recs) > 0:
+            self.json_ld['features'] = json_recs_obj.geojson_recs
+        if settings.DEBUG:
+            # self.json_ld['request'] = self.request_dict
+            self.json_ld['solr'] = solr_json
+        return self.json_ld
 
     def add_filters_json(self):
         """ adds JSON describing search filters """
@@ -194,26 +219,6 @@ class MakeJsonLd():
             if found:
                 output = entity
         return output
-
-    def convert_solr_json(self, solr_json):
-        """ Converst the solr jsont """
-        self.json_ld['@context'] = self.base_context
-        self.json_ld['id'] = self.make_id()
-        self.json_ld['label'] = self.label
-        self.json_ld['opensearch:totalResults'] = self.get_path_in_dict(['response',
-                                                                         'numFound'],
-                                                                        solr_json)
-        self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
-        self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
-        self.add_filters_json()
-        self.add_text_fields()
-        self.add_numeric_fields(solr_json)
-        self.add_date_fields(solr_json)
-        self.make_facets(solr_json)
-        if settings.DEBUG:
-            # self.json_ld['request'] = self.request_dict
-            self.json_ld['solr'] = solr_json
-        return self.json_ld
 
     def make_id(self):
         """ makes the ID for the document """
