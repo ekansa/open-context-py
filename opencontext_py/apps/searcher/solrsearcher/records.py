@@ -92,7 +92,8 @@ class JsonLDrecords():
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
                                                   SolrDocument.ROOT_CONTEXT_SOLR,
-                                                  '___context_id')
+                                                  '___context_id',
+                                                  [])
                 if len(contexts) > 0:
                     properties['context-label'] = self.make_context_path_label(contexts)
                     properties['context-href'] = self. make_context_uri(contexts)
@@ -122,7 +123,8 @@ class JsonLDrecords():
             root_cat_field = 'oc_gen_' + item_type + '___pred_id'
             cat_hierarchy = self.extract_hierarchy(solr_rec,
                                                    root_cat_field,
-                                                   '___pred_id')
+                                                   '___pred_id',
+                                                   [])
         return cat_hierarchy
 
     def extract_hierarchy(self,
@@ -147,7 +149,7 @@ class JsonLDrecords():
                 hierarchy.append(parsed_path_item)
                 new_facet_field = parsed_path_item['slug'].replace('-', '_')
                 new_facet_field += facet_suffix
-                print('New hierarchy field: ' + new_facet_field)
+                # print('New hierarchy field: ' + new_facet_field)
                 hierarchy = self.extract_hierarchy(solr_rec,
                                                    new_facet_field,
                                                    facet_suffix,
