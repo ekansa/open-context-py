@@ -80,6 +80,7 @@ class MakeJsonLd():
                                                                         solr_json)
         self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
         self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
+        self.json_ld['to-do'] = 'paging through results'
         self.add_filters_json()
         self.add_text_fields()
         self.add_numeric_fields(solr_json)
@@ -91,6 +92,7 @@ class MakeJsonLd():
             self.json_ld['type'] = 'FeatureCollection'
             self.json_ld['features'] = json_recs_obj.geojson_recs
         if settings.DEBUG:
+            self.json_ld['request'] = self.request_dict
             # self.json_ld['request'] = self.request_dict
             self.json_ld['solr'] = solr_json
         return self.json_ld
@@ -167,7 +169,6 @@ class MakeJsonLd():
                     act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
                     act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
                     filters.append(act_filter)
-        self.json_ld['request'] = self.request_dict
         if len(filters) > 0:
             self.json_ld['oc-api:has-filters'] = filters
 
