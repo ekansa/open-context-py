@@ -88,6 +88,7 @@ class MakeJsonLd():
         json_recs_obj = JsonLDrecords()
         json_recs_obj.make_records_from_solr(solr_json)
         if len(json_recs_obj.geojson_recs) > 0:
+            self.json_ld['type'] = 'FeatureCollection'
             self.json_ld['features'] = json_recs_obj.geojson_recs
         if settings.DEBUG:
             # self.json_ld['request'] = self.request_dict
