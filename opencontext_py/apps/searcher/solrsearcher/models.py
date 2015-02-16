@@ -108,7 +108,7 @@ class SolrSearch():
             disc_geo_query = qm.process_discovery_geo(disc_geo)
             query['fq'] += disc_geo_query['fq']
             query['facet.field'] += disc_geo_query['facet.field']
-            query['f.discovery_geotile.facet.field.limit'] = 4100
+            query['f.discovery_geotile.facet.limit'] = -1
         else:
             # Now add Geo-facets
             query = self.add_root_discovery_geo(query,
@@ -144,7 +144,7 @@ class SolrSearch():
         """ add base discovery - geo """
         if 'disc-geotile' not in request_dict:
             query['facet.field'].append('discovery_geotile')
-            query['f.discovery_geotile.facet.field.limit'] = 4100
+            query['f.discovery_geotile.facet.limit'] = -1
         return query
 
     def gather_entities(self, entities_dict):

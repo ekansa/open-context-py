@@ -33,7 +33,9 @@ class JsonLDregions():
         # first aggregate counts for tile that belong togther
         aggregate_tiles = {}
         i = -1
+        t = 0
         for tile_key in solr_tiles[::2]:
+            t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
             trim_tile_key = tile_key[:self.aggregation_depth]
@@ -41,6 +43,7 @@ class JsonLDregions():
                 aggregate_tiles[trim_tile_key] = 0
             aggregate_tiles[trim_tile_key] += solr_facet_count
         # now generate GeoJSON for each tile region
+        print('Total tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         i = 0
         for tile_key, aggregate_count in aggregate_tiles.items():
             i += 1
