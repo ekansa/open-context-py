@@ -10,6 +10,7 @@ from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.regions import JsonLDregions
 from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
 
 
@@ -85,12 +86,18 @@ class MakeJsonLd():
         self.add_text_fields()
         self.add_numeric_fields(solr_json)
         self.add_date_fields(solr_json)
+        #now check for discovery geotiles
+        self.make_discovery_geotiles(solr_json)
+        # now make the regular facets
         self.make_facets(solr_json)
+        # now add the result information
         json_recs_obj = JsonLDrecords()
         json_recs_obj.make_records_from_solr(solr_json)
         if len(json_recs_obj.geojson_recs) > 0:
             self.json_ld['type'] = 'FeatureCollection'
-            self.json_ld['features'] = json_recs_obj.geojson_recs
+            if 'features' not in self.json_ld:
+                self.json_ld['features'] = []
+            self.json_ld['features'] += json_recs_obj.geojson_recs
         if settings.DEBUG:
             self.json_ld['request'] = self.request_dict
             # self.json_ld['request'] = self.request_dict
@@ -450,6 +457,26 @@ class MakeJsonLd():
         if len(date_fields) > 0:
             self.json_ld['oc-api:has-date-facets'] = date_fields
 
+    def make_discovery_geotiles(self, solr_json):
+        """ discovery geotiles need
+            special handling.
+            This finds any geodiscovery tiles
+            and removes them from the other list
+            of facets
+        """
+        solr_disc_geotile_facets = self.get_path_in_dict(['facet_counts',
+                                                         'facet_fields',
+                                                         'discovery_geotile'],
+                                                         solr_json)
+        if solr_disc_geotile_facets is not False:
+            geo_regions = JsonLDregions(solr_json)
+            geo_regions.spatial_context = self.spatial_context
+            geo_regions.set_aggregation_depth(self.request_dict)  # also needed for making filter links
+            geo_regions.process_solr_tiles(solr_disc_geotile_facets)
+            if len(geo_regions.geojson_regions) > 0:
+                self.json_ld['type'] = 'FeatureCollection'
+                self.json_ld['features'] = geo_regions.geojson_regions
+
     def make_facets(self, solr_json):
         """ Makes a list of facets """
         solr_facet_fields = self.get_path_in_dict(['facet_counts',
@@ -458,6 +485,9 @@ class MakeJsonLd():
         if solr_facet_fields is not False:
             pre_sort_facets = {}
             json_ld_facets = []
+            if 'discovery_geotile' in solr_facet_fields:
+                # remove the geotile field
+                solr_facet_fields.pop('discovery_geotile', None)
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
                 count_raw_values = len(solr_facet_values)
@@ -568,6 +598,7 @@ class MakeJsonLd():
     def get_facet_meta(self, solr_facet_key):
         facet = LastUpdatedOrderedDict()
         # facet['solr'] = solr_facet_key
+        id_prefix = '#' + solr_facet_key
         if '___project_id' in solr_facet_key:
             id_prefix = '#facet-project'
             ftype = 'oc-api:facet-project'
