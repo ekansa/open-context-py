@@ -1,16 +1,21 @@
 import json
 import geojson
-from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
-from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
+from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-from django.utils.encoding import iri_to_uri
 
 
 class JsonLDrecords():
+    """ methods to make JSON-LD for records returned
+        in a solr search; i.e. items in (response.docs)
+
+        This makes GeoJSON-LD features for items with
+        geo data.
+
+        TO DO: add JSON-LD for non spatial items
+    """
 
     def __init__(self):
         self.geojson_recs = []
@@ -68,7 +73,7 @@ class JsonLDrecords():
                 geometry['type'] = 'Point'
                 geometry['coordinates'] = geo_coords
                 record['type'] = 'Feature'
-                record['oc-api:category'] = 'oc-api:result-record'
+                record['oc-api:category'] = 'oc-api:geo-item'
                 record['geometry'] = geometry
                 # check for time information
                 when = False
@@ -88,6 +93,7 @@ class JsonLDrecords():
                 properties['uri'] = record['id']
                 properties['href'] = local_url
                 properties['label'] = label
+                properties['category'] = 'result item'
                 # add context information, if present
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
