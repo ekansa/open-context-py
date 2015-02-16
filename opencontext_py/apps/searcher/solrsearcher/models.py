@@ -99,6 +99,20 @@ class SolrSearch():
             it_query = qm.process_item_type(item_type)
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
+        # now add discovery geo location
+        disc_geo = self.get_request_param(request_dict,
+                                          'disc-geotile',
+                                          False,
+                                          False)
+        if disc_geo is not False:
+            disc_geo_query = qm.process_discovery_geo(disc_geo)
+            query['fq'] += disc_geo_query['fq']
+            query['facet.field'] += disc_geo_query['facet.field']
+            query['f.discovery_geotile.facet.field.limit'] = 4100
+        else:
+            # Now add Geo-facets
+            query = self.add_root_discovery_geo(query,
+                                                request_dict)
         # Now add default facet fields
         query = self.add_default_facet_fields(query,
                                               request_dict)
@@ -122,6 +136,15 @@ class SolrSearch():
                     query['facet.field'].append(default_field)
             if 'proj' in request_dict:
                 query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
+        return query
+
+    def add_root_discovery_geo(self,
+                               query,
+                               request_dict):
+        """ add base discovery - geo """
+        if 'disc-geotile' not in request_dict:
+            query['facet.field'].append('discovery_geotile')
+            query['f.discovery_geotile.facet.field.limit'] = 4100
         return query
 
     def gather_entities(self, entities_dict):

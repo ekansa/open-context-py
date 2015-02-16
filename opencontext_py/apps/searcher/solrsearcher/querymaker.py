@@ -532,6 +532,34 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
+    def process_discovery_geo(self, raw_disc_geo):
+        # creates facet query for discovery geotiles
+        # supports or {'||') queries in the path also
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        query_dict['facet.field'].append('discovery_geotile')
+        # since this is a hierarchy, but has no delim,
+        # give it a delim to make it easy to split into
+        # different '||' paths
+        raw_geo_path_list = []
+        for geo_char in raw_disc_geo:
+            raw_geo_path_list.append(geo_char)
+        raw_geo_path = '---'.join(raw_geo_path_list)
+        raw_geo_path = raw_geo_path.replace('---|---|---', '||')
+        disc_geo_lists = self.expand_hierarchy_options(raw_geo_path)
+        for disc_geo_list in disc_geo_lists:
+            i = 0
+            disc_path = ''.join(disc_geo_list)
+            if len(disc_path) < 20:
+                disc_path += '*'
+            fq_term = 'discovery_geotile:' + disc_path
+            fq_terms.append(fq_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
     def make_solr_value_from_entity(self, entity, value_type='id'):
         """ makes a solr value as indexed in SolrDocument
             see _concat_solr_string_value

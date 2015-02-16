@@ -313,3 +313,21 @@ class GlobalMercator(object):
         zoom = len(quadtree)
         tx, ty = self.quadtree_to_tile(quadtree, zoom)
         return self.TileLatLonBounds(tx, ty, zoom)
+
+    def quadtree_to_geojson_poly_coords(self, quadtree):
+        """
+        Transforms a quadree into a set of coordinates for
+        a GeoJSON polygon region.
+
+        Added by Eric Kansa
+        """
+        coords = []
+        outer_coords = []
+        bounds = self.quadtree_to_lat_lon(quadtree)
+        outer_coords.append([bounds[1], bounds[0]])
+        outer_coords.append([bounds[1], bounds[2]])
+        outer_coords.append([bounds[3], bounds[2]])
+        outer_coords.append([bounds[3], bounds[0]])
+        outer_coords.append([bounds[1], bounds[0]])
+        coords.append(outer_coords)
+        return coords
