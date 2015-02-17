@@ -1,3 +1,4 @@
+import re
 import json
 from django.conf import settings
 from opencontext_py.libs.solrconnection import SolrConnection
@@ -21,6 +22,9 @@ class SolrSearch():
         self.json_ld = False
         self.entities = {}  # entities involved in a search request
         self.facet_fields = self.DEFAULT_FACET_FIELDS
+        self.rows = 20
+        self.start = 0
+        self.max_rows = 10000
 
     def solr_connect(self):
         """ connects to solr """
@@ -40,8 +44,8 @@ class SolrSearch():
         #query['fl'] = ['uuid', 'label']
         query['facet'] = 'true'
         query['facet.mincount'] = 1
-        query['rows'] = 10
-        query['start'] = 0
+        query['rows'] = self.rows
+        query['start'] = self.start
         query['debugQuery'] = 'false'
         query['fq'] = []
         query['facet.field'] = []
@@ -53,9 +57,24 @@ class SolrSearch():
                                             '*:*',
                                             False,
                                             True)
-        query['start'] = self.get_request_param(request_dict,
-                                                'start',
-                                                '0')
+        start = self.get_request_param(request_dict,
+                                       'start',
+                                       False,
+                                       False)
+        if start is not False:
+            query['start'] = re.sub(r'[^\d]', r'', start)
+        rows = self.get_request_param(request_dict,
+                                      'rows',
+                                      False,
+                                      False)
+        if rows is not False:
+            rows = re.sub(r'[^\d]', r'', rows)
+            rows = int(float(rows))
+            if rows > self.max_rows:
+                rows = self.max_rows
+            elif rows < 0:
+                rows = 0
+            query['rows'] = rows
          # Spatial Context
         if 'path' in request_dict:
             self.remove_from_default_facet_fields(SolrDocument.ROOT_CONTEXT_SOLR)

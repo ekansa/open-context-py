@@ -38,7 +38,12 @@ class MakeJsonLd():
         context = item_ns.namespaces
         self.namespaces = context
         context['opensearch'] = 'http://a9.com/-/spec/opensearch/1.1/'
-        context['oc-api'] = 'http://opencontext.org/vocabularies/oc-general/oc-api/'
+        context['totalResults'] = {'@id': 'opensearch:totalResults', '@type': 'xsd:integer'}
+        context['startIndex'] = {'@id': 'opensearch:startIndex', '@type': 'xsd:integer'}
+        context['itemsPerPage'] = {'@id': 'opensearch:itemsPerPage', '@type': 'xsd:integer'}
+        context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
+        context['oc-api'] = 'http://opencontext.org/vocabularies/oc-api/'
+        context['count'] = {'@id': 'oc-api:count', '@type': 'xsd:integer'}
         context['id'] = '@id'
         context['label'] = 'rdfs:label'
         context['uuid'] = 'dc-terms:identifier'
@@ -68,13 +73,6 @@ class MakeJsonLd():
         context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
         context['title'] = 'dc-terms:title'
         context['when'] = 'geojson:when'
-        context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
-        context['inferred'] = 'oc-gen:inferred'
-        context['specified'] = 'oc-gen:specified'
-        context['reference-uri'] = 'oc-gen:reference-uri'
-        context['reference-label'] = 'oc-gen:reference-label'
-        context['location-precision'] = 'oc-gen:location-precision'
-        context['location-note'] = 'oc-gen:location-note'
         self.base_context = context
 
     def convert_solr_json(self, solr_json):
@@ -85,12 +83,9 @@ class MakeJsonLd():
         if 'metadata' in self.act_responses:
             self.json_ld['id'] = self.make_id()
             self.json_ld['label'] = self.label
-            self.json_ld['opensearch:totalResults'] = self.get_path_in_dict(['response',
-                                                                             'numFound'],
-                                                                            solr_json)
             self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
             self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
-            self.json_ld['to-do'] = 'paging through results'
+            self.add_paging_json(solr_json)
             self.add_filters_json()
             self.add_text_fields()
         if 'facet' in self.act_responses:
@@ -147,6 +142,93 @@ class MakeJsonLd():
             # self.json_ld['request'] = self.request_dict
             self.json_ld['solr'] = solr_json
         return self.json_ld
+
+    def add_paging_json(self, solr_json):
+        """ adds JSON for paging through results """
+        total_found = self.get_path_in_dict(['response',
+                                            'numFound'],
+                                            solr_json)
+        start = self.get_path_in_dict(['responseHeader',
+                                       'params',
+                                       'start'],
+                                      solr_json)
+        rows = self.get_path_in_dict(['responseHeader',
+                                      'params',
+                                      'rows'],
+                                     solr_json)
+        if start is not False \
+           and rows is not False \
+           and total_found is not False:
+            # add numeric information about this search
+            total_found = int(float(total_found))
+            start = int(float(start))
+            rows = int(float(rows))
+            self.json_ld['totalResults'] = total_found
+            self.json_ld['startIndex'] = start
+            self.json_ld['itemsPerPage'] = rows
+            # start off with a the request dict, then
+            # remove 'start' and 'rows' parameters
+            ini_request_dict = self.request_dict
+            if 'start' in ini_request_dict:
+                ini_request_dict.pop('start', None)
+            if 'rows' in ini_request_dict:
+                ini_request_dict.pop('rows', None)
+            # do this stupid crap so as not to get a memory
+            # error with FilterLinks()
+            ini_request_dict_json = json.dumps(ini_request_dict,
+                                               ensure_ascii=False,
+                                               indent=4)
+            # add a first page link
+            links = self.make_paging_links(0,
+                                           rows,
+                                           ini_request_dict_json)
+            self.json_ld['first'] = links['html']
+            self.json_ld['first-json'] = links['json']
+            if start > rows:
+                # add a previous page link
+                links = self.make_paging_links(start - rows,
+                                               rows,
+                                               ini_request_dict_json)
+                self.json_ld['previous'] = links['html']
+                self.json_ld['previous-json'] = links['json']
+            if start + rows < total_found:
+                # add a next page link
+                links = self.make_paging_links(start + rows,
+                                               rows,
+                                               ini_request_dict_json)
+                self.json_ld['next'] = links['html']
+                self.json_ld['next-json'] = links['json']
+            num_pages = round(total_found / rows, 0)
+            if num_pages * rows >= total_found:
+                num_pages -= 1
+            # add a last page link
+            links = self.make_paging_links(num_pages * rows,
+                                           rows,
+                                           ini_request_dict_json)
+            self.json_ld['last'] = links['html']
+            self.json_ld['last-json'] = links['json']
+
+    def make_paging_links(self, start, rows, ini_request_dict_json):
+        """ makes links for paging for start, rows, with
+            an initial request dict json string
+
+            a big of a hassle to avoid memory errors with FilterLinks()
+        """
+        start = int(start)
+        start = str(start)
+        rows = str(rows)
+        fl = FilterLinks()
+        fl.base_request_json = ini_request_dict_json
+        fl.spatial_context = self.spatial_context
+        start_rparams = fl.add_to_request('start',
+                                          start)
+        start_rparams_json = json.dumps(start_rparams,
+                                        ensure_ascii=False,
+                                        indent=4)
+        fl.base_request_json = start_rparams_json
+        new_rparams = fl.add_to_request('rows',
+                                        rows)
+        return fl.make_request_urls(new_rparams)
 
     def add_filters_json(self):
         """ adds JSON describing search filters """
