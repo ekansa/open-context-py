@@ -73,7 +73,7 @@ class JsonLDrecords():
                 geometry['type'] = 'Point'
                 geometry['coordinates'] = geo_coords
                 record['type'] = 'Feature'
-                record['oc-api:category'] = 'oc-api:geo-item'
+                record['oc-api:category'] = 'oc-api:geo-record'
                 record['geometry'] = geometry
                 # check for time information
                 when = False
@@ -93,7 +93,7 @@ class JsonLDrecords():
                 properties['uri'] = record['id']
                 properties['href'] = local_url
                 properties['label'] = label
-                properties['category'] = 'result item'
+                properties['category'] = 'item record'
                 # add context information, if present
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
