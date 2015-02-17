@@ -140,6 +140,9 @@ Also, here are some handy git commands to execute (assuming you are navigated in
     git reset --hard origin
     git pull
 
+You can check on things and interact with the Open Context Django application directly through the Python shell. To do so, (assuming you've already activated your virtual environment), navigate into the directory with 'manag.py' and type:
+
+     python manage.py shell
 
 
 PART 2: WEB-SERVER CONFIGURATION

@@ -99,6 +99,62 @@ class Crawler():
         print('Crawl completed')
         print('--------------------------------------------\n')
 
+    def index_document_list(self,
+                            uuid_list,
+                            chunksize=20,
+                            stop_at_invalid=True):
+        """
+        Indexes a list of uuids. The list is generated elsewhere.
+        """
+        if isinstance(uuid_list, list):
+            document_count = 0
+            documents = []
+            for uuid in uuid_list:
+                try:
+                    solrdocument = SolrDocument(uuid).fields
+                    if crawlutil().is_valid_document(solrdocument):
+                        documents.append(solrdocument)
+                        try:
+                            manifest = Manifest.objects.get(uuid=uuid)
+                            manifest.indexed_save()  # saves the time this was indexed
+                        except Manifest.DoesNotExist:
+                            print('Where is ' + uuid + ' in the manifest?')
+                    else:
+                        print('Not valid: ' + uuid )
+                        if stop_at_invalid:
+                            break
+                except Exception as error:
+                    print("Error: {0}".format(error) + " -----> " + uuid)
+                    if stop_at_invalid:
+                            break
+                if len(documents) >= self.chunksize:
+                    ok = self.commit_documents(documents)
+                    if ok is False and stop_at_invalid:
+                        # a problem in committing the documents
+                        break
+                    documents = []
+            # now finish off the remaining documents
+            if len(documents) > 0:
+                ok = self.commit_documents(documents)
+
+    def commit_documents(self, documents):
+        """ commits a set of documents to the Solr index """
+        ok = False
+        solr_status = self.solr.update(documents, 'json',
+                                       commit=False).status
+        if solr_status == 200:
+            ok = True
+            self.solr.commit()
+            print('--------------------------------------------')
+            print('Committed : ' + str(len(documents)) + ' docs.')
+            print('--------------------------------------------')
+        else:
+            print('Error: ' + \
+                  str(self.solr.update(
+                  documents, 'json', commit=False
+                  ).raw_content['error']['msg']))
+        return ok
+
     def index_single_document(self, uuid):
         '''
         Use this method to crawl a single document. Provide the item's
