@@ -365,6 +365,7 @@ class SolrDocument:
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
+                self.process_object_uri(meta['id'])
         if 'dc-terms:subject' in self.oc_item.json_ld:
             fname = 'dc_terms_subject___pred_id'
             self.fields[fname] = []
@@ -376,6 +377,7 @@ class SolrDocument:
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
+                self.process_object_uri(meta['id'])
         if 'dc-terms:spatial' in self.oc_item.json_ld:
             fname = 'dc_terms_spatial___pred_id'
             self.fields[fname] = []
@@ -387,6 +389,7 @@ class SolrDocument:
                     meta['id'],
                     meta['label'])
                 self.fields[fname].append(item)
+                self.process_object_uri(meta['id'])
 
     def _process_geo(self):
         """
@@ -541,6 +544,7 @@ class SolrDocument:
                             if act_root in id_id:
                                 if 'persistent_uri' not in self.fields:
                                     self.fields['persistent_uri'] = []
+                                self.process_object_uri(id_id)
                                 self.fields['persistent_uri'].append(id_id)
                                 self.fields['text'] += id_id + '\n'
 
@@ -593,6 +597,7 @@ class SolrDocument:
                         if equiv_pred in entity:
                             # a semantic equivalence predicate exists for this oc-pred
                             for equiv_entity in entity[equiv_pred]:
+                                last_linked_pred_solr = False
                                 equiv_id = self.get_entity_id(equiv_entity)
                                 parents = LinkRecursion().get_jsonldish_entity_parents(equiv_id)
                                 act_solr_field = self.ROOT_LINK_DATA_SOLR
@@ -612,10 +617,12 @@ class SolrDocument:
                                         self.fields[act_solr_field] = []
                                     self.fields[act_solr_field].append(solr_value)
                                     last_linked_pred_label = parent['label']
+                                    last_linked_pred_uri = parent['id']
                                     act_solr_field = \
                                         self._convert_slug_to_solr(parent['slug'])\
                                         + '___pred_' \
                                         + act_solr_datatype
+                                    last_linked_pred_solr = act_solr_field
                                 # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
                                 self.fields['text'] += last_linked_pred_label + ': \n'
                                 act_pred_root_act_solr_field = act_solr_field
@@ -651,7 +658,7 @@ class SolrDocument:
                                                 # make sure the active solr field is reset to be from
                                                 # the last equivalent predicates. important if we're looping
                                                 # through multiple use_objects
-                                                last_object_uri = ''
+                                                last_object_uri = False
                                                 last_object_label = ''
                                                 act_solr_field = act_pred_root_act_solr_field
                                                 # URI objects can be in hierarchies, look for these!
@@ -670,8 +677,16 @@ class SolrDocument:
                                                     act_solr_field = \
                                                         self._convert_slug_to_solr(parent['slug']) \
                                                         + '___' + act_solr_field
-                                                self.fields['text'] += last_object_uri + ' '
-                                                self.fields['text'] += last_object_label + '\n'
+                                                if last_object_uri is not False:
+                                                    self.process_object_uri(last_object_uri)
+                                                    self.fields['text'] += last_object_uri + ' '
+                                                    self.fields['text'] += last_object_label + '\n'
+                                                    if last_linked_pred_solr is not False:
+                                                        last_solr_field = 'solr_last___' + last_linked_pred_solr
+                                                        if last_solr_field not in self.fields:
+                                                            self.fields[last_solr_field] = []
+                                                        # add the last solr value to the last field
+                                                        self.fields[last_solr_field].append(solr_value)
 
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
@@ -682,7 +697,11 @@ class SolrDocument:
             Also checks the vocabular for the object
             we we can index on that.
         """
-        pass
+        do_object_uri = False  # set this to False for time being
+        if do_object_uri:
+            if 'object_uri' not in self.fields:
+                self.fields['object_uri'] = []
+            self.fields['object_uri'].append(object_uri)
 
     def get_linked_predicate_values(self, predicate_slug_id):
         """ Gets all the values used with a certain predicate

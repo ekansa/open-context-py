@@ -149,6 +149,10 @@
 
     <!-- persistent URI: a Web URI for a persistent identifier added to an item, can have more than 1 -->
     <field name="persistent_uri" type="string" indexed="true" stored="true" multiValued="true"/>
+    
+    <!-- catchall field  for uris of linked objects, useful for general searches
+         where predicates don't matter -->
+   <field name="object_uri" type="string" indexed="true" stored="false" multiValued="true"/>
 
     <!-- repo: identifier for the item's version control repository, don't store only want facets of these  -->
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
