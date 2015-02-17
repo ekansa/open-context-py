@@ -8,10 +8,12 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
+from opencontext_py.apps.searcher.solrsearcher.responsetypes import SolrResponseTypes
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.regions import JsonLDregions
 from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
+from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
 
 class MakeJsonLd():
@@ -24,6 +26,10 @@ class MakeJsonLd():
                                             indent=4)
         self.request_full_path = False
         self.spatial_context = False
+        # ---------------
+        # get the type of responses requested
+        # ---------------
+        self.act_responses = SolrResponseTypes(self.request_dict).responses
         self.id = False
         self.entities = {}
         self.label = settings.CANONICAL_SITENAME + ' API'
@@ -73,32 +79,70 @@ class MakeJsonLd():
 
     def convert_solr_json(self, solr_json):
         """ Converst the solr jsont """
-        self.json_ld['@context'] = self.base_context
-        self.json_ld['id'] = self.make_id()
-        self.json_ld['label'] = self.label
-        self.json_ld['opensearch:totalResults'] = self.get_path_in_dict(['response',
-                                                                         'numFound'],
-                                                                        solr_json)
-        self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
-        self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
-        self.json_ld['to-do'] = 'paging through results'
-        self.add_filters_json()
-        self.add_text_fields()
-        self.add_numeric_fields(solr_json)
-        self.add_date_fields(solr_json)
-        #now check for discovery geotiles
-        self.make_discovery_geotiles(solr_json)
-        # now make the regular facets
-        self.make_facets(solr_json)
-        # now add the result information
-        json_recs_obj = JsonLDrecords()
-        json_recs_obj.make_records_from_solr(solr_json)
-        if len(json_recs_obj.geojson_recs) > 0:
-            self.json_ld['type'] = 'FeatureCollection'
-            if 'features' not in self.json_ld:
-                self.json_ld['features'] = []
-            self.json_ld['features'] += json_recs_obj.geojson_recs
-        if settings.DEBUG:
+        ok_show_debug = True
+        if 'context' in self.act_responses:
+            self.json_ld['@context'] = self.base_context
+        if 'metadata' in self.act_responses:
+            self.json_ld['id'] = self.make_id()
+            self.json_ld['label'] = self.label
+            self.json_ld['opensearch:totalResults'] = self.get_path_in_dict(['response',
+                                                                             'numFound'],
+                                                                            solr_json)
+            self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
+            self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
+            self.json_ld['to-do'] = 'paging through results'
+            self.add_filters_json()
+            self.add_text_fields()
+        if 'facet' in self.act_responses:
+            self.add_numeric_fields(solr_json)
+            self.add_date_fields(solr_json)
+        if 'geo-facet' in self.act_responses:
+            #now check for discovery geotiles
+            self.make_discovery_geotiles(solr_json)
+        if 'facet' in self.act_responses:
+            # now make the regular facets
+            self.make_facets(solr_json)
+        if 'geo-record' in self.act_responses:
+            # now add the result information
+            json_recs_obj = JsonLDrecords()
+            json_recs_obj.make_records_from_solr(solr_json)
+            if len(json_recs_obj.geojson_recs) > 0:
+                self.json_ld['type'] = 'FeatureCollection'
+                if 'features' not in self.json_ld:
+                    self.json_ld['features'] = []
+                self.json_ld['features'] += json_recs_obj.geojson_recs
+        if 'uuid' in self.act_responses:
+            solr_uuids = SolrUUIDs()
+            uuids = solr_uuids.make_uuids_from_solr(solr_json)
+            if len(self.act_responses) > 1:
+                # return a list inside a key
+                self.json_ld['oc-api:uuids'] = uuids
+            else:
+                # just return a simple list
+                self.json_ld = uuids
+                ok_show_debug = False
+        if 'uri' in self.act_responses:
+            solr_uuids = SolrUUIDs()
+            uris = solr_uuids.make_uris_from_solr(solr_json)
+            if len(self.act_responses) > 1:
+                # return a list inside a key
+                self.json_ld['oc-api:has-results'] = uris
+            else:
+                # just return a simple list
+                self.json_ld = uris
+                ok_show_debug = False
+        elif 'uri-meta' in self.act_responses:
+            solr_uuids = SolrUUIDs()
+            uris = solr_uuids.make_uris_from_solr(solr_json,
+                                                  False)
+            if len(self.act_responses) > 1:
+                # return a list inside a key
+                self.json_ld['oc-api:has-results'] = uris
+            else:
+                # just return a simple list
+                self.json_ld = uris
+                ok_show_debug = False
+        if settings.DEBUG and ok_show_debug:
             self.json_ld['request'] = self.request_dict
             # self.json_ld['request'] = self.request_dict
             self.json_ld['solr'] = solr_json
