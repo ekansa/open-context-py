@@ -57,7 +57,7 @@ class JsonLDregions():
             record['json'] = fl.make_request_url(new_rparams, '.json')
             record['count'] = aggregate_count
             record['type'] = 'Feature'
-            record['oc-api:category'] = 'oc-api:geo-facet'
+            record['category'] = 'oc-api:geo-facet'
             gm = GlobalMercator()
             geo_coords = gm.quadtree_to_geojson_poly_coords(tile_key)
             geometry = LastUpdatedOrderedDict()
@@ -69,7 +69,7 @@ class JsonLDregions():
             properties['id'] = '#geo-disc-tile-' + tile_key
             properties['href'] = record['id']
             properties['label'] = 'Discovery region (' + str(i) + ')'
-            properties['category'] = 'discovery region (facet)'
+            properties['feature-type'] = 'discovery region (facet)'
             properties['count'] = aggregate_count
             record['properties'] = properties
             self.geojson_regions.append(record)

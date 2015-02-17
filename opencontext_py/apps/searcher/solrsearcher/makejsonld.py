@@ -43,7 +43,16 @@ class MakeJsonLd():
         context['itemsPerPage'] = {'@id': 'opensearch:itemsPerPage', '@type': 'xsd:integer'}
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-api'] = 'http://opencontext.org/vocabularies/oc-api/'
+        context['first'] = {'@id': 'oc-api:first', '@type': '@id'}
+        context['previous'] = {'@id': 'oc-api:previous', '@type': '@id'}
+        context['next'] = {'@id': 'oc-api:next', '@type': '@id'}
+        context['last'] = {'@id': 'oc-api:last', '@type': '@id'}
+        context['first-json'] = {'@id': 'oc-api:first', '@type': '@id'}
+        context['previous-json'] = {'@id': 'oc-api:previous', '@type': '@id'}
+        context['next-json'] = {'@id': 'oc-api:next', '@type': '@id'}
+        context['last-json'] = {'@id': 'oc-api:last', '@type': '@id'}
         context['count'] = {'@id': 'oc-api:count', '@type': 'xsd:integer'}
+        context['json'] = {'@id': 'oc-api:count', '@type': '@id'}
         context['id'] = '@id'
         context['label'] = 'rdfs:label'
         context['uuid'] = 'dc-terms:identifier'
