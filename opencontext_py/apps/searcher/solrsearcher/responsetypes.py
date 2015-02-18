@@ -14,7 +14,7 @@ class SolrResponseTypes():
 
     ALL_RESPONSES = ['context',
                      'metadata',
-                     'facets',
+                     'facet',
                      'geo-facet',
                      'geo-record',
                      'uuid',
