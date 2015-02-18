@@ -1,4 +1,5 @@
 import sys
+from time import sleep
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
 from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
@@ -18,6 +19,9 @@ class dinaaLink():
         self.request_error = False
         self.lead_zero_check = True
         self.max_results = 3
+        self.error_wait = 0  # wait if problem to send next request
+        self.base_wait = 300
+        self.max_wait = self.base_wait * 5
 
     def match_dinaa_ids(self, limit=False):
         """ get a key word for a site """
@@ -32,8 +36,9 @@ class dinaaLink():
         i = 1
         for tri in tris:
             found_matches += self.match_trinomial_obj(tri)
-            tri.tdar_checked_save()
-            print('Total tDAR matches: ' + str(found_matches) + ', Checked item: ' + str(i) + ' of ' + str(len_tris))
+            if self.request_error is False:
+                tri.tdar_checked_save()
+                print('Total tDAR matches: ' + str(found_matches) + ', Checked item: ' + str(i) + ' of ' + str(len_tris))
             i += 1
         return found_matches
 
@@ -114,6 +119,19 @@ class dinaaLink():
                         else:
                             print('Almost! ' + result['label'] + ' is not exactly: ' + tri.trinomial)
                 if tdar_api.request_error:
+                    self.request_error = True
                     print('HTTP request to tDAR failed!')
-                    sys.exit('Quitting process')
+                    self.error_wait += self.base_wait
+                    if self.error_wait > self.max_wait:
+                        print('Too many failures, quiting...')
+                        sys.exit('Quitting process')
+                    else:
+                        # sleep some minutes before trying again
+                        print('Will try again in ' + str(self.error_wait) + ' seconds...')
+                        sleep(self.error_wait)
+                else:
+                    self.request_error = False
+                    if self.error_wait >= self.base_wait:
+                        print('HTTP requests resumed OK, will continue.')
+                        self.error_wait = 0
         return found_matches
