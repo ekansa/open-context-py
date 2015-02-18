@@ -113,6 +113,7 @@ class Crawler():
                 try:
                     solrdocument = SolrDocument(uuid).fields
                     if crawlutil().is_valid_document(solrdocument):
+                        print('OK to index: ' + uuid)
                         documents.append(solrdocument)
                         try:
                             manifest = Manifest.objects.get(uuid=uuid)
@@ -127,7 +128,7 @@ class Crawler():
                     print("Error: {0}".format(error) + " -----> " + uuid)
                     if stop_at_invalid:
                             break
-                if len(documents) >= self.chunksize:
+                if len(documents) >= chunksize:
                     ok = self.commit_documents(documents)
                     if ok is False and stop_at_invalid:
                         # a problem in committing the documents
