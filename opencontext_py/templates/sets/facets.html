@@ -1,0 +1,35 @@
+
+{% if st.facets|length > 0 %}
+    {% for f_field in st.facets %}
+        <div class="panel-group" id="acc-{{ f_field.id }}">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {% if forloop.counter == 1 %} 
+                    <h4 class="panel-title"><a data-toggle="collapse" data-parent="#acc-{{ f_field.id }}" href="#panel-{{ f_field.id }}"><span class="glyphicon glyphicon-resize-vertical"></span>{{ f_field.label }}</a></h4>
+                    {%else%}
+                    <h4 class="panel-title"><a data-toggle="collapse" data-parent="#acc-{{ f_field.id }}" href="#panel-{{ f_field.id }}"><span class="glyphicon glyphicon-resize-vertical"></span>{{ f_field.label }}</a></h4>
+                    {%endif%}
+                </div>
+                {% if forloop.counter == 1 %} 
+                <div id="panel-{{ f_field.id }}" class="panel-collapse collapse in">
+                {%else%}
+                <div id="panel-{{ f_field.id }}" class="panel-collapse collapse">
+                {%endif%}
+                    <div class="panel-body">
+                    {% if f_field.id_options|length > 0 %}
+                        <ul><h5>{{ f_field.type }} Classifications</h5>
+                        {% for option in f_field.id_options %}
+                            <li>
+                                <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a> ({{ option.count }})
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {%endif%}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{%endif%}
+
+

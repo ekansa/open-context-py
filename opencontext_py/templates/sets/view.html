@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    {% include 'sets/head.html' %}
+     <body>
+          <div id="main">
+               <div class="container-fluid">
+                    {% with page_label='' %}
+                    {% include 'header.html' %}
+                    {% endwith %}
+                    {% with nav_items=st.nav_items %}
+                    {% with act_nav='browse' %}
+                    {% include 'navbar.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% include 'sets/content.html' %}
+                    {% include 'footer.html' %}
+               </div>
+          </div>
+     </body>
+</html>
