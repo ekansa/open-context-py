@@ -745,7 +745,7 @@ class MakeJsonLd():
             ftype = 'oc-api:facet-prop'
         elif 'item_type' in solr_facet_key:
             id_prefix = '#facet-item-type'
-            ftype = 'oc-api:item-type'
+            ftype = 'oc-api:facet-item-type'
         if solr_facet_key == SolrDocument.ROOT_CONTEXT_SOLR:
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-context'
