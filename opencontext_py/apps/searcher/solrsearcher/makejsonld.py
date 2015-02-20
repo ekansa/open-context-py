@@ -525,7 +525,7 @@ class MakeJsonLd():
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
-                    fl.partial_param_val_match = linked_field
+                    fl.partial_param_val_match = True
                     range_start = float(range_min_key)
                     range_end = range_start + gap
                     solr_range = '[' + str(range_start) + ' TO ' + str(range_end) + ' ]'
@@ -573,7 +573,7 @@ class MakeJsonLd():
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
-                    fl.partial_param_val_match = linked_field
+                    fl.partial_param_val_match = True
                     dt_end = qm.add_solr_gap_to_date(range_min_key, ranges['gap'])
                     range_end = qm.convert_date_to_solr_date(dt_end)
                     solr_range = '[' + range_min_key + ' TO ' + range_end + ' ]'
