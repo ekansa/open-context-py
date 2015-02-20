@@ -39,9 +39,12 @@ class SearchTemplate():
             if 'oc-api:has-facets' in self.json_ld:
                 dom_id_prefix = 'f-'
                 i = 0
+                first_facet_field = True
                 for json_facet in self.json_ld['oc-api:has-facets']:
                     i += 1
                     ff = FacetField()
+                    ff.facet_field_index = i
+                    first_facet_field = False
                     ff.dom_id_prefix = dom_id_prefix + str(i)
                     ff.parse_json_facet(json_facet)
                     if ff.id is not False:
@@ -69,13 +72,15 @@ class FacetField():
         facet fields of different sorts
     """
     def __init__(self):
+        self.facet_field_index = 0
         self.dom_id_prefix = False
         self.id = False
         self.defined_by = False
         self.label = False
         self.type = False
+        self.option_types = []
         self.id_options = []
-        self.num_options = []
+        self.numeric_options = []
         self.date_options = []
         self.string_options = []
 
@@ -107,8 +112,8 @@ class FacetField():
                 self.type = 'Description'
             if self.label == '':
                 self.label = self.type
+        i = 0
         if 'oc-api:has-id-options' in json_facet:
-            i = 0
             for json_option in json_facet['oc-api:has-id-options']:
                 i += 1
                 fo = FacetOption()
@@ -116,6 +121,38 @@ class FacetField():
                 fo.parse_json_option(json_option)
                 if fo.id is not False:
                     self.id_options.append(fo)
+        if 'oc-api:has-numeric-options' in json_facet:
+            for json_option in json_facet['oc-api:has-numeric-options']:
+                i += 1
+                fo = FacetOption()
+                fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
+                fo.parse_json_option(json_option)
+                if fo.id is not False:
+                    self.numeric_options.append(fo)
+        if 'oc-api:has-date-options' in json_facet:
+            for json_option in json_facet['oc-api:has-date-options']:
+                i += 1
+                fo = FacetOption()
+                fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
+                fo.parse_json_option(json_option)
+                if fo.id is not False:
+                    self.date_options.append(fo)
+        if 'oc-api:has-string-options' in json_facet:
+            for json_option in json_facet['oc-api:has-string-options']:
+                i += 1
+                fo = FacetOption()
+                fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
+                fo.parse_json_option(json_option)
+                if fo.id is not False:
+                    self.string_options.append(fo)
+        if len(self.id_options) > 0:
+            self.option_types.append('id')
+        if len(self.numeric_options) > 0:
+            self.option_types.append('numeric')
+        if len(self.date_options) > 0:
+            self.option_types.append('date')
+        if len(self.string_options) > 0:
+            self.option_types.append('string')
 
 
 class FacetOption():

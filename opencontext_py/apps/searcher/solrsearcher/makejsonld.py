@@ -759,12 +759,12 @@ class MakeJsonLd():
         elif solr_facet_key == SolrDocument.ROOT_LINK_DATA_SOLR:
             facet['id'] = id_prefix + '-ld'
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-prop-ld'
-            facet['label'] = 'Linked Data (Common Standards)'
+            facet['label'] = 'Descriptions (Common Standards)'
             facet['data-type'] = 'id'
         elif solr_facet_key == SolrDocument.ROOT_PREDICATE_SOLR:
             facet['id'] = id_prefix + '-var'
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-prop-var'
-            facet['label'] = 'Descriptive Properties (Project Defined)'
+            facet['label'] = 'Descriptions (Project Defined)'
             facet['data-type'] = 'id'
         elif solr_facet_key == 'item_type':
             facet['id'] = id_prefix

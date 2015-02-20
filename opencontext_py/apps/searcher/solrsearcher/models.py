@@ -155,6 +155,8 @@ class SolrSearch():
                     query['facet.field'].append(default_field)
             if 'proj' in request_dict:
                 query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
+            elif SolrDocument.ROOT_PROJECT_SOLR not in query['facet.field']:
+                query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
         return query
 
     def add_root_discovery_geo(self,
