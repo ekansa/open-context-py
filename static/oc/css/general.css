@@ -150,3 +150,7 @@ span.title_sep {
     height:66%;
 	min-height:300px;
 }
+div.facet {
+	width: 100%;
+	padding-bottom: 10px;
+}
