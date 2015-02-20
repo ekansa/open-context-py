@@ -1,10 +1,11 @@
 import hashlib
 from django.db import models
 from django.db.models import Q
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class LinkRecursion():
@@ -112,25 +113,14 @@ class LinkRecursion():
         """
         Gets child concepts for a given URI or UUID identified entity
         """
+        act_children = []
         p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
         p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
-        alt_identifier_a = identifier
-        alt_identifier_b = identifier
-        act_children = []
-        # a little something to allow searches of either UUIDs or full URIs
-        if(':' in identifier):
-            alt_identifier_b = URImanagement.convert_prefix_to_full_uri(identifier)
-            if(len(identifier) > 8):
-                if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                    alt_identifier_a = URImanagement.get_uuid_from_oc_uri(identifier)
-                    if(alt_identifier_a is False):
-                        alt_identifier_a = identifier
-                    alt_identifier_b = URImanagement.prefix_common_uri(identifier)
+        lequiv = LinkEquivalence()
+        identifiers = lequiv.get_identifier_list_variants(identifier)
         try:
             # look for child items in the objects of the assertion
-            subobjs_anno = LinkAnnotation.objects.filter(Q(subject=identifier) |
-                                                         Q(subject=alt_identifier_a) |
-                                                         Q(subject=alt_identifier_b),
+            subobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
                                                          predicate_uri__in=p_for_subobjs)
             if(len(subobjs_anno) < 1):
                 subobjs_anno = False
@@ -144,9 +134,7 @@ class LinkRecursion():
             """
             Now look for subordinate entities in the subject, not the object
             """
-            subsubj_anno = LinkAnnotation.objects.filter(Q(object_uri=identifier) |
-                                                         Q(object_uri=alt_identifier_a) |
-                                                         Q(object_uri=alt_identifier_b),
+            subsubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
                                                          predicate_uri__in=p_for_superobjs)
             if len(subsubj_anno) < 1:
                 subsubj_anno = False

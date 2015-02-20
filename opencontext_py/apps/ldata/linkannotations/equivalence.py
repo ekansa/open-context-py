@@ -90,4 +90,14 @@ class LinkEquivalence():
             elif ':' in identifier:
                 full_uri = URImanagement.convert_prefix_to_full_uri(identifier)
                 output_list.append(full_uri)
+            else:
+                # probably an open context uuid or a slug
+                ent = Entity()
+                found = ent.dereference(identifier)
+                if found:
+                    full_uri = ent.uri
+                    output_list.append(full_uri)
+                    prefix_uri = URImanagement.prefix_common_uri(full_uri)
+                    if prefix_uri != full_uri:
+                        output_list.append(prefix_uri)
         return output_list

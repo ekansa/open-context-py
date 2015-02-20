@@ -200,6 +200,7 @@ class QueryMaker():
             act_field_data_type = 'id'
             for prop_slug in prop_path_list:
                 if act_field_data_type == 'id':
+                    require_id_field = False
                     entity = Entity()
                     found = entity.dereference(prop_slug)
                     if found is False:
@@ -207,6 +208,15 @@ class QueryMaker():
                     if found:
                         self.entities[prop_slug] = entity  # store entitty for later use
                         prop_slug = entity.slug
+                        # now check if the entity has children
+                        lr = LinkRecursion()
+                        lr.get_entity_children(entity.uri)
+                        if len(lr.child_entities) > 1:
+                            # ok, this field has children. require it
+                            # to be treated as an ID field
+                            require_id_field = True
+                        else:
+                            require_id_field = False
                         if i == 0:
                             if entity.item_type != 'uri':
                                 act_field = SolrDocument.ROOT_PREDICATE_SOLR
@@ -242,6 +252,9 @@ class QueryMaker():
                         #
                         field_parts = self.make_prop_solr_field_parts(entity)
                         act_field_data_type = field_parts['suffix']
+                        if require_id_field:
+                            act_field_data_type = 'id'
+                            field_parts['suffix'] = 'id'
                         if i < 1:
                             act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                         else:
@@ -266,11 +279,13 @@ class QueryMaker():
                             # -------------------------------------------
                         if act_field_data_type == 'numeric':
                             # print('Numeric field: ' + act_field)
+                            act_field = field_parts['prefix'] + '___pred_numeric'
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
                         elif act_field_data_type == 'date':
                             print('Date field: ' + act_field)
+                            act_field = field_parts['prefix'] + '___pred_date'
                             query_dict = self.add_date_facet_ranges(query_dict,
                                                                     act_field,
                                                                     entity)
@@ -284,6 +299,11 @@ class QueryMaker():
                             query_dict['facet.field'].append(act_field)
                         if act_field_data_type == 'numeric':
                             query_dict['stats.field'].append(act_field)
+                        if require_id_field:
+                            last_fast_field = prop_slug.replace('-', '_')
+                            last_fast_field += '___pred_id'
+                            if last_fast_field not in query_dict['facet.field']:
+                                query_dict['facet.field'].append(last_fast_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
                     search_term = act_field + ':' + self.escape_solr_arg(prop_slug)
@@ -335,11 +355,14 @@ class QueryMaker():
                 summary = ma.get_numeric_range(entity.uuid)
             else:
                 summary = ma.get_numeric_range_via_ldata(entity.uri)
+            print(str(summary))
             min_val = summary['min']
             max_val = summary['max']
             count_val = summary['count']
             if (count_val / self.histogram_groups) < 3:
                 groups = 4
+            if count_val < 1:
+                ok = False
         else:
             if solr_query is not False:
                 vals = []
