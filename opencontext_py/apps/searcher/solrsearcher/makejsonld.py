@@ -103,9 +103,11 @@ class MakeJsonLd():
         if 'facet' in self.act_responses:
             self.add_numeric_fields(solr_json)
             self.add_date_fields(solr_json)
+        # now check for form-use-life chronology
+        # note! Do this first to set time bounds for geo-features
+        # needs to be done, even if facet results are not displayed
+        self.make_form_use_life_chronotiles(solr_json)
         if 'geo-facet' in self.act_responses:
-            # now check for form-use-life chronology
-            self.make_form_use_life_chronotiles(solr_json)
             # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
         if 'facet' in self.act_responses:
@@ -641,7 +643,8 @@ class MakeJsonLd():
             chrono_tiles.process_solr_tiles(solr_form_use_life_chono_facets)
             self.min_date = chrono_tiles.min_date
             self.max_date = chrono_tiles.max_date
-            if len(chrono_tiles.chrono_tiles) > 0:
+            if len(chrono_tiles.chrono_tiles) > 0 \
+               and 'chrono-facet' in self.act_responses:
                 self.json_ld['oc-api:has-form-use-life-ranges'] = chrono_tiles.chrono_tiles
 
     def make_facets(self, solr_json):
