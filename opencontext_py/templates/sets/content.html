@@ -1,7 +1,7 @@
-
+{% load humanize %}
 <div class="row">
     <div class="col-sm-8">
-        <h1>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count }}</h1>
+        <h2>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}</h2>
     </div>
     <div class="col-sm-4">
         {% include 'sets/facets.html' %}

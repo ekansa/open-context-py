@@ -1,5 +1,6 @@
-
+{% load humanize %}
 {% if st.facets|length > 0 %}
+    <h2>Filters</h2>
     <div class="panel-group" id="acc-facets">
     {% for f_field in st.facets %}
         {% for op_type in f_field.option_types %}
@@ -25,63 +26,67 @@
                 {%else%}
                 <div id="panel-{{ f_field.id }}-{{ op_type }}" class="panel-collapse collapse">
                 {%endif%}
-                    <div class="panel-body">
+                    <table class="table">
                     {% if op_type == 'id' and f_field.id_options|length > 0 %} 
                         {% for option in f_field.id_options %}
-                            <div class="facet">
-                                <div class="row">
-                                    <div class="col-sm-9">
-                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
-                                    </div>
-                                    <div class="col-sm-3">
-                                    <span class="badge">{{ option.count }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {% with dom_id=option.dom_id %}
+                            {% with href=option.id %}
+                            {% with label=option.label %}
+                            {% with opt_count=option.count %}
+                            {% with defined_by=option.defined_by %}
+                            {% include 'sets/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         {% endfor %}
                     {% elif op_type == 'numeric' and f_field.numeric_options|length > 0 %} 
                         {% for option in f_field.numeric_options %}
-                            <div class="facet">
-                                <div class="row">
-                                    <div class="col-sm-9">
-                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
-                                    </div>
-                                    <div class="col-sm-3">
-                                    <span class="badge">{{ option.count }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {% with dom_id=option.dom_id %}
+                            {% with href=option.id %}
+                            {% with label=option.label %}
+                            {% with opt_count=option.count %}
+                            {% with defined_by=option.defined_by %}
+                            {% include 'sets/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         {% endfor %}
                     {% elif op_type == 'date' and f_field.date_options|length > 0 %} 
                         {% for option in f_field.date_options %}
-                            <div class="facet">
-                                <div class="row">
-                                    <div class="col-sm-9">
-                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
-                                    </div>
-                                    <div class="col-sm-3">
-                                    <span class="badge">{{ option.count }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {% with dom_id=option.dom_id %}
+                            {% with href=option.id %}
+                            {% with label=option.label %}
+                            {% with opt_count=option.count %}
+                            {% with defined_by=option.defined_by %}
+                            {% include 'sets/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         {% endfor %}
                     {% elif op_type == 'string' and f_field.string_options|length > 0 %} 
                         {% for option in f_field.string_options %}
-                            <div class="facet">
-                                <div class="row">
-                                    <div class="col-sm-9">
-                                    <a id="{{ option.dom_id }}" href="{{ option.id }}">{{ option.label }}</a>
-                                    </div>
-                                    <div class="col-sm-3">
-                                    <span class="badge">{{ option.count }}</span>
-                                    </div>
-                                </div>
-                            </div>
+                            {% with dom_id=option.dom_id %}
+                            {% with href=option.id %}
+                            {% with label=option.label %}
+                            {% with opt_count=option.count %}
+                            {% with defined_by=option.defined_by %}
+                            {% include 'sets/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
+                            {% endwith %}
                         {% endfor %}
                     {%else%}
                         <!-- That's weird -->
                     {%endif%}
-                    </div>
+                    </table>
                 </div>
             </div>
         {% endfor %}
