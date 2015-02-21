@@ -57,9 +57,6 @@ class JsonLDchronology():
                 if trim_tile_key not in aggregate_tiles:
                     aggregate_tiles[trim_tile_key] = 0
                 aggregate_tiles[trim_tile_key] += solr_facet_count
-                if trim_tile_key == '10M-000000000000':
-                    # print('tile: ' + tile_key + ' count: ' + str(solr_facet_count) + ' all: ' + str(aggregate_tiles[trim_tile_key]))
-                    pass
         # now generate GeoJSON for each tile region
         # print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         # --------------------------------------------
