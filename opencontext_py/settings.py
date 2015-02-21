@@ -77,6 +77,7 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.humanize',
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
     'opencontext_py.apps.ocitems.namespaces',

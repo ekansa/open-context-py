@@ -186,5 +186,18 @@ class FacetOption():
         if 'rdfs:isDefinedBy' in json_option:
             if 'http://' in json_option['rdfs:isDefinedBy'] \
                or 'https://' in json_option['rdfs:isDefinedBy']:
-                self.defined_by = json_option['rdfs:isDefinedBy']
+                self.defined_by = self.make_local_url(json_option['rdfs:isDefinedBy'])
         self.dom_id = self.dom_id_prefix + '---' + str(self.slug)
+
+    def make_local_url(self, url):
+        """ makes a local url from a
+            url
+        """
+        if settings.CANONICAL_HOST != settings.DEPLOYED_HOST:
+            if settings.CANONICAL_HOST in url:
+                if settings.DEBUG:
+                    base_url = 'http://127.0.0.1:8000'
+                else:
+                    base_url = settings.DEPLOYED_HOST
+                url = url.replace(settings.CANONICAL_HOST, base_url)
+        return url
