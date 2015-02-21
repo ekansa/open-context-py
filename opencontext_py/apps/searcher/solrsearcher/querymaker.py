@@ -590,7 +590,7 @@ class QueryMaker():
             chrono_paths = [raw_form_use_life_chrono]
         for chrono_path in chrono_paths:
             i = 0
-            if len(chrono_path) < 20:
+            if len(chrono_path) < 30:
                 chrono_path += '*'
             fq_term = 'form_use_life_chrono_tile:' + chrono_path
             fq_terms.append(fq_term)

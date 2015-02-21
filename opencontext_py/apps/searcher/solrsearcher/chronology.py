@@ -54,12 +54,14 @@ class JsonLDchronology():
             solr_facet_count = solr_tiles[i]
             if tile_key != 'false':
                 trim_tile_key = tile_key[:self.aggregation_depth]
-                if len(trim_tile_key) == self.aggregation_depth:
-                    if trim_tile_key not in aggregate_tiles:
-                        aggregate_tiles[trim_tile_key] = 0
-                    aggregate_tiles[trim_tile_key] += solr_facet_count
+                if trim_tile_key not in aggregate_tiles:
+                    aggregate_tiles[trim_tile_key] = 0
+                aggregate_tiles[trim_tile_key] += solr_facet_count
+                if trim_tile_key == '10M-000000000000':
+                    # print('tile: ' + tile_key + ' count: ' + str(solr_facet_count) + ' all: ' + str(aggregate_tiles[trim_tile_key]))
+                    pass
         # now generate GeoJSON for each tile region
-        print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
+        # print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         # --------------------------------------------
         # code to sort the list of tiles by start date and time span
         # --------------------------------------------
