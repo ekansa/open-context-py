@@ -19,6 +19,7 @@ class JsonLDchronology():
         self.spatial_context = False
         self.aggregation_depth = 16
         self.max_depth = ChronoTile.MAX_TILE_DEPTH
+        self.limiting_tile = False
         self.min_date = False  # bce / ce
         self.max_date = False  # bce / ce
         try:
@@ -37,28 +38,40 @@ class JsonLDchronology():
         i = -1
         t = 0
         for tile_key in solr_tiles[::2]:
-            # first get full date range in these tiles
-            chrono_t = ChronoTile()
-            dates = chrono_t.decode_path_dates(tile_key)
-            if isinstance(dates, dict):
-                if self.min_date is False:
-                    self.min_date = dates['earliest_bce']
-                    self.max_date = dates['latest_bce']
-                else:
-                    if self.min_date > dates['earliest_bce']:
-                        self.min_date = dates['earliest_bce']
-                    if self.max_date < dates['latest_bce']:
-                        self.max_date = dates['latest_bce']
             t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
             if tile_key != 'false':
-                trim_tile_key = tile_key[:self.aggregation_depth]
-                if trim_tile_key not in aggregate_tiles:
-                    aggregate_tiles[trim_tile_key] = 0
-                aggregate_tiles[trim_tile_key] += solr_facet_count
+                if self.limiting_tile is False:
+                    ok_to_add = True
+                else:
+                    # constrain to show facets ONLY within
+                    # the current queried tile
+                    if self.limiting_tile in tile_key:
+                        ok_to_add = True
+                    else:
+                        ok_to_add = False
+                if ok_to_add:
+                    # first get full date range for
+                    # facets that are OK to add
+                    chrono_t = ChronoTile()
+                    dates = chrono_t.decode_path_dates(tile_key)
+                    if isinstance(dates, dict):
+                        if self.min_date is False:
+                            self.min_date = dates['earliest_bce']
+                            self.max_date = dates['latest_bce']
+                        else:
+                            if self.min_date > dates['earliest_bce']:
+                                self.min_date = dates['earliest_bce']
+                            if self.max_date < dates['latest_bce']:
+                                self.max_date = dates['latest_bce']
+                    # now aggregrate the OK to use facets
+                    trim_tile_key = tile_key[:self.aggregation_depth]
+                    if trim_tile_key not in aggregate_tiles:
+                        aggregate_tiles[trim_tile_key] = 0
+                    aggregate_tiles[trim_tile_key] += solr_facet_count
         # now generate GeoJSON for each tile region
-        # print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
+        print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         # --------------------------------------------
         # code to sort the list of tiles by start date and time span
         # --------------------------------------------
@@ -107,17 +120,16 @@ class JsonLDchronology():
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
         filter_request_dict = request_dict
+        if 'form-chronotile' in request_dict:
+            self.limiting_tile = request_dict['form-chronotile'][0]
+            self.aggregation_depth = len(self.limiting_tile) + 2
+            filter_request_dict.pop('form-chronotile', None)  # so as to set up for filter links
         if 'chronodeep' in request_dict:
             deep = request_dict['chronodeep'][0]
             # filter out non numeric characters
             deep = re.sub(r'[^0-9]', r'', deep)
             if len(deep) > 0:
                 self.aggregation_depth = int(float(deep))
-        if 'form-chronotile' in request_dict:
-            req_param_tile = request_dict['form-chronotile'][0]
-            req_param_tile = re.sub(r'\|', r'', req_param_tile)  # strip ors
-            self.aggregation_depth += len(req_param_tile)
-            filter_request_dict.pop('form-chronotile', None) # so as to set up for filter links
         if self.aggregation_depth < 6:
             self.aggregation_depth = 6
         elif self.aggregation_depth > self.max_depth:
