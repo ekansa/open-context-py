@@ -40,14 +40,15 @@ class JsonLDchronology():
             # first get full date range in these tiles
             chrono_t = ChronoTile()
             dates = chrono_t.decode_path_dates(tile_key)
-            if self.min_date is False:
-                self.min_date = dates['earliest_bce']
-                self.max_date = dates['latest_bce']
-            else:
-                if self.min_date > dates['earliest_bce']:
+            if isinstance(dates, dict):
+                if self.min_date is False:
                     self.min_date = dates['earliest_bce']
-                if self.max_date < dates['latest_bce']:
                     self.max_date = dates['latest_bce']
+                else:
+                    if self.min_date > dates['earliest_bce']:
+                        self.min_date = dates['earliest_bce']
+                    if self.max_date < dates['latest_bce']:
+                        self.max_date = dates['latest_bce']
             t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
