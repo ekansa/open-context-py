@@ -129,9 +129,44 @@ class SolrSearch():
             query['facet.field'] += disc_geo_query['facet.field']
             query['f.discovery_geotile.facet.limit'] = -1
         else:
-            # Now add Geo-facets
+            # Add default geofacet
             query = self.add_root_discovery_geo(query,
                                                 request_dict)
+        # now add form-use-life chronology
+        form_chrono = self.get_request_param(request_dict,
+                                             'form-chronotile',
+                                             False,
+                                             False)
+        if form_chrono is not False:
+            # query for form-use-live chronological tile
+            form_chrono_query = qm.process_form_use_life_chrono(form_chrono)
+            query['fq'] += form_chrono_query['fq']
+            query['facet.field'] += form_chrono_query['facet.field']
+            query['f.form_use_life_chrono_tile.facet.limit'] = -1
+        else:
+            # Add default form-use-life chronology
+            query = self.add_root_form_use_life_chrono(query,
+                                                       request_dict)
+        form_start = self.get_request_param(request_dict,
+                                            'form-start',
+                                            False,
+                                            False)
+        if form_start is not False:
+            # query for form-use-live start date
+            form_start_query = qm.process_form_date_chrono(self,
+                                                           form_use_life_date,
+                                                           'start')
+            query['fq'] += form_start_query['fq']
+        form_stop = self.get_request_param(request_dict,
+                                           'form-stop',
+                                           False,
+                                           False)
+        if form_stop is not False:
+            # query for form-use-live stop date
+            form_stop_query = qm.process_form_date_chrono(self,
+                                                          form_use_life_date,
+                                                          'stop')
+            query['fq'] += form_stop_query['fq']
         # Now add default facet fields
         query = self.add_default_facet_fields(query,
                                               request_dict)
@@ -166,6 +201,20 @@ class SolrSearch():
         if 'disc-geotile' not in request_dict:
             query['facet.field'].append('discovery_geotile')
             query['f.discovery_geotile.facet.limit'] = -1
+        return query
+
+    def add_root_form_use_life_chrono(self,
+                                      query,
+                                      request_dict):
+        """ adds facet field for the most commonly
+            used chronology description, when the
+            item was created / formed, used, and
+            or lived:
+            form_use_life_chrono_tile
+        """
+        if 'form-chronotile' not in request_dict:
+            query['facet.field'].append('form_use_life_chrono_tile')
+            query['f.form_use_life_chrono_tile.facet.limit'] = -1
         return query
 
     def gather_entities(self, entities_dict):

@@ -562,18 +562,12 @@ class QueryMaker():
                       'facet.field': []}
         fq_terms = []
         query_dict['facet.field'].append('discovery_geotile')
-        # since this is a hierarchy, but has no delim,
-        # give it a delim to make it easy to split into
-        # different '||' paths
-        raw_geo_path_list = []
-        for geo_char in raw_disc_geo:
-            raw_geo_path_list.append(geo_char)
-        raw_geo_path = '---'.join(raw_geo_path_list)
-        raw_geo_path = raw_geo_path.replace('---|---|---', '||')
-        disc_geo_lists = self.expand_hierarchy_options(raw_geo_path)
-        for disc_geo_list in disc_geo_lists:
+        if '||' in raw_disc_geo:
+            disc_geo_paths = raw_disc_geo.split('||')
+        else:
+            disc_geo_paths = [raw_disc_geo]
+        for disc_path in disc_geo_paths:
             i = 0
-            disc_path = ''.join(disc_geo_list)
             if len(disc_path) < 20:
                 disc_path += '*'
             fq_term = 'discovery_geotile:' + disc_path
@@ -581,6 +575,42 @@ class QueryMaker():
         fq_final = ' OR '.join(fq_terms)
         fq_final = '(' + fq_final + ')'
         query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def process_form_use_life_chrono(self, raw_form_use_life_chrono):
+        # creates facet query for form-use-life chronological tiles
+        # supports or {'||') queries in the path also
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        query_dict['facet.field'].append('form_use_life_chrono_tile')
+        if '||' in raw_form_use_life_chrono:
+            chrono_paths = raw_form_use_life_chrono.split('||')
+        else:
+            chrono_paths = [raw_form_use_life_chrono]
+        for chrono_path in chrono_paths:
+            i = 0
+            if len(chrono_path) < 20:
+                chrono_path += '*'
+            fq_term = 'form_use_life_chrono_tile:' + chrono_path
+            fq_terms.append(fq_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def process_form_date_chrono(self, form_use_life_date, date_type):
+        # creates facet query for form-use-life dates
+        # supports or {'||') queries in the path also
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        if date_type == 'start':
+            qterm = '[' + str(form_use_life_date) + ' TO *]'
+            fquery = 'form_use_life_chrono_earliest: ' + qterm
+        else:
+            qterm = '[* TO ' + str(form_use_life_date) + ']'
+            fquery = 'form_use_life_chrono_latest: ' + qterm
+        query_dict['fq'].append(fquery)
         return query_dict
 
     def make_solr_value_from_entity(self, entity, value_type='id'):
