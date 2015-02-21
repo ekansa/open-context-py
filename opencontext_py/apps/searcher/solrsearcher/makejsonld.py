@@ -11,6 +11,7 @@ from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.responsetypes import SolrResponseTypes
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.chronology import JsonLDchronology
 from opencontext_py.apps.searcher.solrsearcher.regions import JsonLDregions
 from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
@@ -26,6 +27,8 @@ class MakeJsonLd():
                                             indent=4)
         self.request_full_path = False
         self.spatial_context = False
+        self.min_date = False
+        self.max_date = False
         # ---------------
         # get the type of responses requested
         # ---------------
@@ -101,7 +104,9 @@ class MakeJsonLd():
             self.add_numeric_fields(solr_json)
             self.add_date_fields(solr_json)
         if 'geo-facet' in self.act_responses:
-            #now check for discovery geotiles
+            # now check for form-use-life chronology
+            self.make_form_use_life_chronotiles(solr_json)
+            # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
         if 'facet' in self.act_responses:
             # now make the regular facets
@@ -109,6 +114,8 @@ class MakeJsonLd():
         if 'geo-record' in self.act_responses:
             # now add the result information
             json_recs_obj = JsonLDrecords()
+            json_recs_obj.min_date = self.min_date
+            json_recs_obj.max_date = self.max_date
             json_recs_obj.make_records_from_solr(solr_json)
             if len(json_recs_obj.geojson_recs) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
@@ -593,7 +600,8 @@ class MakeJsonLd():
             self.json_ld['oc-api:has-date-facets'] = date_fields
 
     def make_discovery_geotiles(self, solr_json):
-        """ discovery geotiles need
+        """ makes discovery geotile facets.
+            discovery geotiles need
             special handling.
             This finds any geodiscovery tiles
             and removes them from the other list
@@ -605,12 +613,36 @@ class MakeJsonLd():
                                                          solr_json)
         if solr_disc_geotile_facets is not False:
             geo_regions = JsonLDregions(solr_json)
+            geo_regions.min_date = self.min_date
+            geo_regions.max_date = self.max_date
             geo_regions.spatial_context = self.spatial_context
-            geo_regions.set_aggregation_depth(self.request_dict)  # also needed for making filter links
+            geo_regions.set_aggregation_depth(self.request_dict_json)  # also needed for making filter links
             geo_regions.process_solr_tiles(solr_disc_geotile_facets)
             if len(geo_regions.geojson_regions) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
                 self.json_ld['features'] = geo_regions.geojson_regions
+
+    def make_form_use_life_chronotiles(self, solr_json):
+        """ makes tile facets for chronology
+            form-use-life tiles need
+            special handling.
+            This finds any form-use-lide tiles
+            and removes them from the other list
+            of facets
+        """
+        solr_form_use_life_chono_facets = self.get_path_in_dict(['facet_counts',
+                                                                'facet_fields',
+                                                                'form_use_life_chrono_tile'],
+                                                                solr_json)
+        if solr_form_use_life_chono_facets is not False:
+            chrono_tiles = JsonLDchronology(solr_json)
+            chrono_tiles.spatial_context = self.spatial_context
+            chrono_tiles.set_aggregation_depth(self.request_dict_json)  # also needed for making filter links
+            chrono_tiles.process_solr_tiles(solr_form_use_life_chono_facets)
+            self.min_date = chrono_tiles.min_date
+            self.max_date = chrono_tiles.max_date
+            if len(chrono_tiles.chrono_tiles) > 0:
+                self.json_ld['oc-api:has-form-use-life-ranges'] = chrono_tiles.chrono_tiles
 
     def make_facets(self, solr_json):
         """ Makes a list of facets """
@@ -623,6 +655,9 @@ class MakeJsonLd():
             if 'discovery_geotile' in solr_facet_fields:
                 # remove the geotile field
                 solr_facet_fields.pop('discovery_geotile', None)
+            if 'form_use_life_chrono_tile' in solr_facet_fields:
+                # remove the form-use-life chronology tile field
+                solr_facet_fields.pop('form_use_life_chrono_tile', None)
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
                 count_raw_values = len(solr_facet_values)

@@ -13,15 +13,16 @@ class ChronoTile():
 
     """
 
+    DEFAULT_MAXIMUM_BP = 10000000  # 10 million years ago
+    MAX_TILE_DEPTH = 32
+    MIN_INTERVAL_SPAN = .25
+    PREFIX_DELIM = '-'
+    SHOW_PROGRESS = False
+
     def __init__(self):
-        self.DEFAULT_MAXIMUM_BP = 10000000  # 10 million years ago
-        self.MAX_TILE_DEPTH = 32
-        self.MIN_INTERVAL_SPAN = .25
-        self.PREFIX_DELIM = '-'
         self.block_latest = 0
         self.block_earliest = self.DEFAULT_MAXIMUM_BP
         self.path_max_bp = self.DEFAULT_MAXIMUM_BP
-        self.SHOW_PROGRESS = False
 
     def encode_path_from_bce_ce(self, latest_bce_ce, earliest_bce_ce, prefix=''):
         """

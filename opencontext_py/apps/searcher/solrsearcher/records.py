@@ -23,6 +23,8 @@ class JsonLDrecords():
         self.total_found = False
         self.rec_start = False
         self.recursive_count = 0
+        self.min_date = False
+        self.max_date = False
 
     def make_records_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -84,8 +86,22 @@ class JsonLDrecords():
                     when = LastUpdatedOrderedDict()
                     when['id'] = '#event-rec-when-' + str(i) + '-of-' + str(self.total_found)
                     when['type'] = 'oc-gen:formation-use-life'
-                    when['start'] = min(early_list)
-                    when['stop'] = max(late_list)
+                    if self.min_date is not False \
+                       and self.max_date is not False:
+                        early_list.sort()
+                        for early in early_list:
+                            if early >= self.min_date:
+                                when['start'] = early
+                                break
+                        late_list.sort(reverse=True)
+                        for late in late_list:
+                            if late <= self.max_date:
+                                when['stop'] = max(late_list)
+                                break
+                    if 'start' not in when:
+                        when['start'] = min(early_list)
+                    if 'stop' not in when:
+                        when['stop'] = max(late_list)
                     record['when'] = when
                 # start adding GeoJSON properties
                 properties = LastUpdatedOrderedDict()

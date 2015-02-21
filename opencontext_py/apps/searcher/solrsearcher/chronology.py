@@ -6,21 +6,21 @@ from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollecti
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
-class JsonLDregions():
+class JsonLDchronology():
 
     def __init__(self, solr_json):
-        self.geojson_regions = []
+        self.chrono_tiles = []
         self.total_found = False
         self.filter_request_dict_json = False
         self.spatial_context = False
-        self.aggregation_depth = 6
-        self.max_depth = 20
-        self.min_date = False
-        self.max_date = False
+        self.aggregation_depth = 16
+        self.max_depth = ChronoTile.MAX_TILE_DEPTH
+        self.min_date = False  # bce / ce
+        self.max_date = False  # bce / ce
         try:
             self.total_found = solr_json['response']['numFound']
         except KeyError:
@@ -33,60 +33,72 @@ class JsonLDregions():
             depth
         """
         # first aggregate counts for tile that belong togther
-        aggregate_tiles = {}
+        aggregate_tiles = LastUpdatedOrderedDict()
         i = -1
         t = 0
         for tile_key in solr_tiles[::2]:
+            # first get full date range in these tiles
+            chrono_t = ChronoTile()
+            dates = chrono_t.decode_path_dates(tile_key)
+            if self.min_date is False:
+                self.min_date = dates['earliest_bce']
+                self.max_date = dates['latest_bce']
+            else:
+                if self.min_date > dates['earliest_bce']:
+                    self.min_date = dates['earliest_bce']
+                if self.max_date < dates['latest_bce']:
+                    self.max_date = dates['latest_bce']
             t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
-            trim_tile_key = tile_key[:self.aggregation_depth]
-            if trim_tile_key not in aggregate_tiles:
-                aggregate_tiles[trim_tile_key] = 0
-            aggregate_tiles[trim_tile_key] += solr_facet_count
+            if tile_key != 'false':
+                trim_tile_key = tile_key[:self.aggregation_depth]
+                if len(trim_tile_key) == self.aggregation_depth:
+                    if trim_tile_key not in aggregate_tiles:
+                        aggregate_tiles[trim_tile_key] = 0
+                    aggregate_tiles[trim_tile_key] += solr_facet_count
         # now generate GeoJSON for each tile region
-        print('Total tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
-        i = 0
+        print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
+        # --------------------------------------------
+        # code to sort the list of tiles by start date and time span
+        # --------------------------------------------
+        sorting_ranges = []
         for tile_key, aggregate_count in aggregate_tiles.items():
+            chrono_t = ChronoTile()
+            dates = chrono_t.decode_path_dates(tile_key)
+            dates['tile_key'] = tile_key
+            sorting_ranges.append(dates)
+        # now sort by earliest bce, then reversed latest bce
+        # this makes puts early dates with longest timespans first
+        sorted_ranges = sorted(sorting_ranges,
+                               key=lambda k: (k['earliest_bce'],
+                                              -k['latest_bce']))
+        sorted_tiles = LastUpdatedOrderedDict()
+        for sort_range in sorted_ranges:
+            tile_key = sort_range['tile_key']
+            sorted_tiles[tile_key] = aggregate_tiles[tile_key]
+        i = 0
+        for tile_key, aggregate_count in sorted_tiles.items():
             i += 1
             fl = FilterLinks()
             fl.base_request_json = self.filter_request_dict_json
             fl.spatial_context = self.spatial_context
-            new_rparams = fl.add_to_request('disc-geotile',
+            new_rparams = fl.add_to_request('form-chronotile',
                                             tile_key)
             record = LastUpdatedOrderedDict()
             record['id'] = fl.make_request_url(new_rparams)
             record['json'] = fl.make_request_url(new_rparams, '.json')
             record['count'] = aggregate_count
-            record['type'] = 'Feature'
-            record['category'] = 'oc-api:geo-facet'
-            if self.min_date is not False \
-               and self.max_date is not False:
-                when = LastUpdatedOrderedDict()
-                when['id'] = '#event-' + tile_key
-                when['type'] = 'oc-gen:formation-use-life'
-                when['start'] = self.min_date
-                when['stop'] = self.max_date
-                record['when'] = when
-            gm = GlobalMercator()
-            geo_coords = gm.quadtree_to_geojson_poly_coords(tile_key)
-            geometry = LastUpdatedOrderedDict()
-            geometry['id'] = '#geo-disc-tile-geom-' + tile_key
-            geometry['type'] = 'Polygon'
-            geometry['coordinates'] = geo_coords
-            record['geometry'] = geometry
-            properties = LastUpdatedOrderedDict()
-            properties['id'] = '#geo-disc-tile-' + tile_key
-            properties['href'] = record['id']
-            properties['label'] = 'Discovery region (' + str(i) + ')'
-            properties['feature-type'] = 'discovery region (facet)'
-            properties['count'] = aggregate_count
-            record['properties'] = properties
-            self.geojson_regions.append(record)
+            record['category'] = 'oc-api:chrono-facet'
+            chrono_t = ChronoTile()
+            dates = chrono_t.decode_path_dates(tile_key)
+            record['start'] = dates['earliest_bce']
+            record['stop'] = dates['latest_bce']
+            self.chrono_tiles.append(record)
 
     def set_aggregation_depth(self, request_dict_json):
         """ sets the aggregatin depth for
-            aggregating geospatial tiles
+            aggregating chronological tiles
 
             aggregation depth varies between 3 and 20
             with 20 being the most fine-grain, specific
@@ -95,19 +107,19 @@ class JsonLDregions():
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
         filter_request_dict = request_dict
-        if 'geodeep' in request_dict:
-            deep = request_dict['geodeep'][0]
+        if 'chronodeep' in request_dict:
+            deep = request_dict['chronodeep'][0]
             # filter out non numeric characters
             deep = re.sub(r'[^0-9]', r'', deep)
             if len(deep) > 0:
                 self.aggregation_depth = int(float(deep))
-        if 'disc-geotile' in request_dict:
-            req_param_tile = request_dict['disc-geotile'][0]
+        if 'form-chronotile' in request_dict:
+            req_param_tile = request_dict['form-chronotile'][0]
             req_param_tile = re.sub(r'\|', r'', req_param_tile)  # strip ors
             self.aggregation_depth += len(req_param_tile)
-            filter_request_dict.pop('disc-geotile', None) # so as to set up for filter links
-        if self.aggregation_depth < 3:
-            self.aggregation_depth = 3
+            filter_request_dict.pop('form-chronotile', None) # so as to set up for filter links
+        if self.aggregation_depth < 6:
+            self.aggregation_depth = 6
         elif self.aggregation_depth > self.max_depth:
             self.aggregation_depth = self.max_depth
         # now make sure we've got a 'clean' request dict
