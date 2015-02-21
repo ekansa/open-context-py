@@ -8,6 +8,7 @@ class SolrResponseTypes():
     """
     DEFAULT_RESPONSES = ['context',
                          'metadata',
+                         'chrono-facet',
                          'facet',
                          'geo-facet',
                          'geo-record']
@@ -15,6 +16,7 @@ class SolrResponseTypes():
     ALL_RESPONSES = ['context',
                      'metadata',
                      'facet',
+                     'chrono-facet',
                      'geo-facet',
                      'geo-record',
                      'uuid',
