@@ -30,9 +30,10 @@ class SolrSearch():
         """ connects to solr """
         self.solr = SolrConnection(False).connection
 
-    def search_solr(self, request_dict):
+    def search_solr(self, request_dict_json):
         """searches solr to get raw solr search results"""
         # Start building solr query
+        request_dict = json.loads(request_dict_json)
         query = self.compose_query(request_dict)
         return self.solr.search(**query)
 

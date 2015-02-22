@@ -8,23 +8,23 @@
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ nav_dict.display }} <span class="caret"></span></a>
                 <ul class="dropdown-menu" role="menu">
                 {% for drop_item in nav_dict.urls %}
-                    <li><a href="{{ drop_item.link }}">{{ drop_item.display }}</a></li>
+                    <li><a href="{{ base_url }}{{ drop_item.link }}">{{ drop_item.display }}</a></li>
                 {% endfor %}   
                 </ul>
             </li>
         {% else %}
             {% if nav_dict.always %}
                 {% if nav_dict.key == act_nav %}
-                <li class="active">{% else %}<li>{%endif%}<a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
+                <li class="active">{% else %}<li>{%endif%}<a href="{{ base_url }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
             {% else %}
                 {% if nav_dict.key == act_nav %}
-                <li class="active"><a href="{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
+                <li class="active"><a href="{{ base_url }}{{ nav_dict.link }}">{{ nav_dict.display }}</a></li>
                 {%endif%}
             {%endif%}
         {%endif%}
         {% endfor %}
         </ul>
-        <form class="navbar-form navbar-right" role="search" method="get" action="../../search">
+        <form class="navbar-form navbar-right" role="search" method="get" action="{{ base_url }}/search">
             <div class="form-group">
               <input type="text" class="form-control" placeholder="Search" name="q" />
             </div>

@@ -1,6 +1,7 @@
-from django.http import HttpResponse, Http404
-from opencontext_py.apps.ocitems.ocitem.models import OCitem
 import json
+from django.http import HttpResponse, Http404
+from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.apps.ocitems.ocitem.models import OCitem
 
 
 # A person resource describes metadata about a person or organization
@@ -14,6 +15,8 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         return HttpResponse("Hello, world. You're at the person htmlView of " + str(uuid))
     else:
         raise Http404
