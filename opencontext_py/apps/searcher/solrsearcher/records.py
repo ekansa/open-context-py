@@ -2,9 +2,12 @@ import json
 import geojson
 from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
 
 class JsonLDrecords():
@@ -18,6 +21,8 @@ class JsonLDrecords():
     """
 
     def __init__(self):
+        rp = RootPath()
+        self.base_url = rp.get_baseurl()
         self.geojson_recs = []
         self.non_geo_recs = []
         self.total_found = False
@@ -60,7 +65,7 @@ class JsonLDrecords():
                 id_parts = self.parse_solr_value_parts(id_val)
                 if id_parts is not False:
                     label = id_parts['label']
-                    record['id'] = self.make_url_from_val_string(id_parts['uri'])
+                    record['id'] = self.make_url_from_val_string(id_parts['uri'], True)
                     record['label'] = label
                     local_url = self.make_url_from_val_string(id_parts['uri'], False)
             geo_strings = self.get_key_val('discovery_geolocation', solr_rec)
@@ -106,11 +111,19 @@ class JsonLDrecords():
                 # start adding GeoJSON properties
                 properties = LastUpdatedOrderedDict()
                 properties['id'] = '#rec-' + str(i) + '-of-' + str(self.total_found)
+                properties['feature-type'] = 'item record'
                 properties['uri'] = record['id']
                 properties['href'] = local_url
-                properties['label'] = label
-                properties['feature-type'] = 'item record'
                 # add context information, if present
+                self.recursive_count = 0
+                projects = self.extract_hierarchy(solr_rec,
+                                                  SolrDocument.ROOT_PROJECT_SOLR,
+                                                  '___project_id',
+                                                  [])
+                if len(projects) > 0:
+                    properties['project-label'] = projects[-1]['label']
+                    properties['project-href'] = self.make_url_from_val_string(projects[-1]['uri'],
+                                                                               False)
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
                                                   SolrDocument.ROOT_CONTEXT_SOLR,
@@ -119,6 +132,7 @@ class JsonLDrecords():
                 if len(contexts) > 0:
                     properties['context-label'] = self.make_context_path_label(contexts)
                     properties['context-href'] = self. make_context_uri(contexts)
+                properties['label'] = label
                 if isinstance(when, dict):
                     properties['early-bce-ce'] = when['start']
                     properties['late-bce-ce'] = when['stop']
@@ -127,12 +141,33 @@ class JsonLDrecords():
                 cat_hierarchy = self.get_category_hierarchy(solr_rec)
                 if len(cat_hierarchy) > 0:
                     properties['category'] = cat_hierarchy[-1]['label']
+                thumbnail = self.get_thumbnail(solr_rec)
+                if isinstance(thumbnail, dict):
+                    properties['thumbnail'] = thumbnail['src']
                 record['properties'] = properties
                 # add to list of geospatial records
                 self.geojson_recs.append(record)
             else:
                 # case when the record is not GeoSpatial in nature
                 self.non_geo_recs.append(record)
+
+    def get_thumbnail(self, solr_rec):
+        """ get media record and thumbnail, if it exists """
+        output = False
+        if 'uuid' in solr_rec:
+            uuid = solr_rec['uuid']
+            media_item = Assertion.objects\
+                                  .filter(uuid=uuid,
+                                          object_type='media')[:1]
+            if len(media_item) > 0:
+                muuid = media_item[0].object_uuid
+                thumb = Mediafile.objects\
+                                 .filter(uuid=muuid,
+                                         file_type='oc-gen:thumbnail')[:1]
+                if len(thumb) > 0:
+                    output = {'uuid': muuid,
+                              'src': thumb[0].file_uri}
+        return output
 
     def get_category_hierarchy(self, solr_rec):
         """ gets the most specific category
@@ -210,9 +245,7 @@ class JsonLDrecords():
         if use_cannonical:
             base_url = settings.CANONICAL_HOST
         else:
-            base_url = settings.DEPLOYED_HOST
-            if settings.DEBUG:
-                base_url = 'http://127.0.0.1:8000'
+            base_url = self.base_url
         solr_parts = self.parse_solr_value_parts(partial_url)
         if isinstance(solr_parts, dict):
             partial_url = solr_parts['uri']

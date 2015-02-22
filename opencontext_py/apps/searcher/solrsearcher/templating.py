@@ -50,6 +50,12 @@ class SearchTemplate():
                     ff.parse_json_facet(json_facet)
                     if ff.id is not False:
                         self.facets.append(ff)
+            if 'features' in self.json_ld:
+                for feature in self.json_ld['features']:
+                    if 'category' in feature:
+                        if feature['category'] == 'oc-api:geo-record':
+                            rr = ResultRecord()
+                            rr.parse_json_record(feature)
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
@@ -66,6 +72,27 @@ class SearchTemplate():
                 output = default
                 break
         return output
+
+
+class ResultRecord():
+    """ Object for a result record
+    """
+    def __init__(self):
+        self.dom_id_prefix = False
+        self.id = False
+        self.label = False
+        self.item_type = False
+        self.context = False
+        self.project = False
+        self.href = False
+        self.category = False
+        self.thumbnail = False
+
+    def parse_json_record(self, json_rec):
+        """ parses json for a
+            geo-json feature of the record
+        """
+        pass
 
 
 class FacetField():
