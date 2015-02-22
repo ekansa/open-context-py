@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.octypes.supplement import TypeSupplement
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
@@ -18,6 +19,8 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ts = TypeSupplement(ocitem.json_ld)
         ocitem.json_ld = ts.get_arachne_comparanda()
         temp_item = TemplateItem(request)
@@ -25,12 +28,14 @@ def html_view(request, uuid):
         if temp_item.view_permitted:
             template = loader.get_template('types/view.html')
             context = RequestContext(request,
-                                     {'item': temp_item})
+                                     {'item': temp_item,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
             template = loader.get_template('items/view401.html')
             context = RequestContext(request,
-                                     {'item': temp_item})
+                                     {'item': temp_item,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context), status=401)
     else:
         raise Http404
