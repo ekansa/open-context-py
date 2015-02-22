@@ -19,12 +19,10 @@ from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
 class MakeJsonLd():
 
-    def __init__(self, request_dict):
+    def __init__(self, request_dict_json):
         self.hierarchy_delim = '---'
-        self.request_dict = request_dict
-        self.request_dict_json = json.dumps(request_dict,
-                                            ensure_ascii=False,
-                                            indent=4)
+        self.request_dict = json.loads(request_dict_json)
+        self.request_dict_json = request_dict_json
         self.request_full_path = False
         self.spatial_context = False
         self.min_date = False

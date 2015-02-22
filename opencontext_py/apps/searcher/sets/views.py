@@ -8,6 +8,7 @@ from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
+from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
 
 
 def index(request, spatial_context=None):
@@ -15,13 +16,13 @@ def index(request, spatial_context=None):
 
 
 def html_view(request, spatial_context=None):
-    new_request = LastUpdatedOrderedDict()
+    rd = RequestDict()
+    request_dict_json = rd.make_request_dict_json(request,
+                                                  spatial_context)
     solr_s = SolrSearch()
     if solr_s.solr is not False:
-        request_dict = solr_s.make_request_obj_dict(request,
-                                                    spatial_context)
-        response = solr_s.search_solr(request_dict)
-        m_json_ld = MakeJsonLd(request_dict)
+        response = solr_s.search_solr(request_dict_json)
+        m_json_ld = MakeJsonLd(request_dict_json)
         # share entities already looked up. Saves database queries
         m_json_ld.entities = solr_s.entities
         m_json_ld.request_full_path = request.get_full_path()
@@ -43,13 +44,13 @@ def html_view(request, spatial_context=None):
 
 def json_view(request, spatial_context=None):
     """ API for searching Open Context """
-    new_request = LastUpdatedOrderedDict()
+    rd = RequestDict()
+    request_dict_json = rd.make_request_dict_json(request,
+                                                  spatial_context)
     solr_s = SolrSearch()
     if solr_s.solr is not False:
-        request_dict = solr_s.make_request_obj_dict(request,
-                                                    spatial_context)
-        response = solr_s.search_solr(request_dict)
-        m_json_ld = MakeJsonLd(request_dict)
+        response = solr_s.search_solr(request_dict_json)
+        m_json_ld = MakeJsonLd(request_dict_json)
         # share entities already looked up. Saves database queries
         m_json_ld.entities = solr_s.entities
         m_json_ld.request_full_path = request.get_full_path()
