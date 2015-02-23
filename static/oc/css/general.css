@@ -150,3 +150,6 @@ span.title_sep {
     height:66%;
 	min-height:300px;
 }
+td.opt-count-pad span {
+	margin-top: 4px;
+}
