@@ -22,7 +22,7 @@ class SearchTemplate():
         self.num_facets = []
         self.date_facets = []
         self.facets = []
-        self.records = []
+        self.geo_records = []
         self.nav_items = settings.NAV_ITEMS
 
     def process_json_ld(self):
@@ -54,8 +54,9 @@ class SearchTemplate():
                 for feature in self.json_ld['features']:
                     if 'category' in feature:
                         if feature['category'] == 'oc-api:geo-record':
-                            rr = ResultRecord()
-                            rr.parse_json_record(feature)
+                            geor = GeoRecord()
+                            geor.parse_json_record(feature)
+                            self.geo_records.append(geor)
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
@@ -74,11 +75,10 @@ class SearchTemplate():
         return output
 
 
-class ResultRecord():
+class GeoRecord():
     """ Object for a result record
     """
     def __init__(self):
-        self.dom_id_prefix = False
         self.id = False
         self.label = False
         self.item_type = False
@@ -86,13 +86,34 @@ class ResultRecord():
         self.project = False
         self.href = False
         self.category = False
+        self.early_bce_ce = False
+        self.late_bce_ce = False
         self.thumbnail = False
 
     def parse_json_record(self, json_rec):
         """ parses json for a
             geo-json feature of the record
         """
-        pass
+        if 'properties' in json_rec:
+            props = json_rec['properties']
+            if 'id' in props:
+                self.id = props['id'].replace('#', '')
+            if 'label' in props:
+                self.label = props['label']
+            if 'href' in props:
+                self.href = props['href']
+            if 'project-label' in props:
+                self.project = props['project-label']
+            if 'context-label' in props:
+                self.context = props['context-label']
+            if 'early-bce-ce' in props:
+                self.early_bce_ce = props['early-bce-ce']
+            if 'late-bce-ce' in props:
+                self.late_bce_ce = props['late-bce-ce']
+            if 'category' in props:
+                self.category = props['category']
+            if 'thumbnail' in props:
+                self.thumbnail = props['thumbnail']
 
 
 class FacetField():

@@ -1,0 +1,26 @@
+{% load humanize %}
+<tr>
+    <td>
+        <a href="{{ geo_rec.href }}" target="_blank">{{ geo_rec.label }}</a>
+    </td>
+    <td>
+        {{ geo_rec.project }}
+    </td>
+    <td>
+        {{ geo_rec.context }}
+    </td>
+    <td>
+        {{ geo_rec.category }}
+    </td>
+    <td>
+        {{ geo_rec.early_bce_ce }}
+    </td>
+    <td>
+        {{ geo_rec.late_bce_ce }}
+    </td>
+    <td>
+        {% if geo_rec.thumbnail != False %}
+        <img src="{{ geo_rec.thumbnail }}" alt="Thumbnail for {{ geo_rec.label }}" />
+        {%endif%}
+    </td>
+</tr>

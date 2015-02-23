@@ -1,0 +1,54 @@
+{% load humanize %}
+{% if st.geo_records|length > 0 %}
+    <div class="panel-group" id="acc-geo-recs">
+        <div class="panel panel-default">
+            <div class="panel-heading"> 
+                <h4 class="panel-title">
+                    <a data-toggle="collapse" data-parent="#acc-facets" href="#panel-geo-recs">
+                            <span class="glyphicon glyphicon-resize-vertical"></span>
+                            Search Results
+                    </a>
+                </h4>
+            </div>
+             
+            <div id="panel-geo-recs" class="panel-collapse collapse in">
+                <table class="table" style="width:100%;">
+                    <thead>
+                        <tr>
+                            <th class="col-sm-2">
+                                Item Label
+                            </th>
+                            <th class="col-sm-2">
+                                Project
+                            </th>
+                            <th class="col-sm-3">
+                                Context
+                            </th>
+                            <th class="col-sm-1">
+                                Category
+                            </th>
+                            <th class="col-sm-1">
+                                Early (BCE/CE)
+                            </th>
+                            <th class="col-sm-1">
+                                Late (BCE/CE)
+                            </th>
+                            <th class="col-sm-2">
+                                Thumbail
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                {% for geo_rec in st.geo_records %}
+                    {% with geo_rec=geo_rec %}
+                    {% include 'sets/geo-record.html' %}
+                    {% endwith %}
+                {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{%endif%}
+
+
