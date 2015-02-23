@@ -50,6 +50,9 @@ class OCitem():
     PREDICATES_OCGEN_OBSLABEL = 'label'
     PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
+    DC_META_PREDS = ['dc-terms:subject',
+                     'dc-terms:spatial',
+                     'dc-terms:coverage']
 
     def __init__(self):
         self.time_start = time.time()
@@ -325,7 +328,13 @@ class OCitem():
             json_ld['description'] = self.project.short_des
             json_ld['dc-terms:abstract'] = self.project.content
             json_ld = item_con.add_editorial_status(json_ld, self.project.edit_status)
+        # add dublin-core descriptive metadata predicates
+        for dc_meta in self.DC_META_PREDS:
+            if dc_meta not in json_ld:
+                print('adding: ' + dc_meta)
+                json_ld[dc_meta] = []  # add it here to make sure it's before the @graph
         json_ld = item_con.add_license(json_ld)
+        # now add dublin-core descriptive metadata
         # add the stable ids needed for citation
         json_ld = item_con.add_stable_ids(json_ld, self.item_type, self.stable_ids)
         # add a slug identifier if the item_type allows slugs
@@ -345,7 +354,11 @@ class OCitem():
                                                                   'dc-terms:hasPart',
                                                                   sub_proj.uuid,
                                                                   'projects')
-        json_ld['time'] = time.time() - self.time_start
+        if settings.DEBUG:
+            json_ld['time'] = time.time() - self.time_start
+        for dc_meta in self.DC_META_PREDS:
+            if len(json_ld[dc_meta]) < 1:
+                json_ld.pop(dc_meta, None)  # get rid of not used dc-meta predicate
         self.json_ld = json_ld
         item_con.__del__()
         return self.json_ld
@@ -658,18 +671,17 @@ class ItemConstruction():
         """
         object_ids = []
         if act_pred_key in act_dict:
-            act_list = act_dict[act_pred_key]
-            for obj in act_list:
+            for obj in act_dict[act_pred_key]:
                 if 'id' in obj:
                     object_ids.append(obj['id'])
                 elif '@id' in obj:
                     object_ids.append(obj['@id'])
         else:
-            act_list = []
+            act_dict[act_pred_key] = []
         new_object_item = LastUpdatedOrderedDict()
         if do_slug_uri:
             new_object_item['id'] = URImanagement.make_oc_uri(object_id, item_type)
-            act_list.append(new_object_item)
+            act_dict[act_pred_key].append(new_object_item)
         else:
             ent = self.get_entity_metadata(object_id)
             if(ent is not False):
@@ -691,10 +703,9 @@ class ItemConstruction():
                     if(ent.class_uri not in self.class_type_list):
                         self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
                 if new_object_item['id'] not in object_ids:
-                    act_list.append(new_object_item)
-                act_dict[act_pred_key] = act_list
+                    act_dict[act_pred_key].append(new_object_item)
             elif(act_pred_key == 'oc-gen:hasIcon'):
-                act_dict[act_pred_key] = [{'id': object_id}]
+                act_dict[act_pred_key].append({'id': object_id})
         return act_dict
 
     def add_inferred_authorship_linked_data_graph(self, act_dict):
