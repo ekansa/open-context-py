@@ -53,11 +53,15 @@ class SolrSearch():
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
         # If the user does not provide a search term, search for everything
-        query['q'] = self.get_request_param(request_dict,
-                                            'q',
-                                            '*:*',
-                                            False,
-                                            True)
+        query['q'] = '*:*' # defaul search for all
+        q_param = self.get_request_param(request_dict,
+                                         'q',
+                                         False,
+                                         False)
+        if q_param is not False:
+            escaped_terms = qm.prep_string_search_term(q_param)
+            query['q'] = ' '.join(escaped_terms)
+            query['q.op'] = 'AND'
         start = self.get_request_param(request_dict,
                                        'start',
                                        False,
@@ -258,7 +262,11 @@ class SolrSearch():
                         output = output[0]
                     if solr_escape:
                         qm = QueryMaker()
-                        output = qm.escape_solr_arg(output)
+                        if output[0] == '"' and output[-1] == '"':
+                            output = qm.escape_solr_arg(output[1:-1])
+                            output = '"' + output + '"'
+                        else:
+                            output = qm.escape_solr_arg(output)
                 else:
                     output = default
         else:

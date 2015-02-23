@@ -306,8 +306,10 @@ class QueryMaker():
                                 query_dict['facet.field'].append(last_fast_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
-                    search_term = act_field + ':' + self.escape_solr_arg(prop_slug)
-                    fq_path_terms.append(search_term)
+                    string_terms = self.prep_string_search_term(prop_slug)
+                    for escaped_term in string_terms:
+                        search_term = act_field + ':' + escaped_term
+                        fq_path_terms.append(search_term)
                 elif act_field_data_type == 'numeric':
                     # numeric search. assume it's well formed solr numeric request
                     search_term = act_field + ':' + prop_slug
@@ -659,6 +661,25 @@ class QueryMaker():
             context['fq'] = None
             context['facet.field'] = ['root___context_id']
         return context
+
+    def prep_string_search_term(self, raw_term):
+        """ prepares a string search
+            returns a list of search terms
+            for AND queries
+        """
+        if '"' in raw_term:
+            nq_term = raw_term.replace('"', ' ')  # get rid of quotes in the search term
+            quoted_list = re.findall(r"\"(.*?)\"", raw_term)
+            terms = []
+            terms.append(self.escape_solr_arg(nq_term))
+            for quote_item in quoted_list:
+                quote_item = self.escape_solr_arg(quote_item)  # escape characters
+                quote_item = '"' + quote_item + '"'  # put quotes back around it
+                terms.append(quote_item)
+        else:
+            terms = []
+            terms.append(self.escape_solr_arg(raw_term))
+        return terms
 
     def escaped_seq(self, term):
         """ Yield the next string based on the
