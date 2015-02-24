@@ -99,6 +99,9 @@ class SolrDocument:
                                 ).get_jsonldish_entity_parents(
                                 value['id']
                                 )
+                            all_obj_solr_field = 'obj_all___' + active_solr_field
+                            if all_obj_solr_field not in self.fields:
+                                self.fields[all_obj_solr_field] = []
                             for parent in parents:
                                 if active_solr_field not in self.fields:
                                     self.fields[active_solr_field] = []
@@ -114,7 +117,12 @@ class SolrDocument:
                                     parent['label'] + ' '
                                 self.fields[active_solr_field].append(
                                     active_solr_value
-                                    )
+                                )
+                                # so all items in the hiearchy are present in the
+                                # and can be queried, even if you don't know the parent
+                                self.fields[all_obj_solr_field].append(
+                                    active_solr_value
+                                )
                                 active_solr_field = self._convert_slug_to_solr(
                                     parent['slug']) + '___' + solr_field_name
                         else:
@@ -597,7 +605,6 @@ class SolrDocument:
                         if equiv_pred in entity:
                             # a semantic equivalence predicate exists for this oc-pred
                             for equiv_entity in entity[equiv_pred]:
-                                last_linked_pred_solr = False
                                 equiv_id = self.get_entity_id(equiv_entity)
                                 parents = LinkRecursion().get_jsonldish_entity_parents(equiv_id)
                                 act_solr_field = self.ROOT_LINK_DATA_SOLR
@@ -622,7 +629,6 @@ class SolrDocument:
                                         self._convert_slug_to_solr(parent['slug'])\
                                         + '___pred_' \
                                         + act_solr_datatype
-                                    last_linked_pred_solr = act_solr_field
                                 # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
                                 self.fields['text'] += last_linked_pred_label + ': \n'
                                 act_pred_root_act_solr_field = act_solr_field
@@ -661,6 +667,12 @@ class SolrDocument:
                                                 last_object_uri = False
                                                 last_object_label = ''
                                                 act_solr_field = act_pred_root_act_solr_field
+                                                #-------------------------------
+                                                # Now make a solr field for ALL the objects (parents, childred)
+                                                # using this predicate
+                                                all_obj_solr_field = 'obj_all___' + act_pred_root_act_solr_field
+                                                if all_obj_solr_field not in self.fields:
+                                                    self.fields[all_obj_solr_field] = []
                                                 # URI objects can be in hierarchies, look for these!
                                                 object_id = self.get_entity_id(use_obj)
                                                 parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
@@ -672,6 +684,11 @@ class SolrDocument:
                                                     if act_solr_field not in self.fields:
                                                         self.fields[act_solr_field] = []
                                                     self.fields[act_solr_field].append(solr_value)
+                                                    #-------------------------------
+                                                    # This way, you don't need to know a parent to search
+                                                    # for a child
+                                                    #-------------------------------
+                                                    self.fields[all_obj_solr_field].append(solr_value)
                                                     last_object_label = parent['label']
                                                     last_object_uri = parent['id']
                                                     act_solr_field = \
@@ -681,12 +698,6 @@ class SolrDocument:
                                                     self.process_object_uri(last_object_uri)
                                                     self.fields['text'] += last_object_uri + ' '
                                                     self.fields['text'] += last_object_label + '\n'
-                                                    if last_linked_pred_solr is not False:
-                                                        last_solr_field = 'solr_last___' + last_linked_pred_solr
-                                                        if last_solr_field not in self.fields:
-                                                            self.fields[last_solr_field] = []
-                                                        # add the last solr value to the last field
-                                                        self.fields[last_solr_field].append(solr_value)
 
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
