@@ -47,6 +47,7 @@ class LinkRecursion():
                         p_item['type'] = ent.data_type
                     else:
                         p_item['type'] = '@id'
+                    p_item['ld_object_ok'] = ent.ld_object_ok
                     output.append(p_item)
         return output
 

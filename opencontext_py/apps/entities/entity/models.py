@@ -29,6 +29,7 @@ class Entity():
         self.alt_label = False
         self.vocab_uri = False
         self.vocabulary = False
+        self.ld_object_ok = False
         self.content = False
         self.manifest = False
         self.thumbnail_uri = False
@@ -64,6 +65,7 @@ class Entity():
                     self.alt_label = ld_entity.alt_label
                     self.entity_type = ld_entity.ent_type
                     self.vocab_uri = ld_entity.vocab_uri
+                    self.ld_object_ok = True
                     try:
                         vocab_entity = LinkEntity.objects.get(uri=self.vocab_uri)
                     except LinkEntity.DoesNotExist:
