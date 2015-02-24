@@ -102,16 +102,16 @@ class GeoRecord():
                 self.label = props['label']
             if 'href' in props:
                 self.href = props['href']
-            if 'project-label' in props:
-                self.project = props['project-label']
-            if 'context-label' in props:
-                self.context = props['context-label']
-            if 'early-bce-ce' in props:
-                self.early_bce_ce = props['early-bce-ce']
-            if 'late-bce-ce' in props:
-                self.late_bce_ce = props['late-bce-ce']
-            if 'category' in props:
-                self.category = props['category']
+            if 'project label' in props:
+                self.project = props['project label']
+            if 'context label' in props:
+                self.context = props['context label']
+            if 'early bce/ce' in props:
+                self.early_bce_ce = props['early bce/ce']
+            if 'late bce/ce' in props:
+                self.late_bce_ce = props['late bce/ce']
+            if 'item category' in props:
+                self.category = props['item category']
             if 'thumbnail' in props:
                 self.thumbnail = props['thumbnail']
 
