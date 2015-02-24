@@ -44,6 +44,7 @@ class MakeJsonLd():
         context['itemsPerPage'] = {'@id': 'opensearch:itemsPerPage', '@type': 'xsd:integer'}
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-api'] = 'http://opencontext.org/vocabularies/oc-api/'
+        context['rdfs:isDefinedBy'] = {'@type': '@id'}
         context['first'] = {'@id': 'oc-api:first', '@type': '@id'}
         context['previous'] = {'@id': 'oc-api:previous', '@type': '@id'}
         context['next'] = {'@id': 'oc-api:next', '@type': '@id'}
