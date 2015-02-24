@@ -65,7 +65,7 @@ class JsonLDrecords():
                 id_parts = self.parse_solr_value_parts(id_val)
                 if id_parts is not False:
                     label = id_parts['label']
-                    record['id'] = self.make_url_from_val_string(id_parts['uri'], True)
+                    record['rdfs:isDefinedBy'] = self.make_url_from_val_string(id_parts['uri'], True)
                     record['label'] = label
                     local_url = self.make_url_from_val_string(id_parts['uri'], False)
             geo_strings = self.get_key_val('discovery_geolocation', solr_rec)
@@ -112,7 +112,7 @@ class JsonLDrecords():
                 properties = LastUpdatedOrderedDict()
                 properties['id'] = '#rec-' + str(i) + '-of-' + str(self.total_found)
                 properties['feature type'] = 'item record'
-                properties['uri'] = record['id']
+                properties['uri'] = record['rdfs:isDefinedBy']
                 properties['href'] = local_url
                 # add context information, if present
                 self.recursive_count = 0
