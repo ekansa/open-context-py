@@ -54,8 +54,9 @@ class JsonLDrecords():
         """ processes the solr_json to
              make GeoJSON records
         """
-        i = self.rec_start + 1
+        i = self.rec_start
         for solr_rec in solr_recs:
+            i += 1
             record = LastUpdatedOrderedDict()
             record['id'] = '#record-' + str(i) + '-of-' + str(self.total_found)
             label = 'Record ' + str(i) + ' of ' + str(self.total_found)
