@@ -331,7 +331,6 @@ class OCitem():
         # add dublin-core descriptive metadata predicates
         for dc_meta in self.DC_META_PREDS:
             if dc_meta not in json_ld:
-                print('adding: ' + dc_meta)
                 json_ld[dc_meta] = []  # add it here to make sure it's before the @graph
         json_ld = item_con.add_license(json_ld)
         # now add dublin-core descriptive metadata
