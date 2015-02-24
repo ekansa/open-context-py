@@ -111,7 +111,7 @@ class JsonLDrecords():
                 # start adding GeoJSON properties
                 properties = LastUpdatedOrderedDict()
                 properties['id'] = '#rec-' + str(i) + '-of-' + str(self.total_found)
-                properties['feature-type'] = 'item record'
+                properties['feature type'] = 'item record'
                 properties['uri'] = record['id']
                 properties['href'] = local_url
                 # add context information, if present
@@ -121,8 +121,8 @@ class JsonLDrecords():
                                                   '___project_id',
                                                   [])
                 if len(projects) > 0:
-                    properties['project-label'] = projects[-1]['label']
-                    properties['project-href'] = self.make_url_from_val_string(projects[-1]['uri'],
+                    properties['project label'] = projects[-1]['label']
+                    properties['project href'] = self.make_url_from_val_string(projects[-1]['uri'],
                                                                                False)
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
@@ -130,17 +130,17 @@ class JsonLDrecords():
                                                   '___context_id',
                                                   [])
                 if len(contexts) > 0:
-                    properties['context-label'] = self.make_context_path_label(contexts)
-                    properties['context-href'] = self. make_context_uri(contexts)
+                    properties['context label'] = self.make_context_path_label(contexts)
+                    properties['context href'] = self. make_context_uri(contexts)
                 properties['label'] = label
                 if isinstance(when, dict):
-                    properties['early-bce-ce'] = when['start']
-                    properties['late-bce-ce'] = when['stop']
+                    properties['early bce/ce'] = when['start']
+                    properties['late bce/ce'] = when['stop']
                 # get category information
                 self.recursive_count = 0
                 cat_hierarchy = self.get_category_hierarchy(solr_rec)
                 if len(cat_hierarchy) > 0:
-                    properties['category'] = cat_hierarchy[-1]['label']
+                    properties['item category'] = cat_hierarchy[-1]['label']
                 thumbnail = self.get_thumbnail(solr_rec)
                 if isinstance(thumbnail, dict):
                     properties['thumbnail'] = thumbnail['src']
