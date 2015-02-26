@@ -1,0 +1,71 @@
+<nav>
+    
+    <ul class="pagination">
+        <li class="disabled">
+            <span>Paging</span>
+        </li>
+        {% if st.paging.first = False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-step-backward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.first }}">
+                <span class="glyphicon glyphicon-step-backward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+        
+        {% if st.paging.previous = False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-backward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.previous }}">
+                <span class="glyphicon glyphicon-backward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+    
+        {% if st.paging.next = False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-forward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.next }}">
+                <span class="glyphicon glyphicon-forward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+    
+        {% if st.paging.last = False %}
+        <li class="disabled">
+            <span>
+            <span class="glyphicon glyphicon-step-forward"></span>
+            </span>
+        </li>
+        {% else %}
+        <li>
+            <span>
+            <a href="{{ st.paging.last }}">
+                <span class="glyphicon glyphicon-step-forward"></span>
+            </a>
+            </span>
+        </li>
+        {%endif%}
+    </ul>
+</nav>

@@ -2,38 +2,40 @@
 {% if st.geo_records|length > 0 %}
     <div class="panel-group" id="acc-geo-recs">
         <div class="panel panel-default">
-            <div class="panel-heading"> 
+            <div class="panel-heading">
+                
                 <h4 class="panel-title">
                     <a data-toggle="collapse" data-parent="#acc-facets" href="#panel-geo-recs">
-                            <span class="glyphicon glyphicon-resize-vertical"></span>
-                            Search Results
+                        <span class="glyphicon glyphicon-resize-vertical"></span>
+                                Search Results
                     </a>
                 </h4>
             </div>
              
             <div id="panel-geo-recs" class="panel-collapse collapse in">
-                <table class="table" style="width:100%;">
+                <div class="table-responsive">
+                <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th class="col-sm-2">
+                            <th class="col-xs-2">
                                 Item Label
                             </th>
-                            <th class="col-sm-2">
+                            <th class="col-xs-2">
                                 Project
                             </th>
-                            <th class="col-sm-3">
+                            <th class="col-xs-3">
                                 Context
                             </th>
-                            <th class="col-sm-1">
+                            <th class="col-xs-1">
                                 Category
                             </th>
-                            <th class="col-sm-1">
+                            <th class="col-xs-1">
                                 Early (BCE/CE)
                             </th>
-                            <th class="col-sm-1">
+                            <th class="col-xs-1">
                                 Late (BCE/CE)
                             </th>
-                            <th class="col-sm-2">
+                            <th class="col-xs-2">
                                 Thumbail
                             </th>
                         </tr>
@@ -46,6 +48,7 @@
                 {% endfor %}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     </div>
