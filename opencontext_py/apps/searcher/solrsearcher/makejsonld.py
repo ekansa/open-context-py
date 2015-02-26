@@ -11,6 +11,7 @@ from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.responsetypes import SolrResponseTypes
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.filters import ActiveFilters
 from opencontext_py.apps.searcher.solrsearcher.chronology import JsonLDchronology
 from opencontext_py.apps.searcher.solrsearcher.regions import JsonLDregions
 from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
@@ -249,78 +250,12 @@ class MakeJsonLd():
 
     def add_filters_json(self):
         """ adds JSON describing search filters """
-        fl = FilterLinks()
-        filters = []
-        string_fields = []  # so we have an interface for string searches
-        i = 0
-        for param_key, param_vals in self.request_dict.items():
-            if param_key == 'path':
-                if param_vals is not False and param_vals is not None:
-                    i += 1
-                    f_entity = self.get_entity(param_vals, True)
-                    label = http.urlunquote_plus(param_vals)
-                    act_filter = LastUpdatedOrderedDict()
-                    act_filter['id'] = '#filter-' + str(i)
-                    act_filter['oc-api:filter'] = 'Context'
-                    act_filter['label'] = label.replace('||', ' OR ')
-                    if f_entity is not False:
-                        act_filter['rdfs:isDefinedBy'] = f_entity.uri
-                    # generate a request dict without the context filter
-                    rem_request = fl.make_request_sub(self.request_dict,
-                                                      param_key,
-                                                      param_vals)
-                    act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
-                    act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
-                    filters.append(act_filter)
-            else:
-                for param_val in param_vals:
-                    i += 1
-                    act_filter = LastUpdatedOrderedDict()
-                    act_filter['id'] = '#filter-' + str(i)
-                    if self.hierarchy_delim in param_val:
-                        all_vals = param_val.split(self.hierarchy_delim)
-                    else:
-                        all_vals = [param_val]
-                    if param_key == 'proj':
-                        # projects, only care about the last item in the parameter value
-                        act_filter['oc-api:filter'] = 'Project'
-                        label_dict = self.make_filter_label_dict(all_vals[-1])
-                        act_filter['label'] = label_dict['label']
-                        if len(label_dict['entities']) == 1:
-                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
-                    elif param_key == 'prop':
-                        # prop, the first item is the filter-label
-                        # the last is the filter
-                        act_filter['label'] = False
-                        if len(all_vals) < 2:
-                            act_filter['oc-api:filter'] = 'Description'
-                        else:
-                            filt_dict = self.make_filter_label_dict(all_vals[0])
-                            act_filter['oc-api:filter'] = filt_dict['label']
-                            if filt_dict['data-type'] == 'string':
-                                act_filter['label'] = 'Search Term: \'' + all_vals[-1] + '\''
-                        if act_filter['label'] is False:
-                            label_dict = self.make_filter_label_dict(all_vals[-1])
-                            act_filter['label'] = label_dict['label']
-                    elif param_key == 'type':
-                        act_filter['oc-api:filter'] = 'Open Context Type'
-                        if all_vals[0] in QueryMaker.TYPE_MAPPINGS:
-                            type_uri = QueryMaker.TYPE_MAPPINGS[all_vals[0]]
-                            label_dict = self.make_filter_label_dict(type_uri)
-                            act_filter['label'] = label_dict['label']
-                        else:
-                            act_filter['label'] = all_vals[0]
-                    elif param_key == 'q':
-                        act_filter['oc-api:filter'] = 'General Keyword Search'
-                        act_filter['label'] = 'Search Term: \'' + all_vals[0] + '\''
-                    rem_request = fl.make_request_sub(self.request_dict,
-                                                      param_key,
-                                                      param_val)
-                    act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
-                    act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
-                    filters.append(act_filter)
+        a_filters = ActiveFilters()
+        a_filters.entities = self.entities
+        a_filters.hierarchy_delim = self.hierarchy_delim
+        filters = a_filters.add_filters_json(self.request_dict)
         if len(filters) > 0:
-            self.json_ld['oc-api:has-filters'] = filters
+            self.json_ld['oc-api:active-filters'] = filters
 
     def make_filter_label_dict(self, act_val):
         """ returns a dictionary object

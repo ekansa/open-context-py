@@ -19,6 +19,7 @@ class SearchTemplate():
         self.end_num = 0
         self.items_per_page = 0
         self.filters = []
+        self.paging = {}
         self.num_facets = []
         self.date_facets = []
         self.facets = []
@@ -28,6 +29,7 @@ class SearchTemplate():
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
+            self.set_paging()  # adds to the paging dict
             if 'totalResults' in self.json_ld:
                 self.total_count = self.json_ld['totalResults']
             if 'itemsPerPage' in self.json_ld:
@@ -57,6 +59,18 @@ class SearchTemplate():
                             geor = GeoRecord()
                             geor.parse_json_record(feature)
                             self.geo_records.append(geor)
+
+    def set_paging(self):
+        """ sets the paging for these results """
+        pages = ['first',
+                 'previous',
+                 'next',
+                 'last']
+        for page in pages:
+            if page in self.json_ld:
+                self.paging[page] = self.json_ld[page]
+            else:
+                self.paging[page] = False
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
