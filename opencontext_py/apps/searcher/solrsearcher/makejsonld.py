@@ -197,11 +197,12 @@ class MakeJsonLd():
                                                ensure_ascii=False,
                                                indent=4)
             # add a first page link
-            links = self.make_paging_links(0,
-                                           rows,
-                                           ini_request_dict_json)
-            self.json_ld['first'] = links['html']
-            self.json_ld['first-json'] = links['json']
+            if start > 0:
+                links = self.make_paging_links(0,
+                                               rows,
+                                               ini_request_dict_json)
+                self.json_ld['first'] = links['html']
+                self.json_ld['first-json'] = links['json']
             if start > rows:
                 # add a previous page link
                 links = self.make_paging_links(start - rows,

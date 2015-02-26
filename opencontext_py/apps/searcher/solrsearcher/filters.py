@@ -1,6 +1,7 @@
 import re
 import json
 import geojson
+import django.utils.http as http
 from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from urllib.parse import urlparse, parse_qs
@@ -38,7 +39,7 @@ class ActiveFilters():
                     if f_entity is not False:
                         act_filter['rdfs:isDefinedBy'] = f_entity.uri
                     # generate a request dict without the context filter
-                    rem_request = fl.make_request_sub(self.request_dict,
+                    rem_request = fl.make_request_sub(request_dict,
                                                       param_key,
                                                       param_vals)
                     act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
