@@ -39,6 +39,11 @@ class SearchTemplate():
                 self.end_num = self.json_ld['startIndex'] + self.items_per_page
                 if self.end_num > self.total_count:
                     self.end_num = self.total_count
+            if 'oc-api:active-filters' in self.json_ld:
+                for json_filter in self.json_ld['oc-api:active-filters']:
+                    s_filter = SearchFilter()
+                    s_filter.parse_json_filter(json_filter)
+                    self.filters.append(s_filter)
             if 'oc-api:has-facets' in self.json_ld:
                 dom_id_prefix = 'f-'
                 i = 0
@@ -88,6 +93,26 @@ class SearchTemplate():
                 break
         return output
 
+
+class SearchFilter():
+    """ Object for an active search filter """
+
+    def __init___(self):
+        self.filter_label = False
+        self.filter_value = False
+        self.remove_href = False
+
+    def parse_json_filter(self, json_filter):
+        """ parses a json filter record
+            to populate object attributes
+        """
+        if 'oc-api:filter' in json_filter:
+            self.filter_label = json_filter['oc-api:filter']
+        if 'label' in json_filter:
+            self.filter_value = json_filter['label']
+        if 'oc-api:remove' in json_filter:
+            self.remove_href = json_filter['oc-api:remove']
+ 
 
 class GeoRecord():
     """ Object for a result record
