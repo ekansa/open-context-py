@@ -158,8 +158,8 @@
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
 
    <!-- catchall field, containing all other searchable text fields (implemented
-        via copyField further on in this schema  -->
-   <field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/>
+        in logic in Python for creating a solr document  -->
+   <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
 
     <!-- SPACE AND TIME FIELDS -->
     <!-- discovery location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,

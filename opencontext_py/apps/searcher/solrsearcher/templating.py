@@ -19,6 +19,7 @@ class SearchTemplate():
         self.end_num = 0
         self.items_per_page = 0
         self.filters = []
+        self.paging = {}
         self.num_facets = []
         self.date_facets = []
         self.facets = []
@@ -28,6 +29,7 @@ class SearchTemplate():
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
+            self.set_paging()  # adds to the paging dict
             if 'totalResults' in self.json_ld:
                 self.total_count = self.json_ld['totalResults']
             if 'itemsPerPage' in self.json_ld:
@@ -37,6 +39,11 @@ class SearchTemplate():
                 self.end_num = self.json_ld['startIndex'] + self.items_per_page
                 if self.end_num > self.total_count:
                     self.end_num = self.total_count
+            if 'oc-api:active-filters' in self.json_ld:
+                for json_filter in self.json_ld['oc-api:active-filters']:
+                    s_filter = SearchFilter()
+                    s_filter.parse_json_filter(json_filter)
+                    self.filters.append(s_filter)
             if 'oc-api:has-facets' in self.json_ld:
                 dom_id_prefix = 'f-'
                 i = 0
@@ -58,6 +65,18 @@ class SearchTemplate():
                             geor.parse_json_record(feature)
                             self.geo_records.append(geor)
 
+    def set_paging(self):
+        """ sets the paging for these results """
+        pages = ['first',
+                 'previous',
+                 'next',
+                 'last']
+        for page in pages:
+            if page in self.json_ld:
+                self.paging[page] = self.json_ld[page]
+            else:
+                self.paging[page] = False
+
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
         act_dict_obj = dict_obj
@@ -74,6 +93,26 @@ class SearchTemplate():
                 break
         return output
 
+
+class SearchFilter():
+    """ Object for an active search filter """
+
+    def __init___(self):
+        self.filter_label = False
+        self.filter_value = False
+        self.remove_href = False
+
+    def parse_json_filter(self, json_filter):
+        """ parses a json filter record
+            to populate object attributes
+        """
+        if 'oc-api:filter' in json_filter:
+            self.filter_label = json_filter['oc-api:filter']
+        if 'label' in json_filter:
+            self.filter_value = json_filter['label']
+        if 'oc-api:remove' in json_filter:
+            self.remove_href = json_filter['oc-api:remove']
+ 
 
 class GeoRecord():
     """ Object for a result record

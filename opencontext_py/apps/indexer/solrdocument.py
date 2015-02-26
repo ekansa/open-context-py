@@ -683,21 +683,23 @@ class SolrDocument:
                                                                                                 parent['label'])
                                                     if act_solr_field not in self.fields:
                                                         self.fields[act_solr_field] = []
-                                                    self.fields[act_solr_field].append(solr_value)
+                                                    if parent['ld_object_ok']:
+                                                        # only add this if it's OK for linked data use
+                                                        # in presenting a facet
+                                                        self.fields[act_solr_field].append(solr_value)
                                                     #-------------------------------
                                                     # This way, you don't need to know a parent to search
-                                                    # for a child
+                                                    # for a child. Since facets aren't made with this,
+                                                    # it's OK for on-linked-data-ok objects to be used
                                                     #-------------------------------
                                                     self.fields[all_obj_solr_field].append(solr_value)
-                                                    last_object_label = parent['label']
-                                                    last_object_uri = parent['id']
+                                                    self.fields['text'] += parent['id'] + ' '
+                                                    self.fields['text'] += parent['label'] + '\n'
                                                     act_solr_field = \
                                                         self._convert_slug_to_solr(parent['slug']) \
                                                         + '___' + act_solr_field
                                                 if last_object_uri is not False:
                                                     self.process_object_uri(last_object_uri)
-                                                    self.fields['text'] += last_object_uri + ' '
-                                                    self.fields['text'] += last_object_label + '\n'
 
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
@@ -708,7 +710,7 @@ class SolrDocument:
             Also checks the vocabular for the object
             we we can index on that.
         """
-        do_object_uri = False  # set this to False for time being
+        do_object_uri = True  # set this to False for time being
         if do_object_uri:
             if 'object_uri' not in self.fields:
                 self.fields['object_uri'] = []
