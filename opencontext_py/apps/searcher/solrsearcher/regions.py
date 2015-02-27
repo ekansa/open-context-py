@@ -49,6 +49,7 @@ class JsonLDregions():
         i = 0
         for tile_key, aggregate_count in aggregate_tiles.items():
             i += 1
+            add_region = True
             fl = FilterLinks()
             fl.base_request_json = self.filter_request_dict_json
             fl.spatial_context = self.spatial_context
@@ -82,7 +83,12 @@ class JsonLDregions():
             properties['feature-type'] = 'discovery region (facet)'
             properties['count'] = aggregate_count
             record['properties'] = properties
-            self.geojson_regions.append(record)
+            if len(tile_key) >= 6:
+                if tile_key[:6] == '211111':
+                    # no bad coordinates (off 0, 0 coast of Africa)
+                    add_region = False  # don't display items without coordinates
+            if add_region:
+                self.geojson_regions.append(record)
 
     def set_aggregation_depth(self, request_dict_json):
         """ sets the aggregatin depth for
