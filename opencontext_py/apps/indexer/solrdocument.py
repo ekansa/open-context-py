@@ -697,7 +697,7 @@ class SolrDocument:
                                                     self.fields['text'] += parent['label'] + '\n'
                                                     act_solr_field = \
                                                         self._convert_slug_to_solr(parent['slug']) \
-                                                        + '___' + act_solr_field
+                                                        + '___' + act_pred_root_act_solr_field
                                                 if last_object_uri is not False:
                                                     self.process_object_uri(last_object_uri)
 
