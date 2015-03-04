@@ -103,6 +103,12 @@ class Manifest(models.Model):
         self.indexed = timezone.now()
         super(Manifest, self).save(update_fields=['indexed'])
 
+    def archived_save(self):
+        """
+        Updates with the last indexed time
+        """
+        super(Manifest, self).save(update_fields=['archived'])
+
     def slug_save(self, project_indices=False):
         """
         save only slug value
