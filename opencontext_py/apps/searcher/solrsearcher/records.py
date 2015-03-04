@@ -1,5 +1,6 @@
 import json
 import geojson
+import django.utils.http as http
 from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from opencontext_py.libs.rootpath import RootPath
@@ -8,6 +9,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 class JsonLDrecords():
@@ -20,9 +22,15 @@ class JsonLDrecords():
         TO DO: add JSON-LD for non spatial items
     """
 
-    def __init__(self):
+    def __init__(self, response_dict_json):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
+        self.entities = {}
+        self.response_dict = json.loads(response_dict_json)
+        # list of fields to include as properties in the geojson records
+        self.record_fields = self.add_record_fields()
+        # make values to these fields "flat" not a list
+        self.flatten_rec_fields = True
         self.geojson_recs = []
         self.non_geo_recs = []
         self.total_found = False
@@ -119,7 +127,7 @@ class JsonLDrecords():
                 self.recursive_count = 0
                 projects = self.extract_hierarchy(solr_rec,
                                                   SolrDocument.ROOT_PROJECT_SOLR,
-                                                  '___project_id',
+                                                  '___project',
                                                   [])
                 if len(projects) > 0:
                     properties['project label'] = projects[-1]['label']
@@ -128,7 +136,7 @@ class JsonLDrecords():
                 self.recursive_count = 0
                 contexts = self.extract_hierarchy(solr_rec,
                                                   SolrDocument.ROOT_CONTEXT_SOLR,
-                                                  '___context_id',
+                                                  '___context',
                                                   [])
                 if len(contexts) > 0:
                     properties['context label'] = self.make_context_path_label(contexts)
@@ -145,12 +153,43 @@ class JsonLDrecords():
                 thumbnail = self.get_thumbnail(solr_rec)
                 if isinstance(thumbnail, dict):
                     properties['thumbnail'] = thumbnail['src']
+                properties = self.add_nonstandard_properties(properties,
+                                                             solr_rec)
                 record['properties'] = properties
                 # add to list of geospatial records
                 self.geojson_recs.append(record)
             else:
                 # case when the record is not GeoSpatial in nature
                 self.non_geo_recs.append(record)
+
+    def add_nonstandard_properties(self,
+                                   properties,
+                                   solr_rec):
+        """ adds properties from the record fields
+            which are non-standard, and provide additional metadata
+            for the geospatial record features. This is useful
+            for clients like qGIS or R that want more
+            full descriptions of records
+        """
+        if len(self.record_fields) > 0:
+            # need to add additional fields to the properties
+            for field_id in self.record_fields:
+                field_ent = self.get_entity(field_id)
+                if field_ent is not False:
+                    # the identifier for this field is known
+                    solr_data_type = QueryMaker().get_solr_field_type(field_ent.data_type)
+                    solr_field = field_ent.slug.replace('-', '_')
+                    solr_field += '___pred_' + solr_data_type
+                    if solr_field in solr_rec:
+                        self.recursive_count = 0
+                        field_hierachy = self.extract_hierarchy(solr_rec,
+                                                                solr_field,
+                                                                '___pred',
+                                                                [],
+                                                                field_ent.slug)
+                        if len(field_hierachy) > 0:
+                            properties[field_ent.label] = field_hierachy[-1]
+        return properties
 
     def get_thumbnail(self, solr_rec):
         """ get media record and thumbnail, if it exists """
@@ -181,7 +220,7 @@ class JsonLDrecords():
             root_cat_field = 'oc_gen_' + item_type + '___pred_id'
             cat_hierarchy = self.extract_hierarchy(solr_rec,
                                                    root_cat_field,
-                                                   '___pred_id',
+                                                   '___pred',
                                                    [])
         return cat_hierarchy
 
@@ -189,7 +228,8 @@ class JsonLDrecords():
                           solr_rec,
                           facet_field_key,
                           facet_suffix,
-                          hierarchy=[]):
+                          hierarchy=[],
+                          pred_field=False):
         """ extracts a hierarchy from a solr_record.
             The output is a list starting with the most
             general parent of the hiearchy,
@@ -199,14 +239,29 @@ class JsonLDrecords():
             default / starts with the root
             of the hiearchy as the facet_field_key
         """
-        if facet_field_key in solr_rec and self.recursive_count < 20:
+        alt_facet_field_key = facet_field_key
+        if pred_field is not False:
+            # do this to allow search of hiarchy in a named
+            # predicate field
+            f_parts = facet_field_key.split('___')
+            if len(f_parts) == 2:
+                alt_f_parts = [f_parts[0],
+                               pred_field.replace('-', '_'),
+                               f_parts[1]]
+                alt_facet_field_key = '___'.join(alt_f_parts)
+                print('Check: ' + facet_field_key + ', ' + alt_facet_field_key)
+        if (facet_field_key in solr_rec or alt_facet_field_key in solr_rec)\
+           and self.recursive_count < 20:
             self.recursive_count += 1
-            path_item_val = solr_rec[facet_field_key][0]
+            if facet_field_key in solr_rec:
+                path_item_val = solr_rec[facet_field_key][0]
+            else:
+                path_item_val = solr_rec[alt_facet_field_key][0]
             parsed_path_item = self.parse_solr_value_parts(path_item_val)
             if isinstance(parsed_path_item, dict):
                 hierarchy.append(parsed_path_item)
                 new_facet_field = parsed_path_item['slug'].replace('-', '_')
-                new_facet_field += facet_suffix
+                new_facet_field += facet_suffix + '_' + parsed_path_item['data_type']
                 # print('New hierarchy field: ' + new_facet_field)
                 hierarchy = self.extract_hierarchy(solr_rec,
                                                    new_facet_field,
@@ -257,6 +312,18 @@ class JsonLDrecords():
             url = partial_url
         return url
 
+    def add_record_fields(self):
+        """ adds fields to include in the GeoJSON properties """
+        if 'rec-field' in self.response_dict:
+            raw_rec_fields = self.response_dict['rec-field'][0]
+            if ',' in raw_rec_fields:
+                self.record_fields = raw_rec_fields.split(',')
+            else:
+                self.record_fields = [raw_rec_fields]
+        else:
+            self.record_fields = []
+        return self.record_fields
+
     def parse_solr_value_parts(self, solr_value):
         """ parses a solr_value string into
             slug, solr-data-type, uri, and label
@@ -282,4 +349,26 @@ class JsonLDrecords():
         if isinstance(dict_obj, dict):
             if key in dict_obj:
                 output = dict_obj[key]
+        return output
+
+    def get_entity(self, identifier, is_path=False):
+        """ looks up an entity """
+        output = False
+        identifier = http.urlunquote_plus(identifier)
+        if identifier in self.entities:
+            # best case scenario, the entity is already looked up
+            output = self.entities[identifier]
+        else:
+            found = False
+            entity = Entity()
+            if is_path:
+                found = entity.context_dereference(identifier)
+            else:
+                found = entity.dereference(identifier)
+                if found is False:
+                    # case of linked data slugs
+                    found = entity.dereference(identifier, identifier)
+            if found:
+                self.entities[identifier] = entity
+                output = entity
         return output
