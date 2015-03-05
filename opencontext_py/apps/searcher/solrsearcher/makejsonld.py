@@ -115,7 +115,8 @@ class MakeJsonLd():
             self.make_facets(solr_json)
         if 'geo-record' in self.act_responses:
             # now add the result information
-            json_recs_obj = JsonLDrecords()
+            json_recs_obj = JsonLDrecords(self.request_dict_json)
+            json_recs_obj.entities = self.entities
             json_recs_obj.min_date = self.min_date
             json_recs_obj.max_date = self.max_date
             json_recs_obj.make_records_from_solr(solr_json)
