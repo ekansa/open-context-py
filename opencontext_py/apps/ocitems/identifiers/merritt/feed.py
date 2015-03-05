@@ -1,6 +1,8 @@
 import feedparser
 import requests
 from time import sleep
+from time import mktime
+from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
@@ -35,7 +37,7 @@ class MerrittFeed():
         if feed is not False:
             for entry in feed.entries:
                 ids = {'stable_id': entry.id,
-                       'archived': entry.updated_parsed}
+                       'archived': datetime.fromtimestamp(mktime(entry.updated_parsed))}
                 if len(entry.links) > 0:
                     for link in entry.links:
                         if link['rel'] == 'alternate' \
