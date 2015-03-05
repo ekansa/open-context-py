@@ -120,7 +120,7 @@ class JsonLDrecords():
                 # start adding GeoJSON properties
                 properties = LastUpdatedOrderedDict()
                 properties['id'] = '#rec-' + str(i) + '-of-' + str(self.total_found)
-                properties['feature type'] = 'item record'
+                properties['feature-type'] = 'item record'
                 properties['uri'] = record['rdfs:isDefinedBy']
                 properties['href'] = local_url
                 # add context information, if present
