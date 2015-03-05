@@ -13,7 +13,10 @@ class SolrSearch():
 
     DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
                             SolrDocument.ROOT_PROJECT_SOLR,
-                            'item_type']
+                            'item_type',
+                            'image_media_count',
+                            'other_binary_media_count',
+                            'document_count']
 
     def __init__(self):
         self.solr = False
@@ -52,6 +55,14 @@ class SolrSearch():
         query['facet.field'] = []
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
+        query['sort'] = 'interest_score desc'
+        s_param = self.get_request_param(request_dict,
+                                         'sort',
+                                         False,
+                                         False)
+        if s_param is not False:
+            # add custom sorting
+            query['sort'] = s_param
         # If the user does not provide a search term, search for everything
         query['q'] = '*:*' # defaul search for all
         q_param = self.get_request_param(request_dict,
@@ -172,6 +183,27 @@ class SolrSearch():
                                                           form_use_life_date,
                                                           'stop')
             query['fq'] += form_stop_query['fq']
+        # images
+        images = self.get_request_param(request_dict,
+                                        'images',
+                                        False,
+                                        False)
+        if images is not False:
+            query['fq'] += ['image_media_count:[1 TO *]']
+        # other media (not images)
+        other_media = self.get_request_param(request_dict,
+                                             'other-media',
+                                             False,
+                                             False)
+        if other_media is not False:
+            query['fq'] += ['other_binary_media_count:[1 TO *]']
+         # other media (not images)
+        documents = self.get_request_param(request_dict,
+                                           'documents',
+                                           False,
+                                           False)
+        if documents is not False:
+            query['fq'] += ['document_count:[1 TO *]']
         # Now add default facet fields
         query = self.add_default_facet_fields(query,
                                               request_dict)
