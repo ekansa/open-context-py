@@ -106,6 +106,15 @@ class ActiveFilters():
                             act_filter['label'] += ' (SW) and ' + str(round(coordinates[2], 3))
                             act_filter['label'] += ', ' + str(round(coordinates[3], 3))
                             act_filter['label'] += ' (NE)'
+                    elif param_key == 'images':
+                        act_filter['oc-api:filter'] = 'Has related media'
+                        act_filter['label'] = 'Linked to images'
+                    elif param_key == 'other-media':
+                        act_filter['oc-api:filter'] = 'Has related media'
+                        act_filter['label'] = 'Linked to media (other than images)'
+                    elif param_key == 'documents':
+                        act_filter['oc-api:filter'] = 'Has related media'
+                        act_filter['label'] = 'Linked to documents'
                     rem_request = fl.make_request_sub(request_dict,
                                                       param_key,
                                                       param_val)

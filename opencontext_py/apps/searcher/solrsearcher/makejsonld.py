@@ -36,6 +36,7 @@ class MakeJsonLd():
         self.entities = {}
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
+        self.rel_media_facet = False
         item_ns = ItemNamespaces()
         context = item_ns.namespaces
         self.namespaces = context
@@ -258,35 +259,6 @@ class MakeJsonLd():
         filters = a_filters.add_filters_json(self.request_dict)
         if len(filters) > 0:
             self.json_ld['oc-api:active-filters'] = filters
-
-    def make_filter_label_dict(self, act_val):
-        """ returns a dictionary object
-            with a label and set of entities (in cases of OR
-            searchs)
-        """
-        output = {'label': False,
-                  'data-type': 'id',
-                  'slug': False,
-                  'entities': []}
-        labels = []
-        if '||' in act_val:
-            vals = act_val.split('||')
-        else:
-            vals = [act_val]
-        for val in vals:
-            f_entity = self.get_entity(val)
-            if f_entity is not False:
-                qm = QueryMaker()
-                # get the solr field data type
-                ent_solr_data_type = qm.get_solr_field_type(f_entity.data_type)
-                if ent_solr_data_type is not False \
-                   and ent_solr_data_type != 'id':
-                    output['data-type'] = ent_solr_data_type
-                labels.append(f_entity.label)
-                output['entities'].append(f_entity)
-        output['label'] = ' OR '.join(labels)
-        output['slug'] = '-or-'.join(vals)
-        return output
 
     def get_entity(self, identifier, is_path=False):
         """ looks up an entity """
@@ -583,8 +555,77 @@ class MakeJsonLd():
                and 'chrono-facet' in self.act_responses:
                 self.json_ld['oc-api:has-form-use-life-ranges'] = chrono_tiles.chrono_tiles
 
+    def add_rel_media_fields(self, solr_json):
+        """ adds facet options for solr media """
+        rel_media_options = []
+        solr_facet_fields = self.get_path_in_dict(['facet_counts',
+                                                  'facet_fields'],
+                                                  solr_json)
+        if solr_facet_fields is not False:
+            rel_image_count = self.get_rel_media_counts(solr_facet_fields,
+                                                        'image_media_count')
+            rel_other_count = self.get_rel_media_counts(solr_facet_fields,
+                                                        'other_binary_media_count')
+            rel_doc_count = self.get_rel_media_counts(solr_facet_fields,
+                                                      'document_count')
+            rel_media_options = self.make_rel_media_option(rel_image_count,
+                                                           'images',
+                                                           rel_media_options)
+            rel_media_options = self.make_rel_media_option(rel_other_count,
+                                                           'other-media',
+                                                           rel_media_options)
+            rel_media_options = self.make_rel_media_option(rel_doc_count,
+                                                           'documents',
+                                                           rel_media_options)
+            if len(rel_media_options) > 0:
+                self.rel_media_facet = LastUpdatedOrderedDict()
+                self.rel_media_facet['id'] = '#related-media'
+                self.rel_media_facet['label'] = 'Has Related Media'
+                self.rel_media_facet['oc-api:has-rel-media-options'] = rel_media_options
+
+    def make_rel_media_option(self,
+                              rel_media_count,
+                              rel_media_type,
+                              rel_media_options):
+        """ makes a facet option for related media """
+        if rel_media_count > 0:
+            fl = FilterLinks()
+            fl.base_request_json = self.request_dict_json
+            fl.base_r_full_path = self.request_full_path
+            fl.spatial_context = self.spatial_context
+            option = LastUpdatedOrderedDict()
+            new_rparams = fl.add_to_request_by_solr_field(rel_media_type,
+                                                          '1')
+            option['id'] = fl.make_request_url(new_rparams)
+            option['json'] = fl.make_request_url(new_rparams, '.json')
+            if rel_media_type == 'images':
+                option['label'] = 'Linked with images'
+            elif rel_media_type == 'other-media':
+                option['label'] = 'Linked with media (non-image)'
+            elif rel_media_type == 'documents':
+                option['label'] = 'Linked with documents'
+            option['count'] = rel_media_count
+            rel_media_options.append(option)
+        return rel_media_options
+
+    def get_rel_media_counts(self, solr_facet_fields, solr_media_field):
+        """ returns the number of items with the requested type of
+            media, as indicated in the 'solr_media_field'
+        """
+        output = 0
+        if solr_media_field in solr_facet_fields:
+            solr_facet_values = solr_facet_fields[solr_media_field]
+            i = -1
+            for solr_facet_value_key in solr_facet_values[::2]:
+                i += 2
+                if solr_facet_value_key != '0':
+                    output += solr_facet_values[i]
+                    print(solr_media_field + ' now: ' + str(output))
+        return output
+
     def make_facets(self, solr_json):
         """ Makes a list of facets """
+        self.add_rel_media_fields(solr_json)
         solr_facet_fields = self.get_path_in_dict(['facet_counts',
                                                   'facet_fields'],
                                                   solr_json)
@@ -597,6 +638,15 @@ class MakeJsonLd():
             if 'form_use_life_chrono_tile' in solr_facet_fields:
                 # remove the form-use-life chronology tile field
                 solr_facet_fields.pop('form_use_life_chrono_tile', None)
+            if 'image_media_count' in solr_facet_fields:
+                # remove image media facet
+                solr_facet_fields.pop('image_media_count', None)
+            if 'other_binary_media_count' in solr_facet_fields:
+                # remove other media facet
+                solr_facet_fields.pop('other_binary_media_count', None)
+            if 'document_count' in solr_facet_fields:
+                # remove document count facet
+                solr_facet_fields.pop('document_count', None)
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
                 count_raw_values = len(solr_facet_values)
@@ -702,6 +752,9 @@ class MakeJsonLd():
         for id_key, facet in pre_sort_facets.items():
             # add remaining (unsorted) facets
             json_ld_facets.append(facet)
+        if self.rel_media_facet is not False:
+            # add the related media facet
+            json_ld_facets.append(self.rel_media_facet)
         return json_ld_facets
 
     def get_facet_meta(self, solr_facet_key):

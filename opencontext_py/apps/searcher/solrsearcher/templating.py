@@ -209,6 +209,14 @@ class FacetField():
                 fo.parse_json_option(json_option)
                 if fo.id is not False:
                     self.id_options.append(fo)
+        elif 'oc-api:has-rel-media-options' in json_facet:
+            for json_option in json_facet['oc-api:has-rel-media-options']:
+                i += 1
+                fo = FacetOption()
+                fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
+                fo.parse_json_option(json_option)
+                if fo.id is not False:
+                    self.id_options.append(fo)
         if 'oc-api:has-numeric-options' in json_facet:
             for json_option in json_facet['oc-api:has-numeric-options']:
                 i += 1
