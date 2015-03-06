@@ -19,6 +19,8 @@ class StableIDassociate():
         self.id_recorded = 0
         self.base_wait = 300
         self.max_wait = self.base_wait * 5
+        self.go_backwards = False
+        self.url = False
 
     def associate_ids(self, feed_url=False):
         """ match ids """
@@ -26,9 +28,14 @@ class StableIDassociate():
         ids = mf.get_ids_from_merritt_feed(feed_url)
         ids_done = self.add_ids(ids)
         print('Added stable identifiers: ' + str(len(ids)) + ' total added: ' + str(ids_done))
-        if mf.next_page is not False:
+        if mf.next_page is not False and self.go_backwards is False:
+            self.url = mf.next_page
             print('Continuing to next batch...')
             self.associate_ids(mf.next_page)
+        elif mf.prev_page is not False and self.go_backwards:
+            self.url = mf.prev_page
+            print('Continuing to next batch (backwards)...')
+            self.associate_ids(mf.prev_page)
         else: 
             print('Done for now.')
 
