@@ -627,7 +627,7 @@ class MakeJsonLd():
                 i += 2
                 if solr_facet_value_key != '0':
                     output += solr_facet_values[i]
-                    print(solr_media_field + ' now: ' + str(output))
+                    # print(solr_media_field + ' now: ' + str(output))
         return output
 
     def make_facets(self, solr_json):
