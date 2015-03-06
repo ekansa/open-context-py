@@ -1,5 +1,6 @@
 import json
 import requests
+from unidecode import unidecode
 from time import sleep
 from django.conf import settings
 from opencontext_py.libs.generalapi import GeneralAPI
@@ -39,9 +40,9 @@ class indexWarmer():
                             if option_type in facet:
                                 for option in facet[option_type]:
                                     new_urls.append(option['json'])
-                print(str(len(new_urls)) + ' urls in: ' + url)
+                print(str(len(new_urls)) + ' urls in: ' + unidecode(url))
                 for new_url in new_urls:
-                    print('Getting: ' + new_url + ', level: ' + str(recursion_depth))
+                    print('Getting: ' + unidecode(new_url) + ', level: ' + str(recursion_depth))
                     self.get_search_links(new_url, recursion_depth)
             else:
                 self.request_errors.append(url)
