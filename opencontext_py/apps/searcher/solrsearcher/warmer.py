@@ -46,7 +46,7 @@ class indexWarmer():
                     self.get_search_links(new_url, recursion_depth)
             else:
                 self.request_errors.append(url)
-                print('New error ! ' + url)
+                print('New error ! ' + unidecode(url))
         else:
             print('*****************************************')
             print('At maximum depth from this path.')
