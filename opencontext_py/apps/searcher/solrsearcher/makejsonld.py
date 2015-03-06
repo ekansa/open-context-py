@@ -260,6 +260,13 @@ class MakeJsonLd():
         if len(filters) > 0:
             self.json_ld['oc-api:active-filters'] = filters
 
+    def make_filter_label_dict(self, act_val):
+        """ returns a dictionary object
+            with a label and set of entities (in cases of OR
+            searchs)
+        """
+        return ActiveFilters().make_filter_label_dict(act_val)
+
     def get_entity(self, identifier, is_path=False):
         """ looks up an entity """
         output = False
