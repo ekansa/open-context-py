@@ -447,11 +447,11 @@ class QueryMaker():
         elif dif_dt.days >= 1:
             solr_val = int(round(dif_dt.days, 0))
             solr_dif = '+' + str(solr_val) + 'DAY'
-        elif dif_dt.hours >= 1:
-            solr_val = int(round(dif_dt.hours, 0))
+        elif (dif_dt.seconds // 3600) >= 1:
+            solr_val = int(round((dif_dt.seconds // 3600), 0))
             solr_dif = '+' + str(solr_val) + 'HOUR'
-        elif dif_dt.minutes >= 1:
-            solr_val = int(round(dif_dt.minutes, 0))
+        elif ((dif_dt.seconds % 3600) // 60) >= 1:
+            solr_val = int(round(((dif_dt.seconds % 3600) // 60), 0))
             solr_dif = '+' + str(solr_val) + 'MINUTE'
         elif dif_dt.seconds >= 1:
             solr_val = int(round(dif_dt.seconds, 0))
