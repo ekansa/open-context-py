@@ -466,7 +466,7 @@ class QueryMaker():
         solr_val = int(float(solr_val))
         dt = self.date_convert(date_val)
         if 'YEAR' in solr_gap:
-            dt = dt + datetime.timedelta(days=int(round(solr_val * 365.25), 0))
+            dt = dt + datetime.timedelta(days=int(round((solr_val * 365.25), 0)))
         elif 'MONTH' in solr_gap:
             dt = dt + datetime.timedelta(days=(solr_val * 30))
         elif 'DAY' in solr_gap:
