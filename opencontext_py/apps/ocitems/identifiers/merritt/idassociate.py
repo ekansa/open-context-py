@@ -126,4 +126,4 @@ class StableIDassociate():
                         manifest.archived_save()
                         if ok_new:
                             self.id_recorded += 1
-            print('Saved ids: ' + str(self.id_recorded))
+                        print('Saved ids: ' + str(self.id_recorded))
