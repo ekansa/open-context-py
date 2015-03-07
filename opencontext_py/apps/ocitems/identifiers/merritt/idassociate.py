@@ -106,7 +106,8 @@ class StableIDassociate():
                     uuid = URImanagement.get_uuid_from_oc_uri(row[1])
                     if uuid is not False:
                         try:
-                            manifest = Manifest.objects.get(uuid=uuid)
+                            manifest = Manifest.objects.get(uuid=uuid,
+                                                            archived__isnull=True)
                         except Manifest.DoesNotExist:
                             manifest = False
                     if manifest is not False:
