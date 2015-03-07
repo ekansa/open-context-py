@@ -2,6 +2,8 @@ import sys
 import csv
 import os
 import datetime
+import time
+import re
 from time import mktime
 from time import sleep
 from django.conf import settings
@@ -70,11 +72,22 @@ class StableIDassociate():
                     except:
                         ok_new = False
                     # note when the item was last archived
-                    manifest.archived = id_rec['archived']
+                    manifest.archived = self.validate_date(id_rec['archived'])
                     manifest.archived_save()
                     if ok_new:
                         self.id_recorded += 1
         return self.id_recorded
+
+    def validate_date(self, date_text):
+        q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}[\s]\d{2}:\d{2}:\d{2}', date_text)
+        if len(q_dt_strs) == 1:
+            date_text = q_dt_strs[0]
+        try:
+            output = date_text
+            datetime.datetime.strptime(date_text, '%Y-%m-%d %H:%M:%S')
+        except ValueError:
+            output = time.strftime('%Y-%m-%d %H:%M:%S')
+        return output
 
     def parse_stable_id(self, stable_uri):
         """ Parses a stable ID to into components
