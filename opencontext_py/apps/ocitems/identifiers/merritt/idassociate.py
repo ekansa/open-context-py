@@ -88,7 +88,7 @@ class StableIDassociate():
                 break
         return output
 
-    def load_csv(self, filename, add_path=False):
+    def load_csv(self, filename, after=0, add_path=False):
         """ loads CSV dump from Merritt """
         if add_path:
             filename_path = os.path.join(settings.STATIC_ROOT,
@@ -97,30 +97,33 @@ class StableIDassociate():
         else:
             filename_path = filename
         data = csv.reader(open(filename_path))
+        i = 0
         for row in data:
             manifest = False
             if 'ark:/' in row[0]:
-                uuid = URImanagement.get_uuid_from_oc_uri(row[1])
-                if uuid is not False:
-                    try:
-                        manifest = Manifest.objects.get(uuid=uuid)
-                    except Manifest.DoesNotExist:
-                        manifest = False
-                if manifest is not False:
-                    ok_new = True
-                    try:
-                        sid = StableIdentifer()
-                        sid.stable_id = row[0].replace('ark:/', '')
-                        sid.stable_type = 'ark'
-                        sid.uuid = manifest.uuid
-                        sid.project_uuid = manifest.project_uuid
-                        sid.item_type = manifest.item_type
-                        sid.save()
-                    except:
-                        ok_new = False
-                    # note when the item was last archived
-                    manifest.archived = row[3]
-                    manifest.archived_save()
-                    if ok_new:
-                        self.id_recorded += 1
+                i += 0
+                if i >= after:
+                    uuid = URImanagement.get_uuid_from_oc_uri(row[1])
+                    if uuid is not False:
+                        try:
+                            manifest = Manifest.objects.get(uuid=uuid)
+                        except Manifest.DoesNotExist:
+                            manifest = False
+                    if manifest is not False:
+                        ok_new = True
+                        try:
+                            sid = StableIdentifer()
+                            sid.stable_id = row[0].replace('ark:/', '')
+                            sid.stable_type = 'ark'
+                            sid.uuid = manifest.uuid
+                            sid.project_uuid = manifest.project_uuid
+                            sid.item_type = manifest.item_type
+                            sid.save()
+                        except:
+                            ok_new = False
+                        # note when the item was last archived
+                        manifest.archived = row[3]
+                        manifest.archived_save()
+                        if ok_new:
+                            self.id_recorded += 1
             print('Saved ids: ' + str(self.id_recorded))
