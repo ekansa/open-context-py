@@ -72,8 +72,12 @@ class StableIDassociate():
                     except:
                         ok_new = False
                     # note when the item was last archived
-                    manifest.archived = self.validate_date(id_rec['archived'])
-                    manifest.archived_save()
+                    try:
+                        manifest.archived = self.validate_date(id_rec['archived'])
+                        manifest.archived_save()
+                    except:
+                        manifest.archived = time.strftime('%Y-%m-%d %H:%M:%S')
+                        manifest.archived_save()
                     if ok_new:
                         self.id_recorded += 1
         return self.id_recorded
@@ -136,8 +140,12 @@ class StableIDassociate():
                         except:
                             ok_new = False
                         # note when the item was last archived
-                        manifest.archived = row[3]
-                        manifest.archived_save()
+                        try:
+                            manifest.archived = self.validate_date(row[3])
+                            manifest.archived_save()
+                        except:
+                            manifest.archived = time.strftime('%Y-%m-%d %H:%M:%S')
+                            manifest.archived_save()
                         if ok_new:
                             self.id_recorded += 1
                         print('Saved ids: ' + str(self.id_recorded))
