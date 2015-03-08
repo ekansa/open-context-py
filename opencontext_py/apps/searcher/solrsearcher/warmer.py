@@ -10,11 +10,17 @@ class indexWarmer():
     """ Interacts with the Open Context API
         to make requests to warm up the solr index
     """
+    SPACETIME_FACET_TYPES = ['oc-api:has-form-use-life-ranges',
+                             'features']
+    FACET_TYPES = ['oc-api:has-facets',
+                   'oc-api:oc-api:has-numeric-facets',
+                   'oc-api:oc-api:has-date-facets']
     OPTION_TYPES = ['oc-api:has-id-options',
                     'oc-api:has-numeric-options',
                     'oc-api:has-date-options',
                     'oc-api:has-text-options',
-                    'oc-api:has-rel-media-options']
+                    'oc-api:has-rel-media-options',
+                    'oc-api:has-range-options']
     SLEEP_TIME = .33
 
     def __init__(self):
@@ -34,12 +40,18 @@ class indexWarmer():
             json_r = self.get_search_json(url)
             new_urls = []
             if isinstance(json_r, dict):
-                if 'oc-api:has-facets' in json_r:
-                    for facet in json_r['oc-api:has-facets']:
-                        for option_type in self.OPTION_TYPES:
-                            if option_type in facet:
-                                for option in facet[option_type]:
-                                    new_urls.append(option['json'])
+                for facet_type in self.SPACETIME_FACET_TYPES:
+                    if facet_type in json_r:
+                        for option in json_r[facet_type]:
+                            if 'json' in option:
+                                new_urls.append(option['json'])
+                for facet_type in self.FACET_TYPES:
+                    if facet_type in json_r:
+                        for facet in json_r[facet_type]:
+                            for option_type in self.OPTION_TYPES:
+                                if option_type in facet:
+                                    for option in facet[option_type]:
+                                        new_urls.append(option['json'])
                 print(str(len(new_urls)) + ' urls in: ' + unidecode(url))
                 for new_url in new_urls:
                     print('Getting: ' + unidecode(new_url) + ', level: ' + str(recursion_depth))
