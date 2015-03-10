@@ -367,6 +367,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:coverage']:
                 self.fields['text'] += meta['label'] + '\n'
+                self.fields['text'] += meta['id'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
                     'id',
@@ -379,6 +380,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:subject']:
                 self.fields['text'] += meta['label'] + '\n'
+                self.fields['text'] += meta['id'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
                     'id',
@@ -391,6 +393,7 @@ class SolrDocument:
             self.fields[fname] = []
             for meta in self.oc_item.json_ld['dc-terms:spatial']:
                 self.fields['text'] += meta['label'] + '\n'
+                self.fields['text'] += meta['id'] + '\n'
                 item = self._concat_solr_string_value(
                     meta['slug'],
                     'id',
