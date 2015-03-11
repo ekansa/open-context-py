@@ -37,6 +37,9 @@ class JsonLDchronology():
         aggregate_tiles = LastUpdatedOrderedDict()
         i = -1
         t = 0
+        if len(solr_tiles) <= 10:
+            # don't aggregate if there's not much to aggregate
+            self.aggregation_depth = self.max_depth
         for tile_key in solr_tiles[::2]:
             t += 1
             i += 2
