@@ -38,6 +38,7 @@ class RecordProperties():
         self.thumbnail_href = False
         self.thumbnail_uri = False
         self.thumbnail_scr = False
+        self.snippet = False
         self.cite_uri = False  # stable identifier as an HTTP uri
         self.base_url = settings.CANONICAL_HOST
         rp = RootPath()
@@ -47,6 +48,7 @@ class RecordProperties():
             self.response_dict = json.loads(response_dict_json)
         else:
             self.response_dict = False
+        self.highlighting = False
         self.recursive_count = 0
         self.min_date = False
         self.max_date = False
@@ -62,6 +64,7 @@ class RecordProperties():
             self.get_context(solr_rec)
             self.get_time(solr_rec)  # get time information, limiting date ranges to query constaints
             self.get_thumbnail(solr_rec)
+            self.get_snippet(solr_rec)  # get snippet of highlighted text
 
     def get_item_basics(self, solr_rec):
         """ get basic metadata for an item """
@@ -79,6 +82,17 @@ class RecordProperties():
                     self.item_type = item_type_output['item_type']
                     self.label = id_parts['label']
         return output
+
+    def get_snippet(self, solr_rec):
+        """ get a text highlighting snippet """
+        if isinstance(self.highlighting, dict):
+            if self.uuid is False:
+                if 'uuid' in solr_rec:
+                    self.uuid = solr_rec['uuid']
+            if self.uuid in self.highlighting:
+                if 'text' in self.highlighting[self.uuid]:
+                    text_list = self.highlighting[self.uuid]['text']
+                    self.snippet = ' '.join(text_list)
 
     def get_citation_uri(self, solr_rec):
         """ gets the best citation / persistent uri for the item """

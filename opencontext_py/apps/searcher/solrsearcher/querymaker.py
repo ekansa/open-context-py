@@ -222,13 +222,17 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
-
     def process_prop(self, props):
-        # TODO docstring
+        """ processes 'prop' (property) parameters
+            property parameters are tricky because they
+            can come in hierarchies
+            that's why there's some complexity to this
+        """
         query_dict = {'fq': [],
                       'facet.field': [],
                       'stats.field': [],
                       'facet.range': [],
+                      'hl-queries': [],
                       'ranges': {}}
         fq_terms = []
         prop_path_lists = self.expand_hierarchy_options(props)
@@ -238,6 +242,7 @@ class QueryMaker():
             fq_path_terms = []
             act_field_fq = SolrDocument.ROOT_PREDICATE_SOLR
             act_field_data_type = 'id'
+            last_field_label = False  # needed for full text highlighting
             predicate_solr_slug = False
             for prop_slug in prop_path_list:
                 l_prop_entity = False
@@ -250,6 +255,7 @@ class QueryMaker():
                         found = entity.dereference(prop_slug, prop_slug)
                     if found:
                         self.entities[prop_slug] = entity  # store entitty for later use
+                        last_field_label = entity.label
                         prop_slug = entity.slug
                         if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
                             if entity.entity_type == 'property':
@@ -316,7 +322,8 @@ class QueryMaker():
                         if predicate_solr_slug is False or pred_prop_entity:
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                             # get a facet on this field
-                            query_dict['facet.field'].append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
+                            if act_field_data_type != 'string':
+                                query_dict['facet.field'].append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
                         else:
                             if act_field_data_type == 'id':
                                 act_field_fq = 'obj_all___' + predicate_solr_slug \
@@ -353,9 +360,14 @@ class QueryMaker():
                     i += 1
                 elif act_field_data_type == 'string':
                     # case for a text search
+                    # last_field_label = False  # turn off using the field label for highlighting
                     string_terms = self.prep_string_search_term(prop_slug)
                     for escaped_term in string_terms:
                         search_term = act_field_fq + ':' + escaped_term
+                        if last_field_label is False:
+                            query_dict['hl-queries'].append(escaped_term)
+                        else:
+                            query_dict['hl-queries'].append(last_field_label + ' ' + escaped_term)
                         fq_path_terms.append(search_term)
                 elif act_field_data_type == 'numeric':
                     # numeric search. assume it's well formed solr numeric request

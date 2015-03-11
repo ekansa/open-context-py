@@ -24,6 +24,7 @@ class GeoJsonRecords():
         self.entities = {}
         self.response_dict_json = response_dict_json
         self.response_dict = json.loads(response_dict_json)
+        self.highlighting = False
         # make values to these fields "flat" not a list
         self.flatten_rec_fields = True
         self.geojson_recs = []
@@ -49,6 +50,10 @@ class GeoJsonRecords():
                 solr_recs = solr_json['response']['docs']
             except KeyError:
                 solr_recs = False
+            try:
+                self.highlighting = solr_json['highlighting']
+            except KeyError:
+                self.highlighting = False
             if isinstance(solr_recs, list):
                 self.process_solr_recs(solr_recs)
 
@@ -64,6 +69,7 @@ class GeoJsonRecords():
             rec_props_obj.entities = self.entities
             rec_props_obj.min_date = self.min_date
             rec_props_obj.max_date = self.max_date
+            rec_props_obj.highlighting = self.highlighting
             rec_props_obj.parse_solr_record(solr_rec)
             self.entities = rec_props_obj.entities  # add to existing list of entities, reduce lookups
             record['id'] = '#record-' + str(i) + '-of-' + str(self.total_found)
@@ -108,6 +114,8 @@ class GeoJsonRecords():
             properties['early bce/ce'] = rec_props_obj.early_date
             properties['late bce/ce'] = rec_props_obj.late_date
             properties['item category'] = rec_props_obj.category
+            if rec_props_obj.snippet is not False:
+                properties['snippet'] = rec_props_obj.snippet
             properties['thumbnail'] = rec_props_obj.thumbnail_scr
             record['properties'] = properties
             if geometry is not False:

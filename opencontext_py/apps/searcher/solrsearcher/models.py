@@ -64,7 +64,7 @@ class SolrSearch():
             # add custom sorting
             query['sort'] = s_param
         # If the user does not provide a search term, search for everything
-        query['q'] = '*:*' # defaul search for all
+        query['q'] = '*:*'  # defaul search for all
         q_param = self.get_request_param(request_dict,
                                          'q',
                                          False,
@@ -73,6 +73,9 @@ class SolrSearch():
             escaped_terms = qm.prep_string_search_term(q_param)
             query['q'] = ' '.join(escaped_terms)
             query['q.op'] = 'AND'
+            query['hl'] = 'true'
+            query['hl.fl'] = 'text'
+            query['hl.q'] = ' '.join(escaped_terms)
         start = self.get_request_param(request_dict,
                                        'start',
                                        False,
@@ -113,6 +116,15 @@ class SolrSearch():
                 if 'ranges' in prop_query:
                     for key, value in prop_query['ranges'].items():
                         query[key] = value
+                if 'hl-queries' in prop_query:
+                    query['hl'] = 'true'
+                    query['hl.fl'] = 'text'
+                    # query['hl.snippets'] = 2
+                    for q_term in prop_query['hl-queries']:
+                        if 'hl.q' in query:
+                            query['hl.q'] += ' OR (' + q_term + ')'
+                        else:
+                            query['hl.q'] = q_term
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
