@@ -101,7 +101,6 @@ class FilterLinks():
         slugs = self.parse_slugs_in_solr_facet_key(solr_facet_key)
         if slugs is not False:
             add_to_value = self.hierarchy_delim.join(slugs)
-            # print('Add-to-value' + add_to_value)
         else:
             add_to_value = None
         #print('New param: ' + param + ' new val: ' + new_value + ' len:' + str(self.base_request))
@@ -148,10 +147,20 @@ class FilterLinks():
                     old_found = False
                     for old_val in new_rparams[param]:
                         old_prefix = self.remove_solr_part(old_val)
+                        first_last_old_val = False
+                        if self.hierarchy_delim in old_val:
+                            old_val_ex = old_val.split(self.hierarchy_delim)
+                            if len(old_val_ex) > 2:
+                                first_last_old_val = old_val_ex[0]
+                                first_last_old_val += self.hierarchy_delim
+                                first_last_old_val += old_val_ex[-1]
                         if old_val == add_to_value:
                             old_found = True
                             new_list_val = old_val + self.hierarchy_delim + new_value
                         elif old_prefix == add_to_value:
+                            old_found = True
+                            new_list_val = old_prefix + self.hierarchy_delim + new_value
+                        elif first_last_old_val == add_to_value:
                             old_found = True
                             new_list_val = old_prefix + self.hierarchy_delim + new_value
                         else:

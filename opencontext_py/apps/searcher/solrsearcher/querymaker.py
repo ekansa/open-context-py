@@ -196,11 +196,14 @@ class QueryMaker():
             i = 0
             path_list_len = len(prop_path_list)
             fq_path_terms = []
-            act_field = SolrDocument.ROOT_PREDICATE_SOLR
+            act_field_fq = SolrDocument.ROOT_PREDICATE_SOLR
             act_field_data_type = 'id'
+            predicate_solr_slug = False
             for prop_slug in prop_path_list:
+                l_prop_entity = False
+                pred_prop_entity = False
+                require_id_field = False
                 if act_field_data_type == 'id':
-                    require_id_field = False
                     entity = Entity()
                     found = entity.dereference(prop_slug)
                     if found is False:
@@ -208,124 +211,128 @@ class QueryMaker():
                     if found:
                         self.entities[prop_slug] = entity  # store entitty for later use
                         prop_slug = entity.slug
-                        # now check if the entity has children
-                        lr = LinkRecursion()
-                        lr.get_entity_children(entity.uri)
-                        if len(lr.child_entities) > 1:
-                            # ok, this field has children. require it
-                            # to be treated as an ID field
-                            require_id_field = True
-                        else:
-                            require_id_field = False
-                        if i == 0:
-                            if entity.item_type != 'uri':
-                                act_field = SolrDocument.ROOT_PREDICATE_SOLR
-                            else:
-                                act_field = False
-                                if 'oc-gen' in prop_slug:
-                                    # get the root solr facet field for the item type
-                                    # associated with this category
-                                    act_field = self.get_parent_item_type_facet_field(entity.uri)
-                                if act_field is False:
-                                    act_field = SolrDocument.ROOT_LINK_DATA_SOLR
-                        # use the database to look up the active field for linked data
-                        l_prop_entity = False
                         if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
                             if entity.entity_type == 'property':
+                                pred_prop_entity = True
+                                predicate_solr_slug = prop_slug.replace('-', '_')
                                 l_prop_entity = True
-                                act_field = self.get_parent_entity_facet_field(entity.uri)
-                                # print('linked data field (' + str(i) + '): ' + str(act_field))
-                                if act_field is False:
-                                    act_field = SolrDocument.ROOT_LINK_DATA_SOLR
+                                lr = LinkRecursion()
+                                lr.get_entity_children(entity.uri)
+                                if len(lr.child_entities) > 1:
+                                    # ok, this field has children. require it
+                                    # to be treated as an ID field
+                                    require_id_field = True
+                        else:
+                            if entity.item_type == 'predicates':
+                                pred_prop_entity = True
+                                predicate_solr_slug = prop_slug.replace('-', '_')
+                                lr = LinkRecursion()
+                                lr.get_entity_children(entity.uri)
+                                if len(lr.child_entities) > 1:
+                                    # ok, this field has children. require it
+                                    # to be treated as an ID field
+
+                                    require_id_field = True
+                        if i == 0:
+                            if 'oc-gen' in prop_slug and entity.item_type != 'uri':
+                                act_field_fq = self.get_parent_item_type_facet_field(entity.uri)
+                            elif entity.item_type == 'uri':
+                                act_field_fq = SolrDocument.ROOT_LINK_DATA_SOLR
+                            else:
+                                act_field_fq = SolrDocument.ROOT_PREDICATE_SOLR
                         # ---------------------------------------------------
                         # THIS PART BUILDS THE FACET-QUERY
                         # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                         # the below is a bit of a hack. We should have a query field
                         # as with ___pred_ to query just the slug. But this works for now
-                        fq_field = act_field + '_fq'
-                        fq_path_term = fq_field + ':' + prop_slug
+                        fq_field = act_field_fq + '_fq'
+                        if path_list_len == 2 and act_field_data_type == 'id':
+                            # could be an object deeper in the hierarchy, so allow the obj_all version
+                            fq_path_term = '(' + fq_field + ':' + prop_slug
+                            fq_path_term += ' OR obj_all___' + fq_field + ':' + prop_slug + ')'
+                        else:
+                            fq_path_term = fq_field + ':' + prop_slug
                         fq_path_terms.append(fq_path_term)
                         #---------------------------------------------------
                         #
                         #---------------------------------------------------
                         # THIS PART PREPARES FOR LOOPING OR FINAL FACET-FIELDS
                         #
+                        # print('pred-solr-slug: ' + predicate_solr_slug)
                         field_parts = self.make_prop_solr_field_parts(entity)
                         act_field_data_type = field_parts['suffix']
                         if require_id_field:
                             act_field_data_type = 'id'
                             field_parts['suffix'] = 'id'
-                        if i < 1:
-                            act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                        # check if the last or penultimate field has
+                        # a different data-type (for linked-data)
+                        if i >= (path_list_len - 2) \
+                           and l_prop_entity:
+                            lequiv = LinkEquivalence()
+                            dtypes = lequiv.get_data_types_from_object(entity.uri)
+                            if isinstance(dtypes, list):
+                                # set te data type and the act-field
+                                act_field_data_type = self.get_solr_field_type(dtypes[0])
+                        if predicate_solr_slug is False or pred_prop_entity:
+                            act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                            # get a facet on this field
+                            query_dict['facet.field'].append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
                         else:
-                            # active field for the next trip around the loop!
-                            if l_prop_entity:
-                                act_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                            if act_field_data_type == 'id':
+                                act_field_fq = 'obj_all___' + predicate_solr_slug \
+                                               + '___pred_' + field_parts['suffix']
+                                # get a facet on this field
+                                if predicate_solr_slug != field_parts['prefix']:
+                                    query_dict['facet.field'].append(field_parts['prefix'] \
+                                                                     + '___' \
+                                                                     + predicate_solr_slug \
+                                                                     + '___pred_' + field_parts['suffix'])
+                                else:
+                                    query_dict['facet.field'].append(field_parts['prefix'] \
+                                                                     + '___pred_' \
+                                                                     + field_parts['suffix'])
                             else:
-                                act_field = field_parts['prefix'] + '___' + act_field
-                            # --------------------------------------------
-                            # check if the last or penultimate field has
-                            # a different data-type (for linked-data)
-                            if i >= (path_list_len - 2) \
-                               and l_prop_entity:
-                                lequiv = LinkEquivalence()
-                                dtypes = lequiv.get_data_types_from_object(entity.uri)
-                                if isinstance(dtypes, list):
-                                    # set te data type and the act-field
-                                    act_field_data_type = self.get_solr_field_type(dtypes[0])
-                                    if act_field_data_type != 'id':
-                                        # a different data-type, make an act_field to reflect it
-                                        act_field = field_parts['prefix'] + '___pred_' + act_field_data_type
-                            # -------------------------------------------
+                                act_field_fq = predicate_solr_slug + '___pred_' + field_parts['suffix']
+                        # -------------------------------------------
                         if act_field_data_type == 'numeric':
                             # print('Numeric field: ' + act_field)
-                            act_field = field_parts['prefix'] + '___pred_numeric'
+                            act_field_fq = field_parts['prefix'] + '___pred_numeric'
                             query_dict = self.add_math_facet_ranges(query_dict,
-                                                                    act_field,
+                                                                    act_field_fq,
                                                                     entity)
+                            query_dict['stats.field'].append(act_field_fq)
                         elif act_field_data_type == 'date':
-                            print('Date field: ' + act_field)
-                            act_field = field_parts['prefix'] + '___pred_date'
+                            # print('Date field: ' + act_field)
+                            act_field_fq = field_parts['prefix'] + '___pred_date'
+                            query_dict['stats.field'].append(act_field_fq)
                             query_dict = self.add_date_facet_ranges(query_dict,
-                                                                    act_field,
+                                                                    act_field_fq,
                                                                     entity)
-                        # print('Current data type (' + str(i) + '): ' + act_field_data_type)
-                        # print('Current field (' + str(i) + '): ' + act_field)
+                        print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        print('Current field (' + str(i) + '): ' + act_field_fq)
                     i += 1
-                    if i >= path_list_len \
-                            and act_field not in query_dict['facet.field']:
-                        if act_field_data_type == 'id':
-                            # only get facets for 'id' type fields
-                            query_dict['facet.field'].append(act_field)
-                        if act_field_data_type == 'numeric':
-                            query_dict['stats.field'].append(act_field)
-                        if require_id_field:
-                            last_fast_field = prop_slug.replace('-', '_')
-                            last_fast_field += '___pred_id'
-                            if last_fast_field not in query_dict['facet.field']:
-                                query_dict['facet.field'].append(last_fast_field)
                 elif act_field_data_type == 'string':
                     # case for a text search
                     string_terms = self.prep_string_search_term(prop_slug)
                     for escaped_term in string_terms:
-                        search_term = act_field + ':' + escaped_term
+                        search_term = act_field_fq + ':' + escaped_term
                         fq_path_terms.append(search_term)
                 elif act_field_data_type == 'numeric':
                     # numeric search. assume it's well formed solr numeric request
-                    search_term = act_field + ':' + prop_slug
+                    search_term = act_field_fq + ':' + prop_slug
                     fq_path_terms.append(search_term)
                     # now limit the numeric ranges from query to the range facets
                     query_dict = self.add_math_facet_ranges(query_dict,
-                                                            act_field,
+                                                            act_field_fq,
                                                             False,
                                                             prop_slug)
                 elif act_field_data_type == 'date':
                     # date search. assume it's well formed solr request
-                    search_term = act_field + ':' + prop_slug
+                    search_term = act_field_fq + ':' + prop_slug
                     fq_path_terms.append(search_term)
                     # now limit the date ranges from query to the range facets
                     query_dict = self.add_date_facet_ranges(query_dict,
-                                                            act_field,
+                                                            act_field_fq,
                                                             False,
                                                             prop_slug)
             final_path_term = ' AND '.join(fq_path_terms)
