@@ -308,8 +308,8 @@ class QueryMaker():
                             query_dict = self.add_date_facet_ranges(query_dict,
                                                                     act_field_fq,
                                                                     entity)
-                        print('Current data type (' + str(i) + '): ' + act_field_data_type)
-                        print('Current field (' + str(i) + '): ' + act_field_fq)
+                        # print('Current data type (' + str(i) + '): ' + act_field_data_type)
+                        # print('Current field (' + str(i) + '): ' + act_field_fq)
                     i += 1
                 elif act_field_data_type == 'string':
                     # case for a text search

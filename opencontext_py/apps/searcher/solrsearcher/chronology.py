@@ -71,7 +71,7 @@ class JsonLDchronology():
                         aggregate_tiles[trim_tile_key] = 0
                     aggregate_tiles[trim_tile_key] += solr_facet_count
         # now generate GeoJSON for each tile region
-        print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
+        # print('Chronology tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         # --------------------------------------------
         # code to sort the list of tiles by start date and time span
         # --------------------------------------------
