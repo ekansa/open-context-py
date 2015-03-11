@@ -97,7 +97,7 @@ class SolrSearch():
             context = qm._process_spatial_context(request_dict['path'])
             query['fq'].append(context['fq'])
             query['facet.field'] += context['facet.field']  # context facet fields, always a list
-            # Properties and Linked Data
+        # Properties and Linked Data
         props = self.get_request_param(request_dict,
                                        'prop',
                                        False,
@@ -123,6 +123,19 @@ class SolrSearch():
             proj_query = qm.process_proj(proj)
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']
+        # Dublin-Core terms
+        dc_params = ['dc-subject',
+                     'dc-spatial',
+                     'dc-coverage']
+        for dc_param in dc_params:
+            dc_terms = self.get_request_param(request_dict,
+                                              dc_param,
+                                              False,
+                                              True)
+            if dc_terms is not False:
+                dc_query = qm.process_dc_term(dc_param, dc_terms)
+                query['fq'] += dc_query['fq']
+                query['facet.field'] += dc_query['facet.field']
         # item-types
         item_type = self.get_request_param(request_dict,
                                            'type',

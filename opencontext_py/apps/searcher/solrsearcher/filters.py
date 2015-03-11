@@ -115,6 +115,35 @@ class ActiveFilters():
                     elif param_key == 'documents':
                         act_filter['oc-api:filter'] = 'Has related media'
                         act_filter['label'] = 'Linked to documents'
+                    elif param_key == 'dc-subject':
+                        act_filter['oc-api:filter'] = 'Has subject metadata'
+                        label_dict = self.make_filter_label_dict(all_vals[-1])
+                        if len(label_dict['label']) > 0:
+                            act_filter['label'] = label_dict['label']
+                        elif 'tdar' in all_vals[-1]:
+                            act_filter['label'] = 'tDAR defined metadata record(s)'
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
+                            if label_dict['entities'][0].vocabulary is not False:
+                                act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
+                    elif param_key == 'dc-spatial':
+                        act_filter['oc-api:filter'] = 'Has spatial metadata'
+                        label_dict = self.make_filter_label_dict(all_vals[-1])
+                        if len(label_dict['label']) > 0:
+                            act_filter['label'] = label_dict['label']
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
+                            if label_dict['entities'][0].vocabulary is not False:
+                                act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
+                    elif param_key == 'dc-coverage':
+                        act_filter['oc-api:filter'] = 'Has coverage / period metadata'
+                        label_dict = self.make_filter_label_dict(all_vals[-1])
+                        if len(label_dict['label']) > 0:
+                            act_filter['label'] = label_dict['label']
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
+                            if label_dict['entities'][0].vocabulary is not False:
+                                act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
                     rem_request = fl.make_request_sub(request_dict,
                                                       param_key,
                                                       param_val)
