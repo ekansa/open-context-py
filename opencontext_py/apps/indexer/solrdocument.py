@@ -696,8 +696,9 @@ class SolrDocument:
                                                     # it's OK for on-linked-data-ok objects to be used
                                                     #-------------------------------
                                                     self.fields[all_obj_solr_field].append(solr_value)
-                                                    self.fields['text'] += parent['id'] + ' '
-                                                    self.fields['text'] += parent['label'] + '\n'
+                                                    if parent['id'] not in self.fields['text']:
+                                                        self.fields['text'] += parent['id'] + ' '
+                                                        self.fields['text'] += parent['label'] + '\n'
                                                     act_solr_field = \
                                                         self._convert_slug_to_solr(parent['slug']) \
                                                         + '___' + act_pred_root_act_solr_field

@@ -18,6 +18,12 @@ class ActiveFilters():
 
     """ Methods to show search / query filters in use """
 
+    IGNORE_PARAMS = ['geodeep',
+                     'chronodeep',
+                     'sort',
+                     'rows',
+                     'start']
+
     def __init__(self):
         self.entities = {}  # entities already dereferenced
         self.hierarchy_delim = '---'
@@ -144,12 +150,15 @@ class ActiveFilters():
                             act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
                             if label_dict['entities'][0].vocabulary is not False:
                                 act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
-                    rem_request = fl.make_request_sub(request_dict,
-                                                      param_key,
-                                                      param_val)
-                    act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
-                    act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
-                    filters.append(act_filter)
+                    else:
+                        act_filter = False
+                    if act_filter is not False:
+                        rem_request = fl.make_request_sub(request_dict,
+                                                          param_key,
+                                                          param_val)
+                        act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
+                        act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
+                        filters.append(act_filter)
         return filters
 
     def make_filter_label_dict(self, act_val):

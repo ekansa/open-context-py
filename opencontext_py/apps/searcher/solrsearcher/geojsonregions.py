@@ -10,7 +10,7 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
-class JsonLDregions():
+class GeoJsonRegions():
 
     def __init__(self, solr_json):
         self.geojson_regions = []

@@ -13,8 +13,8 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filters import ActiveFilters
 from opencontext_py.apps.searcher.solrsearcher.chronology import JsonLDchronology
-from opencontext_py.apps.searcher.solrsearcher.regions import JsonLDregions
-from opencontext_py.apps.searcher.solrsearcher.records import JsonLDrecords
+from opencontext_py.apps.searcher.solrsearcher.geojsonregions import GeoJsonRegions
+from opencontext_py.apps.searcher.solrsearcher.geojsonrecords import GeoJsonRecords
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
 
@@ -116,18 +116,18 @@ class MakeJsonLd():
             self.make_facets(solr_json)
         if 'geo-record' in self.act_responses:
             # now add the result information
-            json_recs_obj = JsonLDrecords(self.request_dict_json)
-            json_recs_obj.entities = self.entities
-            json_recs_obj.min_date = self.min_date
-            json_recs_obj.max_date = self.max_date
-            json_recs_obj.make_records_from_solr(solr_json)
-            if len(json_recs_obj.geojson_recs) > 0:
+            geojson_recs_obj = GeoJsonRecords(self.request_dict_json)
+            geojson_recs_obj.entities = self.entities
+            geojson_recs_obj.min_date = self.min_date
+            geojson_recs_obj.max_date = self.max_date
+            geojson_recs_obj.make_records_from_solr(solr_json)
+            if len(geojson_recs_obj.geojson_recs) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
                 if 'features' not in self.json_ld:
                     self.json_ld['features'] = []
-                self.json_ld['features'] += json_recs_obj.geojson_recs
+                self.json_ld['features'] += geojson_recs_obj.geojson_recs
         if 'uuid' in self.act_responses:
-            solr_uuids = SolrUUIDs()
+            solr_uuids = SolrUUIDs(self.request_dict_json)
             uuids = solr_uuids.make_uuids_from_solr(solr_json)
             if len(self.act_responses) > 1:
                 # return a list inside a key
@@ -137,7 +137,7 @@ class MakeJsonLd():
                 self.json_ld = uuids
                 ok_show_debug = False
         if 'uri' in self.act_responses:
-            solr_uuids = SolrUUIDs()
+            solr_uuids = SolrUUIDs(self.request_dict_json)
             uris = solr_uuids.make_uris_from_solr(solr_json)
             if len(self.act_responses) > 1:
                 # return a list inside a key
@@ -147,7 +147,10 @@ class MakeJsonLd():
                 self.json_ld = uris
                 ok_show_debug = False
         elif 'uri-meta' in self.act_responses:
-            solr_uuids = SolrUUIDs()
+            solr_uuids = SolrUUIDs(self.request_dict_json)
+            solr_uuids.min_date = self.min_date
+            solr_uuids.max_date = self.max_date
+            solr_uuids.entities = self.entities
             uris = solr_uuids.make_uris_from_solr(solr_json,
                                                   False)
             if len(self.act_responses) > 1:
@@ -529,7 +532,7 @@ class MakeJsonLd():
                                                          'discovery_geotile'],
                                                          solr_json)
         if solr_disc_geotile_facets is not False:
-            geo_regions = JsonLDregions(solr_json)
+            geo_regions = GeoJsonRegions(solr_json)
             geo_regions.min_date = self.min_date
             geo_regions.max_date = self.max_date
             geo_regions.spatial_context = self.spatial_context
