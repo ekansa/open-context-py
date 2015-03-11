@@ -7,7 +7,11 @@
         {{ geo_rec.project }}
     </td>
     <td>
+        {% if geo_rec.context != False %}
         {{ geo_rec.context }}
+        {%else%}
+        Open Context '{{ geo_rec.item_type }}' resource
+        {%endif%}
         {% if geo_rec.snippet != False %}
             <p>
                 <small>...{% autoescape off %}{{ geo_rec.snippet }}{% endautoescape %}...</small>
