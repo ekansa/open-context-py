@@ -126,7 +126,10 @@ class GeoRecord():
         self.href = False
         self.category = False
         self.early_bce_ce = False
+        self.early_suffix = ''
         self.late_bce_ce = False
+        self.late_suffix = ''
+        self.snippet = False
         self.thumbnail = False
 
     def parse_json_record(self, json_rec):
@@ -147,10 +150,20 @@ class GeoRecord():
                 self.context = props['context label']
             if 'early bce/ce' in props:
                 self.early_bce_ce = props['early bce/ce']
+                if self.early_bce_ce < 0:
+                    self.early_bce_ce = int(round(self.early_bce_ce * -1, 0))
+                    self.early_suffix = 'BCE'
             if 'late bce/ce' in props:
                 self.late_bce_ce = props['late bce/ce']
+                if self.late_bce_ce < 0:
+                    self.late_bce_ce = int(round(self.late_bce_ce * -1, 0))
+                    self.late_suffix = 'BCE'
             if 'item category' in props:
                 self.category = props['item category']
+            if 'snippet' in props:
+                self.snippet = props['snippet']
+                self.snippet = self.snippet.replace('<em>', '<mark>')
+                self.snippet = self.snippet.replace('</em>', '</mark>')
             if 'thumbnail' in props:
                 self.thumbnail = props['thumbnail']
 

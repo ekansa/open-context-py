@@ -8,15 +8,28 @@
     </td>
     <td>
         {{ geo_rec.context }}
+        {% if geo_rec.snippet != False %}
+            <p>
+                <small>...{% autoescape off %}{{ geo_rec.snippet }}{% endautoescape %}...</small>
+            </p>
+        {%endif%}
     </td>
     <td>
         {{ geo_rec.category }}
     </td>
     <td>
-        {{ geo_rec.early_bce_ce }}
+        {% if geo_rec.early_bce_ce != False %}
+        {{ geo_rec.early_bce_ce|intcomma }} {{ geo_rec.early_suffix }}
+        {%else%}
+        Not given
+        {%endif%}
     </td>
     <td>
-        {{ geo_rec.late_bce_ce }}
+        {% if geo_rec.late_bce_ce != False %}
+        {{ geo_rec.late_bce_ce|intcomma }} {{ geo_rec.late_suffix }}
+        {%else%}
+        Not given
+        {%endif%}
     </td>
     <td>
         {% if geo_rec.thumbnail != False %}
