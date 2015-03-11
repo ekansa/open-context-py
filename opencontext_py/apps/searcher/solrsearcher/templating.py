@@ -1,6 +1,6 @@
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
-
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 class SearchTemplate():
     """ methods use Open Context JSON-LD
@@ -144,6 +144,9 @@ class GeoRecord():
                 self.label = props['label']
             if 'href' in props:
                 self.href = props['href']
+            if 'uri' in props:
+                item_type_output = URImanagement.get_uuid_from_oc_uri(props['uri'], True)
+                self.item_type = item_type_output['item_type']
             if 'project label' in props:
                 self.project = props['project label']
             if 'context label' in props:
