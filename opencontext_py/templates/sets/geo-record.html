@@ -29,14 +29,22 @@
     </td>
     <td>
         {% if geo_rec.early_bce_ce != False %}
+        {% if geo_rec.early_suffix != False %}
         {{ geo_rec.early_bce_ce|intcomma }} {{ geo_rec.early_suffix }}
+        {%else%}
+        {{ geo_rec.early_bce_ce }}
+        {%endif%}
         {%else%}
         Not given
         {%endif%}
     </td>
     <td>
         {% if geo_rec.late_bce_ce != False %}
+        {% if geo_rec.late_suffix != False %}
         {{ geo_rec.late_bce_ce|intcomma }} {{ geo_rec.late_suffix }}
+        {%else%}
+        {{ geo_rec.late_bce_ce }}
+        {%endif%}
         {%else%}
         Not given
         {%endif%}

@@ -168,6 +168,7 @@ class ResultRecord():
                     self.early_suffix = 'BCE'
                 else:
                     self.early_bce_ce = int(round(self.early_bce_ce, 0))
+                    self.early_suffix = False
             if 'late bce/ce' in props:
                 self.late_bce_ce = props['late bce/ce']
                 if self.late_bce_ce < 0:
@@ -175,6 +176,7 @@ class ResultRecord():
                     self.late_suffix = 'BCE'
                 else:
                     self.late_bce_ce = int(round(self.late_bce_ce, 0))
+                    self.late_suffix = False
             if 'item category' in props:
                 self.category = props['item category']
             if 'snippet' in props:
