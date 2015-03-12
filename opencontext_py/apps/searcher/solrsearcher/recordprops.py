@@ -94,6 +94,7 @@ class RecordProperties():
                 if 'text' in self.highlighting[self.uuid]:
                     text_list = self.highlighting[self.uuid]['text']
                     self.snippet = ' '.join(text_list)
+                    # some processing to remove fagments of HTML markup.
                     self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')
                     self.snippet = self.snippet.replace('</em>', '[[[[/mark]]]]')
                     self.snippet = strip_tags(self.snippet)
