@@ -30,7 +30,7 @@ class RecordProperties():
         self.context_uri = False  # link to parent context cannonical uri
         self.context_label = False
         self.category = False
-        self.latitute = False
+        self.latitude = False
         self.longitude = False
         self.geojson = False
         self.early_date = False
