@@ -11,7 +11,8 @@ class SolrResponseTypes():
                          'chrono-facet',
                          'facet',
                          'geo-facet',
-                         'geo-record']
+                         'geo-record',
+                         'nongeo-record']
 
     ALL_RESPONSES = ['context',
                      'metadata',

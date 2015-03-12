@@ -114,18 +114,23 @@ class MakeJsonLd():
         if 'facet' in self.act_responses:
             # now make the regular facets
             self.make_facets(solr_json)
-        if 'geo-record' in self.act_responses:
+        if 'geo-record' in self.act_responses \
+           or 'nongeo-record' in self.act_responses:
             # now add the result information
             geojson_recs_obj = GeoJsonRecords(self.request_dict_json)
             geojson_recs_obj.entities = self.entities
             geojson_recs_obj.min_date = self.min_date
             geojson_recs_obj.max_date = self.max_date
             geojson_recs_obj.make_records_from_solr(solr_json)
-            if len(geojson_recs_obj.geojson_recs) > 0:
+            if len(geojson_recs_obj.geojson_recs) > 0 \
+               and 'geo-record' in self.act_responses:
                 self.json_ld['type'] = 'FeatureCollection'
                 if 'features' not in self.json_ld:
                     self.json_ld['features'] = []
                 self.json_ld['features'] += geojson_recs_obj.geojson_recs
+            if len(geojson_recs_obj.non_geo_recs) > 0 \
+               and 'nongeo-record' in self.act_responses:
+                self.json_ld['oc-api:has-results'] = geojson_recs_obj.non_geo_recs
         if 'uuid' in self.act_responses:
             solr_uuids = SolrUUIDs(self.request_dict_json)
             uuids = solr_uuids.make_uuids_from_solr(solr_json)
