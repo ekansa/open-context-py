@@ -5,6 +5,7 @@ from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
 
 
@@ -123,4 +124,5 @@ class GeoJsonRecords():
                 self.geojson_recs.append(record)
             else:
                 # case when the record is not GeoSpatial in nature
-                self.non_geo_recs.append(record)
+                item = SolrUUIDs().make_item_dict_from_rec_props_obj(rec_props_obj, False)
+                self.non_geo_recs.append(item)

@@ -1,6 +1,8 @@
+from django.utils.html import strip_tags
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.entities.uri.models import URImanagement
+
 
 class SearchTemplate():
     """ methods use Open Context JSON-LD
@@ -61,9 +63,14 @@ class SearchTemplate():
                 for feature in self.json_ld['features']:
                     if 'category' in feature:
                         if feature['category'] == 'oc-api:geo-record':
-                            geor = GeoRecord()
+                            geor = ResultRecord()
                             geor.parse_json_record(feature)
                             self.geo_records.append(geor)
+            if 'oc-api:has-results' in self.json_ld:
+                for json_rec in self.json_ld['oc-api:has-results']:
+                    rr = ResultRecord()
+                    rr.parse_json_record(json_rec)
+                    self.geo_records.append(rr)
 
     def set_paging(self):
         """ sets the paging for these results """
@@ -114,7 +121,7 @@ class SearchFilter():
             self.remove_href = json_filter['oc-api:remove']
  
 
-class GeoRecord():
+class ResultRecord():
     """ Object for a result record
     """
     def __init__(self):
@@ -138,6 +145,9 @@ class GeoRecord():
         """
         if 'properties' in json_rec:
             props = json_rec['properties']
+        else:
+            props = json_rec
+        if isinstance(props, dict):
             if 'id' in props:
                 self.id = props['id'].replace('#', '')
             if 'label' in props:
@@ -169,8 +179,11 @@ class GeoRecord():
                 self.category = props['item category']
             if 'snippet' in props:
                 self.snippet = props['snippet']
-                self.snippet = self.snippet.replace('<em>', '<mark>')
-                self.snippet = self.snippet.replace('</em>', '</mark>')
+                self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')
+                self.snippet = self.snippet.replace('</em>', '[[[[/mark]]]]')
+                self.snippet = strip_tags(self.snippet)
+                self.snippet = self.snippet.replace('[[[[mark]]]]', '<mark>')
+                self.snippet = self.snippet.replace('[[[[/mark]]]]', '</mark>')
             if 'thumbnail' in props:
                 self.thumbnail = props['thumbnail']
 

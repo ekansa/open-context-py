@@ -11,7 +11,7 @@ class SolrUUIDs():
         also makes URIs
     """
 
-    def __init__(self, response_dict_json):
+    def __init__(self, response_dict_json=False):
         self.uuids = []
         self.uris = []
         self.entities = {}
@@ -52,25 +52,38 @@ class SolrUUIDs():
                     if uris_only:
                         item = rec_props_obj.uri
                     else:
-                        item = LastUpdatedOrderedDict()
                         rec_props_obj.parse_solr_record(solr_rec)
                         self.entities = rec_props_obj.entities  # add to existing list of entities, reduce lookups
-                        item['uri'] = rec_props_obj.uri
-                        item['citation uri'] = rec_props_obj.cite_uri
-                        item['label'] = rec_props_obj.label
-                        item['project label'] = rec_props_obj.project_label
-                        item['project uri'] = rec_props_obj.project_uri
-                        item['context label'] = rec_props_obj.context_label
-                        item['context uri'] = rec_props_obj.context_uri
-                        item['latitude'] = rec_props_obj.latitude
-                        item['longitude'] = rec_props_obj.longitude
-                        item['early bce/ce'] = rec_props_obj.early_date
-                        item['late bce/ce'] = rec_props_obj.late_date
-                        item['item category'] = rec_props_obj.category
-                        if rec_props_obj.snippet is not False:
-                            item['snippet'] = rec_props_obj.snippet
+                        item = self.make_item_dict_from_rec_props_obj(rec_props_obj)
                     self.uris.append(item)
         return self.uris
+
+    def make_item_dict_from_rec_props_obj(self, rec_props_obj, cannonical=True):
+        """ makes item dictionary object from a record prop obj """
+        item = LastUpdatedOrderedDict()
+        item['uri'] = rec_props_obj.uri
+        if cannonical is False:
+            item['href'] = rec_props_obj.href
+        item['citation uri'] = rec_props_obj.cite_uri
+        item['label'] = rec_props_obj.label
+        item['project label'] = rec_props_obj.project_label
+        if cannonical:
+            item['project uri'] = rec_props_obj.project_uri
+        else:
+            item['project href'] = rec_props_obj.project_href
+        item['context label'] = rec_props_obj.context_label
+        if cannonical:
+            item['context uri'] = rec_props_obj.context_uri
+        else:
+            item['context href'] = rec_props_obj.context_href
+        item['latitude'] = rec_props_obj.latitude
+        item['longitude'] = rec_props_obj.longitude
+        item['early bce/ce'] = rec_props_obj.early_date
+        item['late bce/ce'] = rec_props_obj.late_date
+        item['item category'] = rec_props_obj.category
+        if rec_props_obj.snippet is not False:
+            item['snippet'] = rec_props_obj.snippet
+        return item
 
     def extract_solr_recs(self, solr_json):
         """ extracts solr_recs along with
