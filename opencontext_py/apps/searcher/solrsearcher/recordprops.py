@@ -1,5 +1,6 @@
 import json
 from django.conf import settings
+from django.utils.html import strip_tags
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
@@ -93,6 +94,11 @@ class RecordProperties():
                 if 'text' in self.highlighting[self.uuid]:
                     text_list = self.highlighting[self.uuid]['text']
                     self.snippet = ' '.join(text_list)
+                    self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')
+                    self.snippet = self.snippet.replace('</em>', '[[[[/mark]]]]')
+                    self.snippet = strip_tags(self.snippet)
+                    self.snippet = self.snippet.replace('[[[[mark]]]]', '<em>')
+                    self.snippet = self.snippet.replace('[[[[/mark]]]]', '</em>')
 
     def get_citation_uri(self, solr_rec):
         """ gets the best citation / persistent uri for the item """
