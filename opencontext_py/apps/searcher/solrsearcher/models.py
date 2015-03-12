@@ -5,6 +5,7 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.specialized import SpecialSearches
 
 
 # This class is used to dereference URIs or prefixed URIs
@@ -229,6 +230,15 @@ class SolrSearch():
                                            False)
         if documents is not False:
             query['fq'] += ['document_count:[1 TO *]']
+        # special queries (to simplify access to specific datasets)
+        spsearch = SpecialSearches()
+        trinomial = self.get_request_param(request_dict,
+                                           'trinomial',
+                                           False,
+                                           False)
+        if trinomial is not False:
+            query = spsearch.process_trinonial_reconcile(trinomial,
+                                                         query)
         # Now add default facet fields
         query = self.add_default_facet_fields(query,
                                               request_dict)
