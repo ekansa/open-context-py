@@ -277,7 +277,6 @@ class QueryMaker():
                                 if len(lr.child_entities) > 1:
                                     # ok, this field has children. require it
                                     # to be treated as an ID field
-
                                     require_id_field = True
                         if i == 0:
                             if 'oc-gen' in prop_slug:
