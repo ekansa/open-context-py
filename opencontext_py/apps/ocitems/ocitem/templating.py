@@ -36,6 +36,7 @@ class TemplateItem():
         self.act_nav = False
         self.use_accordions = False
         self.item_linked_data = False
+        self.item_dc_metadata = False
         self.request = request
         self.view_permitted = True  # defaults to allow views
         self.edit_permitted = False
@@ -140,6 +141,15 @@ class TemplateItem():
             act_obs.make_item_annotation_obs(self.item_linked_data)
             if act_obs.annotations is not False:
                 self.observations.append(act_obs)
+        if self.item_dc_metadata is not False:
+            # create an observation out of the item annoations
+            if self.observations is False:
+                self.observations = []
+            act_obs = Observation()
+            act_obs.obs_num = len(self.observations) + 1
+            act_obs.make_item_dc_metadata_obs(self.item_dc_metadata)
+            if act_obs.annotations is not False:
+                self.observations.append(act_obs)
         if self.observations is not False:
             # for when to add a 'more' drop down list
             all_labels = ''
@@ -201,6 +211,7 @@ class TemplateItem():
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
         self.item_linked_data = linked_data.get_item_annotations(self.act_nav, json_ld)
+        self.item_dc_metadata = linked_data.get_item_dc_metadata(self.act_nav, json_ld)
 
     def create_content(self, json_ld):
         """
@@ -378,9 +389,26 @@ class Observation():
         self.documents_link_count = 0
         self.persons_link_count = 0
         self.annotations = False
+        self.dc_annotations = False
         self.item_annotations = False
         self.class_type_metadata = False
         self.use_accordions = False
+
+    def make_item_dc_metadata_obs(self, item_metadata):
+        """ Makes an observation with some metadata
+            specifically for display of information related
+            to predicates
+        """
+        self.id = 'item-metadata'
+        self.source_id = 'project'
+        self.obs_status = 'active'
+        self.obs_type = 'contributor'
+        self.label = 'Item Metadata'
+        self.dc_annotations = True
+        for item_anno in item_metadata:
+            if self.annotations is False:
+                self.annotations = []
+            self.annotations.append(item_anno)
 
     def make_item_annotation_obs(self, item_annotations):
         """ Makes an observation with some metadata
@@ -834,12 +862,16 @@ class LinkedData():
                            'owl:sameAs',
                            'skos:related',
                            'skos:broader']
+    ITEM_DC_METADATA_PREDICATES = ['dc-terms:subject',
+                                   'dc-terms:spatial',
+                                   'dc-terms:coverage']
 
     def __init__(self):
         self.linked_predicates = False
         self.linked_types = False
         self.annotations = []  # annotations on entities found in observations
         self.item_annotations = []  # annotations on the main entity of the JSON-LD
+        self.item_dc_metadata = []  # dublin-core annotations on the main entity of the JSON-LD
         self.measurement_meta = {}  # measurement metadata for predicates
         self.project = False
 
@@ -1023,6 +1055,48 @@ class LinkedData():
                         self.item_assertions.append(act_i_ass)
         if len(self.item_assertions) > 0:
             output = self.item_assertions
+        else:
+            output = False
+        return output
+
+    def get_item_dc_metadata(self, item_type, json_ld):
+        """ Gets dublin core annotations made on this specific item """
+        self.item_dc_metadata = []
+        if isinstance(json_ld, dict):
+            for act_pred in self.ITEM_DC_METADATA_PREDICATES:
+                print(act_pred)
+                if act_pred in json_ld:
+                    add_annotation = True
+                    p_uri = act_pred
+                    p_label = act_pred
+                    p_vocab = False
+                    p_vocab_uri = False
+                    ent = Entity()
+                    found = ent.dereference(act_pred)
+                    if found:
+                        p_uri = ent.uri
+                        p_label = ent.label
+                        p_vocab = ent.vocabulary
+                        p_vocab_uri = ent.vocab_uri
+                    act_i_ass = {'id': p_uri,
+                                 'label': p_label,
+                                 'vocabulary': p_vocab,
+                                 'vocab_uri': p_vocab_uri,
+                                 'objects': []}
+                    for ld_obj in json_ld[act_pred]:
+                        uri = ld_obj['id']
+                        ld_obj['vocabulary'] = False
+                        ld_obj['vocab_uri'] = False
+                        ent = Entity()
+                        found = ent.dereference(uri)
+                        if found:
+                            ld_obj['vocabulary'] = ent.vocabulary
+                            ld_obj['vocab_uri'] = ent.vocab_uri
+                        act_i_ass['objects'].append(ld_obj)
+                    if add_annotation:
+                        self.item_dc_metadata.append(act_i_ass)
+        if len(self.item_dc_metadata) > 0:
+            output = self.item_dc_metadata
         else:
             output = False
         return output
