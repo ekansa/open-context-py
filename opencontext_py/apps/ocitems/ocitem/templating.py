@@ -1104,13 +1104,14 @@ class LinkedData():
                         tdar = tdarAPI()
                         tdar_items = tdar.get_tdar_items_by_site_keyword_objs(act_i_ass['objects'])
                         if isinstance(tdar_items, list):
-                            act_i_ass = {'id': 'http://www.w3.org/2000/01/rdf-schema#seeAlso',
-                                         'type': 'Source, Current Feed',
-                                         'label': 'See also, Related Content',
-                                         'vocabulary': 'Digital Antiquity, tDAR',
-                                         'vocab_uri': tdar.html_url,
-                                         'objects': tdar_items}
-                            self.item_dc_metadata.append(act_i_ass)
+                            if len(tdar_items) > 0:
+                                act_i_ass = {'id': 'http://www.w3.org/2000/01/rdf-schema#seeAlso',
+                                             'type': 'Source, Current Feed',
+                                             'label': 'See also, Related Content',
+                                             'vocabulary': 'Digital Antiquity, tDAR',
+                                             'vocab_uri': tdar.html_url,
+                                             'objects': tdar_items}
+                                self.item_dc_metadata.append(act_i_ass)
         if len(self.item_dc_metadata) > 0:
             output = self.item_dc_metadata
         else:
