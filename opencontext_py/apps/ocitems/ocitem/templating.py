@@ -10,6 +10,7 @@ from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+from opencontext_py.apps.ldata.tdar.api import tdarAPI
 
 
 # Help organize the code, with a class to make templating easier
@@ -948,6 +949,7 @@ class LinkedData():
                             act_annotation['oc_objects'] = None
                         else:
                             act_annotation['objects'] = act_annotation['oc_objects']
+                    act_annotation['type'] = 'Standard'
                     self.annotations.append(act_annotation)
         return output
 
@@ -1025,6 +1027,7 @@ class LinkedData():
                         p_vocab = ent.vocabulary
                         p_vocab_uri = ent.vocab_uri
                     act_i_ass = {'id': p_uri,
+                                 'type': 'Standard',
                                  'label': p_label,
                                  'vocabulary': p_vocab,
                                  'vocab_uri': p_vocab_uri,
@@ -1079,6 +1082,7 @@ class LinkedData():
                         p_vocab = ent.vocabulary
                         p_vocab_uri = ent.vocab_uri
                     act_i_ass = {'id': p_uri,
+                                 'type': 'Standard',
                                  'label': p_label,
                                  'vocabulary': p_vocab,
                                  'vocab_uri': p_vocab_uri,
@@ -1095,6 +1099,18 @@ class LinkedData():
                         act_i_ass['objects'].append(ld_obj)
                     if add_annotation:
                         self.item_dc_metadata.append(act_i_ass)
+                    if 'subject' in act_i_ass['id'] \
+                       and len(act_i_ass['objects']) > 0:
+                        tdar = tdarAPI()
+                        tdar_items = tdar.get_tdar_items_by_site_keyword_objs(act_i_ass['objects'])
+                        if isinstance(tdar_items, list):
+                            act_i_ass = {'id': 'http://www.w3.org/2000/01/rdf-schema#seeAlso',
+                                         'type': 'Source, Current Feed',
+                                         'label': 'See also, Related Content',
+                                         'vocabulary': 'Digital Antiquity, tDAR',
+                                         'vocab_uri': tdar.html_url,
+                                         'objects': tdar_items}
+                            self.item_dc_metadata.append(act_i_ass)
         if len(self.item_dc_metadata) > 0:
             output = self.item_dc_metadata
         else:
