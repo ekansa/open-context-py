@@ -174,7 +174,7 @@
                         <td class="col-sm-4">
                             <a href="{{ anno.id }}" target="_blank">{{ anno.label }}</a>
                             <br/>
-                            <small>[Standard: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
+                            <small>[{{ anno.type }}: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
                         </td>
                         <td class="col-sm-8">
                         {% if anno.literals != None %}
@@ -201,8 +201,12 @@
                                 <li>
                                     <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
                                     <br/>
+									{% if annoval.vocab_uri != False %}
                                     <small>[Standard: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
-                                </li>
+									{% else %}
+									<small>[External resource]</small>
+									{%endif%}
+								</li>
                                 {% endfor %}
                             </ul>
                             {%endif%}

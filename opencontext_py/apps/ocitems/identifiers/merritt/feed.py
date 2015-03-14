@@ -9,9 +9,9 @@ from opencontext_py.libs.generalapi import GeneralAPI
 
 
 class MerrittFeed():
-    """ Interacts with the tDAR API
-        First use-case is to relate DINAA trinomials with
-        tDAR keywords
+    """ Interacts with the Merritt Atom feed API
+        The main use case is to get identifiers from Merritt
+        to associate with Open Context URIs
     """
     ATOM_ROOT_URL = 'https://merritt.cdlib.org/object/recent.atom?collection=ark:/13030/m5wd3xhm'
     MERRITT_BASE_URL = 'https://merritt.cdlib.org'

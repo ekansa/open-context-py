@@ -24,7 +24,7 @@ class SolrReIndex():
         # if not false, use a dictionary of paramaters with Open Context
         # to generate a solr request to get UUIDs
         self.oc_params = False
-        # if not false, use a Postgres SQL auery to get a list of
+        # if not false, use a Postgres SQL query to get a list of
         # UUIDs
         self.sql = False
 
