@@ -8,9 +8,7 @@ class ItemContext():
     for Items
     """
     def __init__(self):
-        rp = RootPath()
-        base_url = rp.get_baseurl()
-        self.id = base_url + '/contexts/item.json'
+        self.id = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
         context = LastUpdatedOrderedDict()
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
@@ -72,6 +70,7 @@ class SearchContext():
     for faceted search
     """
     def __init__(self):
+        self.id = 'http://dx.doi.org/10.6078/M7JH3J42'  # DOI for this
         item_context_obj = ItemContext()
         context = item_context_obj.context
         context['opensearch'] = 'http://a9.com/-/spec/opensearch/1.1/'
