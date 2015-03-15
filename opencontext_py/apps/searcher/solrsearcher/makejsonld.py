@@ -4,6 +4,7 @@ import django.utils.http as http
 from datetime import datetime
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
@@ -37,62 +38,13 @@ class MakeJsonLd():
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
         self.rel_media_facet = False
-        item_ns = ItemNamespaces()
-        context = item_ns.namespaces
-        self.namespaces = context
-        context['opensearch'] = 'http://a9.com/-/spec/opensearch/1.1/'
-        context['totalResults'] = {'@id': 'opensearch:totalResults', '@type': 'xsd:integer'}
-        context['startIndex'] = {'@id': 'opensearch:startIndex', '@type': 'xsd:integer'}
-        context['itemsPerPage'] = {'@id': 'opensearch:itemsPerPage', '@type': 'xsd:integer'}
-        context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
-        context['oc-api'] = 'http://opencontext.org/vocabularies/oc-api/'
-        context['rdfs:isDefinedBy'] = {'@type': '@id'}
-        context['first'] = {'@id': 'oc-api:first', '@type': '@id'}
-        context['previous'] = {'@id': 'oc-api:previous', '@type': '@id'}
-        context['next'] = {'@id': 'oc-api:next', '@type': '@id'}
-        context['last'] = {'@id': 'oc-api:last', '@type': '@id'}
-        context['first-json'] = {'@id': 'oc-api:first', '@type': '@id'}
-        context['previous-json'] = {'@id': 'oc-api:previous', '@type': '@id'}
-        context['next-json'] = {'@id': 'oc-api:next', '@type': '@id'}
-        context['last-json'] = {'@id': 'oc-api:last', '@type': '@id'}
-        context['count'] = {'@id': 'oc-api:count', '@type': 'xsd:integer'}
-        context['json'] = {'@id': 'oc-api:count', '@type': '@id'}
-        context['id'] = '@id'
-        context['label'] = 'rdfs:label'
-        context['uuid'] = 'dc-terms:identifier'
-        context['slug'] = 'oc-gen:slug'
-        context['type'] = '@type'
-        context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
-        context['Feature'] = 'geojson:Feature'
-        context['FeatureCollection'] = 'geojson:FeatureCollection'
-        context['GeometryCollection'] = 'geojson:GeometryCollection'
-        context['Instant'] = 'http://www.w3.org/2006/time#Instant'
-        context['Interval'] = 'http://www.w3.org/2006/time#Interval'
-        context['LineString'] = 'geojson:LineString'
-        context['MultiLineString'] = 'geojson:MultiLineString'
-        context['MultiPoint'] = 'geojson:MultiPoint'
-        context['MultiPolygon'] = 'geojson:MultiPolygon'
-        context['Point'] = 'geojson:Point'
-        context['Polygon'] = 'geojson:Polygon'
-        context['bbox'] = {'@id': 'geojson:bbox', '@container': '@list'}
-        context['circa'] = 'geojson:circa'
-        context['coordinates'] = 'geojson:coordinates'
-        context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
-        context['description'] = 'dc-terms:description'
-        context['features'] = {'@id': 'geojson:features', '@container': '@set'}
-        context['geometry'] = 'geojson:geometry'
-        context['properties'] = 'geojson:properties'
-        context['start'] = 'http://www.w3.org/2006/time#hasBeginning'
-        context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
-        context['title'] = 'dc-terms:title'
-        context['when'] = 'geojson:when'
-        self.base_context = context
 
     def convert_solr_json(self, solr_json):
         """ Converst the solr jsont """
         ok_show_debug = True
         if 'context' in self.act_responses:
-            self.json_ld['@context'] = self.base_context
+            search_context_obj = SearchContext()
+            self.json_ld['@context'] = search_context_obj.id
         if 'metadata' in self.act_responses:
             self.json_ld['id'] = self.make_id()
             self.json_ld['label'] = self.label

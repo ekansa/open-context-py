@@ -1,0 +1,121 @@
+﻿
+{
+    "@context": {
+        "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "xsd": "http://www.w3.org/2001/XMLSchema#",
+        "skos": "http://www.w3.org/2004/02/skos/core#",
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "dc-terms": "http://purl.org/dc/terms/",
+        "dcmi": "http://dublincore.org/documents/dcmi-terms/",
+        "bibo": "http://purl.org/ontology/bibo/",
+        "foaf": "http://xmlns.com/foaf/0.1/",
+        "cidoc-crm": "http://erlangen-crm.org/current/",
+        "dcat": "http://www.w3.org/ns/dcat#",
+        "geojson": "http://ld.geojson.org/vocab#",
+        "cc": "http://creativecommons.org/ns#",
+        "oc-gen": "http://opencontext.org/vocabularies/oc-general/",
+        "oc-pred": "http://opencontext.org/predicates/",
+        "id": "@id",
+        "label": "rdfs:label",
+        "uuid": "dc-terms:identifier",
+        "slug": "oc-gen:slug",
+        "type": "@type",
+        "category": {
+            "@id": "oc-gen:category",
+            "@type": "@id"
+        },
+        "Feature": "geojson:Feature",
+        "FeatureCollection": "geojson:FeatureCollection",
+        "GeometryCollection": "geojson:GeometryCollection",
+        "Instant": "http://www.w3.org/2006/time#Instant",
+        "Interval": "http://www.w3.org/2006/time#Interval",
+        "LineString": "geojson:LineString",
+        "MultiLineString": "geojson:MultiLineString",
+        "MultiPoint": "geojson:MultiPoint",
+        "MultiPolygon": "geojson:MultiPolygon",
+        "Point": "geojson:Point",
+        "Polygon": "geojson:Polygon",
+        "bbox": {
+            "@id": "geojson:bbox",
+            "@container": "@list"
+        },
+        "circa": "geojson:circa",
+        "coordinates": "geojson:coordinates",
+        "datetime": "http://www.w3.org/2006/time#inXSDDateTime",
+        "description": "dc-terms:description",
+        "features": {
+            "@id": "geojson:features",
+            "@container": "@set"
+        },
+        "geometry": "geojson:geometry",
+        "properties": "geojson:properties",
+        "start": "http://www.w3.org/2006/time#hasBeginning",
+        "stop": "http://www.w3.org/2006/time#hasEnding",
+        "title": "dc-terms:title",
+        "when": "geojson:when",
+        "reference-type": {
+            "@id": "oc-gen:reference-type",
+            "@type": "@id"
+        },
+        "inferred": "oc-gen:inferred",
+        "specified": "oc-gen:specified",
+        "reference-uri": "oc-gen:reference-uri",
+        "reference-label": "oc-gen:reference-label",
+        "location-precision": "oc-gen:location-precision",
+        "location-note": "oc-gen:location-note",
+        "opensearch": "http://a9.com/-/spec/opensearch/1.1/",
+        "totalResults": {
+            "@id": "opensearch:totalResults",
+            "@type": "xsd:integer"
+        },
+        "startIndex": {
+            "@id": "opensearch:startIndex",
+            "@type": "xsd:integer"
+        },
+        "itemsPerPage": {
+            "@id": "opensearch:itemsPerPage",
+            "@type": "xsd:integer"
+        },
+        "oc-api": "http://opencontext.org/vocabularies/oc-api/",
+        "rdfs:isDefinedBy": {
+            "@type": "@id"
+        },
+        "first": {
+            "@id": "oc-api:first",
+            "@type": "@id"
+        },
+        "previous": {
+            "@id": "oc-api:previous",
+            "@type": "@id"
+        },
+        "next": {
+            "@id": "oc-api:next",
+            "@type": "@id"
+        },
+        "last": {
+            "@id": "oc-api:last",
+            "@type": "@id"
+        },
+        "first-json": {
+            "@id": "oc-api:first",
+            "@type": "@id"
+        },
+        "previous-json": {
+            "@id": "oc-api:previous",
+            "@type": "@id"
+        },
+        "next-json": {
+            "@id": "oc-api:next",
+            "@type": "@id"
+        },
+        "last-json": {
+            "@id": "oc-api:last",
+            "@type": "@id"
+        },
+        "count": {
+            "@id": "oc-api:count",
+            "@type": "xsd:integer"
+        }
+    }
+}

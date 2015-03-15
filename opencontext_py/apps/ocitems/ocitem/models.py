@@ -11,7 +11,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
+from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
@@ -389,46 +389,6 @@ class ItemConstruction():
         self.entity_metadata = {}
         self.thumbnails = {}
         self.parent_list = list()
-        item_ns = ItemNamespaces()
-        context = item_ns.namespaces
-        self.namespaces = context
-        context['id'] = '@id'
-        context['label'] = 'rdfs:label'
-        context['uuid'] = 'dc-terms:identifier'
-        context['slug'] = 'oc-gen:slug'
-        context['type'] = '@type'
-        context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
-        context['Feature'] = 'geojson:Feature'
-        context['FeatureCollection'] = 'geojson:FeatureCollection'
-        context['GeometryCollection'] = 'geojson:GeometryCollection'
-        context['Instant'] = 'http://www.w3.org/2006/time#Instant'
-        context['Interval'] = 'http://www.w3.org/2006/time#Interval'
-        context['LineString'] = 'geojson:LineString'
-        context['MultiLineString'] = 'geojson:MultiLineString'
-        context['MultiPoint'] = 'geojson:MultiPoint'
-        context['MultiPolygon'] = 'geojson:MultiPolygon'
-        context['Point'] = 'geojson:Point'
-        context['Polygon'] = 'geojson:Polygon'
-        context['bbox'] = {'@id': 'geojson:bbox', '@container': '@list'}
-        context['circa'] = 'geojson:circa'
-        context['coordinates'] = 'geojson:coordinates'
-        context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
-        context['description'] = 'dc-terms:description'
-        context['features'] = {'@id': 'geojson:features', '@container': '@set'}
-        context['geometry'] = 'geojson:geometry'
-        context['properties'] = 'geojson:properties'
-        context['start'] = 'http://www.w3.org/2006/time#hasBeginning'
-        context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
-        context['title'] = 'dc-terms:title'
-        context['when'] = 'geojson:when'
-        context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
-        context['inferred'] = 'oc-gen:inferred'
-        context['specified'] = 'oc-gen:specified'
-        context['reference-uri'] = 'oc-gen:reference-uri'
-        context['reference-label'] = 'oc-gen:reference-label'
-        context['location-precision'] = 'oc-gen:location-precision'
-        context['location-note'] = 'oc-gen:location-note'
-        self.base_context = context
 
     def __del__(self):
         self.var_list = list()
@@ -440,7 +400,13 @@ class ItemConstruction():
         creates a json_ld (ordered) dictionary with a context
         """
         json_ld = LastUpdatedOrderedDict()
-        context = self.base_context
+        # context object, a list with:
+        # 1: a URI to the general item context
+        # 2: a dict of 'local context' predicates (variables, links)
+        context = []
+        item_context_obj = ItemContext()
+        context.append(item_context_obj.id)  # add the URI for the general item context
+        local_context = LastUpdatedOrderedDict()  # make an object for the local context
         raw_pred_list = list()
         pred_types = {}
         for assertion in assertions:
@@ -480,7 +446,7 @@ class ItemConstruction():
             if v_data['type'] == 'xsd:string':
                 self.pred_strings[key] = []  # to keep track of linked data for strings
             del v_data['uuid']
-            context[key] = v_data
+            local_context[key] = v_data
             v += 1
         # adds link predicates to the item context
         l = 1
@@ -491,8 +457,9 @@ class ItemConstruction():
                 key = 'oc-pred:' + l_data['slug']
             self.predicates[l_data['uuid']] = key
             del l_data['uuid']
-            context[key] = l_data
+            local_context[key] = l_data
             l += 1
+        context.append(local_context)  # add the local context to the context list
         json_ld['@context'] = context
         return json_ld
 
