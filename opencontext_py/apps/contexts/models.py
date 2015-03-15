@@ -7,8 +7,15 @@ class ItemContext():
     General namespaces used for JSON-LD
     for Items
     """
-    def __init__(self):
-        self.id = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
+    DOI = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
+
+    def __init__(self, id_href=True):
+        self.id = self.DOI  # DOI for this
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        self.href = base_url + '/contexts/item.json'  # URL for this
+        if id_href:
+            self.id = self.href
         context = LastUpdatedOrderedDict()
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
@@ -69,8 +76,16 @@ class SearchContext():
     General namespaces used for JSON-LD
     for faceted search
     """
-    def __init__(self):
-        self.id = 'http://dx.doi.org/10.6078/M7JH3J42'  # DOI for this
+
+    DOI = 'http://dx.doi.org/10.6078/M7JH3J42'  # DOI for this
+
+    def __init__(self, id_href=True):
+        self.id = self.DOI  # DOI for this
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        self.href = base_url + '/contexts/search.json'  # URL for this
+        if id_href:
+            self.id = self.href
         item_context_obj = ItemContext()
         context = item_context_obj.context
         context['opensearch'] = 'http://a9.com/-/spec/opensearch/1.1/'
