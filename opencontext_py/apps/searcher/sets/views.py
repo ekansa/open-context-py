@@ -2,6 +2,7 @@ import json
 from django.conf import settings
 from django.http import HttpResponse, Http404
 from django.template import RequestContext, loader
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
@@ -17,9 +18,19 @@ def index(request, spatial_context=None):
 
 
 def html_view(request, spatial_context=None):
+    rp = RootPath()
+    base_url = rp.get_baseurl()
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
+    url = request.get_full_path()
+    if 'http://' not in url \
+       and 'https://' not in url:
+        url = base_url + url
+    if '?' in url:
+        json_url = url.replace('?', '.json?')
+    else:
+        json_url = url + '.json'
     solr_s = SolrSearch()
     if solr_s.solr is not False:
         response = solr_s.search_solr(request_dict_json)
@@ -45,7 +56,10 @@ def html_view(request, spatial_context=None):
             st.process_json_ld()
             template = loader.get_template('sets/view.html')
             context = RequestContext(request,
-                                     {'st': st})
+                                     {'st': st,
+                                      'url': url,
+                                      'json_url': json_url,
+                                      'base_url': base_url})
             if req_neg.supported:
                 return HttpResponse(template.render(context))
             else:

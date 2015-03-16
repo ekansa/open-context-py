@@ -2,6 +2,20 @@
 <div class="row">
     <div class="col-sm-8">
         <h2>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}</h2>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <h3 class="panel-title"><span id="map-title">Map</span></h3>
+                    </div>
+                    <div class="col-sm-4" id="map-title-suffix">
+                    </div>
+                </div>
+            </div>
+            <div class="panel-body" id="map" style="min-height: 600px;">
+                   
+            </div>
+        </div>  
         {% include 'sets/filters.html' %}
     </div>
     <div class="col-sm-4">
@@ -20,3 +34,10 @@
         {% include 'sets/geo-records.html' %}
     </div>
 </div>
+<script type="text/javascript">
+    <!--
+    var base_url = "{{ base_url }}";
+    var search_map = new search_map("{{ json_url }}");
+    search_map.map.get_geojson_regions();
+    -->
+</script>
