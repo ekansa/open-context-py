@@ -13,6 +13,7 @@ function search_map(json_url) {
 	var geodeep = 6; // default geo-facet tile depth
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
+	var map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
 	
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
@@ -62,7 +63,16 @@ function search_map(json_url) {
 		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
+    /*
 	var mapboxTiles = L.tileLayer('http://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	});
+	*/
+	var mapboxPencil = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.pencil/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	});
+	
+	var mapboxDark = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
    
@@ -80,7 +90,8 @@ function search_map(json_url) {
 		"ESRI-Satellite": ESRISatelliteTiles,
 		"Google-Roads": gmapRoad,
 		"OpenStreetMap": osmTiles,
-		"MapBox": mapboxTiles,
+		"Pencil": mapboxPencil,
+		"Dark": mapboxDark,
 	};
   
 	map._layersMaxZoom = 20;
