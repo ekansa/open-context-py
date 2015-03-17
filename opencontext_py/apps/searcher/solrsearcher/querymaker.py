@@ -413,22 +413,8 @@ class QueryMaker():
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
         if entity is not False:
-            """
-            ok = True
-            ma = MathAssertions()
-            if entity.item_type != 'uri':
-                summary = ma.get_numeric_range(entity.uuid)
-            else:
-                summary = ma.get_numeric_range_via_ldata(entity.uri)
-            print(str(summary))
-            min_val = summary['min']
-            max_val = summary['max']
-            count_val = summary['count']
-            if (count_val / self.histogram_groups) < 3:
-                groups = 4
-            if count_val < 1:
-                ok = False
-            """
+            # this is a field with no value limits
+            # we need to do a stats-prequery first
             query_dict['prequery-stats'].append(act_field)
         else:
             if solr_query is not False:
@@ -468,17 +454,8 @@ class QueryMaker():
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
         if entity is not False:
-            """
-            ok = True
-            ma = MathAssertions()
-            if entity.item_type != 'uri':
-                summary = ma.get_date_range(entity.uuid)
-            else:
-                summary = ma.get_date_range_via_ldata(entity.uri)
-            min_val = summary['min']
-            max_val = summary['max']
-            count_val = summary['count']
-            """
+            # this is a field with no value limits
+            # we need to do a stats-prequery first
             query_dict['prequery-stats'].append(act_field)
         else:
             if solr_query is not False:
