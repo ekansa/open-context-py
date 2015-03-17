@@ -4,6 +4,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
+from opencontext_py.apps.ocitems.subjects.supplement import SubjectSupplement
 from django.template import RequestContext, loader
 
 
@@ -19,6 +20,9 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
+        # check to see if there's related data via API calls. Add if so.
+        subj_s = SubjectSupplement(ocitem.json_ld)
+        ocitem.json_ld = subj_s.get_catal_related()
         rp = RootPath()
         base_url = rp.get_baseurl()
         temp_item = TemplateItem(request)
