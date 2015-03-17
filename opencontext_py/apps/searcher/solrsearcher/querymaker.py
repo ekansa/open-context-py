@@ -231,6 +231,7 @@ class QueryMaker():
         query_dict = {'fq': [],
                       'facet.field': [],
                       'stats.field': [],
+                      'prequery-stats': [],
                       'facet.range': [],
                       'hl-queries': [],
                       'ranges': {}}
@@ -351,11 +352,9 @@ class QueryMaker():
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field_fq,
                                                                     entity)
-                            query_dict['stats.field'].append(act_field_fq)
                         elif act_field_data_type == 'date':
                             # print('Date field: ' + act_field)
                             act_field_fq = field_parts['prefix'] + '___pred_date'
-                            query_dict['stats.field'].append(act_field_fq)
                             query_dict = self.add_date_facet_ranges(query_dict,
                                                                     act_field_fq,
                                                                     entity)
@@ -414,20 +413,9 @@ class QueryMaker():
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
         if entity is not False:
-            ok = True
-            ma = MathAssertions()
-            if entity.item_type != 'uri':
-                summary = ma.get_numeric_range(entity.uuid)
-            else:
-                summary = ma.get_numeric_range_via_ldata(entity.uri)
-            print(str(summary))
-            min_val = summary['min']
-            max_val = summary['max']
-            count_val = summary['count']
-            if (count_val / self.histogram_groups) < 3:
-                groups = 4
-            if count_val < 1:
-                ok = False
+            # this is a field with no value limits
+            # we need to do a stats-prequery first
+            query_dict['prequery-stats'].append(act_field)
         else:
             if solr_query is not False:
                 vals = []
@@ -441,6 +429,8 @@ class QueryMaker():
                     min_val = vals[0]
                     max_val = vals[-1]
         if ok:
+            if act_field not in query_dict['stats.field']:
+                query_dict['stats.field'].append(act_field)
             if act_field not in query_dict['facet.range']:
                 query_dict['facet.range'].append(act_field)
             query_dict['ranges'][fstart] = min_val
@@ -464,15 +454,9 @@ class QueryMaker():
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
         if entity is not False:
-            ok = True
-            ma = MathAssertions()
-            if entity.item_type != 'uri':
-                summary = ma.get_date_range(entity.uuid)
-            else:
-                summary = ma.get_date_range_via_ldata(entity.uri)
-            min_val = summary['min']
-            max_val = summary['max']
-            count_val = summary['count']
+            # this is a field with no value limits
+            # we need to do a stats-prequery first
+            query_dict['prequery-stats'].append(act_field)
         else:
             if solr_query is not False:
                 q_dt_strs = re.findall(r'\d{4}-\d{2}-\d{2}[T:]\d{2}:\d{2}:\d{2}', solr_query)
@@ -488,6 +472,8 @@ class QueryMaker():
                     min_val = vals[0]
                     max_val = vals[1]
         if ok:
+            if act_field not in query_dict['stats.field']:
+                query_dict['stats.field'].append(act_field)
             if act_field not in query_dict['facet.range']:
                 query_dict['facet.range'].append(act_field)
             query_dict['ranges'][fstart] = self.convert_date_to_solr_date(min_val)

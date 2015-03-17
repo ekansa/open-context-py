@@ -6,6 +6,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.specialized import SpecialSearches
+from opencontext_py.apps.searcher.solrsearcher.statsquery import StatsQuery
 
 
 # This class is used to dereference URIs or prefixed URIs
@@ -29,6 +30,7 @@ class SolrSearch():
         self.rows = 20
         self.start = 0
         self.max_rows = 10000
+        self.prequery_stats = []
 
     def solr_connect(self):
         """ connects to solr """
@@ -54,6 +56,7 @@ class SolrSearch():
         query['debugQuery'] = 'false'
         query['fq'] = []
         query['facet.field'] = []
+        query['facet.range'] = []
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
         query['sort'] = 'interest_score desc'
@@ -113,7 +116,7 @@ class SolrSearch():
                 query['fq'] += prop_query['fq']
                 query['facet.field'] += prop_query['facet.field']
                 query['stats.field'] += prop_query['stats.field']
-                query['facet.range'] = prop_query['facet.range']
+                query['facet.range'] += prop_query['facet.range']
                 if 'ranges' in prop_query:
                     for key, value in prop_query['ranges'].items():
                         query[key] = value
@@ -126,6 +129,9 @@ class SolrSearch():
                             query['hl.q'] += ' OR (' + q_term + ')'
                         else:
                             query['hl.q'] = q_term
+                if 'prequery-stats' in prop_query:
+                    # we have fields that need a stats prequery
+                    self.prequery_stats += prop_query['prequery-stats']
         # Project
         proj = self.get_request_param(request_dict,
                                       'proj',
@@ -242,6 +248,15 @@ class SolrSearch():
         # Now add default facet fields
         query = self.add_default_facet_fields(query,
                                               request_dict)
+        if len(self.prequery_stats) > 0:
+            #  we have fields that need a stats prequery
+            statsq = StatsQuery()
+            statsq.q = query['q']
+            if 'q.op' in query:
+                statsq.q_op = query['q.op']
+            statsq.fq = query['fq']
+            statsq.stats_fields = self.prequery_stats
+            query = statsq.add_stats_ranges_from_solr(query)
         # Now set aside entities used as search filters
         self.gather_entities(qm.entities)
         return query
