@@ -1067,7 +1067,7 @@ class LinkedData():
         self.item_dc_metadata = []
         if isinstance(json_ld, dict):
             for act_pred in self.ITEM_DC_METADATA_PREDICATES:
-                print(act_pred)
+                # print(act_pred)
                 if act_pred in json_ld:
                     add_annotation = True
                     p_uri = act_pred
