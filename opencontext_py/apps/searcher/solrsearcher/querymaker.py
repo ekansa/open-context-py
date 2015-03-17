@@ -412,6 +412,8 @@ class QueryMaker():
         fend = 'f.' + act_field + '.facet.range.end'
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
+        fother = 'f.' + act_field + '.facet.range.other'
+        finclude = 'f.' + act_field + '.facet.range.include'
         if entity is not False:
             # this is a field with no value limits
             # we need to do a stats-prequery first
@@ -433,6 +435,8 @@ class QueryMaker():
                 query_dict['stats.field'].append(act_field)
             if act_field not in query_dict['facet.range']:
                 query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fother] = 'all'
+            query_dict['ranges'][finclude] = 'all'
             query_dict['ranges'][fstart] = min_val
             query_dict['ranges'][fend] = max_val
             query_dict['ranges'][fgap] = (max_val - min_val) / groups
@@ -453,6 +457,8 @@ class QueryMaker():
         fend = 'f.' + act_field + '.facet.range.end'
         fgap = 'f.' + act_field + '.facet.range.gap'
         findex = 'f.' + act_field + '.facet.sort'
+        fother = 'f.' + act_field + '.facet.range.other'
+        finclude = 'f.' + act_field + '.facet.range.include'
         if entity is not False:
             # this is a field with no value limits
             # we need to do a stats-prequery first
@@ -476,6 +482,8 @@ class QueryMaker():
                 query_dict['stats.field'].append(act_field)
             if act_field not in query_dict['facet.range']:
                 query_dict['facet.range'].append(act_field)
+            query_dict['ranges'][fother] = 'all'
+            query_dict['ranges'][finclude] = 'all'
             query_dict['ranges'][fstart] = self.convert_date_to_solr_date(min_val)
             query_dict['ranges'][fend] = self.convert_date_to_solr_date(max_val)
             query_dict['ranges'][fgap] = self.get_date_difference_for_solr(min_val, max_val, groups)
