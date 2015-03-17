@@ -54,6 +54,7 @@ class SolrSearch():
         query['debugQuery'] = 'false'
         query['fq'] = []
         query['facet.field'] = []
+        query['facet.range'] = []
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
         query['sort'] = 'interest_score desc'
@@ -113,7 +114,7 @@ class SolrSearch():
                 query['fq'] += prop_query['fq']
                 query['facet.field'] += prop_query['facet.field']
                 query['stats.field'] += prop_query['stats.field']
-                query['facet.range'] = prop_query['facet.range']
+                query['facet.range'] += prop_query['facet.range']
                 if 'ranges' in prop_query:
                     for key, value in prop_query['ranges'].items():
                         query[key] = value
