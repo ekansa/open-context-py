@@ -91,7 +91,8 @@ class CatalLivingArchiveAPI():
                                 descript = feature['description']
                             if find_id is not False \
                                and class_id is not False \
-                               and class_id != 'FaunalBone':
+                               and class_id != 'FaunalBone' \
+                               and class_id != 'Faunal Bone':
                                 oc_obj = LastUpdatedOrderedDict()
                                 if self.id_results:
                                     oc_obj['id'] = self.BASE_HTML_URL + '#find-' + urlquote(find_id)
