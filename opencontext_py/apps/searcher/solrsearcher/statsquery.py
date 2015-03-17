@@ -49,6 +49,10 @@ class StatsQuery():
                         fend = 'f.' + solr_field_key + '.facet.range.end'
                         fgap = 'f.' + solr_field_key + '.facet.range.gap'
                         findex = 'f.' + solr_field_key + '.facet.sort'
+                        fother = 'f.' + solr_field_key + '.facet.range.other'
+                        finclude = 'f.' + solr_field_key + '.facet.range.include'
+                        query[fother] = 'all'
+                        query[finclude] = 'all'
                         if (stats['count'] / qm.histogram_groups) < 3:
                             groups = 4
                         if '___pred_date' in solr_field_key:
@@ -59,7 +63,8 @@ class StatsQuery():
                         else:
                             query[fstart] = stats['min']
                             query[fend] = stats['max']
-                            query[fgap] = (stats['max'] - stats['min']) / groups
+                            query[fgap] = ((stats['max'] - stats['min']) / groups)
+                            # query[fgap] = ((stats['max'] - stats['min']) / groups) - ((stats['max'] - stats['min']) / groups) * .01
                             query[findex] = 'index'  # sort by index, not by count
         return query
 
