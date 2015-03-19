@@ -1,6 +1,6 @@
 {% load humanize %}
 {% if st.facets|length > 0 %}
-    <h3>Filting Options</h3>
+    <h3>Filtering Options</h3>
     <div class="panel-group" id="acc-facets">
     {% for f_field in st.facets %}
         {% for op_type in f_field.option_types %}
