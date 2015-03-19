@@ -1,43 +1,48 @@
 {% load humanize %}
-<div class="row">
-    <div class="col-sm-8">
-        <h2>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}</h2>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <div class="row">
-                    <div class="col-sm-8">
-                        <h3 class="panel-title"><span id="map-title">Map</span></h3>
-                    </div>
-                    <div class="col-sm-4" id="map-title-suffix">
+<div id="search-content">
+    <div class="row">
+        <div class="col-sm-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <h3 class="panel-title"><span id="map-title">Map</span></h3>
+                        </div>
+                        <div class="col-sm-2" id="map-title-suffix">
+                        </div>
+                        <div class="col-sm-4 text-right" id="map-title-num">
+                            <h3 class="panel-title">{{ st.total_count|intcomma }} records</h3>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="panel-body" id="map" style="min-height: 600px;">
-                   
-            </div>
-        </div>  
-        {% include 'sets/filters.html' %}
+                <div class="panel-body" id="map" style="min-height: 600px;">
+                       
+                </div>
+            </div>  
+        </div>
+        <div class="col-sm-4">
+            {% include 'sets/filters.html' %}
+            {% include 'sets/facets.html' %}
+        </div>
+    <div class="row" style="margin-bottom: -15px;">
+        <div class="col-sm-8">
+            
+        </div>
+        <div class="col-sm-4" style="padding-right: 30px; text-align: right;">
+            {% include 'sets/paging.html' %}
+        </div>
     </div>
-    <div class="col-sm-4">
-        {% include 'sets/facets.html' %}
+    <div class="row" style="padding-top: 0px;">
+        <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
+            <h3>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}</h3>
+            {% include 'sets/geo-records.html' %}
+        </div>
     </div>
-<div class="row" style="margin-bottom: -15px;">
-    <div class="col-sm-8">
-        
-    </div>
-    <div class="col-sm-4" style="padding-right: 30px; text-align: right;">
-        {% include 'sets/paging.html' %}
-    </div>
+    <script type="text/javascript">
+        <!--
+        var base_url = "{{ base_url }}";
+        var search_map = new search_map("{{ json_url }}");
+        search_map.map.get_geojson_regions();
+        -->
+    </script>
 </div>
-<div class="row" style="padding-top: 0px;">
-    <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
-        {% include 'sets/geo-records.html' %}
-    </div>
-</div>
-<script type="text/javascript">
-    <!--
-    var base_url = "{{ base_url }}";
-    var search_map = new search_map("{{ json_url }}");
-    search_map.map.get_geojson_regions();
-    -->
-</script>

@@ -218,12 +218,7 @@ STABLE_ID_URI_PREFIXES = {'doi': 'http://dx.doi.org/',
                           'orcid': 'http://orcid.org/',
                           'ark': 'http://n2t.net/ark:/'}
 
-NAV_ITEMS = [{'key': 'home',
-              'link': '../../',
-              'display': 'Home',
-              'always': True,
-              'urls': None},
-             {'key': 'about',
+NAV_ITEMS = [{'key': 'about',
               'link': None,
               'display': 'About',
               'always': True,

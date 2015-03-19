@@ -1,5 +1,6 @@
 {% load humanize %}
 {% if st.filters|length == 0 %}
+    <!--
     <div class="panel-group" id="acc-filters">
         <div class="panel panel-default">
             <div class="panel-heading"> 
@@ -14,25 +15,28 @@
             </div>
         </div>
     </div>
+    -->
 {%else%}
     <div class="panel-group" id="acc-filters">
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading"> 
                 <h4 class="panel-title">
                     <a data-toggle="collapse" data-parent="#acc-filters" href="#panel-filters">
-                            <span class="glyphicon glyphicon-resize-vertical"></span>
-                            Search Filters
+                        <span class="glyphicon glyphicon-resize-vertical"></span>
+                        Applied Filters
                     </a>
                 </h4>
             </div>
              
             <div id="panel-filters" class="panel-collapse collapse in">
-                <div class="panel-body">
+                <div class="container-fluid">
+                    
                 {% for s_filter in st.filters %}
                     {% with s_filter=s_filter %}
                     {% include 'sets/filter.html' %}
                     {% endwith %}
                 {% endfor %}
+                
                 </div>
             </div>
         </div>

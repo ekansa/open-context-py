@@ -1,18 +1,19 @@
 {% load humanize %}
-<dl>
-    <dt>
-        {{ s_filter.filter_label }}
-    </dt>
-    <dd>
-        <div class="row">
-            <div class="col-sm-1">
-                <a href="{{ s_filter.remove_href}}">
-                    <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
-                </a>
-            </div>
-            <div class="col-sm-11">
-                {{ s_filter.filter_value }}
-            </div>
-        </div>
-    </dd>
-</dl>
+
+<div class="row act-filter-type">
+    <div class="col-xs-12">
+        <p><strong>{{ s_filter.filter_label }}</strong></p>
+    </div>
+</div>
+<div class="row act-filter-val-row">
+    <div class="col-xs-1">
+        <a href="{{ s_filter.remove_href}}">
+            <span class="glyphicon glyphicon-remove-circle" aria-hidden="true"></span>
+        </a>
+    </div>
+    <div class="col-xs-10 act-filter-val">
+        {{ s_filter.filter_value }}
+    </div>
+    <div class="col-xs-1">
+    </div>
+</div>

@@ -1,7 +1,7 @@
 {% extends 'edit/item.html' %}
-<!DOCTYPE html>
 
 {% block itemcontent %}
+<div id="item-content">
     <!-- BEGIN item edit general javascript includes -->
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
@@ -69,4 +69,5 @@
          <script src="../../static/oc/js/edit/geo-chrono-edit.js"></script>
          <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:start();"></script>
      </div>
+</div>
 {% endblock %} 
