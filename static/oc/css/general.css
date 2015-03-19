@@ -6,37 +6,30 @@
 	margin-left:auto;
 	margin-right:auto;
 }
-#header-logo {
-	padding-top: 1%;
-	padding-bottom: 1%;
-	margin-right: 4px;
+#oc-nav-bar {
+	background-color: #141518;
 }
-#header-oc {
-	font-family:"Palatino Linotype", "Book Antiqua", Palatino, serif;
-	margin-left: 6px;
+#oc-nav-bar li.active a {
+	background-color: #141518;
 }
-#header-oc h1 {
-	text-transform:uppercase;
-    font-size: 1.7em;
-    letter-spacing: normal;
-    font-weight: 500;
-	color: #003B66;
-	margin-top: 12px;
-	margin-bottom: 0px;
-}
-#header-oc h5 {
-	text-align:left;
-    color: #003B66;
-    font-size: 1em;
-    letter-spacing: normal;
-    font-weight: normal;
-    padding-top: 0px;
-	margin-top: 7px;
-}
-#header-label {
+#oc-nav-branding {
+	padding-top:0px;
+        padding-left:0px;
 }
 
+/* Item-content, for individual records */
+#item-content {
+	/*
+	padding-top:70px;
+	*/
+}
 
+/* Search-content, for search results */
+#search-content {
+	/*
+	padding-top:70px;
+	*/
+}
 
 #footer-upper {
 	margin-top: 5%;
@@ -143,13 +136,23 @@ span.title_sep {
 }
 #item-uri {
 	max-width:200px;
-    word-wrap:break-word;
+	word-wrap:break-word;
 }
 #map {
 	width:100%;
-    height:66%;
+	height:66%;
 	min-height:300px;
 }
 td.opt-count-pad span {
 	margin-top: 4px;
+}
+div.act-filter-type {
+	padding-top: 5px;
+}
+div.act-filter-val-row {
+	padding-bottom: 5px;
+}
+div.act-filter-val {
+	max-width:200px;
+	word-wrap:break-word;
 }
