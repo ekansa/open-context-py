@@ -148,6 +148,28 @@ span.title_sep {
 	height:66%;
 	min-height:300px;
 }
+div.act-filter-type {
+	padding-top: 5px;
+}
+div.act-filter-val-row {
+	padding-bottom: 5px;
+}
+
+ul.f-opt-list {
+	border-top: 1px solid #ddd;
+	margin-bottom: -1px;
+}
+li.f-opt-top {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+	border-top: none;
+	border-left: none;
+	border-right: none;
+}
+li.f-opt {
+	border-left: none;
+	border-right: none;
+}
 div.f-opt-label {
 	padding-left: 0px;
 }
