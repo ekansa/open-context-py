@@ -11,6 +11,7 @@ static/exports/
 static/bootstrap/
 static/jquery/
 static/angularjs/
+static/leaflet/
 static/exports/
 static/robots/robots.txt
 *.pyc
