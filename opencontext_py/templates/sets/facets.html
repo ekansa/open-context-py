@@ -26,7 +26,7 @@
                 {%else%}
                 <div id="panel-{{ f_field.id }}-{{ op_type }}" class="panel-collapse collapse">
                 {%endif%}
-                    <ul class="list-group">
+                    <ul class="list-group f-opt-list">
                     {% if op_type == 'id' and f_field.id_options|length > 0 %} 
                         {% for option in f_field.id_options %}
                             {% with dom_id=option.dom_id %}
@@ -34,7 +34,9 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
+                            {% with l_count=forloop.counter %}    
                             {% include 'sets/facet-option.html' %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -48,7 +50,9 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
+                            {% with l_count=forloop.counter %}    
                             {% include 'sets/facet-option.html' %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -62,7 +66,9 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
+                            {% with l_count=forloop.counter %}    
                             {% include 'sets/facet-option.html' %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -76,7 +82,9 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
+                            {% with l_count=forloop.counter %}    
                             {% include 'sets/facet-option.html' %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}

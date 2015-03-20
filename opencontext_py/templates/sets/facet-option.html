@@ -1,5 +1,9 @@
 {% load humanize %}
-<li class="list-group-item">
+{% if l_count == 1 %}
+<li class="list-group-item f-opt-top">
+{%else%}
+<li class="list-group-item f-opt">
+{%endif%}
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-7 f-opt-label">
