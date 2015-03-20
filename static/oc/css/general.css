@@ -148,16 +148,11 @@ span.title_sep {
 	height:66%;
 	min-height:300px;
 }
-td.opt-count-pad span {
-	margin-top: 4px;
+div.f-opt-label {
+	padding-left: 0px;
 }
-div.act-filter-type {
-	padding-top: 5px;
-}
-div.act-filter-val-row {
-	padding-bottom: 5px;
-}
-div.act-filter-val {
-	max-width:200px;
-	word-wrap:break-word;
+div.f-count {
+	margin-top: -2px;
+	padding-top: 0px;
+	padding-left: 0px;
 }
