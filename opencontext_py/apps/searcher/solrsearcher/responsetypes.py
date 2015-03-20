@@ -22,7 +22,8 @@ class SolrResponseTypes():
                      'geo-record',
                      'uuid',
                      'uri',
-                     'uri-meta']
+                     'uri-meta',
+                     'solr']
 
     def __init__(self, request_dict={}):
         self.responses = self.DEFAULT_RESPONSES
