@@ -26,7 +26,7 @@
                 {%else%}
                 <div id="panel-{{ f_field.id }}-{{ op_type }}" class="panel-collapse collapse">
                 {%endif%}
-                    <table class="table">
+                    <ul class="list-group">
                     {% if op_type == 'id' and f_field.id_options|length > 0 %} 
                         {% for option in f_field.id_options %}
                             {% with dom_id=option.dom_id %}
@@ -86,7 +86,7 @@
                     {%else%}
                         <!-- That's weird -->
                     {%endif%}
-                    </table>
+                    </ul>
                 </div>
             </div>
         {% endfor %}

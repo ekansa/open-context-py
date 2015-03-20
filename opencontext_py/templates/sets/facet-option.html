@@ -1,14 +1,18 @@
 {% load humanize %}
-<tr>
-    <td class="col-sm-8">
-        <a id="{{ dom_id }}" href="{{ href }}">{{ label }}</a>
-    </td>
-    <td class="col-sm-1 opt-count-pad">
-        {% if defined_by != False %}
-        <a href="{{ defined_by }}" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
-        {%endif%}
-    </td>
-    <td class="col-sm-3 opt-count">
-        <span class="badge">{{ opt_count|intcomma }}</span>
-    </td>
-</tr>
+<li class="list-group-item">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-7 f-opt-label">
+                <a id="{{ dom_id }}" href="{{ href }}">{{ label }}</a>
+            </div>
+            <div class="col-xs-2">
+                {% if defined_by != False %}
+                <a href="{{ defined_by }}" target="_blank" title="Link about this option"><span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>
+                {%endif%}
+            </div>
+            <div class="col-xs-3 f-count">
+                <span class="badge">{{ opt_count|intcomma }}</span>
+            </div>
+        </div>
+    </div>
+</li>
