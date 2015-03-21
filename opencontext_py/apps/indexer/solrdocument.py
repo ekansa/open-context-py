@@ -695,7 +695,8 @@ class SolrDocument:
                                                     # for a child. Since facets aren't made with this,
                                                     # it's OK for on-linked-data-ok objects to be used
                                                     #-------------------------------
-                                                    self.fields[all_obj_solr_field].append(solr_value)
+                                                    if solr_value not in self.fields[all_obj_solr_field]:
+                                                        self.fields[all_obj_solr_field].append(solr_value)
                                                     if parent['id'] not in self.fields['text']:
                                                         self.fields['text'] += parent['id'] + ' '
                                                         self.fields['text'] += parent['label'] + '\n'
