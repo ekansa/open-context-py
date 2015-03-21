@@ -94,16 +94,11 @@ function search_map(json_url) {
 	console.log(layerControl);
 	map.addLayer(gmapSat);
 	
-	
-	
-	
-	
-	var region_layers = {};
 	map.show_title_menu = function(map_type, geodeep){
 		/*
 		* Show current layer type
 		*/
-	        var act_dom_id = 'map-title';
+	    var act_dom_id = 'map-title';
 		var title = document.getElementById(act_dom_id);
 		var act_dom_id = "map-title-suffix";
 		var title_suf = document.getElementById(act_dom_id);
@@ -119,7 +114,58 @@ function search_map(json_url) {
 		}
 	}
 	
+	var region_controls = false;
+	map.add_region_controls = function(){
+		/*
+		* Add geo-regions (control)
+		*/
+		if (!region_controls) {	
+			L.easyButton('glyphicon-th', 
+				function (){
+					map.view_region_layer_by_zoom(map.geodeep + 1);
+				},
+				'Higher resolution Open Context regions'
+			);
+			L.easyButton('glyphicon-th-large', 
+				function (){
+					map.view_region_layer_by_zoom(map.geodeep - 1);
+				},
+				'Lower resolution Open Context regions'
+			);
+			region_controls = true;
+		}
+	}
 	
+	map.view_region_layer_by_zoom = function(geodeep){
+		/*
+		 * get a layer by zoom level
+		 */
+		if (geodeep in region_layers) {
+			if (map.hasLayer(region_layers[geodeep])) {
+				if (map.geodeep in region_layers) {
+					if (map.hasLayer(region_layers[map.geodeep])) {
+						// delete the currently displayed layer
+						map.removeLayer(region_layers[map.geodeep]);
+						delete region_layers[map.geodeep];
+					}
+				}
+				map.addTo(region_layers[geodeep]);
+			}
+		}
+		else{
+			if (map.geodeep in region_layers) {
+				if (map.hasLayer(region_layers[map.geodeep])) {
+					map.removeLayer(region_layers[map.geodeep]);
+					delete region_layers[map.geodeep];
+				}
+			}
+			// go get new data
+			map.geodeep = geodeep;
+			map.get_geojson_regions();
+		}
+	}
+	
+	var region_layers = {};
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
 		if (map.geojson_facets != false) {
@@ -210,16 +256,6 @@ function search_map(json_url) {
 		bounds.extend(newbounds.getNorthEast());
 	}
 	
-	map.view_region_layer_by_zoom = function(geodeep){
-		/*
-		 * get a layer by zoom level
-		 */
-		console.log(region_layers);
-		if (geodeep in region_layers) {
-			alert('yes!');
-		}
-	}
-	
 	map.get_geojson_regions = function (){
 		/*
 		* Show current layer type
@@ -242,6 +278,7 @@ function search_map(json_url) {
 				map.geojson_facets = data;
 				map.render_region_layer();
 				map.show_title_menu('geo-facet', map.geodeep);
+				map.add_region_controls();
 			}
 		})
 	}
