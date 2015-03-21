@@ -323,6 +323,9 @@ class QueryMaker():
                             dtypes = lequiv.get_data_types_from_object(entity.uri)
                             if isinstance(dtypes, list):
                                 # set te data type and the act-field
+                                if prop_slug in self.entities:
+                                    # pass
+                                    self.entities[prop_slug].data_type = dtypes[0]  # store entitty for later use
                                 act_field_data_type = self.get_solr_field_type(dtypes[0])
                         if predicate_solr_slug is False or pred_prop_entity:
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']

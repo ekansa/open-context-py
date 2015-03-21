@@ -38,6 +38,12 @@ class MakeJsonLd():
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
         self.rel_media_facet = False
+        # flatten list of an attribute values to single value
+        self.flatten_rec_attributes = False
+        # A list of (non-standard) attributes to include in a record
+        self.rec_attributes = []
+        # check for additional requested record attributes
+        self.get_requested_attributes()
 
     def convert_solr_json(self, solr_json):
         """ Converst the solr jsont """
@@ -55,9 +61,10 @@ class MakeJsonLd():
             self.add_paging_json(solr_json)
             self.add_filters_json()
             self.add_text_fields()
-        if 'facet' in self.act_responses:
-            self.add_numeric_fields(solr_json)
-            self.add_date_fields(solr_json)
+        # now process numeric + date fields, facets will
+        # only be added if 'facet' in self.act_response
+        self.add_numeric_fields(solr_json)
+        self.add_date_fields(solr_json)
         # now check for form-use-life chronology
         # note! Do this first to set time bounds for geo-features
         # needs to be done, even if facet results are not displayed
@@ -65,9 +72,10 @@ class MakeJsonLd():
         if 'geo-facet' in self.act_responses:
             # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
-        if 'facet' in self.act_responses:
-            # now make the regular facets
-            self.make_facets(solr_json)
+        # now process regular facets.
+        # they will only be added to the response if
+        # 'facet' in self.act_response
+        self.make_facets(solr_json)
         if 'geo-record' in self.act_responses \
            or 'nongeo-record' in self.act_responses:
             # now add the result information
@@ -75,6 +83,8 @@ class MakeJsonLd():
             geojson_recs_obj.entities = self.entities
             geojson_recs_obj.min_date = self.min_date
             geojson_recs_obj.max_date = self.max_date
+            geojson_recs_obj.flatten_rec_attributes = self.flatten_rec_attributes
+            geojson_recs_obj.rec_attributes = self.rec_attributes
             geojson_recs_obj.make_records_from_solr(solr_json)
             if len(geojson_recs_obj.geojson_recs) > 0 \
                and 'geo-record' in self.act_responses:
@@ -110,6 +120,8 @@ class MakeJsonLd():
             solr_uuids.min_date = self.min_date
             solr_uuids.max_date = self.max_date
             solr_uuids.entities = self.entities
+            solr_uuids.flatten_rec_attributes = self.flatten_rec_attributes
+            solr_uuids.rec_attributes = self.rec_attributes
             uris = solr_uuids.make_uris_from_solr(solr_json,
                                                   False)
             if len(self.act_responses) > 1:
@@ -395,6 +407,7 @@ class MakeJsonLd():
                 linked_field = False
                 field_entity = self.get_entity(slug)
                 if field_entity is not False:
+                    self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
                 field = self.get_facet_meta(solr_field_key)
@@ -427,7 +440,7 @@ class MakeJsonLd():
                     range_dict['oc-api:max'] = range_end
                     field['oc-api:has-range-options'].append(range_dict)
                 num_fields.append(field)
-        if len(num_fields) > 0:
+        if len(num_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-numeric-facets'] = num_fields
 
     def add_date_fields(self, solr_json):
@@ -443,6 +456,7 @@ class MakeJsonLd():
                 linked_field = False
                 field_entity = self.get_entity(slug)
                 if field_entity is not False:
+                    self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
                 field = self.get_facet_meta(solr_field_key)
@@ -475,7 +489,7 @@ class MakeJsonLd():
                     range_dict['oc-api:max-date'] = range_end
                     field['oc-api:has-range-options'].append(range_dict)
                 date_fields.append(field)
-        if len(date_fields) > 0:
+        if len(date_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-date-facets'] = date_fields
 
     def make_discovery_geotiles(self, solr_json):
@@ -656,7 +670,7 @@ class MakeJsonLd():
                     pre_sort_facets[facet['id']] = facet
             # now make a sorted list of facets
             json_ld_facets = self.make_sorted_facet_list(pre_sort_facets)
-            if len(json_ld_facets) > 0:
+            if len(json_ld_facets) > 0 and 'facet' in self.act_responses:
                 self.json_ld['oc-api:has-facets'] = json_ld_facets
 
     def make_sorted_facet_list(self, pre_sort_facets):
@@ -774,11 +788,19 @@ class MakeJsonLd():
             facet['id'] = id_prefix
             facet['label'] = ''
             facet_key_list = solr_facet_key.split('___')
-            fdtype_list = facet_key_list[1].split('_')
             fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
             entity = self.get_entity(slug)
             if entity is not False:
+                if facet_key_list[-1] != facet_key_list[1]:
+                    # there's a predicate slug as the second
+                    # item in te facet_key_list
+                    pred_slug = facet_key_list[1].replace('_', '-')
+                    self.add_active_facet_field(pred_slug, fsuffix_list[0])
+                else:
+                    # the predicate field is the first item in the
+                    # facet key list
+                    self.add_active_facet_field(slug, fsuffix_list[0])
                 facet['id'] = id_prefix + '-' + entity.slug
                 facet['rdfs:isDefinedBy'] = entity.uri
                 facet['label'] = entity.label
@@ -855,6 +877,40 @@ class MakeJsonLd():
         output['slug'] = solr_facet_value_key
         output['data-type'] = 'id'
         return output
+
+    def add_active_facet_field(self, facet_slug, facet_type=False):
+        """ adds an active facet field to pass to
+            the item record generator object so that
+            non-standandard attributes can be added
+            to item records based on the user request
+        """
+        if 'oc-gen' not in facet_slug \
+           and facet_type != 'context' \
+           and facet_type != 'project':
+            if facet_slug not in self.rec_attributes:
+                # print('adding:' + facet_slug)
+                self.rec_attributes.append(facet_slug)
+
+    def get_requested_attributes(self):
+        """ adds to the list of attributes to include
+            in individual record results based on
+            the GET parameter 'attributes' requested
+            by the client
+        """
+        if isinstance(self.request_dict, dict):
+            if 'attributes' in self.request_dict:
+                req_att_val = self.request_dict['attributes'][0]
+                if ',' in req_att_val:
+                    # comma seperated list of values for requested attributes
+                    requested_attributes = req_att_val.split(',')
+                else:
+                    requested_attributes = [req_att_val]
+                for req_attribute in requested_attributes:
+                    if req_attribute not in self.rec_attributes:
+                        # add these to the list of requested attributes
+                        self.rec_attributes.append(req_attribute)
+            if 'flatten-attributes' in self.request_dict:
+                self.flatten_rec_attributes = True
 
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """

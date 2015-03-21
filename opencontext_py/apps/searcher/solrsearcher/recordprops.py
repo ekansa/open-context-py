@@ -1,5 +1,6 @@
 import json
 from django.conf import settings
+import django.utils.http as http
 from django.utils.html import strip_tags
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -9,6 +10,8 @@ from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class RecordProperties():
@@ -16,8 +19,9 @@ class RecordProperties():
         useful for making geospatial feature records or
         lists of items without geospatial data
     """
+    ATTRIBUTE_DELIM = '; '  # delimiter for multiple attributes
 
-    def __init__(self, response_dict_json=False):
+    def __init__(self, request_dict_json=False):
         self.uuid = False
         self.uri = False  # cannonical uri for the item
         self.href = False  # link to the item in the current deployment
@@ -41,14 +45,21 @@ class RecordProperties():
         self.thumbnail_scr = False
         self.snippet = False
         self.cite_uri = False  # stable identifier as an HTTP uri
+        self.other_attributes = False  # other attributes to the record
+        # flatten list of an attribute values to single value
+        self.flatten_rec_attributes = False
+        # A list of (non-standard) attributes to include in a record
+        self.rec_attributes = []
+        self.attribute_hierarchies = {}
         self.base_url = settings.CANONICAL_HOST
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.entities = {}
-        if response_dict_json is not False:
-            self.response_dict = json.loads(response_dict_json)
+        self.request_dict_json = request_dict_json
+        if request_dict_json is not False:
+            self.request_dict = json.loads(request_dict_json)
         else:
-            self.response_dict = False
+            self.request_dict = False
         self.highlighting = False
         self.recursive_count = 0
         self.min_date = False
@@ -66,6 +77,7 @@ class RecordProperties():
             self.get_time(solr_rec)  # get time information, limiting date ranges to query constaints
             self.get_thumbnail(solr_rec)
             self.get_snippet(solr_rec)  # get snippet of highlighted text
+            self.get_attributes(solr_rec) # get non-standard attributes
 
     def get_item_basics(self, solr_rec):
         """ get basic metadata for an item """
@@ -107,7 +119,7 @@ class RecordProperties():
             for p_uri in solr_rec['persistent_uri']:
                 self.cite_uri = p_uri
                 if 'dx.doi.org' in p_uri:
-                    break # stop looking once we have a DOI, the best
+                    break  # stop looking once we have a DOI, the best
 
     def get_lat_lon(self, solr_rec):
         """ gets latitute and longitude information """
@@ -225,6 +237,185 @@ class RecordProperties():
                                                    [])
         return cat_hierarchy
 
+    """ The following seciton of code
+        processes non-default attributes for records
+    """
+    def get_attributes(self, solr_rec):
+        """ gets attributes for a record, based on the
+            predicates requested in the search
+            and optional predicates passed by a client
+            with a GET request with parameter 'attributes'
+        """
+        qm = QueryMaker()
+        solr_field_entities = {}
+        for attribute in self.rec_attributes:
+            entity = self.get_entity(attribute)
+            if entity is not False:
+                prop_slug = entity.slug
+                # check to make sure we have the entity data type for linked fields
+                if entity.data_type is False and entity.item_type == 'uri':
+                    lequiv = LinkEquivalence()
+                    dtypes = lequiv.get_data_types_from_object(entity.uri)
+                    if isinstance(dtypes, list):
+                        # set te data type and the act-field
+                        # print('Found for ' + prop_slug + ' ' + dtypes[0])
+                        entity.data_type = dtypes[0]
+                        if prop_slug in self.entities:
+                            self.entities[prop_slug] = entity  # store entitty for later use
+                field_parts = qm.make_prop_solr_field_parts(entity)
+                solr_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                # extract children of the solr_field so we know if
+                # we have the most specific attributes, then we can get
+                # values for the most specific attributes
+                self.extract_attribute_children(solr_rec, solr_field)
+        self.clean_attribute_hiearchies()
+        if isinstance(self.attribute_hierarchies, dict):
+            self.other_attributes = []
+            for field_slug_key, values in self.attribute_hierarchies.items():
+                entity = self.get_entity(field_slug_key)
+                if entity is not False:
+                    attribute_dict = LastUpdatedOrderedDict()
+                    attribute_dict['property'] = entity.label
+                    attribute_dict['values_list'] = []
+                    attribute_dict['value'] = ''
+                    string_val = False
+                    delim = ''
+                    for val in values:
+                        if isinstance(val, str):
+                            string_val = True
+                            parsed_val = self.parse_solr_value_parts(val)
+                            attribute_dict["values_list"].append(parsed_val['label'])
+                            attribute_dict['value'] += delim + str(parsed_val['label'])
+                        else:
+                            attribute_dict["values_list"].append(val)
+                            attribute_dict['value'] += delim + str(val)
+                        delim = self.ATTRIBUTE_DELIM
+                    if len(values) == 1 \
+                       and string_val is False:
+                        attribute_dict['value'] = values[0]
+                    self.other_attributes.append(attribute_dict)
+
+    def prevent_attribute_key_collision(self, item_prop_dict, prop_key):
+        """ checks to make sure there's no collision between the prop_key
+            and the dict that it will be added to
+        """
+        i = 2
+        output_prop_key = prop_key
+        while output_prop_key in item_prop_dict:
+            output_prop_key = prop_key + '[' + str(i) + ']'
+            i += 1
+        return output_prop_key
+
+    def clean_attribute_hiearchies(self):
+        """ some post-processing to make sure
+            we have clean attribute hierarchies
+        """
+        if isinstance(self.attribute_hierarchies, dict):
+            # print('check: ' + str(self.attribute_hierarchies))
+            temp_attribute_hierarchies = self.attribute_hierarchies
+            clean_attribute_hiearchies = {}
+            for solr_field_key, field_char in self.attribute_hierarchies.items():
+                if field_char['most-specific']:
+                    par_field_ex = solr_field_key.split('___')
+                    # last two parts make the suffix, a pred-slug[-2] and a field type [-1]
+                    pred_suffix = '___' + par_field_ex[-2] + '___' + par_field_ex[-1]
+                    specific_ok = True
+                    for val in field_char['values']:
+                        if isinstance(val, str):
+                            #  print('check:' + solr_field_key + ' val: ' + val)
+                            parsed_val = self.parse_solr_value_parts(val)
+                            check_field = parsed_val['slug'].replace('-', '_')
+                            check_field += '___pred_' + parsed_val['data_type']
+                            if check_field in temp_attribute_hierarchies:
+                                # note a field is NOT at the most specific level
+                                specific_ok = False
+                            else:
+                                # now check a version with the predicate as part of
+                                # the solr field
+                                check_field = parsed_val['slug'].replace('-', '_')
+                                check_field += pred_suffix
+                                if check_field in temp_attribute_hierarchies:
+                                    # note a field is NOT at the most specific level
+                                    specific_ok = False
+                    if specific_ok:
+                        # ok to add
+                        # print('checked OK: ' + solr_field_key)
+                        clean_attribute_hiearchies[solr_field_key] = field_char
+            # now that we got rid of problem fields, lets sort these for consistent
+            # rendering
+            self.attribute_hierarchies = LastUpdatedOrderedDict()
+            keys = LastUpdatedOrderedDict()
+            # order of key types, we want id fields, followed by numeric then date
+            key_types = ['___pred_id',
+                         '___pred_numeric',
+                         '___pred_date']
+            for key_type in key_types:
+                keys[key_type] = []
+                for solr_field_key, field_char in clean_attribute_hiearchies.items():
+                    if key_type in solr_field_key:
+                        keys[key_type].append(solr_field_key)
+                # sort alphabetically. Slugs useful, since they will cluster predicates
+                # from similar vocabularies
+                keys[key_type].sort()
+                for key in keys[key_type]:
+                    field_char = clean_attribute_hiearchies[key]
+                    field_ex = key.split('___')
+                    # the penultimate part is the predicate
+                    field_slug = field_ex[-2].replace('_', '-')
+                    if field_slug not in self.attribute_hierarchies:
+                        self.attribute_hierarchies[field_slug] = []
+                    for val in field_char['values']:
+                        if val not in self.attribute_hierarchies[field_slug]:
+                            self.attribute_hierarchies[field_slug].append(val)
+
+    def extract_attribute_children(self,
+                                   solr_rec,
+                                   solr_field_key):
+        """ extracts ALL children from the hiearchy of
+            a solr_field_key
+        """
+        is_field = False
+        if solr_field_key not in self.attribute_hierarchies:
+            # so we don't look at the same thing twice!
+            if solr_field_key in solr_rec:
+                is_field = True
+                field_char = {'most-specific': False,
+                              'values': []}
+                if '___pred_numeric' in solr_field_key \
+                   or '___pred_numeric' in solr_field_key:
+                    field_char['most-specific'] = True
+                    field_char['values'] = solr_rec[solr_field_key]
+                elif '___pred_id' in solr_field_key:
+                    # make a suffix for the 
+                    par_field_ex = solr_field_key.split('___')
+                    # last two parts make the suffix, a pred-slug[-2] and a field type [-1]
+                    pred_suffix = '___' + par_field_ex[-2] + '___' + par_field_ex[-1]
+                    childless_children = []
+                    for child_val in solr_rec[solr_field_key]:
+                        # print('Child: ' + solr_field_key + ': ' + child_val)
+                        parsed_path_item = self.parse_solr_value_parts(child_val)
+                        new_field_prefix = parsed_path_item['slug'].replace('-', '_')
+                        new_field_key = new_field_prefix + '___pred_' + parsed_path_item['data_type']
+                        if parsed_path_item['data_type'] == 'id':
+                            child_is_field = self.extract_attribute_children(solr_rec,
+                                                                             new_field_key)
+                            if child_is_field is False:
+                                # now check an alternative combining the child
+                                # slug with the predicate of the parent
+                                new_field_key = new_field_prefix + pred_suffix
+                                # print('check: ' + new_field_key)
+                                child_is_field = self.extract_attribute_children(solr_rec,
+                                                                                 new_field_key)
+                                if child_is_field is False:
+                                    childless_children.append(child_val)
+                    if len(childless_children) > 0:
+                        field_char['most-specific'] = True
+                        field_char['values'] = childless_children
+                else:
+                    pass
+                self.attribute_hierarchies[solr_field_key] = field_char
+        return is_field
+
     def extract_hierarchy(self,
                           solr_rec,
                           facet_field_key,
@@ -239,6 +430,8 @@ class RecordProperties():
             This is a recursive function and
             default / starts with the root
             of the hiearchy as the facet_field_key
+
+            This only follows a single path (not multiple paths)
         """
         alt_facet_field_key = facet_field_key
         if pred_field is not False:
@@ -250,7 +443,7 @@ class RecordProperties():
                                pred_field.replace('-', '_'),
                                f_parts[1]]
                 alt_facet_field_key = '___'.join(alt_f_parts)
-                print('Check: ' + facet_field_key + ', ' + alt_facet_field_key)
+                # print('Check: ' + facet_field_key + ', ' + alt_facet_field_key)
         if (facet_field_key in solr_rec or alt_facet_field_key in solr_rec)\
            and self.recursive_count < 20:
             self.recursive_count += 1
@@ -331,14 +524,19 @@ class RecordProperties():
             parts
         """
         output = False
-        if '___' in solr_value:
-            solr_ex = solr_value.split('___')
-            if len(solr_ex) == 4:
-                output = {}
-                output['slug'] = solr_ex[0]
-                output['data_type'] = solr_ex[1]
-                output['uri'] = solr_ex[2]
-                output['label'] = solr_ex[3]
+        if isinstance(solr_value, str):
+            if '___' in solr_value:
+                solr_ex = solr_value.split('___')
+                if len(solr_ex) == 4:
+                    output = {}
+                    output['slug'] = solr_ex[0]
+                    output['data_type'] = solr_ex[1]
+                    output['uri'] = solr_ex[2]
+                    output['label'] = solr_ex[3]
+            else:
+                output = solr_value
+        else:
+            output = solr_value
         return output
 
     def get_key_val(self, key, dict_obj):
