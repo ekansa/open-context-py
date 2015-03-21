@@ -63,11 +63,6 @@ function search_map(json_url) {
 		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-    /*
-	var mapboxTiles = L.tileLayer('http://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
-	});
-	*/
 	var mapboxPencil = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.pencil/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
@@ -95,20 +90,85 @@ function search_map(json_url) {
 	};
   
 	map._layersMaxZoom = 20;
-	L.control.layers(baseMaps).addTo(map);
+	var layerControl = L.control.layers(baseMaps).addTo(map);
+	console.log(layerControl);
 	map.addLayer(gmapSat);
 	
-	var region_layer = false
+	map.show_title_menu = function(map_type, geodeep){
+		/*
+		* Show current layer type
+		*/
+	    var act_dom_id = 'map-title';
+		var title = document.getElementById(act_dom_id);
+		var act_dom_id = "map-title-suffix";
+		var title_suf = document.getElementById(act_dom_id);
+		title_suf.innerHTML = "";
+		var act_dom_id = "map-menu";
+		var menu = document.getElementById(act_dom_id);
+		
+		/*
+		* Handle geo-regions (facets)
+		*/
+	        if (map_type == 'geo-facet') {
+			title.innerHTML = "Map of Counts by Region";
+		}
+	}
+	
+	var region_controls = false;
+	map.add_region_controls = function(){
+		/*
+		* Add geo-regions (control)
+		*/
+		if (!region_controls) {	
+			L.easyButton('glyphicon-th', 
+				function (){
+					map.view_region_layer_by_zoom(map.geodeep + 1);
+				},
+				'Higher resolution Open Context regions'
+			);
+			L.easyButton('glyphicon-th-large', 
+				function (){
+					map.view_region_layer_by_zoom(map.geodeep - 1);
+				},
+				'Lower resolution Open Context regions'
+			);
+			region_controls = true;
+		}
+	}
+	
+	map.view_region_layer_by_zoom = function(geodeep){
+		/*
+		 * get a layer by zoom level
+		 */
+		if (geodeep in region_layers) {
+			if (map.hasLayer(region_layers[geodeep])) {
+				if (map.geodeep in region_layers) {
+					if (map.hasLayer(region_layers[map.geodeep])) {
+						// delete the currently displayed layer
+						map.removeLayer(region_layers[map.geodeep]);
+						delete region_layers[map.geodeep];
+					}
+				}
+				map.addTo(region_layers[geodeep]);
+			}
+		}
+		else{
+			if (map.geodeep in region_layers) {
+				if (map.hasLayer(region_layers[map.geodeep])) {
+					map.removeLayer(region_layers[map.geodeep]);
+					delete region_layers[map.geodeep];
+				}
+			}
+			// go get new data
+			map.geodeep = geodeep;
+			map.get_geojson_regions();
+		}
+	}
+	
+	var region_layers = {};
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
 		if (map.geojson_facets != false) {
-			/*
-			 * Show current layer type
-			 */
-			var act_dom_id = "map-title";
-			document.getElementById(act_dom_id).innerHTML = "Map of Counts by Region";
-			var act_dom_id = "map-title-suffix";
-			document.getElementById(act_dom_id).innerHTML = "";
 			/*
 			 * Loop through features to get the range of counts.
 			 */
@@ -128,7 +188,7 @@ function search_map(json_url) {
 					}
 				}
 			}
-			region_layer = L.geoJson(map.geojson_facets,
+			var region_layer = L.geoJson(map.geojson_facets,
 						   {
 								style: function(feature){
 										// makes colors, opacity for each feature
@@ -144,7 +204,10 @@ function search_map(json_url) {
 									    },
 								onEachFeature: on_each_region_feature
 									 });
-			var jsonGroup = new L.FeatureGroup(region_layer); 
+			region_layer.geodeep = map.geodeep;
+			region_layer.max_value = max_value;
+			region_layer.min_value = min_value;
+			region_layers[map.geodeep] = region_layer;
 			if (map.fit_bounds) {
 				map.fitBounds(bounds);
 				//map.fitBounds(jsonGroup.getBounds());
@@ -214,11 +277,13 @@ function search_map(json_url) {
 			success: function(data) {
 				map.geojson_facets = data;
 				map.render_region_layer();
+				map.show_title_menu('geo-facet', map.geodeep);
+				map.add_region_controls();
 			}
 		})
 	}
 
-	this.region_layer = region_layer;
+	this.region_layers = region_layers;
 	this.map = map;
 }
 

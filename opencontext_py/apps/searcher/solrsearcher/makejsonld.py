@@ -42,6 +42,8 @@ class MakeJsonLd():
     def convert_solr_json(self, solr_json):
         """ Converst the solr jsont """
         ok_show_debug = True
+        if 'solr' in self.act_responses:
+            return solr_json
         if 'context' in self.act_responses:
             search_context_obj = SearchContext()
             self.json_ld['@context'] = search_context_obj.id
