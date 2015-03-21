@@ -49,6 +49,7 @@ function search_map(json_url) {
 	map.json_url = this.json_url
 	map.geodeep = geodeep;
 	map.rows = rows;
+	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
 	map.geojson_facets = false;  //geojson data for facet regions
 	map.geojson_records = false; //geojson data for records
@@ -140,6 +141,7 @@ function search_map(json_url) {
 		/*
 		 * get a layer by zoom level
 		 */
+		map.fit_bounds = true;
 		if (geodeep in region_layers) {
 			if (map.hasLayer(region_layers[geodeep])) {
 				if (map.geodeep in region_layers) {
@@ -209,8 +211,8 @@ function search_map(json_url) {
 			region_layer.min_value = min_value;
 			region_layers[map.geodeep] = region_layer;
 			if (map.fit_bounds) {
-				map.fitBounds(bounds);
-				//map.fitBounds(jsonGroup.getBounds());
+				//map.fit_bounds exists to set an inital attractive view
+				map.fitBounds(region_layer.getBounds());
 			}
 			region_layer.addTo(map);
 		}
