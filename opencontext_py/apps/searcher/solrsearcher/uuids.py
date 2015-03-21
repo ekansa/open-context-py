@@ -23,6 +23,10 @@ class SolrUUIDs():
         self.rec_start = False
         self.min_date = False
         self.max_date = False
+        # flatten list of an attribute values to single value
+        self.flatten_rec_attributes = False
+        # A list of (non-standard) attributes to include in a record
+        self.rec_attributes = []
 
     def make_uuids_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -47,6 +51,8 @@ class SolrUUIDs():
                 rec_props_obj.min_date = self.min_date
                 rec_props_obj.max_date = self.max_date
                 rec_props_obj.highlighting = self.highlighting
+                rec_props_obj.flatten_rec_attributes = self.flatten_rec_attributes
+                rec_props_obj.rec_attributes = self.rec_attributes
                 item_ok = rec_props_obj.get_item_basics(solr_rec)
                 if item_ok:
                     if uris_only:
@@ -83,6 +89,15 @@ class SolrUUIDs():
         item['item category'] = rec_props_obj.category
         if rec_props_obj.snippet is not False:
             item['snippet'] = rec_props_obj.snippet
+        if isinstance(rec_props_obj.other_attributes, list):
+            for attribute in rec_props_obj.other_attributes:
+                prop_key = attribute['property']
+                prop_key = rec_props_obj.prevent_attribute_key_collision(item,
+                                                                         prop_key)
+                if self.flatten_rec_attributes:
+                    item[prop_key] = attribute['value']
+                else:
+                    item[prop_key] = attribute['values_list']
         return item
 
     def extract_solr_recs(self, solr_json):
