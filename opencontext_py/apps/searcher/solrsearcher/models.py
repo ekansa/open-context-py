@@ -166,20 +166,9 @@ class SolrSearch():
             it_query = qm.process_item_type(item_type)
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
-        # now add discovery geo location
-        disc_geo = self.get_request_param(request_dict,
-                                          'disc-geotile',
-                                          False,
-                                          False)
-        if disc_geo is not False:
-            disc_geo_query = qm.process_discovery_geo(disc_geo)
-            query['fq'] += disc_geo_query['fq']
-            query['facet.field'] += disc_geo_query['facet.field']
-            query['f.discovery_geotile.facet.limit'] = -1
-        else:
-            # Add default geofacet
-            query = self.add_root_discovery_geo(query,
-                                                request_dict)
+        """ CHRONOLOGY Form Use Life (form)
+            queries
+        """
         # now add form-use-life chronology
         form_chrono = self.get_request_param(request_dict,
                                              'form-chronotile',
@@ -215,6 +204,9 @@ class SolrSearch():
                                                           form_use_life_date,
                                                           'stop')
             query['fq'] += form_stop_query['fq']
+        """ Linked media (images, documents, other)
+            queries
+        """
         # images
         images = self.get_request_param(request_dict,
                                         'images',
@@ -236,6 +228,34 @@ class SolrSearch():
                                            False)
         if documents is not False:
             query['fq'] += ['document_count:[1 TO *]']
+        """ Geospatial (discovery location)
+            queries
+        """
+        # now add discovery geo location
+        disc_geo = self.get_request_param(request_dict,
+                                          'disc-geotile',
+                                          False,
+                                          False)
+        if disc_geo is not False:
+            disc_geo_query = qm.process_discovery_geo(disc_geo)
+            query['fq'] += disc_geo_query['fq']
+            query['facet.field'] += disc_geo_query['facet.field']
+            query['f.discovery_geotile.facet.limit'] = -1
+        else:
+            # Add default geofacet
+            query = self.add_root_discovery_geo(query,
+                                                request_dict)
+        # geospatial bounding box query
+        disc_bbox = self.get_request_param(request_dict,
+                                           'disc-bbox',
+                                           False,
+                                           False)
+        if disc_bbox is not False:
+            disc_bbox_query = qm.process_discovery_bbox(disc_bbox)
+            query['fq'] += disc_bbox_query['fq']
+        """ Additional, dataset specific specialized
+            queries
+        """
         # special queries (to simplify access to specific datasets)
         spsearch = SpecialSearches()
         trinomial = self.get_request_param(request_dict,
