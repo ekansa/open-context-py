@@ -103,15 +103,10 @@ class ActiveFilters():
                             act_filter['label'] += ' to ' + str(dates['latest_bce'])
                     elif param_key == 'disc-geotile':
                         act_filter['oc-api:filter'] = 'Location of discovery or observation'
-                        geotile = GlobalMercator()
-                        coordinates = geotile.quadtree_to_lat_lon(all_vals[0])
-                        if coordinates is not False:
-                            act_filter['label'] = 'In the region bounded by: '
-                            act_filter['label'] += str(round(coordinates[0], 3))
-                            act_filter['label'] += ', ' + str(round(coordinates[1], 3))
-                            act_filter['label'] += ' (SW) and ' + str(round(coordinates[2], 3))
-                            act_filter['label'] += ', ' + str(round(coordinates[3], 3))
-                            act_filter['label'] += ' (NE)'
+                        act_filter['label'] = self.make_geotile_filter_label(all_vals[0])
+                    elif param_key == 'disc-bbox':
+                        act_filter['oc-api:filter'] = 'Location of discovery or observation'
+                        act_filter['label'] = self.make_bbox_filter_label(all_vals[0])
                     elif param_key == 'images':
                         act_filter['oc-api:filter'] = 'Has related media'
                         act_filter['label'] = 'Linked to images'
@@ -160,6 +155,60 @@ class ActiveFilters():
                         act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
                         filters.append(act_filter)
         return filters
+
+    def make_geotile_filter_label(self, raw_geotile):
+        """ parses a raw bbox parameter value to make
+            a filter label
+        """
+        output_list = []
+        if '||' in raw_geotile:
+            tile_list = raw_geotile.split('||')
+        else:
+            tile_list = [raw_geotile]
+        for tile in tile_list:
+            geotile = GlobalMercator()
+            coordinates = geotile.quadtree_to_lat_lon(tile)
+            if coordinates is not False:
+                label = 'In the region bounded by: '
+                label += str(round(coordinates[0], 3))
+                label += ', ' + str(round(coordinates[1], 3))
+                label += ' (SW) and ' + str(round(coordinates[2], 3))
+                label += ', ' + str(round(coordinates[3], 3))
+                label += ' (NE)'
+                output_list.append(label)
+            else:
+                output_list.append('[Ignored invalid geospatial tile]')
+        output = '; or '.join(output_list)
+        return output
+
+    def make_bbox_filter_label(self, raw_disc_bbox):
+        """ parses a raw bbox parameter value to make
+            a filter label
+        """
+        qm = QueryMaker()
+        output_list = []
+        if '||' in raw_disc_bbox:
+            bbox_list = raw_disc_bbox.split('||')
+        else:
+            bbox_list = [raw_disc_bbox]
+        for bbox in bbox_list:
+            if ',' in bbox:
+                bbox_coors = bbox.split(',')
+                bbox_valid = qm.validate_bbox_coordiantes(bbox_coors)
+                if bbox_valid:
+                    label = 'In the bounding-box of: Latitude '
+                    label += str(bbox_coors[1])
+                    label += ', Longitude ' + str(bbox_coors[0])
+                    label += ' (SW) and Latitude ' + str(bbox_coors[3])
+                    label += ', Longitude ' + str(bbox_coors[2])
+                    label += ' (NE)'
+                    output_list.append(label)
+                else:
+                    output_list.append('[Ignored invalid bounding-box]')
+            else:
+                output_list.append('[Ignored invalid bounding-box]')
+        output = '; or '.join(output_list)
+        return output
 
     def make_filter_label_dict(self, act_val):
         """ returns a dictionary object

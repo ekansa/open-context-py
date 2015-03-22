@@ -617,28 +617,6 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
-    def process_discovery_geo(self, raw_disc_geo):
-        # creates facet query for discovery geotiles
-        # supports or {'||') queries in the path also
-        query_dict = {'fq': [],
-                      'facet.field': []}
-        fq_terms = []
-        query_dict['facet.field'].append('discovery_geotile')
-        if '||' in raw_disc_geo:
-            disc_geo_paths = raw_disc_geo.split('||')
-        else:
-            disc_geo_paths = [raw_disc_geo]
-        for disc_path in disc_geo_paths:
-            i = 0
-            if len(disc_path) < 20:
-                disc_path += '*'
-            fq_term = 'discovery_geotile:' + disc_path
-            fq_terms.append(fq_term)
-        fq_final = ' OR '.join(fq_terms)
-        fq_final = '(' + fq_final + ')'
-        query_dict['fq'].append(fq_final)
-        return query_dict
-
     def process_form_use_life_chrono(self, raw_form_use_life_chrono):
         # creates facet query for form-use-life chronological tiles
         # supports or {'||') queries in the path also
@@ -674,6 +652,101 @@ class QueryMaker():
             fquery = 'form_use_life_chrono_latest: ' + qterm
         query_dict['fq'].append(fquery)
         return query_dict
+
+    def process_discovery_geo(self, raw_disc_geo):
+        # creates facet query for discovery geotiles
+        # supports or {'||') queries in the path also
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        query_dict['facet.field'].append('discovery_geotile')
+        if '||' in raw_disc_geo:
+            disc_geo_paths = raw_disc_geo.split('||')
+        else:
+            disc_geo_paths = [raw_disc_geo]
+        for disc_path in disc_geo_paths:
+            i = 0
+            if len(disc_path) < 20:
+                disc_path += '*'
+            fq_term = 'discovery_geotile:' + disc_path
+            fq_terms.append(fq_term)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def process_discovery_bbox(self, raw_disc_bbox):
+        # creates facet query for bounding box searches
+        # supports or {'||') queries
+        query_dict = {'fq': []}
+        fq_terms = []
+        if '||' in raw_disc_bbox:
+            bbox_list = raw_disc_bbox.split('||')
+        else:
+            bbox_list = [raw_disc_bbox]
+        for bbox in bbox_list:
+            if ',' in bbox:
+                # comma seperated list of coordinates
+                bbox_coors = bbox.split(',')
+                bbox_valid = self.validate_bbox_coordiantes(bbox_coors)
+                if bbox_valid:
+                    # valid bounding box, now make a solr-query
+                    # not how solr expacts latitude / longitude order, which
+                    # is the revserse of geojson!
+                    fq_term = 'discovery_geolocation:'
+                    fq_term += '[' + str(bbox_coors[1]) + ',' + str(bbox_coors[0])
+                    fq_term += ' TO ' + str(bbox_coors[3]) + ',' + str(bbox_coors[2])
+                    fq_term += ']'
+                    fq_terms.append(fq_term)
+        if len(fq_terms) > 0:
+            fq_final = ' OR '.join(fq_terms)
+            fq_final = '(' + fq_final + ')'
+            query_dict['fq'].append(fq_final)
+        return query_dict
+
+    def validate_bbox_coordiantes(self, bbox_coors):
+        """ validates a set of bounding box coordinates """
+        is_valid = False
+        if len(bbox_coors) == 4:
+            lower_left_valid = self.validate_geo_lon_lat(bbox_coors[0],
+                                                         bbox_coors[1])
+            top_right_valid = self.validate_geo_lon_lat(bbox_coors[2],
+                                                        bbox_coors[3])
+            if lower_left_valid and top_right_valid:
+                if bbox_coors[0] < bbox_coors[2] and\
+                   bbox_coors[1] < bbox_coors[3]:
+                    is_valid = True
+        return is_valid
+
+    def validate_geo_lon_lat(self, lon, lat):
+        """ checks to see if a lon, lat pair
+            are valid. Note the GeoJSON ordering
+            of the coordinates
+        """
+        is_valid = False
+        lon_valid = self.validate_geo_coordinate(lon, 'lon')
+        lat_valid = self.validate_geo_coordinate(lat, 'lat')
+        if lon_valid and lat_valid:
+            is_valid = True
+        return is_valid
+
+    def validate_geo_coordinate(self, coordinate, coord_type):
+        """ validates a geo-spatial coordinate """
+        is_valid = False
+        try:
+            fl_coord = float(coordinate)
+        except ValueError:
+            fl_coord = False
+        if fl_coord is not False:
+            if 'lat' in coord_type:
+                if fl_coord <= 90 and\
+                   fl_coord >= -90:
+                    is_valid = True
+            elif 'lon' in coord_type:
+                if fl_coord <= 180 and\
+                   fl_coord >= -180:
+                    is_valid = True
+        return is_valid
 
     def make_solr_value_from_entity(self, entity, value_type='id'):
         """ makes a solr value as indexed in SolrDocument

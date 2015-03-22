@@ -51,8 +51,9 @@ function search_map(json_url) {
 	map.rows = rows;
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
-	map.geojson_facets = false;  //geojson data for facet regions
-	map.geojson_records = false; //geojson data for records
+	map.max_tile_zoom = 20;
+	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
+	map.geojson_records = {}; //geojson data for records, start as key
 	if (map.geodeep > 6 || tile_constrained) {
 		map.fit_bounds = true;
 	}
@@ -92,7 +93,7 @@ function search_map(json_url) {
   
 	map._layersMaxZoom = 20;
 	var layerControl = L.control.layers(baseMaps).addTo(map);
-	console.log(layerControl);
+	// console.log(layerControl);
 	map.addLayer(gmapSat);
 	
 	map.show_title_menu = function(map_type, geodeep){
@@ -121,63 +122,109 @@ function search_map(json_url) {
 		* Add geo-regions (control)
 		*/
 		if (!region_controls) {	
-			L.easyButton('glyphicon-th', 
+			var deep_tile_control = L.easyButton('glyphicon-th', 
 				function (){
-					map.view_region_layer_by_zoom(map.geodeep + 1);
+					var new_geodeep = map.geodeep + 1;
+					if (new_geodeep <= map.max_tile_zoom) {
+						//can still zoom in
+						map.view_region_layer_by_zoom(new_geodeep);
+					}
 				},
 				'Higher resolution Open Context regions'
 			);
-			L.easyButton('glyphicon-th-large', 
+			var big_tile_control = L.easyButton('glyphicon-th-large', 
 				function (){
-					map.view_region_layer_by_zoom(map.geodeep - 1);
+					var new_geodeep = map.geodeep - 1;
+					if (new_geodeep > 3) {
+						//can still zoom out
+						map.view_region_layer_by_zoom(new_geodeep);
+					}
 				},
 				'Lower resolution Open Context regions'
 			);
+			deep_tile_control.link.id = 'tile-more-precision';
+			big_tile_control.link.id = 'tile-less-precision';
 			region_controls = true;
 		}
+		else{
+			// toggle map controls based on map.geodeep
+			map.toggle_tile_controls();
+		}
 	}
+	
+	map.toggle_tile_controls = function(){
+		var act_dom_id = 'tile-more-precision';
+		var link = document.getElementById(act_dom_id);
+		if (map.geodeep >= map.max_tile_zoom) {
+			// can't zoom in anymore
+			link.className = 'diabled-map-button';
+			link.title = 'At maximum spatial resolution for these data';
+		}
+		else {
+			link.title = 'Higher resolution Open Context regions';
+			link.className = '';
+			link.style = '';
+		}
+		var act_dom_id = 'tile-less-precision';
+		var link = document.getElementById(act_dom_id);
+		if (map.geodeep <= 4) {
+			// can't zoom out anymore
+			link.title = 'At minimum spatial resolution';
+			link.className = 'diabled-map-button';
+		}
+		else{
+			link.title = 'Lower resolution Open Context regions';
+			link.className = '';
+			link.style = '';
+		}
+	}
+	
 	
 	map.view_region_layer_by_zoom = function(geodeep){
 		/*
 		 * get a layer by zoom level
 		 */
 		map.fit_bounds = true;
-		if (geodeep in region_layers) {
-			if (map.hasLayer(region_layers[geodeep])) {
+		if (geodeep in map.geojson_facets) {
+			if (map.hasLayer(region_layers[map.geodeep])) {
+				// delete the currently displayed layer
+				map.removeLayer(region_layers[map.geodeep]);
+				delete region_layers[map.geodeep];
+			}
+			map.geodeep = geodeep;
+			map.render_region_layer();
+		}
+		else{
+			if (geodeep <= map.max_tile_zoom) {
+				//we can get higher-res mapping data
 				if (map.geodeep in region_layers) {
 					if (map.hasLayer(region_layers[map.geodeep])) {
-						// delete the currently displayed layer
 						map.removeLayer(region_layers[map.geodeep]);
 						delete region_layers[map.geodeep];
 					}
 				}
-				map.addTo(region_layers[geodeep]);
+				// go get new data
+				map.geodeep = geodeep;
+				map.get_geojson_regions();
 			}
-		}
-		else{
-			if (map.geodeep in region_layers) {
-				if (map.hasLayer(region_layers[map.geodeep])) {
-					map.removeLayer(region_layers[map.geodeep]);
-					delete region_layers[map.geodeep];
-				}
-			}
-			// go get new data
-			map.geodeep = geodeep;
-			map.get_geojson_regions();
 		}
 	}
 	
 	var region_layers = {};
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
-		if (map.geojson_facets != false) {
+		if (map.geodeep in map.geojson_facets) {
 			/*
 			 * Loop through features to get the range of counts.
 			 */
+			var geojson_facets = map.geojson_facets[map.geodeep];
+			if ('oc-api:max-disc-tile-zoom' in geojson_facets) {
+				map.max_tile_zoom = geojson_facets['oc-api:max-disc-tile-zoom'];
+			}
 			var max_value = 1;
 			var min_value = 0;
-			for (var i = 0, length = map.geojson_facets.features.length; i < length; i++) {
-				feature = map.geojson_facets.features[i];
+			for (var i = 0, length = geojson_facets.features.length; i < length; i++) {
+				feature = geojson_facets.features[i];
 				if (feature.count > max_value) {
 					max_value = feature.count;
 				}
@@ -190,7 +237,7 @@ function search_map(json_url) {
 					}
 				}
 			}
-			var region_layer = L.geoJson(map.geojson_facets,
+			var region_layer = L.geoJson(geojson_facets,
 						   {
 								style: function(feature){
 										// makes colors, opacity for each feature
@@ -215,6 +262,9 @@ function search_map(json_url) {
 				map.fitBounds(region_layer.getBounds());
 			}
 			region_layer.addTo(map);
+			if (region_controls) {
+				map.toggle_tile_controls();
+			}
 		}
 	}
 	
@@ -263,7 +313,8 @@ function search_map(json_url) {
 		* Show current layer type
 		*/
 		var act_dom_id = "map-title";
-		var loading = "<img height=\"20\" width=\"20\"  src=\"" + base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
+		var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
+		loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
 		loading += " Loading Regions...";
 		document.getElementById(act_dom_id).innerHTML =loading;
 		var act_dom_id = "map-title-suffix";
@@ -277,7 +328,7 @@ function search_map(json_url) {
 				response: "geo-facet",
 				geodeep: map.geodeep},
 			success: function(data) {
-				map.geojson_facets = data;
+				map.geojson_facets[map.geodeep] = data;
 				map.render_region_layer();
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
