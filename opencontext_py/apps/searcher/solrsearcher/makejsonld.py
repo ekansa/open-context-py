@@ -513,6 +513,7 @@ class MakeJsonLd():
             geo_regions.process_solr_tiles(solr_disc_geotile_facets)
             if len(geo_regions.geojson_regions) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
+                self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
                 self.json_ld['features'] = geo_regions.geojson_regions
 
     def make_form_use_life_chronotiles(self, solr_json):

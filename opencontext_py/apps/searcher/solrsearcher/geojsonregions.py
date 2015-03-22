@@ -18,6 +18,8 @@ class GeoJsonRegions():
         self.filter_request_dict_json = False
         self.spatial_context = False
         self.aggregation_depth = 6
+        # max precision of tiles in the current filtered set
+        self.max_tile_precision = 0
         self.max_depth = 20
         self.min_date = False
         self.max_date = False
@@ -40,6 +42,11 @@ class GeoJsonRegions():
             t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
+            tile_key_len = len(tile_key)
+            if tile_key_len > self.max_tile_precision:
+                # get the maximum tile precision level
+                # for this filtered set of data
+                self.max_tile_precision = tile_key_len
             trim_tile_key = tile_key[:self.aggregation_depth]
             if trim_tile_key not in aggregate_tiles:
                 aggregate_tiles[trim_tile_key] = 0

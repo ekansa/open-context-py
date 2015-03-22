@@ -51,8 +51,8 @@ function search_map(json_url) {
 	map.rows = rows;
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
-	map.geojson_facets = false;  //geojson data for facet regions
-	map.geojson_records = false; //geojson data for records
+	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
+	map.geojson_records = {}; //geojson data for records, start as key
 	if (map.geodeep > 6 || tile_constrained) {
 		map.fit_bounds = true;
 	}
@@ -142,17 +142,14 @@ function search_map(json_url) {
 		 * get a layer by zoom level
 		 */
 		map.fit_bounds = true;
-		if (geodeep in region_layers) {
-			if (map.hasLayer(region_layers[geodeep])) {
-				if (map.geodeep in region_layers) {
-					if (map.hasLayer(region_layers[map.geodeep])) {
-						// delete the currently displayed layer
-						map.removeLayer(region_layers[map.geodeep]);
-						delete region_layers[map.geodeep];
-					}
-				}
-				map.addTo(region_layers[geodeep]);
+		if (geodeep in map.geojson_facets) {
+			if (map.hasLayer(region_layers[map.geodeep])) {
+				// delete the currently displayed layer
+				map.removeLayer(region_layers[map.geodeep]);
+				delete region_layers[map.geodeep];
 			}
+			map.geodeep = geodeep;
+			map.render_region_layer();
 		}
 		else{
 			if (map.geodeep in region_layers) {
@@ -170,14 +167,15 @@ function search_map(json_url) {
 	var region_layers = {};
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
-		if (map.geojson_facets != false) {
+		if (map.geodeep in map.geojson_facets) {
 			/*
 			 * Loop through features to get the range of counts.
 			 */
+			var geojson_facets = map.geojson_facets[map.geodeep];
 			var max_value = 1;
 			var min_value = 0;
-			for (var i = 0, length = map.geojson_facets.features.length; i < length; i++) {
-				feature = map.geojson_facets.features[i];
+			for (var i = 0, length = geojson_facets.features.length; i < length; i++) {
+				feature = geojson_facets.features[i];
 				if (feature.count > max_value) {
 					max_value = feature.count;
 				}
@@ -190,7 +188,7 @@ function search_map(json_url) {
 					}
 				}
 			}
-			var region_layer = L.geoJson(map.geojson_facets,
+			var region_layer = L.geoJson(geojson_facets,
 						   {
 								style: function(feature){
 										// makes colors, opacity for each feature
@@ -263,7 +261,8 @@ function search_map(json_url) {
 		* Show current layer type
 		*/
 		var act_dom_id = "map-title";
-		var loading = "<img height=\"20\" width=\"20\"  src=\"" + base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
+		var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
+		loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
 		loading += " Loading Regions...";
 		document.getElementById(act_dom_id).innerHTML =loading;
 		var act_dom_id = "map-title-suffix";
@@ -277,7 +276,7 @@ function search_map(json_url) {
 				response: "geo-facet",
 				geodeep: map.geodeep},
 			success: function(data) {
-				map.geojson_facets = data;
+				map.geojson_facets[map.geodeep] = data;
 				map.render_region_layer();
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
