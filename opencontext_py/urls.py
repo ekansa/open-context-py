@@ -5,6 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 from opencontext_py.apps.index import views as HomeViews
+from opencontext_py.apps.about import views as AboutViews
 from opencontext_py.apps.contexts import views as ContextViews
 from opencontext_py.apps.ocitems.subjects import views as SubjectViews
 from opencontext_py.apps.ocitems.mediafiles import views as MediaViews
@@ -24,6 +25,8 @@ urlpatterns = patterns('',
                        # Examples:
                        # url(r'^$', 'opencontext_py.views.home', name='home'),
                        # url(r'^blog/', include('blog.urls')),
+                       # About pages
+                       url(r'^about/recipes', AboutViews.recipes_view, name='about_recipes'),
                        # Contexts for JSON-LD
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
                        url(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
