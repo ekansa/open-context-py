@@ -38,19 +38,25 @@ class GeoJsonRegions():
         aggregate_tiles = {}
         i = -1
         t = 0
+        all_tile_lens = []
         for tile_key in solr_tiles[::2]:
             t += 1
             i += 2
             solr_facet_count = solr_tiles[i]
+            # to compute the main tile precision level
+            # for this filtered set of data
             tile_key_len = len(tile_key)
-            if tile_key_len > self.max_tile_precision:
-                # get the maximum tile precision level
-                # for this filtered set of data
-                self.max_tile_precision = tile_key_len
+            if tile_key_len > 6:
+                all_tile_lens.append(tile_key_len)
             trim_tile_key = tile_key[:self.aggregation_depth]
             if trim_tile_key not in aggregate_tiles:
                 aggregate_tiles[trim_tile_key] = 0
             aggregate_tiles[trim_tile_key] += solr_facet_count
+        if len(all_tile_lens) > 0:
+            # gets the average tile depth, so clients don't over-zoom
+            mean_tile_len = sum(all_tile_lens) / len(all_tile_lens)
+            # print(str(mean_tile_len))
+            self.max_tile_precision = round(mean_tile_len)
         # now generate GeoJSON for each tile region
         # print('Total tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         i = 0

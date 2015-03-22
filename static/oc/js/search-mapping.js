@@ -51,6 +51,7 @@ function search_map(json_url) {
 	map.rows = rows;
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
+	map.max_tile_zoom = 20;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
 	map.geojson_records = {}; //geojson data for records, start as key
 	if (map.geodeep > 6 || tile_constrained) {
@@ -92,7 +93,7 @@ function search_map(json_url) {
   
 	map._layersMaxZoom = 20;
 	var layerControl = L.control.layers(baseMaps).addTo(map);
-	console.log(layerControl);
+	// console.log(layerControl);
 	map.addLayer(gmapSat);
 	
 	map.show_title_menu = function(map_type, geodeep){
@@ -121,21 +122,63 @@ function search_map(json_url) {
 		* Add geo-regions (control)
 		*/
 		if (!region_controls) {	
-			L.easyButton('glyphicon-th', 
+			var deep_tile_control = L.easyButton('glyphicon-th', 
 				function (){
-					map.view_region_layer_by_zoom(map.geodeep + 1);
+					var new_geodeep = map.geodeep + 1;
+					if (new_geodeep <= map.max_tile_zoom) {
+						//can still zoom in
+						map.view_region_layer_by_zoom(new_geodeep);
+					}
 				},
 				'Higher resolution Open Context regions'
 			);
-			L.easyButton('glyphicon-th-large', 
+			var big_tile_control = L.easyButton('glyphicon-th-large', 
 				function (){
-					map.view_region_layer_by_zoom(map.geodeep - 1);
+					var new_geodeep = map.geodeep - 1;
+					if (new_geodeep > 3) {
+						//can still zoom out
+						map.view_region_layer_by_zoom(new_geodeep);
+					}
 				},
 				'Lower resolution Open Context regions'
 			);
+			deep_tile_control.link.id = 'tile-more-precision';
+			big_tile_control.link.id = 'tile-less-precision';
 			region_controls = true;
 		}
+		else{
+			// toggle map controls based on map.geodeep
+			map.toggle_tile_controls();
+		}
 	}
+	
+	map.toggle_tile_controls = function(){
+		var act_dom_id = 'tile-more-precision';
+		var link = document.getElementById(act_dom_id);
+		if (map.geodeep >= map.max_tile_zoom) {
+			// can't zoom in anymore
+			link.className = 'diabled-map-button';
+			link.title = 'At maximum spatial resolution for these data';
+		}
+		else {
+			link.title = 'Higher resolution Open Context regions';
+			link.className = '';
+			link.style = '';
+		}
+		var act_dom_id = 'tile-less-precision';
+		var link = document.getElementById(act_dom_id);
+		if (map.geodeep <= 4) {
+			// can't zoom out anymore
+			link.title = 'At minimum spatial resolution';
+			link.className = 'diabled-map-button';
+		}
+		else{
+			link.title = 'Lower resolution Open Context regions';
+			link.className = '';
+			link.style = '';
+		}
+	}
+	
 	
 	map.view_region_layer_by_zoom = function(geodeep){
 		/*
@@ -152,15 +195,18 @@ function search_map(json_url) {
 			map.render_region_layer();
 		}
 		else{
-			if (map.geodeep in region_layers) {
-				if (map.hasLayer(region_layers[map.geodeep])) {
-					map.removeLayer(region_layers[map.geodeep]);
-					delete region_layers[map.geodeep];
+			if (geodeep <= map.max_tile_zoom) {
+				//we can get higher-res mapping data
+				if (map.geodeep in region_layers) {
+					if (map.hasLayer(region_layers[map.geodeep])) {
+						map.removeLayer(region_layers[map.geodeep]);
+						delete region_layers[map.geodeep];
+					}
 				}
+				// go get new data
+				map.geodeep = geodeep;
+				map.get_geojson_regions();
 			}
-			// go get new data
-			map.geodeep = geodeep;
-			map.get_geojson_regions();
 		}
 	}
 	
@@ -172,6 +218,9 @@ function search_map(json_url) {
 			 * Loop through features to get the range of counts.
 			 */
 			var geojson_facets = map.geojson_facets[map.geodeep];
+			if ('oc-api:max-disc-tile-zoom' in geojson_facets) {
+				map.max_tile_zoom = geojson_facets['oc-api:max-disc-tile-zoom'];
+			}
 			var max_value = 1;
 			var min_value = 0;
 			for (var i = 0, length = geojson_facets.features.length; i < length; i++) {
@@ -213,6 +262,9 @@ function search_map(json_url) {
 				map.fitBounds(region_layer.getBounds());
 			}
 			region_layer.addTo(map);
+			if (region_controls) {
+				map.toggle_tile_controls();
+			}
 		}
 	}
 	
