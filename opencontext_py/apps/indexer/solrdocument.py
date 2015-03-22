@@ -445,9 +445,10 @@ class SolrDocument:
                         self.fields['discovery_geotile'] = \
                             gm.geojson_coords_to_quadtree(coords, zoom)
                         # indexing with coordinates seperated by a space is in
-                        # lon-lat order, like GeoJSON
+                        # lat-lon order, the reverse of GeoJSON because
+                        # solr spatial fields expect a lat-lon order
                         self.fields['discovery_geolocation'] = \
-                            str(coords[0]) + ' ' + str(coords[1])
+                            str(coords[1]) + ' ' + str(coords[0])
                         discovery_done = True  # so we don't repeat getting
                                                # discovery locations
                 if discovery_done:
