@@ -179,7 +179,7 @@ class MakeJsonLd():
                                                ini_request_dict_json)
                 self.json_ld['first'] = links['html']
                 self.json_ld['first-json'] = links['json']
-            if start > rows:
+            if start >= rows:
                 # add a previous page link
                 links = self.make_paging_links(start - rows,
                                                rows,
@@ -215,6 +215,7 @@ class MakeJsonLd():
         fl = FilterLinks()
         fl.base_request_json = ini_request_dict_json
         fl.spatial_context = self.spatial_context
+        fl.remove_start_param = False
         start_rparams = fl.add_to_request('start',
                                           start)
         start_rparams_json = json.dumps(start_rparams,
