@@ -24,28 +24,30 @@ function search_map(json_url) {
 		tile_constrained = true;
 	}
 	else{
-		if (url_parts['geodeep']) {
-			geodeep = url_parts['geodeep'];
-			
-		}
-		else{
-			var check_url = this.json_url.replace('.json', '');
-			var url_ex = check_url.split('/sets/');
-			if (url_ex.length > 1) {
+		// zoom in a bit if deeper in the context path
+		var check_url = this.json_url.replace('.json', '');
+		var url_ex = check_url.split('/sets/');
+		if (url_ex.length > 1) {
+			var after_sets = url_ex[1];
+			if (after_sets.length > 0) {
+				geodeep = 8;
 				var after_sets = url_ex[1];
-				if (after_sets.length > 0) {
-					geodeep = 8;
-					var after_sets = url_ex[1];
-					var slash_count = (after_sets.match(/\//g) || []).length;
-					if (slash_count > 0) {
-						geodeep += slash_count + 2;
-					}
+				var slash_count = (after_sets.match(/\//g) || []).length;
+				if (slash_count > 0) {
+					geodeep += slash_count + 2;
 				}
 			}
 		}
 	}
 	
+	//if geodeep is in the url, use it.
+	if (url_parts['geodeep']) {
+		geodeep = url_parts['geodeep'];
+	}
+	
 	map = L.map('map').setView([45, 0], 2); //map the map
+	// remove the geodeep parameter
+	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	map.json_url = this.json_url
 	map.geodeep = geodeep;
 	map.rows = rows;
