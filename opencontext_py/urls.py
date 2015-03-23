@@ -26,6 +26,7 @@ urlpatterns = patterns('',
                        # url(r'^$', 'opencontext_py.views.home', name='home'),
                        # url(r'^blog/', include('blog.urls')),
                        # About pages
+                       url(r'^about/services', AboutViews.services_view, name='about_services'),
                        url(r'^about/recipes', AboutViews.recipes_view, name='about_recipes'),
                        # Contexts for JSON-LD
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),

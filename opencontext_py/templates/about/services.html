@@ -1,0 +1,356 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <div id="page-top"></div>
+    <style type="text/css">
+        div.about-section {
+            padding-top: 50px;
+        }
+        div.about-section samp {
+            font-weight: bold;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Web Services (APIs)</h1>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <img style="height: 210px;" src="{{ base_url }}/static/oc/images/about/gears-icon-noun-1063.svg" alt="Gears Icon" />
+                </div>
+                <div class="col-sm-1">
+                
+                </div>    
+                <div class="col-sm-8">
+                    <p>Open Context has a powerful Application Program Interface (API)
+                    that enables you to programatically:</p>
+                    <ul>
+                        <li>Search and browse data</li>
+                        <li>Visualize data</li>
+                        <li>Analyze data</li>
+                        <li>Link to Open Context records (entity reconciliation)</li>
+                        <li>Interoperate with Open Context</li>
+                    </ul>
+                    <p>The discussions below provide background information on the APIs. For specific examples of the APIs in use, check out the <a href="{{ base_url }}/about/recipes">Open Context API Cookbook</a>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">        
+        <div class="row">
+            <div class="col-sm-9">
+                <!-- content of the page -->
+                <div class="container-fluid">        
+                    <div class="row">
+                        <div class="col-sm-12">
+                            <h3>API Introduction <a href="#page-top">[Top]</a></h3>
+                            <p>Open Context has two primary APIs. One returns data on individual records, and the other returns data from searches. Both APIs share data in the JSON-LD format. JSON-LD means you can treat the information as simple JSON data, or you can parse it as RDF for Linked Data applications.</p>
+                            <p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, this current version of Open Context is only deployed at mirror and testing hosts. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp> where the old version of Open Context is still running. Many URIs will not resolve at the old version, so for now, it's best to substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.</p>
+                            
+                            
+                            
+                            
+                            
+                            
+                            
+                            
+                            <div class="about-section" id="getting-data">
+                                <h4>Getting JSON(-LD) Data <a href="#page-top">[Top]</a></h4>
+                                <p>Open Context offers two main ways to get JSON-LD data. The better-practice approach relies upon <a title="Wikipedia introduction" href="http://en.wikipedia.org/wiki/Content_negotiation" target="_blank">HTTP content negotiation</a>. The second expediant approach involves adding a <samp>.json</samp> to request URLs. The table below provides examples for using these different approaches.</p>
+                                <table class="table">
+                                    <thead>
+                                        <th class="col-sm-3">Approach</th>
+                                        <th class="col-sm-9">Description and Examples</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>
+                                                Content Negotiation
+                                            </th>
+                                            <td>
+                                                <p>Open Context supports content resolution for both item record and search APIs. To request JSON data, include either of the following in the HTTP header of your request:
+                                                </p>
+                                                <ul class="list-unstyled">
+                                                    <li><samp>Accept: application/json</samp></li>
+                                                    <li><samp>Accept: application/ld+json</samp></li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Modifying Item Record URLs
+                                            </th>
+                                            <td>
+                                                <p>For individual record items, you can get JSON data by simply adding a "<strong>.json</strong>" to the end of a record's URL. For example, you can get the JSON for this object: <samp><a title="Example pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC</a></samp>, with this URL: <samp><a title="JSON for the pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC.json">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC<strong>.json</strong></a></samp>.</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Modifying Query URLs
+                                            </th>
+                                            <td>
+                                                <p>Similarly, adding a "<strong>.json</strong>" to search URLs also requests JSON data. To do so, add the ".json" just before the quesion-mark ("?") in a search URL. If the URL doesn't have a question-mark, append the ".json" at the end of the URL.</p>
+                                                <ol>
+                                                    <li>
+                                                        <h5><em>Query without a "?" in the URL</em></h5>
+                                                        <p>The search URL <samp><a title="Query for Kenan Tepe" target="_blank" href="{{ base_url}}/sets/Turkey/Kenan+Tepe">{{ base_url}}/sets/Turkey/Kenan+Tepe</a></samp> becomes <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/sets/Turkey/Kenan+Tepe.json">{{ base_url}}/sets/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> for a JSON request.
+                                                        </p>
+                                                    </li>
+                                                    <li>
+                                                        <h5><em>Query with a "?" in the URL</em></h5>
+                                                        <p>The search URL <samp><a title="Query for Murlo project" target="_blank" href="{{ base_url}}/sets/?proj=24-murlo">{{ base_url}}/sets/?proj=24-murlo</a></samp> becomes <samp><a title="JSON query for Murlo project" target="_blank" href="{{ base_url}}/sets/.json?proj=24-murlo">{{ base_url}}/sets/<strong>.json</strong>?proj=24-murlo</a></samp> for a JSON request.
+                                                        </p>
+                                                    </li>
+                                                </ol>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- end of geting-data section -->
+                            
+                            
+                            
+                            
+                
+                            
+                            
+                            
+                            <div class="about-section" id="geojson-ld">
+                                <h4>GeoJSON-LD: Geospatial and Chronological Data <a href="#page-top">[Top]</a></h4>
+                                <p>Most of the information returned by Open Context's APIs, except for data about concepts in controlled vocabularies ("types") and descriptive or linking relations ("predicates") contain geospatial data. To make the geospatial information easier to use, Open Context expresses geospatial data using the GeoJSON standard. GeoJSON is widely supported by Web mapping services and visualization tools and by desktop GIS software.</p>
+                                <p>Open Context has adopted GeoJSON-LD conventions <a title="GeoJSON-LD" target="_blank" href="https://github.com/geojson/geojson-ld">documented here</a>. One component added to the GeoJSON-LD features is a "<samp>when</samp>" object (see <a target="_blank" title="GeoJSON-LD and Time" href"https://github.com/geojson/geojson-ld/labels/time">discussion</a>). The when object adds information on the chronological coverage of a GeoJSON feature. Dates BCE are indicated as negative values. Importantly, each GeoJSON feature with a when object should be considered an "event" that has a spatial as well as a chronological coverage. Below we provide an example of a when object that provides chronological coverage information:</p>
+                                
+                                
+                                <ul class="code-samp">
+                                    <li><samp>"when": {</samp></li>
+                                    <li>
+                                        <ul class="code-samp">
+                                            <li><samp>"id": "#event-when-2",</samp></li>
+                                            <li><samp>"type": "<span title="General type of the event, in this case when the item was formed, used or alive">oc-gen:formation-use-life</span>",</samp></li>
+                                            <li><samp>"start": -8050,</samp></li>
+                                            <li><samp>"stop": -6050,</samp></li>
+                                            <li><samp>"reference-type": "<span title="Time information assigned to this record itself, it is not inherited by context">specified</span>"</samp></li>
+                                        </ul>
+                                    </li>
+                                    </li><samp>}</samp></li>
+                                </ul>
+                                
+                            </div>
+                            <!-- end introduction of geojson -->
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                            <div class="about-section" id="geojson-types">
+                                <h4>GeoJSON-LD Varieties <a href="#page-top">[Top]</a></h4> 
+                                <p>Open Context provides three main varieties of GeoJSON-LD data described with examples in the table below.</p>
+                                <table class="table">
+                                    <thead>
+                                        <th class="col-sm-3">Variant</th>
+                                        <th class="col-sm-9">Description and Examples</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>
+                                                Item Record GeoJSON-LD
+                                            </th>
+                                            <td>
+                                                <p>In Open Context, some items have multiple GeoJSON-LD events. For example, an archaeological site can have multiple episodes of occupation. So a single Open Context record can have multiple GeoJSON-LD features (see example: <a target="_blank" title="Archaeological Site in Georgia" href="{{ base_url }}/subjects/B057EC89-851B-43B2-CD08-15B8DEB02823">HTML</a>, <a target="_blank" title="Archaeological Site in Georgia" href="{{ base_url }}/subjects/B057EC89-851B-43B2-CD08-15B8DEB02823.json">GeoJSON-LD</a>).</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Query Result Record GeoJSON-LD
+                                            </th>
+                                            <td>
+                                                
+                                                <p>The Open Context Query API can return GeoJSON-LD features that represent a search result. To simplify matters, only one feature is returned per search result. A "when" object in a feature reflects the item's total time coverage unless the query specified limits on time. If the query limits by time spans, the when object provides a chronology information within the contraints of the query.</p>
+                                                <p>By default, the Query API returns GeoJSON-LD features of search results. Search result records come as point features. Two attributes in the JSON data differentiate result record features from facet-region features (see below). These are:</p>
+                                                <ol>
+                                                    <li>Features with an attribute: <samp>"category": "oc-api:geo-record"</samp></li>
+                                                    <li>Feature properties with an attribute: <samp>"feature-type": "item record"</samp></li>
+                                                </ol>
+                                                <p>To limit the GeoJSON-LD response to result records, add a <samp>response=geo-record</samp> parameter to the query URL (see <a target="_blank" title="GeoJSON record features only" href="{{ base_url }}/sets/Turkey.json?prop=biol-term-hastaxonomy&response=geo-record">example</a>).</p>
+                                                <p>Open Context returns a few common attributes for result records in the GeoJSON "properties" object. Open Context will add additional attributes to the properties object depending on query filters in the request. For instance, the following search requests animal bones from Turkey that have a biological taxonomy identification: <a target="_blank" title="Taxonomic identified bones in Turkey" href="{{ base_url }}/sets/Turkey?prop=oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy">{{ base_url }}/sets/Turkey?prop=biol-term-hastaxonomy</a>. GeoJSON result records from that query will have a taxonomic attribute in their properties as shown below:</p>
+                                                
+                                                
+                                                <ul class="code-samp">
+                                                    <li><samp>"properties": { </samp></li>
+                                                    <li>
+                                                        <ul class="code-samp">
+                                                            <li><samp>"id": "#rec-1-of-244200",</samp></li>
+                                                            <li><samp>"feature-type": "item record",</samp></li>
+                                                            <li><samp>"uri": "http://opencontext.org/subjects/4D168E37-51A1-48A4-D82B-246D2346FCB1",</samp></li>
+                                                            <li><em>... more attributes ...</em></li>
+                                                            <li><samp>"Has Biological Taxonomy": ["Bos"]</samp></li>
+                                                        </ul>
+                                                    </li>
+                                                    <li><samp>}</li>
+                                                </ul>
+                                                
+                                                <!--
+                                                <p>You can request more attributes to include in the properties of a GeoJSON result record feature. To do so, add the <samp>attributes</samp> parameter with a comma seperated list of descriptive predicates, identified by slug (slugs are included in JSON-LD and are easy to read short-hand identifiers specific to Open Context) or by URI.</p>
+                                                <ol>
+                                                    <li>Animal bones in Tukey with anatomical identification attribute data: <a target="_blank" title="Bones in Turkey with anatomical descriptions" href="{{ base_url }}/sets/Turkey.json?prop=oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy&response=geo-record&attributes=oc-zoo-has-anat-id"><samp>attributes=oc-zoo-has-anat-id</samp></a></li>
+                                                    <li>Pottery from the Murlo project in Italy with vessel-form attribute data: <a target="_blank" title="Murlo pottery with form descriptions" href="{{ base_url }}/sets/Italy.json?prop=24-object-type---24-vessel&proj=24-murlo&response=geo-record&attributes=24-vessel-form"><samp>attributes=24-vessel-form</samp></a></li>
+                                                </ol>
+                                                -->
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <th>
+                                                Query Region Facet GeoJSON-LD
+                                            </th>
+                                            <td>
+                                                <p>Open Context uses a tiling algorithm to hierarchically index geospatial data. This approach allows Open Context to aggregate data at different scales by location. Open Context returns aggregated data as "region facets" that can be visualized in a map interface as square polygons. By default the query API returns region facets. Two attributes in the JSON data differentiate result record features (see above) from facet-region features. These are:</p>
+                                                <ol>
+                                                    <li>Features with an attribute: <samp>"category": "oc-api:geo-facet"</samp></li>
+                                                    <li>Feature properties with an attribute: <samp>"feature-type": "discovery region (facet)"</samp></li>
+                                                </ol>
+                                                <p>To limit the GeoJSON-LD response to facet regions, add a <samp>response=geo-facet</samp> parameter to the query URL (see <a target="_blank" title="GeoJSON facet regions only" href="{{ base_url }}/sets/United+States.json?response=geo-facet">example</a>).</p>
+                                                <p>Last, you can change the level of aggregation in the facet regions with the <samp>geodeep</samp> parameter. The maximum value is 20, correponding to a Web mapping zoom level of 20. Below are two examples with different levels of aggregation:</p>
+                                                <ol>
+                                                    <li>More aggregated (coarse) data at <samp>geodeep=6</samp>, presented in: <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=7">HTML</a> (with map visualization) or <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=7">GeoJSON-LD</a></li>
+                                                    <li>Less aggregated (fine-grain) data at <samp>geodeep=11</samp>, presented in: <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=11">HTML</a> (with map visualization) or <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=11">GeoJSON-LD</a></li>
+                                                </ol>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- end of GeoJSON-LD section -->
+                            
+                            
+                            
+                            <div class="about-section" id="query-api-meta">
+                                <h4>Query API: Metadata and Paging<a href="#page-top">[Top]</a></h4>
+                                <p>The general goal of the search/query/faceted-browse API is to provide clients with links described with useful information to:</p>
+                                <ul>
+                                    <li>Change state (further filter Open Context)</li>
+                                    <li>Get useful numeric summaries of filtered sets of Open Context records</li>
+                                </ul>
+                                <p>This is all built on a model of faceted search / faceted browsing. In faceted search, the service returns information that summarizes a collection according to different metadata facets. This is the main way data in Open Context can be understood in aggregate. The table below introduces some of the general metadata and linking options (especially paging) provided by the Query API:</p>
+                                <table class="table">
+                                    <thead>
+                                        <th class="col-sm-3">Attribute</th>
+                                        <th class="col-sm-9">Definition and Examples</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>
+                                                <samp>totalResults</samp>
+                                            </th>
+                                            <td>
+                                                <p>Total number of results found in the search.</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                Paging
+                                            </th>
+                                            <td>
+                                                <p>The Query API returns links to page through the list of query result records. Paging links are provided in both HTML and JSON versions as follows:</p>
+                                                <ol>
+                                                    <li><samp>first</samp>, first page</li>
+                                                    <li><samp>previous</samp>, previous page</li>
+                                                    <li><samp>next</samp>, next page</li>
+                                                    <li><samp>last</samp>, last page</li>
+                                                </ol>
+                                                <p>In addition to paging, the Query API provides details about the start of the index number of the current page's search results. <samp>"startIndex": 0</samp> is the begining of the list of results. As one pages through the search results, the <samp>startIndex</samp> increases. You can change the number of results returned per page with the <samp>rows</samp> parameter. Open Context defaults to 20 records per page and this can be increased to 1000 with <samp>rows=1000</samp>.</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                <samp>oc-api:active-filters</samp>
+                                            </th>
+                                            <td>
+                                                <p>The Query API provides a list of the filters currently constraining the the search results. The API provides some descriptive information for each filter, including links indicated as <samp>oc-api:remove</samp> or <samp>oc-api:remove-json</samp> that can be followed to remove that particular filtering constraint.</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>
+                                                <samp>oc-api:has-text-search</samp>
+                                            </th>
+                                            <td>
+                                                <p>The Query API provides a list of ways one can add an additional full-text search constraint to any search constraints already in place. The API provides a template for composing URLs to request full-text searches in the <samp>oc-api:template</samp> or <samp>oc-api:template-json</samp> keys. Substitute the <samp>{SearchTerm}</samp> in those URLs with the URL encoded text of your search term(s).</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+        
+        
+        
+                            <div class="about-section" id="query-api-facets">
+                                <h4>Query API: Facets <a href="#page-top">[Top]</a></h4>
+                                
+                                <p>Facets represent one of the most important and useful types of information provided by the Query API. Open Context's query API provides different kinds of facets as follows:</p>
+                                <ul>
+                                    <li>Geospatial region facets as GeoJSON features (see above)</li>
+                                    <li>Chronological (time-span) facets</li>
+                                    <li>Range facets (for numerical or date ranges) and numeric searches</li>
+                                    <li>Classification facets for searching by controlled vocabulary concepts</li>
+                                </ul>
+                                <p>Each type of facet has a list of query options that can further constrain your search. The <samp>id</samp> attribute-key provides a link to the HTML (if not using content negotiation) search option, and the <samp>json</samp> attribute-key provides a link to the JSON representation of the search option. Finally, the <samp>count</samp> attribute-key provides a count of the frequency that facet option appears in the filtered set of data. Usually, the count will be the same as the number of records returned if you execute the search option, but that is not always the case.</p>
+                                <table class="table">
+                                    <thead>
+                                        <th class="col-sm-3">Type of Facet</th>
+                                        <th class="col-sm-9">Definition and Examples</th>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <th>
+                                                <samp>oc-api:has-form-use-life-ranges</samp>
+                                            </th>
+                                            <td>
+                                                <p>These are hierarchically organized time-spans for dates in the past. Since the algorithm (<a target="_blank" href="http://www.slideshare.net/dinaa_proj/kansa-saa2014poster">described here</a>) used to compute these facets needs a fixed reference point, the latest possible date in these time-spans is 1950. The <samp>start</samp> and <samp>stop</samp> attribute keys describe dates in years BCE / CE, with BCE dates as negative values. In way that's similar to the geo-region facets desceribed above, you can control the level of chronological aggregation to your requests by adding the <samp>chronodeep</samp> query parameter to request URLs.</p>
+                                                <ol>
+                                                    <li>More aggregated (coarse) chronology data at <samp>chronodeep=16</samp>, the default level, as <a target="_blank" title="Level 16 aggregation" href="{{ base_url }}/sets/.json?chronodeep=16">JSON-LD</a></li>
+                                                    <li>Less aggregated (fine-grain) chronology data at <samp>chronodeep=32</samp>, the maximum precision, as <a target="_blank" title="Level 32 aggregation" href="{{ base_url }}/sets/.json?chronodeep=32">JSON-LD</a></li>
+                                                </ol>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            
+                            
+                            
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div id="wrapper">
+                    <!-- Sidebar -->
+                    <div id="sidebar-wrapper">
+                        <h3>Page Contents</h3>
+                        <ul class="sidebar-nav">
+                            <li><a href="#overview">Overview</a></li>
+                            <li><a href="#getting-data">Getting Data</a></li>
+                            <li><a href="#geojson-ld">GeoJSON-LD</a></li>
+                            <li><a href="#geojson-ld-types">GeoJSON-LD Varieties</a></li>
+                            <li><a href="#query-api">Query API</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
