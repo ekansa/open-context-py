@@ -50,7 +50,9 @@ class MakeJsonLd():
         ok_show_debug = True
         if 'solr' in self.act_responses:
             return solr_json
-        if 'context' in self.act_responses:
+        if 'context' in self.act_responses \
+           or 'geo-facet' in self.act_responses \
+           or 'geo-record' in self.act_responses:
             search_context_obj = SearchContext()
             self.json_ld['@context'] = search_context_obj.id
         if 'metadata' in self.act_responses:
