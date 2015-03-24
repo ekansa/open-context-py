@@ -1,0 +1,64 @@
+<h3>Query API: Response Options, Metadata, and Paging</h3>
+
+<p>By default the Open Context API returns a wide variety information in response to a query request. The responses include, metadata, a variety of search facets, geo-spatial data (in the form of regionl facets and result records) and some non-geospatial results. You can limit the types of responses you get from Open Context searches by adding the <samp>response</samp> parameter and a comma seperated list of response-types to a request URL. For example, the <samp><a target="_blank" title="Metadata request" href="{{ base_url }}/sets/United+States.json?response=metadata">{{ base_url }}/sets/United+States.json?response=metadata</a></samp> request only gets metadata about a search result, while <samp><a target="_blank" title="Metadata and URI request" href="{{ base_url }}/sets/United+States.json?response=metadata,uri">{{ base_url }}/sets/United+States.json?response=metadata,uri</a></samp> gets metadata and URIs of result records. Allowed response types are:</p>
+
+<ul>
+    <li><samp>metadata</samp>: metadata about a search, includes paging information, number of records found, etc.</li>
+    <li><samp>facet</samp>: search facets that <em>ARE NOT</em> GeoJSON region facets (see the GeoJSON discussion)</li>
+    <li><samp>geo-facet</samp>: search facets that <em>ARE</em> GeoJSON region facets (see the GeoJSON discussion)</li>
+    <li><samp>geo-record</samp>: result records as GeoJSON features (see the GeoJSON discussion)</li>
+    <li><samp>uri-meta</samp>: result records as a simple list of URIs and some attributes</li>
+    <li><samp>uri</samp>: result records as a simple list of URIs</li>
+    <li><samp>solr</samp>: raw and unprocessed Solr query response (these will be very difficult to process given the high-level of abstration in Open Context's Solr schema)</li>
+</ul>
+
+<br/>
+<p>The table below introduces some of the general metadata and linking options (especially paging) provided by the Query API:</p>
+
+<table class="table">
+    <thead>
+        <th class="col-sm-3">Attribute</th>
+        <th class="col-sm-9">Definition and Examples</th>
+    </thead>
+    <tbody>
+        <tr>
+            <th>
+                <samp>totalResults</samp>
+            </th>
+            <td>
+                <p>Total number of results found in the search.</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Paging
+            </th>
+            <td>
+                <p>The Query API returns links to page through the list of query result records. Paging links are provided for both HTML and JSON versions as follows:</p>
+                <ol>
+                    <li><samp>first</samp>, first page</li>
+                    <li><samp>previous</samp>, previous page</li>
+                    <li><samp>next</samp>, next page</li>
+                    <li><samp>last</samp>, last page</li>
+                </ol>
+                <p>In addition to paging, the Query API provides details about the start of the index number of the current page's search results. <samp>"startIndex": 0</samp> is the begining of the list of results. As one pages through the search results, the <samp>startIndex</samp> increases. You can change the number of results returned per page with the <samp>rows</samp> parameter. Open Context defaults to 20 records per page and this can be increased to 1000 with <samp>rows=1000</samp>.</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                <samp>oc-api:active-filters</samp>
+            </th>
+            <td>
+                <p>The Query API provides a list of the filters currently constraining the the search results. The API provides some descriptive information for each filter, including links indicated as <samp>oc-api:remove</samp> or <samp>oc-api:remove-json</samp> that can be followed to remove that particular filtering constraint.</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                <samp>oc-api:has-text-search</samp>
+            </th>
+            <td>
+                <p>The Query API provides a list of ways one can add an additional full-text search constraint to any search constraints already in place. The API provides a template for composing URLs to request full-text searches in the <samp>oc-api:template</samp> or <samp>oc-api:template-json</samp> keys. Substitute the <samp>{SearchTerm}</samp> in those URLs with the URL encoded text of your search term(s).</p>
+            </td>
+        </tr>
+    </tbody>
+</table>

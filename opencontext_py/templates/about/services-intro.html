@@ -1,0 +1,18 @@
+<h3>API Introduction</h3>
+
+<p>Open Context has two primary APIs. One returns data on individual records, and the other returns data from searches. Both APIs share data in the JSON-LD format. JSON-LD means you can treat the information as simple JSON data, or you can parse it as RDF for Linked Data applications.</p>
+
+<p>The general goal of the search/query/faceted-browse API is to provide clients with links described with useful information to:</p>
+
+<ul>
+    <li>Change state (further filter Open Context)</li>
+    <li>Get useful numeric summaries of filtered sets of Open Context records</li>
+</ul>
+
+<p>This is all built on a model of faceted search / faceted browsing. In faceted search, the service returns information that summarizes a collection according to different metadata facets. This is the main way data in Open Context can be understood in aggregate.</p>
+
+<p>Open Context's approach of exposing metaddata as links that you can follow provides a uniform interface for otherwise very diverse data. This common method allows a client or user to discover metadata links common across multiple projects or links of attributes specific to a single project. The aim of this common method is to help to simplify accessing, querying, and analyzing a wide variety of data.</p>
+
+<h4>Caveats</h4>
+
+<p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, this current version of Open Context is only deployed at mirror and testing hosts. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp> where the old version of Open Context is still running. Many URIs will not resolve at the old version, so for now, it's best to substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.

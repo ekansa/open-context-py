@@ -28,6 +28,7 @@ class FilterLinks():
         self.testing = settings.DEBUG
         self.hierarchy_delim = '---'
         self.partial_param_val_match = False
+        self.remove_start_param = True
 
     def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """
@@ -126,6 +127,9 @@ class FilterLinks():
             new_rparams = self.base_request
         else:
             new_rparams = {}
+        if 'start' in new_rparams and self.remove_start_param:
+            # remove paging information when composing a new link
+            new_rparams.pop('start', None)
         if param == 'path':
             entity = Entity()
             entity.get_context = True
