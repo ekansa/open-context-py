@@ -3,13 +3,13 @@
 <p>Facets represent one of the most important and useful types of information provided by the Query API. Open Context's query API provides different kinds of facets as follows:</p>
 
 <ul>
-    <li>Geospatial region facets as GeoJSON features (see above)</li>
+    <li>Geospatial region facets as GeoJSON features (see GeoJSON discussion)</li>
     <li>Chronological (time-span) facets</li>
     <li>Range facets (for numerical or date ranges) and numeric searches</li>
     <li>Classification facets for searching by controlled vocabulary concepts</li>
 </ul>
 
-<p>Each type of facet has a list of query options that can further constrain your search. The <samp>id</samp> attribute-key provides a link to the HTML (if not using content negotiation) search option, and the <samp>json</samp> attribute-key provides a link to the JSON representation of the search option. Finally, the <samp>count</samp> attribute-key provides a count of the frequency that facet option appears in the filtered set of data. Usually, the count will be the same as the number of records returned if you execute the search option, but that is not always the case.</p>
+<p>Each type of facet has a list of query options that can further constrain your search. The <samp>id</samp> attribute-key provides a link to the HTML (if not using content negotiation) search option, and the <samp>json</samp> attribute-key provides a link to the JSON representation of the search option. Finally, the <samp>count</samp> attribute-key provides a count of the frequency that facet option appears in the filtered set of data.</p>
 
 <table class="table">
     <thead>
@@ -27,6 +27,9 @@
                     <li>More aggregated (coarse) chronology data at <samp>chronodeep=16</samp>, the default level, as <a target="_blank" title="Level 16 aggregation" href="{{ base_url }}/sets/.json?chronodeep=16">JSON-LD</a></li>
                     <li>Less aggregated (fine-grain) chronology data at <samp>chronodeep=32</samp>, the maximum precision, as <a target="_blank" title="Level 32 aggregation" href="{{ base_url }}/sets/.json?chronodeep=32">JSON-LD</a></li>
                 </ol>
+                
+                <p>Usually, the facet count will be the same as the number of records returned if you execute the search option, but that is not always the case for chronological facets. Items in Open Context (especially archaeological sites) can have multiple time spans of use. A chronological facet count reflects the number of times a particular time-span bucket is filled. A single record of an archaeological site can fill multiple time-span buckets. This sometimes makes facet counts for time-spans a close approximation rather than an exact match of filtering by a particular time-span.</p>
+                
             </td>
         </tr>
         <tr>
