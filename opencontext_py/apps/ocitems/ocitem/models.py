@@ -7,6 +7,7 @@ from collections import OrderedDict
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -1068,11 +1069,13 @@ class ItemConstruction():
         when['type'] = event.when_type
         when['type'] = event.meta_type
         if(event.earliest != event.start):
-            when['earliest'] = int(event.earliest)
-        when['start'] = int(event.start)
-        when['stop'] = int(event.stop)
+            # when['earliest'] = int(event.earliest)
+            pass
+        when['start'] = ISOyears().make_iso_from_float(event.start)
+        when['stop'] = ISOyears().make_iso_from_float(event.stop)
         if(event.latest != event.stop):
-            when['latest'] = int(event.latest)
+            # when['latest'] = int(event.latest)
+            pass
         if(event.uuid != uuid):
             when['reference-type'] = 'inferred'
             when['reference-uri'] = URImanagement.make_oc_uri(event.uuid, 'subjects', self.cannonical_uris)
