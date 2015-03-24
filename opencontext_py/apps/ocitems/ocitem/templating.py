@@ -683,6 +683,7 @@ class PropValue():
         self.uuid = False
         self.type = False
         self.thumbnail = False
+        self.oc_item = True
 
     def make_value(self, val_item):
         if isinstance(val_item, dict):
@@ -696,6 +697,7 @@ class PropValue():
                     else:
                         self.item_type = 'external-resource'
                         self.uuid = False
+                        self.oc_item = False
                 else:
                     self.id = val_item['id'].replace('#', '')
             if 'type' in val_item:

@@ -5,6 +5,7 @@ from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
@@ -79,8 +80,9 @@ class GeoJsonRegions():
                 when = LastUpdatedOrderedDict()
                 when['id'] = '#event-' + tile_key
                 when['type'] = 'oc-gen:formation-use-life'
-                when['start'] = self.min_date
-                when['stop'] = self.max_date
+                # convert numeric to GeoJSON-LD ISO 8601
+                when['start'] = ISOyears().make_iso_from_float(self.min_date)
+                when['stop'] = ISOyears().make_iso_from_float(self.max_date)
                 record['when'] = when
             gm = GlobalMercator()
             geo_coords = gm.quadtree_to_geojson_poly_coords(tile_key)
@@ -95,6 +97,8 @@ class GeoJsonRegions():
             properties['label'] = 'Discovery region (' + str(i) + ')'
             properties['feature-type'] = 'discovery region (facet)'
             properties['count'] = aggregate_count
+            properties['early bce/ce'] = self.min_date
+            properties['late bce/ce'] = self.max_date
             record['properties'] = properties
             if len(tile_key) >= 6:
                 if tile_key[:6] == '211111':

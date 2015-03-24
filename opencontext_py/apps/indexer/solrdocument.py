@@ -1,5 +1,6 @@
 import datetime
 import json
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -463,11 +464,13 @@ class SolrDocument:
             for feature in self.oc_item.json_ld['features']:
                 bad_time = False
                 try:
-                    start = feature['when']['start']
+                    # time is in ISO 8601 time
+                    iso_start = feature['when']['start']
                 except KeyError:
                     bad_time = True
                 try:
-                    stop = feature['when']['stop']
+                    # time is in ISO 8601 time
+                    iso_stop = feature['when']['stop']
                 except KeyError:
                     bad_time = True
                 try:
@@ -482,6 +485,9 @@ class SolrDocument:
                     ref_type = False
                 if when_type == 'oc-gen:formation-use-life' \
                         and bad_time is False:
+                    # convert GeoJSON-LD ISO 8601 to numeric
+                    start = ISOyears().make_float_from_iso(iso_start)
+                    stop = ISOyears().make_float_from_iso(iso_stop)
                     chrono_tile = ChronoTile()
                     if 'form_use_life_chrono_tile' not in self.fields:
                         self.fields['form_use_life_chrono_tile'] = []

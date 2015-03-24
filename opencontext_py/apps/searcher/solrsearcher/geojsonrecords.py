@@ -3,6 +3,7 @@ import geojson
 import django.utils.http as http
 from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
@@ -103,8 +104,9 @@ class GeoJsonRecords():
                 when = LastUpdatedOrderedDict()
                 when['id'] = '#event-rec-when-' + str(i) + '-of-' + str(self.total_found)
                 when['type'] = 'oc-gen:formation-use-life'
-                when['start'] = rec_props_obj.early_date
-                when['stop'] = rec_props_obj.late_date
+                # convert numeric to GeoJSON-LD ISO 8601
+                when['start'] = ISOyears().make_iso_from_float(rec_props_obj.early_date)
+                when['stop'] = ISOyears().make_iso_from_float(rec_props_obj.late_date)
                 record['when'] = when
             # start adding GeoJSON properties
             properties = LastUpdatedOrderedDict()
