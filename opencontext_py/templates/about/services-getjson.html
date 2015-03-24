@@ -1,0 +1,52 @@
+<h3>Getting JSON(-LD) Data</h3>
+
+<p>Open Context offers two main ways to get JSON-LD data. The better-practice approach relies upon <a title="Wikipedia introduction" href="http://en.wikipedia.org/wiki/Content_negotiation" target="_blank">HTTP content negotiation</a>. The second expediant approach involves adding a <samp>.json</samp> to request URLs. The table below provides examples for using these different approaches.</p>
+<table class="table">
+    <thead>
+        <th class="col-sm-3">Approach</th>
+        <th class="col-sm-9">Description and Examples</th>
+    </thead>
+    <tbody>
+        <tr>
+            <th>
+                Content Negotiation
+            </th>
+            <td>
+                <p>Open Context supports content resolution for both item record and search APIs. To request JSON data, include either of the following in the HTTP header of your request:
+                </p>
+                <ul class="list-unstyled">
+                    <li><samp>Accept: application/json</samp></li>
+                    <li><samp>Accept: application/ld+json</samp></li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Modifying Item Record URLs
+            </th>
+            <td>
+                <p>For individual record items, you can get JSON data by simply adding a "<strong>.json</strong>" to the end of a record's URL. For example, you can get the JSON for this object: <samp><a title="Example pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC</a></samp>, with this URL: <samp><a title="JSON for the pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC.json">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC<strong>.json</strong></a></samp>.</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Modifying Query URLs
+            </th>
+            <td>
+                <p>Similarly, adding a "<strong>.json</strong>" to search URLs also requests JSON data. To do so, add the ".json" just before the quesion-mark ("?") in a search URL. If the URL doesn't have a question-mark, append the ".json" at the end of the URL.</p>
+                <ol>
+                    <li>
+                        <h5><em>Query without a "?" in the URL</em></h5>
+                        <p>The search URL <samp><a title="Query for Kenan Tepe" target="_blank" href="{{ base_url}}/sets/Turkey/Kenan+Tepe">{{ base_url}}/sets/Turkey/Kenan+Tepe</a></samp> becomes <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/sets/Turkey/Kenan+Tepe.json">{{ base_url}}/sets/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> for a JSON request.
+                        </p>
+                    </li>
+                    <li>
+                        <h5><em>Query with a "?" in the URL</em></h5>
+                        <p>The search URL <samp><a title="Query for Murlo project" target="_blank" href="{{ base_url}}/sets/?proj=24-murlo">{{ base_url}}/sets/?proj=24-murlo</a></samp> becomes <samp><a title="JSON query for Murlo project" target="_blank" href="{{ base_url}}/sets/.json?proj=24-murlo">{{ base_url}}/sets/<strong>.json</strong>?proj=24-murlo</a></samp> for a JSON request.
+                        </p>
+                    </li>
+                </ol>
+            </td>
+        </tr>
+    </tbody>
+</table>

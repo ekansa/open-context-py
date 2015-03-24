@@ -1,0 +1,31 @@
+<h3>Linking to Site File Records in the Digital Index of North American Archaeology (DINAA)</h3>
+
+<p>The Digital Index of North American Archaeology (DINAA) is an NSF sponsored project led by David G. Anderson and Joshua Wells that uses Open Context to publish archaeological site file records on the Web. Administrative offices from several states in the US are participating with the project.</p>
+
+<p>The DINAA project has included <a target="_blank" title="Wikipedia article" href="http://en.wikipedia.org/wiki/Smithsonian_trinomial">Smithsonian Trinomials</a> for these site file records. Since archaeologists and other cultural heritage professionals routinely use Smithsonian Trinomials, these identifiers can be powerful tools to cross-reference different data togehter.</p>
+
+<h4>Linking to DINAA with <a target="_blank"href="http://openrefine.org/" title="Documentation and open source download">Open / Google Refine</a></h4>
+
+<ol>
+    
+    <li>
+        <p>Click on the column with trinomial identifier to select it. Create a column for the DINAA identifier associated with the trinomial by <samp>Add Column By Fetching URLs...</samp>. You can name the field something like 'dinaa-uri'.</p>
+    </li>
+    
+    <li>
+        <p>In the expression field, write:</p>
+        <p><samp>"{{ base_url }}/sets/.json?response=uri-meta&trinomial=" + escape(value, "url")</samp></p>
+        <p>The above expression will get a list of possible DINAA identifiers that match your trinomial. The vast majority of cases will return only 1 DINAA identifier / trinomial (but not always, since state site records do not necessarily have a 1 to 1 relationship with trinomial identifiers). You can set the "throttle delay" to 500 milliseconds (this delay makes pauses between requests so you don't overwhelm Open Context's server). If you have a big dataset, 1/2 second delays add up.</p>
+    </li>
+    
+    <li>
+        <p>Completing the step above will populate this new column with JSON data (a "machine-readable" data format) from Open Context. You'll need to process these results further with the <samp>Edit Cells > Transform...</samp> command.</p>
+        <p>In the expression field, write:</p>
+        <p><samp>value.parseJson()[0]["uri"]</samp></p>
+        <p>The above expression generates a link to the Open Context page representing the mostly likely match to the trinomial ID in your dataset. Since Open Context emphasizes linked data, the link represents the primary identifier for the site. For now, this will go to the old version of Open Context (still running the legacy software / database). To see the new version of the data (more cleaned up) use, you'll need to substitute "<samp>http://opencontext.org</samp>" with "<samp>{{ base_url }}</samp>". You should also note the the result has other good data, including lat/lon coordinates, time spans, and geographic context (state, county), as well as a text snippet with that has the matching trinomial.</p>
+        
+    <li>
+        <p>Check the results! For the most part this will work since trinomials are pretty unique and usually map clearly to a state dataset. However, there maybe some edge cases that will require human problem solving. You'll need to spot check to make sure the results make sense and reference appropriate sites.</p>
+    </li>
+    
+</ol>

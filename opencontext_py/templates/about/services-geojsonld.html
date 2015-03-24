@@ -1,0 +1,97 @@
+<h3>GeoJSON-LD: Geospatial Data with Time</h3>
+
+<p>Most of the information returned by Open Context's APIs, except for data about concepts in controlled vocabularies ("types") and descriptive or linking relations ("predicates") contain geospatial data. To make the geospatial information easier to use, Open Context expresses geospatial data using the GeoJSON standard. GeoJSON is widely supported by Web mapping services and visualization tools and by desktop GIS software.</p>
+
+<p>Open Context has adopted GeoJSON-LD conventions <a title="GeoJSON-LD" target="_blank" href="https://github.com/geojson/geojson-ld">documented here</a>. One component added to the GeoJSON-LD features is a "<samp>when</samp>" object (see <a target="_blank" title="GeoJSON-LD and Time" href"https://github.com/geojson/geojson-ld/labels/time">discussion</a>). The when object adds information on the chronological coverage of a GeoJSON feature. Dates BCE are indicated as negative values. Importantly, each GeoJSON feature with a when object should be considered an "event" that has a spatial as well as a chronological coverage. Below we provide an example of a when object that provides chronological coverage information:</p>
+
+
+<ul class="code-samp">
+    <li><samp>"when": {</samp></li>
+    <li>
+        <ul class="code-samp">
+            <li><samp>"id": "#event-when-2",</samp></li>
+            <li><samp>"type": "<span title="General type of the event, in this case when the item was formed, used or alive">oc-gen:formation-use-life</span>",</samp></li>
+            <li><samp>"start": -8050,</samp></li>
+            <li><samp>"stop": -6050,</samp></li>
+            <li><samp>"reference-type": "<span title="Time information assigned to this record itself, it is not inherited by context">specified</span>"</samp></li>
+        </ul>
+    </li>
+    </li><samp>}</samp></li>
+</ul>
+
+
+<p>Open Context provides three main varieties of GeoJSON-LD data described with examples in the table below.</p>
+<table class="table">
+    <thead>
+        <th class="col-sm-3">Variant</th>
+        <th class="col-sm-9">Description and Examples</th>
+    </thead>
+    <tbody>
+        <tr>
+            <th>
+                Item Record GeoJSON-LD
+            </th>
+            <td>
+                <p>In Open Context, some items have multiple GeoJSON-LD events. For example, an archaeological site can have multiple episodes of occupation. So a single Open Context record can have multiple GeoJSON-LD features (see example: <a target="_blank" title="Archaeological Site in Georgia" href="{{ base_url }}/subjects/B057EC89-851B-43B2-CD08-15B8DEB02823">HTML</a>, <a target="_blank" title="Archaeological Site in Georgia" href="{{ base_url }}/subjects/B057EC89-851B-43B2-CD08-15B8DEB02823.json">GeoJSON-LD</a>).</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                Query Result Record GeoJSON-LD
+            </th>
+            <td>
+                
+                <p>The Open Context Query API can return GeoJSON-LD features that represent a search result. To simplify matters, only one feature is returned per search result. A "when" object in a feature reflects the item's total time coverage unless the query specified limits on time. If the query limits by time spans, the when object provides a chronology information within the contraints of the query.</p>
+                <p>By default, the Query API returns GeoJSON-LD features of search results. Search result records come as point features. Two attributes in the JSON data differentiate result record features from facet-region features (see below). These are:</p>
+                <ol>
+                    <li>Features with an attribute: <samp>"category": "oc-api:geo-record"</samp></li>
+                    <li>Feature properties with an attribute: <samp>"feature-type": "item record"</samp></li>
+                </ol>
+                <p>To limit the GeoJSON-LD response to result records, add a <samp>response=geo-record</samp> parameter to the query URL (see <a target="_blank" title="GeoJSON record features only" href="{{ base_url }}/sets/Turkey.json?prop=biol-term-hastaxonomy&response=geo-record">example</a>).</p>
+                <p>Open Context returns a few common attributes for result records in the GeoJSON "properties" object. Open Context will add additional attributes to the properties object depending on query filters in the request. For instance, the following search requests animal bones from Turkey that have a biological taxonomy identification: <a target="_blank" title="Taxonomic identified bones in Turkey" href="{{ base_url }}/sets/Turkey?prop=oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy">{{ base_url }}/sets/Turkey?prop=biol-term-hastaxonomy</a>. GeoJSON result records from that query will have a taxonomic attribute in their properties as shown below:</p>
+                
+                
+                <ul class="code-samp">
+                    <li><samp>"properties": { </samp></li>
+                    <li>
+                        <ul class="code-samp">
+                            <li><samp>"id": "#rec-1-of-244200",</samp></li>
+                            <li><samp>"feature-type": "item record",</samp></li>
+                            <li><samp>"uri": "http://opencontext.org/subjects/4D168E37-51A1-48A4-D82B-246D2346FCB1",</samp></li>
+                            <li><em>... more attributes ...</em></li>
+                            <li><samp>"Has Biological Taxonomy": ["Bos"]</samp></li>
+                        </ul>
+                    </li>
+                    <li><samp>}</samp></li>
+                </ul>
+                
+                
+                <p>You can request more attributes to include in the properties of a GeoJSON result record feature. To do so, add the <samp>attributes</samp> parameter with a comma seperated list of descriptive predicates, identified by slug (slugs are included in JSON-LD and are easy to read short-hand identifiers specific to Open Context) or by URI.</p>
+                <ol>
+                    <li>Animal bones in Tukey with anatomical identification attribute data: <a target="_blank" title="Bones in Turkey with anatomical descriptions" href="{{ base_url }}/sets/Turkey.json?prop=oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy&response=geo-record&attributes=oc-zoo-has-anat-id"><samp>attributes=oc-zoo-has-anat-id</samp></a></li>
+                    <li>Pottery from the Murlo project in Italy with vessel-form attribute data: <a target="_blank" title="Murlo pottery with form descriptions" href="{{ base_url }}/sets/Italy.json?prop=24-object-type---24-vessel&proj=24-murlo&response=geo-record&attributes=24-vessel-form"><samp>attributes=24-vessel-form</samp></a></li>
+                </ol>
+                
+            </td>
+        </tr>
+        
+        <tr>
+            <th>
+                Query Region Facet GeoJSON-LD
+            </th>
+            <td>
+                <p>Open Context uses a tiling algorithm to hierarchically index geospatial data. This approach allows Open Context to aggregate data at different scales by location. Open Context returns aggregated data as "region facets" that can be visualized in a map interface as square polygons. By default the query API returns region facets. Two attributes in the JSON data differentiate result record features (see above) from facet-region features. These are:</p>
+                <ol>
+                    <li>Features with an attribute: <samp>"category": "oc-api:geo-facet"</samp></li>
+                    <li>Feature properties with an attribute: <samp>"feature-type": "discovery region (facet)"</samp></li>
+                </ol>
+                <p>To limit the GeoJSON-LD response to facet regions, add a <samp>response=geo-facet</samp> parameter to the query URL (see <a target="_blank" title="GeoJSON facet regions only" href="{{ base_url }}/sets/United+States.json?response=geo-facet">example</a>).</p>
+                <p>Last, you can change the level of aggregation in the facet regions with the <samp>geodeep</samp> parameter. The maximum value is 20, correponding to a Web mapping zoom level of 20. Below are two examples with different levels of aggregation:</p>
+                <ol>
+                    <li>More aggregated (coarse) data at <samp>geodeep=6</samp>, presented in: <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=7">HTML</a> (with map visualization) or <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=7">GeoJSON-LD</a></li>
+                    <li>Less aggregated (fine-grain) data at <samp>geodeep=11</samp>, presented in: <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=11">HTML</a> (with map visualization) or <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=11">GeoJSON-LD</a></li>
+                </ol>
+            </td>
+        </tr>
+    </tbody>
+</table>
