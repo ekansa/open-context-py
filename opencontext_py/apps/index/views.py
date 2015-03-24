@@ -1,13 +1,27 @@
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from django.template import RequestContext, loader
+from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 
-# These views provide forms for editing items
 def index(request):
-    """ Displays the HTML for the project homepage """
+    """ Get the search context JSON-LD """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    req_neg = RequestNegotiation('text/html')
     template = loader.get_template('index/view.html')
     context = RequestContext(request,
-                             {'nav_items': settings.NAV_ITEMS})
-    return HttpResponse(template.render(context))
-
+                             {'base_url': base_url,
+                              'page_title': 'Open Context: Publisher of Research Data',
+                              'act_nav': 'home',
+                              'nav_items': settings.NAV_ITEMS})
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if req_neg.supported:
+        # requester wanted a mimetype we DO support
+        return HttpResponse(template.render(context))
+    else:
+        # client wanted a mimetype we don't support
+        return HttpResponse(template.render(context),
+                            status=415)
