@@ -5,6 +5,7 @@ from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
@@ -108,8 +109,13 @@ class JsonLDchronology():
             record['category'] = 'oc-api:chrono-facet'
             chrono_t = ChronoTile()
             dates = chrono_t.decode_path_dates(tile_key)
-            record['start'] = dates['earliest_bce']
-            record['stop'] = dates['latest_bce']
+            # convert numeric to GeoJSON-LD ISO 8601
+            record['start'] = ISOyears().make_iso_from_float(dates['earliest_bce'])
+            record['stop'] = ISOyears().make_iso_from_float(dates['latest_bce'])
+            properties = LastUpdatedOrderedDict()
+            properties['early bce/ce'] = dates['earliest_bce']
+            properties['late bce/ce'] = dates['latest_bce']
+            record['properties'] = properties
             self.chrono_tiles.append(record)
 
     def set_aggregation_depth(self, request_dict_json):
