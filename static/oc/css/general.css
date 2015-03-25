@@ -1,5 +1,9 @@
 /* Open Context Layout Main */
+@import url('http://fonts.googleapis.com/css?family=Open+Sans');
 
+body {
+	font-family: 'Open Sans';	
+}
 
 #main {
 	width:98%;
