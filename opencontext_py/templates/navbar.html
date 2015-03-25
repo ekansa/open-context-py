@@ -2,14 +2,15 @@
 <nav id="oc-nav-bar" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
     <div class="container-fluid">
         <div class="navbar-header">
+            {% if base_url != 'http://opencontext.dainst.org' %}
             <a id="oc-nav-branding" class="navbar-brand" href="{{ base_url }}">
                 <img alt="Open Context Logo" height="48" src="{{ base_url }}/static/oc/images/oc-nav-logo-black.png" />
             </a>
-            {% if base_url == 'http://opencontext.dainst.org' %}
-            <a title="DAI hosted mirror" style="margin-left: 10px;" class="navbar-brand" href="{{ base_url }}">
-                <img style="height: 30px; margin-top: -5px;" src="{{ base_url }}/static/oc/images/index/dai-logo-small-lblue.png" alt="DAI Logo" />
+            {% else %}
+            <a id="oc-nav-branding" class="navbar-brand" href="{{ base_url }}">
+                <img height="48" src="{{ base_url }}/static/oc/images/oc-nav-logo-black-dai.png"" alt="Open Context DAI-Mirror Logo" />
             </a>
-        {%endif%}
+            {%endif%}
         </div>
         <ul class="nav navbar-nav">
         {% for nav_dict in nav_items %}
