@@ -72,6 +72,8 @@
                     <li>Pottery from the Murlo project in Italy with vessel-form attribute data: <a target="_blank" title="Murlo pottery with form descriptions" href="{{ base_url }}/sets/Italy.json?prop=24-object-type---24-vessel&proj=24-murlo&response=geo-record&attributes=24-vessel-form"><samp>attributes=24-vessel-form</samp></a></li>
                 </ol>
                 
+                <p>Finally, some clients (especially desktop GIS applications) do a bad job at handling multiple values for property attributes. To work around this problem, you can add the parameter <samp>flatten-attributes=1</samp> to the URL requesting GeoJSON records.</p>
+                
             </td>
         </tr>
         
@@ -88,7 +90,7 @@
                 <p>To limit the GeoJSON-LD response to facet regions, add a <samp>response=geo-facet</samp> parameter to the query URL (see <a target="_blank" title="GeoJSON facet regions only" href="{{ base_url }}/sets/United+States.json?response=geo-facet">example</a>).</p>
                 <p>Last, you can change the level of aggregation in the facet regions with the <samp>geodeep</samp> parameter. The maximum value is 20, correponding to a Web mapping zoom level of 20. Below are two examples with different levels of aggregation:</p>
                 <ol>
-                    <li>More aggregated (coarse) data at <samp>geodeep=6</samp>, presented in: <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=7">HTML</a> (with map visualization) or <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=7">GeoJSON-LD</a></li>
+                    <li>More aggregated (coarse) data at <samp>geodeep=7</samp>, presented in: <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=7">HTML</a> (with map visualization) or <a target="_blank" title="Level 7 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=7">GeoJSON-LD</a></li>
                     <li>Less aggregated (fine-grain) data at <samp>geodeep=11</samp>, presented in: <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&geodeep=11">HTML</a> (with map visualization) or <a target="_blank" title="Level 11 aggregation" href="{{ base_url }}/sets/United+States.json?proj=52-digital-index-of-north-american-archaeology-dinaa&response=geo-facet&geodeep=11">GeoJSON-LD</a></li>
                 </ol>
             </td>
