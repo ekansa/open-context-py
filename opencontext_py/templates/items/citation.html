@@ -11,10 +11,10 @@
             {{ item.citation.cite_editors }}. Released: {{ item.citation.cite_released }}.
             Open Context. &lt;<span id="item-uri">{{ item.citation.uri }}</span>&gt;
             {% if item.citation.doi != False %}
-                DOI: {{ item.citation.doi }}
+                DOI: <span id="item-stable-id">{{ item.citation.doi }}</span>
             {%endif%}
             {% if item.citation.ark != False %}
-                ARK: {{ item.citation.ark }}
+                Digital Archive: <span id="item-stable-id">{{ item.citation.ark }}</span>
             {%endif%}
         </div>
         <script type="text/javascript">

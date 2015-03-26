@@ -297,7 +297,7 @@ class QueryMaker():
                         # the below is a bit of a hack. We should have a query field
                         # as with ___pred_ to query just the slug. But this works for now
                         fq_field = act_field_fq + '_fq'
-                        if path_list_len == 2 and act_field_data_type == 'id':
+                        if path_list_len >= 2 and act_field_data_type == 'id':
                             # could be an object deeper in the hierarchy, so allow the obj_all version
                             fq_path_term = '(' + fq_field + ':' + prop_slug
                             fq_path_term += ' OR obj_all___' + fq_field + ':' + prop_slug + ')'
