@@ -39,7 +39,7 @@ def create_project(request):
             ipr = ImportProjects()
             project_uuid = ipr.create_project(label,
                                               short_des)
-            return HttpResponseRedirect('../../imports/project/' + project_uuid)
+            return HttpResponseRedirect('../../imports/project/' + str(project_uuid))
         else:
             return HttpResponseForbidden
 
