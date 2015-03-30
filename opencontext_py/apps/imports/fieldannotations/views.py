@@ -125,6 +125,9 @@ def create(request, source_id):
                 elif request.POST['predicate'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
                     ifd.update_field_containedin_entity(request.POST['field_num'],
                                                         request.POST['object_uuid'])
+                elif request.POST['predicate'] == ImportFieldAnnotation.PRED_MEDIA_PART_OF:
+                    ifd.update_field_media_part_of_entity(request.POST['field_num'],
+                                                          request.POST['object_field_num'])
                 elif request.POST['predicate'] == Assertion.PREDICATES_LINK:
                     if 'object_field_num' in request.POST:
                         ifd.update_field_links(request.POST['field_num'],

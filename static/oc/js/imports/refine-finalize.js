@@ -20,7 +20,7 @@ function start_finalization() {
 			data: post_data,
             success: function(data) {
 				data.loop = loop;
-				console.log(data)
+				// console.log(data)
                 if (!data.done && data.ok) {
                     showProgress(data);
                     finalizeData();

@@ -6,6 +6,7 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
@@ -134,7 +135,7 @@ class UnImport():
                                  .delete()
 
     def delete_person_entities(self):
-        """ Deletes subjects entities
+        """ Deletes person entities
             import
         """
         if self.delete_ok:
@@ -149,6 +150,23 @@ class UnImport():
                                 .filter(source_id=self.source_id,
                                         project_uuid=self.project_uuid)\
                                 .delete()
+    
+    def delete_media_entities(self):
+        """ Deletes media entities
+            import
+        """
+        if self.delete_ok:
+            # get rid of "persons" manifest records from this source
+            rem_manifest = Manifest.objects\
+                                   .filter(source_id=self.source_id,
+                                           project_uuid=self.project_uuid,
+                                           item_type='media')\
+                                   .delete()
+            # get rid of media records from this source
+            rem_media = Mediafile.objects\
+                                 .filter(source_id=self.source_id,
+                                         project_uuid=self.project_uuid)\
+                                 .delete()
 
     def delete_types_entities(self):
         """ Deletes types entities from an

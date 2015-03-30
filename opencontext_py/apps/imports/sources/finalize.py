@@ -1,3 +1,4 @@
+from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -7,6 +8,7 @@ from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubjects
+from opencontext_py.apps.imports.fieldannotations.media import ProcessMedia
 from opencontext_py.apps.imports.fieldannotations.persons import ProcessPersons
 from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 from opencontext_py.apps.imports.fieldannotations.links import ProcessLinks
@@ -17,13 +19,14 @@ class FinalizeImport():
 
     # list of processes to run, in order, to complete the import of data
     DEFAULT_PROCESS_STAGES = ['subjects',
+                              'media',
                               'persons',
                               'links',
                               'descriptions']
     # prefix to save the state of the import process
     DEFAULT_STAGE_ROW_PREFIX = 'imp-stage-row'
     DEFAULT_DONE_STATUS = 'import-done'
-
+    
     def __init__(self, source_id):
         self.source_id = source_id
         pg = ProcessGeneral(source_id)
@@ -33,7 +36,7 @@ class FinalizeImport():
         self.row_count = False
         self.imp_status = False
         self.start_row = False
-        self.batch_size = 500
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
         self.act_process_num = False
         self.next_process_num = False
@@ -99,6 +102,16 @@ class FinalizeImport():
             p_act.start_row = self.start_row
             p_act.batch_size = self.batch_size
             p_act.process_subjects_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = p_act.new_entities
+            p_outcome['reconciled_entities'] = p_act.reconciled_entities
+            p_outcome['not_reconciled_entities'] = p_act.not_reconciled_entities
+            p_outcome['count_new_assertions'] = 0
+        elif p_label == 'media':
+            p_act = ProcessMedia(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_media_batch()
             p_outcome['count_active_fields'] = p_act.count_active_fields
             p_outcome['new_entities'] = p_act.new_entities
             p_outcome['reconciled_entities'] = p_act.reconciled_entities

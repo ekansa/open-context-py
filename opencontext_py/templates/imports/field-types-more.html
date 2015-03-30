@@ -102,6 +102,21 @@
                     </div>
                 </div>
             </div>
+        
+            {% if ip.has_media_field %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Media Classifications</h4>
+                </div>
+                <div class="panel-body">
+                    <ul>
+                        <li><a href="javascript:assignMediaCategory('oc-gen:thumbnail');">Thumbail</a></li>
+                        <li><a href="javascript:assignMediaCategory('oc-gen:preview');">Preview</a></li>
+                        <li><a href="javascript:assignMediaCategory('oc-gen:fullfile');">Full-file</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
         </div>
         <script src="../../static/oc/js/imports/fields-classify-more.js"></script>
     </div>

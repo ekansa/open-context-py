@@ -158,6 +158,11 @@ USE_L10N = True
 
 USE_TZ = True
 
+# ----------------------------
+# IMPORTER SETIINGS
+# ----------------------------
+IMPORT_BATCH_SIZE = 500 # number of records to import in 1 batch
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/

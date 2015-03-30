@@ -164,6 +164,26 @@ function assignEntityCategory() {
 	}
 }
 
+function assignMediaCategory(media_cat) {
+	/* Assigns a media category for values of cells that are specific to 
+	 * different versions of a media item (thumbail, preview, full)
+	*/
+	if (media_cat.length > 0) {
+		url = "../../imports/field-meta-update/" + encodeURIComponent(source_id);
+		var selected_fields = getSelectedFieldNumbers();
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				field_value_cat: media_cat,
+				field_num: selected_fields,
+				csrfmiddlewaretoken: csrftoken},
+			success: assignEntityCategoryDone
+		});
+	}
+}
+
 function assignEntityCategoryDone(data){
 	/* Shows updates to the entity value category */
 	for (var i = 0, length = data.length; i < length; i++) {

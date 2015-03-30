@@ -30,7 +30,7 @@ class ProcessSubjects():
         self.root_subject_field = False  # field_num for the root subject field
         self.field_parent_entities = {}  # Parent entities named for a given field
         self.start_row = 1
-        self.batch_size = 250
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
         self.example_size = 5
         self.count_active_fields = 0
@@ -186,6 +186,8 @@ class ProcessSubjects():
                 cs.class_uri = field_obj.field_value_cat
                 cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
+                print('Reconciled item: ' + str(dist_rec['imp_cell_obj'].record))
+                print('--- Has uuid: ' + str(cs.uuid))
                 if cs.uuid is not False:
                     if cs.is_new:
                         self.new_entities.append({'id': str(cs.uuid),
@@ -216,7 +218,8 @@ class ProcessSubjects():
             Subjects can only be created if they are
             defined in a spatial hierarchy
         """
-        if len(self.non_contain_subjects) > 1:
+        if len(self.non_contain_subjects) > 0:
+            print('Non-contain process')
             for field_num in self.non_contain_subjects:
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
@@ -462,6 +465,9 @@ class CandidateSubject():
         if len(manifest_match) > 0:
             match_found = True
             self.uuid = manifest_match[0].uuid
+            self.imp_cell_obj.fl_uuid = self.uuid
+            self.imp_cell_obj.cell_ok = True
+            self.imp_cell_obj.save()
         else:
             # can't match the item in the manifest
             if self.allow_new is False:

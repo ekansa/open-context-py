@@ -1,5 +1,6 @@
 from django.db import models
 from django.db.models import Q
+from django.conf import settings
 from opencontext_py.apps.imports.records.models import ImportCell
 
 
@@ -9,7 +10,7 @@ class ProcessCells():
     def __init__(self, source_id, start_row):
         self.source_id = source_id
         self.start_row = start_row
-        self.batch_size = 250
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.start_row + self.batch_size
 
     def get_field_records(self,

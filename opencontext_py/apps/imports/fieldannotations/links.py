@@ -25,7 +25,8 @@ class ProcessLinks():
     # This list has predicates not processed as 'linking' relations
     DEFAULT_EXCLUSION_PREDS = [Assertion.PREDICATES_CONTAINS,
                                ImportFieldAnnotation.PRED_CONTAINED_IN,
-                               ImportFieldAnnotation.PRED_DESCRIBES]
+                               ImportFieldAnnotation.PRED_DESCRIBES,
+                               ImportFieldAnnotation.PRED_MEDIA_PART_OF]
 
     def __init__(self, source_id):
         self.source_id = source_id
@@ -33,7 +34,7 @@ class ProcessLinks():
         pg.get_source()
         self.project_uuid = pg.project_uuid
         self.start_row = 1
-        self.batch_size = 250
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
         self.example_size = 5
         self.link_rels = False
@@ -166,6 +167,8 @@ class ProcessLinks():
                         subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
                         subject_type = sub_field_obj.field_type
                         subject_ok = dist_rec['imp_cell_obj'].cell_ok
+                        if subject_uuid is False:
+                            subject_ok = False
                         sort = 0
                         in_rows = dist_rec['rows']
                         for pred_obj in rels['pred_objs']:
@@ -200,11 +203,11 @@ class ProcessLinks():
                                 if sort < 1:
                                     sort = obj_field_obj.field_num
                                 for hash_key, obj_rec in obj_recs.items():
-                                    print('Worry about: ' + str(obj_rec))
+                                    # print('Worry about: ' + str(obj_rec['imp_cell_obj'].record))
                                     object_uuid = obj_rec['imp_cell_obj'].fl_uuid
                                     object_type = obj_field_obj.field_type
                                     object_ok = obj_rec['imp_cell_obj'].cell_ok
-                                    cla = CandidateLinkAssersion()
+                                    cla = CandidateLinkAssertion()
                                     cla.project_uuid = self.project_uuid
                                     cla.source_id = self.source_id
                                     cla.subject_uuid = subject_uuid
@@ -215,10 +218,13 @@ class ProcessLinks():
                                     cla.predicate_uuid = predicate_uuid
                                     cla.object_uuid = object_uuid
                                     cla.object_type = object_type
-                                    if subject_ok and object_ok and predicate_uuid is not False:
+                                    if (subject_ok and object_ok) and predicate_uuid is not False:
+                                        # print('Link ok: ' + str(obj_rec['imp_cell_obj'].record))
                                         cla.create_link()
                                         if cla.is_valid:
                                             self.count_new_assertions += 1
+                                            print('Count OK: ' + str(self.count_new_assertions))
+    
 
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -256,7 +262,7 @@ class ProcessLinks():
                         self.link_rels[link_anno.field_num] = rels
 
 
-class CandidateLinkAssersion():
+class CandidateLinkAssertion():
 
     def __init__(self):
         self.project_uuid = False
@@ -275,6 +281,7 @@ class CandidateLinkAssersion():
         """ Creates a new link assertion if data is valid """
         is_valid = self.validate_creation()
         if is_valid:
+            # print('Subject added: ' + self.subject_uuid)
             new_ass = Assertion()
             new_ass.uuid = self.subject_uuid
             new_ass.subject_type = self.subject_type
@@ -296,16 +303,19 @@ class CandidateLinkAssersion():
         is_valid = False
         if self.subject_uuid is not False \
            and self.predicate_uuid is not False \
-           and self.object_uuid is not False > 0:
+           and self.object_uuid is not False:
             is_new = self.check_link_new(self.subject_uuid,
                                          self.obs_num,
                                          self.predicate_uuid,
                                          self.object_uuid)
-            print('Is new?: ' + str(is_new))
+            # print('Is new?: ' + str(is_new))
             if is_new:
                 is_valid = True
-            else:
-                is_valid = False
+        if is_valid is False:
+            prob = 'Problem: ' + self.subject_uuid
+            prob += ' ' + self.predicate_uuid
+            prob += ' ' + self.object_uuid
+            # print(prob)
         return is_valid
 
     def check_link_new(self,
