@@ -33,7 +33,7 @@ class FinalizeImport():
         self.row_count = False
         self.imp_status = False
         self.start_row = False
-        self.batch_size = 5
+        self.batch_size = 500
         self.end_row = self.batch_size
         self.act_process_num = False
         self.next_process_num = False
