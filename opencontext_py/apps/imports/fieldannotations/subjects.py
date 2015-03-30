@@ -1,6 +1,7 @@
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
+from unidecode import unidecode
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
@@ -186,8 +187,9 @@ class ProcessSubjects():
                 cs.class_uri = field_obj.field_value_cat
                 cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
-                print('Reconciled item: ' + str(dist_rec['imp_cell_obj'].record))
-                print('--- Has uuid: ' + str(cs.uuid))
+                # show_item = str(unidecode(dist_rec['imp_cell_obj'].record))
+                # print('Reconciled item: ' + show_item)
+                # print('--- Has uuid: ' + str(cs.uuid))
                 if cs.uuid is not False:
                     if cs.is_new:
                         self.new_entities.append({'id': str(cs.uuid),
