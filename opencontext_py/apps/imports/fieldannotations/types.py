@@ -10,10 +10,16 @@ from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
-
+from opencontext_py.apps.ocitems.octypes.management import TypeManagement
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 # Processes to generate subjects items for an import
 class ProcessTypes():
+
+    # default predicate for subject item is subordinate to object item
+    PRED_SBJ_IS_SUB_OF_OBJ = 'skos:broader'
 
     def __init__(self, source_id):
         self.source_id = source_id
@@ -38,6 +44,117 @@ class ProcessTypes():
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
             # to do, figure out the unimport
+    
+    def make_type_ld_annotations(self, sub_type_pred_uuid,
+                                       sub_type_f_num,
+                                       rel_pred,
+                                       obj_le_f_num):
+        """ Makes linked data annotations
+            for a type in an import
+        """
+        rels = []
+        sub_type_list = ImportCell.objects\
+                                  .filter(source_id=self.source_id,
+                                          field_num=sub_type_f_num)
+        if len(sub_type_list) > 0:
+            distinct_records = {}
+            for cell in sub_type_list:
+                if cell.rec_hash not in distinct_records:
+                    distinct_records[cell.rec_hash] = {}
+                    distinct_records[cell.rec_hash]['rows'] = []
+                    distinct_records[cell.rec_hash]['imp_cell_obj'] = cell
+                distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
+            for rec_hash_key, distinct_type in distinct_records.items():
+                # iterate through the distinct types and get associated linked data
+                type_label = distinct_type['imp_cell_obj'].record
+                rows = distinct_type['rows']
+                if len(type_label) > 0:
+                    # the type isn't blank, so we can use it
+                    pc = ProcessCells(self.source_id, 0)
+                    ld_entities = pc.get_field_records(obj_le_f_num, rows)
+                    for ld_hash_key, distinct_ld in ld_entities.items():
+                        obj_uri = distinct_ld['imp_cell_obj'].record
+                        if len(obj_uri) > 8:
+                            if obj_uri[:7] == 'http://'\
+                               or obj_uri[:8] == 'https://':
+                                # we have a valid linked data entity
+                                #
+                                # now get the UUID for the type
+                                tm = TypeManagement()
+                                tm.project_uuid = self.project_uuid
+                                tm.source_id = self.source_id
+                                sub_type = tm.get_make_type_within_pred_uuid(sub_type_pred_uuid,
+                                                                             type_label)
+                                rel = {'subject_label' : type_label,
+                                       'subject': sub_type.uuid, 
+                                       'object_uri': obj_uri}
+                                rels.append(rel)
+        if len(rels) > 0:
+            for rel in rels:
+                new_la = LinkAnnotation()
+                new_la.subject = rel['subject']
+                new_la.subject_type = 'types'
+                new_la.project_uuid = self.project_uuid
+                new_la.source_id = self.source_id
+                new_la.predicate_uri = rel_pred
+                new_la.object_uri = rel['object_uri']
+                new_la.creator_uuid = ''
+                new_la.save()
+                    
+    
+    def make_type_relations(self, sub_type_pred_uuid,
+                                  sub_type_f_num,
+                                  rel_pred,
+                                  obj_type_pred_uuid,
+                                  obj_type_f_num):
+        """ Makes semantic relationships between
+            different types in an import
+        """
+        rels = {}
+        sub_type_list = ImportCell.objects\
+                                  .filter(source_id=self.source_id,
+                                          field_num=sub_type_f_num)
+        for sub_type_obj in sub_type_list:
+            sub_type_text = sub_type_obj.record
+            row = sub_type_obj.row_num
+            if len(sub_type_text) > 0:
+                tm = TypeManagement()
+                tm.project_uuid = self.project_uuid
+                tm.source_id = self.source_id
+                sub_type = tm.get_make_type_within_pred_uuid(sub_type_pred_uuid,
+                                                             sub_type_text)
+                obj_type_list = ImportCell.objects\
+                                          .filter(source_id=self.source_id,
+                                                  field_num=obj_type_f_num,
+                                                  row_num=row)[:1]
+                if len(obj_type_list) > 0:
+                    obj_type_text = obj_type_list[0].record
+                    if len(obj_type_text) > 0:
+                        tmo = TypeManagement()
+                        tmo.project_uuid = self.project_uuid
+                        tmo.source_id = self.source_id
+                        obj_type = tmo.get_make_type_within_pred_uuid(obj_type_pred_uuid,
+                                                                      obj_type_text)
+                        # make a uri for this, since we're making a link assertion
+                        obj_uri = URImanagement.make_oc_uri(obj_type.uuid, 'types')
+                        # the following bit is so we don't make the
+                        # same link assertions over and over.
+                        rel_id = str(sub_type.uuid) + ' ' + str(obj_type.uuid)
+                        if rel_id not in rels:
+                            rels[rel_id] = {'subject': sub_type.uuid,
+                                            'object_uri': obj_uri}
+        # now make the link data annotation relating these types.
+        for rel_id, rel in rels.items():
+            new_la = LinkAnnotation()
+            new_la.subject = rel['subject']
+            new_la.subject_type = 'types'
+            new_la.project_uuid = self.project_uuid
+            new_la.source_id = self.source_id
+            new_la.predicate_uri = rel_pred
+            new_la.object_uri = rel['object_uri']
+            new_la.creator_uuid = ''
+            new_la.save()
+            
     
     def make_type_event_from_uuid_records(self,
                                           type_field_num,
