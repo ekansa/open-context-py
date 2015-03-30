@@ -448,12 +448,35 @@ class SolrDocument:
                         # indexing with coordinates seperated by a space is in
                         # lat-lon order, the reverse of GeoJSON because
                         # solr spatial fields expect a lat-lon order
-                        self.fields['discovery_geolocation'] = \
-                            str(coords[1]) + ' ' + str(coords[0])
+                        lat_ok = self.validate_geo_coordinate(coords[1], 'lat')
+                        lon_ok = self.validate_geo_coordinate(coords[0], 'lon')
+                        if lat_ok and lon_ok:
+                            self.fields['discovery_geolocation'] = \
+                                str(coords[1]) + ',' + str(coords[0])
+                        else:
+                            print('Geo problem in: ' + self.oc_item.uuid + ' ' + str(coords[0]) + ' ' + str(coords[1]))
                         discovery_done = True  # so we don't repeat getting
                                                # discovery locations
                 if discovery_done:
                     break
+
+    def validate_geo_coordinate(self, coordinate, coord_type):
+        """ validates a geo-spatial coordinate """
+        is_valid = False
+        try:
+            fl_coord = float(coordinate)
+        except ValueError:
+            fl_coord = False
+        if fl_coord is not False:
+            if 'lat' in coord_type:
+                if fl_coord <= 90 and\
+                   fl_coord >= -90:
+                    is_valid = True
+            elif 'lon' in coord_type:
+                if fl_coord <= 180 and\
+                   fl_coord >= -180:
+                    is_valid = True
+        return is_valid
 
     def _process_chrono(self):
         """ Finds chronological / date ranges in GeoJSON features for indexing.

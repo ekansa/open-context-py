@@ -125,7 +125,7 @@ class RecordProperties():
         """ gets latitute and longitude information """
         if 'discovery_geolocation' in solr_rec:
             geo_strings = solr_rec['discovery_geolocation']
-            geo_coords_str = geo_strings[0].split(' ')
+            geo_coords_str = geo_strings.split(',')
             self.latitude = float(geo_coords_str[1])
             self.longitude = float(geo_coords_str[0])  # geojson ording
 

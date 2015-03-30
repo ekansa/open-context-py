@@ -712,9 +712,10 @@ class QueryMaker():
                                                          bbox_coors[1])
             top_right_valid = self.validate_geo_lon_lat(bbox_coors[2],
                                                         bbox_coors[3])
+            # print('ok: ' + str(lower_left_valid) + ' ' + str(top_right_valid))
             if lower_left_valid and top_right_valid:
-                if bbox_coors[0] < bbox_coors[2] and\
-                   bbox_coors[1] < bbox_coors[3]:
+                if float(bbox_coors[0]) < float(bbox_coors[2]) and\
+                   float(bbox_coors[1]) < float(bbox_coors[3]):
                     is_valid = True
         return is_valid
 
