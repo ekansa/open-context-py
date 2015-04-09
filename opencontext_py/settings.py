@@ -49,6 +49,7 @@ def get_secret(setting, secrets=secrets):
 SECRET_KEY = get_secret('SECRET_KEY')
 SOLR_HOST = get_secret('SOLR_HOST')
 SOLR_PORT = get_secret('SOLR_PORT')
+SOLR_COLLECTION = get_secret('SOLR_COLLECTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if get_secret('DEBUG') == 1:
