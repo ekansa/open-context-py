@@ -20,18 +20,19 @@ class SolrConnection():
         self.session = requests.Session()
         if len(solr_collection) > 1:
             solr_collection = '/' + solr_collection
-        if solr_port != 80:
-            solr_connection_string = solr_host + ':' + str(solr_port) \
+        if solr_port == 80:
+            solr_connection_string = solr_host \
                 + '/solr' + solr_collection
         else:
-            solr_connection_string = solr_host \
+            solr_connection_string = solr_host + ':' + str(solr_port) \
                 + '/solr' + solr_collection
         try:
             self.connection = Solr(solr_connection_string,
-                                   make_request=self.session)
+                                   make_request=self.session,
+                                   version=4)
         except requests.ConnectionError:
-            print('\nError: Could not connect to Solr. Please '
-                  'verify your Solr instance and configuration.\n')
+            print('\nError: Could not connect to Solr at: ' + solr_connection_string +\
+                  '\nPlease verify your Solr instance and configuration.\n')
             if exit_on_error:
                 sys.exit(1)
             else:
