@@ -49,6 +49,7 @@ def get_secret(setting, secrets=secrets):
 SECRET_KEY = get_secret('SECRET_KEY')
 SOLR_HOST = get_secret('SOLR_HOST')
 SOLR_PORT = get_secret('SOLR_PORT')
+SOLR_COLLECTION = get_secret('SOLR_COLLECTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if get_secret('DEBUG') == 1:
@@ -157,6 +158,11 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# ----------------------------
+# IMPORTER SETIINGS
+# ----------------------------
+IMPORT_BATCH_SIZE = 500 # number of records to import in 1 batch
 
 
 # Static files (CSS, JavaScript, Images)

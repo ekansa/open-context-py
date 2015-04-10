@@ -42,6 +42,7 @@ class TemplateItem():
         self.view_permitted = True  # defaults to allow views
         self.edit_permitted = False
         self.check_edit_permitted = False
+        self.contents_top = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -65,6 +66,7 @@ class TemplateItem():
         self.create_citation(json_ld)
         self.create_geo(json_ld)
         self.create_content(json_ld)
+        self.check_contents_top()
 
     def create_context(self, json_ld):
         """
@@ -278,6 +280,33 @@ class TemplateItem():
                 if nav_item['key'] == self.act_nav:
                     self.item_category_label = nav_item['display']
                     break
+
+    def check_contents_top(self):
+        """ checks to see if the
+            contents panel is at the top
+            of a multi-observation item
+        """
+        if isinstance(self.observations, list):
+            if len(self.observations) > 1:
+                has_content = False
+                check_obs = self.observations[0]
+                if isinstance(check_obs.properties, list):
+                    has_content = True
+                elif isinstance(check_obs.subjects_links, list):
+                    has_content = True
+                elif isinstance(check_obs.media_links, list):
+                    has_content = True
+                elif isinstance(check_obs.documents_links, list):
+                    has_content = True
+                elif isinstance(check_obs.persons_links, list):
+                    has_content = True
+                elif isinstance(check_obs.annotations, list):
+                    has_content = True
+                elif isinstance(check_obs.item_annotations, list):
+                    has_content = True
+                if has_content is False:
+                    # make the contents the top
+                    self.contents_top = True
 
 
 class ItemMetadata():

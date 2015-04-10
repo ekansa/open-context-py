@@ -54,6 +54,8 @@ function search_map(json_url) {
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
+	map.default_layer = 'tile';
+	map.min_tile_count_display = 200;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
 	map.geojson_records = {}; //geojson data for records, start as key
 	if (map.geodeep > 6 || tile_constrained) {
@@ -102,7 +104,7 @@ function search_map(json_url) {
 		/*
 		* Show current layer type
 		*/
-	    var act_dom_id = 'map-title';
+		var act_dom_id = 'map-title';
 		var title = document.getElementById(act_dom_id);
 		var act_dom_id = "map-title-suffix";
 		var title_suf = document.getElementById(act_dom_id);
@@ -193,6 +195,11 @@ function search_map(json_url) {
 				map.removeLayer(region_layers[map.geodeep]);
 				delete region_layers[map.geodeep];
 			}
+			if (map.hasLayer(circle_layers[map.geodeep])) {
+				//code
+				map.removeLayer(circle_layers[map.geodeep]);
+				delete circle_layers[map.geodeep];
+			}
 			map.geodeep = geodeep;
 			map.render_region_layer();
 		}
@@ -203,6 +210,11 @@ function search_map(json_url) {
 					if (map.hasLayer(region_layers[map.geodeep])) {
 						map.removeLayer(region_layers[map.geodeep]);
 						delete region_layers[map.geodeep];
+					}
+					if (map.hasLayer(circle_layers[map.geodeep])) {
+						//code
+						map.removeLayer(circle_layers[map.geodeep]);
+						delete circle_layers[map.geodeep];
 					}
 				}
 				// go get new data
@@ -240,22 +252,22 @@ function search_map(json_url) {
 				}
 			}
 			var region_layer = L.geoJson(geojson_facets,
-						   {
-								style: function(feature){
-										// makes colors, opacity for each feature
-										var style_obj = new numericStyle();
-										style_obj.min_value = min_value;
-										style_obj.max_value = max_value;
-										style_obj.act_value = feature.count;
-										var hex_color = style_obj.generate_hex_color();
-										var fill_opacity = style_obj.generate_opacity();
-										return {color: hex_color,
-												fillOpacity: fill_opacity,
-												weight: 2}
-									    },
-								onEachFeature: on_each_region_feature
-									 });
-			region_layer.geodeep = map.geodeep;
+						{
+							     style: function(feature){
+									     // makes colors, opacity for each feature
+									     var style_obj = new numericStyle();
+									     style_obj.min_value = min_value;
+									     style_obj.max_value = max_value;
+									     style_obj.act_value = feature.count;
+									     var hex_color = style_obj.generate_hex_color();
+									     var fill_opacity = style_obj.generate_opacity();
+									     return {color: hex_color,
+											     fillOpacity: fill_opacity,
+											     weight: 2}
+									 },
+							     onEachFeature: on_each_region_feature
+								      });
+		     region_layer.geodeep = map.geodeep;
 			region_layer.max_value = max_value;
 			region_layer.min_value = min_value;
 			region_layers[map.geodeep] = region_layer;
@@ -310,6 +322,132 @@ function search_map(json_url) {
 		bounds.extend(newbounds.getNorthEast());
 	}
 	
+	var circle_layers = {}
+	map.circle_regions = function (){
+		// does the work of rendering a region facet layer
+		if (map.geodeep in map.geojson_facets) {
+			var geojson_facets = map.geojson_facets[map.geodeep];
+			if ('oc-api:max-disc-tile-zoom' in geojson_facets) {
+				map.max_tile_zoom = geojson_facets['oc-api:max-disc-tile-zoom'];
+			}
+			/*
+			 * 1st we aggregate nearby tiles getting points for the center of each
+			 * tile region
+			 */
+			var aggregated_tiles = {}
+			for (var i = 0, length = geojson_facets.features.length; i < length; i++) {
+				var feature = geojson_facets.features[i];
+				var geometry = feature.geometry;
+				var geo_id_ex = geometry.id.split('-');
+				var geo_tile = geo_id_ex[geo_id_ex.length - 1];
+				var aggregate_tile_id = geo_tile.substring(0, (geo_tile.length -1));
+				if (aggregate_tile_id in aggregated_tiles) {
+					var act_tile = aggregated_tiles[aggregate_tile_id];
+				}
+				else{
+					var act_tile = [];
+				}
+				var centroid = getCentroid(geometry.coordinates[0]);
+				var tile_point = {'centroid': centroid,
+						  'count': feature.count,
+						  'url': feature.id.replace(geo_tile, aggregate_tile_id) };
+				act_tile.push(tile_point);
+				aggregated_tiles[aggregate_tile_id] = act_tile;
+			}
+			/*
+			 * 2nd we compute the weighted average for nearby tile center points
+			 * based on their counts. This will help make the map look less like a grid
+			 */
+			var max_value = 1;
+			var min_value = false;
+			var count_keys = [];
+			var points = {};
+			for(var tile_key in aggregated_tiles) { 
+				var points_data = aggregated_tiles[tile_key];
+				var total_count = 0;
+				var sum_longitude = 0;
+				var sum_latitude = 0;
+				var url = points_data[0]['url'];
+				// console.log(points_data);
+				for (var i = 0, length = points_data.length; i < length; i++) {
+					var act_pdata = points_data[i];
+					total_count += act_pdata['count'];
+					sum_longitude += act_pdata['centroid'][0] * act_pdata['count'];
+					sum_latitude += act_pdata['centroid'][1] * act_pdata['count'];
+				}
+				// computed weighted average for the center of these tile regions
+				var mean_longitude = sum_longitude / total_count;
+				var mean_latitude = sum_latitude / total_count;
+				var point = {'type': 'Feature',
+				             'properties': {
+						'href': url
+					     },
+					     'geometry': {
+						'type': 'Point',
+						'coordinates': [mean_longitude, mean_latitude]
+					     },
+					     'count': total_count,
+					     'url': url}
+				var count_key = make_unique_count_key(total_count, count_keys);
+				count_keys.push(count_key)
+				points[count_key] = point;
+				if (total_count > max_value) {
+					max_value = total_count;
+				}
+				if (min_value == false) {
+					min_value = total_count;
+				}
+				else{
+					if (total_count < min_value) {
+						min_value = total_count;
+					}
+				}
+			}
+			/*
+			 * 3rd we sort the points in descending order of count so the point features with
+			 * the highest counts will be rendered lower
+			 */
+			count_keys.sort(function(a, b){return b-a});
+			var feature_points = []
+			for (var i = 0, length = count_keys.length; i < length; i++) { 
+				var count_key = count_keys[i];
+				var point = points[count_key];
+				feature_points.push(point);
+			}
+			// now switch the polygon regions for points
+			geojson_facets.features = feature_points;
+			var circle_layer = L.geoJson(geojson_facets, {
+				pointToLayer: function (feature, latlng) {
+					var style_obj = new numericStyle();
+					style_obj.min_value = min_value;
+					style_obj.max_value = max_value;
+					style_obj.act_value = feature.count;
+					var hex_color = style_obj.generate_hex_color();
+					var radius = Math.round(30 * (feature.count / max_value), 0) + 5;
+					var markerOps = {
+						'radius': radius,
+						'fillColor': hex_color,
+						'color': hex_color,
+						weight: 1,
+						opacity: 1,
+						fillOpacity: 0.8
+					}
+					return L.circleMarker(latlng, markerOps);
+				}
+			});
+			circle_layers[map.geodeep] = circle_layer;
+			if (map.fit_bounds) {
+				//map.fit_bounds exists to set an inital attractive view
+				map.fitBounds(circle_layer.getBounds());
+			}
+			circle_layer.addTo(map);
+			if (region_controls) {
+				map.toggle_tile_controls();
+			}
+			circle_layer.addTo(map);
+		}
+	}
+	
 	map.get_geojson_regions = function (){
 		/*
 		* Show current layer type
@@ -331,7 +469,12 @@ function search_map(json_url) {
 				geodeep: map.geodeep},
 			success: function(data) {
 				map.geojson_facets[map.geodeep] = data;
-				map.render_region_layer();
+				if (data.features.length > map.min_tile_count_display || map.default_layer == 'tile') {
+					map.render_region_layer();
+				}
+				else{
+					map.circle_regions();
+				}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
 			}
@@ -375,4 +518,18 @@ function getJsonFromUrl() {
 		result[item[0]] = decodeURIComponent(item[1]);
 	});
 	return result;
+}
+
+var getCentroid = function (arr) {
+	// get the centroid of a polygon
+	return arr.reduce(function (x,y) {
+	    return [x[0] + y[0]/arr.length, x[1] + y[1]/arr.length] 
+	}, [0,0]) 
+}
+
+function make_unique_count_key(count_key, count_list) {
+	if (count_key in count_list) {
+		count_key = make_unique_count_key(count_key - .0001, count_list);
+	}
+	return count_key;
 }

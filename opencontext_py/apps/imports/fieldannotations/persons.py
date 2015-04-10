@@ -22,7 +22,7 @@ class ProcessPersons():
         self.project_uuid = pg.project_uuid
         self.persons_fields = []
         self.start_row = 1
-        self.batch_size = 250
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
         self.count_active_fields = 0
         self.new_entities = []
@@ -168,6 +168,7 @@ class CandidatePerson():
                 for up_cell in up_cells:
                     # save each cell with the correct UUID
                     up_cell.fl_uuid = self.uuid
+                    up_cell.cell_ok = True
                     up_cell.save()
 
     def match_against_persons(self, combined_name):

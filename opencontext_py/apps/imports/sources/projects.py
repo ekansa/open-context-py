@@ -181,6 +181,9 @@ class ImportProjects():
         man_proj.views = 0
         man_proj.save()
         pobj = Project()
+        pobj.uuid = uuid
+        pobj.source_id = 'manual'
+        pobj.project_uuid = uuid
         pobj.label = label
         pobj.edit_status = 0
         pobj.short_des = short_des

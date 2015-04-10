@@ -35,7 +35,7 @@ class ProcessDescriptions():
         self.description_annotations = False
         self.des_rels = False
         self.start_row = 1
-        self.batch_size = 250
+        self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
         self.example_size = 5
         self.reconciled_predicates = {}
@@ -500,7 +500,7 @@ class CandidateDescription():
                                                 self.object_uuid,
                                                 self.data_num,
                                                 self.data_date)
-            print('Is new?: ' + str(is_new))
+            # print('Is new?: ' + str(is_new))
             if is_new:
                 is_valid = True
             else:

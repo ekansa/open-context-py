@@ -147,6 +147,7 @@
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu" role="menu">
+                            <li><a href="javascript:addRelInterface('media-part-of');">Media Part linking</a></li>
                             <li><a href="javascript:addRelInterface('links-field');">Link fields</a></li>
                             <li><a href="javascript:addRelInterface('links-entity');">Link to entity</a></li>
                             <li><a href="javascript:addRelInterface('links-in-field');">Linking Rel in Field</a></li>
@@ -220,6 +221,7 @@
         var PREDICATE_LINK = "{{ ip.PREDICATE_LINK}}";
         var DEFAULT_SUBJECT_TYPE_FIELDS = {{ ip.DEFAULT_SUBJECT_TYPE_FIELDS|safe }};
         var PREDICATE_CONTAINED_IN = "{{ ip.PREDICATE_CONTAINED_IN}}";
+        var PRED_MEDIA_PART_OF = "{{ ip.PRED_MEDIA_PART_OF}}";
          
     </script>
     <!-- load up field data in the background, we'll need that to make lists of fields to display -->
