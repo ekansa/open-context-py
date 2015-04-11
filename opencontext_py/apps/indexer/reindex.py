@@ -3,6 +3,7 @@ import requests
 from django.db import models
 from opencontext_py.apps.searcher.solrsearcher.solrdirect import SolrDirect
 from opencontext_py.apps.indexer.crawler import Crawler
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class SolrReIndex():
@@ -25,6 +26,9 @@ class SolrReIndex():
         # to generate a solr request to get UUIDs
         self.oc_params = False
         # if not false, use a Postgres SQL query to get a list of
+        # UUIDs from a list of projects
+        self.project_uuids = False
+        # if not false, use a Postgres SQL query to get a list of
         # UUIDs
         self.sql = False
 
@@ -45,6 +49,11 @@ class SolrReIndex():
                    and '.json' in self.oc_url:
                     print('Get uuids from OC-API: ' + str(self.oc_url))
                     uuids = self.get_uuids_oc_url(self.oc_url)
+            elif isinstance(self.project_uuids, list):
+                # now validate to make sure we're asking for uuids
+                uuids = Manifest.objects\
+                                .filter(project_uuid__in=self.project_uuids)\
+                                .values_list('uuid', flat=True)
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
                 crawler = Crawler()
