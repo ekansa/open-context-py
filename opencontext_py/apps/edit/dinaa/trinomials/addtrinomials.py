@@ -1,3 +1,4 @@
+from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -33,10 +34,14 @@ class AddTrinomials():
             with a trinomial added in the temporary
             trinomial table
         """
-        proj_uuids = self.get_dinaa_projects()
+        proj_labels = {}
+        proj_uuids = self.dinaa_projs
+        projects = Project.objects.filter(uuid__in=proj_uuids)
         source_index = 0
-        for project_uuid in proj_uuids:
-            source_index += 1
+        for project in projects:
+            project_uuid = project.uuid
+            proj_labels[project_uuid] = project.label
+            source_index = project.short_id
             # check to see if the project already has a source_id for
             # trinomial observation assertions
             proj_source_id = self.check_project_source_id(project_uuid)
@@ -64,47 +69,50 @@ class AddTrinomials():
         pm.source_id = self.source_id
         aux_pred = pm.get_make_predicate(self.aux_label,
                                          'variable')
-        tris = Trinomial.objects.filter(trinomial__isnull=False)
-        for tri in tris:
-            # first check a manifest item exists for this item
-            manifest = False
-            try:
-                manifest = Manifest.objects.get(uuid=tri.uuid)
-            except Manifest.DoesNotExist:
+        for project_uuid, proj_label in proj_labels.items():
+            print('Adding trinomials for: ' + proj_label)
+            tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                            project_label=proj_label)
+            for tri in tris:
+                # first check a manifest item exists for this item
                 manifest = False
-            if manifest is not False:
-                # OK we know this exists, so now make the assertion
-                # to add a trinomial
-                sorting = self.initial_sort
-                # add the cannonical trinomial first
-                ok = self.add_trinomial_to_item(main_pred,
-                                                sorting,
-                                                manifest,
-                                                tri.trinomial,
-                                                False)
-                if ok:
-                    print('Added: ' + tri.trinomial + ' to: ' + tri.uri)
-                    sorting += 1
-                    # add the sorting trinomial
-                    sort_trinomial = self.make_sort_trinomial(tri.trinomial)
-                    ok = self.add_trinomial_to_item(sort_pred,
+                try:
+                    manifest = Manifest.objects.get(uuid=tri.uuid)
+                except Manifest.DoesNotExist:
+                    manifest = False
+                if manifest is not False:
+                    # OK we know this exists, so now make the assertion
+                    # to add a trinomial
+                    sorting = self.initial_sort
+                    # add the cannonical trinomial first
+                    ok = self.add_trinomial_to_item(main_pred,
                                                     sorting,
                                                     manifest,
-                                                    sort_trinomial,
+                                                    tri.trinomial,
                                                     False)
-                    # add a list of alternate versions
-                    aux_list = self.make_aux_trinomial_list(tri.trinomial)
-                    allow_multiple = False
-                    for aux_trinomial in aux_list:
+                    if ok:
+                        print('Added: ' + tri.trinomial + ' to: ' + tri.uri)
                         sorting += 1
-                        # if successful in creation, then allow_multiple is true
-                        allow_multiple = self.add_trinomial_to_item(aux_pred,
-                                                                    sorting,
-                                                                    manifest,
-                                                                    aux_trinomial,
-                                                                    allow_multiple)
-            else:
-                print('Bad news! Missing Manifest obj for: ' + str(tri))
+                        # add the sorting trinomial
+                        sort_trinomial = self.make_sort_trinomial(tri.trinomial)
+                        ok = self.add_trinomial_to_item(sort_pred,
+                                                        sorting,
+                                                        manifest,
+                                                        sort_trinomial,
+                                                        False)
+                        # add a list of alternate versions
+                        aux_list = self.make_aux_trinomial_list(tri.trinomial)
+                        allow_multiple = False
+                        for aux_trinomial in aux_list:
+                            sorting += 1
+                            # if successful in creation, then allow_multiple is true
+                            allow_multiple = self.add_trinomial_to_item(aux_pred,
+                                                                        sorting,
+                                                                        manifest,
+                                                                        aux_trinomial,
+                                                                        allow_multiple)
+                else:
+                    print('Bad news! Missing Manifest obj for: ' + str(tri))
 
     def add_trinomial_to_item(self,
                               predicate,

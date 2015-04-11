@@ -241,3 +241,29 @@ class TrinomialManage():
             mt.trinomial = new_trinomial
             mt.site = str(site) + str(suffix)
             mt.save()
+
+    def make_trinomial_from_site_labels(self,
+                                        project_uuid,
+                                        state_prefix=''):
+        """ makes trinomial identifiers from a site label """
+        ent = Entity()
+        found = ent.dereference(project_uuid)
+        if found:
+            proj_label = ent.label
+            sites = Manifest.objects\
+                            .filter(project_uuid=project_uuid,
+                                    class_uri='oc-gen:cat-site')
+            for site in sites:
+                trinomial = str(state_prefix) + site.label
+                parts = self.parse_trinomial(trinomial)
+                dt = Trinomial()
+                dt.uri = URImanagement.make_oc_uri(site.uuid, site.item_type)
+                dt.uuid = site.uuid
+                dt.label = site.label
+                dt.project_label = proj_label
+                dt.trinomial = trinomial
+                dt.state = parts['state']
+                dt.county = parts['county']
+                dt.site = parts['site']
+                dt.save()
+                print('Trinomial: ' + trinomial + ', from: ' + site.label)
