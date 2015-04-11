@@ -15,6 +15,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement
 
+
 # Processes to generate subjects items for an import
 class ProcessTypes():
 
@@ -44,7 +45,7 @@ class ProcessTypes():
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
             # to do, figure out the unimport
-    
+
     def make_type_ld_annotations(self, sub_type_pred_uuid,
                                        sub_type_f_num,
                                        rel_pred,
@@ -85,8 +86,8 @@ class ProcessTypes():
                                 tm.source_id = self.source_id
                                 sub_type = tm.get_make_type_within_pred_uuid(sub_type_pred_uuid,
                                                                              type_label)
-                                rel = {'subject_label' : type_label,
-                                       'subject': sub_type.uuid, 
+                                rel = {'subject_label': type_label,
+                                       'subject': sub_type.uuid,
                                        'object_uri': obj_uri}
                                 rels.append(rel)
         if len(rels) > 0:
@@ -100,8 +101,7 @@ class ProcessTypes():
                 new_la.object_uri = rel['object_uri']
                 new_la.creator_uuid = ''
                 new_la.save()
-                    
-    
+
     def make_type_relations(self, sub_type_pred_uuid,
                                   sub_type_f_num,
                                   rel_pred,
@@ -154,8 +154,41 @@ class ProcessTypes():
             new_la.object_uri = rel['object_uri']
             new_la.creator_uuid = ''
             new_la.save()
-            
-    
+
+    def make_type_event_from_type_label_records(self,
+                                                type_pred_uuid,
+                                                type_field_num,
+                                                start_field_num,
+                                                stop_field_num):
+        """ make event records from types identified by
+            the predicate uuid for a type and its field number
+        """
+        type_list = ImportCell.objects\
+                              .filter(source_id=self.source_id,
+                                      field_num=type_field_num)
+        if len(type_list) > 0:
+            for type_row in type_list:
+                row = type_row.row_num
+                type_label = type_row.record
+                start_date = self.get_date_record(start_field_num,
+                                                  row)
+                stop_date = self.get_date_record(stop_field_num,
+                                                 row)
+                if start_date is not False\
+                   and stop_date is not False:
+                    tmo = TypeManagement()
+                    tmo.project_uuid = self.project_uuid
+                    tmo.source_id = self.source_id
+                    type_obj = tmo.get_make_type_within_pred_uuid(type_pred_uuid,
+                                                                  type_label)
+                    tet = TimeEventType()
+                    tet.uuid = type_obj.uuid
+                    tet.start_date = start_date
+                    tet.stop_date = stop_date
+                    tet.source_id = self.source_id
+                    tet.project_uuid = self.project_uuid
+                    tet.create_type_event()
+
     def make_type_event_from_uuid_records(self,
                                           type_field_num,
                                           start_field_num,
@@ -183,7 +216,7 @@ class ProcessTypes():
                     tet.source_id = self.source_id
                     tet.project_uuid = self.project_uuid
                     tet.create_type_event()
-                
+
     def get_date_record(self, date_field_num, row):
         """ get a date record, returns false if not found
             or not a number
@@ -199,8 +232,7 @@ class ProcessTypes():
             except ValueError:
                 output = False
         return output
-                
-        
+
     def get_date_fields(self):
         """ Gets the start and stop date fields
         """
@@ -215,11 +247,12 @@ class ProcessTypes():
         if len(stop_field_list) > 0:
             self.stop_field = stop_field_list[0]
 
+
 class TimeEventType():
     """ Methods for assigning time spans to a
         type
     """
-    
+
     def __init__(self):
         self.uuid = False
         self.start_date = False
@@ -229,7 +262,7 @@ class TimeEventType():
         self.event_id = 0
         self.meta_type = 'oc-gen:formation-use-life'
         self.when_type = 'Interval'
-    
+
     def create_type_event(self):
         """ makes an event object for a
             type entity
@@ -255,4 +288,3 @@ class TimeEventType():
         event.stop = stop
         event.latest = stop
         event.save()
-        
