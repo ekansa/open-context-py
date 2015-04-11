@@ -53,7 +53,8 @@ class OCitem():
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
     DC_META_PREDS = ['dc-terms:subject',
                      'dc-terms:spatial',
-                     'dc-terms:coverage']
+                     'dc-terms:coverage',
+                     'dc-terms:isReferencedBy']
 
     def __init__(self):
         self.time_start = time.time()
