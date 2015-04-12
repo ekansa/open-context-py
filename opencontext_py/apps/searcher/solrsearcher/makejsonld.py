@@ -53,6 +53,7 @@ class MakeJsonLd():
             return solr_json
         if 'context' in self.act_responses \
            or 'geo-facet' in self.act_responses \
+           or 'geo-project' in self.act_responses \
            or 'geo-record' in self.act_responses:
             search_context_obj = SearchContext()
             self.json_ld['@context'] = search_context_obj.id
@@ -540,6 +541,8 @@ class MakeJsonLd():
             geo_projects = GeoJsonProjects(solr_json)
             geo_projects.geo_pivot = solr_proj_geo_facets
             geo_projects.chrono_pivot = solr_proj_chrono_facets
+            geo_projects.spatial_context = self.spatial_context
+            geo_projects.filter_request_dict_json = self.request_dict_json  # needed for making filter links
             geo_projects.make_project_geojson()
             if len(geo_projects.geojson_projects) > 0:
                 self.json_ld['type'] = 'FeatureCollection'

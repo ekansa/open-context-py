@@ -9,6 +9,7 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.libs.chronotiles import ChronoTile
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
@@ -21,6 +22,7 @@ class GeoJsonProjects():
         self.filter_request_dict_json = False
         self.geo_pivot = False
         self.chrono_pivot = False
+        self.spatial_context = False
         try:
             self.total_found = solr_json['response']['numFound']
         except KeyError:
@@ -29,84 +31,87 @@ class GeoJsonProjects():
     def make_project_geojson(self):
         """ makes the project geojson """
         self.process_chronology()
+        self.process_geo()
 
-    def process_solr_tiles(self, solr_tiles):
+    def process_geo(self):
         """ processes the solr_json 
             discovery geo tiles,
             aggregating to a certain
             depth
         """
-        # first aggregate counts for tile that belong togther
-        aggregate_tiles = {}
-        i = -1
-        t = 0
-        all_tile_lens = []
-        for tile_key in solr_tiles[::2]:
-            t += 1
-            i += 2
-            solr_facet_count = solr_tiles[i]
-            # to compute the main tile precision level
-            # for this filtered set of data
-            tile_key_len = len(tile_key)
-            if tile_key_len > 6:
-                all_tile_lens.append(tile_key_len)
-            trim_tile_key = tile_key[:self.aggregation_depth]
-            if trim_tile_key not in aggregate_tiles:
-                aggregate_tiles[trim_tile_key] = 0
-            aggregate_tiles[trim_tile_key] += solr_facet_count
-        if len(all_tile_lens) > 0:
-            # gets the average tile depth, so clients don't over-zoom
-            mean_tile_len = sum(all_tile_lens) / len(all_tile_lens)
-            # print(str(mean_tile_len))
-            self.max_tile_precision = round(mean_tile_len)
-        # now generate GeoJSON for each tile region
-        # print('Total tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
-        i = 0
-        for tile_key, aggregate_count in aggregate_tiles.items():
-            i += 1
-            add_region = True
-            fl = FilterLinks()
-            fl.base_request_json = self.filter_request_dict_json
-            fl.spatial_context = self.spatial_context
-            new_rparams = fl.add_to_request('disc-geotile',
-                                            tile_key)
-            record = LastUpdatedOrderedDict()
-            record['id'] = fl.make_request_url(new_rparams)
-            record['json'] = fl.make_request_url(new_rparams, '.json')
-            record['count'] = aggregate_count
-            record['type'] = 'Feature'
-            record['category'] = 'oc-api:geo-facet'
-            if self.min_date is not False \
-               and self.max_date is not False:
-                when = LastUpdatedOrderedDict()
-                when['id'] = '#event-' + tile_key
-                when['type'] = 'oc-gen:formation-use-life'
-                # convert numeric to GeoJSON-LD ISO 8601
-                when['start'] = ISOyears().make_iso_from_float(self.min_date)
-                when['stop'] = ISOyears().make_iso_from_float(self.max_date)
-                record['when'] = when
-            gm = GlobalMercator()
-            geo_coords = gm.quadtree_to_geojson_poly_coords(tile_key)
-            geometry = LastUpdatedOrderedDict()
-            geometry['id'] = '#geo-disc-tile-geom-' + tile_key
-            geometry['type'] = 'Polygon'
-            geometry['coordinates'] = geo_coords
-            record['geometry'] = geometry
-            properties = LastUpdatedOrderedDict()
-            properties['id'] = '#geo-disc-tile-' + tile_key
-            properties['href'] = record['id']
-            properties['label'] = 'Discovery region (' + str(i) + ')'
-            properties['feature-type'] = 'discovery region (facet)'
-            properties['count'] = aggregate_count
-            properties['early bce/ce'] = self.min_date
-            properties['late bce/ce'] = self.max_date
-            record['properties'] = properties
-            if len(tile_key) >= 6:
-                if tile_key[:6] == '211111':
-                    # no bad coordinates (off 0, 0 coast of Africa)
-                    add_region = False  # don't display items without coordinates
-            if add_region:
-                self.geojson_regions.append(record)
+        if isinstance(self.geo_pivot, list):
+            i = 0
+            for proj in self.geo_pivot:
+                i += 1
+                add_feature = True
+                project_key = proj['value']
+                proj_ex = project_key.split('___')
+                slug = proj_ex[0]
+                uri = self.make_url_from_val_string(proj_ex[2])
+                href = self.make_url_from_val_string(proj_ex[2], False)
+                label = proj_ex[3]
+                fl = FilterLinks()
+                fl.base_request_json = self.filter_request_dict_json
+                fl.spatial_context = self.spatial_context
+                new_rparams = fl.add_to_request('proj',
+                                                slug)
+                if 'response' in new_rparams:
+                    new_rparams.pop('response', None)
+                record = LastUpdatedOrderedDict()
+                record['id'] = fl.make_request_url(new_rparams)
+                record['json'] = fl.make_request_url(new_rparams, '.json')
+                record['count'] = proj['count']
+                record['type'] = 'Feature'
+                record['category'] = 'oc-api:geo-project'
+                min_date = False
+                max_date = False
+                if project_key in self.projects:
+                    min_date = self.projects[project_key]['min_date']
+                    max_date = self.projects[project_key]['max_date']
+                if min_date is not False \
+                   and max_date is not False:
+                    when = LastUpdatedOrderedDict()
+                    when['id'] = '#event-' + slug
+                    when['type'] = 'oc-gen:formation-use-life'
+                    # convert numeric to GeoJSON-LD ISO 8601
+                    when['start'] = ISOyears().make_iso_from_float(self.projects[project_key]['min_date'])
+                    when['stop'] = ISOyears().make_iso_from_float(self.projects[project_key]['max_date'])
+                    record['when'] = when
+                if 'pivot' not in proj:
+                    add_feature = False
+                else:
+                    geometry = LastUpdatedOrderedDict()
+                    geometry['id'] = '#geo-geom-' + slug
+                    geometry['type'] = 'Point'
+                    pivot_count_total = 0
+                    total_lon = 0
+                    total_lat = 0
+                    for geo_data in proj['pivot']:
+                        pivot_count_total += geo_data['count']
+                        gm = GlobalMercator()
+                        bounds = gm.quadtree_to_lat_lon(geo_data['value'])
+                        mean_lon = (bounds[1] + bounds[3]) / 2
+                        mean_lat = (bounds[0] + bounds[2]) / 2
+                        total_lon += mean_lon * geo_data['count']
+                        total_lat += mean_lat * geo_data['count']
+                    weighted_mean_lon = total_lon / pivot_count_total
+                    weighted_mean_lat = total_lat / pivot_count_total
+                    geometry['coordinates'] = [weighted_mean_lon,
+                                               weighted_mean_lat]
+                    record['geometry'] = geometry
+                properties = LastUpdatedOrderedDict()
+                properties['id'] = '#geo-proj-' + slug
+                properties['uri'] = uri
+                properties['href'] = href
+                properties['search'] = record['id']
+                properties['label'] = label
+                properties['feature-type'] = 'project '
+                properties['count'] = proj['count']
+                properties['early bce/ce'] = min_date
+                properties['late bce/ce'] = max_date
+                record['properties'] = properties
+                if add_feature:
+                    self.geojson_projects.append(record)
 
     def process_chronology(self):
         """ sets the aggregatin depth for
