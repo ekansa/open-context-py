@@ -29,6 +29,11 @@ class SolrDocument:
                            'n2t.net/ark:/',
                            'orcid.org']
 
+    DC_META_PREDICATES = {'dc-terms:subject': 'dc_terms_subject___pred_id',
+                          'dc-terms:spatial': 'dc_terms_spatial___pred_id',
+                          'dc-terms:coverage': 'dc_terms_coverage___pred_id',
+                          'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
+
     ROOT_CONTEXT_SOLR = 'root___context_id'
     ROOT_PREDICATE_SOLR = 'root___pred_id'
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
@@ -363,11 +368,7 @@ class SolrDocument:
         Finds the project that this item is part of. If not part of a
         project, make the project slug the same as the item's own slug.
         """
-        dc_meta_preds = {'dc-terms:subject': 'dc_terms_subject___pred_id',
-                         'dc-terms:spatial': 'dc_terms_spatial___pred_id',
-                         'dc-terms:coverage': 'dc_terms_coverage___pred_id',
-                         'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
-        for dc_predicate, fname in dc_meta_preds.items():
+        for dc_predicate, fname in self.DC_META_PREDICATES.items():
             if dc_predicate in self.oc_item.json_ld:
                 self.fields[fname] = []
                 for meta in self.oc_item.json_ld[dc_predicate]:
