@@ -21,3 +21,5 @@ secrets.json
 opencontext_py/secrets.json
 wsgi.py
 *.swp
+node_modules
+bower_components
