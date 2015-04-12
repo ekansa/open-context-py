@@ -896,7 +896,8 @@ class LinkedData():
                            'skos:broader']
     ITEM_DC_METADATA_PREDICATES = ['dc-terms:subject',
                                    'dc-terms:spatial',
-                                   'dc-terms:coverage']
+                                   'dc-terms:coverage',
+                                   'dc-terms:isReferencedBy']
 
     def __init__(self):
         self.linked_predicates = False

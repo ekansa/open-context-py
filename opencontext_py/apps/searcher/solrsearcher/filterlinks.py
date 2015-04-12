@@ -15,7 +15,8 @@ class FilterLinks():
         {'___project_id': 'proj',
          '___context_id': 'path',
          '___pred_': 'prop',
-         'item_type': 'type'}
+         'item_type': 'type',
+         'dc_terms_isreferencedby___pred_id':'dc-isReferencedBy'}
 
     def __init__(self, request_dict=False):
         rp = RootPath()
@@ -230,10 +231,17 @@ class FilterLinks():
     def get_param_from_solr_facet_key(self, solr_facet_key):
         """" returns the public parameter from the solr_facet_key """
         output = solr_facet_key
+        exact_match = False
         for solr_field_part_key, param in self.SOLR_FIELD_PARAM_MAPPINGS.items():
-            if solr_field_part_key in solr_facet_key:
+            if solr_field_part_key == solr_facet_key:
                 output = param
+                exact_match = True
                 break
+        if exact_match is False:
+            for solr_field_part_key, param in self.SOLR_FIELD_PARAM_MAPPINGS.items():
+                if solr_field_part_key in solr_facet_key:
+                    output = param
+                    break
         return output
 
     def parse_slugs_in_solr_facet_key(self, solr_facet_key):
