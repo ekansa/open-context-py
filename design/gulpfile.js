@@ -10,7 +10,7 @@ var uglify = require('gulp-uglify');
 var w3cjs = require('gulp-w3cjs');
 var sass = require('gulp-sass');
 
-var scssFiles = "src/sass/**/*.scss";
+var scssFiles = "src/sass/*.scss";
 var cssCompileDir = "www/css";
 
 // Carry over misc files,
