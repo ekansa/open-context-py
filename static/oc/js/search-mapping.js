@@ -10,6 +10,10 @@ var polyStyle = {
  
 function search_map(json_url) {
 	
+	var map_dom_id = 'map';
+	var map_title_dom_id = 'map-title';
+	var map_title_suffix_dom_id = 'map-title-suffix';
+	var map_menu_dom_id = 'map-menu';
 	var geodeep = 6; // default geo-facet tile depth
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
@@ -45,7 +49,7 @@ function search_map(json_url) {
 		geodeep = url_parts['geodeep'];
 	}
 	
-	map = L.map('map').setView([45, 0], 2); //map the map
+	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	map.json_url = this.json_url
@@ -55,6 +59,7 @@ function search_map(json_url) {
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
 	map.default_layer = 'tile';
+	map.layer_limit = false;
 	map.min_tile_count_display = 200;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
 	map.geojson_records = {}; //geojson data for records, start as key
@@ -104,19 +109,22 @@ function search_map(json_url) {
 		/*
 		* Show current layer type
 		*/
-		var act_dom_id = 'map-title';
-		var title = document.getElementById(act_dom_id);
-		var act_dom_id = "map-title-suffix";
-		var title_suf = document.getElementById(act_dom_id);
-		title_suf.innerHTML = "";
-		var act_dom_id = "map-menu";
-		var menu = document.getElementById(act_dom_id);
-		
-		/*
-		* Handle geo-regions (facets)
-		*/
-	        if (map_type == 'geo-facet') {
-			title.innerHTML = "Map of Counts by Region";
+		if (document.getElementById(map_title_dom_id)) {
+			//if the map title element exits
+			var act_dom_id = map_title_dom_id;
+			var title = document.getElementById(act_dom_id);
+			var act_dom_id = map_title_suffix_dom_id;
+			var title_suf = document.getElementById(act_dom_id);
+			title_suf.innerHTML = "";
+			var act_dom_id = map_menu_dom_id;
+			var menu = document.getElementById(act_dom_id);
+			
+			/*
+			* Handle geo-regions (facets)
+			*/
+			if (map_type == 'geo-facet') {
+				title.innerHTML = "Map of Counts by Region";
+			}
 		}
 	}
 	
@@ -452,13 +460,16 @@ function search_map(json_url) {
 		/*
 		* Show current layer type
 		*/
-		var act_dom_id = "map-title";
-		var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
-		loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
-		loading += " Loading Regions...";
-		document.getElementById(act_dom_id).innerHTML =loading;
-		var act_dom_id = "map-title-suffix";
-		document.getElementById(act_dom_id).innerHTML = "";	
+		if (document.getElementById(map_title_dom_id)) {
+			// show the loading script
+			var act_dom_id = map_title_dom_id;
+			var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
+			loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
+			loading += " Loading Regions...";
+			document.getElementById(act_dom_id).innerHTML =loading;
+			var act_dom_id = map_title_suffix_dom_id;
+			document.getElementById(act_dom_id).innerHTML = "";
+		}
 		//do the ajax request
 		$.ajax({
 			type: "GET",
@@ -469,11 +480,20 @@ function search_map(json_url) {
 				geodeep: map.geodeep},
 			success: function(data) {
 				map.geojson_facets[map.geodeep] = data;
-				if (data.features.length > map.min_tile_count_display || map.default_layer == 'tile') {
-					map.render_region_layer();
+				if (map.layer_limit == false) {
+					//code
+					if (data.features.length > map.min_tile_count_display || map.default_layer == 'tile') {
+						map.render_region_layer();
+					}
+					else{
+						map.circle_regions();
+					}
+				}
+				else if(map.layer_limit == 'circle'){
+					map.circle_regions();
 				}
 				else{
-					map.circle_regions();
+					map.render_region_layer();
 				}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();

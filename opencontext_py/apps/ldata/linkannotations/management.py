@@ -6,14 +6,50 @@ from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 
 
 class LinkAnnoManagement():
     """
         Some useful methods for changing linked data annoations.
     """
+
+    PRED_SBJ_IS_SUB_OF_OBJ = 'skos:broader'  # default predicate for subject item is subordinate to object item
+
     def __init__(self):
-        pass
+        self.project_uuid = '0'
+        self.source_id = 'manual'
+
+    def add_skos_hierarachy(self, parent_uri, child_uri):
+        """ Add a hiearchy assertion for
+            linked entities
+        """
+        try:
+            parent = LinkEntity.objects.get(uri=parent_uri)
+        except LinkEntity.DoesNotExist:
+            parent = False
+        try:
+            child = LinkEntity.objects.get(uri=child_uri)
+        except LinkEntity.DoesNotExist:
+            child = False
+        if parent is not False and child is not False:
+            lr = LinkRecursion()
+            exiting_parents = lr.get_entity_parents(child_uri)
+            if len(exiting_parents) >= 1:
+                print('Child has parents: ' + str(exiting_parents))
+            else:
+                # child is not already in a hieararchy, ok to put it in one
+                la = LinkAnnotation()
+                la.subject = child.uri  # the subordinate is the subject
+                la.subject_type = 'uri'
+                la.project_uuid = self.project_uuid
+                la.source_id = self.source_id + '-hierarchy'
+                la.predicate_uri = self.PRED_SBJ_IS_SUB_OF_OBJ
+                la.object_uri = parent.uri  # the parent is the object
+                la.save()
+                print('Made: ' + child.uri + ' child of: ' + parent.uri)
+        else:
+            print('Cannot find parent or child')
 
     def replace_predicate_uri(self,
                               old_pred_uri,

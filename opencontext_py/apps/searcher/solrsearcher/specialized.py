@@ -16,6 +16,19 @@ class SpecialSearches():
     def __init__(self):
         pass
 
+    def process_geo_projects(self, query):
+        """ requests pivot facets for projects
+            so as to make enriched GeoJSON for
+            project facets
+        """
+        proj_field = SolrDocument.ROOT_PROJECT_SOLR
+        query['facet.pivot.mincount'] = 1
+        if 'facet.pivot' not in query:
+            query['facet.pivot'] = []
+        query['facet.pivot'].append(proj_field + ',discovery_geotile')
+        query['facet.pivot'].append(proj_field + ',form_use_life_chrono_tile')
+        return query
+
     def process_trinonial_reconcile(self,
                                     trinomial,
                                     query):

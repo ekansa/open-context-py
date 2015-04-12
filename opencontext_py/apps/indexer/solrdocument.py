@@ -363,45 +363,23 @@ class SolrDocument:
         Finds the project that this item is part of. If not part of a
         project, make the project slug the same as the item's own slug.
         """
-        if 'dc-terms:coverage' in self.oc_item.json_ld:
-            fname = 'dc_terms_coverage___pred_id'
-            self.fields[fname] = []
-            for meta in self.oc_item.json_ld['dc-terms:coverage']:
-                self.fields['text'] += meta['label'] + '\n'
-                self.fields['text'] += meta['id'] + '\n'
-                item = self._concat_solr_string_value(
-                    meta['slug'],
-                    'id',
-                    meta['id'],
-                    meta['label'])
-                self.fields[fname].append(item)
-                self.process_object_uri(meta['id'])
-        if 'dc-terms:subject' in self.oc_item.json_ld:
-            fname = 'dc_terms_subject___pred_id'
-            self.fields[fname] = []
-            for meta in self.oc_item.json_ld['dc-terms:subject']:
-                self.fields['text'] += meta['label'] + '\n'
-                self.fields['text'] += meta['id'] + '\n'
-                item = self._concat_solr_string_value(
-                    meta['slug'],
-                    'id',
-                    meta['id'],
-                    meta['label'])
-                self.fields[fname].append(item)
-                self.process_object_uri(meta['id'])
-        if 'dc-terms:spatial' in self.oc_item.json_ld:
-            fname = 'dc_terms_spatial___pred_id'
-            self.fields[fname] = []
-            for meta in self.oc_item.json_ld['dc-terms:spatial']:
-                self.fields['text'] += meta['label'] + '\n'
-                self.fields['text'] += meta['id'] + '\n'
-                item = self._concat_solr_string_value(
-                    meta['slug'],
-                    'id',
-                    meta['id'],
-                    meta['label'])
-                self.fields[fname].append(item)
-                self.process_object_uri(meta['id'])
+        dc_meta_preds = {'dc-terms:subject': 'dc_terms_subject___pred_id',
+                         'dc-terms:spatial': 'dc_terms_spatial___pred_id',
+                         'dc-terms:coverage': 'dc_terms_coverage___pred_id',
+                         'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
+        for dc_predicate, fname in dc_meta_preds.items():
+            if dc_predicate in self.oc_item.json_ld:
+                self.fields[fname] = []
+                for meta in self.oc_item.json_ld[dc_predicate]:
+                    self.fields['text'] += meta['label'] + '\n'
+                    self.fields['text'] += meta['id'] + '\n'
+                    item = self._concat_solr_string_value(
+                        meta['slug'],
+                        'id',
+                        meta['id'],
+                        meta['label'])
+                    self.fields[fname].append(item)
+                    self.process_object_uri(meta['id'])
 
     def _process_geo(self):
         """

@@ -111,23 +111,25 @@ class Crawler():
             documents = []
             for uuid in uuid_list:
                 try:
-                    solrdocument = SolrDocument(uuid).fields
-                    if crawlutil().is_valid_document(solrdocument):
-                        print('OK to index: ' + uuid)
-                        documents.append(solrdocument)
-                        try:
-                            manifest = Manifest.objects.get(uuid=uuid)
+                    manifest = Manifest.objects.get(uuid=uuid)
+                except Manifest.DoesNotExist:
+                    print('Where is ' + uuid + ' in the manifest?')
+                    manifest = False
+                if manifest is not False:
+                    try:
+                        solrdocument = SolrDocument(uuid).fields
+                        if crawlutil().is_valid_document(solrdocument):
+                            print('OK to index: ' + uuid)
+                            documents.append(solrdocument)
                             manifest.indexed_save()  # saves the time this was indexed
-                        except Manifest.DoesNotExist:
-                            print('Where is ' + uuid + ' in the manifest?')
-                    else:
-                        print('Not valid: ' + uuid )
+                        else:
+                            print('Not valid: ' + uuid )
+                            if stop_at_invalid:
+                                break
+                    except Exception as error:
+                        print("Error: {0}".format(error) + " -----> " + uuid)
                         if stop_at_invalid:
-                            break
-                except Exception as error:
-                    print("Error: {0}".format(error) + " -----> " + uuid)
-                    if stop_at_invalid:
-                            break
+                                break
                 if len(documents) >= chunksize:
                     ok = self.commit_documents(documents)
                     if ok is False and stop_at_invalid:

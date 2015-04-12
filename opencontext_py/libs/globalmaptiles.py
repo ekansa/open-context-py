@@ -308,7 +308,7 @@ class GlobalMercator(object):
     def quadtree_to_lat_lon(self, quadtree):
         """
         Added by Eric Kansa by porting code from PHP version of Open Context
-        Converst a quadtree tile to bounding latitude and longitude coordinates
+        Converts a quadtree tile to bounding latitude and longitude coordinates
         """
         zoom = len(quadtree)
         tx, ty = self.quadtree_to_tile(quadtree, zoom)

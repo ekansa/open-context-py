@@ -84,7 +84,7 @@ class DeleteMerge():
             output['annotations'] = self.alter_annotations(delete_uuid, False)
             output['altered_children'] = self.update_children_subjects(self.delete_children)
             output['message'] = 'Deleted item: ' + self.delete_manifest_obj.label + '(' + delete_uuid + ')'
-            self.delete_manifest_obj.delete() # deletes object from the manifest
+            self.delete_manifest_obj.delete()  # deletes object from the manifest
             self.delete_type_records(delete_uuid, delete_manifest_obj.item_type)
             output['done'] = True
         return output

@@ -12,7 +12,7 @@ class dinaaLink():
     """ methods to link Smithsonian Trinomials curated by
         DINAA with keywords in tDAR
     """
-
+    DC_TERMS_SUBJECT = 'dc-terms:subject'
     TDAR_VOCAB = 'http://core.tdar.org/browse/site-name/'
 
     def __init__(self):
@@ -113,7 +113,7 @@ class dinaaLink():
                             la.subject_type = manifest.item_type
                             la.project_uuid = manifest.project_uuid
                             la.source_id = 'tdar-api-lookup'
-                            la.predicate_uri = 'dc-terms:subject'
+                            la.predicate_uri = self.DC_TERMS_SUBJECT
                             la.object_uri = result['id']
                             la.save()
                         else:
