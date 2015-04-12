@@ -791,6 +791,9 @@ class MakeJsonLd():
         elif 'item_type' in solr_facet_key:
             id_prefix = '#facet-item-type'
             ftype = 'oc-api:facet-item-type'
+        if 'dc_terms_isreferencedby___pred_id' == solr_facet_key:
+            id_prefix = '#facet-dc-terms-isreferencedby'
+            ftype = 'oc-api:facet-prop'
         if solr_facet_key == SolrDocument.ROOT_CONTEXT_SOLR:
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-context'
@@ -815,6 +818,11 @@ class MakeJsonLd():
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-item-type'
             facet['label'] = 'Open Context Type'
+            facet['data-type'] = 'id'
+        elif solr_facet_key == 'dc_terms_isreferencedby___pred_id':
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'dc-terms:isReferencedBy'
+            facet['label'] = 'Is referenced by'
             facet['data-type'] = 'id'
         else:
             # ------------------------

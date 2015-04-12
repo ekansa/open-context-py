@@ -167,7 +167,8 @@ class SolrSearch():
         # Dublin-Core terms
         dc_params = ['dc-subject',
                      'dc-spatial',
-                     'dc-coverage']
+                     'dc-coverage',
+                     'dc-isReferencedBy']
         for dc_param in dc_params:
             dc_terms = self.get_request_param(request_dict,
                                               dc_param,
@@ -275,8 +276,10 @@ class SolrSearch():
         if disc_bbox is not False:
             disc_bbox_query = qm.process_discovery_bbox(disc_bbox)
             query['fq'] += disc_bbox_query['fq']
-        """ Additional, dataset specific specialized
+        """ -----------------------------------------
+            Additional, dataset specific specialized
             queries
+            -----------------------------------------
         """
         # special queries (to simplify access to specific datasets)
         spsearch = SpecialSearches()
@@ -289,6 +292,12 @@ class SolrSearch():
                 # request for special handling of project facets with
                 # added geospatial and chronological metadata
                 query = spsearch.process_geo_projects(query)
+        linked = self.get_request_param(request_dict,
+                                        'linked',
+                                        False,
+                                        False)
+        if linked == 'dinaa-cross-ref':
+            query = spsearch.process_linked_dinaa(query)
         trinomial = self.get_request_param(request_dict,
                                            'trinomial',
                                            False,
