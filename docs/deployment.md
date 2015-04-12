@@ -1,7 +1,9 @@
 DEPLOYMENT INSTRUCTIONS
 =======================
 
-Sadly, setup and configuration is not the easiest thing in the world, especially for people new to Django. This document provides some tips and methods to get past deployment issues encountered for Open Context.
+Setup and configuration is not the easiest thing in the world, especially for people new to Django.
+
+This document provides some tips and methods to get past deployment issues encountered for Open Context.
 
 These installation instructions center on deploying the application on a Debian Linux server in a Python virtual environment. The virtual environment needs to use a Python 3+ interpreter. The assumption here is that you've got super-user permissions on your server.
 
@@ -72,7 +74,7 @@ If you've been good, you should be able to enter the password you set for postgr
 
     sudo /usr/lib/postgresql/9.4/bin/initdb -D /mnt/oc-data/postgresdata
 
-More information at: 
+More information at:
     http://www.whiteboardcoder.com/2012/04/change-postgres-datadirectory-folder.html
 
 If that doesn't work, then you'll need to edit a configuration file. But, BEFORE YOU EDIT!! STOP POSTGRES!
@@ -85,8 +87,8 @@ Once stopped, you'll find the configuration file in a location like:
 
 Change the PGDATA directory to the directory you established for the data, with all the proper permissions added for postgre. If you don't have the permissions, you won't be able to restart Postgres with:
 
-    sudo /etc/init.d/postgresql restart 
- 
+    sudo /etc/init.d/postgresql restart
+
 Last, there's a library to install so the Django application can interact with the Postgres database. Install this to be able to install the psycopg2 Python library:
 
     sudo apt-get install libpq-dev
@@ -126,7 +128,7 @@ You may want to install Git version control to make it easier to keep Open Conte
 
     sudo apt-get install git
 
-Then clone Open Context from the GitHub repository for the project's production branch (recommended): 
+Then clone Open Context from the GitHub repository for the project's production branch (recommended):
 
     git clone -b production https://github.com/ekansa/open-context-py.git
 
@@ -147,7 +149,7 @@ You can check on things and interact with the Open Context Django application di
 
 PART 2: WEB-SERVER CONFIGURATION
 --------------------------------
-Once you have the production source code in place, you're ready for the real fun (FUN!) of configuring this Django application to actually work on the Web. The following description centers on using uWSGI and Nginx. Though lots of Websites claim it's easy to deploy a Django application with uWSGI and Nginx, I (a novice) found it to be a confusing configuration nightmare. So, it's probably well worth sharing how I actually (finally) got this to work on a production website. 
+Once you have the production source code in place, you're ready for the real fun (FUN!) of configuring this Django application to actually work on the Web. The following description centers on using uWSGI and Nginx. Though lots of Websites claim it's easy to deploy a Django application with uWSGI and Nginx, I (a novice) found it to be a confusing configuration nightmare. So, it's probably well worth sharing how I actually (finally) got this to work on a production website.
 
 (2.1) Installing uWSGI:
 
@@ -175,7 +177,7 @@ One of the big headaches with configuration centers on read/write/execute permis
 Once you've got it successfully installed. Start it up with:
 
      sudo /etc/init.d/nginx restart
- 
+
 Then you can check the unix userid for nginx:
 
      ps aux | grep nginx
@@ -192,7 +194,7 @@ Next we'll need to create a unix user for uWSGI so it can interact with the Ngin
      sudo groupadd www-data
      sudo usermod -a -G www-data uwsgi
 
-If you run onto permissions troubles, you make also want to add the Nginx userid to the "www-data" group. That way you can set group level permissions for read/write/execute. 
+If you run onto permissions troubles, you make also want to add the Nginx userid to the "www-data" group. That way you can set group level permissions for read/write/execute.
 
      sudo adduser www-data --no-create-home --disabled-login --disabled-password
      sudo usermod -a -G www-data www-data
@@ -224,7 +226,7 @@ This particular configuration seems to work on 2 different machines so far. So i
 
 ```
 uwsgi --http-socket :8080 --ini /path/your-virtual-env/web/oc.ini
-```    
+```
 
 The above starts a unix socket for servers (Nginx in our case) to use in passing HTTP requests from the outside world to the Open Context Django application. Note that the socket opperates on port 8080 in this case. Choose something that won't interfere with port 80 for outside Web requests. If all goes well, you will not see an error in the log (see the path in the "daemonize" parameter above). Use the log to help debug further, since problems with the Django app sometimes appear there. If you get uWSGI to work without error, congrats! That seems to be the hardest part.
 
