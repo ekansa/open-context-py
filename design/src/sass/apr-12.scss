@@ -1,3 +1,5 @@
+$border-grey: #979797;
+
 /* Open Context Layout Main */
 @import url('http://fonts.googleapis.com/css?family=Open+Sans');
 
@@ -199,6 +201,23 @@ div.f-count {
   padding-left: 0;
 }
 
-h3 {
-  border: 1px solid red!important;
+.april-12 {
+  * {
+    box-sizing: border-box;
+  }
+
+  section {
+    border-bottom: 1px solid $border-grey;
+    margin: 0;
+    padding: 0;
+  }
+
+  section.publish {
+    width: 50%;
+  }
+
+  section.explore {
+    width: 50%;
+    float: right;
+  }
 }
