@@ -15,6 +15,7 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filters import ActiveFilters
 from opencontext_py.apps.searcher.solrsearcher.chronology import JsonLDchronology
 from opencontext_py.apps.searcher.solrsearcher.geojsonregions import GeoJsonRegions
+from opencontext_py.apps.searcher.solrsearcher.geojsonprojects import GeoJsonProjects
 from opencontext_py.apps.searcher.solrsearcher.geojsonrecords import GeoJsonRecords
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
@@ -74,6 +75,9 @@ class MakeJsonLd():
         if 'geo-facet' in self.act_responses:
             # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
+        if 'geo-project' in self.act_responses:
+            # now check for project geojson
+            self.make_project_geojson(solr_json)
         # now process regular facets.
         # they will only be added to the response if
         # 'facet' in self.act_response
@@ -518,6 +522,30 @@ class MakeJsonLd():
                 self.json_ld['type'] = 'FeatureCollection'
                 self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
                 self.json_ld['features'] = geo_regions.geojson_regions
+
+    def make_project_geojson(self, solr_json):
+        """ makes project geojson based on a special
+            pivot-facet request.
+        """
+        solr_proj_geo_facets = self.get_path_in_dict(['facet_counts',
+                                                      'facet_pivot',
+                                                      'root___project_id,discovery_geotile'],
+                                                     solr_json)
+        solr_proj_chrono_facets = self.get_path_in_dict(['facet_counts',
+                                                         'facet_pivot',
+                                                         'root___project_id,form_use_life_chrono_tile'],
+                                                        solr_json)
+        if solr_proj_geo_facets is not False\
+           and solr_proj_chrono_facets is not False:
+            geo_projects = GeoJsonProjects(solr_json)
+            geo_projects.geo_pivot = solr_proj_geo_facets
+            geo_projects.chrono_pivot = solr_proj_chrono_facets
+            geo_projects.make_project_geojson()
+            if len(geo_projects.geojson_projects) > 0:
+                self.json_ld['type'] = 'FeatureCollection'
+                if 'features' not in self.json_ld:
+                    self.json_ld['features'] = []
+                self.json_ld['features'] += geo_projects.geojson_projects
 
     def make_form_use_life_chronotiles(self, solr_json):
         """ makes tile facets for chronology

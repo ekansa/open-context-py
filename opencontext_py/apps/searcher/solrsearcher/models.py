@@ -1,6 +1,7 @@
 import re
 import json
 from django.conf import settings
+from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
@@ -41,7 +42,28 @@ class SolrSearch():
         # Start building solr query
         request_dict = json.loads(request_dict_json)
         query = self.compose_query(request_dict)
-        return self.solr.search(**query)
+        """
+        try:
+            response = self.solr.search(**query)
+        except:
+            # some hassels to handle project pivot queries
+            response = KludgeSolrResponse()
+            squery = response.build_request(query)
+            url = urljoin(self.solr.base_url, 'select')
+            http_response = self.solr.make_request.post(url,
+                                                        data=squery,
+                                                        timeout=240)
+            response.raw_content = parse_response(http_response.content)
+        """
+        # some hassels to handle project pivot queries
+        response = KludgeSolrResponse()
+        squery = response.build_request(query)
+        url = urljoin(self.solr.base_url, 'select')
+        http_response = self.solr.make_request.post(url,
+                                                    data=squery,
+                                                    timeout=240)
+        response.raw_content = parse_response(http_response.content)
+        return response
 
     def compose_query(self, request_dict):
         """ composes the search query based on the request_dict """
@@ -258,6 +280,15 @@ class SolrSearch():
         """
         # special queries (to simplify access to specific datasets)
         spsearch = SpecialSearches()
+        response = self.get_request_param(request_dict,
+                                          'response',
+                                          False,
+                                          False)
+        if response is not False:
+            if 'geo-project' in response:
+                # request for special handling of project facets with
+                # added geospatial and chronological metadata
+                query = spsearch.process_geo_projects(query)
         trinomial = self.get_request_param(request_dict,
                                            'trinomial',
                                            False,
@@ -386,3 +417,18 @@ class SolrSearch():
             for key, key_val in request.GET.items():  # "for key in request.GET" works too.
                 new_request[key] = request.GET.getlist(key)
         return new_request
+
+
+class KludgeSolrResponse():
+    """ A kludgy way around the lack of support for pivot facets
+        in MySolr
+    """
+    def __init__(self):
+        self.raw_content = False
+
+    def build_request(self, query):
+        """ Check solr query and put convenient format """
+        assert 'q' in query
+        compat_args(query)
+        query['wt'] = 'json'
+        return query
