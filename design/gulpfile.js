@@ -16,7 +16,7 @@ var cssCompileDir = "www/css";
 // Carry over misc files,
 // but only if they changed.
 gulp.task('misc-files', function () {
-  gulp.src(['src/CNAME', 'src/*.js', 'src/*.pdf', 'src/robots.txt', 'src/images/favicons/*'])
+  gulp.src(['src/*.html', 'src/*.js'])
     .pipe(changed("./www"))
     .pipe(gulp.dest("./www"));
 });
@@ -54,7 +54,7 @@ var browserSyncConfig = {
 }
 
 // Default task
-gulp.task('default', function () {
+gulp.task('default', ['misc-files'], function () {
   gulp.watch(scssFiles, ['sass']);
   browserSync(browserSyncConfig);
 });
