@@ -145,6 +145,19 @@ class ActiveFilters():
                             act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
                             if label_dict['entities'][0].vocabulary is not False:
                                 act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
+                    elif param_key == 'dc-isReferencedBy':
+                        act_filter['oc-api:filter'] = 'Is referenced by'
+                        label_dict = self.make_filter_label_dict(all_vals[-1])
+                        if len(label_dict['label']) > 0:
+                            act_filter['label'] = label_dict['label']
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
+                            if label_dict['entities'][0].vocabulary is not False\
+                               and label_dict['entities'][0].vocab_uri != label_dict['entities'][0].uri:
+                                act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
+                    elif param_key == 'linked' and all_vals[-1] == 'dinaa-cross-ref':
+                        act_filter['oc-api:filter'] = 'Has cross references'
+                        act_filter['label'] = 'Links to, or with, DINAA curated site files'
                     else:
                         act_filter = False
                     if act_filter is not False:

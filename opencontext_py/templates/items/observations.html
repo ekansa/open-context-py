@@ -193,19 +193,23 @@
                         {% if anno.objects != None %}
                             {% if anno.objects|length == 1 %}
                                 <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
-                                <br/>
+                                {% if anno.objects.0.id != anno.objects.0.vocab_uri %}
+				<br/>
                                 <small>[Standard: <a href="{{ anno.objects.0.vocab_uri }}" target="_blank">{{ anno.objects.0.vocabulary }}</a>]</small>
-                            {% else %}
+				{%endif%}
+			    {% else %}
                             <ul>
                                 {% for annoval in anno.objects %}
                                 <li>
                                     <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
-                                    <br/>
+                                    {% if annoval.id != annoval.vocab_uri %}
+				    <br/>
 									{% if annoval.vocab_uri != False %}
                                     <small>[Standard: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
 									{% else %}
 									<small>[External resource]</small>
-									{%endif%}
+								    {%endif%}
+				    {%endif%}
 								</li>
                                 {% endfor %}
                             </ul>

@@ -28,6 +28,24 @@ class SpecialSearches():
         query['facet.pivot'].append(proj_field + ',discovery_geotile')
         query['facet.pivot'].append(proj_field + ',form_use_life_chrono_tile')
         return query
+    
+    def process_linked_dinaa(self, query):
+        """ processes a request for DINAA sites that
+            are cross referenced with tDAR or other
+            online collections
+        """
+        rel_query_term = '((dc_terms_subject___pred_id:tdar*)'
+        rel_query_term += ' OR (dc_terms_isreferencedby___pred_id:*))'
+        if 'fq' not in query:
+            query['fq'] = []
+        query['fq'].append(rel_query_term)
+        proj_field = SolrDocument.ROOT_PROJECT_SOLR
+        proj_query = proj_field + ':52-digital-index-of-north-american-archaeology-dinaa*'
+        query['fq'].append(proj_query)
+        if 'facet.field' not in query:
+            query['facet.field'] = []
+        query['facet.field'].append('dc_terms_isreferencedby___pred_id')
+        return query
 
     def process_trinonial_reconcile(self,
                                     trinomial,
