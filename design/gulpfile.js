@@ -27,6 +27,17 @@ gulp.task('validate', function () {
     .pipe(w3cjs());
 });
 
+// HTML pipeline
+gulp.task('html', function () {
+  return gulp.src(['src/*.html'])
+    .pipe(changed('www/'))
+    .pipe(gulp.dest('www/'));
+});
+// convenience task to call reload after the dust rendering
+gulp.task('htmlreload', ['html'], function () {
+  reload();
+});
+
 // Sass stylesheets
 var sassConfig = {
   errLogToConsole: true,
@@ -55,6 +66,7 @@ var browserSyncConfig = {
 
 // Default task
 gulp.task('default', ['misc-files'], function () {
+  gulp.watch('src/*.html', ['htmlreload']);
   gulp.watch(scssFiles, ['sass']);
   browserSync(browserSyncConfig);
 });
