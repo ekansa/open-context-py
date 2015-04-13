@@ -1,36 +1,13 @@
-$border-grey: #979797;
-$headline-blue: #0088CC;
-$subheader-grey: #2f2a2b;
-$paragraph-dark: #231f20;
-$inverted-text: #ffffff;
-$special-grey: #6d6371;
-
-%clearfix {
-  *zoom: 1;
-  &:before, &:after {
-    content: " ";
-    display: table;
-  }
-  &:after {
-    clear: both;
-  }
-}
-
-%button {
-  padding: 1em;
-  background-color: $headline-blue;
-  color: $inverted-text;
-  clear: both;
-  margin: 65px auto;
-  display: inline-block;
-  text-transform: uppercase;
-}
-
-/* Open Context Layout Main */
-@import url('http://fonts.googleapis.com/css?family=Open+Sans');
+@import "colors";
+@import "footer";
+@import "nav";
+@import "typography";
+@import "shared";
 
 body {
-  font-family: 'Open Sans';
+  min-width: 320px;
+  overflow-x: hidden;
+  @extend %border-box-model;
 }
 
 #main {
@@ -39,62 +16,11 @@ body {
   margin-right: auto;
 }
 
-#oc-nav-bar {
-  background-color: #141518;
-  li.active a {
-    background-color: #141518;
-  }
-}
-
-#oc-nav-branding {
-  padding-top: 0;
-  padding-left: 0;
-}
-
-#oc-hidden-bar {
-  width: 100%;
-  height: 50px;
-  display: block;
-}
-
-#footer-upper {
-  margin-top: 5%;
-  background-color: #666;
-}
-
-div.footer-cell {
-  display: table-cell;
-  vertical-align: middle;
-  text-align: center;
-  padding: 1%;
-  img {
-    max-height: 75px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-
-#footer-lower {
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  font-size: 75%;
-}
-
 .project-edit-stars {
-  color: #ee7600;
-}
-
-a.project-edit-stars:link {
-  color: #ee7600;
-}
-
-a.project-edit-stars:visited {
-  color: #ee7600;
-}
-
-a.project-edit-stars:hover {
-  color: #ee7600;
+  color: $edit-stars-color;
+  &:link, &:visited, &:hover {
+    color: $edit-stars-color;
+  }
 }
 
 div.subject-list-row {
@@ -142,6 +68,7 @@ div.media-thumb {
 #rel-item-in-context::before {
   content: "\2194";
 }
+
 div.top-panel {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -199,6 +126,7 @@ div.act-filter-type {
 div.act-filter-val-row {
   padding-bottom: 5px;
 }
+
 ul.f-opt-list {
   border-top: 1px solid #ddd;
   margin-bottom: -1px;
@@ -229,18 +157,12 @@ div.f-count {
 
 .april-12 {
 
-  * {
-    box-sizing: border-box;
-  }
-
   section {
     border-bottom: 1px solid $border-grey;
     margin: 0;
     padding: 0;
     text-align: center;
-    padding-top: 125px;
-    padding-left: 100px;
-    padding-right: 100px;
+    padding: 125px 5% 5%
   }
 
   h1 {
@@ -291,24 +213,22 @@ div.f-count {
 
     }
     .pricing-table {
-      border: 1px solid red;
       @extend clearfix;
 
       ul {
-        border: 1px solid green;
-        width: 90%;
         padding: 0;
-        margin: 0 auto;
+        margin: 0 0;
         text-align: center;
 
         li {
           vertical-align: top;
           border: 1px solid $border-grey;
           width: 20%;
-          margin: 1%;
+          margin: 2%;
+          padding: 2%;
           list-style-image: none;
           display: inline-block;
-
+          height: auto;
         }
         ul {
           padding: 0;
