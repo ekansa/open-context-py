@@ -172,6 +172,12 @@ div.f-count {
     text-transform: uppercase;
   }
 
+  h2 {
+    font-size: 36px;
+    text-transform: uppercase;
+    color: $headline-blue;
+  }
+
   section.welcome {
     font-size: 24px;
     h3.slogan {
@@ -195,9 +201,38 @@ div.f-count {
   section.how-it-works {
     clear: both;
   }
+
+$showcase-height: 500px;
+
   section.showcase {
     background-color: $mid-grey;
     color: white;
+    padding: 0;
+    height: $showcase-height;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    flex-flow: row nowrap;
+
+    &:after {
+      content: "";
+      background-image: url("http://placehold.it/500x500");
+      background-size: cover;
+      background-position: center center;
+      height: $showcase-height;
+      display: inline-block;
+      flex: 1;
+      padding: 4em;
+    }
+
+    .showcase--text {
+      flex: 1;
+      text-align: center;
+      padding: 4em;
+      h2 {
+        color: white;
+      }
+    }
   }
 
   ul {
