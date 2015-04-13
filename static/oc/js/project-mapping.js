@@ -1,8 +1,8 @@
 /*
- * Map an individual item with GeoJSON
+ * Map projects from GeoJSON
  */
  
-function search_map(json_url) {
+function project_map(json_url) {
 	
 	var map_dom_id = 'map';
 	var map_title_dom_id = 'map-title';
@@ -21,19 +21,25 @@ function search_map(json_url) {
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
 	map.geojson = false;  //current geojson data
+	map.circle_layer = false;
+	map.color_list = false;
 	
 	var bounds = new L.LatLngBounds();
 	var mapboxPencil = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.pencil/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
+	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	});
 	var baseMaps = {
 		"Pencil": mapboxPencil,
+		"Light": mapboxLight,
 	};
   
 	map._layersMaxZoom = 20;
 	// var layerControl = L.control.layers(baseMaps).addTo(map);
 	// console.log(layerControl);
-	map.addLayer(mapboxPencil);
+	map.addLayer(mapboxLight);
 	
 	map.show_title_menu = function(map_type, geodeep){
 		/*
@@ -60,6 +66,13 @@ function search_map(json_url) {
 	
 	function on_each_project_feature(feature, layer){
 		
+		if (feature.properties['early bce/ce'] != feature.properties['late bce/ce']) {
+			var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+			date_range += " to " + style_bce_ce_year(feature.properties['late bce/ce']);
+		}
+		else{
+			var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+		}
 		if (feature.properties) {
 			var popupContent = [
 			"<div>",
@@ -68,28 +81,48 @@ function search_map(json_url) {
 			"<dd>",
 			"<a href='" + feature.properties.href + "'>" + feature.properties.label + "</a>",
 			"</dd>",
-			"</dl>",
-			"<dl>",
+			//"</dl>",
+			//"<dl>",
 			"<dt>Time Range</dt>",
-			"<dd>" + feature.properties['early bce/ce'] + " to ",
-			feature.properties['late bce/ce'] + "</dd>",
-			"</dl>",
-			"<dl>",
+			"<dd>" + date_range + "</dd>",
+			//"</dl>",
+			//"<dl>",
 			"<dt>Records</dt>",
 			"<dd>",
 			"<a href='" + feature.properties.search + "'>" + feature.count + " (Click to Browse)</a>",
 			"</dd>",
 			"</dl>",
-			"</div>"].joins("\n");
+			"</div>"].join("\n");
 			layer.bindPopup(popupContent);
 		}
 	}
 	
 	map.circle_projects = function (){
-		// renders the geojson for projects	
-		var circle_layer = L.geoJson(geojson_facets, {
+		// renders the geojson for projects
+		
+		//first get min and max counts
+		var max_value = 1;
+		var min_value = 0;
+		for (var i = 0, length = map.geojson.features.length; i < length; i++) {
+			feature = map.geojson.features[i];
+			if (feature.count > max_value) {
+				max_value = feature.count;
+			}
+			if (i < 1) {
+				min_value = feature.count;
+			}
+			else{
+				if (feature.count < min_value) {
+					min_value = feature.count;
+				}
+			}
+		}
+		var circle_layer = L.geoJson(map.geojson.features, {
 			pointToLayer: function (feature, latlng) {
 				var style_obj = new numericStyle();
+				if (map.color_list != false) {
+					style_obj.reset_gradient_colors(map.color_list);
+				}
 				style_obj.min_value = min_value;
 				style_obj.max_value = max_value;
 				style_obj.act_value = feature.count;
@@ -107,14 +140,10 @@ function search_map(json_url) {
 			},
 			onEachFeature: on_each_project_feature
 		});
-		circle_layers[map.geodeep] = circle_layer;
+		map.circle_layer = circle_layer;
 		if (map.fit_bounds) {
 			//map.fit_bounds exists to set an inital attractive view
 			map.fitBounds(circle_layer.getBounds());
-		}
-		circle_layer.addTo(map);
-		if (region_controls) {
-			map.toggle_tile_controls();
 		}
 		circle_layer.addTo(map);
 	}
@@ -146,6 +175,5 @@ function search_map(json_url) {
 		})
 	}
 
-	this.region_layers = region_layers;
 	this.map = map;
 }

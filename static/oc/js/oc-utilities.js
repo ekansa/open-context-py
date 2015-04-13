@@ -51,3 +51,19 @@ function make_unique_count_key(count_key, count_list) {
 	}
 	return count_key;
 }
+
+function style_bce_ce_year(date_num){
+	//styles a year BCE / CE
+	if (date_num == false) {
+		output = '(recent)';
+	}
+	else{
+		if (date_num < 0) {
+			output = (date_num * -1) + ' BCE';
+		}
+		else{
+			output = date_num + ' CE';
+		}	
+	}
+	return output;
+}
