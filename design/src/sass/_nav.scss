@@ -1,0 +1,17 @@
+#oc-nav-bar {
+  background-color: #141518;
+  li.active a {
+    background-color: #141518;
+  }
+}
+
+#oc-nav-branding {
+  padding-top: 0;
+  padding-left: 0;
+}
+
+#oc-hidden-bar {
+  width: 100%;
+  height: 50px;
+  display: block;
+}

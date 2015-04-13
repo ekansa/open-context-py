@@ -10,9 +10,14 @@ def index(request):
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
+    new_view = False
     template = loader.get_template('index/view.html')
+    if 'test' in request.GET:
+        template = loader.get_template('index/new-view.html')
+        new_view = True
     context = RequestContext(request,
                              {'base_url': base_url,
+                              'new_view': new_view,
                               'page_title': 'Open Context: Publisher of Research Data',
                               'act_nav': 'home',
                               'nav_items': settings.NAV_ITEMS})

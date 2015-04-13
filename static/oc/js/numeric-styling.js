@@ -48,14 +48,22 @@ function numericStyle(){
 	
 	//starting default gradient colors from low to high
 	var gradient_colors = [convertToRGB('#FFFF66'),
-						   convertToRGB('#FF3300'),
-						   convertToRGB('#5A0000')];
+			       convertToRGB('#FF3300'),
+			       convertToRGB('#5A0000')];
 	
 	this.gradient_colors = gradient_colors;
 	this.hex_prefix = '#'; // for making a hex color, add the prefix
 	this.min_value = 0;
 	this.max_value = 1;
 	this.act_value = .5;
+	
+	this.reset_gradient_colors = function(color_list){
+		if (color_list.length == 3) {
+			this.gradient_colors = [convertToRGB(color_list[0]),
+					        convertToRGB(color_list[1]),
+					        convertToRGB(color_list[2])];
+		}
+	}
 	
 	this.generate_color = function(){
 		// does the actual work of making the color

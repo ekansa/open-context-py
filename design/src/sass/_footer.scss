@@ -1,0 +1,23 @@
+#footer-upper {
+  margin-top: 5%;
+  // background-color: #666;
+}
+
+div.footer-cell {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: center;
+  padding: 1%;
+  img {
+    max-height: 75px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+#footer-lower {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  font-size: 75%;
+}

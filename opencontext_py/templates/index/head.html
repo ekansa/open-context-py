@@ -5,8 +5,11 @@
 
     <link rel="stylesheet" href="{{ base_url }}/static/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ base_url }}/static/angularjs/abn_tree.css">
+    {% if new_view %}
+    <link rel="stylesheet" href="{{ base_url }}/static/oc/css/index/apr-12.css">
+    {%else%}
     <link rel="stylesheet" href="{{ base_url }}/static/oc/css/general.css">
-    
+    {%endif%}
     <script src="{{ base_url }}/static/jquery/jquery-1.11.1.min.js"></script>
     <script src="{{ base_url }}/static/jquery/jquery.cookie.js"></script>
     <script src="{{ base_url }}/static/jquery/ui/jquery-ui.min.js"></script>
@@ -22,8 +25,9 @@
     <!-- extensions to Leaflet --> 
     <script src="{{ base_url }}/static/leaflet/easy-button/easy-button.js"></script>
     <script src="{{ base_url }}/static/oc/js/GoogleLayers.js"></script>
-    <!-- Open Context specific implementations of Leaflet --> 
+    <!-- Open Context specific implementations of Leaflet and related --> 
     <script src="{{ base_url }}/static/oc/js/numeric-styling.js"></script>
-    <script src="{{ base_url }}/static/oc/js/search-mapping.js"></script>
+    <script src="{{ base_url }}/static/oc/js/oc-utilities.js"></script>
+    <script src="{{ base_url }}/static/oc/js/project-mapping.js"></script>
     
 </head>

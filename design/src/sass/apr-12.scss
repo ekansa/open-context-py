@@ -1,0 +1,300 @@
+@import "colors";
+@import "footer";
+@import "nav";
+@import "typography";
+@import "shared";
+
+$breakpoint: 1000px;
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+  @extend %border-box-model;
+}
+
+#main {
+  width: 98%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.project-edit-stars {
+  color: $edit-stars-color;
+  &:link, &:visited, &:hover {
+    color: $edit-stars-color;
+  }
+}
+
+div.subject-list-row {
+  padding-top: 1%;
+  padding-bottom: 1%;
+}
+
+div.media-list-row {
+  padding-top: 1%;
+  padding-bottom: 1%;
+  img {
+    height: 30px;
+    width: 30px;
+  }
+}
+
+div.subject-list-text {
+  padding-top: 2%;
+}
+
+div.media-thumb {
+  text-align: center;
+}
+
+/* Tweeks to Bootstrap */
+#context-root::before {
+  content: "";
+}
+
+#context-start {
+  font-weight: normal;
+  color: rgb(51, 51, 51);
+}
+
+#item-in-context {
+  font-weight: bold;
+  color: #000;
+}
+
+#rel-item-in-context {
+  font-weight: bold;
+  color: #000;
+}
+
+#rel-item-in-context::before {
+  content: "\2194";
+}
+
+div.top-panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+}
+
+div.panel-group div.top-panel {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+div.preview-image {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+div.subjects-links-cell {
+  width: 100%;
+  margin-left: 1%;
+  text-align: left;
+}
+
+/* So long uri in Citation has good wrapping */
+#item-title {
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+span.title_sep {
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
+#item-uri {
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+#item-stable-id {
+  max-width: 200px;
+  word-wrap: break-word;
+}
+
+#map {
+  width: 100%;
+  height: 66%;
+  min-height: 300px;
+}
+
+div.act-filter-type {
+  padding-top: 5px;
+}
+
+div.act-filter-val-row {
+  padding-bottom: 5px;
+}
+
+ul.f-opt-list {
+  border-top: 1px solid #ddd;
+  margin-bottom: -1px;
+}
+
+li.f-opt-top {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+li.f-opt {
+  border-left: none;
+  border-right: none;
+}
+
+div.f-opt-label {
+  padding-left: 0;
+}
+
+div.f-count {
+  margin-top: -2px;
+  padding-top: 0;
+  padding-left: 0;
+}
+
+.april-12 {
+
+  section {
+    border-bottom: 1px solid $border-grey;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    padding: 125px 5% 5%
+  }
+
+  h1 {
+    font-size: 48px;
+    color: $headline-blue;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  h2 {
+    font-size: 36px;
+    text-transform: uppercase;
+    color: $headline-blue;
+  }
+
+  section.welcome {
+    font-size: 24px;
+    h3.slogan {
+      font-style: italic;
+      font-family: "OpenSans-Italic", Helvetica, serif;
+      color: $special-grey;
+      margin: 32px auto;
+    }
+  }
+
+  section.publish {
+    width: 50%;
+    float: left;
+  }
+
+  section.explore {
+    width: 50%;
+    float: right;
+  }
+
+  section.how-it-works {
+    clear: both;
+  }
+
+  $showcase-height: 500px;
+  section.showcase {
+    background-color: $mid-grey;
+    color: white;
+    padding: 0;
+    height: $showcase-height;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    flex-flow: row nowrap;
+
+    &:after {
+      content: "";
+      background-image: url("http://placehold.it/500x500");
+      background-size: cover;
+      background-position: center center;
+      height: $showcase-height;
+      display: inline-block;
+      flex: 1;
+      padding: 4em;
+    }
+
+    .showcase--text {
+      flex: 1;
+      text-align: center;
+      padding: 4em;
+      h2 {
+        color: white;
+      }
+    }
+  }
+
+  ul {
+    list-style-type: none;
+    li {
+      height: 70px;
+      list-style-image: url('http://placehold.it/60x60');
+    }
+  }
+
+  section.pricing {
+    clear: both;
+
+    h4 {
+      text-transform: uppercase;
+      font-size: 16px;
+    }
+
+    .pricing-table {
+      @extend clearfix;
+
+      .price {
+        padding: 1em 0;
+        @media all and (max-width: $breakpoint) {
+          font-size: 26px;
+        }
+        font-size: 46px;
+        font-family: "OpenSans-Light", "Helvetica";
+        color: $special-grey;
+      }
+
+      ul {
+        padding: 0;
+        margin: 0 0;
+        text-align: center;
+
+        li {
+          vertical-align: top;
+          border: 1px solid $border-grey;
+          width: 20%;
+          margin: 2%;
+          padding: 2%;
+          list-style-image: none;
+          display: inline-block;
+          height: auto;
+        }
+        ul {
+          border-top: 1px solid $border-grey;
+          padding: 1em 0;
+          margin: 1em 0;
+          li {
+            width: 100%;
+            height: auto;
+            border: none;
+          }
+        }
+      }
+    }
+  }
+
+  a.estimate {
+    @extend %button;
+  }
+}

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <title>Open Context: Web-based research data publishing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="http://opencontext.dainst.org/static/oc/images/oc-favicon.ico">
+
+  <link rel="stylesheet" href="http://opencontext.dainst.org/static/bootstrap/3.3.4/css/bootstrap.min.css">
+  <link rel="stylesheet" href="http://opencontext.dainst.org/static/angularjs/abn_tree.css">
+  <!-- <link rel="stylesheet" href="http://opencontext.dainst.org/static/oc/css/general.css"> -->
+  <link rel="stylesheet" href="css/apr-12.css">
+
+  <script src="http://opencontext.dainst.org/static/jquery/jquery-1.11.1.min.js"></script>
+  <script src="http://opencontext.dainst.org/static/jquery/jquery.cookie.js"></script>
+  <script src="http://opencontext.dainst.org/static/jquery/ui/jquery-ui.min.js"></script>
+  <script src="http://opencontext.dainst.org/static/angularjs/angular.js"></script>
+  <script src="http://opencontext.dainst.org/static/angularjs/angular-animate.js"></script>
+  <script src="http://opencontext.dainst.org/static/angularjs/abn_tree_directive.js"></script>
+  <script src="http://opencontext.dainst.org/static/bootstrap/3.3.4/js/bootstrap.js"></script>
+
+  <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+  <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+  <script src="http://maps.google.com/maps/api/js?v=3.2&amp;sensor=false"></script>
+  <!-- extensions to Leaflet -->
+  <script src="http://opencontext.dainst.org/static/leaflet/easy-button/easy-button.js"></script>
+  <script src="http://opencontext.dainst.org/static/oc/js/GoogleLayers.js"></script>
+  <!-- Open Context specific implementations of Leaflet -->
+  <script src="http://opencontext.dainst.org/static/oc/js/numeric-styling.js"></script>
+  <script src="http://opencontext.dainst.org/static/oc/js/search-mapping.js"></script>
+
+</head>
+
+<body>
+  <div id="main">
+    <div class="container-fluid">
+
+      <!-- in case we ever need anything above the nav-bar -->
+
+      <nav id="oc-nav-bar" class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container-fluid">
+          <div class="navbar-header">
+
+            <a id="oc-nav-branding" class="navbar-brand" href="http://opencontext.dainst.org">
+              <img style="margin-top: 14px; margin-left: 12px; height: 22px;" src="http://opencontext.dainst.org/static/oc/images/nav/oc-nav-logo.png" alt="Open Context DAI-Mirror Logo" />
+            </a>
+
+          </div>
+          <ul class="nav navbar-nav">
+
+
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+
+                <li><a href="http://opencontext.dainst.org/about/">About Open Context</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/uses">Uses</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/publishing">Publishing</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/estimate">Grant Seekers</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/concepts">Concepts</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/technology">Technology</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/services">APIs and Web Services</a></li>
+
+                <li><a href="http://opencontext.dainst.org/about/recipes">Recipes using APIs</a></li>
+
+              </ul>
+            </li>
+
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Explore <span class="caret"></span></a>
+              <ul class="dropdown-menu" role="menu">
+
+                <li><a href="http://opencontext.dainst.org/sets/">Browse Data Records</a></li>
+
+                <li><a href="http://opencontext.dainst.org/projects/">Browse Projects</a></li>
+
+              </ul>
+            </li>
+
+          </ul>
+          <form class="navbar-form navbar-right" role="search" method="get" action="http://opencontext.dainst.org/sets">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Search" name="q" />
+            </div>
+            <button id="nav-search-button" type="submit" class="btn btn-default">
+              <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+            </button>
+          </form>
+        </div>
+      </nav>
+      <!-- hack to make it possible to see top of screen in small sizes -->
+      <div id="oc-hidden-bar">
+        <h3>Open Context</h3>
+      </div>
+
+      <script type="text/javascript">
+        <!--
+        style_for_size();
+        $(window).resize(function() {
+          style_for_size();
+        });
+
+        function style_for_size() {
+          // sets navigation bar style based on window size
+          var nav_dom = document.getElementById("oc-nav-bar");
+          var buffer_dom = document.getElementById("oc-hidden-bar");
+          var w_width = $(window).width();
+          var w_height = $(window).height();
+          var nav_width = $(nav_dom).width();
+          var nav_height = $(nav_dom).height();
+          if (nav_height < w_height * .25) {
+            nav_dom.className = "navbar navbar-inverse navbar-fixed-top";
+            buffer_dom.style.display = 'block';
+            buffer_dom.style.height = nav_height + 'px';
+            buffer_dom.style.width = nav_width + 'px';
+          } else {
+            nav_dom.className = "navbar navbar-inverse navbar-static-top";
+            buffer_dom.style.display = 'none';
+          }
+        }
+
+        -->
+      </script>
+
+      <div class="april-12 homepage container">
+        <div class="main-map">
+        </div>
+        <section class="welcome">
+          <h1>Welcome to Open Context</h1>
+          <h3 class="slogan">publishing research data on the web</h3>
+          <p>Get started / Services / Lorem Ipsum </p>
+
+        </section>
+        <section class="publish">
+          <img class="section-header-image" src="http://placehold.it/80x80" alt=" ">
+          <h2>Publish</h2>
+          <p>
+            Make your field documentation and data discoverable and searchable on the Web.
+          </p>
+          <h3>What can you publish?</h3>
+          <ul>
+            <li class="documents">
+              Documents, field notes, diaries
+            </li>
+            <li class="images">
+              Images and maps
+            </li>
+            <li class="vocabularies">
+              Vocabularies and typologies
+            </li>
+            <li class="artifact">
+              Artifact and ecofact data
+            </li>
+            <li class="identifiers">
+              Stable indentifiers for online and offline citation
+            </li>
+          </ul>
+        </section>
+        <section class="explore">
+          <img class="section-header-image" src="http://placehold.it/80x80" alt=" ">
+          <h2>Explore</h2>
+          <p>
+            Find artifact images for comparison, data for analysis. Learn how others describe their research.
+          </p>
+          <h3>What can I do?</h3>
+          <ul class="explore">
+            <li class="faceted-search">
+              Use faceted search for informed exploration
+            </li>
+            <li class="map">
+              See map-based visualization of data
+            </li>
+            <li class="pictures">
+              Browse pictures and comparative collections
+            </li>
+            <li class="download">
+              Download data tables to your desktop
+            </li>
+            <li class="discover">
+                Discover links and related resources across the web
+            </li>
+          </ul>
+
+        </section>
+        <section class="how-it-works">
+          <h2>How it works</h2>
+          <ul>
+            <li class="clean">
+              Open Context editors clean your data and organize your content
+            </li>
+            <li class="unique">
+              Every item receives a unique identifier that allows citation of individual items
+            </li>
+            <li class="doi">
+              Your data publication receives a DOI
+            </li>
+            <li class="linked">
+              Linked Open Data approaches tie your content to museum collections and other research data
+            </li>
+            <li class="reuse">
+              Creative Commons licenses facilitate reuse
+            </li>
+            <li class="cdl">
+              All Cpen Context data publications are preserved with the California Digital Library
+            </li>
+          </ul>
+
+          <a class="learn-more" href="">Learn more</a>
+        </section>
+
+        <section class="showcase">
+          <div class="showcase--text">
+            <h2>Showcase</h2>
+            <p>
+              Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
+          </div>
+        </section>
+        <section class="pricing">
+          <h2>Pricing</h2>
+          <p>
+            Open Context charges a one-time fee for data publishing services, including archiving with the California Digital Library.
+          </p>
+          <div class="pricing-table">
+
+            <ul>
+              <li>
+                <h4>Small project</h4>
+                <div class="price">
+                  $350
+                </div>
+                <p>
+                  Example: a short term-faunal contract
+                </p>
+                <ul class="fine-print">
+                  <li>
+                    1 year project
+                  </li>
+                  <li>
+                    1 author or specialist
+                  </li>
+                  <li>
+                    1 table
+                  </li>
+                  <li>
+                    1-10 <code>.pdf</code> or <code>.doc</code> files
+                  </li>
+                  <li>
+                    1-100 images
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <h4>Medium project</h4>
+                <div class="price">
+                  $1000
+                </div>
+                <p>
+                  Example: a ceramics database
+                </p>
+                <ul class="fine-print">
+                  <li>
+                    3 year project
+                  </li>
+                  <li>
+                    1 author or specialist
+                  </li>
+                  <li>
+                    2 tables
+                  </li>
+                  <li>
+                    1-10 <code>.pdf</code> or <code>.doc</code> files
+                  </li>
+                  <li>
+                    100-1000 images
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <h4>Large project</h4>
+                <div class="price">
+                  $5000
+                </div>
+                <p>
+                  Example: a multi-year excavation
+                </p>
+                <ul class="fine-print">
+                  <li>
+                    5 year project
+                  </li>
+                  <li>
+                    8 authors or specialists
+                  </li>
+                  <li>
+                    20 tables
+                  </li>
+                  <li>
+                    1-12 <code>.pdf</code> or <code>.doc</code> files
+                  </li>
+                  <li>
+                    1000-5000 images
+                  </li>
+                  <li>
+                    1-25 audio or video files
+                  </li>
+                  <li>
+                    5-10 GIS layers
+                  </li>
+                </ul>
+              </li>
+              <li>
+                <h4>Custom project</h4>
+                <div class="price">
+                  TBD
+                </div>
+                <p>
+                  Example: Custom API integration
+                </p>
+                <ul class="fine-print">
+                  <li>
+                    3 year project
+                  </li>
+                  <li>
+                    1 author or specialist
+                  </li>
+                  <li>
+                    2 tables
+                  </li>
+                  <li>
+                    1-10 <code>.pdf</code> or <code>.doc</code> files
+                  </li>
+                  <li>
+                    100-1000 images
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+          <a class="estimate" href="">Estimate your cost</a>
+        </section>
+      </div>
+
+      <div id="footer-upper" class="row">
+        <div class="col-sm-4 footer-cell">
+
+        </div>
+        <div class="col-sm-2 footer-cell">
+
+        </div>
+        <div class="col-sm-3 footer-cell">
+
+        </div>
+        <div class="col-sm-3 footer-cell">
+
+        </div>
+      </div>
+
+      <div id="footer-lower" class="row">
+        <div class="col-md-12">
+          Open Context is a publishing service maintained by the <a href="http://alexandriaarchive.org/" title="AAI- Open Context Host">Alexandria Archive Institute</a>, a 501(c)3 nonprofit organization. Open Context data is archived by the <a href="http://www.cdlib.org/"
+          title="CDL- Repository used by Open Context">California Digital Library</a>.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+
+</html>
