@@ -1,4 +1,30 @@
 $border-grey: #979797;
+$headline-blue: #0088CC;
+$subheader-grey: #2f2a2b;
+$paragraph-dark: #231f20;
+$inverted-text: #ffffff;
+$special-grey: #6d6371;
+
+%clearfix {
+  *zoom: 1;
+  &:before, &:after {
+    content: " ";
+    display: table;
+  }
+  &:after {
+    clear: both;
+  }
+}
+
+%button {
+  padding: 1em;
+  background-color: $headline-blue;
+  color: $inverted-text;
+  clear: both;
+  margin: 65px auto;
+  display: inline-block;
+  text-transform: uppercase;
+}
 
 /* Open Context Layout Main */
 @import url('http://fonts.googleapis.com/css?family=Open+Sans');
@@ -202,6 +228,7 @@ div.f-count {
 }
 
 .april-12 {
+
   * {
     box-sizing: border-box;
   }
@@ -210,14 +237,93 @@ div.f-count {
     border-bottom: 1px solid $border-grey;
     margin: 0;
     padding: 0;
+    text-align: center;
+    padding-top: 125px;
+    padding-left: 100px;
+    padding-right: 100px;
+  }
+
+  h1 {
+    font-size: 48px;
+    color: $headline-blue;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  section.welcome {
+    font-size: 24px;
+    h3.slogan {
+      font-style: italic;
+      font-family: "OpenSans-Italic", Helvetica, serif;
+      color: $special-grey;
+      margin: 32px auto;
+    }
   }
 
   section.publish {
     width: 50%;
+    float: left;
   }
 
   section.explore {
     width: 50%;
     float: right;
+  }
+
+  section.how-it-works {
+    clear: both;
+  }
+
+  ul {
+    list-style-type: none;
+    li {
+      height: 70px;
+      list-style-image: url('http://placehold.it/60x60');
+    }
+  }
+
+  section.pricing {
+    clear: both;
+    h2 {
+
+    }
+    p {
+
+    }
+    .pricing-table {
+      border: 1px solid red;
+      @extend clearfix;
+
+      ul {
+        border: 1px solid green;
+        width: 90%;
+        padding: 0;
+        margin: 0 auto;
+        text-align: center;
+
+        li {
+          vertical-align: top;
+          border: 1px solid $border-grey;
+          width: 20%;
+          margin: 1%;
+          list-style-image: none;
+          display: inline-block;
+
+        }
+        ul {
+          padding: 0;
+          margin: 0;
+          li {
+            width: 100%;
+            height: auto;
+            border: none;
+          }
+        }
+      }
+    }
+  }
+
+  a.estimate {
+    @extend %button;
   }
 }
