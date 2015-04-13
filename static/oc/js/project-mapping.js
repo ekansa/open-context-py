@@ -127,7 +127,7 @@ function project_map(json_url) {
 				style_obj.max_value = max_value;
 				style_obj.act_value = feature.count;
 				var hex_color = style_obj.generate_hex_color();
-				var radius = Math.round(30 * (feature.count / max_value), 0) + 5;
+				var radius = Math.round(20 * (feature.count / max_value), 0) + 5;
 				var markerOps = {
 					'radius': radius,
 					'fillColor': hex_color,
