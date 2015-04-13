@@ -4,6 +4,8 @@
 @import "typography";
 @import "shared";
 
+$breakpoint: 1000px;
+
 body {
   min-width: 320px;
   overflow-x: hidden;
@@ -202,8 +204,7 @@ div.f-count {
     clear: both;
   }
 
-$showcase-height: 500px;
-
+  $showcase-height: 500px;
   section.showcase {
     background-color: $mid-grey;
     color: white;
@@ -245,14 +246,24 @@ $showcase-height: 500px;
 
   section.pricing {
     clear: both;
-    h2 {
 
+    h4 {
+      text-transform: uppercase;
+      font-size: 16px;
     }
-    p {
 
-    }
     .pricing-table {
       @extend clearfix;
+
+      .price {
+        padding: 1em 0;
+        @media all and (max-width: $breakpoint) {
+          font-size: 26px;
+        }
+        font-size: 46px;
+        font-family: "OpenSans-Light", "Helvetica";
+        color: $special-grey;
+      }
 
       ul {
         padding: 0;
@@ -270,8 +281,9 @@ $showcase-height: 500px;
           height: auto;
         }
         ul {
-          padding: 0;
-          margin: 0;
+          border-top: 1px solid $border-grey;
+          padding: 1em 0;
+          margin: 1em 0;
           li {
             width: 100%;
             height: auto;
