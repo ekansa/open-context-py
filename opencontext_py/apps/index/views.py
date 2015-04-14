@@ -13,7 +13,7 @@ def index(request):
     new_view = False
     template = loader.get_template('index/view.html')
     if 'test' in request.GET:
-        template = loader.get_template('index/new-view.html')
+        template = loader.get_template('index/view-initial-minimal.html')
         new_view = True
     context = RequestContext(request,
                              {'base_url': base_url,

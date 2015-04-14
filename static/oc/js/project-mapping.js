@@ -2,9 +2,8 @@
  * Map projects from GeoJSON
  */
  
-function project_map(json_url) {
+function project_map(map_dom_id, json_url) {
 	
-	var map_dom_id = 'map';
 	var map_title_dom_id = 'map-title';
 	var map_title_suffix_dom_id = 'map-title-suffix';
 	var map_menu_dom_id = 'map-menu';
@@ -25,15 +24,15 @@ function project_map(json_url) {
 	map.color_list = false;
 	
 	var bounds = new L.LatLngBounds();
-	var mapboxPencil = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.pencil/{z}/{x}/{y}.png?access_token=' + map_box_token, {
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
-	});
 	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
+	var mapboxAlt = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.run-bike-hike/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	});
 	var baseMaps = {
-		"Pencil": mapboxPencil,
 		"Light": mapboxLight,
+		"Alternative": mapboxAlt
 	};
   
 	map._layersMaxZoom = 20;
