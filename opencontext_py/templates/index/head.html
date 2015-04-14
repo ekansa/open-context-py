@@ -5,10 +5,10 @@
 
     <link rel="stylesheet" href="{{ base_url }}/static/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ base_url }}/static/angularjs/abn_tree.css">
-    {% if new_view %}
-    <link rel="stylesheet" href="{{ base_url }}/static/oc/css/index/apr-12.css">
-    {%else%}
+    {% if old_view %}
     <link rel="stylesheet" href="{{ base_url }}/static/oc/css/general.css">
+    {%else%}
+    <link rel="stylesheet" href="{{ base_url }}/static/oc/css/index/apr-12.css">
     {%endif%}
     <script src="{{ base_url }}/static/jquery/jquery-1.11.1.min.js"></script>
     <script src="{{ base_url }}/static/jquery/jquery.cookie.js"></script>
