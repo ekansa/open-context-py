@@ -99,6 +99,7 @@ L.Control.ZoomBox = L.Control.extend({
                 url = replaceURLparameter(url, 'geodeep', new_zoom);
                 url = replaceURLparameter(url, 'disc-bbox', bbox_query);
                 //console.log(url);
+                map.show_region_loading();
                 window.location = url; //load the page with the zoom query
             }
         }, this);

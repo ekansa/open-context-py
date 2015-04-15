@@ -56,6 +56,7 @@ class ActiveFilters():
             else:
                 for param_val in param_vals:
                     i += 1
+                    remove_geodeep = False
                     act_filter = LastUpdatedOrderedDict()
                     act_filter['id'] = '#filter-' + str(i)
                     if self.hierarchy_delim in param_val:
@@ -104,9 +105,11 @@ class ActiveFilters():
                     elif param_key == 'disc-geotile':
                         act_filter['oc-api:filter'] = 'Location of discovery or observation'
                         act_filter['label'] = self.make_geotile_filter_label(all_vals[0])
+                        remove_geodeep = True
                     elif param_key == 'disc-bbox':
                         act_filter['oc-api:filter'] = 'Location of discovery or observation'
                         act_filter['label'] = self.make_bbox_filter_label(all_vals[0])
+                        remove_geodeep = True
                     elif param_key == 'images':
                         act_filter['oc-api:filter'] = 'Has related media'
                         act_filter['label'] = 'Linked to images'
@@ -164,6 +167,8 @@ class ActiveFilters():
                         rem_request = fl.make_request_sub(request_dict,
                                                           param_key,
                                                           param_val)
+                        if 'geodeep' in rem_request and remove_geodeep:
+                            rem_request.pop('geodeep', None)    
                         act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
                         act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
                         filters.append(act_filter)
