@@ -74,7 +74,7 @@ function search_map(json_url) {
 		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-	var mapboxPencil = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.pencil/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
 	
@@ -96,13 +96,12 @@ function search_map(json_url) {
 		"ESRI-Satellite": ESRISatelliteTiles,
 		"Google-Roads": gmapRoad,
 		"OpenStreetMap": osmTiles,
-		"Pencil": mapboxPencil,
-		"Dark": mapboxDark,
+		"Mapbox-Light": mapboxLight,
+		"Mapbox-Dark": mapboxDark,
 	};
   
 	map._layersMaxZoom = 20;
 	var layerControl = L.control.layers(baseMaps).addTo(map);
-	// console.log(layerControl);
 	map.addLayer(gmapSat);
 	
 	map.show_title_menu = function(map_type, geodeep){
@@ -136,7 +135,7 @@ function search_map(json_url) {
 		if (!region_controls) {	
 			var deep_tile_control = L.easyButton('glyphicon-th', 
 				function (){
-					var new_geodeep = map.geodeep + 1;
+					var new_geodeep = parseInt(map.geodeep) + 1;
 					if (new_geodeep <= map.max_tile_zoom) {
 						//can still zoom in
 						map.view_region_layer_by_zoom(new_geodeep);
@@ -153,6 +152,16 @@ function search_map(json_url) {
 					}
 				},
 				'Lower resolution Open Context regions'
+			);
+			var circle_control = L.easyButton('fa-circle-o', 
+				function (){
+					if (map.hasLayer(tile_region_layer)) {
+						// delete the currently displayed layer
+						map.removeLayer(tile_region_layer);
+					}
+					map.circle_regions();
+				},
+				'Circle-markers for Open Context regions'
 			);
 			deep_tile_control.link.id = 'tile-more-precision';
 			big_tile_control.link.id = 'tile-less-precision';
@@ -196,35 +205,21 @@ function search_map(json_url) {
 		/*
 		 * get a layer by zoom level
 		 */
+		if (map.hasLayer(circle_region_layer)) {
+			//delete the cicle if it exits
+			map.removeLayer(circle_region_layer);
+		}
+		if (map.hasLayer(tile_region_layer)) {
+			// delete the tile if it exits
+			map.removeLayer(tile_region_layer);
+		}
 		map.fit_bounds = true;
 		if (geodeep in map.geojson_facets) {
-			if (map.hasLayer(region_layers[map.geodeep])) {
-				// delete the currently displayed layer
-				map.removeLayer(region_layers[map.geodeep]);
-				delete region_layers[map.geodeep];
-			}
-			if (map.hasLayer(circle_layers[map.geodeep])) {
-				//code
-				map.removeLayer(circle_layers[map.geodeep]);
-				delete circle_layers[map.geodeep];
-			}
 			map.geodeep = geodeep;
 			map.render_region_layer();
 		}
 		else{
 			if (geodeep <= map.max_tile_zoom) {
-				//we can get higher-res mapping data
-				if (map.geodeep in region_layers) {
-					if (map.hasLayer(region_layers[map.geodeep])) {
-						map.removeLayer(region_layers[map.geodeep]);
-						delete region_layers[map.geodeep];
-					}
-					if (map.hasLayer(circle_layers[map.geodeep])) {
-						//code
-						map.removeLayer(circle_layers[map.geodeep]);
-						delete circle_layers[map.geodeep];
-					}
-				}
 				// go get new data
 				map.geodeep = geodeep;
 				map.get_geojson_regions();
@@ -232,7 +227,7 @@ function search_map(json_url) {
 		}
 	}
 	
-	var region_layers = {};
+	var tile_region_layer = false;
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
 		if (map.geodeep in map.geojson_facets) {
@@ -259,26 +254,27 @@ function search_map(json_url) {
 					}
 				}
 			}
+			var region_layer = false;
 			var region_layer = L.geoJson(geojson_facets,
-						{
-							     style: function(feature){
-									     // makes colors, opacity for each feature
-									     var style_obj = new numericStyle();
-									     style_obj.min_value = min_value;
-									     style_obj.max_value = max_value;
-									     style_obj.act_value = feature.count;
-									     var hex_color = style_obj.generate_hex_color();
-									     var fill_opacity = style_obj.generate_opacity();
-									     return {color: hex_color,
-											     fillOpacity: fill_opacity,
-											     weight: 2}
-									 },
-							     onEachFeature: on_each_region_feature
-								      });
-		     region_layer.geodeep = map.geodeep;
+				{
+					style: function(feature){
+							// makes colors, opacity for each feature
+							var style_obj = new numericStyle();
+							style_obj.min_value = min_value;
+							style_obj.max_value = max_value;
+							style_obj.act_value = feature.count;
+							var hex_color = style_obj.generate_hex_color();
+							var fill_opacity = style_obj.generate_opacity();
+							return {color: hex_color,
+									fillOpacity: fill_opacity,
+									weight: 2}
+						    },
+					onEachFeature: on_each_region_feature
+				});
+			region_layer.geodeep = map.geodeep;
 			region_layer.max_value = max_value;
 			region_layer.min_value = min_value;
-			region_layers[map.geodeep] = region_layer;
+			tile_region_layer = region_layer;
 			if (map.fit_bounds) {
 				//map.fit_bounds exists to set an inital attractive view
 				map.fitBounds(region_layer.getBounds());
@@ -308,14 +304,22 @@ function search_map(json_url) {
 			});
 		}
 		if (feature.properties) {
+			if (feature.properties['early bce/ce'] != feature.properties['late bce/ce']) {
+				var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+				date_range += " to " + style_bce_ce_year(feature.properties['late bce/ce']);
+			}
+			else{
+				var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+			}
+			
 			var popupContent = "<div> This discovery region has " + feature.count;
-			popupContent += " items";
+			popupContent += " items, with a date range of: " + date_range;
 
 			popupContent += ". ";
 			if(feature.properties.href){
 				var use_href = removeURLParameter(feature.properties.href, 'response');
 				use_href = removeURLParameter(use_href, 'geodeep');
-				var next_deep = map.geodeep + 5;
+				var next_deep = 5;
 				if (next_deep > 20) {
 					next_deep = 20;
 				}
@@ -325,15 +329,41 @@ function search_map(json_url) {
 			popupContent += "</div>";
 			layer.bindPopup(popupContent);
 		}
-		var newbounds = layer.getBounds();
-		bounds.extend(newbounds.getSouthWest());
-		bounds.extend(newbounds.getNorthEast());
+		
+		if (typeof layer._latlngs !== 'undefined') {
+			var newbounds = layer.getBounds();
+			bounds.extend(newbounds.getSouthWest());
+			bounds.extend(newbounds.getNorthEast());
+		}
 	}
 	
-	var circle_layers = {}
+	
+	function on_each_circle_feature(feature, layer){
+		
+		if (feature.properties) {
+			
+			var popupContent = "<div> This discovery region has " + feature.count;
+			popupContent += " items. ";
+			if(feature.properties.href){
+				var use_href = removeURLParameter(feature.properties.href, 'response');
+				use_href = removeURLParameter(use_href, 'geodeep');
+				var next_deep = 5;
+				if (next_deep > 20) {
+					next_deep = 20;
+				}
+				use_href += "&geodeep=" + next_deep;
+				popupContent += "<a href='" + use_href + "'>Click here</a> to filter by this region."
+			}
+			popupContent += "</div>";
+			layer.bindPopup(popupContent);
+		}
+	}
+	
+	var circle_region_layer = false;
 	map.circle_regions = function (){
 		// does the work of rendering a region facet layer
 		if (map.geodeep in map.geojson_facets) {
+			// var original_geojson = map.geojson_facets[map.geodeep];
 			var geojson_facets = map.geojson_facets[map.geodeep];
 			if ('oc-api:max-disc-tile-zoom' in geojson_facets) {
 				map.max_tile_zoom = geojson_facets['oc-api:max-disc-tile-zoom'];
@@ -423,10 +453,16 @@ function search_map(json_url) {
 				feature_points.push(point);
 			}
 			// now switch the polygon regions for points
-			geojson_facets.features = feature_points;
-			var circle_layer = L.geoJson(geojson_facets, {
+			pgeo_json = {'type': "FeatureCollection",
+			             'features': feature_points}
+			var circle_layer = L.geoJson(pgeo_json, {
+				onEachFeature: on_each_circle_feature,
 				pointToLayer: function (feature, latlng) {
 					var style_obj = new numericStyle();
+					color_list = ['#FFC600',
+						      '#FF6F00',
+						      '#FF1600'];
+					style_obj.reset_gradient_colors(color_list);
 					style_obj.min_value = min_value;
 					style_obj.max_value = max_value;
 					style_obj.act_value = feature.count;
@@ -443,7 +479,7 @@ function search_map(json_url) {
 					return L.circleMarker(latlng, markerOps);
 				}
 			});
-			circle_layers[map.geodeep] = circle_layer;
+			circle_region_layer = circle_layer;
 			if (map.fit_bounds) {
 				//map.fit_bounds exists to set an inital attractive view
 				map.fitBounds(circle_layer.getBounds());
@@ -452,7 +488,8 @@ function search_map(json_url) {
 			if (region_controls) {
 				map.toggle_tile_controls();
 			}
-			circle_layer.addTo(map);
+			// delete map.geojson_facets[map.geodeep];
+			// map.geojson_facets[map.geodeep] = original_geojson;
 		}
 	}
 	
@@ -501,6 +538,5 @@ function search_map(json_url) {
 		})
 	}
 
-	this.region_layers = region_layers;
 	this.map = map;
 }
