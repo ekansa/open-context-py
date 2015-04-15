@@ -127,7 +127,8 @@ class OCitem():
         """
         act_contain = Containment()
         self.assertions = Assertion.objects.filter(uuid=self.uuid) \
-                                           .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)
+                                           .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                    visibility__lt=1)
         return self.assertions
 
     def get_parent_contexts(self):
