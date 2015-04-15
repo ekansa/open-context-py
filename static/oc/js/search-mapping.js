@@ -132,7 +132,9 @@ function search_map(json_url) {
 		/*
 		* Add geo-regions (control)
 		*/
-		if (!region_controls) {	
+		if (!region_controls) {
+			var buttonControls = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+			buttonControls.id = 'region-facet-buttons';
 			var deep_tile_control = L.easyButton('glyphicon-th', 
 				function (){
 					var new_geodeep = parseInt(map.geodeep) + 1;
@@ -141,7 +143,8 @@ function search_map(json_url) {
 						map.view_region_layer_by_zoom(new_geodeep);
 					}
 				},
-				'Higher resolution Open Context regions'
+				'Higher resolution Open Context regions',
+				buttonControls
 			);
 			var big_tile_control = L.easyButton('glyphicon-th-large', 
 				function (){
@@ -151,7 +154,8 @@ function search_map(json_url) {
 						map.view_region_layer_by_zoom(new_geodeep);
 					}
 				},
-				'Lower resolution Open Context regions'
+				'Lower resolution Open Context regions',
+				buttonControls
 			);
 			var circle_control = L.easyButton('fa-circle-o', 
 				function (){
@@ -161,11 +165,17 @@ function search_map(json_url) {
 					}
 					map.circle_regions();
 				},
-				'Circle-markers for Open Context regions'
+				'Circle-markers for Open Context regions',
+				buttonControls
 			);
+			deep_tile_control.id = 'test-control';
 			deep_tile_control.link.id = 'tile-more-precision';
 			big_tile_control.link.id = 'tile-less-precision';
 			region_controls = true;
+			
+			//now add a box-zoom
+			var zoom_control = L.control.zoomBox({modal: true});
+			map.addControl(zoom_control);
 		}
 		else{
 			// toggle map controls based on map.geodeep
