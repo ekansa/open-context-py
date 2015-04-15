@@ -503,10 +503,7 @@ function search_map(json_url) {
 		}
 	}
 	
-	map.get_geojson_regions = function (){
-		/*
-		* Show current layer type
-		*/
+	map.show_region_loading = function (){
 		if (document.getElementById(map_title_dom_id)) {
 			// show the loading script
 			var act_dom_id = map_title_dom_id;
@@ -517,6 +514,12 @@ function search_map(json_url) {
 			var act_dom_id = map_title_suffix_dom_id;
 			document.getElementById(act_dom_id).innerHTML = "";
 		}
+	}
+	map.get_geojson_regions = function (){
+		/*
+		* Show current layer type
+		*/
+		map.show_region_loading();
 		//do the ajax request
 		$.ajax({
 			type: "GET",
