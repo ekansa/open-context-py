@@ -232,6 +232,14 @@ class ManifestGeneration():
             print('Item: ' + nslug.label + ' has slug: ' + nslug.slug)
             cc += 1
         return cc
+    
+    def redo_slugs_for_source_id(self, source_id):
+        """ makes slugs for manifest items from a given source """
+        man_objs = Manifest.objects.filter(source_id=source_id)
+        for man in man_objs:
+            # build up project_indices to avoid future database lookups
+            self.get_project_index(man.project_uuid)
+            man.slug_save(self.project_indices)
 
     def fix_blank_sorts(self):
         cc = 0
