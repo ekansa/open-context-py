@@ -155,8 +155,10 @@ class GeoJsonRegions():
         # print('Num tiles: ' + str(len(aggregate_tiles)))
         if len(aggregate_tiles) < 2:
             # only 1 tile, aggregate at a greater depth
-            aggregate_tiles = self.aggregate_spatial_tiles(solr_tiles,
-                                                           aggregation_depth + 3)
+            aggregation_depth += 3
+            if aggregation_depth <= self.max_depth:
+                aggregate_tiles = self.aggregate_spatial_tiles(solr_tiles,
+                                                               aggregation_depth)
         return aggregate_tiles
 
     def make_url_from_val_string(self,
