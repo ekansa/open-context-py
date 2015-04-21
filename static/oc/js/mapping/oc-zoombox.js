@@ -64,7 +64,7 @@ L.Control.ZoomBox = L.Control.extend({
             //console.log(map.boxZoom.b_points);
             if (typeof map.boxZoom.b_points !== 'undefined') {
                 // console.log(map.boxZoom);
-                var new_zoom = map.geodeep + map.getZoom();
+                var new_zoom = parseInt(map.geodeep) + map.getZoom();
                 for (var i = 0, length = map.boxZoom.b_points.length; i < length; i++) {
                     var act_point = map.boxZoom.b_points[i];
                     if (i == 0) {
