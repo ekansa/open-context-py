@@ -333,21 +333,32 @@ class QueryMaker():
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                             # get a facet on this field
                             if act_field_data_type != 'string':
-                                query_dict['facet.field'].append(field_parts['prefix'] + '___pred_' + field_parts['suffix'])
+                                ffield = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                                if ffield not in query_dict['facet.field'] \
+                                   and i >= (path_list_len - 1):
+                                    query_dict['facet.field'].append(ffield)
                         else:
                             if act_field_data_type == 'id':
                                 act_field_fq = 'obj_all___' + predicate_solr_slug \
                                                + '___pred_' + field_parts['suffix']
                                 # get a facet on this field
                                 if predicate_solr_slug != field_parts['prefix']:
-                                    query_dict['facet.field'].append(field_parts['prefix'] \
-                                                                     + '___' \
-                                                                     + predicate_solr_slug \
-                                                                     + '___pred_' + field_parts['suffix'])
+                                    # the predicate_solr_slug is not the
+                                    # prefix of the current field part, meaning
+                                    # the field_parts[prefix] is the type, and
+                                    # we want facets for the predicate -> type
+                                    ffield = field_parts['prefix'] \
+                                             + '___' \
+                                             + predicate_solr_slug \
+                                             + '___pred_' + field_parts['suffix']
                                 else:
-                                    query_dict['facet.field'].append(field_parts['prefix'] \
-                                                                     + '___pred_' \
-                                                                     + field_parts['suffix'])
+                                    # get facets for the predicate
+                                    ffield = field_parts['prefix'] \
+                                             + '___pred_' \
+                                             + field_parts['suffix']
+                                if ffield not in query_dict['facet.field'] \
+                                   and i >= (path_list_len - 1):
+                                    query_dict['facet.field'].append(ffield)
                             else:
                                 act_field_fq = predicate_solr_slug + '___pred_' + field_parts['suffix']
                         # -------------------------------------------

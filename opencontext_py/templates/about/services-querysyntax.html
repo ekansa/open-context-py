@@ -19,7 +19,7 @@
     <li><p>In the example above, Open Context has the object value <samp>eol-p-1642</samp> for "Mammalia" in a hierarchy of classifications. It automatically returns results that include mammals and all subordinate (more specific) taxa. You can further restrict the scope of your query to more specific taxa by appending a <samp>---</samp> delimiter after the <samp>eol-p-1642</samp> and then adding a slug for a more specific type of mammal. In the example below, the search returns all records described by the predicate "Has biological taxonomy" and values identified with <samp>eol-p-1642</samp> for "Mammalia" and "Carivora" (<samp>eol-p-7662</samp>):</p>
         <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662</a></samp></p>
     </li>
-    <li><p>You don't need to know the position of a concept in a hierarchy in order to search for it. The following query returns identical results for Carniores as the one above, but omits reference to Mammalia:</p>
+    <li><p>You don't need to know the position of a concept in a hierarchy in order to search for it. The following query returns identical results for Carnivores as the one above, but omits reference to Mammalia:</p>
         <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-7662</a></samp></p>
     </li>
     <li><p>Open Context uses double pipe characters ("<samp>||</samp>") for Boolean "OR" terms. The following example returns results described as either carnivore <samp>eol-p-7662</samp> or lagomorph (rabbits, hares) <samp>eol-p-7662</samp>:</p>
@@ -27,3 +27,41 @@
     </li>
 </ol>
 
+<br/>
+
+<h4>Specialized Queries</h4>
+<p>In addition to the general querying patterns discussed above, Open Context has some more specialized query options, as described below:</p>
+
+<table class="table">
+    <thead>
+        <th class="col-sm-3">Parameter</th>
+        <th class="col-sm-9">Definition and Examples</th>
+    </thead>
+    <tbody>
+        <tr>
+            <th>
+                <samp>disc-bbox</samp>
+            </th>
+            <td>
+                <p>This query parameter requests a filter defined by a geospatial bounding box for the location of discovery or description. The bounding box is expressed as comma sperated values of coordinates using the WGS84 (typical for Web mapping) decimal degrees. The order of coordinates follows the GeoJSON pattern of (x,y) (Longitude, Latitude). The first pair of coordinates defines the lower-left (south-west) corner of the bounding box, with the second pair of coordinates defines the top-right (north-east) corner. An invalid bounding box will be ignored as a search filter but will return a notice in the <samp>oc-api:active-filters</samp> of the JSON-LD response.</p>
+                <p>Bounding Box search examples include:</p>
+                <ol>
+                    <li>
+                        Filtering for a region in the south-east of the United States: <samp><a title="Search a bounding box" target="_blank" href="{{ base_url }}/sets/?geodeep=11&disc-bbox=-87.19%2C21.29%2C-73.48%2C34.60">-87.19 Longitude, 21.29 Latitude (south-west corner) to -73.48 Longitude, 34.60 Latidude (north-east corner)</a></samp>
+                    </li>
+                    <li>
+                        You can use the double pipe characters ("<samp>||</samp>") for Boolean "OR" searches of multiple regions, as in this example: <samp><a title="Search multiple bounding boxes" target="_blank" href="{{ base_url }}/sets/?geodeep=12&disc-bbox=31.37%2C34.31%2C35.42%2C35.96||31.86%2C35.89%2C34.53%2C36.97">31.37,C34.31,35.42,C35.96 (roughly Cyprus) OR 31.86,35.89,34.53,36.97 (roughly Cilicia in Turkey)</a></samp>
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                <samp>linked=dinaa-cross-ref</samp>
+            </th>
+            <td>
+                <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
+            </td>
+        </tr>
+    </tbody>
+</table>
