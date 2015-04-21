@@ -86,7 +86,8 @@ class LinkRecursion():
                     parent_id = oc_uuid
                 if(parent_id not in self.parent_entities):
                     self.parent_entities.append(parent_id)
-            self.parent_entities = self.get_entity_parents(parent_id)
+            if parent_id not in self.parent_entities:
+                self.parent_entities = self.get_entity_parents(parent_id)
         try:
             """
             Now look for superior entities in the subject, not the object
@@ -107,7 +108,8 @@ class LinkRecursion():
                     parent_id = oc_uuid
                 if(parent_id not in self.parent_entities):
                     self.parent_entities.append(parent_id)
-            self.parent_entities = self.get_entity_parents(parent_id)
+            if parent_id not in self.parent_entities:
+                self.parent_entities = self.get_entity_parents(parent_id)
         return self.parent_entities
 
     def get_entity_children(self, identifier, recurive=True):
