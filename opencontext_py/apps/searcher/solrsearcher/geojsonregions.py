@@ -36,28 +36,7 @@ class GeoJsonRegions():
             depth
         """
         # first aggregate counts for tile that belong togther
-        aggregate_tiles = {}
-        i = -1
-        t = 0
-        all_tile_lens = []
-        for tile_key in solr_tiles[::2]:
-            t += 1
-            i += 2
-            solr_facet_count = solr_tiles[i]
-            # to compute the main tile precision level
-            # for this filtered set of data
-            tile_key_len = len(tile_key)
-            if tile_key_len > 6:
-                all_tile_lens.append(tile_key_len)
-            trim_tile_key = tile_key[:self.aggregation_depth]
-            if trim_tile_key not in aggregate_tiles:
-                aggregate_tiles[trim_tile_key] = 0
-            aggregate_tiles[trim_tile_key] += solr_facet_count
-        if len(all_tile_lens) > 0:
-            # gets the average tile depth, so clients don't over-zoom
-            mean_tile_len = sum(all_tile_lens) / len(all_tile_lens)
-            # print(str(mean_tile_len))
-            self.max_tile_precision = round(mean_tile_len)
+        aggregate_tiles = self.aggregate_spatial_tiles(solr_tiles)
         # now generate GeoJSON for each tile region
         # print('Total tiles: ' + str(t) + ' reduced to ' + str(len(aggregate_tiles)))
         i = 0
@@ -139,6 +118,46 @@ class GeoJsonRegions():
                                                    ensure_ascii=False,
                                                    indent=4)
         return self.aggregation_depth
+
+    def aggregate_spatial_tiles(self, solr_tiles, aggregation_depth=False):
+        """ Aggregates tiles to a depth that gives multiple tiles, since single tile maps
+            are not very useful
+        """
+        if aggregation_depth is False:
+            aggregation_depth = self.aggregation_depth
+        aggregate_tiles = {}
+        i = -1
+        t = 0
+        all_tile_lens = []
+        for tile_key in solr_tiles[::2]:
+            t += 1
+            i += 2
+            solr_facet_count = solr_tiles[i]
+            # to compute the main tile precision level
+            # for this filtered set of data
+            if tile_key[:6] != '211111':
+                # a bit of a hack to exclude display of
+                # erroroneous data without spatial reference
+                tile_key_len = len(tile_key)
+                if tile_key_len > 6:
+                    all_tile_lens.append(tile_key_len)
+                trim_tile_key = tile_key[:aggregation_depth]
+                if trim_tile_key not in aggregate_tiles:
+                    aggregate_tiles[trim_tile_key] = 0
+                aggregate_tiles[trim_tile_key] += solr_facet_count
+        if len(all_tile_lens) > 0:
+            # gets the average tile depth, so clients don't over-zoom
+            mean_tile_len = sum(all_tile_lens) / len(all_tile_lens)
+            # print(str(mean_tile_len))
+            self.max_tile_precision = round(mean_tile_len)
+        if aggregation_depth != self.aggregation_depth:
+            self.aggregation_depth = aggregation_depth
+        # print('Num tiles: ' + str(len(aggregate_tiles)))
+        if len(aggregate_tiles) < 2:
+            # only 1 tile, aggregate at a greater depth
+            aggregate_tiles = self.aggregate_spatial_tiles(solr_tiles,
+                                                           aggregation_depth + 3)
+        return aggregate_tiles
 
     def make_url_from_val_string(self,
                                  partial_url,
