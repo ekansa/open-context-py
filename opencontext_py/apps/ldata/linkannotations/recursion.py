@@ -15,6 +15,7 @@ class LinkRecursion():
     def __init__(self):
         self.parent_entities = []
         self.child_entities = LastUpdatedOrderedDict()
+        self.loop_count = 0
 
     def get_jsonldish_entity_parents(self, identifier, add_original=True):
         """
@@ -55,25 +56,18 @@ class LinkRecursion():
         """
         Gets parent concepts for a given URI or UUID identified entity
         """
+        self.loop_count += 1
+        lequiv = LinkEquivalence()
+        identifiers = lequiv.get_identifier_list_variants(identifier)
         p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
+        preds_for_superobjs = lequiv.get_identifier_list_variants(p_for_superobjs)
         p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
-        alt_identifier_a = identifier
-        alt_identifier_b = identifier
-        # a little something to allow searches of either UUIDs or full URIs
-        if(':' in identifier):
-            alt_identifier_b = URImanagement.convert_prefix_to_full_uri(identifier)
-            if(len(identifier) > 8):
-                if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                    alt_identifier_a = URImanagement.get_uuid_from_oc_uri(identifier)
-                    if(alt_identifier_a is False):
-                        alt_identifier_a = identifier
-                    alt_identifier_b = URImanagement.prefix_common_uri(identifier)
+        preds_for_subobjs = lequiv.get_identifier_list_variants(p_for_subobjs)
         try:
             # look for superior items in the objects of the assertion
-            superobjs_anno = LinkAnnotation.objects.filter(Q(subject=identifier) |
-                                                           Q(subject=alt_identifier_a) |
-                                                           Q(subject=alt_identifier_b),
-                                                           predicate_uri__in=p_for_superobjs)[:1]
+            superobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
+                                                           predicate_uri__in=preds_for_superobjs)\
+                                                   .exclude(object_uri__in=identifiers)[:1]
             if(len(superobjs_anno) < 1):
                 superobjs_anno = False
         except LinkAnnotation.DoesNotExist:
@@ -86,16 +80,15 @@ class LinkRecursion():
                     parent_id = oc_uuid
                 if(parent_id not in self.parent_entities):
                     self.parent_entities.append(parent_id)
-            if parent_id not in self.parent_entities:
+            if self.loop_count <= 50:
                 self.parent_entities = self.get_entity_parents(parent_id)
         try:
             """
             Now look for superior entities in the subject, not the object
             """
-            supersubj_anno = LinkAnnotation.objects.filter(Q(object_uri=identifier) |
-                                                           Q(object_uri=alt_identifier_a) |
-                                                           Q(object_uri=alt_identifier_b),
-                                                           predicate_uri__in=p_for_subobjs)[:1]
+            supersubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
+                                                           predicate_uri__in=preds_for_subobjs)\
+                                                   .exclude(subject__in=identifiers)[:1]
             if(len(supersubj_anno) < 1):
                 supersubj_anno = False
         except LinkAnnotation.DoesNotExist:
@@ -108,7 +101,7 @@ class LinkRecursion():
                     parent_id = oc_uuid
                 if(parent_id not in self.parent_entities):
                     self.parent_entities.append(parent_id)
-            if parent_id not in self.parent_entities:
+            if self.loop_count <= 50:
                 self.parent_entities = self.get_entity_parents(parent_id)
         return self.parent_entities
 
