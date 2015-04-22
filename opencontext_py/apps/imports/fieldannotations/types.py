@@ -129,7 +129,8 @@ class ProcessTypes():
                                                   row_num=row)[:1]
                 if len(obj_type_list) > 0:
                     obj_type_text = obj_type_list[0].record
-                    if len(obj_type_text) > 0:
+                    if len(obj_type_text) > 0 \
+                       and sub_type_text != obj_type_text:
                         tmo = TypeManagement()
                         tmo.project_uuid = self.project_uuid
                         tmo.source_id = self.source_id
