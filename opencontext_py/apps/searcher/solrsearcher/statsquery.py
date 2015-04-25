@@ -41,31 +41,33 @@ class StatsQuery():
                     qm = QueryMaker()
                     groups = qm.histogram_groups
                     for solr_field_key, stats in solr_json['stats']['stats_fields'].items():
-                        if solr_field_key not in query['facet.range']:
-                            query['facet.range'].append(solr_field_key)
-                        if solr_field_key not in query['stats.field']:
-                            query['stats.field'].append(solr_field_key)
-                        fstart = 'f.' + solr_field_key + '.facet.range.start'
-                        fend = 'f.' + solr_field_key + '.facet.range.end'
-                        fgap = 'f.' + solr_field_key + '.facet.range.gap'
-                        findex = 'f.' + solr_field_key + '.facet.sort'
-                        fother = 'f.' + solr_field_key + '.facet.range.other'
-                        finclude = 'f.' + solr_field_key + '.facet.range.include'
-                        query[fother] = 'all'
-                        query[finclude] = 'all'
-                        if (stats['count'] / qm.histogram_groups) < 3:
-                            groups = 4
-                        if '___pred_date' in solr_field_key:
-                            query[fstart] = qm.convert_date_to_solr_date(stats['min'])
-                            query[fend] = qm.convert_date_to_solr_date(stats['max'])
-                            query[fgap] = qm.get_date_difference_for_solr(stats['min'], stats['max'], groups)
-                            query[findex] = 'index'  # sort by index, not by count
-                        else:
-                            query[fstart] = stats['min']
-                            query[fend] = stats['max']
-                            query[fgap] = ((stats['max'] - stats['min']) / groups)
-                            # query[fgap] = ((stats['max'] - stats['min']) / groups) - ((stats['max'] - stats['min']) / groups) * .01
-                            query[findex] = 'index'  # sort by index, not by count
+                        if stats is not None:
+                            if solr_field_key not in query['facet.range']:
+                                query['facet.range'].append(solr_field_key)
+                            if solr_field_key not in query['stats.field']:
+                                query['stats.field'].append(solr_field_key)
+                            fstart = 'f.' + solr_field_key + '.facet.range.start'
+                            fend = 'f.' + solr_field_key + '.facet.range.end'
+                            fgap = 'f.' + solr_field_key + '.facet.range.gap'
+                            findex = 'f.' + solr_field_key + '.facet.sort'
+                            fother = 'f.' + solr_field_key + '.facet.range.other'
+                            finclude = 'f.' + solr_field_key + '.facet.range.include'
+                            query[fother] = 'all'
+                            query[finclude] = 'all'
+                            if 'count' in stats:
+                                if (stats['count'] / qm.histogram_groups) < 3:
+                                    groups = 4
+                            if '___pred_date' in solr_field_key:
+                                query[fstart] = qm.convert_date_to_solr_date(stats['min'])
+                                query[fend] = qm.convert_date_to_solr_date(stats['max'])
+                                query[fgap] = qm.get_date_difference_for_solr(stats['min'], stats['max'], groups)
+                                query[findex] = 'index'  # sort by index, not by count
+                            else:
+                                query[fstart] = stats['min']
+                                query[fend] = stats['max']
+                                query[fgap] = ((stats['max'] - stats['min']) / groups)
+                                # query[fgap] = ((stats['max'] - stats['min']) / groups) - ((stats['max'] - stats['min']) / groups) * .01
+                                query[findex] = 'index'  # sort by index, not by count
         return query
 
     def compose_query(self):
