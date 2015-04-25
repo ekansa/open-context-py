@@ -1,0 +1,51 @@
+{% block predicategraph %}
+        <style type="text/css">
+        .chart .legend {
+            fill: black;
+            font: 14px sans-serif;
+            text-anchor: start;
+            font-size: 12px;
+          }
+          
+          .chart text {
+            fill: white;
+            font: 10px sans-serif;
+            text-anchor: end;
+          }
+          
+          .chart .label {
+            fill: black;
+            font: 14px sans-serif;
+            text-anchor: end;
+          }
+          
+          .bar:hover {
+            fill: brown;
+          }
+          
+          .axis path,
+          .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+          }
+
+    </style>
+    <svg class="chart"></svg>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="{{ base_url}}/static/oc/js/datavis/predicates.js"></script>
+    
+    <div id="predicate-graph">
+        
+    </div>
+    <script type="text/javascript">
+        <!--
+        var chart_dom_id = "predicate-graph";
+        var json_url = "{{ base_url}}{{ item.predicate_query_json}}";
+        var pbc = new predicate_bar_chart(chart_dom_id, json_url);
+        pbc.base_url = "{{ base_url}}";
+        pbc.get_json();
+        
+        -->
+    </script>
+{% endblock %}
