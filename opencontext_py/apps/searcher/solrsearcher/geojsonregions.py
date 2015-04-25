@@ -22,6 +22,7 @@ class GeoJsonRegions():
         # max precision of tiles in the current filtered set
         self.max_tile_precision = 0
         self.max_depth = 20
+        self.result_depth = self.aggregation_depth
         self.min_date = False
         self.max_date = False
         try:
@@ -117,6 +118,7 @@ class GeoJsonRegions():
         self.filter_request_dict_json = json.dumps(filter_request_dict,
                                                    ensure_ascii=False,
                                                    indent=4)
+        self.result_depth = self.aggregation_depth
         return self.aggregation_depth
 
     def aggregate_spatial_tiles(self, solr_tiles, aggregation_depth=False):
@@ -152,6 +154,7 @@ class GeoJsonRegions():
             self.max_tile_precision = round(mean_tile_len)
         if aggregation_depth != self.aggregation_depth:
             self.aggregation_depth = aggregation_depth
+            self.result_depth = self.aggregation_depth
         # print('Num tiles: ' + str(len(aggregate_tiles)))
         if len(aggregate_tiles) < 2:
             # only 1 tile, aggregate at a greater depth

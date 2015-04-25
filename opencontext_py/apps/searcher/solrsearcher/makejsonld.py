@@ -522,6 +522,7 @@ class MakeJsonLd():
             if len(geo_regions.geojson_regions) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
                 self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
+                self.json_ld['oc-api:response-tile-zoom'] = geo_regions.result_depth
                 self.json_ld['features'] = geo_regions.geojson_regions
 
     def make_project_geojson(self, solr_json):
