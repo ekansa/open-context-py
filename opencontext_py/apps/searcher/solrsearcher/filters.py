@@ -253,6 +253,8 @@ class ActiveFilters():
                     output['data-type'] = ent_solr_data_type
                 labels.append(f_entity.label)
                 output['entities'].append(f_entity)
+            else:
+                labels.append(val)
         output['label'] = ' OR '.join(labels)
         output['slug'] = '-or-'.join(vals)
         return output

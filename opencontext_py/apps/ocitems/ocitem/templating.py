@@ -22,6 +22,7 @@ class TemplateItem():
         self.label = False
         self.uuid = False
         self.id = False
+        self.slug = False
         self.item_category_label = False
         self.context = False
         self.children = False
@@ -43,6 +44,8 @@ class TemplateItem():
         self.edit_permitted = False
         self.check_edit_permitted = False
         self.contents_top = False
+        self.predicate_query_link = False # link for querying with a predicate
+        self.predicate_query_json = False # link for querying json with a predicate
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -54,6 +57,7 @@ class TemplateItem():
             self.act_nav = ent.item_type
         self.label = json_ld['label']
         self.id = json_ld['id']
+        self.slug = json_ld['slug']
         self.store_class_type_metadata(json_ld)
         self.create_project(json_ld)
         self.check_view_permission()
@@ -66,6 +70,7 @@ class TemplateItem():
         self.create_citation(json_ld)
         self.create_geo(json_ld)
         self.create_content(json_ld)
+        self.create_query_links(json_ld)
         self.check_contents_top()
 
     def create_context(self, json_ld):
@@ -308,6 +313,16 @@ class TemplateItem():
                     # make the contents the top
                     self.contents_top = True
 
+    def create_query_links(self, json_ld):
+        """ makes links for querying with the item
+        """
+        if self.act_nav == 'predicates':
+            self.predicate_query_link = '/sets/?prop=' + self.slug
+            self.predicate_query_json = '/sets/.json?prop=' + self.slug
+            if self.project is not False:
+                if self.project.slug is not False:
+                    self.predicate_query_link += '&proj=' + self.project.slug
+                    self.predicate_query_json += '&proj=' + self.project.slug
 
 class ItemMetadata():
     """ Class has some methods to add metadata to items """

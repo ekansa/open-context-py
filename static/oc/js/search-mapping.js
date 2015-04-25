@@ -524,11 +524,15 @@ function search_map(json_url) {
 		$.ajax({
 			type: "GET",
 			url: map.json_url,
+			async: false,
 			dataType: "json",
 			data: {
 				response: "geo-facet",
 				geodeep: map.geodeep},
 			success: function(data) {
+				if ('oc-api:response-tile-zoom' in data) {
+					map.geodeep = data['oc-api:response-tile-zoom'];
+				}
 				map.geojson_facets[map.geodeep] = data;
 				if (map.layer_limit == false) {
 					//code
