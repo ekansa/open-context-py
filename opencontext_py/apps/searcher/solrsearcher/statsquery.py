@@ -66,6 +66,8 @@ class StatsQuery():
                                 query[fstart] = stats['min']
                                 query[fend] = stats['max']
                                 query[fgap] = ((stats['max'] - stats['min']) / groups)
+                                if query[fgap] > stats['mean']:
+                                    query[fgap] = stats['mean'] / 3;
                                 # query[fgap] = ((stats['max'] - stats['min']) / groups) - ((stats['max'] - stats['min']) / groups) * .01
                                 query[findex] = 'index'  # sort by index, not by count
         return query
