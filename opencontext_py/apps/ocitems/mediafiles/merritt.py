@@ -8,12 +8,12 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
-class ManageMediaFiles():
+class MerrittMediaFiles():
     """
     This class has useful methods for updating
     media files, particularly updating links
@@ -26,7 +26,7 @@ class ManageMediaFiles():
                           'oc-gen:fullfile': '/full'}
     
     def __init__(self):
-        self.updated_uuid_count = 0
+        self.updated_uuids = []
         self.updated_file_count = 0
     
     
@@ -38,38 +38,53 @@ class ManageMediaFiles():
         arks = StableIdentifer.objects\
                               .filter(project_uuid=project_uuid,
                                       item_type='media',
-                                      stable_type='ark')[:5]
+                                      stable_type='ark')
         for id_obj in arks:
             if 'ark:/' not in id_obj.stable_id:
                 ark_id = 'ark:/' + id_obj.stable_id
             else:
                 ark_id = id_obj.stable_id
-            media_files = self.get_item_media_files(ark_id,
-                                                    id_obj.uuid)
-            self.update_item_media_files(id_obj.uuid,
-                                         media_files)
+            self.update_item_media_files(ark_id,
+                                         id_obj.uuid)
     
-    def update_item_media_files(self, uuid, media_files):
+    def update_item_media_files(self, ark_id, uuid):
         """ updates media files associated with an item
         """
-        uuid_add = 0
-        if isinstance(media_files, list):
-            old_files = Mediafile.objects.filter(uuid=uuid)
-            for old_file in old_files:
-                if old_file.file_type in self.FILE_TYPE_MAPPINGS:
-                    type_pattern = urlquote(self.FILE_TYPE_MAPPINGS[old_file.file_type],
-                                            safe='')
-                    found_file = False
-                    for media_file in media_files:
-                        if type_pattern in media_file:
-                            found_file = media_file
-                            break
-                    if found_file is not False:
-                        uuid_add = 1
-                        self.updated_file_count += 1
-                        print('Found ' + old_file.file_type + ' in ' + found_file)
-        self.updated_uuid_count += uuid_add
-        
+        old_files = Mediafile.objects.filter(uuid=uuid)
+        for old_file in old_files:
+            media_files = None
+            if self.BASE_MERRITT not in old_file.file_uri:
+                # the file_uri is not in Merritt, so do update
+                # processes
+                if media_files is None:
+                    # a file_uri is not in Merritt, so go to
+                    # Merritt and get the files for this item
+                    media_files = self.get_item_media_files(ark_id,
+                                                            uuid)
+                if isinstance(media_files, list):
+                    # we have a list of media files from Merritt
+                    # so now check to update 
+                    if old_file.file_type in self.FILE_TYPE_MAPPINGS:
+                        type_pattern = urlquote(self.FILE_TYPE_MAPPINGS[old_file.file_type],
+                                                safe='')
+                        found_file = False
+                        for media_file in media_files:
+                            if type_pattern in media_file:
+                                found_file = media_file
+                                break
+                        if found_file is not False:
+                            if uuid not in self.updated_uuids:
+                                self.updated_uuids.append(uuid)
+                            self.updated_file_count += 1
+                            old_file.file_uri = found_file
+                            old_file.save()
+                            output = '\n\n'
+                            output += 'Saved file: ' + str(self.updated_file_count)
+                            output += ' of uuid: ' + str(len(self.updated_uuids))
+                            output += '\n'
+                            output += found_file
+                            print(output)
+
     def get_item_media_files(self, ark_id, uuid):
         """ Gets item resources from Merritt
             based on an ARK id
@@ -81,15 +96,51 @@ class ManageMediaFiles():
         if isinstance(objects, list):
             media_files = []
             avoid_content = [(merritt_url + '/0/system'),
+                             (merritt_url + '/0/system%2Fmrt-erc.txt'),
                              (merritt_url + '/0/producer%2Fmrt-erc.txt'),
+                             (urlquote(ark_id, safe='') + '/0/system'),
+                             (urlquote(ark_id, safe='') + '/0/producer%2Fmrt-erc.txt'),
                              urlquote(('opencontext.org/media/' + uuid), safe='')]
             for obj in objects:
                 ok = True
                 for avoid in avoid_content:
                     if avoid in obj:
+                        # the URI for the object in turtle is a system file
+                        # or is related to the media resource description
+                        # the URI is NOT a link to the actual binary file
                         ok = False
+                if ok and ':' in obj:
+                    """
+                    We've found the binary file, but now we have to manage some
+                    inconsistencies in Merritt's links to these files. To do so,
+                    we need to extract the file name part of the URI and compose
+                    a new URI that will be a long-term stable URL / URI.
+                    
+                    If the Merritt link has a port number indicated, then it is NOT
+                    stable and we need to make a stable link
+                    
+                    A port is in the file object URL, so manually compose a better URL
+                    """
+                    file_splitters = [(urlquote(ark_id, safe='') + '/0/'),
+                                      (urlquote(ark_id, safe='') + '/0%2F'),
+                                      (urlquote(ark_id, safe='') + '%2F0%2F'),
+                                      (urlquote(ark_id, safe='') + '%2F0/')]
+                    for splitter in file_splitters:
+                        if splitter in obj:
+                            obj_ex = obj.split(splitter)
+                            # compose a new obj uri based on the canonnical template
+                            # for a presistent URI in Merritt
+                            obj = merritt_url + '/0/' + obj_ex[1]
+                            break
                 if ok:
-                    media_files.append(obj)
+                    # now check that the obj uri actually works
+                    mm = ManageMediafiles()
+                    head_ok = mm.get_head_info(obj, True)
+                    if head_ok:
+                        # HTTP head request returned an OK or Redirect found status
+                        media_files.append(obj)
+                    else:
+                        print('Crap failed Header request for ' + obj)
         else:
             print('No resources for item')
         return media_files 

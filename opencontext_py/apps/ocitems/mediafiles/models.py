@@ -10,7 +10,7 @@ class Mediafile(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     file_type = models.CharField(max_length=50, db_index=True)
     mime_type_uri = models.CharField(max_length=200)
-    file_uri = models.CharField(max_length=200)
+    file_uri = models.CharField(max_length=300)
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
     updated = models.DateTimeField(auto_now=True)
 
@@ -51,7 +51,7 @@ class ManageMediafiles():
         self.mime_type_uri = False
         self.filesize = False
 
-    def get_head_info(self, file_uri):
+    def get_head_info(self, file_uri, redirect_ok=False):
         output = False
         r = requests.head(file_uri)
         if(r.status_code == requests.codes.ok):
@@ -62,7 +62,9 @@ class ManageMediafiles():
                 self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
                 self.genfile_type = self.mime_to_general_file_type(self.genfile_type)
                 output = True
-
+        elif redirect_ok:
+            if r.status_code >= 300 and r.status_code <= 310:
+                output = True
         return output
 
     def raw_to_mimetype_uri(self, raw_mime_type):
