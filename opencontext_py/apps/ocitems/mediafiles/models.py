@@ -10,7 +10,7 @@ class Mediafile(models.Model):
     source_id = models.CharField(max_length=50, db_index=True)
     file_type = models.CharField(max_length=50, db_index=True)
     mime_type_uri = models.CharField(max_length=200)
-    file_uri = models.CharField(max_length=300)
+    file_uri = models.CharField(max_length=400)
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
     updated = models.DateTimeField(auto_now=True)
 
