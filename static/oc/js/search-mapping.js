@@ -11,9 +11,6 @@ var polyStyle = {
 function search_map(json_url) {
 	
 	var map_dom_id = 'map';
-	var map_title_dom_id = 'map-title';
-	var map_title_suffix_dom_id = 'map-title-suffix';
-	var map_menu_dom_id = 'map-menu';
 	var geodeep = 6; // default geo-facet tile depth
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
@@ -52,6 +49,9 @@ function search_map(json_url) {
 	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
+	map.map_title_dom_id = 'map-title';
+	map.map_title_suffix_dom_id = 'map-title-suffix';
+	map.map_menu_dom_id = 'map-menu';
 	map.json_url = this.json_url
 	map.geodeep = geodeep;
 	map.rows = rows;
@@ -60,6 +60,7 @@ function search_map(json_url) {
 	map.max_tile_zoom = 20;
 	map.default_layer = 'tile';
 	map.layer_limit = false;
+	map.button_ready = true;
 	map.min_tile_count_display = 200;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
 	map.geojson_records = {}; //geojson data for records, start as key
@@ -108,14 +109,14 @@ function search_map(json_url) {
 		/*
 		* Show current layer type
 		*/
-		if (document.getElementById(map_title_dom_id)) {
+		if (document.getElementById(map.map_title_dom_id)) {
 			//if the map title element exits
-			var act_dom_id = map_title_dom_id;
+			var act_dom_id = map.map_title_dom_id;
 			var title = document.getElementById(act_dom_id);
-			var act_dom_id = map_title_suffix_dom_id;
+			var act_dom_id = map.map_title_suffix_dom_id;
 			var title_suf = document.getElementById(act_dom_id);
 			title_suf.innerHTML = "";
-			var act_dom_id = map_menu_dom_id;
+			var act_dom_id = map.map_menu_dom_id;
 			var menu = document.getElementById(act_dom_id);
 			
 			/*
@@ -229,7 +230,7 @@ function search_map(json_url) {
 			map.render_region_layer();
 		}
 		else{
-			if (geodeep <= map.max_tile_zoom) {
+			if (geodeep <= map.max_tile_zoom && map.button_ready) {
 				// go get new data
 				map.geodeep = geodeep;
 				map.get_geojson_regions();
@@ -294,6 +295,7 @@ function search_map(json_url) {
 				map.toggle_tile_controls();
 			}
 		}
+		map.button_ready = true;
 	}
 	
 	function on_each_region_feature(feature, layer){
@@ -501,17 +503,19 @@ function search_map(json_url) {
 			// delete map.geojson_facets[map.geodeep];
 			// map.geojson_facets[map.geodeep] = original_geojson;
 		}
+		map.button_ready = true;
 	}
 	
 	map.show_region_loading = function (){
-		if (document.getElementById(map_title_dom_id)) {
+		if (document.getElementById(map.map_title_dom_id)) {
 			// show the loading script
-			var act_dom_id = map_title_dom_id;
+			map.button_ready = false;
+			var act_dom_id = map.map_title_dom_id;
 			var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
 			loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
 			loading += " Loading Regions...";
-			document.getElementById(act_dom_id).innerHTML =loading;
-			var act_dom_id = map_title_suffix_dom_id;
+			document.getElementById(act_dom_id).innerHTML = loading;
+			var act_dom_id = map.map_title_suffix_dom_id;
 			document.getElementById(act_dom_id).innerHTML = "";
 		}
 	}
@@ -524,12 +528,13 @@ function search_map(json_url) {
 		$.ajax({
 			type: "GET",
 			url: map.json_url,
-			async: false,
+			async: true,
 			dataType: "json",
 			data: {
 				response: "geo-facet",
 				geodeep: map.geodeep},
 			success: function(data) {
+				map.show_region_loading();
 				if ('oc-api:response-tile-zoom' in data) {
 					map.geodeep = data['oc-api:response-tile-zoom'];
 				}
