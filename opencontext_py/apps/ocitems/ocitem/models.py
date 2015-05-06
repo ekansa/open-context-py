@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from opencontext_py.libs.isoyears import ISOyears
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -51,10 +51,6 @@ class OCitem():
     PREDICATES_OCGEN_OBSLABEL = 'label'
     PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
-    DC_META_PREDS = ['dc-terms:subject',
-                     'dc-terms:spatial',
-                     'dc-terms:coverage',
-                     'dc-terms:isReferencedBy']
 
     def __init__(self):
         self.time_start = time.time()
@@ -81,6 +77,8 @@ class OCitem():
         self.table = False
         self.predicate = False
         self.octype = False
+        dc_terms_obj = DCterms()
+        self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
 
     def get_item(self, act_identifier, try_slug=False):
         """

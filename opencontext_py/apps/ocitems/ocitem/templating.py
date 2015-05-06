@@ -2,7 +2,7 @@ import json
 import copy
 import datetime
 from django.conf import settings
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -909,10 +909,6 @@ class LinkedData():
                            'owl:sameAs',
                            'skos:related',
                            'skos:broader']
-    ITEM_DC_METADATA_PREDICATES = ['dc-terms:subject',
-                                   'dc-terms:spatial',
-                                   'dc-terms:coverage',
-                                   'dc-terms:isReferencedBy']
 
     def __init__(self):
         self.linked_predicates = False
@@ -922,6 +918,8 @@ class LinkedData():
         self.item_dc_metadata = []  # dublin-core annotations on the main entity of the JSON-LD
         self.measurement_meta = {}  # measurement metadata for predicates
         self.project = False
+        dc_terms_obj = DCterms()
+        self.ITEM_DC_METADATA_PREDICATES = dc_terms_obj.get_dc_terms_list()
 
     def make_linked_data(self, json_ld):
         """ Makes a list of linked data annotations that have unique combinations of predicates and objects

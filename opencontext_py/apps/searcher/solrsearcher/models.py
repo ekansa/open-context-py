@@ -3,7 +3,7 @@ import json
 from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.specialized import SpecialSearches
@@ -165,10 +165,8 @@ class SolrSearch():
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']
         # Dublin-Core terms
-        dc_params = ['dc-subject',
-                     'dc-spatial',
-                     'dc-coverage',
-                     'dc-isReferencedBy']
+        dc_terms_obj = DCterms()
+        dc_params = dc_terms_obj.get_dc_params_list()
         for dc_param in dc_params:
             dc_terms = self.get_request_param(request_dict,
                                               dc_param,
