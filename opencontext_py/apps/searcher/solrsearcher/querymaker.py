@@ -3,6 +3,7 @@ import datetime
 import itertools
 import django.utils.http as http
 from django.http import Http404
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
@@ -188,12 +189,8 @@ class QueryMaker():
         query_dict = {'fq': [],
                       'facet.field': []}
         fq_terms = []
-        dc_meta_fields = {'dc-subject': 'dc_terms_subject___pred_id',
-                          'dc-spatial': 'dc_terms_spatial___pred_id',
-                          'dc-coverage': 'dc_terms_coverage___pred_id',
-                          'dc-isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
-        if dc_param in dc_meta_fields:
-            fq_field = dc_meta_fields[dc_param]
+        if dc_param in DCterms.DC_META_FIELDS:
+            fq_field = DCterms.DC_META_FIELDS[dc_param]
             if fq_field not in query_dict['facet.field'] and add_facet:
                 query_dict['facet.field'].append(fq_field)
             for raw_dc_term in dc_terms:

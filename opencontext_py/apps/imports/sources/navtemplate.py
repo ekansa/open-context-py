@@ -103,7 +103,13 @@ class ImportNavigation():
                 act_index = i
             i += 1
         navs = []
+        # print('source-id: ' + str(self.source_id))
         for act_nav in self.SOURCE_NAVS:
+            if 'ref:' in act_nav['url']:
+                url_ex = act_nav['url'].split('/')
+                if 'ref:' in url_ex[-1]:
+                    url_ex[-1] = ''
+                act_nav['url'] = '/'.join(url_ex)
             if self.source_id is False:
                 act_nav['class'] = 'disabled'
             else:

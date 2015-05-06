@@ -23,6 +23,7 @@ class Entity():
         self.slug = False
         self.label = False
         self.item_type = False
+        self.project_uuid = False
         self.class_uri = False
         self.entity_type = False
         self.data_type = False
@@ -98,6 +99,7 @@ class Entity():
                 self.label = manifest_item.label
                 self.item_type = manifest_item.item_type
                 self.class_uri = manifest_item.class_uri
+                self.project_uuid = manifest_item.project_uuid
                 if(manifest_item.item_type == 'media' and self.get_thumbnail):
                     # a media item. get information about its thumbnail.
                     try:

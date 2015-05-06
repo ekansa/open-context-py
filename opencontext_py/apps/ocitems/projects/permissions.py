@@ -20,21 +20,22 @@ class ProjectPermissions():
                        .filter(uuid=self.project_uuid)[:1]
         if len(projs) > 0:
             proj = projs[0]
-            if proj.view_group_id <= 0:
-                output = True
-            else:
-                print('Project view permission in group: ' + str(proj.view_group_id))
-                if request.user.is_authenticated():
-                    if request.user.is_superuser:
-                        # super users are super!
-                        output = True
-                    else:
-                        # check to see if the user is in a view_group
-                        output = request.user.groups\
-                                        .filter(Q(id=proj.view_group_id) | Q(id=proj.edit_group_id))\
-                                        .exists()
+            if proj.view_group_id is not None:
+                if proj.view_group_id <= 0:
+                    output = True
                 else:
-                    output = False
+                    print('Project view permission in group: ' + str(proj.view_group_id))
+                    if request.user.is_authenticated():
+                        if request.user.is_superuser:
+                            # super users are super!
+                            output = True
+                        else:
+                            # check to see if the user is in a view_group
+                            output = request.user.groups\
+                                            .filter(Q(id=proj.view_group_id) | Q(id=proj.edit_group_id))\
+                                            .exists()
+                    else:
+                        output = False
         return output
 
     def edit_allowed(self, request):
