@@ -73,6 +73,8 @@ class SolrReIndex():
                 if self.project_uuids is not False:
                     if not isinstance(self.project_uuids, list):
                         project_uuids = [self.project_uuids]
+                    else:
+                        project_uuids = self.project_uuids
                     anno_list = LinkAnnotation.objects\
                                               .filter(project_uuid__in=project_uuids,
                                                       updated__gte=self.annotated_after)
