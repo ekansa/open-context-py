@@ -68,9 +68,8 @@ class SolrSearch():
     def compose_query(self, request_dict):
         """ composes the search query based on the request_dict """
         qm = QueryMaker()
+        child_context_join = False # do a JOIN to include children in results
         query = {}
-        # TODO field list (fl)
-        #query['fl'] = ['uuid', 'label']
         query['facet'] = 'true'
         query['facet.mincount'] = 1
         query['rows'] = self.rows
@@ -176,6 +175,8 @@ class SolrSearch():
                 dc_query = qm.process_dc_term(dc_param, dc_terms)
                 query['fq'] += dc_query['fq']
                 query['facet.field'] += dc_query['facet.field']
+                if dc_param == 'dc-temporal':
+                    child_context_join = True
         # item-types
         item_type = self.get_request_param(request_dict,
                                            'type',
@@ -317,6 +318,16 @@ class SolrSearch():
             query = statsq.add_stats_ranges_from_solr(query)
         # Now set aside entities used as search filters
         self.gather_entities(qm.entities)
+        if child_context_join:
+            all_fq = False
+            for fq in query['fq']:
+                if all_fq is False:
+                    all_fq = '(' + fq + ')'
+                else:
+                    all_fq += ' AND (' + fq + ')'
+            all_fq = '(' + all_fq + ')'
+            joined_fq = '{!join from=slug_type_uri_label to=obj_all___context_id}' + all_fq 
+            query['fq'] = all_fq + ' OR _query_:"' + joined_fq + '"' 
         return query
 
     def remove_from_default_facet_fields(self, field):
