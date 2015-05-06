@@ -14,77 +14,97 @@ class PeriodoLink():
     def __init__(self):
         self.periodo_data = False
         self.db_uris = [] # list of entities already in the database
+        self.source_id = 'PeriodO'
+
+    def add_period_coverage(self, uuid, period_uri):
+        """ Adds an periodo uri annotation to an item
+        """
+        po_api = PeriodoAPI()
+        if not isinstance(self.periodo_data, dict):
+            po_api.get_periodo_data()
+            self.periodo_data = po_api.periodo_data
+        else:
+            po_api.periodo_data = self.periodo_data
+        if isinstance(po_api.periodo_data, dict):
+            period = po_api.get_period_by_uri(period_uri)
+            if isinstance(period, dict):
+                # we found the period, now check the UUID
+                # is found
+                entity = Entity()
+                found = entity.dereference(uuid)
+                if found:
+                    pass
 
     def get_relate_oc_periods(self):
         """ Gets period-o data, checks for references to open context
             then updates link annotations with references
         """
+        self.delete_periodo_annotations()
         self.check_add_periodo_vocab()
         po_api = PeriodoAPI()
         po_api.get_periodo_data()
+        self.periodo_data = po_api.periodo_data
         oc_refs = po_api.get_oc_periods()
         if isinstance(oc_refs, list):
-            for oc_ref in oc_refs:
+            for p_ref in oc_refs:
                 # make an annotation if item is in Open Context
-                ok = self.add_period_annoation(oc_ref)
+                ok = self.add_period_annoation(p_ref)
                 if ok:
                     # create the period collection, if new
-                    self.check_add_period_collection(oc_ref)
+                    self.check_add_period_collection(p_ref)
                     # create the period, if new
-                    self.check_add_period(oc_ref)
+                    self.check_add_period(p_ref)
                 
-    def add_period_annoation(self, oc_ref):
+    def add_period_annoation(self, p_ref):
         """ adds a period annotation """
         entity = Entity()
-        found = entity.dereference(oc_ref['oc-uri'])
+        found = entity.dereference(p_ref['oc-uri'])
         if found:
             new_la = LinkAnnotation()
             new_la.subject = entity.uuid
             new_la.subject_type = entity.item_type
             new_la.project_uuid = entity.project_uuid
-            new_la.source_id = 'PeriodO'
-            new_la.predicate_uri = 'skos:closeMatch'
-            new_la.object_uri = oc_ref['period_uri']
+            new_la.source_id = self.source_id
+            new_la.predicate_uri = 'dc-terms:isReferencedBy'
+            new_la.object_uri = p_ref['period-meta']['uri']
             new_la.creator_uuid = ''
             new_la.save()
         return found
     
-    
-    def check_add_period(self, oc_ref):
+    def check_add_period(self, p_ref):
         """ Checks to see if a period collection is in
             the database, adds it if needed
         """
-        if not oc_ref['period_uri'] in self.db_uris:
+        if not p_ref['period-meta']['uri'] in self.db_uris:
             # not in memory for being in the database
-            lev = LinkEntity.objects.filter(uri=oc_ref['period_uri'])[:1]
+            lev = LinkEntity.objects.filter(uri=p_ref['period-meta']['uri'])[:1]
             if len(lev) < 1:
                 le = LinkEntity()
-                le.uri = oc_ref['period_uri']
-                le.label = oc_ref['period_label']
-                le.alt_label = oc_ref['period_label']
-                le.vocab_uri = oc_ref['collection_uri']
+                le.uri = p_ref['period-meta']['uri']
+                le.label = p_ref['period-meta']['label']
+                le.alt_label = p_ref['period-meta']['label']
+                le.vocab_uri = p_ref['collection']['uri']
                 le.ent_type = 'class'
                 le.save()
-            self.db_uris.append(oc_ref['period_uri'])
+            self.db_uris.append(p_ref['period-meta']['uri'])
             
-    def check_add_period_collection(self, oc_ref):
+    def check_add_period_collection(self, p_ref):
         """ Checks to see if a period collection is in
             the database, adds it if needed
         """
-        if not oc_ref['collection_uri'] in self.db_uris:
+        if not p_ref['collection']['uri'] in self.db_uris:
             # not in memory for being in the database
-            lev = LinkEntity.objects.filter(uri=oc_ref['collection_uri'])[:1]
+            lev = LinkEntity.objects.filter(uri=p_ref['collection']['uri'])[:1]
             if len(lev) < 1:
                 le = LinkEntity()
-                le.uri = oc_ref['collection_uri']
-                le.label = 'PeriodO Collection: ' + oc_ref['collection_label']
-                le.alt_label = 'PeriodO (http://perio.do): ' + oc_ref['collection_label']
+                le.uri = p_ref['collection']['uri']
+                le.label = 'PeriodO Collection: ' + p_ref['collection']['label']
+                le.alt_label = 'PeriodO (http://perio.do): ' + p_ref['collection']['label']
                 le.vocab_uri = self.PERIODO_VOCAB_URI
                 le.ent_type = 'vocabulary'
                 le.save()
-            self.db_uris.append(oc_ref['collection_uri'])
-        
-    
+            self.db_uris.append(p_ref['collection']['uri'])
+
     def check_add_periodo_vocab(self):
         """ Adds the periodo vocabulary if it doesn't exist yet
         """
@@ -97,3 +117,10 @@ class PeriodoLink():
             le.vocab_uri = self.PERIODO_VOCAB_URI
             le.ent_type = 'vocabulary'
             le.save()
+    
+    def delete_periodo_annotations(self):
+        """ deletes period0 annoations """
+        delete = LinkAnnotation.objects\
+                               .filter(source_id=self.source_id)\
+                               .delete()
+        
