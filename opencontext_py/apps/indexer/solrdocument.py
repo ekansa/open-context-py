@@ -29,6 +29,7 @@ class SolrDocument:
                            'n2t.net/ark:/',
                            'orcid.org']
 
+    ALL_CONTEXT_SOLR = 'obj_all___context_id'
     ROOT_CONTEXT_SOLR = 'root___context_id'
     ROOT_PREDICATE_SOLR = 'root___pred_id'
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
@@ -313,15 +314,20 @@ class SolrDocument:
 
     def _process_context_path(self):
         if self.context_path is not None:
+            self.fields[self.ALL_CONTEXT_SOLR] = []
             for index, context in enumerate(self.context_path):
                 # treat the root in its own special way
+                context_item = \
+                    self._concat_solr_string_value(
+                        self.context_path[index]['slug'],
+                        'id',
+                        self.context_path[index]['id'].split('http://opencontext.org')[1],
+                        self.context_path[index]['label'])
+                if context_item not in self.fields[self.ALL_CONTEXT_SOLR]:
+                    # so we have a list of all the contexts for a given item
+                    self.fields[self.ALL_CONTEXT_SOLR].append(context_item)
                 if index == 0:
-                        self.fields[self.ROOT_CONTEXT_SOLR] = \
-                            self._concat_solr_string_value(
-                                self.context_path[0]['slug'],
-                                'id',
-                                self.context_path[0]['id'].split('http://opencontext.org')[1],
-                                self.context_path[0]['label'])
+                    self.fields[self.ROOT_CONTEXT_SOLR] = context_item
                 else:
                 # for others, get the parent slug and generate a
                 # dynamic field name
@@ -332,12 +338,7 @@ class SolrDocument:
                         solr_field_name
                         )
                     # add field name and values
-                    self.fields[solr_field_name] = \
-                        self._concat_solr_string_value(
-                            self.context_path[index]['slug'],
-                            'id',
-                            self.context_path[index]['id'].split('http://opencontext.org')[1],
-                            self.context_path[index]['label'])
+                    self.fields[solr_field_name] = context_item
 
     def _process_projects(self):
         """
