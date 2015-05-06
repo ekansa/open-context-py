@@ -31,6 +31,9 @@ class SolrReIndex():
         # if not false, use a Postgres SQL query to get a list of
         # UUIDs of items annotated after a certain date
         self.annotated_after = False
+        # if not false, then limit to items that have been indexed before
+        # this time
+        self.skip_indexed_after = False
         # if not True also get uuids for items that have an assertion
         # linking them to annotated items
         self.related_annotations = False
@@ -58,11 +61,25 @@ class SolrReIndex():
                    and '.json' in self.oc_url:
                     print('Get uuids from OC-API: ' + str(self.oc_url))
                     uuids = self.get_uuids_oc_url(self.oc_url)
-            elif isinstance(self.project_uuids, list) and self.annotated_after is False:
+            elif isinstance(self.project_uuids, list)\
+                 and self.annotated_after is False\
+                 and self.skip_indexed_after is False:
                 # now validate to make sure we're asking for uuids
                 uuids = []
                 raw_uuids = Manifest.objects\
                                     .filter(project_uuid__in=self.project_uuids)\
+                                    .values_list('uuid', flat=True)
+                for raw_uuid in raw_uuids:
+                    uuids.append(str(raw_uuid))
+            elif isinstance(self.project_uuids, list)\
+                 and self.annotated_after is False\
+                 and self.skip_indexed_after is not False:
+                # index items from projects, but not items indexed after a certain
+                # datetime
+                uuids = []
+                raw_uuids = Manifest.objects\
+                                    .filter(project_uuid__in=self.project_uuids)\
+                                    .exclude(indexed__gte=self.skip_indexed_after)\
                                     .values_list('uuid', flat=True)
                 for raw_uuid in raw_uuids:
                     uuids.append(str(raw_uuid))
