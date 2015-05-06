@@ -2,6 +2,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.periodo.api import PeriodoAPI
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 
 
@@ -10,6 +11,7 @@ class PeriodoLink():
         with PeriodO URIs
     """
     PERIODO_VOCAB_URI = 'http://n2t.net/ark:/99152/p0'
+    DC_PERIOD_PRED = 'dc-terms:temporal'
     
     def __init__(self):
         self.periodo_data = False
@@ -19,8 +21,10 @@ class PeriodoLink():
     def add_period_coverage(self, uuid, period_uri):
         """ Adds an periodo uri annotation to an item
         """
+        ok = False
         po_api = PeriodoAPI()
         if not isinstance(self.periodo_data, dict):
+            self.check_add_period_pred()
             po_api.get_periodo_data()
             self.periodo_data = po_api.periodo_data
         else:
@@ -33,7 +37,34 @@ class PeriodoLink():
                 entity = Entity()
                 found = entity.dereference(uuid)
                 if found:
-                    pass
+                    # save the period collection entity to database, if needed
+                    self.check_add_period_collection(period)
+                    # save the period entity to the database, if needed
+                    self.check_add_period(period)
+                    # check to make sure the annotation does not yet exist
+                    # do so by checking all possible varients in expressing
+                    # this annotation
+                    lequiv = LinkEquivalence()
+                    subjects = lequiv.get_identifier_list_variants(uuid)
+                    predicates = lequiv.get_identifier_list_variants(self.DC_PERIOD_PRED)
+                    objects = lequiv.get_identifier_list_variants(period['period-meta']['uri'])
+                    la_exists = LinkAnnotation.objects\
+                                              .filter(subject__in=subjects,
+                                                      predicate_uri__in=predicates,
+                                                      object_uri__in=objects)[:1]
+                    if len(la_exists) < 1:
+                        # OK save to make the annotation
+                        new_la = LinkAnnotation()
+                        new_la.subject = entity.uuid
+                        new_la.subject_type = entity.item_type
+                        new_la.project_uuid = entity.project_uuid
+                        new_la.source_id = self.source_id
+                        new_la.predicate_uri = self.DC_PERIOD_PRED
+                        new_la.object_uri = period['period-meta']['uri']
+                        new_la.creator_uuid = ''
+                        new_la.save()
+                        ok = True
+        return ok
 
     def get_relate_oc_periods(self):
         """ Gets period-o data, checks for references to open context
@@ -116,6 +147,20 @@ class PeriodoLink():
             le.alt_label = 'PeriodO (http://perio.do)'
             le.vocab_uri = self.PERIODO_VOCAB_URI
             le.ent_type = 'vocabulary'
+            le.save()
+    
+    def check_add_period_pred(self):
+        """ Adds the periodo vocabulary if it doesn't exist yet
+        """
+        temporal_pred = 'http://purl.org/dc/terms/temporal'
+        lev = LinkEntity.objects.filter(uri=temporal_pred)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = temporal_pred
+            le.label = 'Temporal Coverage'
+            le.alt_label = 'Temporal Coverage'
+            le.vocab_uri = 'http://purl.org/dc/terms'
+            le.ent_type = 'property'
             le.save()
     
     def delete_periodo_annotations(self):

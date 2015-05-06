@@ -37,12 +37,6 @@ class PeriodoAPI():
                                 oc_refs.append(oc_ref)
         return oc_refs
     
-    def get_period_dates_by_keys(self, collection_id, period_id):
-        """ gets period dates by looking up keys """
-        period = self.get_period_by_keys(collection_id, period_id)
-        if isinstance(period, dict):
-            pass
-    
     def get_period_by_uri(self, period_uri):
         """ gets period information by URI
             it is not at all efficient, but it works
@@ -53,8 +47,14 @@ class PeriodoAPI():
         period_collections = self.get_period_collections()
         if isinstance(period_collections, dict):
             # last part of the period URI is the period-ID
-            per_uri_ex = period_uri.split('/')
-            p_id_key = per_uri_ex[-1]
+            if self.URI_PREFIX in period_uri:
+                # full uri
+                per_uri_ex = period_uri.split('/')
+                p_id_key = per_uri_ex[-1]
+            else:
+                # assume it is just the identifier, not a full uri
+                p_id_key = period_uri
+                period_uri = self.URI_PREFIX + period_uri
             for col_id_key, pcollection in period_collections.items():
                 collection = self.get_collection_metadata(col_id_key,
                                                           pcollection)
@@ -67,19 +67,6 @@ class PeriodoAPI():
                                   'period-meta':period_meta,
                                   'period': period}
         return output
-    
-    def get_period_by_keys(self, collection_id, period_id):
-        """ gets a period by looking up keys """
-        period = False
-        period_collections = self.get_period_collections()
-        if isinstance(period_collections, dict):
-            if collection_id in period_collections:
-                pcollection = period_collections[collection_id]
-                if 'definitions' in pcollection:
-                    period_defs = pcollection['definitions']
-                    if period_id in period_defs:
-                        period = period_defs[period_id]
-        return period
 
     def get_collection_metadata(self, col_id_key, pcollection):
         """ gets some simple metadata about a collection """
