@@ -204,52 +204,17 @@ class Containment():
                                                                      False)
         return metadata_items
 
-    def get_temporal_from_subject_list(self, subject_list, metadata_type, do_parents=True):
-        """
-        gets the most specific temporal (usually PeriodO) metadata associated with an
-        item or its parens.
-        """
-        metadata_items = False
-        if(len(subject_list) < 1):
-            # can't find a related subject uuid
-            # print(" Sad, an empty list! \n")
-            return metadata_items
-        else:
-            if(do_parents):
-                self.contexts = {}
-                self.contexts_list = []
-            for search_uuid in subject_list:
-                # print(" trying: " + search_uuid + "\n")
-                if(metadata_type == 'geo'):
-                    try:
-                        metadata_items = Geospace.objects.filter(uuid=search_uuid)
-                        if(len(metadata_items) >= 1):
-                            break
-                    except Geodata.DoesNotExist:
-                        # can't find any geodata, build a list of parent uuids to search
-                        metadata_items = False
-                else:
-                    try:
-                        metadata_items = Event.objects.filter(uuid=search_uuid)
-                        if(len(metadata_items) >= 1):
-                            break
-                    except Event.DoesNotExist:
-                        # can't find any geodata, build a list of parent uuids to search
-                        metadata_items = False
-                if(len(metadata_items) < 1):
-                    metadata_items = False
-                if(do_parents and metadata_items is False):
-                    self.recurse_count = 0
-                    self.get_parents_by_child_uuid(search_uuid)
-            if(metadata_items is False and do_parents):
-                # print(" going for parents: " + str(self.contexts_list) + "\n")
-                # use the list of parent uuid's from the context_list. It's in order of more
-                # specific to more general
-                metadata_items = self.get_geochron_from_subject_list(self.contexts_list,
-                                                                     metadata_type,
-                                                                     False)
+    def get_temporal_from_project(self, project_uuid):
+        """ gets temporal metadata by association with a project """
+        lequiv = LinkEquivalence()
+        subjects = lequiv.get_identifier_list_variants(project_uuid)
+        predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
+        metadata_items = LinkAnnotation.objects\
+                                       .filter(subject__in=subjects,
+                                               predicate_uri__in=predicates)
+        if len(metadata_items) < 1:
+            metadata_items = False
         return metadata_items
-
 
     def get_related_geochron(self, uuid, item_type, metadata_type):
         """
