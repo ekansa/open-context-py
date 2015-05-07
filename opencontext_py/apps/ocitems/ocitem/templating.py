@@ -1134,6 +1134,12 @@ class LinkedData():
                                  'objects': []}
                     for ld_obj in json_ld[act_pred]:
                         uri = ld_obj['id']
+                        if not ('http://' in ld_obj['id']\
+                           or 'https://' in ld_obj['id'])\
+                           and 'rdfs:isDefinedBy' in ld_obj:
+                            # special case for inferred relationship
+                            uri = ld_obj['rdfs:isDefinedBy']
+                            ld_obj['id'] = uri
                         ld_obj['vocabulary'] = False
                         ld_obj['vocab_uri'] = False
                         ent = Entity()

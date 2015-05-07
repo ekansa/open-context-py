@@ -814,13 +814,31 @@ class ItemConstruction():
             if len(act_dict['dc-terms:temporal']) < 1:
                 # only add if we don't already have temproal metadata
                 # and if we have temporal annotations form a parent item
+                i = 0
                 for temporal in temporal_meta:
                     new_object_item = LastUpdatedOrderedDict()
                     new_object_item['id'] = temporal.object_uri
                     ent = self.get_entity_metadata(temporal.object_uri)
                     if ent is not False:
+                        subject_uri = URImanagement.make_oc_uri(temporal.subject,
+                                                                temporal.subject_type,
+                                                                self.cannonical_uris)
                         new_object_item['slug'] = ent.slug
                         new_object_item['label'] = ent.label
+                        if 'id' in act_dict\
+                           and subject_uri is not False:
+                            if act_dict['id'] != subject_uri:
+                                # we have an infered temporal relation
+                                i += 1
+                                new_object_item['id'] = '#period-' + str(i)
+                                new_object_item['rdfs:isDefinedBy'] = temporal.object_uri
+                                new_object_item['slug'] = ent.slug
+                                new_object_item['label'] = ent.label
+                                new_object_item['reference-type'] = 'inferred'
+                                new_object_item['reference-uri'] = subject_uri
+                                rel_meta = self.get_entity_metadata(subject_uri)
+                                if rel_meta is not False:
+                                    new_object_item['reference-label'] = rel_meta.label
                         act_dict['dc-terms:temporal'].append(new_object_item)
         return act_dict
 
