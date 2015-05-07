@@ -829,11 +829,19 @@ class ItemConstruction():
                            and subject_uri is not False:
                             if act_dict['id'] != subject_uri:
                                 # we have an infered temporal relation
+                                """
+                                Commenting out this stuff, because it is overly
+                                pedantic. It's easier just to treat this assertion
+                                directly to the period, rather than some fragment
+                                identifier.
+                                
+                                if people complain, we will uncomment this code.
                                 i += 1
                                 new_object_item['id'] = '#period-' + str(i)
                                 new_object_item['rdfs:isDefinedBy'] = temporal.object_uri
                                 new_object_item['slug'] = ent.slug
                                 new_object_item['label'] = ent.label
+                                """
                                 new_object_item['reference-type'] = 'inferred'
                                 new_object_item['reference-uri'] = subject_uri
                                 rel_meta = self.get_entity_metadata(subject_uri)
