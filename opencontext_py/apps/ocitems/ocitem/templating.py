@@ -2,6 +2,7 @@ import json
 import copy
 import datetime
 from django.conf import settings
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -254,6 +255,14 @@ class TemplateItem():
             if self.content is False:
                 self.content = {}
             self.content['sum_text'] = json_ld['description']
+        if self.content is not False \
+           and settings.CANONICAL_HOST != settings.DEPLOYED_HOST:
+            if 'main_text' in self.content:
+                # update links in the text to point to the current host
+                rp = RootPath()
+                self.content['main_text'] = self.content['main_text']\
+                                                .replace(settings.CANONICAL_HOST,
+                                                         rp.get_baseurl())
 
     def store_class_type_metadata(self, json_ld):
         """ Stores information about classes / categories, including labels and icons
