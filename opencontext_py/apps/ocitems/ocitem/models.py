@@ -67,6 +67,7 @@ class OCitem():
         self.contents = False
         self.geo_meta = False
         self.event_meta = False
+        self.temporal_meta = False
         self.stable_ids = False
         self.media = False
         self.document = False
@@ -145,6 +146,7 @@ class OCitem():
             subject_list = act_contain.contexts_list
             subject_list.insert(0, self.uuid)
             self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
+            self.temporal_meta = act_contain.get_geochron_from_subject_list(subject_list, 'temporal')
             self.event_meta = act_contain.get_geochron_from_subject_list(subject_list, 'event')
         else:
             parents = act_contain.get_related_context(self.uuid)
@@ -356,6 +358,9 @@ class OCitem():
                                                                   'projects')
         if settings.DEBUG:
             json_ld['time'] = time.time() - self.time_start
+        # last add inferred temporal metadata if it exists
+        json_ld = item_con.add_json_temporal(json_ld, self.temporal_meta)
+        # now get rid of unused dc-terms metadata
         for dc_meta in self.DC_META_PREDS:
             if len(json_ld[dc_meta]) < 1:
                 json_ld.pop(dc_meta, None)  # get rid of not used dc-meta predicate
@@ -784,6 +789,25 @@ class ItemConstruction():
             act_dict['dc-terms:license'] = [new_object_item]
         else:
             print('crap, no license')
+        return act_dict
+    
+    def add_json_temporal(self, act_dict, temporal_meta):
+        """ adds temporal metadata predicate """
+        if temporal_meta is not False:
+            if 'dc-terms:temporal' not in act_dict:
+                act_dict['dc-terms:temporal'] = []
+            if len(act_dict['dc-terms:temporal']) < 1:
+                # only add if we don't already have temproal metadata
+                # and if we have temporal annotations form a parent item
+                act_dict['dc-terms:temporal'] = []
+                for temporal in temporal_meta:
+                    new_object_item = LastUpdatedOrderedDict()
+                    new_object_item['id'] = temporal.object_uri
+                    ent = self.get_entity_metadata(temporal.object_uri)
+                    if ent is not False:
+                        new_object_item['slug'] = ent.slug
+                        new_object_item['label'] = ent.label
+                        act_dict['dc-terms:temporal'].append(new_object_item)
         return act_dict
 
     def add_unique_entity_lists(self, existing_list, to_add_list):
