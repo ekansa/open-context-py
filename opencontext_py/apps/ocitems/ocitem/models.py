@@ -157,10 +157,25 @@ class OCitem():
         """
         gets item geo and chronological metadata
         """
-        if(self.geo_meta is False and self.event_meta is False):
+        if self.geo_meta is False\
+           or self.event_meta is False\
+           or self.temporal_meta is False:
             act_contain = Containment()
-            self.geo_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
-            self.event_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'event')
+            if self.geo_meta is False:
+                self.geo_meta = act_contain.get_related_geochron(self.uuid,
+                                                                 self.item_type,
+                                                                 'geo')
+            if self.temporal_meta is False:
+                self.temporal_meta = act_contain.get_related_geochron(self.uuid,
+                                                                      self.item_type,
+                                                                      'temporal')
+                if self.temporal_meta is False:
+                    # now look in the project for temporal metadata
+                    self.temporal_meta = act_contain.get_temporal_from_project(self.project_uuid)
+            if self.event_meta is False:
+                self.event_meta = act_contain.get_related_geochron(self.uuid,
+                                                                   self.item_type,
+                                                                   'event')
             return True
         else:
             return False
@@ -799,7 +814,6 @@ class ItemConstruction():
             if len(act_dict['dc-terms:temporal']) < 1:
                 # only add if we don't already have temproal metadata
                 # and if we have temporal annotations form a parent item
-                act_dict['dc-terms:temporal'] = []
                 for temporal in temporal_meta:
                     new_object_item = LastUpdatedOrderedDict()
                     new_object_item['id'] = temporal.object_uri
