@@ -83,6 +83,9 @@ class PenMysql():
         self.start_sub = False
         self.start_batch = 0
         self.after = '2001-01-01'
+        self.uuids = False
+        self.item_types = False
+        self.item_type = False
 
     def get_project_records(self, project_uuid):
         """ Gets all the data belonging to a project """
@@ -115,10 +118,102 @@ class PenMysql():
                             print('Skipping : ' + act_table + ' (' + str(sub_table) + ')')
             else:
                 print('Process working on: ' + act_table + ' (' + str(sub_table) + ')')
-                self.process_request_table(act_table,
-                                           sub_table,
-                                           self.after,
-                                           project_uuid)
+                if sub_table != 'links-uuids':
+                    self.process_request_table(act_table,
+                                               sub_table,
+                                               self.after,
+                                               project_uuid)
+                else:
+                    self.process_links_uuids(self.after,
+                                             project_uuid)
+
+    def process_links_uuids(self, after, project_uuid):
+        """ iterates through a specific type of
+            content to get linking relations
+        """
+        self.after = after
+        if self.item_types is not False:
+            if not isinstance(self.item_types, list):
+                self.item_types = [self.item_types]
+            for item_type in self.item_types:
+                self.item_type = item_type
+                print('Getting ' + item_type + ' uuids')
+                man_list = Manifest.objects\
+                                   .filter(item_type=item_type,
+                                           project_uuid=project_uuid)
+                self.uuids = []
+                continue_tab = True
+                count = 0
+                for man_obj in man_list:
+                    count += 1
+                    self.uuids.append(man_obj.uuid)
+                    if len(self.uuids) >= 25:
+                        print('Fetching ' + item_type + ' uuids (' + str(count) + ')')
+                        json_ok = self.get_table_records('oc_assertions',
+                                                         'links-uuids',
+                                                         self.after,
+                                                         0,
+                                                         1000,
+                                                         project_uuid)
+                        if json_ok is not None:
+                            self.uuids = []
+                            continue_tab = self.store_tab_records()
+                if len(self.uuids) > 0:
+                    # now do the remaining
+                    print('LAST fetch for ' + item_type + ' uuids (' + str(count) + ')')
+                    json_ok = self.get_table_records('oc_assertions',
+                                                     'links-uuids',
+                                                     self.after,
+                                                     0,
+                                                     1000,
+                                                     project_uuid)
+                    if json_ok is not None:
+                        self.uuids = []
+                        continue_tab = self.store_tab_records()
+
+    def process_inferred_subject_uuids(self, after, project_uuid):
+        """ iterates through a specific type of
+            content to get linking relations
+            for items not connected to subjects
+        """
+        self.after = after
+        if self.item_types is not False:
+            if not isinstance(self.item_types, list):
+                self.item_types = [self.item_types]
+            continue_tab = True
+            count = 0
+            for item_type in self.item_types:
+                self.item_type = item_type
+                print('Getting ' + item_type + ' uuids')
+                man_list = Manifest.objects\
+                                   .filter(item_type=item_type,
+                                           project_uuid=project_uuid)
+                for man_obj in man_list:
+                    # check no subjects associated
+                    self.uuids = False
+                    uuid = man_obj.uuid
+                    sub_ass = Assertion.objects\
+                                       .filter(subject_type='subjects',
+                                               object_uuid=uuid)[:1]
+                    if len(sub_ass) < 1:
+                        # no linking to a subject yet, so lets make one
+                        count += 1
+                        output = '[' + str(count) + '] Get inferred subjects for: '
+                        output += uuid + ' ' + item_type
+                        print(output)
+                        self.uuids = [uuid]
+                        json_ok = self.get_table_records('oc_assertions',
+                                                         'links-subjects-inf',
+                                                         self.after,
+                                                         0,
+                                                         1000,
+                                                         project_uuid)
+                        continue_tab = self.store_tab_records()
+                        if json_ok is not None:
+                            self.uuids = False
+                            continue_tab = self.store_tab_records()
+                    if continue_tab is False:
+                        break
 
     def process_request_table(self, act_table,
                               sub_table,
@@ -271,6 +366,10 @@ class PenMysql():
             payload['project_uuids'] = project_uuids
         if uuid is not False:
             payload['uuid'] = uuid
+        if isinstance(self.uuids, list):
+            payload['uuids'] = ','.join(self.uuids)
+        if self.item_type is not False:
+            payload['item_type'] = self.item_type
         if uri is not False:
             payload['uri'] = uri
         r = requests.get(self.table_records_base_url, params=payload, timeout=1440)
