@@ -67,6 +67,7 @@ class OCitem():
         self.contents = False
         self.geo_meta = False
         self.event_meta = False
+        self.temporal_meta = False
         self.stable_ids = False
         self.media = False
         self.document = False
@@ -145,6 +146,7 @@ class OCitem():
             subject_list = act_contain.contexts_list
             subject_list.insert(0, self.uuid)
             self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
+            self.temporal_meta = act_contain.get_geochron_from_subject_list(subject_list, 'temporal')
             self.event_meta = act_contain.get_geochron_from_subject_list(subject_list, 'event')
         else:
             parents = act_contain.get_related_context(self.uuid)
@@ -155,10 +157,25 @@ class OCitem():
         """
         gets item geo and chronological metadata
         """
-        if(self.geo_meta is False and self.event_meta is False):
+        if self.geo_meta is False\
+           or self.event_meta is False\
+           or self.temporal_meta is False:
             act_contain = Containment()
-            self.geo_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'geo')
-            self.event_meta = act_contain.get_related_geochron(self.uuid, self.item_type, 'event')
+            if self.geo_meta is False:
+                self.geo_meta = act_contain.get_related_geochron(self.uuid,
+                                                                 self.item_type,
+                                                                 'geo')
+            if self.temporal_meta is False:
+                self.temporal_meta = act_contain.get_related_geochron(self.uuid,
+                                                                      self.item_type,
+                                                                      'temporal')
+                if self.temporal_meta is False:
+                    # now look in the project for temporal metadata
+                    self.temporal_meta = act_contain.get_temporal_from_project(self.project_uuid)
+            if self.event_meta is False:
+                self.event_meta = act_contain.get_related_geochron(self.uuid,
+                                                                   self.item_type,
+                                                                   'event')
             return True
         else:
             return False
@@ -356,6 +373,9 @@ class OCitem():
                                                                   'projects')
         if settings.DEBUG:
             json_ld['time'] = time.time() - self.time_start
+        # last add inferred temporal metadata if it exists
+        json_ld = item_con.add_json_temporal(json_ld, self.temporal_meta)
+        # now get rid of unused dc-terms metadata
         for dc_meta in self.DC_META_PREDS:
             if len(json_ld[dc_meta]) < 1:
                 json_ld.pop(dc_meta, None)  # get rid of not used dc-meta predicate
@@ -784,6 +804,50 @@ class ItemConstruction():
             act_dict['dc-terms:license'] = [new_object_item]
         else:
             print('crap, no license')
+        return act_dict
+    
+    def add_json_temporal(self, act_dict, temporal_meta):
+        """ adds temporal metadata predicate """
+        if temporal_meta is not False:
+            if 'dc-terms:temporal' not in act_dict:
+                act_dict['dc-terms:temporal'] = []
+            if len(act_dict['dc-terms:temporal']) < 1:
+                # only add if we don't already have temproal metadata
+                # and if we have temporal annotations form a parent item
+                i = 0
+                for temporal in temporal_meta:
+                    new_object_item = LastUpdatedOrderedDict()
+                    new_object_item['id'] = temporal.object_uri
+                    ent = self.get_entity_metadata(temporal.object_uri)
+                    if ent is not False:
+                        subject_uri = URImanagement.make_oc_uri(temporal.subject,
+                                                                temporal.subject_type,
+                                                                self.cannonical_uris)
+                        new_object_item['slug'] = ent.slug
+                        new_object_item['label'] = ent.label
+                        if 'id' in act_dict\
+                           and subject_uri is not False:
+                            if act_dict['id'] != subject_uri:
+                                # we have an infered temporal relation
+                                """
+                                Commenting out this stuff, because it is overly
+                                pedantic. It's easier just to treat this assertion
+                                directly to the period, rather than some fragment
+                                identifier.
+                                
+                                if people complain, we will uncomment this code.
+                                i += 1
+                                new_object_item['id'] = '#period-' + str(i)
+                                new_object_item['rdfs:isDefinedBy'] = temporal.object_uri
+                                new_object_item['slug'] = ent.slug
+                                new_object_item['label'] = ent.label
+                                """
+                                new_object_item['reference-type'] = 'inferred'
+                                new_object_item['reference-uri'] = subject_uri
+                                rel_meta = self.get_entity_metadata(subject_uri)
+                                if rel_meta is not False:
+                                    new_object_item['reference-label'] = rel_meta.label
+                        act_dict['dc-terms:temporal'].append(new_object_item)
         return act_dict
 
     def add_unique_entity_lists(self, existing_list, to_add_list):

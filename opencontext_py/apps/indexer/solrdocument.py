@@ -368,6 +368,11 @@ class SolrDocument:
             if dc_predicate in self.oc_item.json_ld:
                 self.fields[fname] = []
                 for meta in self.oc_item.json_ld[dc_predicate]:
+                    if not ('http://' in meta['id']\
+                       or 'https://' in meta['id'])\
+                       and 'rdfs:isDefinedBy' in meta:
+                        # special case for inferred relationship
+                        meta['id'] = meta['rdfs:isDefinedBy']
                     self.fields['text'] += meta['label'] + '\n'
                     self.fields['text'] += meta['id'] + '\n'
                     item = self._concat_solr_string_value(

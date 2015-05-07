@@ -2,6 +2,8 @@ import hashlib
 from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -163,23 +165,33 @@ class Containment():
             for search_uuid in subject_list:
                 # print(" trying: " + search_uuid + "\n")
                 if(metadata_type == 'geo'):
-                    try:
-                        metadata_items = Geospace.objects.filter(uuid=search_uuid)
-                        if(len(metadata_items) >= 1):
-                            break
-                    except Geodata.DoesNotExist:
-                        # can't find any geodata, build a list of parent uuids to search
+                    metadata_items = Geospace.objects.filter(uuid=search_uuid)
+                    if len(metadata_items) >= 1:
+                        break
+                    else:
+                        metadata_items = False
+                elif metadata_type == 'temporal':
+                    # get temporal metadata
+                    lequiv = LinkEquivalence()
+                    subjects = lequiv.get_identifier_list_variants(search_uuid)
+                    predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
+                    metadata_items = LinkAnnotation.objects\
+                                                   .filter(subject__in=subjects,
+                                                           predicate_uri__in=predicates)
+                    if len(metadata_items) >= 1:
+                        break
+                    else:
                         metadata_items = False
                 else:
-                    try:
-                        metadata_items = Event.objects.filter(uuid=search_uuid)
-                        if(len(metadata_items) >= 1):
-                            break
-                    except Event.DoesNotExist:
-                        # can't find any geodata, build a list of parent uuids to search
+                    metadata_items = Event.objects.filter(uuid=search_uuid)
+                    if len(metadata_items) >= 1:
+                        break
+                    else:
+                        # can't find any vent, build a list of parent uuids to search
                         metadata_items = False
-                if(len(metadata_items) < 1):
-                    metadata_items = False
+                if isinstance(metadata_items, list):
+                    if len(metadata_items) < 1:
+                        metadata_items = False
                 if(do_parents and metadata_items is False):
                     self.recurse_count = 0
                     self.get_parents_by_child_uuid(search_uuid)
@@ -190,6 +202,18 @@ class Containment():
                 metadata_items = self.get_geochron_from_subject_list(self.contexts_list,
                                                                      metadata_type,
                                                                      False)
+        return metadata_items
+
+    def get_temporal_from_project(self, project_uuid):
+        """ gets temporal metadata by association with a project """
+        lequiv = LinkEquivalence()
+        subjects = lequiv.get_identifier_list_variants(project_uuid)
+        predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
+        metadata_items = LinkAnnotation.objects\
+                                       .filter(subject__in=subjects,
+                                               predicate_uri__in=predicates)
+        if len(metadata_items) < 1:
+            metadata_items = False
         return metadata_items
 
     def get_related_geochron(self, uuid, item_type, metadata_type):
