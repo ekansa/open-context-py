@@ -12,7 +12,17 @@
             {% if item.context.type == 'context' %}
             <li class="active" id="item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
             {% else %}
-            <li class="active" id="rel-item-in-context">{{ item.label }} ({{ item.item_category_label}})</li>
+            <li class="active" id="rel-item-in-context">{{ item.label }}
+            {% if item.fullimage %}
+                {% if fullview %}
+                ({{ item.item_category_label}}, Full size)
+                {% else %}
+                ({{ item.item_category_label}}, Preview)
+                {%endif%}        
+            {% else %}    
+            ({{ item.item_category_label}} )
+            {%endif%}
+            </li>
             {%endif%}
         </ol>
     {% else %}
