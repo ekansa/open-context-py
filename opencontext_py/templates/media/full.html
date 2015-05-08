@@ -11,7 +11,7 @@
      <div class="row">
           <div class="col-sm-12">
           {% if item.content != False %}
-          {% if item.content.preview != False %}
+          {% if item.content.fullfile != False %}
                {% with top_panel_num=0 %}
                {% with show_header=True %}
                {% with panel_label='Fullsize Image' %}
@@ -19,7 +19,9 @@
                {% with prefix_node_id='fullsize-' %}
                {% with node_id=1 %}
                {% with suffix_node_id='-file' %}
+               {% with media_panel=True %}
                {% include 'items/plain-panel-start.html' %}
+               {% endwith %}
                {% endwith %}
                {% endwith %}
                {% endwith %}

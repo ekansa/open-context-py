@@ -39,6 +39,7 @@ def html_view(request, uuid):
                 else:
                     context = RequestContext(request,
                                              {'item': temp_item,
+                                              'fullview': False,
                                               'base_url': base_url})
                     return HttpResponse(template.render(context))
             else:
@@ -80,6 +81,7 @@ def html_full(request, uuid):
                 else:
                     context = RequestContext(request,
                                              {'item': temp_item,
+                                              'fullview': True,
                                               'base_url': base_url})
                     return HttpResponse(template.render(context))
             else:

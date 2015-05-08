@@ -19,6 +19,10 @@ class TemplateItem():
     """ This class makes an object useful for templating, since
     the JSON-LD object can't be read by the django template system """
 
+    FULLIMAGE_MIMETYPES = ['image/png',
+                           'image/jpeg',
+                           'image/gif']
+
     def __init__(self, request=False):
         self.label = False
         self.uuid = False
@@ -35,6 +39,8 @@ class TemplateItem():
         self.geo = False
         self.linked_data = False
         self.content = False
+        self.fullimage = False
+        self.fulldownload = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -236,6 +242,13 @@ class TemplateItem():
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
                     self.content['fullfile'] = file_item['id']
+                    self.fulldownload = True
+                    if 'dc-terms:hasFormat' in file_item:
+                        for mime_type in self.FULLIMAGE_MIMETYPES:
+                            if mime_type in file_item['dc-terms:hasFormat']:
+                                # the file is an image type that displays in a browser
+                                self.fullimage = True
+                                break
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = file_item['id']
                 elif file_item['type'] == 'oc-gen:thumbnail':
