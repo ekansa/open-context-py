@@ -176,7 +176,7 @@ class SolrSearch():
                 query['fq'] += dc_query['fq']
                 query['facet.field'] += dc_query['facet.field']
                 if dc_param == 'dc-temporal':
-                    child_context_join = True
+                    child_context_join = False # turn this off
         # item-types
         item_type = self.get_request_param(request_dict,
                                            'type',
