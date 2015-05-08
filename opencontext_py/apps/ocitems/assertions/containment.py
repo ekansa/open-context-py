@@ -21,6 +21,7 @@ class Containment():
         self.contexts = {}
         self.contexts_list = []
         self.recurse_count = 0
+        self.related_subjects = False # subject items related to an item
 
     def get_project_top_level_contexts(self, project_uuid, visible_only=True):
         """
@@ -113,16 +114,20 @@ class Containment():
         makes a list of related subjects uuids from a given uuid. if none present,
         defaults to look at reverse link assertions
         """
-        rel_sub_uuid_list = []
-        rel_subjects = Assertion.objects.filter(uuid=uuid, object_type='subjects')
-        for sub in rel_subjects:
-            rel_sub_uuid_list.append(sub.object_uuid)
-        if(len(rel_sub_uuid_list) < 1 and reverse_links_ok):
-            rel_subjects = Assertion.objects.filter(object_uuid=uuid,
-                                                    subject_type='subjects',
-                                                    predicate_uuid=Assertion.PREDICATES_LINK)
+        if not isinstance(self.related_subjects, list):
+            rel_sub_uuid_list = []
+            rel_subjects = Assertion.objects.filter(uuid=uuid, object_type='subjects')
             for sub in rel_subjects:
-                rel_sub_uuid_list.append(sub.uuid)
+                rel_sub_uuid_list.append(sub.object_uuid)
+            if len(rel_sub_uuid_list) < 1 and reverse_links_ok:
+                rel_subjects = Assertion.objects.filter(object_uuid=uuid,
+                                                        subject_type='subjects',
+                                                        predicate_uuid=Assertion.PREDICATES_LINK)
+                for sub in rel_subjects:
+                    rel_sub_uuid_list.append(sub.uuid)
+            self.related_subjects = rel_sub_uuid_list
+        else:
+            rel_sub_uuid_list = self.related_subjects
         return rel_sub_uuid_list
 
     def get_related_context(self, uuid, reverse_links_ok=True):
@@ -133,7 +138,7 @@ class Containment():
         self.contexts_list = []
         parents = False
         rel_sub_uuid_list = self.get_related_subjects(uuid, reverse_links_ok)
-        if(len(rel_sub_uuid_list) > 0):
+        if len(rel_sub_uuid_list) > 0:
             rel_subject_uuid = rel_sub_uuid_list[0]
             parents = self.get_parents_by_child_uuid(rel_subject_uuid)
             # add the related subject as the first item in the parent list

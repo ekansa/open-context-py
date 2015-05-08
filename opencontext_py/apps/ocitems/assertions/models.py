@@ -12,6 +12,10 @@ class Assertion(models.Model):
     PREDICATES_CONTAINS = 'oc-gen:contains'
     # standard predicate for generic link
     PREDICATES_LINK = 'oc-3'
+    # standard predicate for a link relation that's from the object
+    # use this to not make the subject too cluttered with visible links
+    # this is provisional, I may decide this is stupid beyond hope
+    PREDICATES_LINKED_FROM = 'oc-gen:is-linked-from'
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     subject_type = models.CharField(max_length=50, choices=settings.ITEM_TYPES)
