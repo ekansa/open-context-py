@@ -48,6 +48,7 @@ urlpatterns = patterns('',
                        url(r'^sets/(?P<spatial_context>\S+)?', SetsViews.html_view, name='sets_html'),
                        # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
+                       url(r'^media/(?P<uuid>\S+)/full', MediaViews.html_full, name='media_full'),
                        url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
                        # url(r'^media', MediaViews.index, name='media_index'),
                        url(r'^media', AboutViews.index_view, name='about_index'),
