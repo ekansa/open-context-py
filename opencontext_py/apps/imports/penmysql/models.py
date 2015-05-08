@@ -196,6 +196,7 @@ class PenMysql():
                     sub_ass = Assertion.objects\
                                        .filter(Q(subject_type='subjects',
                                                  object_uuid=uuid)
+                                               | Q(uuid=uuid,
                                                    predicate_uuid='oc-3',
                                                    object_type='subjects'))[:1]
                     if len(sub_ass) < 1:
