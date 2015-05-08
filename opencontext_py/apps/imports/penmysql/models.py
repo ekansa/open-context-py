@@ -1,6 +1,7 @@
 import json
 import requests
 from django.db import connection
+from django.db.models import Q
 from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation as LinkAnnotation
@@ -193,8 +194,10 @@ class PenMysql():
                     self.uuids = False
                     uuid = man_obj.uuid
                     sub_ass = Assertion.objects\
-                                       .filter(subject_type='subjects',
-                                               object_uuid=uuid)[:1]
+                                       .filter(Q(subject_type='subjects',
+                                                 object_uuid=uuid)
+                                                   predicate_uuid='oc-3',
+                                                   object_type='subjects'))[:1]
                     if len(sub_ass) < 1:
                         # no linking to a subject yet, so lets make one
                         count += 1
