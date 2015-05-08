@@ -1,5 +1,20 @@
 {% if show_header %}
 <div class="panel-heading">
+    {% if media_panel %}
+    <h4 class="pull-right panel-title">
+        <span class="label">
+        {% if item.fullimage %}
+        {% if fullview %}
+        <a title="Download the full version of this media resource" href="{{ item.content.fullfile }}" target="_blank"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Download File</a>
+        {% else %}
+        <a title="Go to the full-size version of this image" href="{% url 'media_full'  item.uuid %}"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Full Size Image</a>
+        {%endif%}    
+        {% else %}
+        <a title="Download the full version of this media resource" href="{{ item.content.fullfile }}" target="_blank"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Download File</a>
+        {%endif%}
+        </span>
+    </h4>
+    {%endif%}
     <h4 class="panel-title">{% if accordion %}<a data-toggle="collapse" data-parent="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc" href="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel"><span class="glyphicon glyphicon-resize-vertical"></span> {{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}</a>{%else%}{{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}{%endif%}</h4>
 </div>
 {%endif%}

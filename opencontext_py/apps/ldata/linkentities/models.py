@@ -69,6 +69,7 @@ class LinkEntityGeneration():
                         'http://core.tdar.org/browse/site-name': 'tdar-kw-site',
                         'http://purl.org/ontology/bibo': 'bibo',
                         'http://creativecommons.org/ns#': 'cc',
+                        'http://www.w3.org/2002/07/owl#': 'owl',
                         'http://creativecommons.org/licenses': 'cc-license',
                         'http://creativecommons.org/publicdomain': 'cc-publicdomain',
                         'http://n2t.net/ark:/99152/p0': 'periodo-p0'
@@ -121,3 +122,66 @@ class LinkEntityGeneration():
                 nslug.save()
                 cc += 1
         return cc
+
+    def check_add_common_entities(self):
+        """ checks and adds common entities to the database """
+        self.check_add_owlsameas_pred()
+        self.check_add_ispartof_pred()
+        self.check_add_haspart_pred()
+        self.check_add_period_pred()
+
+    def check_add_owlsameas_pred(self):
+        """ Adds dublin core temporal if it doesn't exist yet
+        """
+        pred_uri = 'http://www.w3.org/2002/07/owl#sameAs'
+        lev = LinkEntity.objects.filter(uri=pred_uri)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = pred_uri
+            le.label = 'Same As'
+            le.alt_label = 'Same As'
+            le.vocab_uri = 'http://www.w3.org/2002/07/owl'
+            le.ent_type = 'property'
+            le.save()
+
+    def check_add_ispartof_pred(self):
+        """ Adds dublin core temporal if it doesn't exist yet
+        """
+        pred_uri = 'http://purl.org/dc/terms/isPartOf'
+        lev = LinkEntity.objects.filter(uri=pred_uri)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = pred_uri
+            le.label = 'Is Part Of'
+            le.alt_label = 'Is Part Of'
+            le.vocab_uri = 'http://purl.org/dc/terms'
+            le.ent_type = 'property'
+            le.save()
+
+    def check_add_haspart_pred(self):
+        """ Adds dublin core temporal if it doesn't exist yet
+        """
+        pred_uri = 'http://purl.org/dc/terms/hasPart'
+        lev = LinkEntity.objects.filter(uri=pred_uri)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = pred_uri
+            le.label = 'Has Part'
+            le.alt_label = 'Has Part'
+            le.vocab_uri = 'http://purl.org/dc/terms'
+            le.ent_type = 'property'
+            le.save()
+
+    def check_add_period_pred(self):
+        """ Adds dublin core temporal if it doesn't exist yet
+        """
+        temporal_pred = 'http://purl.org/dc/terms/temporal'
+        lev = LinkEntity.objects.filter(uri=temporal_pred)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = temporal_pred
+            le.label = 'Temporal Coverage'
+            le.alt_label = 'Temporal Coverage'
+            le.vocab_uri = 'http://purl.org/dc/terms'
+            le.ent_type = 'property'
+            le.save()

@@ -39,6 +39,49 @@ def html_view(request, uuid):
                 else:
                     context = RequestContext(request,
                                              {'item': temp_item,
+                                              'fullview': False,
+                                              'base_url': base_url})
+                    return HttpResponse(template.render(context))
+            else:
+                # client wanted a mimetype we don't support
+                return HttpResponse(req_neg.error_message,
+                                    content_type=req_neg.use_response_type + "; charset=utf8",
+                                    status=415)
+        else:
+            template = loader.get_template('items/view401.html')
+            context = RequestContext(request,
+                                     {'item': temp_item,
+                                      'base_url': base_url})
+            return HttpResponse(template.render(context), status=401)
+    else:
+        raise Http404
+
+
+def html_full(request, uuid):
+    ocitem = OCitem()
+    ocitem.get_item(uuid)
+    if(ocitem.manifest is not False):
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        temp_item = TemplateItem(request)
+        temp_item.read_jsonld_dict(ocitem.json_ld)
+        template = loader.get_template('media/full.html')
+        if temp_item.view_permitted:
+            req_neg = RequestNegotiation('text/html')
+            req_neg.supported_types = ['application/json',
+                                       'application/ld+json']
+            if 'HTTP_ACCEPT' in request.META:
+                req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+            if req_neg.supported:
+                if 'json' in req_neg.use_response_type:
+                    # content negotiation requested JSON or JSON-LD
+                    return HttpResponse(json.dumps(ocitem.json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                else:
+                    context = RequestContext(request,
+                                             {'item': temp_item,
+                                              'fullview': True,
                                               'base_url': base_url})
                     return HttpResponse(template.render(context))
             else:

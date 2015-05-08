@@ -2,6 +2,7 @@ import json
 import copy
 import datetime
 from django.conf import settings
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -17,6 +18,10 @@ from opencontext_py.apps.ldata.tdar.api import tdarAPI
 class TemplateItem():
     """ This class makes an object useful for templating, since
     the JSON-LD object can't be read by the django template system """
+
+    FULLIMAGE_MIMETYPES = ['image/png',
+                           'image/jpeg',
+                           'image/gif']
 
     def __init__(self, request=False):
         self.label = False
@@ -34,6 +39,8 @@ class TemplateItem():
         self.geo = False
         self.linked_data = False
         self.content = False
+        self.fullimage = False
+        self.fulldownload = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -235,6 +242,13 @@ class TemplateItem():
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
                     self.content['fullfile'] = file_item['id']
+                    self.fulldownload = True
+                    if 'dc-terms:hasFormat' in file_item:
+                        for mime_type in self.FULLIMAGE_MIMETYPES:
+                            if mime_type in file_item['dc-terms:hasFormat']:
+                                # the file is an image type that displays in a browser
+                                self.fullimage = True
+                                break
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = file_item['id']
                 elif file_item['type'] == 'oc-gen:thumbnail':
@@ -254,6 +268,14 @@ class TemplateItem():
             if self.content is False:
                 self.content = {}
             self.content['sum_text'] = json_ld['description']
+        if self.content is not False \
+           and settings.CANONICAL_HOST != settings.DEPLOYED_HOST:
+            if 'main_text' in self.content:
+                # update links in the text to point to the current host
+                rp = RootPath()
+                self.content['main_text'] = self.content['main_text']\
+                                                .replace(settings.CANONICAL_HOST,
+                                                         rp.get_baseurl())
 
     def store_class_type_metadata(self, json_ld):
         """ Stores information about classes / categories, including labels and icons
