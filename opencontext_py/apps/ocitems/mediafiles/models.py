@@ -1,4 +1,5 @@
 import requests
+from time import sleep
 from django.db import models
 
 
@@ -50,6 +51,7 @@ class ManageMediafiles():
         self.raw_mime_type = False
         self.mime_type_uri = False
         self.filesize = False
+        self.delay = .33
 
     def get_head_info(self, file_uri, redirect_ok=False):
         output = False
@@ -66,6 +68,18 @@ class ManageMediafiles():
             if r.status_code >= 300 and r.status_code <= 310:
                 output = True
         return output
+    
+    def update_missing_mimetypes(self):
+        """ Gets media files without mimetypes, updates them """
+        miss_media = Mediafile.objects\
+                              .filter(mime_type_uri='')
+        total_len = len(miss_media)
+        i = 0
+        for mfile in miss_media:
+            i += 1
+            print(str(i) +' of ' + str(total_len) + ', file: ' + mfile.file_uri)
+            mfile.save() # should automatically request mime-type
+            sleep(self.delay) # short delay so as to not overwhelm servers
 
     def raw_to_mimetype_uri(self, raw_mime_type):
         """
