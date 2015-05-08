@@ -249,6 +249,41 @@ class PenMysql():
                 continue_tab = False
             start = start + recs
 
+    def get_missing_media(self, project_uuids):
+        """ gets oc_annotations for items missing descriptions """
+        if ',' in project_uuids:
+            p_list = project_uuids.split(',')
+        else:
+            p_list = [project_uuids]
+        for project_uuid in p_list:
+            sql = ' SELECT ass.hash_id, ass.object_uuid AS muuid \
+                    FROM oc_assertions AS ass \
+                    WHERE ass.project_uuid = \
+                    \'' + project_uuid + '\' \
+                    AND ass.object_type = \'media\' \
+                    AND ass.object_uuid NOT IN ( \
+                    SELECT man.uuid \
+                    FROM oc_manifest AS man \
+                    WHERE man.project_uuid = \
+                    \'' + project_uuid + '\' \
+                    AND (man.item_type = \'media\')\
+                    );'
+            no_media = Assertion.objects.raw(sql)
+            uuids = []
+            for missing in no_media:
+                uuid = missing.muuid
+                if uuid not in uuids:
+                    uuids.append(uuid)
+                    json_ok = self.get_table_records('oc_mediafiles',
+                                                     False,
+                                                     self.after,
+                                                     0,
+                                                     200,
+                                                     project_uuid,
+                                                     uuid)
+                    if json_ok is not None:
+                        continue_tab = self.store_tab_records()
+
     def get_missing_strings(self, project_uuids):
         """ gets oc_annotations for items missing descriptions """
         if ',' in project_uuids:
