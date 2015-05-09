@@ -2,7 +2,7 @@ import time
 import json
 import geojson
 import copy
-from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
+from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
