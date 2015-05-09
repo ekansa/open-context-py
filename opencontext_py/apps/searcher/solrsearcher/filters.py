@@ -152,10 +152,12 @@ class ActiveFilters():
                         act_filter['oc-api:filter'] = 'Has temporal coverage'
                         label_dict = self.make_filter_label_dict(all_vals[-1])
                         if len(label_dict['label']) > 0:
-                            if label_dict['entities'][0].entity_type == 'vocabulary':
-                                act_filter['label'] = 'Concepts defined by: ' + label_dict['label']
-                            else:
-                                act_filter['label'] = label_dict['label']
+                            act_filter['label'] = label_dict['label']
+                            if len(label_dict['entities']) == 1: 
+                                if label_dict['entities'][0].entity_type == 'vocabulary':
+                                    act_filter['label'] = 'Concepts defined by: ' + label_dict['label']
+                            elif 'periodo' in all_vals[-1]:
+                                act_filter['label'] = 'PeriodO defined concepts'
                         if len(label_dict['entities']) == 1:
                             act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
                             if label_dict['entities'][0].vocabulary is not False\
