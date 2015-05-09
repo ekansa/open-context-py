@@ -1,13 +1,7 @@
 /*
  * Map an individual item with GeoJSON
  */
-var polyStyle = {
-	"color": "#ff7800",
-	"weight": 2,
-	"opacity": 0.85,
-	"fillOpacity": 0.5
- };
- 
+
 function search_map(json_url) {
 	
 	var map_dom_id = 'map';
@@ -19,28 +13,31 @@ function search_map(json_url) {
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
 	var url_parts = getJsonFromUrl(json_url);
+	var context_path_geodeep = false;
 	if (url_parts['disc-geotile']) {
 		//geodeep = url_parts['disc-geotile'].length + 4;
 		geodeep = 4;
 		tile_constrained = true;
 	}
 	else{
-		// zoom in a bit if deeper in the context path
+		// use context depth to set geodeep
 		var check_url = this.json_url.replace('.json', '');
-		var url_ex = check_url.split('/sets/');
-		if (url_ex.length > 1) {
-			var after_sets = url_ex[1];
-			if (after_sets.length > 0) {
-				geodeep = 8;
-				var after_sets = url_ex[1];
-				var slash_count = (after_sets.match(/\//g) || []).length;
+		var url_last = check_url.replace((base_url + '/sets/'), '');
+		if (url_last.length > 0) {
+			geodeep += 1;
+			var qindex = url_last.indexOf('?');
+			if (qindex > 0) {
+				url_last = url_last.substr(0, qindex);
+			}
+			if (url_last.length > 0) {
+				geodeep += 1;
+				var slash_count = (url_last.match(/\//g) || []).length;
 				if (slash_count > 0) {
 					geodeep += slash_count + 2;
 				}
 			}
 		}
 	}
-	
 	//if geodeep is in the url, use it.
 	if (url_parts['geodeep']) {
 		geodeep = url_parts['geodeep'];
@@ -58,10 +55,10 @@ function search_map(json_url) {
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
-	map.default_layer = 'tile';
+	map.default_layer = 'any';
 	map.layer_limit = false;
 	map.button_ready = true;
-	map.min_tile_count_display = 200;
+	map.min_tile_count_display = 25;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
 	map.geojson_records = {}; //geojson data for records, start as key
 	if (map.geodeep > 6 || tile_constrained) {
