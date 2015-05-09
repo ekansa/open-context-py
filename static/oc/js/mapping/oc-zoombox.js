@@ -67,6 +67,7 @@ L.Control.ZoomBox = L.Control.extend({
                 var new_zoom = parseInt(map.geodeep) + map.getZoom();
                 for (var i = 0, length = map.boxZoom.b_points.length; i < length; i++) {
                     var act_point = map.boxZoom.b_points[i];
+                    act_point.lng = lon_oneeighty(act_point.lng);
                     if (i == 0) {
                         var min_lat = act_point.lat;
                         var min_lng = act_point.lng;
@@ -87,6 +88,12 @@ L.Control.ZoomBox = L.Control.extend({
                             max_lng = act_point.lng;
                         }    
                     }
+                }
+                var distance = get_distance(min_lng, min_lat, max_lng, max_lat);
+                console.log(distance);
+                if (distance * 3.5 < new_zoom){
+                    // hopefully better scaling when zoomed in
+                    new_zoom = Math.round(distance * 3.5, 0);
                 }
                 var bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
                 if (map.getZoom() == map.getMaxZoom()){
@@ -140,3 +147,17 @@ L.Control.ZoomBox = L.Control.extend({
 L.control.zoomBox = function (options) {
   return new L.Control.ZoomBox(options);
 };
+
+function get_distance(xa, ya, xb, yb){
+    var xpart = (xa - xb) * (xa - xb);
+    var ypart = (ya - yb) * (ya - yb);
+    var distance = Math.sqrt(xpart + ypart);
+    return distance;
+}
+
+function lon_oneeighty(lon){
+    if (lon > 180) {
+        lon = lon - 360;
+    }
+    return lon;
+}
