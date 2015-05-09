@@ -109,6 +109,8 @@ class Crawler():
         if isinstance(uuid_list, list):
             document_count = 0
             documents = []
+            total_count = len(uuid_list)
+            i = 0;
             for uuid in uuid_list:
                 try:
                     manifest = Manifest.objects.get(uuid=uuid)
@@ -119,6 +121,7 @@ class Crawler():
                     try:
                         solrdocument = SolrDocument(uuid).fields
                         if crawlutil().is_valid_document(solrdocument):
+                            i += 1
                             print('OK to index: ' + uuid)
                             documents.append(solrdocument)
                             manifest.indexed_save()  # saves the time this was indexed
@@ -131,25 +134,31 @@ class Crawler():
                         if stop_at_invalid:
                                 break
                 if len(documents) >= chunksize:
-                    ok = self.commit_documents(documents)
+                    ok = self.commit_documents(documents, i, total_count)
                     if ok is False and stop_at_invalid:
                         # a problem in committing the documents
                         break
                     documents = []
             # now finish off the remaining documents
             if len(documents) > 0:
-                ok = self.commit_documents(documents)
+                ok = self.commit_documents(documents, i, total_count)
 
-    def commit_documents(self, documents):
+    def commit_documents(self,
+                         documents,
+                         last_index=False,
+                         total_docs=False):
         """ commits a set of documents to the Solr index """
         ok = False
         solr_status = self.solr.update(documents, 'json',
                                        commit=False).status
         if solr_status == 200:
+            last_message = ''
+            if last_index is not False and total_docs is not False:
+                last_message = '(' + str(last_index) + ' of ' + str(total_docs) + ')'
             ok = True
             self.solr.commit()
             print('--------------------------------------------')
-            print('Committed : ' + str(len(documents)) + ' docs.')
+            print('Committed : ' + str(len(documents)) + ' docs. ' + last_message)
             print('--------------------------------------------')
         else:
             print('Error: ' + \

@@ -61,9 +61,9 @@ class SolrReIndex():
                    and '.json' in self.oc_url:
                     print('Get uuids from OC-API: ' + str(self.oc_url))
                     uuids = self.get_uuids_oc_url(self.oc_url)
-            elif isinstance(self.project_uuids, list)\
-                 and self.annotated_after is False\
-                 and self.skip_indexed_after is False:
+            elif isinstance(self.project_uuids, list) \
+                and self.annotated_after is False \
+                and self.skip_indexed_after is False:
                 # now validate to make sure we're asking for uuids
                 uuids = []
                 raw_uuids = Manifest.objects\
