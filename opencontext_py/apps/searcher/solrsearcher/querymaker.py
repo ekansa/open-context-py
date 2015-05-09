@@ -208,6 +208,14 @@ class QueryMaker():
                         # as with ___pred_ to query just the slug. But this works for now
                         self.entities[entity.slug] = entity
                         fq_path_term = fq_field + '_fq:' + entity.slug
+                        if dc_param == 'dc-temporal' \
+                           and entity.entity_type == 'vocabulary' \
+                           and 'periodo' in entity.slug:
+                            # it's a temporal vocabulary from periodo
+                            # so search for specific periods contained in
+                            # the vocabulary
+                            fq_path_term = '(' + fq_path_term +\
+                                           ' OR ' + fq_path_term + '*)'
                     else:
                         if dc_term[-1] != '*':
                             dc_term += '*'
