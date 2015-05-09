@@ -106,8 +106,9 @@ class Entity():
                         thumb_obj = Mediafile.objects.get(uuid=manifest_item.uuid, file_type='oc-gen:thumbnail')
                     except Mediafile.DoesNotExist:
                         thumb_obj = False
-                    self.thumbnail_media = thumb_obj
-                    self.thumbnail_uri = thumb_obj.file_uri
+                    if thumb_obj is not False:
+                        self.thumbnail_media = thumb_obj
+                        self.thumbnail_uri = thumb_obj.file_uri
                 elif(manifest_item.item_type == 'types'):
                     tl = TypeLookup()
                     tl.get_octype_without_manifest(identifier)

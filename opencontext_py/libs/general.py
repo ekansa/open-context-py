@@ -11,6 +11,7 @@ class LastUpdatedOrderedDict(OrderedDict):
             del self[key]
         OrderedDict.__setitem__(self, key, value)
 
+
 class DCterms():
     """
     Some methods for accessing some commonly used
@@ -21,16 +22,16 @@ class DCterms():
                           'dc-terms:coverage': 'dc_terms_coverage___pred_id',
                           'dc-terms:temporal': 'dc_terms_temporal___pred_id',
                           'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
-    
+
     DC_META_FIELDS = {'dc-subject': 'dc_terms_subject___pred_id',
                       'dc-spatial': 'dc_terms_spatial___pred_id',
                       'dc-coverage': 'dc_terms_coverage___pred_id',
                       'dc-temporal': 'dc_terms_temporal___pred_id',
                       'dc-isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
-    
+
     def __init__(self):
         pass
-    
+
     def get_dc_terms_list(self):
         """ returns a list of dc-terms predicates """
         dc_terms = []
