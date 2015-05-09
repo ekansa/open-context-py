@@ -12,7 +12,7 @@ class PeriodoLink():
     """
     PERIODO_VOCAB_URI = 'http://n2t.net/ark:/99152/p0'
     DC_PERIOD_PRED = 'dc-terms:temporal'
-    
+
     def __init__(self):
         self.periodo_data = False
         self.db_uris = [] # list of entities already in the database
@@ -85,7 +85,7 @@ class PeriodoLink():
                     self.check_add_period_collection(p_ref)
                     # create the period, if new
                     self.check_add_period(p_ref)
-                
+
     def add_period_annoation(self, p_ref):
         """ adds a period annotation """
         entity = Entity()
@@ -101,7 +101,7 @@ class PeriodoLink():
             new_la.creator_uuid = ''
             new_la.save()
         return found
-    
+
     def check_add_period(self, p_ref):
         """ Checks to see if a period collection is in
             the database, adds it if needed
@@ -118,7 +118,7 @@ class PeriodoLink():
                 le.ent_type = 'class'
                 le.save()
             self.db_uris.append(p_ref['period-meta']['uri'])
-            
+
     def check_add_period_collection(self, p_ref):
         """ Checks to see if a period collection is in
             the database, adds it if needed
@@ -148,7 +148,7 @@ class PeriodoLink():
             le.vocab_uri = self.PERIODO_VOCAB_URI
             le.ent_type = 'vocabulary'
             le.save()
-    
+
     def check_add_period_pred(self):
         """ Adds the periodo vocabulary if it doesn't exist yet
         """
@@ -162,7 +162,7 @@ class PeriodoLink():
             le.vocab_uri = 'http://purl.org/dc/terms'
             le.ent_type = 'property'
             le.save()
-    
+
     def delete_periodo_annotations(self):
         """ deletes period0 annoations """
         delete = LinkAnnotation.objects\
