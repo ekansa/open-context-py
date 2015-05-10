@@ -79,7 +79,7 @@ class FilterLinks():
                 # a different parameter than the one in the filter, so add
                 filter_request[ch_param_key] = ch_param_vals
             else:
-                if rem_param_key != 'path' and len(ch_param_vals) > 1:
+                if rem_param_key != 'path' and len(ch_param_vals) > 0:
                     filter_request[ch_param_key] = []
                     for ch_param_val in ch_param_vals:
                         if rem_param_val != ch_param_val:
