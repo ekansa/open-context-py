@@ -24,6 +24,7 @@
         </div>
         <div class="col-sm-4">
             {% include 'sets/filters.html' %}
+            {% include 'sets/text-search.html' %}
             {% include 'sets/facets.html' %}
         </div>
     <div class="row" style="margin-bottom: -15px;">
@@ -53,7 +54,10 @@
         <!--
         var base_url = "{{ base_url }}";
         var search_map = new search_map("{{ json_url }}");
-        search_map.map.get_geojson_regions();
+        var total_count = {{ st.total_count }};
+        if (total_count > 0) {
+            search_map.map.get_geojson_regions();
+        }
         -->
     </script>
 </div>

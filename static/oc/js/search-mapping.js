@@ -135,6 +135,7 @@ function search_map(json_url) {
 			buttonControls.id = 'region-facet-buttons';
 			var deep_tile_control = L.easyButton('glyphicon-th', 
 				function (){
+					map.default_layer = 'tile';
 					var new_geodeep = parseInt(map.geodeep) + 1;
 					if (new_geodeep <= map.max_tile_zoom) {
 						//can still zoom in
@@ -146,6 +147,7 @@ function search_map(json_url) {
 			);
 			var big_tile_control = L.easyButton('glyphicon-th-large', 
 				function (){
+					map.default_layer = 'tile';
 					var new_geodeep = map.geodeep - 1;
 					if (new_geodeep > 3) {
 						//can still zoom out
@@ -161,6 +163,7 @@ function search_map(json_url) {
 						// delete the currently displayed layer
 						map.removeLayer(tile_region_layer);
 					}
+					map.default_layer = 'circle';
 					map.circle_regions();
 				},
 				'Circle-markers for Open Context regions',
