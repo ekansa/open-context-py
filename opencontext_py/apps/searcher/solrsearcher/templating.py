@@ -26,12 +26,14 @@ class SearchTemplate():
         self.date_facets = []
         self.facets = []
         self.geo_records = []
+        self.text_search = []
         self.nav_items = settings.NAV_ITEMS
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
             self.set_paging()  # adds to the paging dict
+            self.set_text_search()  # adds text search fields
             if 'totalResults' in self.json_ld:
                 self.total_count = self.json_ld['totalResults']
             if 'itemsPerPage' in self.json_ld:
@@ -84,6 +86,15 @@ class SearchTemplate():
             else:
                 self.paging[page] = False
 
+    def set_text_search(self):
+        """ sets the text search URL """
+        if 'oc-api:has-text-search' in self.json_ld:
+            for t_opt in self.json_ld['oc-api:has-text-search']:
+                ts = TextSearch()
+                ts.parse_json_record(t_opt)
+                if ts.id is not False:
+                    self.text_search.append(ts)
+
     def get_path_in_dict(self, key_path_list, dict_obj, default=False):
         """ get part of a dictionary object by a list of keys """
         act_dict_obj = dict_obj
@@ -104,7 +115,7 @@ class SearchTemplate():
 class SearchFilter():
     """ Object for an active search filter """
 
-    def __init___(self):
+    def __init__(self):
         self.filter_label = False
         self.filter_value = False
         self.remove_href = False
@@ -119,7 +130,31 @@ class SearchFilter():
             self.filter_value = json_filter['label']
         if 'oc-api:remove' in json_filter:
             self.remove_href = json_filter['oc-api:remove']
- 
+
+
+class TextSearch():
+    """ Object for text search fields """
+    def __init__(self):
+        self.id = False
+        self.label = False
+        self.href = False
+        self.term = False
+        self.temp = '{SearchTerm}'
+
+    def parse_json_record(self, json_rec):
+        """ parses a json record to make a text
+            search object
+        """
+        if isinstance(json_rec, dict):
+            if 'id' in json_rec:
+                self.id = json_rec['id'].replace('#', '')
+            if 'label' in json_rec:
+                self.label = json_rec['label']
+            if 'oc-api:search-term' in json_rec:
+                if json_rec['oc-api:search-term'] is not None:
+                    self.term = json_rec['oc-api:search-term']
+            if 'oc-api:template' in json_rec:
+                self.href = json_rec['oc-api:template']
 
 class ResultRecord():
     """ Object for a result record
