@@ -1,3 +1,4 @@
+import re
 import json
 import requests
 from opencontext_py.libs.isoyears import ISOyears
@@ -84,11 +85,47 @@ class PeriodoAPI():
                        'uri': self.URI_PREFIX + p_id_key,
                        'label': False,
                        'start': self.get_period_numeric_year(period, 'start'),
-                       'stop': self.get_period_numeric_year(period, 'stop')}
+                       'stop': self.get_period_numeric_year(period, 'stop'),
+                       'range': self.make_date_range(period),
+                       'label-range': False # label, combined label with time range
+                       }
         if 'label' in period:
             period_meta['label'] = period['label']
+            t_number = re.sub('[^0-9]', '', period['label'])
+            if t_number is None:
+                add_range = True
+            elif t_number is False:
+                add_range = True
+            elif len(t_number) < 1:
+                add_range = True
+            else:
+                add_range = False
+            if add_range and period_meta['range'] is not False:
+                period_meta['label-range'] = period['label'] \
+                                             + ' (' + period_meta['range'] + ')'
+            else:
+                period_meta['label-range'] = period['label']
         return period_meta
-        
+    
+    def make_date_range(self, period):
+        """ gets a year, if it exists and translates from
+            ISO 8601 values to numeric BCE / CE
+        """
+        output = False
+        iso_years = ISOyears()
+        start_date = self.get_period_numeric_year(period, 'start')
+        if isinstance(start_date, float):
+            start_date = int(start_date)
+            start_date = iso_years.bce_ce_suffix(start_date)
+            output = start_date
+            end_date = self.get_period_numeric_year(period, 'stop')
+            if isinstance(end_date, float):
+                end_date = int(end_date)
+                end_date = iso_years.bce_ce_suffix(end_date)
+                output += ' - ' + end_date
+        # print('Range: ' + output)
+        return output
+    
     def get_period_numeric_year(self, period, start_stop='start'):
         """ gets a year, if it exists and translates from
             ISO 8601 values to numeric BCE / CE

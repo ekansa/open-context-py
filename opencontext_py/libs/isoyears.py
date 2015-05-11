@@ -44,6 +44,14 @@ class ISOyears():
             float_year = float(iso_year)
         return float_year
     
+    def bce_ce_suffix(self, float_year):
+        """ Adds a BCE / CE suffix to a float year """
+        if float_year < 1:
+            output = str(abs(float_year)) + ' BCE'
+        else:
+            output = str(float_year) + ' CE'
+        return output
+    
     def prepend_zeros(self, date_string, total_len=4):
         """ prepends zeros for a site
             with a total digit length
