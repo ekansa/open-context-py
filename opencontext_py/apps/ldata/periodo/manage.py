@@ -112,10 +112,8 @@ class PeriodoLink():
             if len(lev) < 1:
                 le = LinkEntity()
                 le.uri = p_ref['period-meta']['uri']
-                le.label = p_ref['period-meta']['label'] \
-                           + '(' + p_ref['period-meta']['range'] + ')'
-                le.alt_label = p_ref['period-meta']['label'] \
-                           + '(' + p_ref['period-meta']['range'] + ')'
+                le.label = p_ref['period-meta']['label-range']
+                le.alt_label = p_ref['period-meta']['label']
                 le.vocab_uri = p_ref['collection']['uri']
                 le.ent_type = 'class'
                 le.save()

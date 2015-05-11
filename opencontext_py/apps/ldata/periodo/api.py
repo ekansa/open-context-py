@@ -1,3 +1,4 @@
+import re
 import json
 import requests
 from opencontext_py.libs.isoyears import ISOyears
@@ -85,9 +86,18 @@ class PeriodoAPI():
                        'label': False,
                        'start': self.get_period_numeric_year(period, 'start'),
                        'stop': self.get_period_numeric_year(period, 'stop'),
-                       'range': self.make_date_range(period)}
+                       'range': self.make_date_range(period),
+                       'label-range': False # label, combined label with time range
+                       }
         if 'label' in period:
             period_meta['label'] = period['label']
+            t_number = re.sub('[^0-9.]', '', period['label'])
+            if t_number is not None:
+                # the label already has numbers, so don't add a date range
+                period_meta['label-range'] = period['label']
+            else:
+                period_meta['label-range'] = period['label'] \
+                                             + ' (' + period['range'] + ')'
         return period_meta
     
     def make_date_range(self, period):
