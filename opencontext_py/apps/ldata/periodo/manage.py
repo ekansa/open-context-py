@@ -110,7 +110,7 @@ class PeriodoLink():
         if not p_ref['period-meta']['uri'] in self.db_uris:
             # not in memory for being in the database
             lev = LinkEntity.objects.filter(uri=p_ref['period-meta']['uri'])[:1]
-            if len(lev) < 1:
+            if len(lev) < 1 or self.update_period:
                 le = LinkEntity()
                 le.uri = p_ref['period-meta']['uri']
                 le.label = p_ref['period-meta']['label-range']
@@ -127,7 +127,7 @@ class PeriodoLink():
         if not p_ref['collection']['uri'] in self.db_uris:
             # not in memory for being in the database
             lev = LinkEntity.objects.filter(uri=p_ref['collection']['uri'])[:1]
-            if len(lev) < 1 or self.update_period:
+            if len(lev) < 1:
                 le = LinkEntity()
                 le.uri = p_ref['collection']['uri']
                 le.label = 'PeriodO Collection: ' + p_ref['collection']['label']
