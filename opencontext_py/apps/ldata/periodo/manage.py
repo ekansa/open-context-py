@@ -17,6 +17,7 @@ class PeriodoLink():
         self.periodo_data = False
         self.db_uris = [] # list of entities already in the database
         self.source_id = 'PeriodO'
+        self.update_period = False
 
     def add_period_coverage(self, uuid, period_uri):
         """ Adds an periodo uri annotation to an item
@@ -126,7 +127,7 @@ class PeriodoLink():
         if not p_ref['collection']['uri'] in self.db_uris:
             # not in memory for being in the database
             lev = LinkEntity.objects.filter(uri=p_ref['collection']['uri'])[:1]
-            if len(lev) < 1:
+            if len(lev) < 1 or self.update_period:
                 le = LinkEntity()
                 le.uri = p_ref['collection']['uri']
                 le.label = 'PeriodO Collection: ' + p_ref['collection']['label']
