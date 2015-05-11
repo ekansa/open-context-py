@@ -84,11 +84,28 @@ class PeriodoAPI():
                        'uri': self.URI_PREFIX + p_id_key,
                        'label': False,
                        'start': self.get_period_numeric_year(period, 'start'),
-                       'stop': self.get_period_numeric_year(period, 'stop')}
+                       'stop': self.get_period_numeric_year(period, 'stop'),
+                       'range': self.make_date_range(period)}
         if 'label' in period:
             period_meta['label'] = period['label']
         return period_meta
-        
+    
+    def make_date_range(self, period):
+        """ gets a year, if it exists and translates from
+            ISO 8601 values to numeric BCE / CE
+        """
+        output = False
+        iso_years = ISOyears()
+        start_date = self.get_period_numeric_year(period, 'start')
+        if start_date is not False:
+            start_date = iso_years.bce_ce_suffix(start_date)
+            output = start_date
+            end_date = self.get_period_numeric_year(period, 'stop')
+            if end_date is not False:
+                end_date = iso_years.bce_ce_suffix(end_date)
+                output += ' - ' + end_date
+        return output
+    
     def get_period_numeric_year(self, period, start_stop='start'):
         """ gets a year, if it exists and translates from
             ISO 8601 values to numeric BCE / CE
