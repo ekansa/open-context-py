@@ -91,13 +91,20 @@ class PeriodoAPI():
                        }
         if 'label' in period:
             period_meta['label'] = period['label']
-            t_number = re.sub('[^0-9.]', '', period['label'])
-            if t_number is not None:
-                # the label already has numbers, so don't add a date range
-                period_meta['label-range'] = period['label']
+            t_number = re.sub('[^0-9]', '', period['label'])
+            if t_number is None:
+                add_range = True
+            elif t_number is False:
+                add_range = True
+            elif len(t_number) < 1:
+                add_range = True
             else:
+                add_range = False
+            if add_range and period_meta['range'] is not False:
                 period_meta['label-range'] = period['label'] \
-                                             + ' (' + period['range'] + ')'
+                                             + ' (' + period_meta['range'] + ')'
+            else:
+                period_meta['label-range'] = period['label']
         return period_meta
     
     def make_date_range(self, period):
@@ -107,13 +114,16 @@ class PeriodoAPI():
         output = False
         iso_years = ISOyears()
         start_date = self.get_period_numeric_year(period, 'start')
-        if start_date is not False:
+        if isinstance(start_date, float):
+            start_date = int(start_date)
             start_date = iso_years.bce_ce_suffix(start_date)
             output = start_date
             end_date = self.get_period_numeric_year(period, 'stop')
-            if end_date is not False:
+            if isinstance(end_date, float):
+                end_date = int(end_date)
                 end_date = iso_years.bce_ce_suffix(end_date)
                 output += ' - ' + end_date
+        # print('Range: ' + output)
         return output
     
     def get_period_numeric_year(self, period, start_stop='start'):
