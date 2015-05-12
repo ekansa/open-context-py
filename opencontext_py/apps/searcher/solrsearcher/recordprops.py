@@ -126,8 +126,9 @@ class RecordProperties():
         if 'discovery_geolocation' in solr_rec:
             geo_strings = solr_rec['discovery_geolocation']
             geo_coords_str = geo_strings.split(',')
-            self.latitude = float(geo_coords_str[1])
-            self.longitude = float(geo_coords_str[0])  # geojson ording
+            # NOT geojson ording, since solr uses lat/lon ordering
+            self.latitude = float(geo_coords_str[0])
+            self.longitude = float(geo_coords_str[1]) 
 
     def get_category(self, solr_rec):
         """ Gets the most specific category for the item """
