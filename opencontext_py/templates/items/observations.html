@@ -78,38 +78,38 @@
                 {% for prop in obs.properties %}
                     <tr>
                         <td class="col-sm-4">
-							{% if prop.varslug != False %}
-							<a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a>
-							{% else %}
-							{{ prop.varlabel }}
-							{%endif%}
-						</td>
+				{% if prop.varslug != False %}
+				<a href="{% url 'predicates_html' prop.varslug %}">{{ prop.varlabel }}</a>
+				{% else %}
+				{{ prop.varlabel }}
+				{%endif%}
+			</td>
                         <td class="col-sm-8">
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
                                 {% if prop.values.0.uri != False %}
-									{% if prop.values.0.item_type == 'predicates' %}
-									<a href="{% url 'predicates_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
-									{% elif prop.values.0.item_type == 'types'  %}
-                                    <a href="{% url 'types_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
-									{% else %}
-									<a href="{{ prop.values.0.uri }}" target="_blank">{{ prop.values.0.val }}</a>
-									{%endif%}
-                                {% else %}
-									{% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
+				    {% if prop.values.0.item_type == 'predicates' %}
+				    <a href="{% url 'predicates_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
+				    {% elif prop.values.0.item_type == 'types'  %}
+<a href="{% url 'types_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
+				    {% else %}
+				    <a href="{{ prop.values.0.uri }}" target="_blank">{{ prop.values.0.val }}</a>
+				    {%endif%}
+{% else %}
+				    {% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
                                 {%endif%}
                             {% else %}
                             <ul>
                                 {% for propval in prop.values %}
                                 <li>
                                     {% if propval.uri != False %}
-										{% if propval.item_type == 'predicates' %}
-										<a href="{% url 'predicates_html' propval.uuid %}">{{ propval.val }}</a>
-										{% elif propval.item_type == 'types'  %}
-										<a href="{% url 'types_html' propval.uuid %}">{{ propval.val }}</a>
-										{% else %}
-										<a href="{{ propval.uri }}" target="_blank">{{ propval.val }}</a>
-										{%endif%}
+					{% if propval.item_type == 'predicates' %}
+					<a href="{% url 'predicates_html' propval.uuid %}">{{ propval.val }}</a>
+					{% elif propval.item_type == 'types'  %}
+					<a href="{% url 'types_html' propval.uuid %}">{{ propval.val }}</a>
+					{% else %}
+					<a href="{{ propval.uri }}" target="_blank">{{ propval.val }}</a>
+					{%endif%}
                                     {% else %}
                                         {% autoescape off %}{{ propval.val }}{% endautoescape %}
                                     {%endif%}
@@ -178,8 +178,10 @@
                     <tr>
                         <td class="col-sm-4">
                             <a href="{{ anno.id }}" target="_blank">{{ anno.label }}</a>
-                            <br/>
+                            {% if anno.vocabulary != False %}
+			    <br/>
                             <small>[{{ anno.type }}: <a href="{{ anno.vocab_uri }}" target="_blank">{{ anno.vocabulary }}</a>]</small>
+			    {% endif %}
                         </td>
                         <td class="col-sm-8">
                         {% if anno.literals != None %}
@@ -199,8 +201,10 @@
                             {% if anno.objects|length == 1 %}
                                 <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
                                 {% if anno.objects.0.id != anno.objects.0.vocab_uri %}
+				{% if anno.objects.0.vocabulary != False %}
 				<br/>
                                 <small>[Standard: <a href="{{ anno.objects.0.vocab_uri }}" target="_blank">{{ anno.objects.0.vocabulary }}</a>]</small>
+				{%endif%}
 				{%endif%}
 			    {% else %}
                             <ul>

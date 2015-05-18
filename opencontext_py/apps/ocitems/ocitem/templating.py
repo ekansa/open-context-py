@@ -12,6 +12,7 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
+from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 # Help organize the code, with a class to make templating easier
@@ -942,6 +943,8 @@ class LinkedData():
         self.project = False
         dc_terms_obj = DCterms()
         self.ITEM_DC_METADATA_PREDICATES = dc_terms_obj.get_dc_terms_list()
+        rp = RootPath()
+        self.base_url = rp.get_baseurl()
 
     def make_linked_data(self, json_ld):
         """ Makes a list of linked data annotations that have unique combinations of predicates and objects
@@ -1056,11 +1059,20 @@ class LinkedData():
                                     link_assertion['subject'] = subject_id
                                     link_assertion['vocab_uri'] = False
                                     link_assertion['vocabulary'] = False
+                                    link_assertion['slug'] = False
                                     ent = Entity()
                                     found = ent.dereference(link_assertion['id'])
                                     if found:
                                         link_assertion['vocab_uri'] = ent.vocab_uri
                                         link_assertion['vocabulary'] = ent.vocabulary
+                                        link_assertion['slug'] = ent.slug
+                                        if ent.vocab_uri is False \
+                                           and self.project.uuid is not False:
+                                            link_assertion['vocab_uri'] = self.base_url \
+                                                                          + '/projects/' \
+                                                                          + self.project.uuid
+                                            link_assertion['vocabulary'] = settings.CANONICAL_SITENAME \
+                                                                           + ' :: ' + self.project.label
                                     if subject_type == 'predicates':
                                         linked_predicates.append(link_assertion)
                                     else:
@@ -1086,6 +1098,7 @@ class LinkedData():
                     p_label = act_pred
                     p_vocab = False
                     p_vocab_uri = False
+                    p_slug = False
                     ent = Entity()
                     found = ent.dereference(act_pred)
                     if found:
@@ -1093,6 +1106,7 @@ class LinkedData():
                         p_label = ent.label
                         p_vocab = ent.vocabulary
                         p_vocab_uri = ent.vocab_uri
+                        p_slug = ent.slug
                     act_i_ass = {'id': p_uri,
                                  'type': 'Standard',
                                  'label': p_label,
@@ -1115,11 +1129,21 @@ class LinkedData():
                             add_annotation = False
                         ld_obj['vocabulary'] = False
                         ld_obj['vocab_uri'] = False
+                        ld_obj['query'] = False
                         ent = Entity()
                         found = ent.dereference(uri)
                         if found:
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
+                            if p_slug is not False:
+                                ld_obj['query'] = p_slug + '---' + ent.slug
+                            if ent.vocab_uri is False \
+                               and self.project.uuid is not False:
+                                ld_obj['vocab_uri'] = self.base_url \
+                                                      + '/projects/' \
+                                                      + self.project.uuid
+                                ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
+                                                       + ' :: ' + self.project.label
                         act_i_ass['objects'].append(ld_obj)
                     if add_annotation:
                         self.item_assertions.append(act_i_ass)
@@ -1141,6 +1165,7 @@ class LinkedData():
                     p_label = act_pred
                     p_vocab = False
                     p_vocab_uri = False
+                    p_slug = False
                     ent = Entity()
                     found = ent.dereference(act_pred)
                     if found:
@@ -1148,6 +1173,7 @@ class LinkedData():
                         p_label = ent.label
                         p_vocab = ent.vocabulary
                         p_vocab_uri = ent.vocab_uri
+                        p_slug = ent.slug
                     act_i_ass = {'id': p_uri,
                                  'type': 'Standard',
                                  'label': p_label,
@@ -1164,11 +1190,21 @@ class LinkedData():
                             ld_obj['id'] = uri
                         ld_obj['vocabulary'] = False
                         ld_obj['vocab_uri'] = False
+                        ld_obj['query'] = False
                         ent = Entity()
                         found = ent.dereference(uri)
                         if found:
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
+                            if p_slug is not False:
+                                ld_obj['query'] = p_slug + '---' + ent.slug
+                            if ent.vocab_uri is False \
+                               and self.project.uuid is not False:
+                                ld_obj['vocab_uri'] = self.base_url \
+                                                      + '/projects/' \
+                                                      + self.project.uuid
+                                ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
+                                                       + ' :: ' + self.project.label
                         act_i_ass['objects'].append(ld_obj)
                     if add_annotation:
                         self.item_dc_metadata.append(act_i_ass)
