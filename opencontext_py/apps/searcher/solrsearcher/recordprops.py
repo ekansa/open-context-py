@@ -1,4 +1,5 @@
 import json
+import lxml.html
 from django.conf import settings
 import django.utils.http as http
 from django.utils.html import strip_tags
@@ -109,7 +110,12 @@ class RecordProperties():
                     # some processing to remove fagments of HTML markup.
                     self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')
                     self.snippet = self.snippet.replace('</em>', '[[[[/mark]]]]')
-                    self.snippet = strip_tags(self.snippet)
+                    try:
+                        self.snippet = '<div>' + self.snippet + '</div>'
+                        self.snippet = lxml.html.fromstring(self.snippet).text_content()
+                        self.snippet = strip_tags(self.snippet)
+                    except:
+                        self.snippet = strip_tags(self.snippet)
                     self.snippet = self.snippet.replace('[[[[mark]]]]', '<em>')
                     self.snippet = self.snippet.replace('[[[[/mark]]]]', '</em>')
 
