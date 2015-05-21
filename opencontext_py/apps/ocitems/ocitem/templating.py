@@ -978,10 +978,11 @@ class LinkedData():
                                         if 'id' in act_val:
                                             act_type_oc_id = act_val['id']
                                             if act_type_oc_id in self.linked_types:
-                                                act_type = self.linked_types[act_type_oc_id]
-                                                if act_type['id'] not in act_annotation['objects']:
-                                                    # makes sure we've got unique objects
-                                                    act_annotation['objects'][act_type['id']] = act_type
+                                                act_types = self.linked_types[act_type_oc_id]
+                                                for act_type in act_types:
+                                                    if act_type['id'] not in act_annotation['objects']:
+                                                        # makes sure we've got unique objects
+                                                        act_annotation['objects'][act_type['id']] = act_type
                                             else:
                                                 act_type = act_val
                                                 if self.project.label is False:
@@ -1076,7 +1077,10 @@ class LinkedData():
                                     if subject_type == 'predicates':
                                         linked_predicates.append(link_assertion)
                                     else:
-                                        linked_types[link_assertion['subject']] = link_assertion
+                                        if link_assertion['subject'] in linked_types:
+                                            linked_types[link_assertion['subject']].append(link_assertion)
+                                        else:
+                                            linked_types[link_assertion['subject']] = [link_assertion]
                 if len(linked_predicates) > 0:
                     self.linked_predicates = linked_predicates
                     self.linked_types = {}
