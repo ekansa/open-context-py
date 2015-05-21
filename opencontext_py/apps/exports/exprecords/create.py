@@ -126,7 +126,7 @@ class Create():
                 field['rel_ids'] = json.loads(exfield.rel_ids)
                 self.fields.append(field)
 
-    def process_uuids_simple(self, project_uuids, class_uri):
+    def prep_process_uuids_by_projects_class(self, project_uuids, class_uri):
         """ Gets a list of uuids and basic metadata about items for the
             export table. Does so in the simpliest way, filtering only
             by a list of project_uuids and class_uri """
@@ -137,6 +137,17 @@ class Create():
         self.get_predicate_link_annotations()  # even if not showing linked data
         self.process_ld_predicates_values()  # only if exporting linked data
         self.save_ld_fields()  # only if exporting linked data
+
+    def prep_process_uuid_list(self, uuids, do_linked_data=False):
+        """ prepares default fields and exports a list of items """
+        self.uuidlist = uuids
+        self.prep_default_fields()
+        self.process_uuid_list(self.uuidlist)
+        self.get_predicate_uuids()  # now prepare to do item descriptions
+        self.get_predicate_link_annotations()  # even if not showing linked data
+        if do_linked_data:
+            self.process_ld_predicates_values()  # only if exporting linked data
+            self.save_ld_fields()  # only if exporting linked data
 
     def process_uuid_list(self, uuids, starting_row=1):
         row_num = starting_row
