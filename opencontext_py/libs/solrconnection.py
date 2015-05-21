@@ -27,6 +27,7 @@ class SolrConnection():
             solr_connection_string = solr_host + ':' + str(solr_port) \
                 + '/solr' + solr_collection
         try:
+            # print(solr_connection_string)
             self.connection = Solr(solr_connection_string,
                                    make_request=self.session,
                                    version=4)
