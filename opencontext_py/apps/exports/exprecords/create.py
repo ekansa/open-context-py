@@ -53,6 +53,8 @@ class Create():
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
         self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
         self.ld_object_equivs = LastUpdatedOrderedDict()  # unique linked_data predicates
+        self.dc_contributor_ids = {} # dict with ID keys and counts of dc-terms:contributor
+        self.dc_creator_ids = {} # dict with ID keys and counts of dc-terms:creator
         self.uuidlist = []
 
     def prep_default_fields(self):
@@ -660,6 +662,16 @@ class Create():
         found = auth.get_authors(man.uuid,
                                  man.project_uuid)
         if found:
+            # save counts of different dc-terms:creator for use as table metadata
+            for auth_id in auth.creators:
+                if auth_id not in self.dc_creator_ids:
+                    self.dc_creator_ids[auth_id] = 0
+                self.dc_creator_ids[auth_id] += 1
+            # save counts of different dc-terms:contributor for use as table metadata    
+            for auth_id in auth.contributors:
+                if auth_id not in self.dc_contributor_ids:
+                    self.self.dc_contributor_ids[auth_id] = 0
+                self.self.dc_contributor_ids[auth_id] += 1    
             all_author_ids = auth.creators + auth.contributors
             all_authors = []
             for auth_id in all_author_ids:
