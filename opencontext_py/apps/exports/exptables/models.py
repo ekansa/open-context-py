@@ -13,7 +13,7 @@ class ExpTable(models.Model):
     abstract = models.TextField()
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
-    
+
     def save(self, *args, **kwargs):
         """
         saves with created time if None
@@ -24,6 +24,3 @@ class ExpTable(models.Model):
 
     class Meta:
         db_table = 'exp_tables'
-
-    
-    
