@@ -45,6 +45,9 @@ class Create():
         self.fields = []
         self.context_fields = LastUpdatedOrderedDict()
         self.ld_fields = LastUpdatedOrderedDict()
+        self.predicate_fields = LastUpdatedOrderedDict()
+        self.multi_source_value_delim = '; '  # delimiter for multiple values in source data field
+        self.obs_limits = []  # limits predicate exports to listed observation numbers, no limit if empty
         self.entities = {}
         self.predicate_uris_boolean_types = False  # predicate_uris expressed as boolean types
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
@@ -148,6 +151,7 @@ class Create():
         if do_linked_data:
             self.process_ld_predicates_values()  # only if exporting linked data
             self.save_ld_fields()  # only if exporting linked data
+        self.save_source_fields()  # save source data, possibly limited by observations
 
     def process_uuid_list(self, uuids, starting_row=1):
         row_num = starting_row
@@ -177,12 +181,22 @@ class Create():
         """ Gets predicate uuids for a table """
         self.entities = {}  # resets the entites, no need to keep context entitites in memory
         self.check_reload_fields_from_db()  # gets fields from DB, if process was interrupted
+        limit_obs = False
+        if isinstance(self.obs_limits, list):
+            if len(self.obs_limits) > 0:
+                limit_obs = True
         uuids = UUIDListExportTable(self.table_id).uuids
         # seems faster than a select distinct with a join.
         for uuid in uuids:
-            pred_uuids = Assertion.objects\
-                                  .values_list('predicate_uuid', flat=True)\
-                                  .filter(uuid=uuid)
+            if limit_obs:
+                pred_uuids = Assertion.objects\
+                                      .values_list('predicate_uuid', flat=True)\
+                                      .filter(uuid=uuid,
+                                              obs_num__in=self.obs_limits)
+            else:
+                pred_uuids = Assertion.objects\
+                                      .values_list('predicate_uuid', flat=True)\
+                                      .filter(uuid=uuid)
             item_preds = LastUpdatedOrderedDict()
             for pred_uuid in pred_uuids:
                 if pred_uuid not in item_preds:
@@ -276,6 +290,90 @@ class Create():
                         if self.predicate_uuids[predicate_uuid]['count'] > 1:
                             output = True
         return output
+
+    def save_source_fields(self):
+        """ Creates fields for source data, then saves
+            records of source data for each item in the export
+            table
+        """
+        if self.include_original_fields and len(self.predicate_uuids) > 0:
+            limit_obs = False
+            if isinstance(self.obs_limits, list):
+                if len(self.obs_limits) > 0:
+                    limit_obs = True
+            pred_uuid_list = []
+            for predicate_uuid, pred_dict in self.predicate_uuids.items():
+                field_num = self.get_add_predicate_field_number(predicate_uuid)
+                pred_uuid_list.append(predicate_uuid)
+            # get the rows for the export table
+            rows = UUIDsRowsExportTable(self.table_id).rows
+            for row in rows:
+                if limit_obs:
+                    item_data = Assertion.objects.filter(uuid=row['uuid'],
+                                                         predicate_uuid__in=pred_uuid_list,
+                                                         obs_num__in=self.obs_limits)
+                else:
+                    item_data = Assertion.objects.filter(uuid=row['uuid'],
+                                                         predicate_uuid__in=pred_uuid_list)
+                if len(item_data) > 0:
+                    self.add_source_cells(row['uuid'],
+                                          row['row_num'],
+                                          item_data)
+
+    def add_source_cells(self, uuid, row_num, item_data):
+        """ Adds source data records for an assertion """
+        predicate_values = LastUpdatedOrderedDict()
+        project_uuid = item_data[0].project_uuid
+        for assertion in item_data:
+            predicate_uuid = assertion.predicate_uuid
+            object_uuid = assertion.object_uuid
+            if assertion.object_type == 'xsd:string':
+                try:
+                    oc_str = OCstring.objects.get(uuid=object_uuid)
+                    obj_val = oc_str.content
+                except OCstring.DoesNotExist:
+                    obj_val = ''
+            elif assertion.object_type in ['xsd:integer', 'xsd:double']:
+                # numeric value
+                obj_val = str(assertion.data_num)
+            elif assertion.object_type == 'xsd:date':
+                obj_val = str(assertion.data_date)
+            else:
+                obj_val = str(self.deref_entity_label(object_uuid))
+            if predicate_uuid not in predicate_values:
+                # make a list, since some predicates are multi-valued
+                predicate_values[predicate_uuid] = []
+            predicate_values[predicate_uuid].append(obj_val)
+        for predicate_uuid, val_list in predicate_values.items():
+            field_num = self.get_add_predicate_field_number(predicate_uuid)
+            cell = ExpCell()
+            cell.table_id = self.table_id
+            cell.uuid = uuid
+            cell.project_uuid = project_uuid
+            cell.row_num = row_num
+            cell.field_num = field_num
+            cell.record = self.multi_source_value_delim.join(val_list)  # semi-colon delim for multivalued predicates
+            cell.save()
+            cell = None
+
+    def get_add_predicate_field_number(self, predicate_uuid):
+        """ Gets the field_num for a source predicate_uuid field,
+            givem the predicate_uuid
+            Creates a new field for the predicate as needed
+        """
+        if predicate_uuid in self.predicate_fields:
+            field_num = self.predicate_fields[predicate_uuid]
+        else:
+            field_num = len(self.fields) + 1
+            label = self.deref_entity_label(predicate_uuid) + ' [Source]'
+            rel_ids = [predicate_uuid]
+            field = {'label': label,
+                     'rel_ids': rel_ids,
+                     'field_num': field_num}
+            self.fields.append(field)
+            self.save_field(field)
+            self.predicate_fields[predicate_uuid] = field_num
+        return field_num
 
     def save_ld_fields(self):
         """ Creates fields for linked data, then saves
