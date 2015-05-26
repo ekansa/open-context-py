@@ -275,6 +275,13 @@ class SolrSearch():
         if disc_bbox is not False:
             disc_bbox_query = qm.process_discovery_bbox(disc_bbox)
             query['fq'] += disc_bbox_query['fq']
+        # get items with a URI (or slug) indentified object
+        obj = self.get_request_param(request_dict,
+                                     'obj',
+                                     False)
+        if obj is not False:
+            obj_query = qm.process_ld_object(obj)
+            query['fq'] += obj_query['fq']
         """ -----------------------------------------
             Additional, dataset specific specialized
             queries

@@ -717,6 +717,7 @@ class SolrDocument:
                                                                                                 'id',
                                                                                                 parent['id'],
                                                                                                 parent['label'])
+                                                    last_object_uri = parent['id']
                                                     if act_solr_field not in self.fields:
                                                         self.fields[act_solr_field] = []
                                                     if parent['ld_object_ok']:

@@ -184,6 +184,39 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
+    def process_ld_object(self, objects):
+        # TODO docstring
+        query_dict = {'fq': []}
+        fq_terms = []
+        if not isinstance(objects, list):
+            objects = [objects]
+        for raw_obj in objects:
+            if '||' in raw_obj:
+                or_objects = raw_obj.split('||')
+            else:
+                or_objects = [raw_obj]
+            fq_or_terms = []
+            for obj in or_objects:
+                entity = Entity()
+                found = entity.dereference(obj)
+                if found is False:
+                    # ok, now check it this is a slug
+                    found = entity.dereference(obj, obj)
+                if found:
+                    self.entities[obj] = entity  # store entitty for later use
+                    fq_term = 'object_uri:' + self.escape_solr_arg(entity.uri)
+                    fq_term += ' OR text:"' + self.escape_solr_arg(entity.uri) + '"'
+                else:
+                    fq_term = 'object_uri:' + obj
+                fq_or_terms.append(fq_term)
+            fq_all_ors = ' OR '.join(fq_or_terms)
+            fq_all_ors = '(' + fq_all_ors + ')'
+            fq_terms.append(fq_all_ors)
+        fq_final = ' AND '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        return query_dict
+
     def process_dc_term(self, dc_param, dc_terms, add_facet=False):
         # TODO docstring
         query_dict = {'fq': [],

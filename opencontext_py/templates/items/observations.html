@@ -200,6 +200,9 @@
                         {% if anno.objects != None %}
                             {% if anno.objects|length == 1 %}
                                 <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
+				{% if anno.objects.0.query != False %}
+				<a title="Search Open Context for all items related to this concept" href="{{ base_url }}/sets/?{{ anno.objects.0.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
+				{%endif%}
                                 {% if anno.objects.0.id != anno.objects.0.vocab_uri %}
 				{% if anno.objects.0.vocabulary != False %}
 				<br/>
@@ -211,15 +214,18 @@
                                 {% for annoval in anno.objects %}
                                 <li>
                                     <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
+				    {% if annoval.query != False %}
+				    <a title="Search Open Context for all items related to this concept" href="{{ base_url }}/sets/?{{ annoval.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
+				    {%endif%}
                                     {% if annoval.id != annoval.vocab_uri %}
 				    <br/>
-									{% if annoval.vocab_uri != False %}
+				    {% if annoval.vocab_uri != False %}
                                     <small>[Standard: <a href="{{ annoval.vocab_uri }}" target="_blank">{{ annoval.vocabulary }}</a>]</small>
-									{% else %}
-									<small>[External resource]</small>
-								    {%endif%}
+				    {% else %}
+				    <small>[External resource]</small>
 				    {%endif%}
-								</li>
+				    {%endif%}
+				</li>
                                 {% endfor %}
                             </ul>
                             {%endif%}

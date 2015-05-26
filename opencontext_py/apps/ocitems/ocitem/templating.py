@@ -2,6 +2,7 @@ import json
 import copy
 import datetime
 from django.conf import settings
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -1007,11 +1008,13 @@ class LinkedData():
                     if len(act_annotation['objects']) > 0:
                         objects_list = []
                         for obj_uri_key, act_obj in act_annotation['objects'].items():
+                            act_obj['query'] = self.make_query_parameter(pred_uri_key, obj_uri_key)
                             objects_list.append(act_obj)
                         act_annotation['objects'] = objects_list
                     if len(act_annotation['oc_objects']) > 0:
                         oc_objects_list = []
                         for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
+                            act_obj['query'] = self.make_query_parameter(pred_uri_key, obj_uri_key)
                             oc_objects_list.append(act_obj)
                         act_annotation['oc_objects'] = oc_objects_list
                     if len(act_annotation['objects']) < 1:
@@ -1140,7 +1143,8 @@ class LinkedData():
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
                             if p_slug is not False:
-                                ld_obj['query'] = p_slug + '---' + ent.slug
+                                # don't make a query for a predicate
+                                ld_obj['query'] = self.make_query_parameter(p_slug, ent.slug, item_type)
                             if ent.vocab_uri is False \
                                and self.project.uuid is not False:
                                 ld_obj['vocab_uri'] = self.base_url \
@@ -1201,7 +1205,7 @@ class LinkedData():
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
                             if p_slug is not False:
-                                ld_obj['query'] = p_slug + '---' + ent.slug
+                                ld_obj['query'] = self.make_query_parameter(p_slug, ent.slug)
                             if ent.vocab_uri is False \
                                and self.project.uuid is not False:
                                 ld_obj['vocab_uri'] = self.base_url \
@@ -1230,3 +1234,27 @@ class LinkedData():
         else:
             output = False
         return output
+    
+    def make_query_parameter(self,
+                             predicate,
+                             obj,
+                             item_type=False):
+        """ makes a query parameter depending on the value
+            of the predicate slug
+        """
+        if 'http://' in predicate or 'https://' in predicate:
+            predicate = urlquote_plus(predicate)
+        if 'http://' in obj or 'https://' in obj:
+            obj = urlquote_plus(obj)
+        dc_terms_obj = DCterms()
+        if predicate in dc_terms_obj.DC_SLUG_TO_FIELDS:
+            # there's a query parameter for this dc-terms metadata
+            query = dc_terms_obj.DC_SLUG_TO_FIELDS[predicate]
+            query += '=' + obj
+        elif item_type == 'predicates':
+            query = 'prop=' + obj
+        elif item_type == 'types':
+            query = 'obj=' + obj
+        else:
+            query = 'prop=' + predicate + '---' + obj
+        return query    
