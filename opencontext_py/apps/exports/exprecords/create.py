@@ -755,6 +755,39 @@ class Create():
         cell.record = last_update.strftime('%Y-%m-%d')
         cell.save()
         cell = None
+    
+    def recursive_context_build(self,
+                                parent_level=0):
+        """ recusrively builds a list of parent contexts """
+        if parent_level == 0:
+            sql = 'INSERT INTO exp_records(table_id, uuid, project_uuid,\
+                   row_num, field_num, record_id, record)\
+                   SELECT exp.table_id, exp.uuid, exp.project_uuid,\
+                   exp.row_num, -1, pman.label, ass.uuid \
+                   FROM exp_records AS exp \
+                   LEFT OUTER JOIN oc_assertions AS ass\
+                   ON (ass.object_uuid = exp.uuid \
+                       AND ass.predicate_uuid = \'' + Assertion.PREDICATES_CONTAINS + '\') \
+                   LEFT OUTER JOIN oc_manifest AS pman ON (ass.uuid = pman.uuid) \
+                   WHERE ass.predicate_uuid = \'' + Assertion.PREDICATES_CONTAINS + '\' \
+                   AND exp.table_id = \'' + self.table_id + '\' \
+                   AND exp.field_num = 1; '
+        else:
+            sql = 'INSERT INTO exp_records(table_id, uuid, project_uuid,\
+                   row_num, field_num, record_id, record)\
+                   SELECT exp.table_id, exp.uuid, exp.project_uuid,\
+                   exp.row_num, -1, pman.label, ass.uuid \
+                   FROM exp_records AS exp \
+                   LEFT OUTER JOIN oc_assertions AS ass\
+                   ON (ass.object_uuid = exp.uuid \
+                       AND ass.predicate_uuid = \'' + Assertion.PREDICATES_CONTAINS + '\') \
+                   LEFT OUTER JOIN oc_manifest AS pman ON (ass.uuid = pman.uuid) \
+                   WHERE ass.predicate_uuid = \'' + Assertion.PREDICATES_CONTAINS + '\' \
+                   AND exp.table_id = \'' + self.table_id + '\' \
+                   AND exp.field_num = ' + parent_level + ' ;'
+        parent_res = cursor.execute(sql)
+        print(str(parent_res))
+        parent_level = parent_level - 1
 
     def deref_entity_label(self, entity_id):
         """ Dereferences an entity """
