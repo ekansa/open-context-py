@@ -56,6 +56,7 @@ class Create():
         self.dc_contributor_ids = {} # dict with ID keys and counts of dc-terms:contributor
         self.dc_creator_ids = {} # dict with ID keys and counts of dc-terms:creator
         self.uuidlist = []
+        self.parents = {} # dict of uuids for parent entities to keep them in memory
 
     def prep_default_fields(self):
         """ Prepares initial set of default fields for export tables """
@@ -166,18 +167,88 @@ class Create():
                 print(str(row_num) + ': ' + str(uuid))
                 self.save_basic_default_field_cells(row_num, man)
                 self.save_authorship(row_num, man)
-                act_contain = Containment()
-                parents = act_contain.get_parents_by_child_uuid(man.uuid)
-                subject_list = act_contain.contexts_list
-                subject_list.insert(0, man.uuid)
-                geo_meta = act_contain.get_geochron_from_subject_list(subject_list, 'geo')
-                event_meta = act_contain.get_geochron_from_subject_list(subject_list, 'event')
-                self.save_default_geo(row_num, man, geo_meta)
-                self.save_default_chrono(row_num, man, event_meta)
-                self.save_context(row_num, man, parents)
+                context_metadata = self.get_parents_context_metadata(man.uuid)
+                self.save_default_geo(row_num, man, context_metadata['geo'])
+                self.save_default_chrono(row_num, man, context_metadata['event'])
+                self.save_context(row_num, man, context_metadata['p_list'])
                 row_num += 1
             else:
                 print(uuid + ' Failed!')
+
+    def get_parents_context_metadata(self, uuid):
+        """ get all parents from memory or by DB lookups """
+        par_res = Assertion.objects\
+                           .filter(object_uuid=uuid,
+                                   predicate_uuid=Assertion.PREDICATES_CONTAINS)[:1]
+        if len(par_res) > 0:
+            # item has a parent
+            parent_uuid = par_res[0].uuid
+            if parent_uuid not in self.parents:
+                # we don't have a context path parent list for this parent in memory yet
+                # so let's go and make it
+                p_list = []
+                act_contain = Containment()
+                raw_parents = act_contain.get_parents_by_child_uuid(parent_uuid)
+                if raw_parents is not False:
+                    if len(raw_parents) > 0:
+                        for tree_node, r_parents in raw_parents.items():
+                            p_list = r_parents
+                            break
+                p_list.insert(0, parent_uuid) # add the 1st parent to the start of the list
+                context_metadata = {'p_list': p_list}
+                self.parents[parent_uuid] = context_metadata
+            else:
+                context_metadata = self.parents[parent_uuid] 
+        else:
+            parent_uuid = False
+        # now get geo and chrono metadata
+        context_metadata = self.get_geo_chrono_metadata(uuid,
+                                                        parent_uuid,
+                                                        context_metadata)
+        return context_metadata
+
+    def get_geo_chrono_metadata(self, uuid, parent_uuid, context_metadata):
+        """ gets and saves geo and chrono metadata """ 
+        act_contain = Containment()
+        geo_meta = False
+        event_meta = False
+        uuid_geo = Geospace.objects.filter(uuid=uuid)[:1]
+        if len(uuid_geo) > 0:
+            geo_meta = uuid_geo[0]
+        else:
+            # geo information for this item not found, look to parents
+            if parent_uuid is not False \
+               and 'p_list' in context_metadata:
+                # we have at least 1 parent
+                if 'p_geo' not in context_metadata:
+                    # no saved geo information in this context path, so look it up 
+                    p_list = context_metadata['p_list']
+                    geo_meta = act_contain.get_geochron_from_subject_list(p_list, 'geo')
+                    context_metadata['p_geo'] = geo_meta
+                    self.parents[parent_uuid] = context_metadata
+                else:
+                    # we have saved geo information for this context path so use it
+                    geo_meta = context_metadata['p_geo']
+        uuid_event = Event.objects.filter(uuid=uuid)[:1]
+        if len(uuid_event) > 0:
+            event_meta = uuid_event[0]
+        else:
+            # chrono information for this item not found, look to parents
+            if parent_uuid is not False \
+               and 'p_list' in context_metadata:
+                # we have at least 1 parent
+                if 'p_event' not in context_metadata:
+                    # no saved chrono information in this context path, so look it up 
+                    p_list = context_metadata['p_list']
+                    event_meta = act_contain.get_geochron_from_subject_list(p_list, 'event')
+                    context_metadata['p_event'] = event_meta
+                    self.parents[parent_uuid] = context_metadata
+                else:
+                    # we have saved chrono information for this context path so use it
+                    event_meta = context_metadata['p_event']
+        context_metadata['geo'] = geo_meta
+        context_metadata['event'] = event_meta
+        return context_metadata
 
     def get_predicate_uuids(self):
         """ Gets predicate uuids for a table """
@@ -517,19 +588,16 @@ class Create():
             self.ld_fields[field_key] = field_num
         return field_num
 
-    def save_context(self, row_num, man, raw_parents):
+    def save_context(self, row_num, man, parent_list):
         """ Save context information, will also add new context fields
             as needed
         """
         use_parents = False
         context_uri = ''
-        if raw_parents is not False:
-            if len(raw_parents) > 0:
-                for tree_node, r_parents in raw_parents.items():
-                    # the first parent is the the one to use for making a context URI
-                    context_uri = URImanagement.make_oc_uri(r_parents[0], 'subjects')
-                    # now reverse the order, so the top most general is first
-                    use_parents = r_parents[::-1]
+        if isinstance(parent_list, list):
+            if len(parent_list) > 0:
+                context_uri = URImanagement.make_oc_uri(parent_list[0], 'subjects')
+                use_parents = parent_list[::-1]
         # save a record of the context URI
         cell = ExpCell()
         cell.table_id = self.table_id
