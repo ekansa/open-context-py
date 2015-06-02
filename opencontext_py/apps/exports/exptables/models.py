@@ -8,7 +8,7 @@ class ExpTable(models.Model):
     label = models.CharField(max_length=200, db_index=True)
     field_count = models.IntegerField()
     row_count = models.IntegerField()
-    meta_json = = models.TextField()
+    meta_json = models.TextField()
     short_des = models.CharField(max_length=200)
     abstract = models.TextField()
     created = models.DateTimeField()

@@ -194,7 +194,7 @@ class Create():
                         for tree_node, r_parents in raw_parents.items():
                             p_list = r_parents
                             break
-                p_list.insert(0, parent_uuid) # add the 1st parent to the start of the list
+                p_list.insert(0, parent_uuid)  # add the 1st parent to the start of the list
                 context_metadata = {'p_list': p_list}
                 self.parents[parent_uuid] = context_metadata
             else:
@@ -738,8 +738,8 @@ class Create():
             # save counts of different dc-terms:contributor for use as table metadata    
             for auth_id in auth.contributors:
                 if auth_id not in self.dc_contributor_ids:
-                    self.self.dc_contributor_ids[auth_id] = 0
-                self.self.dc_contributor_ids[auth_id] += 1    
+                    self.dc_contributor_ids[auth_id] = 0
+                self.dc_contributor_ids[auth_id] += 1    
             all_author_ids = auth.creators + auth.contributors
             all_authors = []
             for auth_id in all_author_ids:
@@ -823,7 +823,7 @@ class Create():
         cell.record = last_update.strftime('%Y-%m-%d')
         cell.save()
         cell = None
-    
+
     def recursive_context_build(self,
                                 parent_level=0):
         """ recusrively builds a list of parent contexts """
