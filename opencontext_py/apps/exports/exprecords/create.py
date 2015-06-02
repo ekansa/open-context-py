@@ -177,6 +177,8 @@ class Create():
 
     def get_parents_context_metadata(self, uuid):
         """ get all parents from memory or by DB lookups """
+        if len(self.parents) >= 5000:
+            self.parents = {}
         par_res = Assertion.objects\
                            .filter(object_uuid=uuid,
                                    predicate_uuid=Assertion.PREDICATES_CONTAINS)[:1]
