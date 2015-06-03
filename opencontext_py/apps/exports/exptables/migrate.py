@@ -29,8 +29,8 @@ exm = ExpMigrate()
 exm.get_table_id_list()
 exm.table_id_list
 table_id = '341853c35844195860d3e0cf731f0702'
-table_id = '4c98ccdee589f0e76c5fa7376ac2638e'
-exm.process_table_id(table_id)
+table_id = 'f07bce4fb08cfe926505c9e534d89a09'
+exm.process_table_id(table_id, True, False)
 
     """
 
