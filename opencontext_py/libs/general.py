@@ -36,7 +36,7 @@ class DCterms():
                          'dc-terms-spatial': 'dc-spatial',
                          'dc-terms-coverage': 'dc-coverage',
                          'dc-terms-temporal': 'dc-temporal',
-                         'dc-terms-isReferencedBy': 'dc-isReferencedBy'}
+                         'dc-terms-isreferencedby': 'dc-isReferencedBy'}
 
     DC_AUTHOR_FIELDS = {'dc-creator': 'dc_terms_creator___pred_id',
                         'dc-contributor': 'dc_terms_contributor___pred_id'}
