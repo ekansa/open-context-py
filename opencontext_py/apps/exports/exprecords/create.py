@@ -233,7 +233,7 @@ class Create():
                     geo_meta = context_metadata['p_geo']
         uuid_event = Event.objects.filter(uuid=uuid)[:1]
         if len(uuid_event) > 0:
-            event_meta = uuid_event[0]
+            event_meta = uuid_event
         else:
             # chrono information for this item not found, look to parents
             if parent_uuid is not False \
