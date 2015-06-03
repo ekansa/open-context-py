@@ -2,6 +2,7 @@ import json
 import copy
 import datetime
 from django.conf import settings
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -829,6 +830,7 @@ class Citation():
     def __init__(self):
         self.item_authors = []
         self.item_editors = []
+        self.raw_doi = False
         self.doi = False
         self.ark = False
         self.project = False
@@ -838,6 +840,7 @@ class Citation():
         self.cite_title = ''
         self.cite_year = ''
         self.cite_released = ''
+        self.cite_modified = ''
         self.uri = ''
         self.coins = False
 
@@ -846,22 +849,29 @@ class Citation():
         if isinstance(json_ld, dict):
             if('dc-terms:contributor' in json_ld):
                 for p_item in json_ld['dc-terms:contributor']:
-                    self.item_authors.append(p_item['label'])
+                    if p_item['label'] not in self.item_authors:
+                        self.item_authors.append(p_item['label'])
             if('dc-terms:creator' in json_ld):
                 for p_item in json_ld['dc-terms:creator']:
-                    self.item_editors.append(p_item['label'])
+                    if p_item['label'] not in self.item_editors:
+                        self.item_editors.append(p_item['label'])
             if('owl:sameAs' in json_ld):
                 for s_item in json_ld['owl:sameAs']:
                     if 'dx.doi.org' in s_item['id']:
+                        self.raw_doi = s_item['id'].replace('http://dx.doi.org/', '')
                         self.doi = s_item['id']
                     elif 'n2t.net/ark:' in s_item['id']:
                         self.ark = s_item['id']
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
-            if 'dc-terms:published' in json_ld:
-                published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            if 'dc-terms:issued' in json_ld:
+                published = datetime.datetime.strptime(json_ld['dc-terms:issued'], '%Y-%m-%d').date()
             else:
                 published = datetime.datetime.now()
+            if 'dc-terms:modified' in json_ld:
+                self.cite_modified = datetime.datetime.strptime(json_ld['dc-terms:modified'], '%Y-%m-%d').date()
+            else:
+                self.cite_modified = datetime.datetime.now()
             if len(self.item_authors) > 0:
                 self.cite_authors = ', '.join(self.item_authors)
             else:
@@ -872,6 +882,7 @@ class Citation():
                 self.cite_title = json_ld['label']
             self.cite_year += published.strftime('%Y')
             self.cite_released = published.strftime('%Y-%m-%d')
+            self.cite_modified = self.cite_modified.strftime('%Y-%m-%d')
             self.uri = json_ld['id']
             self.cite_editors = ', '.join(self.item_editors)
             if len(self.item_editors) == 1:
@@ -978,10 +989,11 @@ class LinkedData():
                                         if 'id' in act_val:
                                             act_type_oc_id = act_val['id']
                                             if act_type_oc_id in self.linked_types:
-                                                act_type = self.linked_types[act_type_oc_id]
-                                                if act_type['id'] not in act_annotation['objects']:
-                                                    # makes sure we've got unique objects
-                                                    act_annotation['objects'][act_type['id']] = act_type
+                                                act_types = self.linked_types[act_type_oc_id]
+                                                for act_type in act_types:
+                                                    if act_type['id'] not in act_annotation['objects']:
+                                                        # makes sure we've got unique objects
+                                                        act_annotation['objects'][act_type['id']] = act_type
                                             else:
                                                 act_type = act_val
                                                 if self.project.label is False:
@@ -1006,11 +1018,13 @@ class LinkedData():
                     if len(act_annotation['objects']) > 0:
                         objects_list = []
                         for obj_uri_key, act_obj in act_annotation['objects'].items():
+                            act_obj['query'] = self.make_query_parameter(pred_uri_key, obj_uri_key)
                             objects_list.append(act_obj)
                         act_annotation['objects'] = objects_list
                     if len(act_annotation['oc_objects']) > 0:
                         oc_objects_list = []
                         for obj_uri_key, act_obj in act_annotation['oc_objects'].items():
+                            act_obj['query'] = self.make_query_parameter(pred_uri_key, obj_uri_key)
                             oc_objects_list.append(act_obj)
                         act_annotation['oc_objects'] = oc_objects_list
                     if len(act_annotation['objects']) < 1:
@@ -1076,7 +1090,10 @@ class LinkedData():
                                     if subject_type == 'predicates':
                                         linked_predicates.append(link_assertion)
                                     else:
-                                        linked_types[link_assertion['subject']] = link_assertion
+                                        if link_assertion['subject'] in linked_types:
+                                            linked_types[link_assertion['subject']].append(link_assertion)
+                                        else:
+                                            linked_types[link_assertion['subject']] = [link_assertion]
                 if len(linked_predicates) > 0:
                     self.linked_predicates = linked_predicates
                     self.linked_types = {}
@@ -1118,7 +1135,10 @@ class LinkedData():
                         if item_type == 'types'\
                            and act_pred == 'skos:related'\
                            and ('/predicates/' in uri or 'oc-pred' in uri):
-                            # this is a type related to a predicate, don't consider as an annotaiton
+                            # this is a type related to a predicate, don't consider as an annotation
+                            add_annotation = False
+                        elif 'owl:sameAs' == act_pred and settings.CANONICAL_HOST:
+                            # this is same as annotation with something in open context, not to to add
                             add_annotation = False
                         elif item_type == 'predicates' and act_pred == 'rdfs:range':
                              # this is a range for a predicate, don't consider as an annotaiton
@@ -1136,14 +1156,15 @@ class LinkedData():
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
                             if p_slug is not False:
-                                ld_obj['query'] = p_slug + '---' + ent.slug
+                                # don't make a query for a predicate
+                                ld_obj['query'] = self.make_query_parameter(p_slug, ent.slug, item_type)
                             if ent.vocab_uri is False \
                                and self.project.uuid is not False:
                                 ld_obj['vocab_uri'] = self.base_url \
                                                       + '/projects/' \
                                                       + self.project.uuid
                                 ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
-                                                       + ' :: ' + self.project.label
+                                                       + ' :: ' + str(self.project.label)
                         act_i_ass['objects'].append(ld_obj)
                     if add_annotation:
                         self.item_assertions.append(act_i_ass)
@@ -1197,7 +1218,7 @@ class LinkedData():
                             ld_obj['vocabulary'] = ent.vocabulary
                             ld_obj['vocab_uri'] = ent.vocab_uri
                             if p_slug is not False:
-                                ld_obj['query'] = p_slug + '---' + ent.slug
+                                ld_obj['query'] = self.make_query_parameter(p_slug, ent.slug)
                             if ent.vocab_uri is False \
                                and self.project.uuid is not False:
                                 ld_obj['vocab_uri'] = self.base_url \
@@ -1226,3 +1247,27 @@ class LinkedData():
         else:
             output = False
         return output
+    
+    def make_query_parameter(self,
+                             predicate,
+                             obj,
+                             item_type=False):
+        """ makes a query parameter depending on the value
+            of the predicate slug
+        """
+        if 'http://' in predicate or 'https://' in predicate:
+            predicate = urlquote_plus(predicate)
+        if 'http://' in obj or 'https://' in obj:
+            obj = urlquote_plus(obj)
+        dc_terms_obj = DCterms()
+        if predicate in dc_terms_obj.DC_SLUG_TO_FIELDS:
+            # there's a query parameter for this dc-terms metadata
+            query = dc_terms_obj.DC_SLUG_TO_FIELDS[predicate]
+            query += '=' + obj
+        elif item_type == 'predicates':
+            query = 'prop=' + obj
+        elif item_type == 'types':
+            query = 'obj=' + obj
+        else:
+            query = 'prop=' + predicate + '---' + obj
+        return query    

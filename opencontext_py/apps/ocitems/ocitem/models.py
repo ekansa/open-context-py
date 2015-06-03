@@ -34,7 +34,8 @@ from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 # OCitem is a very general class for all Open Context items.
 # This class is used to make a JSON-LD output from data returned from the database via other apps
 class OCitem():
-    PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:published'
+    PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:issued'
+    PREDICATES_DCTERMS_MODIFIED = 'dc-terms:modified'
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
     PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
@@ -60,6 +61,7 @@ class OCitem():
         self.label = False
         self.item_type = False
         self.published = False
+        self.modified = False
         self.manifest = False
         self.assertions = False
         self.contexts = False
@@ -118,6 +120,7 @@ class OCitem():
             self.project_uuid = self.manifest.project_uuid
             self.item_type = self.manifest.item_type
             self.published = self.manifest.published
+            self.modified = self.manifest.revised
         return self.manifest
 
     def get_assertions(self):
@@ -336,8 +339,10 @@ class OCitem():
         if(self.document is not False):
             json_ld = item_con.add_document_json(json_ld, self.document)
         json_ld = item_con.add_dc_title(json_ld)  # adds dublin core title information, useful for indexing
-        if(self.published is not None):
+        if self.published is not None and self.published is not False:
             json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.published.date().isoformat()
+        if self.modified is not None and self.modified is not False:
+            json_ld[self.PREDICATES_DCTERMS_MODIFIED] = self.modified.date().isoformat()
         if(self.uuid != self.project_uuid):
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               self.PREDICATES_DCTERMS_ISPARTOF,

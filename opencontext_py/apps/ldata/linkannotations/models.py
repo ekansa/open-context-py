@@ -23,6 +23,7 @@ class LinkAnnotation(models.Model):
                            'skos:closeMatch']
 
     hash_id = models.CharField(max_length=50, primary_key=True)
+    sort = models.DecimalField(max_digits=8, decimal_places=3)
     subject = models.CharField(max_length=200, db_index=True)
     subject_type = models.CharField(max_length=50)
     project_uuid = models.CharField(max_length=50)
@@ -51,3 +52,4 @@ class LinkAnnotation(models.Model):
     class Meta:
         db_table = 'link_annotations'
         unique_together = ('subject', 'predicate_uri', 'object_uri')
+        ordering = ['subject', 'sort']

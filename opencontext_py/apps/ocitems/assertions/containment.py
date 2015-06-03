@@ -11,10 +11,6 @@ from opencontext_py.apps.entities.entity.models import Entity
 
 
 class Containment():
-    recurse_count = 0
-    contexts = {}
-    contexts_list = []
-    contents = {}
 
     def __init__(self):
         self.contents = {}
@@ -263,4 +259,25 @@ class Containment():
                 pass
         else:
             print('Cannot find the item for slug: ' + child_slug)
+        return output
+    
+    def get_list_context_depth(self,
+                               children_uuids=[],
+                               prev_context_depth=0):
+        """ checks to see how many context fields are needed
+        """
+        parents = Assertion.objects\
+                           .filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                   object_uuid__in=children_uuids)\
+                           .values_list('uuid', flat=True)\
+                           .distinct('uuid')
+        if len(parents) > 0:
+            self.recurse_count += 1
+            if self.recurse_count < 20:
+                output = self.get_list_context_depth(parents,
+                                                     prev_context_depth + 1)
+            else:
+                output = False
+        else:
+            output = prev_context_depth
         return output

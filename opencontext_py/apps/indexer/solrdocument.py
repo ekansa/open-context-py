@@ -55,6 +55,7 @@ class SolrDocument:
         self._process_chrono()
         self._process_text_content()
         self._process_dc_terms()
+        self._process_dc_authorship()
         self._process_projects()
         self._process_persistent_ids()
         self._process_associated_linkedata()
@@ -361,10 +362,32 @@ class SolrDocument:
 
     def _process_dc_terms(self):
         """
-        Finds the project that this item is part of. If not part of a
-        project, make the project slug the same as the item's own slug.
+        Finds dublin-core metadata about an item (other than authorship)
         """
         for dc_predicate, fname in DCterms.DC_META_PREDICATES.items():
+            if dc_predicate in self.oc_item.json_ld:
+                self.fields[fname] = []
+                for meta in self.oc_item.json_ld[dc_predicate]:
+                    if not ('http://' in meta['id']\
+                       or 'https://' in meta['id'])\
+                       and 'rdfs:isDefinedBy' in meta:
+                        # special case for inferred relationship
+                        meta['id'] = meta['rdfs:isDefinedBy']
+                    self.fields['text'] += meta['label'] + '\n'
+                    self.fields['text'] += meta['id'] + '\n'
+                    item = self._concat_solr_string_value(
+                        meta['slug'],
+                        'id',
+                        meta['id'],
+                        meta['label'])
+                    self.fields[fname].append(item)
+                    self.process_object_uri(meta['id'])
+    
+    def _process_dc_authorship(self):
+        """
+        Finds dublin-core authorship metadata about an item
+        """
+        for dc_predicate, fname in DCterms.DC_AUTHOR_PREDICATES.items():
             if dc_predicate in self.oc_item.json_ld:
                 self.fields[fname] = []
                 for meta in self.oc_item.json_ld[dc_predicate]:
@@ -694,6 +717,7 @@ class SolrDocument:
                                                                                                 'id',
                                                                                                 parent['id'],
                                                                                                 parent['label'])
+                                                    last_object_uri = parent['id']
                                                     if act_solr_field not in self.fields:
                                                         self.fields[act_solr_field] = []
                                                     if parent['ld_object_ok']:
