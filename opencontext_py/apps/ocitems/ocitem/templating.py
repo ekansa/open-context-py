@@ -830,6 +830,7 @@ class Citation():
     def __init__(self):
         self.item_authors = []
         self.item_editors = []
+        self.raw_doi = False
         self.doi = False
         self.ark = False
         self.project = False
@@ -839,6 +840,7 @@ class Citation():
         self.cite_title = ''
         self.cite_year = ''
         self.cite_released = ''
+        self.cite_modified = ''
         self.uri = ''
         self.coins = False
 
@@ -847,22 +849,29 @@ class Citation():
         if isinstance(json_ld, dict):
             if('dc-terms:contributor' in json_ld):
                 for p_item in json_ld['dc-terms:contributor']:
-                    self.item_authors.append(p_item['label'])
+                    if p_item['label'] not in self.item_authors:
+                        self.item_authors.append(p_item['label'])
             if('dc-terms:creator' in json_ld):
                 for p_item in json_ld['dc-terms:creator']:
-                    self.item_editors.append(p_item['label'])
+                    if p_item['label'] not in self.item_editors:
+                        self.item_editors.append(p_item['label'])
             if('owl:sameAs' in json_ld):
                 for s_item in json_ld['owl:sameAs']:
                     if 'dx.doi.org' in s_item['id']:
+                        self.raw_doi = s_item['id'].replace('http://dx.doi.org/', '')
                         self.doi = s_item['id']
                     elif 'n2t.net/ark:' in s_item['id']:
                         self.ark = s_item['id']
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
-            if 'dc-terms:published' in json_ld:
-                published = datetime.datetime.strptime(json_ld['dc-terms:published'], '%Y-%m-%d')
+            if 'dc-terms:issued' in json_ld:
+                published = datetime.datetime.strptime(json_ld['dc-terms:issued'], '%Y-%m-%d').date()
             else:
                 published = datetime.datetime.now()
+            if 'dc-terms:modified' in json_ld:
+                self.cite_modified = datetime.datetime.strptime(json_ld['dc-terms:modified'], '%Y-%m-%d').date()
+            else:
+                self.cite_modified = datetime.datetime.now()
             if len(self.item_authors) > 0:
                 self.cite_authors = ', '.join(self.item_authors)
             else:
@@ -873,6 +882,7 @@ class Citation():
                 self.cite_title = json_ld['label']
             self.cite_year += published.strftime('%Y')
             self.cite_released = published.strftime('%Y-%m-%d')
+            self.cite_modified = self.cite_modified.strftime('%Y-%m-%d')
             self.uri = json_ld['id']
             self.cite_editors = ', '.join(self.item_editors)
             if len(self.item_editors) == 1:
@@ -1125,7 +1135,10 @@ class LinkedData():
                         if item_type == 'types'\
                            and act_pred == 'skos:related'\
                            and ('/predicates/' in uri or 'oc-pred' in uri):
-                            # this is a type related to a predicate, don't consider as an annotaiton
+                            # this is a type related to a predicate, don't consider as an annotation
+                            add_annotation = False
+                        elif 'owl:sameAs' == act_pred and settings.CANONICAL_HOST:
+                            # this is same as annotation with something in open context, not to to add
                             add_annotation = False
                         elif item_type == 'predicates' and act_pred == 'rdfs:range':
                              # this is a range for a predicate, don't consider as an annotaiton
@@ -1151,7 +1164,7 @@ class LinkedData():
                                                       + '/projects/' \
                                                       + self.project.uuid
                                 ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
-                                                       + ' :: ' + self.project.label
+                                                       + ' :: ' + str(self.project.label)
                         act_i_ass['objects'].append(ld_obj)
                     if add_annotation:
                         self.item_assertions.append(act_i_ass)
