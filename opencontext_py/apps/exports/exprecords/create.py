@@ -568,9 +568,11 @@ class Create():
             field_key = pred_ld_equiv_uri + '::' + obj_ld_equiv_uri
         else:
             field_key = pred_ld_equiv_uri
-        if field_type is False:
+        if field_type is not False:
             if len(field_type) > 0:
                 field_key += '::' + field_type
+        else:
+            field_key += '::[Type unknown]'
         if field_key in self.ld_fields:
             field_num = self.ld_fields[field_key]
         else:
