@@ -865,32 +865,35 @@ class Create():
         if len(self.dc_contributor_ids) > 0:
             sauthors = sorted(self.dc_contributor_ids.items(),
                               key=lambda x: (-x[1], x[0]))
-            authors['dc-terms:contributor'] = []
-            i = 0
-            for uri_key, count in sauthors:
-                i += 1
-                auth = LastUpdatedOrderedDict()
-                auth['id'] = '#contributor-' + str(i)
-                auth['rdfs:isDefinedBy'] = uri_key
-                auth['label'] = self.deref_entity_label(uri_key)
-                auth['count'] = count
-                authors['dc-terms:contributor'].append(auth)
+            authors['dc-terms:contributor'] = self.add_author_list(sauthors,
+                                                                   'contributor')
         if len(self.dc_creator_ids) > 0:
             sauthors = sorted(self.dc_creator_ids.items(),
                               key=lambda x: (-x[1], x[0]))
-            authors['dc-terms:creator'] = []
-            i = 0
-            for uri_key, count in sauthors:
-                i += 1
-                auth = LastUpdatedOrderedDict()
-                auth['id'] = '#creator-' + str(i)
-                auth['rdfs:isDefinedBy'] = uri_key
-                auth['label'] = self.deref_entity_label(uri_key)
-                auth['count'] = count
-                authors['dc-terms:creator'].append(auth)
-        print(str(authors))
+            authors['dc-terms:creator'] = self.add_author_list(sauthors,
+                                                               'creator')
         exp_tab.meta_json = authors
         exp_tab.save()
+
+    def add_author_list(self, sauthors, dc_type):
+        """ makes an author list from a sorted tuple of
+            author identifiers
+        """
+        i = 0
+        author_list = []
+        for uri_key, count in sauthors:
+            i += 1
+            auth = LastUpdatedOrderedDict()
+            auth['id'] = '#' + dc_type + '-' + str(i)
+            if 'http://' in uri_key or 'https://' in uri_key:
+                auth['rdfs:isDefinedBy'] = uri_key
+            else:
+                auth['rdfs:isDefinedBy'] = URImanagement.make_oc_uri(uri_key,
+                                                                     'persons')
+            auth['label'] = self.deref_entity_label(uri_key)
+            auth['count'] = count
+            author_list.append(auth)
+        return author_list
 
     def recursive_context_build(self,
                                 parent_level=0):
