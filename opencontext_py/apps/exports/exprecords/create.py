@@ -144,6 +144,7 @@ class Create():
         self.get_predicate_link_annotations()  # even if not showing linked data
         self.process_ld_predicates_values()  # only if exporting linked data
         self.save_ld_fields()  # only if exporting linked data
+        self.update_table_metadata()  # save a record of the table metadata
 
     def prep_process_uuid_list(self, uuids, do_linked_data=False):
         """ prepares default fields and exports a list of items """
@@ -156,6 +157,7 @@ class Create():
             self.process_ld_predicates_values()  # only if exporting linked data
             self.save_ld_fields()  # only if exporting linked data
         self.save_source_fields()  # save source data, possibly limited by observations
+        self.update_table_metadata()  # save a record of the table metadata
 
     def process_uuid_list(self, uuids, starting_row=1):
         row_num = starting_row
@@ -843,16 +845,52 @@ class Create():
             exp_tab = ExpTable()
             exp_tab.table_id = self.table_id
             exp_tab.label = '[Not yet named]'
-        sum_cell = ExpCell.objects\
-                          .filter(table_id=self.table_id)\
-                          .aggregate(Max('row_num'))
-        exp_tab.row_count = sum_cell['row_num__max']
-        sum_field = ExpField.objects\
-                            .filter(table_id=self.table_id)\
-                            .aggregate(Max('field_num'))
-        exp_tab.field_count = sum_cell['field_num__max']
+        tcells_ok = ExpCell.objects.filter(table_id=self.table_id)[:1]
+        if len(tcells_ok):
+            sum_cell = ExpCell.objects\
+                              .filter(table_id=self.table_id)\
+                              .aggregate(Max('row_num'))
+            exp_tab.row_count = sum_cell['row_num__max']
+        else:
+            exp_tab.row_count = 0
+        tfields_ok = ExpField.objects.filter(table_id=self.table_id)[:1]
+        if len(tfields_ok):
+            sum_field = ExpField.objects\
+                                .filter(table_id=self.table_id)\
+                                .aggregate(Max('field_num'))
+            exp_tab.field_count = sum_cell['field_num__max']
+        else:
+            exp_tab.field_count = 0
+        authors = LastUpdatedOrderedDict()
         if len(self.dc_contributor_ids) > 0:
-            
+            sauthors = sorted(self.dc_contributor_ids.items(),
+                              key=lambda x: (-x[1], x[0]))
+            authors['dc-terms:contributor'] = []
+            i = 0
+            for uri_key, count in sauthors:
+                i += 1
+                auth = LastUpdatedOrderedDict()
+                auth['id'] = '#contributor-' + str(i)
+                auth['rdfs:isDefinedBy'] = uri_key
+                auth['label'] = self.deref_entity_label(uri_key)
+                auth['count'] = count
+                authors['dc-terms:contributor'].append(auth)
+        if len(self.dc_creator_ids) > 0:
+            sauthors = sorted(self.dc_creator_ids.items(),
+                              key=lambda x: (-x[1], x[0]))
+            authors['dc-terms:creator'] = []
+            i = 0
+            for uri_key, count in sauthors:
+                i += 1
+                auth = LastUpdatedOrderedDict()
+                auth['id'] = '#creator-' + str(i)
+                auth['rdfs:isDefinedBy'] = uri_key
+                auth['label'] = self.deref_entity_label(uri_key)
+                auth['count'] = count
+                authors['dc-terms:creator'].append(auth)
+        print(str(authors))
+        exp_tab.meta_json = authors
+        exp_tab.save()
 
     def recursive_context_build(self,
                                 parent_level=0):
