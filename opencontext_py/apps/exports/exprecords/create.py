@@ -858,7 +858,7 @@ class Create():
             sum_field = ExpField.objects\
                                 .filter(table_id=self.table_id)\
                                 .aggregate(Max('field_num'))
-            exp_tab.field_count = sum_cell['field_num__max']
+            exp_tab.field_count = sum_field['field_num__max']
         else:
             exp_tab.field_count = 0
         authors = LastUpdatedOrderedDict()
