@@ -568,20 +568,26 @@ class Create():
             field_key = pred_ld_equiv_uri + '::' + obj_ld_equiv_uri
         else:
             field_key = pred_ld_equiv_uri
-        if len(field_type) > 0:
-            field_key += '::' + field_type
+        if field_type is False:
+            if len(field_type) > 0:
+                field_key += '::' + field_type
         if field_key in self.ld_fields:
             field_num = self.ld_fields[field_key]
         else:
             field_num = len(self.fields) + 1
             label = self.deref_entity_label(pred_ld_equiv_uri)
+            if label is False:
+                label = pred_ld_equiv_uri
             rel_ids = [field_type, pred_ld_equiv_uri]
             if obj_ld_equiv_uri is not False:
                 rel_ids.append(obj_ld_equiv_uri)
                 obj_label = self.deref_entity_label(obj_ld_equiv_uri)
+                if obj_label is False:
+                    obj_label = obj_ld_equiv_uri
                 label = label + ' :: ' + str(obj_label)
-            if len(field_type) > 0:
-                label += ' ' + field_type
+            if field_type is not False:
+                if len(field_type) > 0:
+                    label += ' ' + field_type
             field = {'label': label,
                      'rel_ids': rel_ids,
                      'field_num': field_num}
