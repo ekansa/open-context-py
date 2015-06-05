@@ -3,6 +3,7 @@ import json
 from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exprecords.uuidlist import UUIDListSimple,\
@@ -53,10 +54,10 @@ class Create():
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
         self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
         self.ld_object_equivs = LastUpdatedOrderedDict()  # unique linked_data predicates
-        self.dc_contributor_ids = {} # dict with ID keys and counts of dc-terms:contributor
-        self.dc_creator_ids = {} # dict with ID keys and counts of dc-terms:creator
+        self.dc_contributor_ids = {}  # dict with ID keys and counts of dc-terms:contributor
+        self.dc_creator_ids = {}  # dict with ID keys and counts of dc-terms:creator
         self.uuidlist = []
-        self.parents = {} # dict of uuids for parent entities to keep them in memory
+        self.parents = {}  # dict of uuids for parent entities to keep them in memory
 
     def prep_default_fields(self):
         """ Prepares initial set of default fields for export tables """
@@ -833,6 +834,25 @@ class Create():
         cell.record = last_update.strftime('%Y-%m-%d')
         cell.save()
         cell = None
+
+    def update_table_metadata(self):
+        """ saves the final table author metadata """
+        try:
+            exp_tab = ExpTable.objects.get(table_id=self.table_id)
+        except ExpTable.DoesNotExist:
+            exp_tab = ExpTable()
+            exp_tab.table_id = self.table_id
+            exp_tab.label = '[Not yet named]'
+        sum_cell = ExpCell.objects\
+                          .filter(table_id=self.table_id)\
+                          .aggregate(Max('row_num'))
+        exp_tab.row_count = sum_cell['row_num__max']
+        sum_field = ExpField.objects\
+                            .filter(table_id=self.table_id)\
+                            .aggregate(Max('field_num'))
+        exp_tab.field_count = sum_cell['field_num__max']
+        if len(self.dc_contributor_ids) > 0:
+            
 
     def recursive_context_build(self,
                                 parent_level=0):
