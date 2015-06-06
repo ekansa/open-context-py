@@ -185,7 +185,7 @@ function updateLabel() {
 	var act_domID = "item-label";
 	var new_label = document.getElementById(act_domID).value;
 	if (new_label.length > 0) {
-		url = "../../edit/update-item/" + encodeURIComponent(uuid);
+		url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
 		var req = $.ajax({
 			type: "POST",
 			url: url,
@@ -218,7 +218,7 @@ function updateCategory() {
 	 * reconciled in an import
 	*/
 	if (select_cat_id.length > 0) {
-		url = "../../edit/update-item/" + encodeURIComponent(uuid);
+		url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
 		var req = $.ajax({
 			type: "POST",
 			url: url,
@@ -237,6 +237,58 @@ function updateCategoryDone(data){
 	// easier just to reload the whole page
 	console.log(data);
 	location.reload(true);
+}
+
+
+
+/* ---------------------------------------------------
+Functions for changing content
+------------------------------------------------------
+*/
+function updateContent() {
+	/* updates the main content of an item (project, document, or table abstract)
+	*/
+	var act_domID = "main-string-content";
+	var content = document.getElementById(act_domID).value;
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var act_icon = document.getElementById('text-content-valid-icon');
+	act_icon.innerHTML = '';
+	var act_note = document.getElementById('text-content-valid-note');
+	act_note.innerHTML = 'Uploading and validating...';
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			content: content,
+			csrfmiddlewaretoken: csrftoken},
+		success: updateContentDone
+	});
+}
+
+function updateContentDone(data){
+	// display HTML validation results
+	var valid_html = true;
+	var html_message = 'Text OK in HTML';
+	if ('errors' in data) {
+		var errors = data.errors;
+		if ('html' in errors) {
+			if (errors.html != false) {
+				valid_html = false;
+				html_message = errors.html;
+			}
+		}
+	}
+	var act_icon = document.getElementById('text-content-valid-icon');
+	var act_note = document.getElementById('text-content-valid-note');
+	if (valid_html) {
+		act_icon.innerHTML = '<span class="glyphicon glyphicon-ok-circle text-success" aria-hidden="true"></span>';
+		act_note.innerHTML = '<p class="text-success">' + html_message + '</p>';
+	}
+	else{
+		act_icon.innerHTML = '<span class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>';
+		act_note.innerHTML = '<p class="text-warning">' + html_message + '</p>';
+	}
 }
 
 

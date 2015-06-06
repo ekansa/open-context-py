@@ -3,7 +3,7 @@ from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
-from opencontext_py.apps.edit.items.model import ItemEdit
+from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -40,17 +40,20 @@ def html_view(request, uuid):
         raise Http404
 
 
-def update_item(request, uuid):
+def update_item_basics(request, uuid):
     """ Handles POST requests to update an item """
-    item_edit = ItemEdit(uuid, request)
+    item_edit = ItemBasicEdit(uuid, request)
     if item_edit.manifest is not False:
         if request.method == 'POST':
             if item_edit.edit_permitted:
                 result = {}
                 if 'label' in request.POST:
                     result = item_edit.update_label(request.POST['label'])
-                if 'class_uri' in request.POST:
+                elif 'class_uri' in request.POST:
                     result = item_edit.update_class_uri(request.POST['class_uri'])
+                elif 'content' in request.POST:
+                    result = item_edit.update_string_content(request.POST['content'])
+                result['errors'] = item_edit.errors
                 json_output = json.dumps(result,
                                          indent=4,
                                          ensure_ascii=False)

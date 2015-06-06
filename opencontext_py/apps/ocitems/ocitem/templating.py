@@ -31,6 +31,7 @@ class TemplateItem():
         self.id = False
         self.slug = False
         self.item_category_label = False
+        self.item_category_uri = False
         self.context = False
         self.children = False
         self.observations = False
@@ -300,6 +301,7 @@ class TemplateItem():
         if 'category' in json_ld:
             item_cat_labels = []
             for cat in json_ld['category']:
+                self.item_category_uri = cat
                 if cat in self.class_type_metadata:
                     item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
             self.item_category_label = ', '.join(item_cat_labels)

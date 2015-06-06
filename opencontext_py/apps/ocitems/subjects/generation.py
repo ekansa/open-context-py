@@ -15,6 +15,7 @@ class SubjectGeneration():
 
     def __init__(self):
         self.error_uuids = dict()
+        self.changes = 0
 
     def get_most_recent_subject(self):
         """
@@ -80,7 +81,7 @@ class SubjectGeneration():
             path = delim.join(path_items)
         return path
 
-    def generate_save_context_path_from_uuid(self, uuid):
+    def generate_save_context_path_from_uuid(self, uuid, do_children=True):
         """ Generates and saves a context path for a subject item by uuid """
         output = False
         try:
@@ -89,41 +90,48 @@ class SubjectGeneration():
             man_obj = False
         if man_obj is not False:
             output = self.generate_save_context_path_from_manifest_obj(man_obj)
+            if do_children:
+                act_contain = Containment()
+                # get the contents recusivelhy
+                contents = act_contain.get_children_by_parent_uuid(uuid, True)
+                if isinstance(child_list, dict):
+                    for tree_node, children in self.contents.items():
+                        for child_uuid in children:
+                            # do the children, but not recursively since we
+                            # already have a resurive look up of contents
+                            output = self.generate_save_context_path_from_uuid(child_uuid,
+                                                                               False)    
         return output
 
     def generate_save_context_path_from_manifest_obj(self, man_obj):
         """ Generates a context path for a manifest object, then saves it to the Subjects """
         output = False
+        new_context = True
         act_context = self.generate_context_path(man_obj.uuid)
-        if(act_context is not False):
-            new_context = True
-            exist_sub_obj = False
+        if act_context is not False:
             try:
-                exist_sub_obj = Subject.objects.get(uuid=man_obj.uuid)
-            except Subject.DoesNotExist:
-                exist_sub_obj = False
-            if exist_sub_obj is not False:
-                if act_context != exist_sub_obj.context:
+                sub_obj = Subject.objects.get(uuid=man_obj.uuid)
+                if sub_obj.context == act_context:
                     new_context = False
-                else:
-                    output = exist_sub_obj
+            except Subject.DoesNotExist:
+                sub_obj = False
+            if sub_obj is False:    
+                sub_obj = Subject()
+                sub_obj.uuid = man_obj.uuid
+                sub_obj.project_uuid = man_obj.project_uuid
+                sub_obj.source_id = man_obj.source_id
+            sub_obj.context = act_context
             if new_context:
-                new_saved = False
-                sub = Subject(uuid=man_obj.uuid,
-                              project_uuid=man_obj.project_uuid,
-                              source_id=man_obj.source_id,
-                              context=act_context)
                 try:
-                    sub.save()
-                    output = sub
-                    new_saved = True
+                    sub_obj.save()
+                    output = sub_obj
+                    self.changes += 1
                 except IntegrityError as e:
-                    self.error_uuids[sub_item.uuid] = {'context': act_context,
-                                                       'error': e}
-                    output = False
+                    self.error_uuids[sub_obj.uuid] = {'context': act_context,
+                                                      'error': e}
         else:
-            self.error_uuids[sub_item.uuid] = {'context': act_context,
-                                               'error': 'bad path'}
+            self.error_uuids[man_obj.uuid] = {'context': act_context,
+                                              'error': 'bad path'}
         return output
 
     def process_manifest_for_subjects(self):

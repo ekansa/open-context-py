@@ -7,18 +7,20 @@
         <table class="table table-condensed table-hover table-striped">
             <thead>
                 <tr>
-                    <th class="col-sm-2">Attribute</th>
-                    <th class="col-sm-4">Value</th>
-                    <th class="col-sm-2">Action</th>
+                    <th class="col-sm-8">Attributes</th>
                     <th class="col-sm-4">Note</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <th>Item Label</th>
-                    <td><input id="item-label" type="text" value="{{ item.label }}" style="width:100%;" /></td>
                     <td>
-                        <button type="button" class="btn btn-info" onclick="javascript:updateLabel();">Update</button>
+                        <form>
+                            <div class="form-group">
+                                <label for="item-label">Item Label</label>
+                                <input id="item-label" class="form-control input-sm" type="text" value="{{ item.label }}"  />
+                            </div>
+                            <button type="button" class="btn btn-info text-right" onclick="javascript:updateLabel();">Update</button>
+                        </form>
                     </td>
                     <td>
                         <small>A label is the primary name used for people to identify an item.
@@ -28,10 +30,16 @@
                     </td>
                 </tr>
                 <tr>
-                    <th>Item Category</th>
-                    <td>{{ item.act_nav }} :: <span id="">{{ item.item_category_label }}</span></td>
-                    <td id="cat-update-button-outer">
-                        <button type="button" class="btn btn-info" disabled="disabled">Update</button>
+                    <td>
+                        <form>
+                            <div class="form-group">
+                                <label for="item-class-uri">Item Category</label>
+                                <input id="item-class-uri" class="form-control input-sm" type="text" value="{{ item.item_category_uri }}" />
+                                <br/>
+                                {{ item.act_nav }} :: <span id="">{{ item.item_category_label }}</span>
+                            </div>
+                            <button type="button" class="btn btn-info" onclick="javascript:updateClass();">Update</button>
+                        </form>
                     </td>
                     <td>
                         <div class="panel panel-default" ng-app="TreeApp">
@@ -56,6 +64,34 @@
                         </div>
                     </td>
                 </tr>
+                {% if item.content != False or item.act_nav == 'projects' %}
+                <tr>
+                    <td colspan="2">
+                        <div class="form-group">
+                            <label for="main-string-content">Main Text Content</label>
+                            <textarea id="main-string-content" class="form-control" rows="10" >{{ item.content.main_text }}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <button type="button" class="btn btn-info" onclick="javascript:updateContent();">Update</button>
+                            </div>
+                            <div class="col-sm-2">
+                                
+                            </div>
+                            <div class="col-sm-1" id="text-content-valid-icon">
+                                
+                            </div>
+                            <div class="col-sm-6" id="text-content-valid-note">
+                                
+                            </div>
+                            <div class="col-sm-1">
+                                
+                            </div>
+                        </div>
+                    </td>
+                    
+                </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>

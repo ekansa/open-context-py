@@ -210,3 +210,20 @@ class ImportProjects():
             except Project.DoesNotExist:
                 ok = False
         return ok
+    
+    def edit_project_content(self, project_uuid, content):
+        """ Edits a project's content
+        """
+        ok = True
+        try:
+            man_proj = Manifest.objects.get(uuid=project_uuid)
+        except Manifest.DoesNotExist:
+            ok = False
+        if ok:
+            try:
+                pobj = Project.objects.get(uuid=project_uuid)
+                pobj.content = content
+                pobj.save()
+            except Project.DoesNotExist:
+                ok = False
+        return ok

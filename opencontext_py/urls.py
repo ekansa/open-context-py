@@ -138,8 +138,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY EDITS AJAX REQUESTS
                        # --------------------------
-                       url(r'^edit/update-item/(?P<uuid>\S+)', EditItemViews.update_item,
-                           name='edit_update_item'),
+                       url(r'^edit/update-item-basics/(?P<uuid>\S+)', EditItemViews.update_item_basics,
+                           name='edit_item_basics'),
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------
