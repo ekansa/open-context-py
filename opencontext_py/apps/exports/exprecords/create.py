@@ -536,6 +536,8 @@ class Create():
                     else:
                         # predicate not broken into seperate fields for different values
                         obj_equiv_label = self.deref_entity_label(obj_ld_equiv_uri)
+                        if obj_equiv_label is False:
+                            obj_equiv_label = obj_ld_equiv_uri
                         if obj_equiv_label not in obj_values['[Label]']:
                             obj_values['[Label]'].append(obj_equiv_label)
                         if obj_ld_equiv_uri not in obj_values['[URI]']:
@@ -546,7 +548,17 @@ class Create():
             # predicate not broken into seperate fields for different values
             for field_type, value_list in obj_values.items():
                 if len(value_list) > 0:
-                    cell_value = '; '.join(value_list)
+                    try:
+                        cell_value = '; '.join(value_list)
+                    except:
+                        # some messiness in the data, won't join into a string
+                        cell_value = False
+                        for val in value_list:
+                            val = str(val)
+                            if cell_value is False:
+                                cell_value = val
+                            else:
+                                cell_value += '; ' + val
                     field_num = self.get_add_ld_field_number(field_type,
                                                              pred_ld_equiv_uri)
                     cell = ExpCell()
