@@ -91,15 +91,19 @@ class Containment():
         to get all children uuids
         """
         try:
-            children = Assertion.objects.filter(uuid=parent_uuid, predicate_uuid=Assertion.PREDICATES_CONTAINS)
+            children = Assertion.objects\
+                                .filter(uuid=parent_uuid,
+                                        predicate_uuid=Assertion.PREDICATES_CONTAINS)
             for child in children:
                 if(child.obs_node not in self.contents):
                     self.contents[child.obs_node] = []
             for child in children:
                 child_uuid = child.object_uuid
                 self.contents[child.obs_node].append(child_uuid)
-                if(recursive and (self.recurse_count < 20)):
-                    self.contents = self.get_children_by_parent_uuid(child_uuid, recursive, visibile_only)
+                if recursive and (self.recurse_count < 20):
+                    self.contents = self.get_children_by_parent_uuid(child_uuid,
+                                                                     recursive,
+                                                                     visibile_only)
             self.recurse_count += 1
         except Assertion.DoesNotExist:
             child_uuid = False

@@ -3,6 +3,7 @@ import json
 from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exprecords.uuidlist import UUIDListSimple,\
@@ -53,10 +54,10 @@ class Create():
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
         self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
         self.ld_object_equivs = LastUpdatedOrderedDict()  # unique linked_data predicates
-        self.dc_contributor_ids = {} # dict with ID keys and counts of dc-terms:contributor
-        self.dc_creator_ids = {} # dict with ID keys and counts of dc-terms:creator
+        self.dc_contributor_ids = {}  # dict with ID keys and counts of dc-terms:contributor
+        self.dc_creator_ids = {}  # dict with ID keys and counts of dc-terms:creator
         self.uuidlist = []
-        self.parents = {} # dict of uuids for parent entities to keep them in memory
+        self.parents = {}  # dict of uuids for parent entities to keep them in memory
 
     def prep_default_fields(self):
         """ Prepares initial set of default fields for export tables """
@@ -143,6 +144,7 @@ class Create():
         self.get_predicate_link_annotations()  # even if not showing linked data
         self.process_ld_predicates_values()  # only if exporting linked data
         self.save_ld_fields()  # only if exporting linked data
+        self.update_table_metadata()  # save a record of the table metadata
 
     def prep_process_uuid_list(self, uuids, do_linked_data=False):
         """ prepares default fields and exports a list of items """
@@ -155,6 +157,7 @@ class Create():
             self.process_ld_predicates_values()  # only if exporting linked data
             self.save_ld_fields()  # only if exporting linked data
         self.save_source_fields()  # save source data, possibly limited by observations
+        self.update_table_metadata()  # save a record of the table metadata
 
     def process_uuid_list(self, uuids, starting_row=1):
         row_num = starting_row
@@ -533,6 +536,8 @@ class Create():
                     else:
                         # predicate not broken into seperate fields for different values
                         obj_equiv_label = self.deref_entity_label(obj_ld_equiv_uri)
+                        if obj_equiv_label is False:
+                            obj_equiv_label = obj_ld_equiv_uri
                         if obj_equiv_label not in obj_values['[Label]']:
                             obj_values['[Label]'].append(obj_equiv_label)
                         if obj_ld_equiv_uri not in obj_values['[URI]']:
@@ -543,7 +548,17 @@ class Create():
             # predicate not broken into seperate fields for different values
             for field_type, value_list in obj_values.items():
                 if len(value_list) > 0:
-                    cell_value = '; '.join(value_list)
+                    try:
+                        cell_value = '; '.join(value_list)
+                    except:
+                        # some messiness in the data, won't join into a string
+                        cell_value = False
+                        for val in value_list:
+                            val = str(val)
+                            if cell_value is False:
+                                cell_value = val
+                            else:
+                                cell_value += '; ' + val
                     field_num = self.get_add_ld_field_number(field_type,
                                                              pred_ld_equiv_uri)
                     cell = ExpCell()
@@ -568,20 +583,28 @@ class Create():
             field_key = pred_ld_equiv_uri + '::' + obj_ld_equiv_uri
         else:
             field_key = pred_ld_equiv_uri
-        if len(field_type) > 0:
-            field_key += '::' + field_type
+        if field_type is not False:
+            if len(field_type) > 0:
+                field_key += '::' + field_type
+        else:
+            field_key += '::[Type unknown]'
         if field_key in self.ld_fields:
             field_num = self.ld_fields[field_key]
         else:
             field_num = len(self.fields) + 1
             label = self.deref_entity_label(pred_ld_equiv_uri)
+            if label is False:
+                label = pred_ld_equiv_uri
             rel_ids = [field_type, pred_ld_equiv_uri]
             if obj_ld_equiv_uri is not False:
                 rel_ids.append(obj_ld_equiv_uri)
                 obj_label = self.deref_entity_label(obj_ld_equiv_uri)
+                if obj_label is False:
+                    obj_label = obj_ld_equiv_uri
                 label = label + ' :: ' + str(obj_label)
-            if len(field_type) > 0:
-                label += ' ' + field_type
+            if field_type is not False:
+                if len(field_type) > 0:
+                    label += ' ' + field_type
             field = {'label': label,
                      'rel_ids': rel_ids,
                      'field_num': field_num}
@@ -825,6 +848,64 @@ class Create():
         cell.record = last_update.strftime('%Y-%m-%d')
         cell.save()
         cell = None
+
+    def update_table_metadata(self):
+        """ saves the final table author metadata """
+        try:
+            exp_tab = ExpTable.objects.get(table_id=self.table_id)
+        except ExpTable.DoesNotExist:
+            exp_tab = ExpTable()
+            exp_tab.table_id = self.table_id
+            exp_tab.label = '[Not yet named]'
+        tcells_ok = ExpCell.objects.filter(table_id=self.table_id)[:1]
+        if len(tcells_ok):
+            sum_cell = ExpCell.objects\
+                              .filter(table_id=self.table_id)\
+                              .aggregate(Max('row_num'))
+            exp_tab.row_count = sum_cell['row_num__max']
+        else:
+            exp_tab.row_count = 0
+        tfields_ok = ExpField.objects.filter(table_id=self.table_id)[:1]
+        if len(tfields_ok):
+            sum_field = ExpField.objects\
+                                .filter(table_id=self.table_id)\
+                                .aggregate(Max('field_num'))
+            exp_tab.field_count = sum_field['field_num__max']
+        else:
+            exp_tab.field_count = 0
+        authors = LastUpdatedOrderedDict()
+        if len(self.dc_contributor_ids) > 0:
+            sauthors = sorted(self.dc_contributor_ids.items(),
+                              key=lambda x: (-x[1], x[0]))
+            authors['dc-terms:contributor'] = self.add_author_list(sauthors,
+                                                                   'contributor')
+        if len(self.dc_creator_ids) > 0:
+            sauthors = sorted(self.dc_creator_ids.items(),
+                              key=lambda x: (-x[1], x[0]))
+            authors['dc-terms:creator'] = self.add_author_list(sauthors,
+                                                               'creator')
+        exp_tab.meta_json = authors
+        exp_tab.save()
+
+    def add_author_list(self, sauthors, dc_type):
+        """ makes an author list from a sorted tuple of
+            author identifiers
+        """
+        i = 0
+        author_list = []
+        for uri_key, count in sauthors:
+            i += 1
+            auth = LastUpdatedOrderedDict()
+            auth['id'] = '#' + dc_type + '-' + str(i)
+            if 'http://' in uri_key or 'https://' in uri_key:
+                auth['rdfs:isDefinedBy'] = uri_key
+            else:
+                auth['rdfs:isDefinedBy'] = URImanagement.make_oc_uri(uri_key,
+                                                                     'persons')
+            auth['label'] = self.deref_entity_label(uri_key)
+            auth['count'] = count
+            author_list.append(auth)
+        return author_list
 
     def recursive_context_build(self,
                                 parent_level=0):

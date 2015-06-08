@@ -64,11 +64,11 @@ function start(){
 function getTypeHierarchy() {
 	/* Gets the hiearchy of child types for the item's type 
 	*/
+	var act_domID = "tree-sel-label";
 	var field_type = 'oc-gen:' + item_type;
-	if (act_tree_root != field_type) {
+	if (act_tree_root != field_type && document.getElementById(act_domID)) {
 		act_tree_root = field_type;
 		url = "../../entities/hierarchy-children/" + encodeURIComponent(field_type);
-		var act_domID = "tree-sel-label";
 		var act_dom = document.getElementById(act_domID);
 		act_dom.innerHTML = "... loading entity type categories ...";
 		var act_domID = "tree-sel-id";
@@ -179,13 +179,13 @@ Functions for changing the item label
 ------------------------------------------------------
 */
 function updateLabel() {
-	/* Assigns a an entity category for values of cells that are to be
-	 * reconciled in an import
+	/* Simple changes of labeling
+	 * for items
 	*/
 	var act_domID = "item-label";
 	var new_label = document.getElementById(act_domID).value;
 	if (new_label.length > 0) {
-		url = "../../edit/update-item/" + encodeURIComponent(uuid);
+		url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
 		var req = $.ajax({
 			type: "POST",
 			url: url,
@@ -195,6 +195,36 @@ function updateLabel() {
 				csrfmiddlewaretoken: csrftoken},
 			success: updateLabelDone
 		});
+	}
+	else{
+		alert('Cannot have a blank value for a label.')
+	}
+}
+
+function updatePersonNames(){
+	// more complicated changes of labels and names for person items
+	var g_name = document.getElementById("pers-given-name").value;
+	var s_name = document.getElementById("pers-surname").value;
+	var com_name = document.getElementById("pers-combined-name").value;
+	var initials = document.getElementById("pers-initials").value;
+	if (com_name.length > 0) {
+		url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				label: com_name,
+				combined_name: com_name,
+				given_name: g_name,
+				surname: s_name,
+				initials: initials,
+				csrfmiddlewaretoken: csrftoken},
+			success: updateLabelDone
+		});
+	}
+	else{
+		alert('Cannot have a blank value for a full name.')
 	}
 }
 
@@ -218,7 +248,7 @@ function updateCategory() {
 	 * reconciled in an import
 	*/
 	if (select_cat_id.length > 0) {
-		url = "../../edit/update-item/" + encodeURIComponent(uuid);
+		url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
 		var req = $.ajax({
 			type: "POST",
 			url: url,
@@ -231,12 +261,113 @@ function updateCategory() {
 	}
 }
 
+function updatePersonCategory(){
+	// updates a category for a person item
+	var p_types = document.getElementsByClassName("person-foaf-type");
+	for (var i = 0, length = p_types.length; i < length; i++) {
+		if (p_types[i].checked) {
+			var foaf_type = p_types[i].value;
+		}
+	}
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			class_uri: foaf_type,
+			csrfmiddlewaretoken: csrftoken},
+		success: updateCategoryDone
+	});
+}
+
 function updateCategoryDone(data){
 	// reload the whole page from the server
 	// it's too complicated to change all the instances of the item category on the page,
 	// easier just to reload the whole page
 	console.log(data);
 	location.reload(true);
+}
+
+
+
+/* ---------------------------------------------------
+Functions for changing short descriptions and content
+------------------------------------------------------
+*/
+function updateShortDescriptionText() {
+	/* updates the short description of a project item
+	*/
+	var act_domID = "sd-string-content";
+	var content = document.getElementById(act_domID).value;
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var act_icon = document.getElementById('sd-text-content-valid-icon');
+	act_icon.innerHTML = '';
+	var act_note = document.getElementById('sd-text-content-valid-note');
+	act_note.innerHTML = 'Uploading and validating...';
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			content: content,
+			content_type: 'short_des',
+			csrfmiddlewaretoken: csrftoken},
+		success: updateContentDone
+	});
+}
+
+function updateContent() {
+	/* updates the main content of an item (project, document, or table abstract)
+	*/
+	var act_domID = "main-string-content";
+	var content = document.getElementById(act_domID).value;
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var act_icon = document.getElementById('text-content-valid-icon');
+	act_icon.innerHTML = '';
+	var act_note = document.getElementById('text-content-valid-note');
+	act_note.innerHTML = 'Uploading and validating...';
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			content: content,
+			content_type: 'content',
+			csrfmiddlewaretoken: csrftoken},
+		success: updateContentDone
+	});
+}
+
+function updateContentDone(data){
+	// display HTML validation results
+	var valid_html = true;
+	var html_message = 'Text OK in HTML';
+	if ('errors' in data) {
+		var errors = data.errors;
+		if ('html' in errors) {
+			if (errors.html != false) {
+				valid_html = false;
+				html_message = errors.html;
+			}
+		}
+	}
+	if (data.change.prop == 'short_des') {
+		var act_icon = document.getElementById('sd-text-content-valid-icon');
+		var act_note = document.getElementById('sd-text-content-valid-note');
+	}
+	else {
+		var act_icon = document.getElementById('text-content-valid-icon');
+		var act_note = document.getElementById('text-content-valid-note');
+	}
+	if (valid_html) {
+		act_icon.innerHTML = '<span class="glyphicon glyphicon-ok-circle text-success" aria-hidden="true"></span>';
+		act_note.innerHTML = '<p class="text-success">' + html_message + '</p>';
+	}
+	else{
+		act_icon.innerHTML = '<span class="glyphicon glyphicon-warning-sign text-warning" aria-hidden="true"></span>';
+		act_note.innerHTML = '<p class="text-warning">' + html_message + '</p>';
+	}
 }
 
 

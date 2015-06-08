@@ -27,10 +27,12 @@ class TemplateItem():
 
     def __init__(self, request=False):
         self.label = False
+        self.person = False
         self.uuid = False
         self.id = False
         self.slug = False
         self.item_category_label = False
+        self.item_category_uri = False
         self.context = False
         self.children = False
         self.observations = False
@@ -68,6 +70,7 @@ class TemplateItem():
         self.id = json_ld['id']
         self.slug = json_ld['slug']
         self.store_class_type_metadata(json_ld)
+        self.create_person_names(json_ld)
         self.create_project(json_ld)
         self.check_view_permission()
         if self.check_edit_permitted:
@@ -81,6 +84,24 @@ class TemplateItem():
         self.create_content(json_ld)
         self.create_query_links(json_ld)
         self.check_contents_top()
+    
+    def create_person_names(self, json_ld):
+        """ Creates person names from FOAF properties """
+        if 'foaf:name' in json_ld:
+            self.person = {}
+            self.person['combined_name'] = json_ld['foaf:name']
+            if 'foaf:givenName' in json_ld:
+                self.person['given_name'] = json_ld['foaf:givenName']
+            else:
+                self.person['given_name'] = False
+            if 'foaf:familyName' in json_ld:
+                self.person['surname'] = json_ld['foaf:familyName']
+            else:
+                self.person['surname'] = False
+            if 'foaf:nick' in json_ld:
+                self.person['intials'] = json_ld['foaf:nick']
+            else:
+                self.person['intials'] = False
 
     def create_context(self, json_ld):
         """
@@ -300,6 +321,7 @@ class TemplateItem():
         if 'category' in json_ld:
             item_cat_labels = []
             for cat in json_ld['category']:
+                self.item_category_uri = cat
                 if cat in self.class_type_metadata:
                     item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
             self.item_category_label = ', '.join(item_cat_labels)
