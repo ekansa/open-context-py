@@ -300,6 +300,15 @@ class OCitem():
         if(len(self.manifest.class_uri) > 0):
             json_ld['category'] = [self.manifest.class_uri]
             item_con.class_type_list.append(self.manifest.class_uri)
+        if self.person is not False:
+            # add foaf properties for people / organizations
+            json_ld['foaf:name'] = self.person.combined_name
+            if len(self.person.given_name) > 0:
+                json_ld['foaf:givenName'] = self.person.given_name
+            if len(self.person.surname) > 0:
+                json_ld['foaf:familyName'] = self.person.surname
+            if len(self.person.initials) > 0:
+                json_ld['foaf:nick'] = self.person.initials
         # add related type data
         rel_pred = self.add_related_predicate(item_con,
                                               json_ld)
