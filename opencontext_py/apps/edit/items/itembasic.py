@@ -1,6 +1,7 @@
 import time
 import uuid as GenUUID
 from lxml import etree
+import lxml.html
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.entities.entity.models import Entity
@@ -8,6 +9,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
+from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -42,7 +44,7 @@ class ItemBasicEdit():
             # default to no editting permissions
             self.edit_permitted = False
 
-    def update_label(self, label):
+    def update_label(self, label, post_data):
         """ Updates an item's label. Generally straightforward
             except for subjects
         """
@@ -65,6 +67,22 @@ class ItemBasicEdit():
             subj_gen = SubjectGeneration()
             subj_gen.generate_save_context_path_from_uuid(self.manifest.uuid)
             note = str(subj_gen.changes) + ' items affected'
+        elif self.manifest.item_type == 'persons':
+            # we need to adjust person's combined name
+            try:
+                cobj = Person.objects.get(uuid=self.manifest.uuid)
+                cobj.combined_name = label
+                if 'given_name' in post_data:
+                    cobj.given_name = post_data['given_name']
+                if 'surname' in post_data:
+                    cobj.surname = post_data['surname']
+                if 'initials' in post_data:
+                    cobj.initials = post_data['initials']
+                cobj.save()
+                ok = True
+            except Person.DoesNotExist:
+                self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                ok = False
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',
@@ -81,10 +99,24 @@ class ItemBasicEdit():
         old_class_uri = self.manifest.class_uri
         entity = Entity()
         found = entity.dereference(class_uri)
-        if found:
+        if found and self.manifest.item_type != 'persons':
             note = 'Updated to class: ' + str(entity.label)
             self.manifest.class_uri = class_uri
             self.manifest.save()
+        elif (class_uri == 'foaf:Person'\
+             or class_uri == 'foaf:Organization')\
+             and self.manifest.item_type == 'persons':
+            note = 'Updated to class: ' + str(class_uri)
+            self.manifest.class_uri = class_uri
+            self.manifest.save()
+            try:
+                cobj = Person.objects.get(uuid=self.manifest.uuid)
+                cobj.foaf_type = class_uri
+                cobj.save()
+                ok = True
+            except Person.DoesNotExist:
+                self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                ok = False
         else:
             note = 'Cannot dereference the class-uri'
             ok = False
@@ -96,7 +128,7 @@ class ItemBasicEdit():
                                     'note': note}}
         return self.response
 
-    def update_string_content(self, content):
+    def update_string_content(self, content, content_type='content'):
         """ Updates the main string content of an item
             (project, document, or table abstract)
         """
@@ -109,13 +141,17 @@ class ItemBasicEdit():
             if self.manifest.item_type == 'projects':
                 try:
                     cobj = Project.objects.get(uuid=self.manifest.uuid)
-                    cobj.content = content
+                    if content_type == 'short_des':
+                        cobj.short_des = content
+                    else:
+                        cobj.content = content
                     cobj.save()
                     ok = True
                 except Project.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                     ok = False
-            elif self.manifest.item_type == 'documents':
+            elif self.manifest.item_type == 'documents'\
+                and content_type == 'content':
                 try:
                     cobj = OCdocument.objects.get(uuid=self.manifest.uuid)
                     cobj.content = content
@@ -128,7 +164,7 @@ class ItemBasicEdit():
                 ok = False
         self.response = {'action': 'update-string-content',
                          'ok': ok,
-                         'change': {'prop': 'content',
+                         'change': {'prop': content_type,
                                     'new': content,
                                     'old': '[Old content]',
                                     'note': note}}

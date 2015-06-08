@@ -4,6 +4,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
+from opencontext_py.apps.edit.items.itemcreate import ItemCreate
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -45,14 +46,17 @@ def update_item_basics(request, uuid):
     item_edit = ItemBasicEdit(uuid, request)
     if item_edit.manifest is not False:
         if request.method == 'POST':
-            if item_edit.edit_permitted:
+            if item_edit.edit_permitted or request.user.is_superuser:
                 result = {}
                 if 'label' in request.POST:
-                    result = item_edit.update_label(request.POST['label'])
+                    result = item_edit.update_label(request.POST['label'],
+                                                    request.POST)
                 elif 'class_uri' in request.POST:
                     result = item_edit.update_class_uri(request.POST['class_uri'])
-                elif 'content' in request.POST:
-                    result = item_edit.update_string_content(request.POST['content'])
+                elif 'content' in request.POST \
+                    and 'content_type' in request.POST:
+                    result = item_edit.update_string_content(request.POST['content'],
+                                                             request.POST['content_type'])
                 result['errors'] = item_edit.errors
                 json_output = json.dumps(result,
                                          indent=4,
@@ -71,3 +75,42 @@ def update_item_basics(request, uuid):
     else:
         raise Http404
 
+def create_item_into(request, project_uuid):
+    """ Handles POST requests to create an item """
+    item_create = ItemCreate(project_uuid, request)
+    if item_create.proj_manifest_obj is not False \
+       or item_create.oc_root_project:
+        if request.method == 'POST':
+            if item_create.edit_permitted or request.user.is_superuser:
+                item_type_fail = True
+                if 'item_type' in request.POST:
+                    result = {}
+                    if request.POST['item_type'] == 'persons':
+                        item_type_fail = False
+                        result = item_create.create_person(request.POST)
+                    else:
+                        item_type_fail = True
+                    result['errors'] = item_create.errors
+                    json_output = json.dumps(result,
+                                             indent=4,
+                                             ensure_ascii=False)
+                    return HttpResponse(json_output,
+                                        content_type='application/json; charset=utf8')
+                if item_type_fail:
+                    json_output = json.dumps({'error': 'item_type failure'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                    return HttpResponse(json_output,
+                                        content_type='application/json; charset=utf8',
+                                        status=400)
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404

@@ -29,6 +29,80 @@
                         item's UUID or URI, nor does it change an item's relationships with other items.</small>
                     </td>
                 </tr>
+                {% if item.person != False or item.act_nav == 'persons' %}
+                <tr>
+                    <td colspan="2">
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <div class="form-group">
+                                    <label for="pers-given-name">Given Name</label>
+                                    {% if item.person.given_name != False %}
+                                    <input id="pers-given-name" class="form-control input-sm" type="text" value="{{ item.person.given_name }}"  />
+                                    {%else%}
+                                    <input id="pers-given-name" class="form-control input-sm" type="text" value=""  />
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="form-group">
+                                    <label for="pers-surname">Surname</label>
+                                    {% if item.person.surname != False %}
+                                    <input id="pers-surname" class="form-control input-sm" type="text" value="{{ item.person.surname }}"  />
+                                    {%else%}
+                                    <input id="pers-surname" class="form-control input-sm" type="text" value=""  />
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="form-group">
+                                    <label for="pers-initials">Initials</label>
+                                    {% if item.person.initials != False %}
+                                    <input id="pers-initials" class="form-control input-sm" type="text" value="{{ item.person.intials }}"  />
+                                    {%else%}
+                                    <input id="pers-initials" class="form-control input-sm" type="text" value=""  />
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="form-group">
+                                    <label for="pers-combined-name">Full Name</label>
+                                    <input id="pers-combined-name" class="form-control input-sm" type="text" value="{{ item.person.combined_name }}"  /><br/>
+                                    <button type="button" class="btn btn-info" onclick="javascript:updatePersonNames();">Update</button>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                    <div class="row">
+                        <div class="col-sm-8">
+                        <label class="radio-inline">
+                        {% if item.item_category_uri == 'foaf:Person' %} 
+                        <input type="radio" name="person-foaf-type" id="person-foaf-type-p" class="person-foaf-type" value="foaf:Person" checked="checked"/>Person</label>
+                        {%else%}
+                        <input type="radio" name="person-foaf-type" id="person-foaf-type-p" class="person-foaf-type" value="foaf:Person" checked="checked"/>Person</label>
+                        {%endif%}
+                        <label class="radio-inline">
+                        {% if item.item_category_uri == 'foaf:Organization' %} 
+                        <input type="radio" name="person-foaf-type" id="person-foaf-type-o" class="person-foaf-type" value="foaf:Organization" checked="checked"/>Organization</label>
+                        {%else%}
+                        <input type="radio" name="person-foaf-type" id="person-foaf-type-o" class="person-foaf-type" value="foaf:Organization"/>Organization</label>
+                        {%endif%}
+                        </div>
+                        <div class="col-sm-4">
+                            <button type="button" class="btn btn-info" onclick="javascript:updatePersonCategory();">Update</button>
+                        </div>
+                    </div>
+                    </td>
+                    <td>
+                        <small>Indicate if this item is an individual person or an named organization.</small>
+                    </td>
+                </tr>
+                
+                {%endif%}
+                    
+                {% if item.act_nav == 'subjects' %}
                 <tr>
                     <td>
                         <form>
@@ -64,6 +138,37 @@
                         </div>
                     </td>
                 </tr>
+                <!-- end case of a subject item -->
+                {% endif %}
+                
+                {% if item.act_nav == 'projects' %}
+                <tr>
+                    <td colspan="2">
+                        <div class="form-group">
+                            <label for="sd-string-content">Short Description / Summary</label>
+                            <textarea id="sd-string-content" class="form-control" rows="3" >{{ item.content.sum_text }}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-2">
+                                <button type="button" class="btn btn-info" onclick="javascript:updateShortDescriptionText();">Update</button>
+                            </div>
+                            <div class="col-sm-2">
+                                
+                            </div>
+                            <div class="col-sm-1" id="sd-text-content-valid-icon">
+                                
+                            </div>
+                            <div class="col-sm-6" id="sd-text-content-valid-note">
+                                
+                            </div>
+                            <div class="col-sm-1">
+                                
+                            </div>
+                        </div>
+                    </td>
+                    
+                </tr>
+                {% endif %}
                 {% if item.content != False or item.act_nav == 'projects' %}
                 <tr>
                     <td colspan="2">
