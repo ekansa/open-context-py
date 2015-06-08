@@ -142,6 +142,8 @@ urlpatterns = patterns('',
                            name='edit_item_basics'),
                        url(r'^edit/add-item-annotation/(?P<uuid>\S+)', EditItemViews.add_item_annotation,
                            name='add_item_annotation'),
+                       url(r'^edit/add-item-stable-id/(?P<uuid>\S+)', EditItemViews.add_item_stable_id,
+                           name='add_item_stable_id'),
                        url(r'^edit/create-item-into/(?P<project_uuid>\S+)', EditItemViews.create_item_into,
                            name='create_item_into'),
                        # --------------------------
@@ -151,6 +153,8 @@ urlpatterns = patterns('',
                            name='entity_hierarchy_children'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
                            name='entity_look_up'),
+                       url(r'^entities/annotations/(?P<subject>\S+)', EntityViews.entity_annotations,
+                           name='entity_annotations'),
                        # Index, home-page route
                        url(r'^$', HomeViews.index, name='home_index'),
                        # Admin route

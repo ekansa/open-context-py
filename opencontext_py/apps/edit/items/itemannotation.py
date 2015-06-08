@@ -8,7 +8,7 @@ from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
-
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 
 # Help organize the code, with a class to make editing items easier
@@ -26,6 +26,7 @@ class ItemAnnotation():
         self.errors = {'uuid': False,
                        'params': False}
         self.response = {}
+        self.orcid_ok = None
         try:
             self.manifest = Manifest.objects.get(uuid=uuid)
         except Manifest.DoesNotExist:
@@ -100,6 +101,65 @@ class ItemAnnotation():
                          'change': {'note': note}}
         return self.response
 
+    
+    def check_orcid_ok(self, post_data):
+        """ checks to see if it's OK to add ORCID
+            stable identifiers
+        """
+        if self.orcid_ok is None:
+            # we haven't checked yet
+            orcid_ok = False
+            if self.manifest.item_type == 'persons':
+                id_type = self.request_param_val(post_data,
+                                                 'stable_type')
+                if id_type == 'orcid':
+                    orcid_ok = True
+            self.orcid_ok = orcid_ok
+        return self.orcid_ok
+    
+    def add_item_stable_id(self, post_data):
+        """ adds a stable identifier to an item """
+        ok = False
+        note = ''
+        orcid_ok = self.check_orcid_ok(post_data)
+        id_type_prefixes = {'ark': 'http://n2t.net/ark:/',
+                            'doi': 'http://dx.doi.org/',
+                            'orcid': 'http://orcid.org/'}
+        stable_id = self.request_param_val(post_data,
+                                           'stable_id')
+        stable_type = self.request_param_val(post_data,
+                                             'stable_type')
+        stable_id = stable_id.strip()
+        for id_type, id_prefix in id_type_prefixes.items():
+            if id_prefix in stable_id:
+                # the user supplied a URI version of the stable ID
+                stable_type = id_type
+                stable_id = stable_id.replace(id_prefix, '')
+        if stable_type == 'orcid' and orcid_ok is not True:
+            # problem adding an ORCID to this type of item
+            stable_type = False
+            note = 'Cannot add an ORCID to this item.'
+        if stable_id is not False \
+           and stable_type is not False:
+            ok = True
+            try:
+                new_stable = StableIdentifer()
+                new_stable.stable_id = stable_id
+                new_stable.stable_type = stable_type
+                new_stable.uuid = self.manifest.uuid
+                new_stable.project_uuid = self.manifest.project_uuid
+                new_stable.item_type = self.manifest.item_type
+                new_stable.save()
+            except:
+                ok = False
+                note = 'Identifier already in use'
+        else:
+            note = 'Problems with the ID request'
+        self.response = {'action': 'add-item-stable-id',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+    
     def request_param_val(self,
                           data,
                           param,

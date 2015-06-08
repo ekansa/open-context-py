@@ -103,6 +103,35 @@ def add_item_annotation(request, uuid):
         raise Http404
 
 
+def add_item_stable_id(request, uuid):
+    """ Handles POST requests to add an annotation to an item """
+    item_anno = ItemAnnotation(uuid, request)
+    if item_anno.manifest is not False:
+        if request.method == 'POST':
+            orcid_ok = item_anno.check_orcid_ok(request.POST)
+            if (item_anno.edit_permitted and orcid_ok)\
+               or request.user.is_superuser:
+                item_anno.creator_uuid = str(request.user.id)
+                result = item_anno.add_item_stable_id(request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+
 def create_item_into(request, project_uuid):
     """ Handles POST requests to create an item """
     item_create = ItemCreate(project_uuid, request)

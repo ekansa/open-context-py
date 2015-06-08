@@ -146,13 +146,78 @@ function addAuthorAnnotationDone(data){
 	// it's too complicated to change all the instances of the item label on the page,
 	// easier just to reload the whole page
 	console.log(data);
-	//location.reload(true);
+	location.reload(true);
 }
 
 function annotate_stableID_body(){
 	var html = [
 	'<div>',
+	'<div class="row">',
+	'<div class="col-xs-8">',
+	'<label>Stable ID Type</label><br/>',
+	'<label class="radio-inline">',
+	'<input type="radio" name="stable-id-type" id="stable-id-type-doi" ',
+	'class="stable-id-type" value="doi" checked="checked" />',
+	'DOI </label>',
+	'<label class="radio-inline">',
+	'<input type="radio" name="stable-id-type" id="stable-id-type-ark" ',
+	'class="stable-id-type" value="ark" />',
+	'ARK </label>',
+	'<label class="radio-inline">',
+	'<input type="radio" name="stable-id-type" id="stable-id-type-orcid" ',
+	'class="stable-id-type" value="orcid" />',
+	'ORCID </label><br/><br/>',
+	'<div class="form-group">',
+	'<label for="new-anno-object-id">Identifier</label>',
+	'<input id="new-anno-object-id" class="form-control input-sm"',
+	'type="text" value="" />',
+	'</div>',
+	'<div class="form-group">',
+	'<label for="new-anno-sort">Add Identifier</label>',
+	'<button class="btn btn-primary" onclick="addStableId();">Submit</button>',
+	'</div>',
+	'</div>',
+	'<div class="col-xs-4">',
+	'<h4>Notes on Stable Identifiers</h4>',
+	'<p><small>Manually enter a stable / persistent identifier curated ',
+	'by an external identifier service. Use EZID for items published by Open Context. ',
+	'Use ORCID to identify persons.',
+	'</small></p>',
+	'</div>',
+	'</div>',
 	'</div>'
 	].join('\n');
 	return html;
+}
+
+function addStableId(){
+	//submits the new stable identifier information
+	var stable_id = document.getElementById("new-anno-object-id").value;
+	if (stable_id.length > 0) {
+		var id_types = document.getElementsByClassName("stable-id-type");
+		for (var i = 0, length = id_types.length; i < length; i++) {
+			if (id_types[i].checked) {
+				var stable_type = id_types[i].value;
+			}
+		}
+		var url = "../../edit/add-item-stable-id/" + encodeURIComponent(uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				stable_type: stable_type,
+				stable_id: stable_id,
+				csrfmiddlewaretoken: csrftoken},
+			success: addStableIdDone
+		});
+	}
+	else{
+		alert("Need to add the identifier first.");
+	}
+}
+
+function addStableIdDone(data){
+	console.log(data);
+	location.reload(true);
 }
