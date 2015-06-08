@@ -4,6 +4,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
+from opencontext_py.apps.edit.items.itemannotation import ItemAnnotation
 from opencontext_py.apps.edit.items.itemcreate import ItemCreate
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -74,6 +75,33 @@ def update_item_basics(request, uuid):
             return HttpResponseForbidden
     else:
         raise Http404
+
+
+def add_item_annotation(request, uuid):
+    """ Handles POST requests to add an annotation to an item """
+    item_anno = ItemAnnotation(uuid, request)
+    if item_anno.manifest is not False:
+        if request.method == 'POST':
+            if item_anno.edit_permitted or request.user.is_superuser:
+                item_anno.creator_uuid = str(request.user.id)
+                result = item_anno.add_item_annotation(request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
 
 def create_item_into(request, project_uuid):
     """ Handles POST requests to create an item """

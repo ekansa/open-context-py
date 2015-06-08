@@ -140,6 +140,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^edit/update-item-basics/(?P<uuid>\S+)', EditItemViews.update_item_basics,
                            name='edit_item_basics'),
+                       url(r'^edit/add-item-annotation/(?P<uuid>\S+)', EditItemViews.add_item_annotation,
+                           name='add_item_annotation'),
                        url(r'^edit/create-item-into/(?P<project_uuid>\S+)', EditItemViews.create_item_into,
                            name='create_item_into'),
                        # --------------------------

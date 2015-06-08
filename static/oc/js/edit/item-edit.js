@@ -269,7 +269,7 @@ function updatePersonCategory(){
 			var foaf_type = p_types[i].value;
 		}
 	}
-	url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
 	var req = $.ajax({
 		type: "POST",
 		url: url,
