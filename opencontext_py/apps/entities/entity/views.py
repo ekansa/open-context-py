@@ -4,6 +4,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 # These views display an HTML form for classifying import fields,
@@ -69,6 +70,7 @@ def entity_annotations(request, subject):
         result = LastUpdatedOrderedDict()
         result['list'] = []
         result['pred-key-objs'] = []
+        result['stable-ids'] = []
         la_list = LinkAnnotation.objects\
                                 .filter(subject=subject)\
                                 .order_by('predicate_uri', 'sort')
@@ -113,6 +115,18 @@ def entity_annotations(request, subject):
                 pred_obj['objects'] = [obj_item]
                 result['pred-key-objs'].append(pred_obj)
             result['list'].append(item)
+        s_ids = StableIdentifer.objects\
+                               .filter(uuid=ent.uuid)
+        id_type_prefixes = StableIdentifer.ID_TYPE_PREFIXES
+        for s_id in s_ids:
+            stable_id = LastUpdatedOrderedDict()
+            stable_id['type'] = s_id.stable_type
+            stable_id['stable_id'] = s_id.stable_id
+            stable_id['id'] = False
+            if s_id.stable_type in id_type_prefixes:
+                stable_id['id'] = id_type_prefixes[s_id.stable_type]
+                stable_id['id'] += s_id.stable_id
+            result['stable-ids'].append(stable_id)
         json_output = json.dumps(result,
                                  indent=4,
                                  ensure_ascii=False)
