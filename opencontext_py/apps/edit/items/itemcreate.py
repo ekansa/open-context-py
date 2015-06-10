@@ -13,6 +13,10 @@ from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 
@@ -52,6 +56,107 @@ class ItemCreate():
         else:
             self.oc_root_project = False
 
+    def check_uuid_exists(self, uuid):
+        """ checks to see if a uuid is already in use """
+        exists = True
+        obj_check = Manifest.objects\
+                            .filter(uuid=uuid)[:1]
+        uses = len(obj_check)
+        obj_check = Subject.objects\
+                           .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        obj_check = Project.objects\
+                           .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        obj_check = OCdocument.objects\
+                              .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        obj_check = Predicate.objects\
+                             .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        obj_check = OCtype.objects\
+                          .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        obj_check = OCstring.objects\
+                            .filter(uuid=uuid)[:1]
+        uses += len(obj_check)
+        if uses == 0:
+            exists = False
+        return exists
+    
+    def create_or_validate_uuid(self, post_data):
+        """ mints a new uuuid or validates an existing
+            one is OK to use
+        """
+        uuid = GenUUID.uuid4()
+        uuid = str(uuid)
+        if 'uuid' in post_data:
+            if len(post_data['uuid']) >  30 \
+               and post_data['uuid'].count('-') == 4:
+                uuid = post_data['uuid']
+                uuid_exists = self.check_uuid_exists(uuid)
+                if uuid_exists:
+                    self.errors['uuid'] = 'Cannot create an item with UUID: ' + uuid
+                    self.errors['uuid'] += ', because it is already used.'
+                    uuid = False
+        return uuid
+    
+    def create_project(self, post_data):
+        """ creates a project item into a project
+        """
+        ok = True
+        required_params = ['source_id',
+                           'label',
+                           'short_des']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                if self.errors['params'] is False:
+                    self.errors['params'] = message
+                else:
+                    self.errors['params'] += '; ' + message
+        uuid = self.create_or_validate_uuid(post_data)
+        if uuid is False:
+            ok = False
+            note = self.errors['uuid']
+        if ok:
+            label = post_data['label']
+            if self.oc_root_project:
+                project_uuid = uuid
+            else:
+                project_uuid = self.project_uuid
+            new_proj = Project()
+            new_proj.uuid = uuid
+            new_proj.project_uuid = project_uuid
+            new_proj.source_id = post_data['source_id']
+            new_proj.edit_status = 0
+            new_proj.label = label
+            new_proj.short_des = post_data['short_des']
+            new_proj.save()
+            new_man = Manifest()
+            new_man.uuid = uuid
+            new_man.project_uuid = project_uuid
+            new_man.source_id = post_data['source_id']
+            new_man.item_type = 'projects'
+            new_man.repo = ''
+            new_man.class_uri = ''
+            new_man.label = label
+            new_man.des_predicate_uuid = ''
+            new_man.views = 0
+            new_man.save()
+        else:
+            label = '[Item not created]'
+            uuid = False
+        self.response = {'action': 'create-item-into',
+                         'ok': ok,
+                         'change': {'uuid': uuid,
+                                    'label': label,
+                                    'note': self.add_creation_note(ok)}}
+        return self.response
+
     def create_person(self, post_data):
         """ creates a person item into a project
         """
@@ -74,10 +179,12 @@ class ItemCreate():
                     self.errors['params'] = message
                 else:
                     self.errors['params'] += '; ' + message
+        uuid = self.create_or_validate_uuid(post_data)
+        if uuid is False:
+            ok = False
+            note = self.errors['uuid']
         if ok:
             label = post_data['combined_name']
-            uuid = GenUUID.uuid4()
-            uuid = str(uuid)
             new_pers = Person()
             new_pers.uuid = uuid
             new_pers.project_uuid = self.project_uuid

@@ -30,6 +30,8 @@ def html_view(request, uuid):
             template = loader.get_template('edit/view.html')
             context = RequestContext(request,
                                      {'item': temp_item,
+                                      'super_user': request.user.is_superuser,
+                                      'icons': ItemBasicEdit.UI_ICONS,
                                       'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
@@ -47,7 +49,18 @@ def update_item_basics(request, uuid):
     item_edit = ItemBasicEdit(uuid, request)
     if item_edit.manifest is not False:
         if request.method == 'POST':
-            if item_edit.edit_permitted or request.user.is_superuser:
+            if ('edit_status' in request.POST \
+               or 'project_uuid' in request.POST)\
+               and request.user.is_superuser:
+                # some parameters in the request require super-user privelages
+                result = item_edit.update_project_sensitives(request.POST)
+                result['errors'] = item_edit.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            elif item_edit.edit_permitted or request.user.is_superuser:
                 result = {}
                 if 'label' in request.POST:
                     result = item_edit.update_label(request.POST['label'],
@@ -131,7 +144,6 @@ def add_item_stable_id(request, uuid):
         raise Http404
 
 
-
 def create_item_into(request, project_uuid):
     """ Handles POST requests to create an item """
     item_create = ItemCreate(project_uuid, request)
@@ -171,3 +183,42 @@ def create_item_into(request, project_uuid):
             return HttpResponseForbidden
     else:
         raise Http404
+
+
+def create_project(request):
+    """ Handles POST requests to create an item """
+    if request.method == 'POST':
+        if request.user.is_superuser:
+            # only super users can make new project
+            if 'project_uuid' in request.POST:
+                project_uuid =  request.POST['project_uuid']
+            else:
+                project_uuid = '0'
+            item_create = ItemCreate(project_uuid, request)
+            if item_create.proj_manifest_obj is not False \
+               or item_create.oc_root_project:
+                # the new project is either at the Open Context root
+                # (independent project) or is part of a larger project
+                result = item_create.create_project(request.POST)
+                result['errors'] = item_create.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'parent project is missing'},
+                                     indent=4,
+                                     ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=400)
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        return HttpResponseForbidden

@@ -289,7 +289,106 @@ function updateCategoryDone(data){
 	location.reload(true);
 }
 
+/* -----------------------------------------------
+ * Project specific edits
+ * -----------------------------------------------
+ */
 
+function updateEditorialStatus(){
+	// updates the editorial status of a project
+	var p_types = document.getElementsByClassName("proj-edit-status");
+	for (var i = 0, length = p_types.length; i < length; i++) {
+		if (p_types[i].checked) {
+			var edit_status = p_types[i].value;
+		}
+	}
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			edit_status: edit_status,
+			csrfmiddlewaretoken: csrftoken},
+		success: updateEditorialStatusDone
+	});
+}
+
+function updateEditorialStatusDone(data){
+	// reload the whole page from the server
+	// it's too complicated to change the whole page
+	console.log(data);
+	location.reload(true);
+}
+
+function parentProjectEntities(){
+	var entityInterfaceHTML = "";
+	/* changes global defauls in  entities/entities.js */
+	projSearchObj = new searchEntityObj();
+	projSearchObj.name = "projSearchObj";
+	projSearchObj.entities_panel_title = "Select a Project";
+	projSearchObj.limit_item_type = "projects";
+	projSearchObj.limit_project_uuid = "";
+	var afterSelectDone = {
+		exec: function(){
+				return parentProjectUse();
+			}
+		};
+	projSearchObj.afterSelectDone = afterSelectDone;
+	var entityInterfaceHTML = projSearchObj.generateEntitiesInterface();
+	var parent_dom = document.getElementById('parent-project-entities-outer');
+	parent_dom.innerHTML = entityInterfaceHTML;
+	var list_dom = document.getElementById("new-parent-proj-search");
+	var new_parent_html = [
+		'',
+		'<input id="parent-project-uuid" type="radio" name="parent-project" ',
+		'class="proj-parent-uuid" value="" />',
+		' <span id="parent-project-label">(Select a project)</span>',
+		''
+	].join("\n");
+	list_dom.innerHTML = new_parent_html;
+}
+
+function parentProjectUse(){
+	var parent_proj_label = document.getElementById("projSearchObj-sel-entity-label").value;
+	var parent_proj_uuid = document.getElementById("projSearchObj-sel-entity-id").value;
+	var list_dom = document.getElementById("new-parent-proj-search");
+	var new_parent_html = [
+		'',
+		'<input id="parent-project-uuid" type="radio" name="parent-project" ',
+		'class="proj-parent-uuid" value="' + parent_proj_uuid + '" checked="checked" />',
+		' <span id="parent-project-label">' + parent_proj_label + '</span>',
+		''
+	].join("\n");
+	list_dom.innerHTML = new_parent_html;
+}
+
+function updateParentProject(){
+	// updates the parent project for a project
+	var par_uuids = document.getElementsByClassName("proj-parent-uuid");
+	for (var i = 0, length = par_uuids.length; i < length; i++) {
+		if (par_uuids[i].checked) {
+			var parent_project_uuid = par_uuids[i].value;
+		}
+	}
+	var url = "../../edit/update-item-basics/" + encodeURIComponent(uuid);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			project_uuid: parent_project_uuid,
+			csrfmiddlewaretoken: csrftoken},
+		success: updateParentProjectDone
+	});
+}
+
+function updateParentProjectDone(data){
+	// reload the whole page from the server
+	// it's too complicated to change the whole page
+	console.log(data);
+	location.reload(true);
+}
 
 /* ---------------------------------------------------
 Functions for changing short descriptions and content

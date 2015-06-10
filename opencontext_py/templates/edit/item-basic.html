@@ -168,6 +168,82 @@
                     </td>
                     
                 </tr>
+                {% if super_user %}
+                <!-- only show this for super users, changing these require extraordinary powers -->
+                <tr>
+                    <td colspan="2">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label for="sd-string-content">Editorial Status</label><br/>
+                                <button type="button" class="btn btn-info" onclick="javascript:updateEditorialStatus();">Update</button>
+                            </div>
+                            <div class="col-sm-6">
+                            <ul class="list-unstyled">
+                            {% for i in "012345" %}
+                                <li>
+                                {% if forloop.counter0 == item.project.edit_status %}
+                                    <input type="radio" name="edit-status" class="proj-edit-status" value="{{ i }}" checked="checked"/> {% with edit_status=forloop.counter0 %}
+{% with label_status=True %}   
+{% include 'items/editorial-symbols.html' %}
+{% endwith %}
+{% endwith %}
+                                {%else%}
+                                    <input type="radio" name="edit-status" class="proj-edit-status" value="{{ i }}"/> {% with edit_status=forloop.counter0 %}
+{% with label_status=True %}   
+{% include 'items/editorial-symbols.html' %}
+{% endwith %}
+{% endwith %}
+                                {%endif%}
+                                </li>
+                            {% endfor %}
+                            </ul>
+                            </div>
+                            <div class="col-sm-2">
+                            </div>
+                        </div>
+                    </td>    
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label for="sd-string-content">Parent Project</label><br/>
+                                <ul class="list-unstyled">
+                                {% if item.uuid == item.project.uuid or item.project.uuid == '0' %}
+                                    <li>
+                                        <input type="radio" name="parent-project" class="proj-parent-uuid" value="{{ item.project.uuid }}" checked="checked"/> Independent Project
+                                    </li>
+                                {%else%}
+                                    <li>
+                                        <input type="radio" name="parent-project" class="proj-parent-uuid" value="0"/> Independent Project
+                                    </li>
+                                    <li><input type="radio" name="parent-project" class="proj-parent-uuid" value="{{ item.project.uuid }}" checked="checked"/> Part of: <em>{{ item.project.label }}</em></li>
+                                {%endif%}
+                                    
+                                    <li id="new-parent-proj-search">
+                                    </li>
+                                </ul>
+                                <button type="button" class="btn btn-info" onclick="updateParentProject();">Update</button>
+                            </div>
+                            <div class="col-sm-8">
+                                <div id="parent-project-entities-outer">
+                                    <div style="margin-top: 20px;">
+                                        <button class="button" onclick="parentProjectEntities();">
+                                            <i class="fa fa-sitemap"></i> Select new parent project
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <p><small>Note: Projects can be contained in other projects. If the project is contained in Open Context, it represents a fully independent body of work. If a project is contained in another project, it represents a component of a larger (and at least somewhat coordinated) effort.</small></p>
+                            </div>
+                        </div>
+                    </td>    
+                </tr>
+                {% endif %}
+                
                 {% endif %}
                 {% if item.content != False or item.act_nav == 'projects' %}
                 <tr>

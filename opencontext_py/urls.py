@@ -146,6 +146,8 @@ urlpatterns = patterns('',
                            name='add_item_stable_id'),
                        url(r'^edit/create-item-into/(?P<project_uuid>\S+)', EditItemViews.create_item_into,
                            name='create_item_into'),
+                       url(r'^edit/create-project', EditItemViews.create_project,
+                           name='create_project'),
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------
