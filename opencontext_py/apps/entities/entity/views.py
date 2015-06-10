@@ -1,9 +1,12 @@
 import json
 from django.http import HttpResponse, Http404
+from django.conf import settings
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 # These views display an HTML form for classifying import fields,
@@ -66,9 +69,13 @@ def entity_annotations(request, subject):
         found = ent.dereference(subject, subject)
     if found:
         # we found the subject entity, now get linked data assertions
+        # make an object for computing hrefs to local host version of OC-URIs
+        rp = RootPath()
+        # make a result dict
         result = LastUpdatedOrderedDict()
-        result['list'] = []
-        result['pred-key-objs'] = []
+        result['list'] = []  # list of link data annotations
+        result['preds_objs'] = [] # list of predicates, then of objects
+        result['stable_ids'] = [] # list of stable_ids
         la_list = LinkAnnotation.objects\
                                 .filter(subject=subject)\
                                 .order_by('predicate_uri', 'sort')
@@ -93,6 +100,8 @@ def entity_annotations(request, subject):
                 item['predicate_label'] = False
             item['object_uri'] = la.object_uri
             obj_item['id'] = la.object_uri
+            obj_item['href'] = obj_item['id'].replace(settings.CANONICAL_HOST,
+                                                      rp.get_baseurl())
             o_ent = Entity()
             o_found = o_ent.dereference(la.object_uri)
             if o_found:
@@ -102,7 +111,7 @@ def entity_annotations(request, subject):
                 item['object_label'] = False
                 obj_item['label'] = False
             pred_key_found = False
-            for pred_list in result['pred-key-objs']:
+            for pred_list in result['preds_objs']:
                 if pred_list['id'] == la.predicate_uri:
                     pred_list['objects'].append(obj_item)
                     pred_key_found = True
@@ -110,9 +119,24 @@ def entity_annotations(request, subject):
                 pred_obj = LastUpdatedOrderedDict()
                 pred_obj['id'] = item['predicate_uri']
                 pred_obj['label'] = item['predicate_label']
+                pred_obj['href'] = pred_obj['id'].replace(settings.CANONICAL_HOST,
+                                                          rp.get_baseurl())
                 pred_obj['objects'] = [obj_item]
-                result['pred-key-objs'].append(pred_obj)
+                result['preds_objs'].append(pred_obj)
             result['list'].append(item)
+        # now lets get any stable identifiers for this item
+        s_ids = StableIdentifer.objects\
+                               .filter(uuid=ent.uuid)
+        id_type_prefixes = StableIdentifer.ID_TYPE_PREFIXES
+        for s_id in s_ids:
+            stable_id = LastUpdatedOrderedDict()
+            stable_id['type'] = s_id.stable_type
+            stable_id['stable_id'] = s_id.stable_id
+            stable_id['id'] = False
+            if s_id.stable_type in id_type_prefixes:
+                stable_id['id'] = id_type_prefixes[s_id.stable_type]
+                stable_id['id'] += s_id.stable_id
+            result['stable_ids'].append(stable_id)
         json_output = json.dumps(result,
                                  indent=4,
                                  ensure_ascii=False)

@@ -130,11 +130,9 @@ class ItemAnnotation():
         stable_type = self.request_param_val(post_data,
                                              'stable_type')
         stable_id = stable_id.strip()
-        for id_type, id_prefix in id_type_prefixes.items():
-            if id_prefix in stable_id:
-                # the user supplied a URI version of the stable ID
-                stable_type = id_type
-                stable_id = stable_id.replace(id_prefix, '')
+        # now update the stable_type based on what's in the stable_id
+        stable_type = StableIdentifer().type_uri_check(stable_type,
+                                                       stable_id)
         if stable_type == 'orcid' and orcid_ok is not True:
             # problem adding an ORCID to this type of item
             stable_type = False
