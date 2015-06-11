@@ -22,6 +22,8 @@ class ItemBasicEdit():
     """ This class contains methods
         for basic item eding
     """
+    UI_ICONS = {'persons': '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
+                'projects': '<i class="fa fa-database"></i>'}
 
     def __init__(self,
                  uuid,
@@ -89,6 +91,74 @@ class ItemBasicEdit():
                                     'new': label,
                                     'old': old_label,
                                     'note': note}}
+        return self.response
+
+    def update_project_sensitives(self, post_data):
+        """ Updates an some of the more sensitive information
+            about a project that requires super-user privelages
+        """
+        ok = True
+        note = ''
+        if 'project_uuid' in post_data:
+            action = 'update-project-uuid'
+            new_project_uuid = post_data['project_uuid']
+            if new_project_uuid != self.manifest.uuid and new_project_uuid != '0':
+                # check to see if the new_project_uuid actually exists
+                try:
+                    m_obj = Manifest.objects.get(uuid=new_project_uuid)
+                except Manifest.DoesNotExist:
+                    m_obj = False
+                    note += ' Manifest missing: ' + new_project_uuid
+                try:
+                    p_obj = Project.objects.get(uuid=new_project_uuid)
+                except Project.DoesNotExist:
+                    p_obj = False
+                    note += ' Project missing: ' + new_project_uuid
+                if m_obj is False or p_obj is False:
+                    ok = False
+            if ok:
+                if self.manifest.item_type == 'projects':
+                    if new_project_uuid == '0':
+                        new_project_uuid = self.manifest.uuid
+                    try:
+                        cobj = Project.objects.get(uuid=self.manifest.uuid)
+                        cobj.project_uuid = new_project_uuid
+                        cobj.save()
+                        ok = True
+                    except Project.DoesNotExist:
+                        self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                        ok = False
+                self.manifest.project_uuid = new_project_uuid
+                self.manifest.save()
+        elif 'edit_status' in post_data:
+            action = 'update-edit-status'
+            try:
+                edit_status = int(float(post_data['edit_status']))
+            except:
+                edit_status = False
+            if edit_status is not False:    
+                if edit_status >= 0 and edit_status <=5:
+                    if self.manifest.item_type == 'projects':
+                        try:
+                            cobj = Project.objects.get(uuid=self.manifest.uuid)
+                            cobj.edit_status = edit_status
+                            cobj.save()
+                            ok = True
+                        except Project.DoesNotExist:
+                            self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                            ok = False
+                    else:
+                        ok = False
+                        note += ' This type of item doesnot have a editorial status.'
+                else:
+                    ok = False
+                    note += ' Edit status must be an integer between 0 and 5 inclusively.'
+            else:
+                ok = False
+                note += ' Edit status must be an integer between 0 and 5 inclusively.'
+        self.response = {'action': action,
+                         'ok': ok,
+                         'change': {'note': note}}
         return self.response
 
     def update_class_uri(self, class_uri):

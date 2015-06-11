@@ -8,11 +8,24 @@
         <div class="panel-body">
             <ul class="list-unstyled" >
                 <li>
-                    <a href="javascript:showCreateItemInterface('persons');"><span class="glyphicon glyphicon-user" aria-hidden="true"></span> Person/Organization</a>
+                    <a href="javascript:showCreateItemInterface('projects');">{% autoescape off %}{{ icons.projects }}{% endautoescape %} Project / Collection</a>
+                </li>
+                <li>
+                    <a href="javascript:showCreateItemInterface('persons');">{% autoescape off %}{{ icons.persons }}{% endautoescape %} Person / Organization</a>
                 </li>    
             </ul>
         </div>
     </div>
+    <!-- Javascript for icons -->
+    <script type="text/javascript">
+    <!--
+    var icons = {
+    {% for key,val in icons.items %}
+        {{ key }}: '{% autoescape off %}{{ val }}{% endautoescape %}',
+    {% endfor %}
+    };    
+    -->
+    </script>
     
     <!-- Javascript for creating items -->
     <script src="../../static/oc/js/edit/item-create.js"></script>

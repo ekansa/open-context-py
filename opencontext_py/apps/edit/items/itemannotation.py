@@ -101,6 +101,25 @@ class ItemAnnotation():
                          'change': {'note': note}}
         return self.response
 
+    def delete_annotation(self, post_data):
+        """ Adds a linked data annotation to an item
+        """
+        note = ''
+        if 'hash_id' in post_data:
+            hash_id = post_data['hash_id']
+            la_exist = LinkAnnotation.objects\
+                                     .filter(hash_id=hash_id)\
+                                     .delete()
+            ok = True
+            note = 'annotation deleteted'
+        else:
+            ok = False
+            note = 'Missing a annotation hash-id.'
+            self.errors['params'] = note
+        self.response = {'action': 'delete-annotation',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
     
     def check_orcid_ok(self, post_data):
         """ checks to see if it's OK to add ORCID
