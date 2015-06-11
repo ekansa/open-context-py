@@ -46,6 +46,9 @@ function entityAnnotationsObj() {
 	}
 	this.dialogModal_html = function(){
 		var html = [
+		'<style type="text/css">',
+		'.uri-id {max-width: 200px; word-wrap: break-word;}',
+		'</style>',
 		'<div class="modal fade bs-example-modal-sm" tabindex="-1" ',
 		'id="' + this.name + '-modal-id" ',
 		'role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">',
@@ -61,6 +64,12 @@ function entityAnnotationsObj() {
 	this.displayPredicateObjects = function(predicate_label, objects){
 		// display list of objects for a given predicate
 		var html = [];
+		if (objects.length > 1) {
+			var do_updown = true;
+		}
+		else{
+			var do_updown = false;
+		}
 		for (var i = 0, length = objects.length; i < length; i++) {
 			var obj = objects[i];
 			var hash_id = obj.hash_id;
@@ -70,7 +79,7 @@ function entityAnnotationsObj() {
 			obj.label = label;
 			this.all_objects[hash_id] = obj;
 			if (obj.sort < 1) {
-				var sorting = '';
+				var sorting = '[Not sorted]';
 			}
 			else{
 				var sorting = 'Sort:<br/>' + obj.sort;
@@ -83,20 +92,42 @@ function entityAnnotationsObj() {
 				'<span class="glyphicon glyphicon-remove-sign"></span>',
 				'</button>',
 				'</div>'
-			].join("\n"); 
+			].join("\n");
+			if (do_updown) {
+				// we have multiple objects so we may want to rank them
+				var up_html = [
+					'<div style="margin-top: 5px;">',
+					'<button class="btn btn btn-info btn-xs" ',
+					'onclick="' + this.name + '.rankAnnotation(\''+ hash_id +'\', -1);" ',
+					'title="Higher rank in sort order">',
+					'<span class="glyphicon glyphicon-arrow-up"></span>',
+					'</button>',
+					'</div>'
+				].join("\n");
+				var down_html = [
+					'<div style="margin-top: 2px;">',
+					'<button class="btn btn btn-info btn-xs" ',
+					'onclick="' + this.name + '.rankAnnotation(\''+ hash_id +'\', 1);" ',
+					'title="Lower rank in sort order">',
+					'<span class="glyphicon glyphicon-arrow-down"></span>',
+					'</button>',
+					'</div>'
+				].join("\n");
+				var up_down = up_html + down_html;
+			}
+			else{
+				var up_down = '';
+			}
 			var row = [
 				'<div class="row">',
 				'<div class="col-xs-1">',
 				delete_html,
 				'</div>',
-				'<div class="col-xs-1">',
+				'<div class="col-xs-2 text-center">',
 				sorting,
 				'</div>',
 				'<div class="col-xs-1">',
-				'',
-				'</div>',
-				'<div class="col-xs-1">',
-				'',
+				up_down,
 				'</div>',
 				'<div class="col-xs-8">',
 				'<div style="padding-bottom: 15px;">' + obj_html + '</div>',
@@ -127,7 +158,7 @@ function entityAnnotationsObj() {
 			var ld_id = ld_item.id;
 		}
 		if (label != ld_id) {
-			var ld_html = label + '<br/><samp>' + ld_id + '</samp>';
+			var ld_html = label + '<br/><samp class="uri-id">' + ld_id + '</samp>';
 		}
 		else{
 			var ld_html = label;
@@ -191,6 +222,30 @@ function entityAnnotationsObj() {
 	}
 	this.cancelDelete = function(){
 		$("#" + this.name + "-modal-id").modal('hide');
+	}
+	this.rankAnnotation = function(hash_id, sort_change){
+		// re-rank the sorting of an annotation accoding to a direction
+		// sort_change = -1 is a lower sort value (move toward 1st place)
+		// sort_change = 1 is a higher sort order (move toward last place)
+		this.exec_rankAnnotation(hash_id, sort_change).then(this.getAnnotations);
+	}
+	this.exec_rankAnnotation = function(hash_id, sort_change){
+		// sends the AJAX request to change the sort order
+		var url = "../../edit/edit-annotation/" + encodeURIComponent(this.entity_id);
+		return req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: {
+				hash_id: hash_id,
+				sort_change: sort_change,
+				csrfmiddlewaretoken: csrftoken},
+			success: this.rankAnnotationDone
+		});
+	}
+	this.rankAnnotationDone = function(data){
+		return true;
 	}
 }
 
