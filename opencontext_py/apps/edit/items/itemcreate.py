@@ -93,7 +93,7 @@ class ItemCreate():
         if 'uuid' in post_data:
             if len(post_data['uuid']) >  30 \
                and post_data['uuid'].count('-') == 4:
-                uuid = post_data['uuid']
+                uuid = post_data['uuid'].strip()
                 uuid_exists = self.check_uuid_exists(uuid)
                 if uuid_exists:
                     self.errors['uuid'] = 'Cannot create an item with UUID: ' + uuid

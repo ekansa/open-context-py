@@ -209,6 +209,13 @@ class ItemAnnotation():
             if self.manifest.item_type == 'persons':
                 id_type = self.request_param_val(post_data,
                                                  'stable_type')
+                stable_id = self.request_param_val(post_data,
+                                                   'stable_id')
+                if stable_id is not False:
+                    # check the actual identifier to see if it's an ORCID
+                    id_type_prefixes = StableIdentifer.ID_TYPE_PREFIXES
+                    if id_type_prefixes['orcid'] in stable_id:
+                        id_type = 'orcid'
                 if id_type == 'orcid':
                     orcid_ok = True
             self.orcid_ok = orcid_ok
@@ -219,9 +226,6 @@ class ItemAnnotation():
         ok = False
         note = ''
         orcid_ok = self.check_orcid_ok(post_data)
-        id_type_prefixes = {'ark': 'http://n2t.net/ark:/',
-                            'doi': 'http://dx.doi.org/',
-                            'orcid': 'http://orcid.org/'}
         stable_id = self.request_param_val(post_data,
                                            'stable_id')
         stable_type = self.request_param_val(post_data,
@@ -251,6 +255,32 @@ class ItemAnnotation():
         else:
             note = 'Problems with the ID request'
         self.response = {'action': 'add-item-stable-id',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+    
+    def delete_item_stable_id(self, post_data):
+        """ deletes a stable identifier from an item """
+        orcid_ok = self.check_orcid_ok(post_data)
+        stable_id = self.request_param_val(post_data,
+                                           'stable_id')
+        if stable_id is not False:
+            ok = True
+            stable_id_list = [stable_id]
+            for id_type, prefix in StableIdentifer.ID_TYPE_PREFIXES.items():
+                id_variant = stable_id.replace(prefix, '')
+                if id_variant not in stable_id_list:
+                    # just in case the stable_id is a given as a URI
+                    # delete multiple varients of it
+                    stable_id_list.append(id_variant)
+            del_id = StableIdentifer.objects\
+                                    .filter(uuid=self.manifest.uuid,
+                                            stable_id__in=stable_id_list)\
+                                    .delete()
+            note = 'Deleteted: ' + stable_id + ' from ' + self.manifest.uuid
+        else:
+            note = 'Need to indicate what stable_id to delete'
+        self.response = {'action': 'delete-item-stable-id',
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
