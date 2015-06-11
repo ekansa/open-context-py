@@ -115,8 +115,34 @@ def add_item_annotation(request, uuid):
     else:
         raise Http404
 
+def edit_annotation(request, entity_id):
+    """ Handles POST requests to edit an annotation of an item """
+    item_anno = ItemAnnotation(entity_id, request)
+    if item_anno.manifest is not False:
+        if request.method == 'POST':
+            if item_anno.edit_permitted or request.user.is_superuser:
+                result = {}
+                if 'sort_change' in request.POST:
+                    result = item_anno.sort_change_annotation(request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
 def delete_annotation(request, entity_id):
-    """ Handles POST requests to delete an annotation to an item """
+    """ Handles POST requests to delete an annotation on an item """
     item_anno = ItemAnnotation(entity_id, request)
     if item_anno.manifest is not False:
         if request.method == 'POST':
@@ -148,8 +174,40 @@ def add_item_stable_id(request, uuid):
             orcid_ok = item_anno.check_orcid_ok(request.POST)
             if (item_anno.edit_permitted and orcid_ok)\
                or request.user.is_superuser:
+                # super user status generally required to edit stable ids
+                # the exception is for users with edit privilages
+                # who can add or delete ORCIDs to persons items
                 item_anno.creator_uuid = str(request.user.id)
                 result = item_anno.add_item_stable_id(request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+def delete_item_stable_id(request, uuid):
+    """ Handles POST requests to add an annotation to an item """
+    item_anno = ItemAnnotation(uuid, request)
+    if item_anno.manifest is not False:
+        if request.method == 'POST':
+            orcid_ok = item_anno.check_orcid_ok(request.POST)
+            if (item_anno.edit_permitted and orcid_ok)\
+               or request.user.is_superuser:
+                # super user status generally required to edit stable ids
+                # the exception is for users with edit privilages
+                # who can add or delete ORCIDs to persons items
+                result = item_anno.delete_item_stable_id(request.POST)
                 json_output = json.dumps(result,
                                          indent=4,
                                          ensure_ascii=False)
