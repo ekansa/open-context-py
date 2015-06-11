@@ -4,6 +4,7 @@
 var contextSearchObj = false;
 var childSearchObj = false;
 var act_item = false;
+var act_annotations = false;
 function start(){
 	/* Thing to do on page load 
 	*/
@@ -17,6 +18,13 @@ function start(){
 	act_item.exec_after_data_get = exec_after_data_get;
 	act_item.getItemData();
 	console.log(act_item);
+	// now get annotations on the item in an easy to edit way
+	act_annotations = new entityAnnotationsObj();
+	act_annotations.name = 'act_annotations';
+	act_annotations.entity_id = uuid;
+	act_annotations.getAnnotations();
+	console.log(act_annotations);
+	// get heirarchis for types, useful for editing classifications
 	getTypeHierarchy();
 	if (item_type == 'subjects') {
 		// add an object for searching parent entities defined in entities/entities.js

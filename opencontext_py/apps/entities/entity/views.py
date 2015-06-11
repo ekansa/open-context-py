@@ -121,6 +121,9 @@ def entity_annotations(request, subject):
                 pred_obj['label'] = item['predicate_label']
                 pred_obj['href'] = pred_obj['id'].replace(settings.CANONICAL_HOST,
                                                           rp.get_baseurl())
+                if 'https://' not in pred_obj['href'] \
+                   and 'http://' not in pred_obj['href']:
+                    pred_obj['href'] = False
                 pred_obj['objects'] = [obj_item]
                 result['preds_objs'].append(pred_obj)
             result['list'].append(item)
