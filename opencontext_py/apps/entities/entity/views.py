@@ -38,6 +38,7 @@ def look_up(request, item_type):
     class_uri = False
     project_uuid = False
     vocab_uri = False
+    ent_type = False
     if len(item_type) < 2:
         item_type = False
     if 'q' in request.GET:
@@ -48,11 +49,14 @@ def look_up(request, item_type):
         project_uuid = request.GET['project_uuid']
     if 'vocab_uri' in request.GET:
         vocab_uri = request.GET['vocab_uri']
+    if 'ent_type' in request.GET:
+        ent_type = request.GET['ent_type']
     entity_list = ent.search(qstring,
                              item_type,
                              class_uri,
                              project_uuid,
-                             vocab_uri)
+                             vocab_uri,
+                             ent_type)
     json_output = json.dumps(entity_list,
                              indent=4,
                              ensure_ascii=False)

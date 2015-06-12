@@ -25,6 +25,12 @@ function annotateItemInterface(type){
 		this.title += ' Add a Stable / Persistent Identifier';
 		this.body = annotate_stableID_body();
 	}
+	else if (type == 'dc') {
+		//make an interface for adding stable identifiers
+		this.title = '';
+		this.title += ' Add a (non-author) Dublin Core Annotations';
+		this.body = annotate_dc_body();
+	}
 }
 
 function annotate_author_body(){
@@ -62,7 +68,6 @@ function annotate_author_body(){
 	'<label for="new-anno-object-id">Person / Org. (Object ID)</label>',
 	'<input id="new-anno-object-id" class="form-control input-sm"',
 	'type="text" value="" />',
-	'<span id="new-anno-object-label"></span>',
 	'</div>',
 	'<div class="form-group" id="new-anno-object-label-out">',
 	'<label for="new-anno-object-label">Person / Org. (Object Label)</label>',
@@ -221,3 +226,110 @@ function addStableIdDone(data){
 	console.log(data);
 	location.reload(true);
 }
+
+var uriSearchObj = false;
+var uriAddObj = false
+function annotate_dc_body(){
+	
+	var entityInterfaceHTML = "";
+	/* changes global authorSearchObj from entities/entities.js */
+	uriSearchObj = new searchEntityObj();
+	uriSearchObj.name = "uriSearchObj";
+	uriSearchObj.entities_panel_title = "Find a URI identified Object";
+	uriSearchObj.limit_item_type = "uri";
+	uriSearchObj.ent_type = 'class';
+	uriSearchObj.show_type = true;
+	uriSearchObj.show_partof = true;
+	var afterSelectDone = {
+		exec: function(){
+				return entityObject();
+			}
+		};
+	uriSearchObj.afterSelectDone = afterSelectDone;
+	var entityInterfaceHTML = uriSearchObj.generateEntitiesInterface();
+	
+	var newEntityInterfaceHTML = "";
+	// make a panel for adding new entities
+	uriAddObj = new addEntityObj();
+	uriAddObj.name = "uriAddObj";
+	newEntityInterfaceHTML = uriAddObj.generateInterface();
+	
+	var html = [
+	'<div>',
+	'<div class="row">',
+	'<div class="col-xs-6">',
+	'<label>Dublin Core Predicate (Property)</label><br/>',
+	'<ul class="list-unstyled">',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-1" ',
+	'class="pred_uri" value="dc-terms:subject" />',
+	'Subject</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-2" ',
+	'class="pred_uri" value="dc-terms:coverage" />',
+	'Coverage (Geographic)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-3" ',
+	'class="pred_uri" value="dc-terms:temporal" />',
+	'Temporal (Time Period)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-4" ',
+	'class="pred_uri" value="dc-terms:references" />',
+	'References (Cites/references another source)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-5" ',
+	'class="pred_uri" value="dc-terms:isReferencedBy" />',
+	'Is referenced by (Is cited by another source)</li>',
+	'</ul>',
+	'<div class="form-group">',
+	'<label for="new-anno-object-id">Object URI</label>',
+	'<input id="new-anno-object-id" class="form-control input-sm"',
+	'type="text" value="" />',
+	'</div>',
+	'<div class="form-group" id="new-anno-object-label-out">',
+	'<label for="new-anno-object-label">Object Label</label>',
+	'<input id="new-anno-object-label" class="form-control input-sm"',
+	'type="text" disabled="disabled" value="Completed upon lookup to the right" />',
+	'</div>',
+	'<div class="form-group">',
+	'<label for="new-anno-sort">Add Annotation</label>',
+	'<button class="btn btn-primary" onclick="addDC();">Submit</button>',
+	'</div>',
+	'</div>',
+	'<div class="col-xs-6">',
+	entityInterfaceHTML,
+	newEntityInterfaceHTML,
+	'</div>',
+	'</div>',
+	'<div class="row">',
+	'<div class="col-xs-12">',
+	'<h4>Notes Dublin Core Properties</h4>',
+	'<p><small>Use this interface to add additional metadata properties ',
+	'to items using the Dublin Core Terms vocabulary. These properties help to ',
+	'add more digital library / scholarly context to Open Context items.',
+	'</small></p>',
+	'</div>',
+	'</div>',
+	'</div>',
+	'</div>',
+	'</div>'
+	].join('\n');
+	return html;
+}
+
+function entityObject(){
+	// puts the selected item from the entity lookup interface
+	// into the appropriate field for making a new assertion
+	var obj_id = document.getElementById("uriSearchObj-sel-entity-id").value;
+	var obj_label = document.getElementById("uriSearchObj-sel-entity-label").value;
+	document.getElementById("new-anno-object-id").value = obj_id;
+	//so we can edit disabled state fields
+	var l_outer = document.getElementById("new-anno-object-label-out");
+	var html = [
+	'<label for="new-anno-object-label">URI item label</label>',
+	'<input id="new-anno-object-label" class="form-control input-sm"',
+	'type="text" disabled="disabled" value="' + obj_label + '" />'
+	].join('\n');
+	l_outer.innerHTML = html;
+}
+

@@ -21,17 +21,16 @@
         
         <h4>Add New Annotations</h4>
         <div class="row">
-            <div class="col-sm-3">
-                <button class="btn btn-default" onclick="showAnnotateItemInterface('author')">Author/Editor</button>
-            </div>
-            <div class="col-sm-3">
-                <button class="btn btn-default" onclick="showAnnotateItemInterface('stableID')">Stable ID</button>
-            </div>
-            <div class="col-sm-3">
+            <div class="col-sm-12">
+                <button title="Dublin Core creator/contributor metadata" class="btn btn-default" onclick="showAnnotateItemInterface('author')">Author/Editor</button>
+            
+                <button title="Dublin Core metadata (NOT author/editor)" class="btn btn-default" onclick="showAnnotateItemInterface('dc')">Dublin Core</button>
+            
+                <button title="Relate to a controlled vocabulary" class="btn btn-default" onclick="showAnnotateItemInterface('vocab')">Relate Vocabularies</button>
                 
-            </div>
-            <div class="col-sm-3">
+                <button title="Add other linked-data annotations" class="btn btn-default" onclick="showAnnotateItemInterface('other')">Other</button>
                 
+                <button title="Add DOI, ARK, or ORCID identifiers" class="btn btn-default" onclick="showAnnotateItemInterface('stableID')">Stable ID</button>
             </div>
         </div>
     </div>

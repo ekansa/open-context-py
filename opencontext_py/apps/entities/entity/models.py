@@ -146,12 +146,20 @@ class Entity():
                item_type=False,
                class_uri=False,
                project_uuid=False,
-               vocab_uri=False):
+               vocab_uri=False,
+               ent_type=False):
         """ Searches for entities limited by query strings
             and optionally other criteria
         """
         entity_list = []
         manifest_list = []
+        if ent_type is not False:
+            # make ent_type search a list
+            ents = [ent_type]
+            if ent_type == 'class':
+                ents.append('type')
+        else:
+            ents = False
         if item_type is False and class_uri is False\
            and project_uuid is False and vocab_uri is False:
             """ Search all types of entities, only limit by string matching """
@@ -167,21 +175,42 @@ class Entity():
         elif item_type == 'uri' and class_uri is False\
                 and project_uuid is False and vocab_uri is False:
             """ Search for link entities only limit by string matching """
-            entity_list = LinkEntity.objects\
-                                    .filter(Q(uri__icontains=qstring)\
-                                            | Q(slug__icontains=qstring)\
-                                            | Q(label__icontains=qstring)\
-                                            | Q(alt_label__icontains=qstring))[:15]
+            if ents is False:
+                # don't limit by entity type
+                entity_list = LinkEntity.objects\
+                                        .filter(Q(uri__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring)\
+                                                | Q(alt_label__icontains=qstring))[:15]
+            else:
+                # also limit by entity type
+                entity_list = LinkEntity.objects\
+                                        .filter(ent_type__in=ents)\
+                                        .filter(Q(uri__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring)\
+                                                | Q(alt_label__icontains=qstring))[:15]
         elif item_type == 'uri' and class_uri is False\
                 and project_uuid is False and vocab_uri is not False:
             """ Search for link entities, limit by vocab_uri """
             vocab_uri = self.make_id_list(vocab_uri)
-            entity_list = LinkEntity.objects\
-                                    .filter(vocab_uri__in=vocab_uri)\
-                                    .filter(Q(uri__icontains=qstring)\
-                                            | Q(slug__icontains=qstring)\
-                                            | Q(label__icontains=qstring)\
-                                            | Q(alt_label__icontains=qstring))[:15]
+            if ents is False:
+                # don't limit by entity type
+                entity_list = LinkEntity.objects\
+                                        .filter(vocab_uri__in=vocab_uri)\
+                                        .filter(Q(uri__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring)\
+                                                | Q(alt_label__icontains=qstring))[:15]
+            else:
+                # also limit by entity type
+                entity_list = LinkEntity.objects\
+                                        .filter(ent_type__in=ents)\
+                                        .filter(vocab_uri__in=vocab_uri)\
+                                        .filter(Q(uri__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring)\
+                                                | Q(alt_label__icontains=qstring))[:15]
         elif item_type is not False and item_type != 'uri':
             """ Look only for manifest items """
             item_type = self.make_id_list(item_type)
@@ -233,6 +262,7 @@ class Entity():
             item['slug'] = link_entity.slug
             item['type'] = 'uri'
             item['class_uri'] = False
+            item['ent_type'] = link_entity.ent_type
             item['partOf_id'] = link_entity.vocab_uri
             item['partOf_label'] = self.get_link_entity_label(link_entity.vocab_uri)
             output.append(item)
@@ -243,6 +273,7 @@ class Entity():
             item['slug'] = man_entity.slug
             item['type'] = man_entity.item_type
             item['class_uri'] = man_entity.class_uri
+            item['ent_type'] = False
             item['partOf_id'] = man_entity.project_uuid
             item['partOf_label'] = self.get_manifest_label(man_entity.project_uuid)
             output.append(item)
