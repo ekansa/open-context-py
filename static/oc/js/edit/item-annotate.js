@@ -28,7 +28,7 @@ function annotateItemInterface(type){
 	else if (type == 'dc') {
 		//make an interface for adding stable identifiers
 		this.title = '';
-		this.title += ' Add a (non-author) Dublin Core Annotations';
+		this.title += ' Add a Dublin Core Annotation (not author related) ';
 		this.body = annotate_dc_body();
 	}
 }
@@ -333,3 +333,58 @@ function entityObject(){
 	l_outer.innerHTML = html;
 }
 
+function addDC(){
+	
+	var obj_uri = document.getElementById("new-anno-object-id").value;
+	if (obj_uri.length > 0) {
+		var pred_uri = false;
+		var p_types = document.getElementsByClassName("pred_uri");
+		for (var i = 0, length = p_types.length; i < length; i++) {
+			if (p_types[i].checked) {
+				pred_uri = p_types[i].value;
+			}
+		}
+		if (pred_uri != false) {
+			// code to execute the annotation creation, load the annotations
+			// via calling the act_annotations object defined in item_edit.js
+			$("#myModal").modal('hide');
+			exec_addDC(pred_uri, obj_uri).then(
+			function() {
+				act_annotations = new entityAnnotationsObj();
+				act_annotations.name = 'act_annotations';
+				act_annotations.entity_id = uuid;
+				act_annotations.getAnnotations();
+			}
+			);
+		}
+		else{
+			alert("Select Dublin Core property to use first.");
+		}
+	}
+	else{
+		alert("Need to select a URI for the object of this annotation.");
+	}
+}
+
+function exec_addDC(pred_uri, obj_uri){
+	var url = "../../edit/add-item-annotation/" + encodeURIComponent(uuid);
+	return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				sort: 0,
+				predicate_uri: pred_uri,
+				object_uri: obj_uri,
+				csrfmiddlewaretoken: csrftoken},
+			success: addDcDone
+		});
+}
+function addDcDone(data){
+	if (data.ok) {
+		alert('Annotation successfully created!');
+	}
+	else{
+		alert('Seems to have been a problem: ' + data.change.note);
+	}
+}

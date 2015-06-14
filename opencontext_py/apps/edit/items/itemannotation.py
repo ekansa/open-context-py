@@ -21,6 +21,7 @@ class ItemAnnotation():
                  uuid,
                  request=False):
         self.creator_uuid = False
+        self.super_user = False
         self.uuid = uuid
         self.request = request
         self.errors = {'uuid': False,

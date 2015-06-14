@@ -1,5 +1,6 @@
 import hashlib
 from django.db import models
+from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 
 
 # This class stores linked data annotations made on the data contributed to open context
@@ -41,11 +42,21 @@ class LinkAnnotation(models.Model):
         concat_string = str(self.subject) + " " + str(self.predicate_uri) + " " + str(self.object_uri)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
+    
+    def clean_uris(self):
+        """
+        cleans URIs to keep them consistent and empty of 'cruft'
+        """
+        le_gen = LinkEntityGeneration()
+        self.subject = le_gen.make_clean_uri(self.subject)
+        self.predicate_uri = le_gen.make_clean_uri(self.predicate_uri)
+        self.object_uri = le_gen.make_clean_uri(self.object_uri)
 
     def save(self, *args, **kwargs):
         """
         creates the hash-id on saving to insure a unique assertion
         """
+        self.clean_uris()
         self.hash_id = self.make_hash_id()
         super(LinkAnnotation, self).save(*args, **kwargs)
 

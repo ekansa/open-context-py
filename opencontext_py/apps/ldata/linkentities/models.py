@@ -14,6 +14,14 @@ class LinkEntity(models.Model):
     vocab_uri = models.CharField(max_length=200)
     ent_type = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
+    
+    def clean_uri(self, uri):
+        """
+        cleans a uri to remove cruft that's not part of the identifier
+        """
+        le_gen = LinkEntityGeneration()
+        uri = le_gen.make_clean_uri(uri)
+        return uri
 
     def make_slug(self):
         """
@@ -27,6 +35,7 @@ class LinkEntity(models.Model):
         """
         saves a manifest item with a good slug
         """
+        self.uri = self.clean_uri(self.uri)
         self.slug = self.make_slug()
         super(LinkEntity, self).save(*args, **kwargs)
 
@@ -35,6 +44,26 @@ class LinkEntity(models.Model):
 
 
 class LinkEntityGeneration():
+    
+    # URIs that end in a numeric value
+    NUMERIC_URI_PREFIXES = ['http://pleiades.stoa.org/places/',
+                            'http://eol.org/pages/']
+
+    def make_clean_uri(self, uri):
+        """
+        Makes a numeric uri for certain vocabularies
+        by stripping off extra slashes and other crud
+        """
+        uri = uri.replace('.html', '')  # strip off .html since it's not a URI part
+        for prefix in self.NUMERIC_URI_PREFIXES:
+            if prefix in uri:
+                part_uri = uri.replace(prefix, '')
+                if '/' in part_uri:
+                    part_ex = part_uri.split('/')
+                    uri = prefix + part_ex[0].strip()
+                else:
+                    uri = prefix + part_uri.strip()
+        return uri
 
     def make_slug(self, uri):
         """
