@@ -66,9 +66,9 @@ class LinkEntityManage():
             vocab_uri = post_data['vocab_uri']
             if not self.validate_web_uri(vocab_uri)\
                and ent_type != 'vocabulary':
-                    # must be a full web uri to use
-                    note += '"' + vocab_uri + '" needs to be valid Web URI. '
-                    vocab_uri = False
+                    # vocab_uri is not a full uri, so suggest one
+                    # based on the URI for the request
+                    vocab_uri = self.suggest_vocabulary(uri)
             elif not self.validate_web_uri(vocab_uri)\
                and ent_type == 'vocabulary':
                 vocab_uri = uri
@@ -121,6 +121,31 @@ class LinkEntityManage():
                          'change': {'note': note}}
         return self.response
     
+    def suggest_vocabulary(self, uri):
+        """ suggests a vocabulary based on
+            the content of the URI
+        """
+        vocab_uri = False
+        le_gen = LinkEntityGeneration()
+        uri = le_gen.make_clean_uri(uri)
+        if '/' in uri:
+            uri_ex = uri.split('/')
+            last_part = '/' + uri_ex[-1]
+            uri_prefix = uri.replace(last_part, '')
+            print('Checking uri prefix: ' + uri_prefix)
+            le_examps = LinkEntity.objects\
+                                  .filter(uri__contains=uri_prefix)
+            if len(le_examps) > 0:
+                vocab_uris = []
+                for le_ex in le_examps:
+                    if le_ex.vocab_uri not in vocab_uris:
+                        # doing this to make sure we have an unambiguous URI
+                        vocab_uris.append(le_ex.vocab_uri)
+                if len(vocab_uris) == 1:
+                    # the uri prefix was not ambiguous, so we can use it
+                    vocab_uri = vocab_uris[0]
+        return vocab_uri
+        
     def check_vocab_uri(self, vocab_uri):
         """ checks to see if the vocabulary
             has a linked entity record, returns
