@@ -6,9 +6,11 @@ from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 
 
-class GeonamesAPI():
-    """ Interacts with Periodo """
-    JSON_BASE_URL = 'http://www.geonames.org/getJSON?id='
+class eolAPI():
+    """ Interacts with the Encyclopeidia of Life
+        (EOL) to get useful data about biological taxa
+    """
+    JSON_BASE_URL = 'http://eol.org/api/pages/1.0/'
     SLEEP_TIME = .5
 
     def __init__(self):
@@ -17,15 +19,16 @@ class GeonamesAPI():
         self.delay_before_request = self.SLEEP_TIME
         self.json_data = False
 
-    def get_json_for_geonames_uri(self, geonames_uri):
+    def get_basic_json_for_eol_uri(self, eol_uri):
         """
-        gets json daa from a geonames_uri
+        gets json daa from the EOL
         """
         le_gen = LinkEntityGeneration()
-        geonames_uri = le_gen.make_clean_uri(geonames_uri) # strip off any cruft in the URI
-        geo_ex = geonames_uri.split('/')
-        geonames_id = geo_ex[-1]
-        url = self.json_base_url + str(geonames_id)
+        eol_uri = le_gen.make_clean_uri(eol_uri) # strip off any cruft in the URI
+        eol_ex = eol_uri.split('/')
+        eol_id = eol_uri[-1]
+        url = self.json_base_url + str(eol_id)
+        url += '.json'
         if self.delay_before_request > 0:
             # default to sleep BEFORE a request is sent, to
             # give the remote service a break.

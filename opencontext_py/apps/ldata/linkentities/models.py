@@ -47,13 +47,15 @@ class LinkEntityGeneration():
     
     # URIs that end in a numeric value
     NUMERIC_URI_PREFIXES = ['http://pleiades.stoa.org/places/',
-                            'http://eol.org/pages/']
+                            'http://eol.org/pages/',
+                            'http://www.geonames.org/']
 
     def make_clean_uri(self, uri):
         """
         Makes a numeric uri for certain vocabularies
         by stripping off extra slashes and other crud
         """
+        uri = uri.strip()
         uri = uri.replace('.html', '')  # strip off .html since it's not a URI part
         for prefix in self.NUMERIC_URI_PREFIXES:
             if prefix in uri:

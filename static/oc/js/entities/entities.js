@@ -408,7 +408,7 @@ function addEntityObj() {
 			}
 		}
 		var url = "../../edit/add-update-ld-entity/";
-		if ((uri.length > 0 && label.length > 0) && (vocab_uri.length > 0 || ent_type == 'vocabulary')) {
+		if ((uri.length > 0 && label.length > 0)) {
 			//code
 			return $.ajax({
 				type: "POST",
