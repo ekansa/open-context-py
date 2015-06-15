@@ -46,7 +46,13 @@ class ItemAnnotation():
         """
         note = ''
         ok_predicates = ['dc-terms:creator',
-                         'dc-terms:contributor']
+                         'dc-terms:contributor',
+                         'skos:closeMatch',
+                         'skos:exactMatch',
+                         'owl:sameAs',
+                         'skos:broader',
+                         'skos:related',
+                         'rdfs:isDefinedBy']
         ok = True
         predicate_uri = self.request_param_val(post_data,
                                                'predicate_uri')

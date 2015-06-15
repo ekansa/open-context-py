@@ -19,6 +19,7 @@ class SolrDocument:
     # the list below defines predicates used for semantic equivalence in indexing
     # linked data
     LD_EQUIVALENT_PREDICATES = ['skos:closeMatch',
+                                'skos:exactMatch',
                                 'owl:sameAs',
                                 'foaf:isPrimaryTopicOf']
 

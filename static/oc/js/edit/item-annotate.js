@@ -1,3 +1,7 @@
+
+var uriSearchObj = false;  // for searching for objects of identifiers
+var uriAddObj = false; // for adding new entities to use for linked data annotations
+
 function showAnnotateItemInterface(type){
 	/* shows an interface for annotating an item
 	 * 
@@ -15,21 +19,27 @@ function showAnnotateItemInterface(type){
 function annotateItemInterface(type){
 	if (type == 'author') {
 		//make an interface for adding dc-terms:creator or dc-terms:contributor persons
-		this.title = '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>';
+		this.title = '<i class="fa fa-users"></i>';
 		this.title += ' Add Contributor and Creator (Authorship) Information';
 		this.body = annotate_author_body();
 	}
 	else if (type == 'stableID') {
 		//make an interface for adding stable identifiers
-		this.title = '';
+		this.title = '<i class="fa fa-university"></i>';
 		this.title += ' Add a Stable / Persistent Identifier';
 		this.body = annotate_stableID_body();
 	}
 	else if (type == 'dc') {
 		//make an interface for adding stable identifiers
-		this.title = '';
+		this.title = '<i class="fa fa-tags"></i>';
 		this.title += ' Add a Dublin Core Annotation (not author related) ';
 		this.body = annotate_dc_body();
+	}
+	else if (type == 'vocab') {
+		//make an interface for adding stable identifiers
+		this.title = '<i class="fa fa-share-alt"></i>';
+		this.title += ' Relate to a Controlled Vocabulary or Ontology ';
+		this.body = annotate_vocab_body();
 	}
 }
 
@@ -227,8 +237,6 @@ function addStableIdDone(data){
 	location.reload(true);
 }
 
-var uriSearchObj = false;
-var uriAddObj = false
 function annotate_dc_body(){
 	
 	var entityInterfaceHTML = "";
@@ -295,6 +303,8 @@ function annotate_dc_body(){
 	'<label for="new-anno-sort">Add Annotation</label>',
 	'<button class="btn btn-primary" onclick="addDC();">Submit</button>',
 	'</div>',
+	'<div id="annotation-results">',
+	'</div>',
 	'</div>',
 	'<div class="col-xs-6">',
 	entityInterfaceHTML,
@@ -303,7 +313,7 @@ function annotate_dc_body(){
 	'</div>',
 	'<div class="row">',
 	'<div class="col-xs-12">',
-	'<h4>Notes Dublin Core Properties</h4>',
+	'<h4>Notes on Dublin Core Properties</h4>',
 	'<p><small>Use this interface to add additional metadata properties ',
 	'to items using the Dublin Core Terms vocabulary. These properties help to ',
 	'add more digital library / scholarly context to Open Context items.',
@@ -347,7 +357,6 @@ function addDC(){
 		if (pred_uri != false) {
 			// code to execute the annotation creation, load the annotations
 			// via calling the act_annotations object defined in item_edit.js
-			$("#myModal").modal('hide');
 			exec_addDC(pred_uri, obj_uri).then(
 			function() {
 				act_annotations = new entityAnnotationsObj();
@@ -377,14 +386,124 @@ function exec_addDC(pred_uri, obj_uri){
 				predicate_uri: pred_uri,
 				object_uri: obj_uri,
 				csrfmiddlewaretoken: csrftoken},
-			success: addDcDone
+			success: addAnnotationDone
 		});
 }
-function addDcDone(data){
-	if (data.ok) {
-		alert('Annotation successfully created!');
-	}
-	else{
-		alert('Seems to have been a problem: ' + data.change.note);
-	}
+function addAnnotationDone(data){
+	var mes_dom = document.getElementById("annotation-results");
+		if (data.ok) {
+			// the interaction was a success
+			var html = '<div class="alert alert-success" role="alert">';
+			html += '<span class="glyphicon glyphicon-ok-sign" aria-hidden="true"></span>';
+			html += ' Annotation successfully added.';
+			if (data.change.note.length > 0) {
+				html += '<br/>' + data.change.note;
+			}
+			html += '</div>';
+		}
+		else{
+			var html = '<div class="alert alert-warning" role="alert">';
+			html += '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			html += ' We found a problem adding the annotation.';
+			html += '<br/><p class="small"><strong>Note:</strong> ' + data.change.note + '</p>';
+			html += '</div>';
+		}
+		mes_dom.innerHTML = html;
+}
+
+function annotate_vocab_body(){
+	
+	var entityInterfaceHTML = "";
+	/* changes global authorSearchObj from entities/entities.js */
+	uriSearchObj = new searchEntityObj();
+	uriSearchObj.name = "uriSearchObj";
+	uriSearchObj.entities_panel_title = "Find a URI identified Object";
+	uriSearchObj.limit_item_type = "uri";
+	uriSearchObj.ent_type = 'class';
+	uriSearchObj.show_type = true;
+	uriSearchObj.show_partof = true;
+	var afterSelectDone = {
+		exec: function(){
+				return entityObject();
+			}
+		};
+	uriSearchObj.afterSelectDone = afterSelectDone;
+	var entityInterfaceHTML = uriSearchObj.generateEntitiesInterface();
+	
+	var newEntityInterfaceHTML = "";
+	// make a panel for adding new entities
+	uriAddObj = new addEntityObj();
+	uriAddObj.name = "uriAddObj";
+	newEntityInterfaceHTML = uriAddObj.generateInterface();
+	
+	var html = [
+	'<div>',
+	'<div class="row">',
+	'<div class="col-xs-6">',
+	'<label>Relationship Property</label><br/>',
+	'<ul class="list-unstyled">',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-1" ',
+	'class="pred_uri" value="skos:closeMatch" checked="checked"/>',
+	'Close Match (skos:closeMatch)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-2" ',
+	'class="pred_uri" value="skos:exactMatch" />',
+	'Exact Match (skos:exactMatch)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-3" ',
+	'class="pred_uri" value="owl:sameAs" />',
+	'Same as, or has alternate URI (owl:sameAs)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-4" ',
+	'class="pred_uri" value="skos:broader" />',
+	'In a broader classification (skos:broader)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-5" ',
+	'class="pred_uri" value="skos:related" />',
+	'Has related concept (skos:related)</li>',
+	'<li>',
+	'<input type="radio" name="pred_uri" id="pred_uri-6" ',
+	'class="pred_uri" value="rdfs:isDefinedBy" />',
+	'Is defined by (rdfs:isDefinedBy)</li>',
+	'</ul>',
+	'<div class="form-group">',
+	'<label for="new-anno-object-id">Object URI</label>',
+	'<input id="new-anno-object-id" class="form-control input-sm"',
+	'type="text" value="" />',
+	'</div>',
+	'<div class="form-group" id="new-anno-object-label-out">',
+	'<label for="new-anno-object-label">Object Label</label>',
+	'<input id="new-anno-object-label" class="form-control input-sm"',
+	'type="text" disabled="disabled" value="Completed upon lookup to the right" />',
+	'</div>',
+	'<div class="form-group">',
+	'<label for="new-anno-sort">Add Annotation</label>',
+	'<button class="btn btn-primary" onclick="addDC();">Submit</button>',
+	'</div>',
+	'<div id="annotation-results">',
+	'</div>',
+	'</div>',
+	'<div class="col-xs-6">',
+	entityInterfaceHTML,
+	newEntityInterfaceHTML,
+	'</div>',
+	'</div>',
+	'<div class="row">',
+	'<div class="col-xs-12">',
+	'<h4>Notes on Vocabulary Mapping</h4>',
+	'<p><small>One should generally use the "Close Match" (SKOS:closeMatch) ',
+	'property to relate to an external controlled vocabulary or ontology. Use ',
+	'"Exact Match" (SKOS:exactMatch) when the concepts fully interchangable. ',
+	'"Same As" (OWL:sameAs) should only be used to indicate another URI for this ',
+	'same resource. Finally, you should use "Is Defined By" (RDFS:isDefinedBy) to reference another ',
+	'URI that has a definition (such as a Wikipedia page) for this concept.',
+	'</small></p>',
+	'</div>',
+	'</div>',
+	'</div>',
+	'</div>',
+	'</div>'
+	].join('\n');
+	return html;
 }

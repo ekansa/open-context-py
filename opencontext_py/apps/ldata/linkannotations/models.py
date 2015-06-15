@@ -19,9 +19,10 @@ class LinkAnnotation(models.Model):
                                  'skos:narrowerTransitive',
                                  'skos:narrowMatch']
 
-    # predicates indicting that a subject is the same or similar to an object
+    # predicates indicting that a subject is the same or very similar to an object
     PREDS_SBJ_EQUIV_OBJ = ['owl:sameAs',
-                           'skos:closeMatch']
+                           'skos:closeMatch',
+                           'skos:exactMatch']
 
     hash_id = models.CharField(max_length=50, primary_key=True)
     sort = models.DecimalField(max_digits=8, decimal_places=3)
