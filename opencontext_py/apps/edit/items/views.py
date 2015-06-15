@@ -6,6 +6,7 @@ from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.items.itemannotation import ItemAnnotation
 from opencontext_py.apps.edit.items.itemcreate import ItemCreate
+from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -165,6 +166,53 @@ def delete_annotation(request, entity_id):
     else:
         raise Http404
 
+def add_update_ld_entity(request):
+    """ Handles POST requests to create or update a linked-data entity """
+    if request.method == 'POST':
+        authorized = False
+        lem = LinkEntityManage()
+        if 'uri' in request.POST:
+            uri =  request.POST['uri']
+        else:
+            uri = False
+        if uri is False:
+            json_output = json.dumps({'error': 'uri parameter required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=400)
+        else:
+            # check to see if the URI is in a sensitive vocabulary
+            # if so, one needs super-use status to edit
+            uri_sensitive = lem.is_uri_sensitive(uri)
+            if uri_sensitive and request.user.is_superuser:
+                authorized = True
+            elif uri_sensitive is False and request.user.is_authenticated():
+                authorized = True
+                # one needs to be an authenticated user to add or edit linked
+                # data entities (for non-sensitive vocabs), since this just
+                # adds data to a list. 
+            else:
+                authorized = False
+        if authorized:
+            result = lem.add_update(request.POST)
+            result['errors'] = lem.errors
+            json_output = json.dumps(result,
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        return HttpResponseForbidden
+
 
 def add_item_stable_id(request, uuid):
     """ Handles POST requests to add an annotation to an item """
@@ -268,7 +316,7 @@ def create_item_into(request, project_uuid):
 
 
 def create_project(request):
-    """ Handles POST requests to create an item """
+    """ Handles POST requests to create a project item """
     if request.method == 'POST':
         if request.user.is_superuser:
             # only super users can make new project
@@ -304,3 +352,4 @@ def create_project(request):
                                 status=401)
     else:
         return HttpResponseForbidden
+
