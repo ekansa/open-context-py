@@ -52,6 +52,7 @@ class ProjectOverview():
             item_type = sum_type['item_type']
             if item_type in type_keys:
                 output[item_type] = sum_type['total']
+                self.get_class_uri_summary(item_type)
         self.manifest_summary = output
         return output
 
