@@ -49,14 +49,24 @@ class LinkEntityGeneration():
     NUMERIC_URI_PREFIXES = ['http://pleiades.stoa.org/places/',
                             'http://eol.org/pages/',
                             'http://www.geonames.org/']
+    
+    USE_HTTPS_PARTS = []
 
-    def make_clean_uri(self, uri):
+    def make_clean_uri(self, uri, http_default=True):
         """
         Makes a numeric uri for certain vocabularies
         by stripping off extra slashes and other crud
         """
         uri = uri.strip()
         uri = uri.replace('.html', '')  # strip off .html since it's not a URI part
+        if http_default:
+            # default all to be not-https for uris for now
+            uri = uri.replace('https://', 'http://')
+        if len(self.USE_HTTPS_PARTS) > 0:
+            for http_part in self.USE_HTTPS_PARTS:
+                if http_part in uri and 'http://' in uri:
+                    # can have a list of URI parts that we allow HTTPS
+                    uri = uri.replace('http://', 'https://')
         for prefix in self.NUMERIC_URI_PREFIXES:
             if prefix in uri:
                 part_uri = uri.replace(prefix, '')
