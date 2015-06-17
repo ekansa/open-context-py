@@ -102,6 +102,11 @@ class TemplateItem():
                 self.person['intials'] = json_ld['foaf:nick']
             else:
                 self.person['intials'] = False
+            if OCitem.PREDICATES_FOAF_PRIMARYTOPICOF in json_ld:
+                # get the orcid identifier for this person
+                self.person['orcid'] = json_ld[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF][0]
+            else:
+                self.person['orcid'] = False
 
     def create_context(self, json_ld):
         """

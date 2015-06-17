@@ -612,11 +612,20 @@ class ItemConstruction():
                         uri = settings.STABLE_ID_URI_PREFIXES[stable_id.stable_type] + str(stable_id.stable_id)
                         id_dict = {'id': uri}
                         stable_id_list.append(id_dict)
-                if(len(stable_id_list) > 0):
-                    if(item_type == 'persons'):
-                        act_dict[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF] = stable_id_list
-                    else:
-                        act_dict['owl:sameAs'] = stable_id_list
+                if item_type == 'persons' and len(stable_id_list) > 0:
+                    # persons with ORCID ids use the foaf:primarytopic predicate to link to ORCID
+                    primary_topic_list = []
+                    same_as_list = []
+                    for id_dict in stable_id_list:
+                        if 'http://orcid.org' in id_dict['id']:
+                            primary_topic_list.append(id_dict)
+                        else:
+                            same_as_list.append(id_dict)
+                    stable_id_list = same_as_list  # other types of identifiers use as owl:sameAs
+                    if len(primary_topic_list) > 0:
+                        act_dict[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF] = primary_topic_list
+                if len(stable_id_list) > 0:
+                    act_dict['owl:sameAs'] = stable_id_list
         return act_dict
 
     def add_dc_title(self, act_dict, title=False):
