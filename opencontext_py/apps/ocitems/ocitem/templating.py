@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
+from opencontext_py.apps.ldata.orcid.api import orcidAPI
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
@@ -70,7 +71,7 @@ class TemplateItem():
         self.id = json_ld['id']
         self.slug = json_ld['slug']
         self.store_class_type_metadata(json_ld)
-        self.create_person_names(json_ld)
+        self.create_person_data(json_ld)
         self.create_project(json_ld)
         self.check_view_permission()
         if self.check_edit_permitted:
@@ -85,7 +86,7 @@ class TemplateItem():
         self.create_query_links(json_ld)
         self.check_contents_top()
     
-    def create_person_names(self, json_ld):
+    def create_person_data(self, json_ld):
         """ Creates person names from FOAF properties """
         if 'foaf:name' in json_ld:
             self.person = {}
@@ -104,7 +105,10 @@ class TemplateItem():
                 self.person['intials'] = False
             if OCitem.PREDICATES_FOAF_PRIMARYTOPICOF in json_ld:
                 # get the orcid identifier for this person
-                self.person['orcid'] = json_ld[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF][0]
+                orcid_dict = json_ld[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF][0]
+                orcid_api = orcidAPI()
+                orcid_dict['api'] = orcid_api.make_orcid_api_url(orcid_dict['id'])
+                self.person['orcid'] = orcid_dict
             else:
                 self.person['orcid'] = False
 

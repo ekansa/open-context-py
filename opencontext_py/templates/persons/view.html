@@ -27,6 +27,24 @@
                               {% if item.person.orcid != False %}
                               <dt>ORCID Identifier</dt>
                               <dd><a title="More about {{ item.label }}" target="_blank" href="{{ item.person.orcid.id }}">{{ item.person.orcid.id }}</a></dd>
+                              <dt>ORCID Profile</dt>
+                              <dd>
+                                   <div id="orcid-profile"></div>
+                                   <script type="text/javascript" >
+                                   <!--
+                                   var orcid = false;
+                                   var orcid_api = "{{ item.person.orcid.api }}";
+                                   function setup_orcid_api(){
+                                             orcid = new orcidObj();
+                                             orcid.api_url = orcid_api;
+                                             orcid.parent_dom_id = "orcid-profile";
+                                             orcid.base_url = base_url;
+                                             orcid.get_data();
+                                   }
+                                   -->
+                                   </script>
+                                   <script src="{{ base_url }}/static/oc/js/apis/orcid.js" type="text/javascript" onload="setup_orcid_api();"></script>
+                              </dd>
                               {%endif%}
                          </dl>
                    </div>
