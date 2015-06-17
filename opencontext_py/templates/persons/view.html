@@ -1,0 +1,47 @@
+{% extends 'item.html' %}
+
+{% block itemcontent %}
+<div id="item-content">
+     <div class="row">
+         <div class="col-sm-12">
+         {% include 'items/context.html' %}
+         </div>
+     </div>
+     <div class="row">
+         <div class="col-sm-8">
+               <div class="row">
+                   <div class="col-sm-12">
+                         <dl class="dl-horizontal">
+                              {% if item.person.given_name|length > 0 %}
+                              <dt>Given Name</dt>
+                              <dd>{{ item.person.given_name }}</dd>
+                              {%endif%}
+                              {% if item.person.surname|length > 0 %}
+                              <dt>Surname</dt>
+                              <dd>{{ item.person.surname }}</dd>
+                              {%endif%}
+                              {% if item.person.combined_name|length > 0 %}
+                              <dt>Full Name</dt>
+                              <dd>{{ item.person.combined_name }}</dd>
+                              {%endif%}
+                              {% if item.person.orcid != False %}
+                              <dt>ORCID Identifier</dt>
+                              <dd><a title="More about {{ item.label }}" target="_blank" href="{{ item.person.orcid.id }}">{{ item.person.orcid.id }}</a></dd>
+                              {%endif%}
+                         </dl>
+                   </div>
+               </div>
+               <div class="row">
+                   <div class="col-sm-12">
+                       {% include 'items/observations.html' %}
+                   </div>
+               </div>
+         </div>
+         <div class="col-sm-4">
+         {% include 'items/citation.html' %}
+         {% include 'items/project.html' %}
+         {% include 'items/map.html' %}
+         </div>
+     </div>
+</div>
+{% endblock %} 
