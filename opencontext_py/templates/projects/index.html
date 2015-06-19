@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<html lang="en">
+    {% include 'projects/index-head.html' %}
+     <body>
+          <div id="main">
+               <div class="container-fluid">
+                    {% with page_label='' %}
+                    {% include 'header.html' %}
+                    {% endwith %}
+                    {% with nav_items=st.nav_items %}
+                    {% with act_nav='projects' %}
+                    {% include 'navbar.html' %}
+                    {% endwith %}
+                    {% endwith %}
+                    {% include 'projects/index-content.html' %}
+                    {% include 'footer.html' %}
+               </div>
+          </div>
+     </body>
+</html>

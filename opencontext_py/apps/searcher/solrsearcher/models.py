@@ -20,6 +20,21 @@ class SolrSearch():
                             'image_media_count',
                             'other_binary_media_count',
                             'document_count']
+    
+    PROJECT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
+                            SolrDocument.ROOT_PROJECT_SOLR]
+    
+    # the number of rows to display by default for different item types
+    ITEM_TYPE_ROWS = {'projects': 100}
+    
+    # the miniumum number of facets to display for different item types
+    ITEM_TYPE_FACET_MIN = {'projects': 2}
+    
+    #facet fields for different item_types
+    ITEM_TYPE_FACETFIELDS = {'projects': ['dc_terms_subject___pred_id',
+                                          'dc_terms_temporal___pred_id',
+                                          'dc_terms_spatial___pred_id',
+                                          'dc_terms_coverage___pred_id']}
 
     def __init__(self):
         self.solr = False
@@ -32,6 +47,8 @@ class SolrSearch():
         self.start = 0
         self.max_rows = 10000
         self.prequery_stats = []
+        self.item_type_limit = False  # limit searches to a specific item type
+        self.do_context_paths = True  # make sure context paths are in the query
 
     def solr_connect(self):
         """ connects to solr """
@@ -40,6 +57,8 @@ class SolrSearch():
     def search_solr(self, request_dict_json):
         """searches solr to get raw solr search results"""
         # Start building solr query
+        if self.item_type_limit == 'projects':
+            self.facet_fields = self.PROJECT_FACET_FIELDS
         request_dict = json.loads(request_dict_json)
         query = self.compose_query(request_dict)
         """
@@ -119,8 +138,8 @@ class SolrSearch():
             elif rows < 0:
                 rows = 0
             query['rows'] = rows
-         # Spatial Context
-        if 'path' in request_dict:
+        # Spatial Context
+        if 'path' in request_dict and self.do_context_paths:
             self.remove_from_default_facet_fields(SolrDocument.ROOT_CONTEXT_SOLR)
             context = qm._process_spatial_context(request_dict['path'])
             query['fq'].append(context['fq'])
@@ -162,7 +181,7 @@ class SolrSearch():
             self.remove_from_default_facet_fields(SolrDocument.ROOT_PROJECT_SOLR)
             proj_query = qm.process_proj(proj)
             query['fq'] += proj_query['fq']
-            query['facet.field'] += proj_query['facet.field']
+            query['facet.field'] += proj_query['facet.field']    
         # Dublin-Core terms
         dc_terms_obj = DCterms()
         dc_params = dc_terms_obj.get_dc_params_list()
@@ -172,7 +191,8 @@ class SolrSearch():
                                               False,
                                               True)
             if dc_terms is not False:
-                dc_query = qm.process_dc_term(dc_param, dc_terms)
+                dc_query = qm.process_dc_term(dc_param,
+                                              dc_terms)
                 query['fq'] += dc_query['fq']
                 query['facet.field'] += dc_query['facet.field']
                 if dc_param == 'dc-temporal':
@@ -188,6 +208,21 @@ class SolrSearch():
             it_query = qm.process_item_type(item_type)
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
+        """
+        If a item_type_limit is set, then we're doing a specialized search
+        that looks only for a certain item_type.
+        """
+        if self.item_type_limit is not False:
+            query['fq'].append('item_type:' + self.item_type_limit)
+            if self.item_type_limit in self.ITEM_TYPE_ROWS:
+                query['rows'] = self.ITEM_TYPE_ROWS[self.item_type_limit]
+            if self.item_type_limit in self.ITEM_TYPE_FACET_MIN:
+                query['facet.mincount'] = self.ITEM_TYPE_FACET_MIN[self.item_type_limit]
+            if self.item_type_limit in self.ITEM_TYPE_FACETFIELDS:
+                for add_facet_field in self.ITEM_TYPE_FACETFIELDS[self.item_type_limit]:
+                    if add_facet_field not in query['facet.field']:
+                        # add facet field for this type of item
+                        query['facet.field'].append(add_facet_field)
         """ CHRONOLOGY Form Use Life (form)
             queries
         """

@@ -1,7 +1,9 @@
+import datetime
 from django.utils.html import strip_tags
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 
 class SearchTemplate():
@@ -160,6 +162,7 @@ class ResultRecord():
     """ Object for a result record
     """
     def __init__(self):
+        self.uuid = False
         self.id = False
         self.label = False
         self.item_type = False
@@ -171,8 +174,12 @@ class ResultRecord():
         self.early_suffix = ''
         self.late_bce_ce = False
         self.late_suffix = ''
+        self.published = False
+        self.updated = False
         self.snippet = False
         self.thumbnail = False
+        self.extra = False
+        self.dc = False
 
     def parse_json_record(self, json_rec):
         """ parses json for a
@@ -191,7 +198,9 @@ class ResultRecord():
                 self.href = props['href']
             if 'uri' in props:
                 item_type_output = URImanagement.get_uuid_from_oc_uri(props['uri'], True)
-                self.item_type = item_type_output['item_type']
+                if isinstance(item_type_output, dict):
+                    self.item_type = item_type_output['item_type']
+                    self.uuid = item_type_output['uuid']
             if 'project label' in props:
                 self.project = props['project label']
             if 'context label' in props:
@@ -219,10 +228,17 @@ class ResultRecord():
                 self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')
                 self.snippet = self.snippet.replace('</em>', '[[[[/mark]]]]')
                 self.snippet = strip_tags(self.snippet)
+                self.snippet = self.snippet.replace('</', '')
+                self.snippet = self.snippet.replace('<', '')
+                self.snippet = self.snippet.replace('>', '')
                 self.snippet = self.snippet.replace('[[[[mark]]]]', '<mark>')
                 self.snippet = self.snippet.replace('[[[[/mark]]]]', '</mark>')
             if 'thumbnail' in props:
                 self.thumbnail = props['thumbnail']
+            if 'published' in props:
+                self.published = QueryMaker().make_human_readable_date(props['published'])
+            if 'updated' in props:
+                self.updated = QueryMaker().make_human_readable_date(props['updated'])
 
 
 class FacetField():

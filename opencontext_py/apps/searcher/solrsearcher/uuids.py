@@ -89,6 +89,8 @@ class SolrUUIDs():
         item['item category'] = rec_props_obj.category
         if rec_props_obj.snippet is not False:
             item['snippet'] = rec_props_obj.snippet
+        item['published'] = rec_props_obj.published
+        item['updated'] = rec_props_obj.updated
         if isinstance(rec_props_obj.other_attributes, list):
             for attribute in rec_props_obj.other_attributes:
                 prop_key = attribute['property']

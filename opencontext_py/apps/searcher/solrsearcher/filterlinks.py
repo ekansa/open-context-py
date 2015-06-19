@@ -3,7 +3,7 @@ from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from django.utils.encoding import iri_to_uri
@@ -11,12 +11,11 @@ from django.utils.encoding import iri_to_uri
 
 class FilterLinks():
 
-    SOLR_FIELD_PARAM_MAPPINGS = \
+    BASE_SOLR_FIELD_PARAM_MAPPINGS = \
         {'___project_id': 'proj',
          '___context_id': 'path',
          '___pred_': 'prop',
-         'item_type': 'type',
-         'dc_terms_isreferencedby___pred_id':'dc-isReferencedBy'}
+         'item_type': 'type'}
 
     def __init__(self, request_dict=False):
         rp = RootPath()
@@ -30,6 +29,9 @@ class FilterLinks():
         self.hierarchy_delim = '---'
         self.partial_param_val_match = False
         self.remove_start_param = True
+        self.SOLR_FIELD_PARAM_MAPPINGS = self.BASE_SOLR_FIELD_PARAM_MAPPINGS
+        for param_key, solr_field in DCterms.DC_META_FIELDS.items():
+            self.SOLR_FIELD_PARAM_MAPPINGS[solr_field] = param_key
 
     def make_request_urls(self, new_rparams):
         """ makes request urls from the new request object """

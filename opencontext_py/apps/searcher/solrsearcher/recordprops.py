@@ -29,6 +29,8 @@ class RecordProperties():
         self.cite_uri = False  # stable / persistent uri
         self.label = False
         self.item_type = False
+        self.updated = False
+        self.published = False
         self.project_href = False  # link to the project in current deployment
         self.project_uri = False  # cannonical uri for the project
         self.project_label = False 
@@ -95,6 +97,10 @@ class RecordProperties():
                     item_type_output = URImanagement.get_uuid_from_oc_uri(self.uri, True)
                     self.item_type = item_type_output['item_type']
                     self.label = id_parts['label']
+            if 'updated' in solr_rec:
+                self.updated = solr_rec['updated']
+            if 'published' in solr_rec:
+                self.published = solr_rec['published']
         return output
 
     def get_snippet(self, solr_rec):

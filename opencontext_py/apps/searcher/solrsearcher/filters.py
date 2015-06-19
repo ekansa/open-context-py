@@ -26,11 +26,13 @@ class ActiveFilters():
 
     def __init__(self):
         self.entities = {}  # entities already dereferenced
+        self.base_search_link = '/sets/'
         self.hierarchy_delim = '---'
 
     def add_filters_json(self, request_dict):
         """ adds JSON describing search filters """
         fl = FilterLinks()
+        fl.base_search_link = self.base_search_link
         filters = []
         string_fields = []  # so we have an interface for string searches
         i = 0
