@@ -226,6 +226,7 @@ class QueryMaker():
             fq_field = DCterms.DC_META_FIELDS[dc_param]
             if fq_field not in query_dict['facet.field'] and add_facet:
                 query_dict['facet.field'].append(fq_field)
+            add_to_fq = False
             for raw_dc_term in dc_terms:
                 if '||' in raw_dc_term:
                     use_dc_terms = raw_dc_term.split('||')
@@ -233,33 +234,36 @@ class QueryMaker():
                     use_dc_terms = [raw_dc_term]
                 fq_path_terms = []
                 for dc_term in use_dc_terms:
-                    entity = Entity()
-                    found = entity.dereference(dc_term)
-                    if found:
-                        # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
-                        # the below is a bit of a hack. We should have a query field
-                        # as with ___pred_ to query just the slug. But this works for now
-                        self.entities[entity.slug] = entity
-                        fq_path_term = fq_field + '_fq:' + entity.slug
-                        if dc_param == 'dc-temporal' \
-                           and entity.entity_type == 'vocabulary' \
-                           and 'periodo' in entity.slug:
-                            # it's a temporal vocabulary from periodo
-                            # so search for specific periods contained in
-                            # the vocabulary
-                            fq_path_term = '(' + fq_path_term +\
-                                           ' OR ' + fq_path_term + '*)'
-                    else:
-                        if dc_term[-1] != '*':
-                            dc_term += '*'
-                        fq_path_term = fq_field + ':' + dc_term
-                    fq_path_terms.append(fq_path_term)
+                    if len(dc_term) > 0:
+                        add_to_fq = True
+                        entity = Entity()
+                        found = entity.dereference(dc_term)
+                        if found:
+                            # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
+                            # the below is a bit of a hack. We should have a query field
+                            # as with ___pred_ to query just the slug. But this works for now
+                            self.entities[entity.slug] = entity
+                            fq_path_term = fq_field + '_fq:' + entity.slug
+                            if dc_param == 'dc-temporal' \
+                               and entity.entity_type == 'vocabulary' \
+                               and 'periodo' in entity.slug:
+                                # it's a temporal vocabulary from periodo
+                                # so search for specific periods contained in
+                                # the vocabulary
+                                fq_path_term = '(' + fq_path_term +\
+                                               ' OR ' + fq_path_term + '*)'
+                        else:
+                            if dc_term[-1] != '*':
+                                dc_term += '*'
+                            fq_path_term = fq_field + ':' + dc_term
+                        fq_path_terms.append(fq_path_term)
                 final_path_term = ' AND '.join(fq_path_terms)
                 final_path_term = '(' + final_path_term + ')'
                 fq_terms.append(final_path_term)
             fq_final = ' OR '.join(fq_terms)
             fq_final = '(' + fq_final + ')'
-            query_dict['fq'].append(fq_final)
+            if add_to_fq:
+                query_dict['fq'].append(fq_final)
         return query_dict
 
     def process_prop(self, props):

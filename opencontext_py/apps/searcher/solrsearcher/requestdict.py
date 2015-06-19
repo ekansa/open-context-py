@@ -5,7 +5,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class RequestDict():
-
+    
     def __init__(self):
         pass
 

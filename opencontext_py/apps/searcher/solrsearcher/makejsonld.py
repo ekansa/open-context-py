@@ -3,7 +3,7 @@ import json
 import django.utils.http as http
 from datetime import datetime
 from django.conf import settings
-from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.containment import Containment
@@ -23,6 +23,7 @@ from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 class MakeJsonLd():
 
     def __init__(self, request_dict_json):
+        self.base_search_link = '/sets/'
         self.hierarchy_delim = '---'
         self.request_dict = json.loads(request_dict_json)
         self.request_dict_json = request_dict_json
@@ -220,6 +221,7 @@ class MakeJsonLd():
         start = str(start)
         rows = str(rows)
         fl = FilterLinks()
+        fl.base_search_link = self.base_search_link
         fl.base_request_json = ini_request_dict_json
         fl.spatial_context = self.spatial_context
         fl.remove_start_param = False
@@ -236,6 +238,7 @@ class MakeJsonLd():
     def add_filters_json(self):
         """ adds JSON describing search filters """
         a_filters = ActiveFilters()
+        a_filters.base_search_link = self.base_search_link
         a_filters.entities = self.entities
         a_filters.hierarchy_delim = self.hierarchy_delim
         filters = a_filters.add_filters_json(self.request_dict)
@@ -311,6 +314,7 @@ class MakeJsonLd():
         text_fields = []
         # first add a general key-word search option
         fl = FilterLinks()
+        fl.base_search_link = self.base_search_link
         fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
         fl.spatial_context = self.spatial_context
@@ -357,6 +361,7 @@ class MakeJsonLd():
                 check_dict = self.make_filter_label_dict(check_field)
                 if check_dict['data-type'] == 'string':
                     fl = FilterLinks()
+                    fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
@@ -429,6 +434,7 @@ class MakeJsonLd():
                     i += 2
                     solr_count = ranges['counts'][i]
                     fl = FilterLinks()
+                    fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
@@ -478,6 +484,7 @@ class MakeJsonLd():
                     i += 2
                     solr_count = ranges['counts'][i]
                     fl = FilterLinks()
+                    fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
                     fl.spatial_context = self.spatial_context
@@ -609,6 +616,7 @@ class MakeJsonLd():
         """ makes a facet option for related media """
         if rel_media_count > 0:
             fl = FilterLinks()
+            fl.base_search_link = self.base_search_link
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
             fl.spatial_context = self.spatial_context
@@ -869,6 +877,7 @@ class MakeJsonLd():
             else:
                 is_linked_data = False
             fl = FilterLinks()
+            fl.base_search_link = self.base_search_link
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
             fl.spatial_context = self.spatial_context
@@ -902,6 +911,7 @@ class MakeJsonLd():
                                          solr_facet_count):
         """ makes a facet_value obj for specialzied solr faccets """
         fl = FilterLinks()
+        fl.base_search_link = self.base_search_link
         fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
         fl.spatial_context = self.spatial_context

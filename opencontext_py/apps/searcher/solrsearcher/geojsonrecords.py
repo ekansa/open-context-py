@@ -126,6 +126,8 @@ class GeoJsonRecords():
             if rec_props_obj.snippet is not False:
                 properties['snippet'] = rec_props_obj.snippet
             properties['thumbnail'] = rec_props_obj.thumbnail_scr
+            properties['published'] = rec_props_obj.published
+            properties['updated'] = rec_props_obj.updated
             if isinstance(rec_props_obj.other_attributes, list):
                 for attribute in rec_props_obj.other_attributes:
                     prop_key = attribute['property']

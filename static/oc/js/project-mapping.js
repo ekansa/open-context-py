@@ -18,10 +18,20 @@ function project_map(map_dom_id, json_url) {
 	map.json_url = this.json_url
 	
 	//map.fit_bounds exists to set an inital attractive view
-	map.fit_bounds = false;
+	if(this.json_url.indexOf('?') === -1){
+		//no query parameters in the url, use default bounds for map
+		map.fit_bounds = false;
+	}
+	else {
+		//let the map set its own bounds
+		map.fit_bounds = true;
+	}
+	
 	map.geojson = false;  //current geojson data
 	map.circle_layer = false;
 	map.color_list = false;
+	map.show_time_ranges = true;
+	map.show_browse_count = true;  // show counts in popup for browsing collections
 	
 	var bounds = new L.LatLngBounds();
 	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
@@ -40,7 +50,7 @@ function project_map(map_dom_id, json_url) {
 	// console.log(layerControl);
 	map.addLayer(mapboxLight);
 	
-	map.show_title_menu = function(map_type, geodeep){
+	map.show_title_menu = function(){
 		/*
 		* Show current layer type
 		*/
@@ -48,18 +58,10 @@ function project_map(map_dom_id, json_url) {
 			//if the map title element exits
 			var act_dom_id = map_title_dom_id;
 			var title = document.getElementById(act_dom_id);
+			title.innerHTML = "Map of Projects";
 			var act_dom_id = map_title_suffix_dom_id;
 			var title_suf = document.getElementById(act_dom_id);
 			title_suf.innerHTML = "";
-			var act_dom_id = map_menu_dom_id;
-			var menu = document.getElementById(act_dom_id);
-			
-			/*
-			* Handle geo-regions (facets)
-			*/
-			if (map_type == 'geo-facet') {
-				title.innerHTML = "Map of Counts by Region";
-			}
 		}
 	}
 	
@@ -73,6 +75,22 @@ function project_map(map_dom_id, json_url) {
 			var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
 		}
 		if (feature.properties) {
+			
+			if (map.show_browse_count) {
+				var f_count = feature.count + ' ';
+			}
+			else{
+				var f_count = '';
+			}
+			if (map.show_time_ranges) {
+				var ranges = [
+				"<dt>Time Range</dt>",
+				"<dd>" + date_range + "</dd>"].join('\n');
+			}
+			else{
+				var ranges = '';
+			}
+			
 			var popupContent = [
 			"<div>",
 			"<dl>",
@@ -80,15 +98,10 @@ function project_map(map_dom_id, json_url) {
 			"<dd>",
 			"<a href='" + feature.properties.href + "'>" + feature.properties.label + "</a>",
 			"</dd>",
-			//"</dl>",
-			//"<dl>",
-			"<dt>Time Range</dt>",
-			"<dd>" + date_range + "</dd>",
-			//"</dl>",
-			//"<dl>",
+			ranges,
 			"<dt>Records</dt>",
 			"<dd>",
-			"<a href='" + feature.properties.search + "'>" + feature.count + " (Click to Browse)</a>",
+			"<a href='" + feature.properties.search + "'>" + f_count + "(Click to Browse)</a>",
 			"</dd>",
 			"</dl>",
 			"</div>"].join("\n");
@@ -98,10 +111,10 @@ function project_map(map_dom_id, json_url) {
 	
 	map.circle_projects = function (){
 		// renders the geojson for projects
-		
 		//first get min and max counts
 		var max_value = 1;
 		var min_value = 0;
+		var num_features = map.geojson.features.length;
 		for (var i = 0, length = map.geojson.features.length; i < length; i++) {
 			feature = map.geojson.features[i];
 			if (feature.count > max_value) {
@@ -143,8 +156,14 @@ function project_map(map_dom_id, json_url) {
 		if (map.fit_bounds) {
 			//map.fit_bounds exists to set an inital attractive view
 			map.fitBounds(circle_layer.getBounds());
+			if (num_features < 2) {
+				//zoom out a bit if we're too close in
+				map.setZoom(7);
+			}
 		}
 		circle_layer.addTo(map);
+		// now remove the loading gif and add the map title
+		map.show_title_menu();
 	}
 	
 	map.get_geojson = function (){
@@ -162,11 +181,21 @@ function project_map(map_dom_id, json_url) {
 			document.getElementById(act_dom_id).innerHTML = "";
 		}
 		//do the ajax request
+		var request_data = {response: "geo-project"};
+		if(map.json_url.indexOf('?') === -1){
+			//no query parameters in the url,
+			var request_data = {response: "geo-project"};
+		}
+		else {
+			var request_data = {};
+			map.json_url += '&response=geo-project';
+		}
+		
 		$.ajax({
 			type: "GET",
 			url: map.json_url,
 			dataType: "json",
-			data: {response: "geo-project"},
+			data: request_data,
 			success: function(data) {
 				map.geojson = data;
 				map.circle_projects();
