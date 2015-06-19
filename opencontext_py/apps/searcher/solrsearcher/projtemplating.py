@@ -23,6 +23,8 @@ class ProjectAugment():
                      'dc-terms:temporal']
 
     def __init__(self, json_ld):
+        rp = RootPath()
+        self.base_url = rp.get_baseurl()
         if isinstance(json_ld, dict):
             self.json_ld = json_ld
             self.ok = True
@@ -103,9 +105,9 @@ class ProjectAugment():
                             if ent.item_type == 'uri':
                                 obj_obj['href'] = ent.uri
                             else:
-                                obj_obj['href'] = URImanagement.make_oc_uri(ent.item_type,
-                                                                            ent.uuid,
-                                                                            False)
+                                obj_obj['href'] = self.base_url \
+                                                  + '/' + ent.item_type \
+                                                  + '/' + ent.uuid
                             proj_r.dc[pred].append(obj_obj)
                             if pred != 'creator' and pred != 'temporal':
                                 proj_r.dc['meta'].append(obj_obj)
