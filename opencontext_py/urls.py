@@ -167,6 +167,11 @@ urlpatterns = patterns('',
                            name='entity_look_up'),
                        url(r'^entities/annotations/(?P<subject>\S+)', EntityViews.entity_annotations,
                            name='entity_annotations'),
+                       #----------------------------
+                       # BELOW ARE INDEX REQUESTS
+                       #----------------------------
+                       # robots.text route
+                       url(r'^robots.txt', HomeViews.robots, name='home_robots'),
                        # Index, home-page route
                        url(r'^$', HomeViews.index, name='home_index'),
                        # Admin route

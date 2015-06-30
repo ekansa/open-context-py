@@ -31,7 +31,9 @@ class ProjectOverview():
             self.manifest = False
             self.errors['uuid'] = 'No project ' + project_uuid + ' not in manifest'
         self.manifest_summary = False
-        self.class_summary = {}
+        self.class_summary = LastUpdatedOrderedDict()
+        self.blank_items = LastUpdatedOrderedDict() # items with no description
+        self.no_context_items = LastUpdatedOrderedDict()  # items with no context
 
     def get_manifest_summary(self):
         """ gets a summary of items in the manifest """
@@ -80,3 +82,96 @@ class ProjectOverview():
             output.append(res_item)
         self.class_summary[item_type] = output
         return output
+
+    def get_no_context_items(self):
+        """ returns a list of subject items
+            that lack containment
+            relattions
+        """
+        item_type = 'subjects'
+        assertion_limit = ' AND oc_assertions.predicate_uuid ='
+        assertion_limit += '\''+ Assertion.PREDICATES_CONTAINS + '\'' 
+        sql = 'SELECT oc_manifest.uuid AS uuid, \
+               oc_manifest.label AS label, \
+               oc_manifest.item_type AS item_type, \
+               oc_manifest.class_uri AS class_uri \
+               FROM oc_manifest \
+               LEFT JOIN oc_assertions ON \
+               (oc_manifest.uuid = oc_assertions.object_uuid \
+               ' + assertion_limit + ') \
+               WHERE oc_manifest.project_uuid = \
+               \'' + self.project_uuid + '\' \
+               AND oc_manifest.item_type = \
+               \'' + item_type + '\' \
+               AND oc_assertions.uuid IS NULL \
+               ORDER BY oc_manifest.sort; '
+        no_context = Manifest.objects.raw(sql)
+        for nc_man in no_context:
+            class_uri = nc_man.class_uri
+            if class_uri not in self.no_context_items[item_type]:
+                class_dict = LastUpdatedOrderedDict()
+                ent = Entity()
+                found = ent.dereference(class_uri)
+                if found:
+                    class_dict['label'] = ent.label
+                else:
+                    class_dict['label'] = item_type
+                class_dict['items'] = []
+                self.no_context_items[class_uri] = class_dict
+            item = LastUpdatedOrderedDict()
+            item['uuid'] = nc_man.uuid
+            item['label'] = nc_man.label
+            self.no_context_items[class_uri]['items'].append(item)
+        return self.no_context_items
+    
+    def get_orphan_items(self,
+                         item_type,
+                         consider=['contain',
+                                   'link']):
+        """ gets a list of items
+            that do not have descriptions
+        """
+        assertion_limit = ''
+        if 'contain' in consider:
+            assertion_limit += ' AND oc_assertions.predicate_uuid !='
+            assertion_limit += '\''+ Assertion.PREDICATES_CONTAINS + '\''   
+        if 'link' in consider:
+            assertion_limit += ' AND oc_assertions.predicate_uuid !='
+            assertion_limit += '\''+ Assertion.PREDICATES_LINK + '\'' 
+        sql = 'SELECT oc_manifest.uuid AS uuid, \
+               oc_manifest.label AS label, \
+               oc_manifest.item_type AS item_type, \
+               oc_manifest.class_uri AS class_uri \
+               FROM oc_manifest \
+               LEFT JOIN oc_assertions ON \
+               (oc_manifest.uuid = oc_assertions.uuid \
+               ' + assertion_limit + ') \
+               WHERE oc_manifest.project_uuid = \
+               \'' + self.project_uuid + '\' \
+               AND oc_manifest.item_type = \
+               \'' + item_type + '\' \
+               AND oc_assertions.uuid IS NULL \
+               ORDER BY oc_manifest.sort; '
+        non_descript = Manifest.objects.raw(sql)
+        for dull_man in non_descript:
+            item_type = dull_man.item_type
+            class_uri = dull_man.class_uri
+            if len(class_uri) < 1:
+                class_uri = item_type
+            if item_type not in self.blank_items:
+                self.blank_items[item_type] = LastUpdatedOrderedDict()
+            if class_uri not in self.blank_items[item_type]:
+                class_dict = LastUpdatedOrderedDict()
+                ent = Entity()
+                found = ent.dereference(class_uri)
+                if found:
+                    class_dict['label'] = ent.label
+                else:
+                    class_dict['label'] = item_type
+                class_dict['items'] = []
+                self.blank_items[item_type][class_uri] = class_dict
+            item = LastUpdatedOrderedDict()
+            item['uuid'] = dull_man.uuid
+            item['label'] = dull_man.label
+            self.blank_items[item_type][class_uri]['items'].append(item)
+        return self.blank_items
