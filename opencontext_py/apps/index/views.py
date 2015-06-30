@@ -30,3 +30,11 @@ def index(request):
         # client wanted a mimetype we don't support
         return HttpResponse(template.render(context),
                             status=415)
+
+
+def robots(request):
+    """ view for the robots.txt file """
+    template = loader.get_template('index/robots.txt')
+    context = RequestContext(request)
+    return HttpResponse(template.render(context),
+                        content_type="text/plain; charset=utf8")
