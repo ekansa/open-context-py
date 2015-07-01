@@ -85,22 +85,24 @@ class SubjectGeneration():
         """ Generates and saves a context path for a subject item by uuid """
         output = False
         try:
-            man_obj = Manifest.objects.get(uuid=uuid)
+            man_obj = Manifest.objects.get(uuid=uuid,
+                                           item_type='subjects')
         except Manifest.DoesNotExist:
             man_obj = False
         if man_obj is not False:
-            output = self.generate_save_context_path_from_manifest_obj(man_obj)
-            if do_children:
-                act_contain = Containment()
-                # get the contents recusivelhy
-                contents = act_contain.get_children_by_parent_uuid(uuid, True)
-                if isinstance(child_list, dict):
-                    for tree_node, children in self.contents.items():
-                        for child_uuid in children:
-                            # do the children, but not recursively since we
-                            # already have a resurive look up of contents
-                            output = self.generate_save_context_path_from_uuid(child_uuid,
-                                                                               False)    
+            if man_obj.item_type == 'subjects':
+                output = self.generate_save_context_path_from_manifest_obj(man_obj)
+                if do_children:
+                    act_contain = Containment()
+                    # get the contents recusivelhy
+                    contents = act_contain.get_children_by_parent_uuid(uuid, True)
+                    if isinstance(child_list, dict):
+                        for tree_node, children in self.contents.items():
+                            for child_uuid in children:
+                                # do the children, but not recursively since we
+                                # already have a resurive look up of contents
+                                output = self.generate_save_context_path_from_uuid(child_uuid,
+                                                                                   False)
         return output
 
     def generate_save_context_path_from_manifest_obj(self, man_obj):

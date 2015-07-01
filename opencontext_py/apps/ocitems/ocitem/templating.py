@@ -30,6 +30,7 @@ class TemplateItem():
         self.label = False
         self.person = False
         self.uuid = False
+        self.project_uuid = False
         self.id = False
         self.slug = False
         self.item_category_label = False
@@ -85,7 +86,7 @@ class TemplateItem():
         self.create_content(json_ld)
         self.create_query_links(json_ld)
         self.check_contents_top()
-    
+
     def create_person_data(self, json_ld):
         """ Creates person names from FOAF properties """
         if 'foaf:name' in json_ld:
@@ -219,6 +220,7 @@ class TemplateItem():
             proj.uuid = self.uuid
         proj.make_project(json_ld)
         self.project = proj
+        self.project_uuid = proj.uuid
 
     def check_view_permission(self):
         """ Checkes to see if viewing the item is permitted

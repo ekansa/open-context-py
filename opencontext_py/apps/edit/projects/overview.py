@@ -23,6 +23,7 @@ class ProjectOverview():
 
     def __init__(self,
                  project_uuid):
+        self.errors = {}
         self.project_uuid = project_uuid
         try:
             self.manifest = Manifest.objects.get(uuid=project_uuid,
@@ -32,7 +33,7 @@ class ProjectOverview():
             self.errors['uuid'] = 'No project ' + project_uuid + ' not in manifest'
         self.manifest_summary = False
         self.class_summary = LastUpdatedOrderedDict()
-        self.blank_items = LastUpdatedOrderedDict() # items with no description
+        self.blank_items = LastUpdatedOrderedDict()  # items with no description
         self.no_context_items = LastUpdatedOrderedDict()  # items with no context
 
     def get_manifest_summary(self):
@@ -123,7 +124,7 @@ class ProjectOverview():
             item['label'] = nc_man.label
             self.no_context_items[class_uri]['items'].append(item)
         return self.no_context_items
-    
+
     def get_orphan_items(self,
                          item_type,
                          consider=['contain',

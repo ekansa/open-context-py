@@ -34,7 +34,23 @@
             {%endif%}
         {%endif%}
         {% endfor %}
-        
+    
+		{% if user.is_authenticated %}
+			<li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Edit<span class="caret"></span></a>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="{{ base_url }}/edit/">Edit (Home)</a></li>
+					{% if item %}
+					{% if item.project_uuid != False %}
+					<li><a href="{% url 'edit_projects_status' item.project_uuid %}">Edit Project</a></li>
+					{%endif%}
+					{% if item.uuid != False %}
+					<li><a href="{% url 'edit_item_html_view' item.uuid %}">Edit Item</a></li>
+					{%endif%}
+					{%endif%}
+                </ul>
+            </li>
+		{%endif%}
         </ul>
         <form class="navbar-form navbar-right" role="search" method="get" action="{{ base_url }}/sets">
             <div class="form-group">

@@ -17,6 +17,7 @@ from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
+from opencontext_py.apps.edit.projects import views as EditProjectsViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
@@ -83,8 +84,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        # IMPORTER INTERFACE PAGES
                        # --------------------------
-                       url(r'^imports/project/(?P<project_uuid>\S+)',  Imp_sources.project,
-                           name='imp_sources_project'),
+                       url(r'^imports/projects/(?P<project_uuid>\S+)',  Imp_sources.project,
+                           name='imp_sources_projects'),
                        url(r'^imports/field-types/(?P<source_id>\S+)', Imp_sources.field_types,
                            name='field_types'),
                        url(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_sources.field_types_more,
@@ -158,6 +159,11 @@ urlpatterns = patterns('',
                            name='create_project'),
                        url(r'^edit/add-update-ld-entity', EditItemViews.add_update_ld_entity,
                            name='add_update_ld_entity'),
+                       url(r'^edit/projects/(?P<project_uuid>\S+)', EditProjectsViews.status,
+                           name='edit_projects_status'),
+                       url(r'^edit/', EditProjectsViews.index,
+                           name='edit_projects_index'),
+                       # --------------------------
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------
