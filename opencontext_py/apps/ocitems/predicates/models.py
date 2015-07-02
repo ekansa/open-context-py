@@ -5,6 +5,13 @@ from django.db import models
 # Predicate stores a predicate (decriptive property or linking relation)
 # that is contributed by open context data contributors
 class Predicate(models.Model):
+    DATA_TYPES_HUMAN = {'id': 'URI identified item',
+                        'xsd:string': 'Alphanumeric text strings',
+                        'xsd:double': 'Decimal values',
+                        'xsd:integer': 'Integer values',
+                        'xsd:boolean': 'Boolean (true/false) values',
+                        'xsd:date': 'Calendar date or datetime values'}
+
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)

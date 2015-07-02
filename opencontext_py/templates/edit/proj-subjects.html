@@ -1,11 +1,64 @@
+{% load humanize %}
 {% block proj-subjects %}
 <div class="panel panel-default top-panel">
     <div class="panel-heading">
-        <h4 class="panel-title">Subjects (Records of Observed Items)</h4>
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Subjects (Records of Observed Items)</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.subjects|intcomma }} records</h4>
+            </div>
+        </div>
     </div>
     <div class="panel-body">
-        Useful summary information will go here
+        {% if status.class_summary.subjects|length > 1 %}
+        <h5>Summary of Subjects Categories</h5>
+        <ul>
+        {% for class in status.class_summary.subjects %}
+            <li>
+                {% if class.label != False  %}
+                {{ class.label }}: {{ class.count }}
+                {% else %}
+                {{ class.id }}: {{ class.count }}    
+                {% endif %}    
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
     </div>
+    <div class="container">
+        <p>Project Contexts</p>
+        <div id="root-contexts" class="container"></div>
+    </div>
+    <!--
+    <ul class="list-group">
+    <li class="list-group-item"><a  data-toggle="collapse" href="#ct" expanded="false">Toggle</a> Cras justo odio
+        <ul class="list-group collapse" id="ct">
+        <li class="list-group-item">Cras justo odio</li>
+        <li class="list-group-item">Dapibus ac facilisis in</li>
+        <li class="list-group-item">Morbi leo risus</li>
+        <li class="list-group-item">Porta ac consectetur ac</li>
+        <li class="list-group-item">Vestibulum at eros</li>
+        </ul>
+    </li>
+    <li class="list-group-item">Dapibus ac facilisis in</li>
+    <li class="list-group-item">Morbi leo risus</li>
+    <li class="list-group-item">Porta ac consectetur ac</li>
+    <li class="list-group-item">Vestibulum at eros</li>
+    </ul>
+    -->
+    <script type="text/javascript">
+        <!--
+        function root_contexts(){
+            var root_tree = new hierarchy(project_uuid, "root-contexts");
+			root_tree.get_data();
+        }
+        -->
+    </script>
+    <script src="{{ base_url }}/static/oc/js/edit/hierarchy-tree.js" onload="root_contexts();"></script>
+    
+    
 </div>
 
 

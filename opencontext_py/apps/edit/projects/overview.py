@@ -8,6 +8,8 @@ from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -33,6 +35,7 @@ class ProjectOverview():
             self.errors['uuid'] = 'No project ' + project_uuid + ' not in manifest'
         self.manifest_summary = False
         self.class_summary = LastUpdatedOrderedDict()
+        self.data_type_summary = []  # summary datatype
         self.blank_items = LastUpdatedOrderedDict()  # items with no description
         self.no_context_items = LastUpdatedOrderedDict()  # items with no context
 
@@ -83,6 +86,30 @@ class ProjectOverview():
             output.append(res_item)
         self.class_summary[item_type] = output
         return output
+
+    def get_data_type_summary(self):
+        """ gets a summary for
+            predicates of different data types
+        """
+        filter_predicates = 'oc_manifest.uuid = oc_predicates.uuid \
+                             AND oc_manifest.class_uri = \'variable\' '
+        l_tables = 'oc_manifest'
+        pred_sum = Predicate.objects\
+                            .filter(project_uuid=self.project_uuid)\
+                            .extra(tables=[l_tables], where=[filter_predicates])\
+                            .values('data_type')\
+                            .annotate(total=Count('data_type'))\
+                            .order_by('-total')
+        for pred in pred_sum:
+            item = LastUpdatedOrderedDict()
+            item['id'] = pred['data_type']
+            if item['id'] in Predicate.DATA_TYPES_HUMAN:
+                item['label'] = Predicate.DATA_TYPES_HUMAN[item['id']]
+            else:
+                item['label'] = pred['data_type'].replace('xsd:', '')
+            item['count'] = pred['total']
+            self.data_type_summary.append(item)
+        return self.data_type_summary
 
     def get_no_context_items(self):
         """ returns a list of subject items

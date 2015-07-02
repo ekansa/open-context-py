@@ -17,7 +17,7 @@ class Containment():
         self.contexts = {}
         self.contexts_list = []
         self.recurse_count = 0
-        self.related_subjects = False # subject items related to an item
+        self.related_subjects = False  # subject items related to an item
 
     def get_project_top_level_contexts(self, project_uuid, visible_only=True):
         """
@@ -26,6 +26,7 @@ class Containment():
         containment hierarchy owned by other projects
         """
         if project_uuid != '0':
+            top = []
             a_tab = 'oc_assertions'
             m_tab = '"oc_manifest" AS "m_b"'
             filters = 'oc_assertions.object_uuid=oc_manifest.uuid \
@@ -34,12 +35,15 @@ class Containment():
                       AND oc_assertions.uuid=m_b.uuid \
                       AND m_b.project_uuid != \''\
                       + project_uuid + '\' '
-            top = Manifest.objects\
-                          .filter(project_uuid=project_uuid,
-                                  item_type='subjects')\
-                          .extra(tables=[a_tab, m_tab], where=[filters])\
-                          .values_list('uuid', flat=True)\
-                          .distinct()
+            tman = Manifest.objects\
+                           .filter(project_uuid=project_uuid,
+                                   item_type='subjects')\
+                           .extra(tables=[a_tab, m_tab], where=[filters])\
+                           .values_list('uuid', flat=True)\
+                           .distinct()
+            for man in tman:
+                if man not in top:
+                    top.append(man)
         else:
             top = []
             a_tab = 'oc_assertions'
@@ -264,7 +268,7 @@ class Containment():
         else:
             print('Cannot find the item for slug: ' + child_slug)
         return output
-    
+
     def get_list_context_depth(self,
                                children_uuids=[],
                                prev_context_depth=0):

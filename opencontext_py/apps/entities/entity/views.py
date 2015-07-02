@@ -9,6 +9,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
+
 # These views display an HTML form for classifying import fields,
 # and handles AJAX requests / responses to change classifications
 def index(request):
@@ -62,6 +63,7 @@ def look_up(request, item_type):
                              ensure_ascii=False)
     return HttpResponse(json_output,
                         content_type='application/json; charset=utf8')
+
 
 def entity_annotations(request, subject):
     """ Returns JSON data with
@@ -145,6 +147,33 @@ def entity_annotations(request, subject):
                 stable_id['id'] += s_id.stable_id
             result['stable_ids'].append(stable_id)
         json_output = json.dumps(result,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
+def contain_children(request, identifier):
+    """ Returns JSON data with
+        spatial containment for a given
+        uuid identiffied entity
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        depth = 1
+        recursive = False
+        if 'depth' in request.GET:
+            try:
+                depth = int(float(request.GET['depth']))
+            except:
+                depth = 1
+        et = EntityTemplate()
+        children = et.get_containment_children(ent,
+                                               depth)
+        json_output = json.dumps(children,
                                  indent=4,
                                  ensure_ascii=False)
         return HttpResponse(json_output,

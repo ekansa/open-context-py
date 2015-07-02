@@ -50,6 +50,7 @@ def status(request, project_uuid):
         if temp_item.edit_permitted:
             p_o = ProjectOverview(project_uuid)
             p_o.get_manifest_summary()
+            p_o. get_data_type_summary()
             template = loader.get_template('edit/project-status.html')
             context = RequestContext(request,
                                      {'item': temp_item,

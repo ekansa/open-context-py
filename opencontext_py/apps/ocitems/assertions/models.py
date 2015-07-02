@@ -8,6 +8,8 @@ from django.db import models
 # Assertions store descriptions and linking relations for Open Context items
 # Assertion data mainly represents data contributed from data authors, not OC editors
 class Assertion(models.Model):
+    # standard predicate for project root children
+    PREDICATES_PROJ_ROOT = 'oc-gen:contains-root'
     # standard predicate for spatial containment
     PREDICATES_CONTAINS = 'oc-gen:contains'
     # standard predicate for generic link

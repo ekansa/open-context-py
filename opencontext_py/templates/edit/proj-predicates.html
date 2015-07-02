@@ -1,10 +1,41 @@
+{% load humanize %}
 {% block proj-predicates %}
 <div class="panel panel-default top-panel">
     <div class="panel-heading">
-        <h4 class="panel-title">Descriptive Properties and Linking Relations (Predicates)</h4>
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Descriptive Properties and Linking Relations (Predicates)</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.predicates|intcomma }} items</h4>
+            </div>
+        </div>
     </div>
     <div class="panel-body">
-        Useful summary information will go here
+        {% if status.class_summary.predicates|length > 0 %}
+        <h5>Summary of Properties and Relations</h5>
+        <ul>
+        {% for class in status.class_summary.predicates %}
+            <li>
+                {% if class.label != False  %}
+                {{ class.label }}: {{ class.count }}
+                {% else %}
+                {{ class.id }}: {{ class.count }}    
+                {% endif %}
+                {% if class.id == 'variable'  %}
+                {% if status.data_type_summary|length > 0  %}
+                <br/>
+                <ul>
+                {% for dt in status.data_type_summary %}
+                    <li>{{ dt.label }}: {{ dt.count }}</li>
+                {% endfor %}
+                </ul>
+                {% endif %}
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </div>
 

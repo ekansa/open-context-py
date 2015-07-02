@@ -173,6 +173,8 @@ urlpatterns = patterns('',
                            name='entity_look_up'),
                        url(r'^entities/annotations/(?P<subject>\S+)', EntityViews.entity_annotations,
                            name='entity_annotations'),
+                       url(r'^entities/contain-children/(?P<identifier>\S+)', EntityViews.contain_children,
+                           name='entity_contain_children'),
                        #----------------------------
                        # BELOW ARE INDEX REQUESTS
                        #----------------------------
