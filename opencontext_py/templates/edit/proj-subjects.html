@@ -29,7 +29,7 @@
     </div>
     <div class="container">
         <p>Project Contexts</p>
-        <div id="root-contexts" class="container"></div>
+        <div id="root-more-0" class="container"></div>
     </div>
     <!--
     <ul class="list-group">
@@ -51,8 +51,10 @@
     <script type="text/javascript">
         <!--
         function root_contexts(){
-            var root_tree = new hierarchy(project_uuid, "root-contexts");
+            var root_tree = new hierarchy(project_uuid, "root-more-0");
 			root_tree.get_data();
+            var root_tree_key = root_tree.object_prefix; 
+            hierarchy_objs[root_tree_key] = root_tree;
         }
         -->
     </script>
