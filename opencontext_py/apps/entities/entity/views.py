@@ -180,3 +180,30 @@ def contain_children(request, identifier):
                             content_type='application/json; charset=utf8')
     else:
         raise Http404
+
+
+def description_hierarchy(request, identifier):
+    """ Returns JSON data with
+        descriptive property and type hierarchies
+        for a given uuid identiffied entity
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        depth = 1
+        recursive = False
+        if 'depth' in request.GET:
+            try:
+                depth = int(float(request.GET['depth']))
+            except:
+                depth = 1
+        et = EntityTemplate()
+        children = et.get_description_tree(ent,
+                                           depth)
+        json_output = json.dumps(children,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404

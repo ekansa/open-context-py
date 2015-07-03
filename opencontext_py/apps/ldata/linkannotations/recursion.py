@@ -6,6 +6,8 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
 
 
 class LinkRecursion():
@@ -157,3 +159,28 @@ class LinkRecursion():
             # save a False for the current identified item. it has no children
             if identifier not in self.child_entities:
                 self.child_entities[identifier] = False
+
+    def get_pred_top_rank_types(self, predicate_uuid):
+        """ gets the top ranked (not a subordinate) of any other
+            type for a predicate
+        """
+        types = False
+        try:
+            pred_obj = Predicate.objects.get(uuid=predicate_uuid)
+        except Predicate.DoesNotExist:
+            pred_obj = False
+        if pred_obj is not False:
+            if pred_obj.data_type == 'id':
+                types = []
+                id_list = []
+                pred_types = OCtype.objects\
+                                   .filter(predicate_uuid=predicate_uuid)
+                for p_type in pred_types:
+                    type_pars = self.get_jsonldish_entity_parents(p_type.uuid)
+                    self.parent_entities = []
+                    self.loop_count = 0
+                    if type_pars[0]['id'] not in id_list:
+                        # so the top parent is only listed once
+                        id_list.append(type_pars[0]['id'])
+                        types.append(type_pars[0])
+        return types

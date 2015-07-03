@@ -173,3 +173,85 @@ class EntityTemplate():
         else:
             output = []
         return output
+
+    def get_description_tree(self,
+                             entity_obj,
+                             depth=1,
+                             first_time=True):
+        """ gets a hierarchy for descriptive
+            predicates and types
+        """
+        lr = LinkRecursion()
+        if entity_obj.item_type == 'predicates':
+            tree = self.make_containment_item(entity_obj)
+            tree['children'] = []
+            child_list = lr.get_entity_children(entity_obj.uuid, False)
+            if isinstance(child_list, list):
+                for child_uuid in child_list:
+                    child_ent = Entity()
+                    found = child_ent.dereference(child_uuid)
+                    if found:
+                        if depth > 1:
+                            child = self.get_containment_children(child_ent,
+                                                                  depth - 1,
+                                                                  False)
+                        else:
+                            child = self.make_containment_item(child_ent)
+                        tree['children'].append(child)
+            elif entity_obj.data_type == 'id':
+                top_types = lr.get_pred_top_rank_types(entity_obj.uuid)
+                for top_type in top_types:
+                    uri = top_type['id']
+                    uuid = URImanagement.get_uuid_from_oc_uri(uri)
+                    item = False
+                    if depth > 1:
+                        child_ent = Entity()
+                        found = child_ent.dereference(uuid)
+                        if found:
+                            item = self.get_description_tree(child_ent,
+                                                             depth - 1,
+                                                             False)
+                    else:
+                        item = LastUpdatedOrderedDict()
+                        item['id'] = uuid
+                        item['label'] = top_type['label']
+                        item['class_uri'] = 'type'
+                        item['class_label'] = 'type'
+                    tree['children'].append(item)
+                tree['children'] = self.sort_children_by_label(tree['children'])
+            else:
+                pass
+            if first_time:
+                output = []
+                output.append(tree)
+            else:
+                output = tree
+        elif entity_obj.item_type == 'types':
+            tree = self.make_containment_item(entity_obj)
+            tree['children'] = []
+            lr.get_entity_children(entity_obj.uuid, False)
+            for id_key, item in lr.child_entities.items():
+                if id_key != entity_obj.uuid:
+                    child_ent = Entity()
+                    found = child_ent.dereference(id_key)
+                    if found:
+                        if depth > 1:
+                            child = self.get_description_tree(child_ent,
+                                                              depth - 1,
+                                                              False)
+                        else:
+                            child = self.make_containment_item(child_ent)
+                        child['class_uri'] = 'type'
+                        child['class_label'] = 'type'
+                        tree['children'].append(child)
+            if len(tree['children']) == 0:
+                tree.pop('children', None)
+            if first_time:
+                output = []
+                output.append(tree)
+            else:
+                output = tree
+        else:
+            output = []
+        return output
+

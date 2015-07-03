@@ -106,6 +106,49 @@ function hierarchy(parent_id, act_dom_id) {
 	}
 	this.make_children_html = function(children, node_i){
 		var html = [];
+		var class_list = [];
+		if (this.class_subdivide) {
+			// sub divide children into lists of seperate classes
+			var classes = {};
+			for (var i = 0, length = children.length; i < length; i++) {
+				var child = children[i];
+				if (child.class_label in classes) {
+					classes[child.class_label].push(child);
+				}
+				else{
+					classes[child.class_label] = [child];
+					class_list.push(child.class_label);
+				}
+			}
+		}
+		var html = [];
+		if (class_list.length > 1) {
+			//multiple classes, put them into sub lists
+			for (var i = 0, length = class_list.length; i < length; i++) {
+				var act_class = class_list[i];
+				if (act_class in classes) {
+					var act_c_list = classes[act_class];
+					var children_row_html = this.make_children_rows_html(act_c_list, node_i);
+					html.push('<li>');
+					html.push(act_class);
+					html.push('<div class="container" style="margin-top:5px; margin-bottom:5px">');
+					html.push('<ul class="list-unstyled">');
+					html.push(children_row_html);
+					html.push('</ul>');
+					html.push('</div>');
+					html.push('</li>');
+				}
+			}
+		}
+		else{
+			var children_row_html = this.make_children_rows_html(children, node_i);
+			html.push(children_row_html);
+		}
+		return html.join('\n');
+	}
+	this.make_children_rows_html = function(children, node_i){
+		// makes list elements for children
+		var html = [];
 		for (var i = 0, length = children.length; i < length; i++) {
 			var child = children[i];
 			if (child.children.length > 0) {
