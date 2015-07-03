@@ -40,6 +40,7 @@ class Containment():
                                    item_type='subjects')\
                            .extra(tables=[a_tab, m_tab], where=[filters])\
                            .values_list('uuid', flat=True)\
+                           .order_by('sort')\
                            .distinct()
             for man in tman:
                 if man not in top:
@@ -55,6 +56,7 @@ class Containment():
                                   item_type='subjects')\
                           .extra(tables=[a_tab], where=[filter_a])\
                           .values_list('uuid', flat=True)\
+                          .order_by('sort')\
                           .distinct()
             for uuid in cnt:
                 contained = Assertion.objects\
@@ -97,7 +99,8 @@ class Containment():
         try:
             children = Assertion.objects\
                                 .filter(uuid=parent_uuid,
-                                        predicate_uuid=Assertion.PREDICATES_CONTAINS)
+                                        predicate_uuid=Assertion.PREDICATES_CONTAINS)\
+                                .order_by('sort')
             for child in children:
                 if(child.obs_node not in self.contents):
                     self.contents[child.obs_node] = []

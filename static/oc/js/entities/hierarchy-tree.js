@@ -9,12 +9,14 @@ function hierarchy(parent_id, act_dom_id) {
 	this.act_dom_id = act_dom_id;
 	this.parent_id = parent_id;
 	this.object_prefix = 'tree_' + data_loads;
-	this.edit_links = true;
-	this.view_links = true;
 	this.class_subdivide = true;
 	this.data = false;
 	this.button_dom_id = false;
 	this.expanded = true;
+	this.exec_primary_onclick = false;
+	this.exec_primary_link = 'edit';
+	//this.supplemental_links = ['view'];
+	this.supplemental_links = [];
 	this.get_data = function(){
 		// ajax request to get the data for this hiearchy
 		this.show_loading();
@@ -91,6 +93,10 @@ function hierarchy(parent_id, act_dom_id) {
 		var html = [];
 		for (var i = 0, length = data.length; i < length; i++) {
 			//html.push('<ul class="list-group" style="margin-bottom:5px">');
+			if ('id' in data) {
+				var item_html = this.make_item_linking_html(data.id, data.label, data.item_type);
+				html.push(item_html);
+			}
 			html.push('<ul class="list-unstyled">');
 			var children_html = this.make_children_html(data[i].children, i);
 			html.push(children_html);
@@ -111,16 +117,10 @@ function hierarchy(parent_id, act_dom_id) {
 				var tog_html = '<span class="glyphicon glyphicon-file" aria-hidden="true"></span>';
 				var children_area_html = '';
 			}
-			//html.push('<li class="list-group-item" style="border:none; padding:5px;">');
+			var item_html = this.make_item_linking_html(child.id, child.label, child.item_type);
 			html.push('<li>');
-			//html.push('<div class="row">');
-			//html.push('<div class="col-sm-1">');
 			html.push(tog_html);
-			//html.push('</div>');
-			//html.push('<div class="col-sm-11">');
-			html.push(child.label);
-			//html.push('</div>');
-			//html.push('</div>');
+			html.push(item_html);
 			html.push(children_area_html);
 			html.push('</li>');
 		}
@@ -166,6 +166,55 @@ function hierarchy(parent_id, act_dom_id) {
 				act_dom.innerHTML = tog_html;
 			}
 		}
+	}
+	this.make_item_linking_html = function(id, label, item_type){
+		// makes the html for the primary link (for the label)
+		var item_html = '<a ';
+		if (this.exec_primary_onclick == false) {
+			item_html += 'target="_blank" ';
+			if (this.exec_primary_link == 'edit') {
+				var title = 'Edit in new window';
+				var href = base_url + '/edit/items/' + encodeURIComponent(id);
+			}
+			else{
+				var title = 'View in new window';
+				var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+			}
+			item_html += 'title="' + title + '" href="' + href + '" >';
+		}
+		item_html += label + '</a>';
+		// add supplemental links, if configured for supplmental links.
+		var sups = [];
+		for (var i = 0, length = this.supplemental_links.length; i < length; i++) {
+			var sup_type = this.supplemental_links[i];
+			if (sup_type == 'view') {
+				var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+				var sup_html = [
+				'<a target="_blank" title="View in new window" href="' + href + '">',
+				'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>',
+				'</a>'
+				].join('\n');
+			}
+			else if (sup_type == 'edit') {
+				var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+				var sup_html = [
+				'<a target="_blank" title="Edit in new window" href="' + href + '">',
+				'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>',
+				'</a>'
+				].join('\n');
+			}
+			else{
+				var sup_html = false;
+			}
+			if (sup_html != false) {
+				sups.push(sup_html);
+			}
+		}
+		if (sups.length > 0) {
+			// only add supplemental links if there are 1 or more to add
+			item_html += ' (' + sups.join(', ') + ')';
+		}
+		return item_html;
 	}
 }
 
