@@ -246,6 +246,8 @@ class EntityTemplate():
                         tree['children'].append(child)
             if len(tree['children']) == 0:
                 tree.pop('children', None)
+            else:
+                tree['children'] = self.sort_children_by_label(tree['children'])
             if first_time:
                 output = []
                 output.append(tree)
