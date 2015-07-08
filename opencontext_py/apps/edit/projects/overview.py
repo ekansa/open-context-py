@@ -23,6 +23,14 @@ class ProjectOverview():
         projects
     """
 
+    TYPE_KEYS = ['subjects',
+                 'media',
+                 'documents',
+                 'persons',
+                 'predicates',
+                 'types',
+                 'tables']
+
     def __init__(self,
                  project_uuid):
         self.errors = {}
@@ -38,16 +46,10 @@ class ProjectOverview():
         self.data_type_summary = []  # summary datatype
         self.blank_items = LastUpdatedOrderedDict()  # items with no description
         self.no_context_items = LastUpdatedOrderedDict()  # items with no context
+        self.mem_entities = {}  # entities kept in memory to reduce database lookups
 
     def get_manifest_summary(self):
         """ gets a summary of items in the manifest """
-        type_keys = ['subjects',
-                     'media',
-                     'documents',
-                     'persons',
-                     'predicates',
-                     'types',
-                     'tables']
         output = LastUpdatedOrderedDict()
         man_sum = Manifest.objects\
                           .filter(project_uuid=self.project_uuid)\
@@ -56,7 +58,7 @@ class ProjectOverview():
                           .order_by('-total')
         for sum_type in man_sum:
             item_type = sum_type['item_type']
-            if item_type in type_keys:
+            if item_type in self.TYPE_KEYS:
                 output[item_type] = sum_type['total']
                 self.get_class_uri_summary(item_type)
         self.manifest_summary = output
@@ -203,3 +205,21 @@ class ProjectOverview():
             item['label'] = dull_man.label
             self.blank_items[item_type][class_uri]['items'].append(item)
         return self.blank_items
+
+    def get_cache_entity(self, identifier, get_icon=False):
+        """ gets an entity either from memory or
+            from the database, if from the database, 
+            cache the entity in memory to make lookups faster
+        """
+        output = False
+        if identifier in self.mem_entities:
+            # found in memory
+            output = self.mem_entities[identifier]
+        else:
+            ent = Entity()
+            ent.get_icon = get_icon
+            found = ent.dereference(identifier)
+            if found:
+                self.mem_entities[identifier] = ent
+                output = ent
+        return output

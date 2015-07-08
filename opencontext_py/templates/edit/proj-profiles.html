@@ -1,13 +1,13 @@
 {% load humanize %}
-{% block proj-types %}
+{% block proj-profiles %}
 <div class="panel panel-default top-panel">
     <div class="panel-heading">
         <div class="row">
             <div class="col-sm-6">
-                <h4 class="panel-title">Types and Classification Categories</h4>
+                <h4 class="panel-title">Data Entry Profiles</h4>
             </div>            
             <div class="col-sm-6 text-right">
-                <h4 class="panel-title">{{ status.manifest_summary.types|intcomma }} types</h4>
+                <h4 class="panel-title">{{ status.manifest_summary.persons|intcomma }} persons</h4>
             </div>
         </div>
     </div>

@@ -187,6 +187,15 @@ def description_hierarchy(request, identifier):
         descriptive property and type hierarchies
         for a given uuid identiffied entity
     """
+    item_type = False
+    class_uri = False
+    if '/' in identifier:
+        id_ex = identifier.split('/')
+        identifier = id_ex[0]
+        if len(id_ex) >= 2:
+            item_type = id_ex[1]
+        if len(id_ex) >= 3:
+            class_uri = id_ex[2]
     ent = Entity()
     found = ent.dereference(identifier)
     if found:
@@ -199,7 +208,10 @@ def description_hierarchy(request, identifier):
                 depth = 1
         et = EntityTemplate()
         children = et.get_description_tree(ent,
-                                           depth)
+                                           depth,
+                                           True,
+                                           item_type,
+                                           class_uri)
         json_output = json.dumps(children,
                                  indent=4,
                                  ensure_ascii=False)

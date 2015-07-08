@@ -23,7 +23,8 @@ class ItemBasicEdit():
         for basic item eding
     """
     UI_ICONS = {'persons': '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
-                'projects': '<i class="fa fa-database"></i>'}
+                'projects': '<i class="fa fa-database"></i>',
+                'profiles': '<span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>'}
 
     def __init__(self,
                  uuid,

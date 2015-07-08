@@ -18,6 +18,7 @@ from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
 from opencontext_py.apps.edit.projects import views as EditProjectsViews
+from opencontext_py.apps.edit.inputs.profiles import views as InputProfileViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
@@ -161,6 +162,24 @@ urlpatterns = patterns('',
                            name='add_update_ld_entity'),
                        url(r'^edit/projects/(?P<project_uuid>\S+)', EditProjectsViews.status,
                            name='edit_projects_status'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR INPUT PROFILE RELATED AJAX REQUESTS
+                       # --------------------------
+                       url(r'^edit/inputs/profiles/(?P<profile_uuid>\S+).json', InputProfileViews.json_view,
+                           name='edit_input_profile_json_view'),
+                       url(r'^edit/inputs/profiles/(?P<profile_uuid>\S+)/edit', InputProfileViews.profile_edit,
+                           name='edit_input_profile_edit'),
+                       url(r'^edit/inputs/create-profile/(?P<project_uuid>\S+)', InputProfileViews.create,
+                           name='edit_input_profile_create'),
+                       url(r'^edit/inputs/update-profile/(?P<profile_uuid>\S+)', InputProfileViews.update,
+                           name='edit_input_profile_update'),
+                       url(r'^edit/inputs/delete-profile/(?P<profile_uuid>\S+)', InputProfileViews.delete,
+                           name='edit_input_profile_delete'),
+                       url(r'^edit/inputs/duplicate-profile/(?P<profile_uuid>\S+)', InputProfileViews.duplicate,
+                           name='edit_input_profile_duplicate'),
+                       # --------------------------
+                       # EDITING ROOT
+                       # --------------------------
                        url(r'^edit/', EditProjectsViews.index,
                            name='edit_projects_index'),
                        # --------------------------

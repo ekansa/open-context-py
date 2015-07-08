@@ -1,11 +1,13 @@
 import json
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.items.itemannotation import ItemAnnotation
 from opencontext_py.apps.edit.items.itemcreate import ItemCreate
+from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
 from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -42,7 +44,15 @@ def html_view(request, uuid):
                                       'base_url': base_url})
             return HttpResponse(template.render(context), status=401)
     else:
-        raise Http404
+        # not in the manifest, check to see if this is an data entry input profile
+        ipt = InputProfileTemplating()
+        exists = ipt.check_exists(uuid)
+        if exists:
+            rp = RootPath()
+            base_url = rp.get_baseurl()
+            return redirect(base_url + '/edit/inputs/profiles/' + uuid + '/edit')
+        else:
+            raise Http404
 
 
 @ensure_csrf_cookie
@@ -147,6 +157,7 @@ def add_item_annotation(request, uuid):
             return HttpResponseForbidden
     else:
         raise Http404
+
 
 def edit_annotation(request, entity_id):
     """ Handles POST requests to edit an annotation of an item """

@@ -83,7 +83,7 @@ class ItemCreate():
         if uses == 0:
             exists = False
         return exists
-    
+
     def create_or_validate_uuid(self, post_data):
         """ mints a new uuuid or validates an existing
             one is OK to use
@@ -100,7 +100,7 @@ class ItemCreate():
                     self.errors['uuid'] += ', because it is already used.'
                     uuid = False
         return uuid
-    
+
     def create_project(self, post_data):
         """ creates a project item into a project
         """

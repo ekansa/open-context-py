@@ -37,8 +37,8 @@
                     <li><a data-toggle="tab" href="#status-3">Media</a></li>
                     <li><a data-toggle="tab" href="#status-4">Documents</a></li>
                     <li><a data-toggle="tab" href="#status-5">Persons</a></li>
-                    <li><a data-toggle="tab" href="#status-6">Properties / Relations</a></li>
-                    <li><a data-toggle="tab" href="#status-7">Types / Categories</a></li>
+                    <li><a data-toggle="tab" href="#status-6">Descriptions</a></li>
+                    <li><a data-toggle="tab" href="#status-7">Data Entry Profiles</a></li>
                 </ul>
                 <div class="tab-content obs-multi">
                     <div id="status-1" class="tab-pane fade in active">
@@ -57,10 +57,10 @@
                         {% include 'edit/proj-persons.html' %}
                     </div>
                     <div id="status-6" class="tab-pane fade">
-                        {% include 'edit/proj-predicates.html' %}
+                        {% include 'edit/proj-descriptions.html' %}
                     </div>
                     <div id="status-7" class="tab-pane fade">
-                        {% include 'edit/proj-types.html' %}
+                        {% include 'edit/proj-profiles.html' %}
                     </div>
                 </div>
             </div>
@@ -73,7 +73,9 @@
           
         {% include 'edit/edit-modal.html' %}
          
-         <script src="../../static/oc/js/entities/entities.js"></script>
+        
+        <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" onload="root_contexts();"></script>
+        <script src="{{ base_url }}/static/oc/js/entities/entities.js" onload="root_descriptions();"></script>
          
      </div>
 </div>

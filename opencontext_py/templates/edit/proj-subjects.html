@@ -26,23 +26,26 @@
         {% endfor %}
         </ul>
         {% endif %}
-    </div>
-    <div class="container">
-        <p>Project Contexts</p>
-        <div id="root-more-0" class="container"></div>
+    
+        <div class="container">
+            <p>Project Contexts</p>
+            <div id="root-more-0" class="container"></div>
+        </div>
+    
     </div>
     
     <script type="text/javascript">
         <!--
         function root_contexts(){
             var root_tree = new hierarchy(project_uuid, "root-more-0");
+            root_tree.root_node = true; // indicate this is the root-node
 			root_tree.get_data();
             var root_tree_key = root_tree.object_prefix; 
             hierarchy_objs[root_tree_key] = root_tree;
         }
         -->
     </script>
-    <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" onload="root_contexts();"></script>
+    
     
     
 </div>

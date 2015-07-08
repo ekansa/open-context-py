@@ -10,6 +10,8 @@ function hierarchy(parent_id, act_dom_id) {
 	this.parent_id = parent_id;
 	this.object_prefix = 'tree_' + data_loads;
 	this.class_subdivide = true;
+	this.request_url = base_url + "/entities/contain-children/";
+	this.root_node = false;
 	this.data = false;
 	this.button_dom_id = false;
 	this.expanded = true;
@@ -17,10 +19,14 @@ function hierarchy(parent_id, act_dom_id) {
 	this.exec_primary_link = 'edit';
 	//this.supplemental_links = ['view'];
 	this.supplemental_links = [];
+	this.do_description_tree = function(){
+		// if doing a desciption tree, change the request URL
+		this.request_url = base_url + "/entities/description-children/";
+	}
 	this.get_data = function(){
 		// ajax request to get the data for this hiearchy
 		this.show_loading();
-		var url = base_url + "/entities/contain-children/" + encodeURIComponent(this.parent_id);
+		var url = this.request_url + encodeURIComponent(this.parent_id);
 		return $.ajax({
 				type: "GET",
 				url: url,
@@ -39,6 +45,9 @@ function hierarchy(parent_id, act_dom_id) {
 	this.show_loading = function(){
 		//display a spinning gif for loading
 		if (document.getElementById(this.act_dom_id)) {
+			if (!this.root_node) {
+				$('#' + this.act_dom_id).collapse('show');
+			}
 			var act_dom = document.getElementById(this.act_dom_id);
 			var html = [
 			'<div class="row">',
@@ -130,7 +139,7 @@ function hierarchy(parent_id, act_dom_id) {
 					var act_c_list = classes[act_class];
 					var children_row_html = this.make_children_rows_html(act_c_list, node_i);
 					html.push('<li>');
-					html.push(act_class);
+					html.push('<em>' + act_class + '</em>');
 					html.push('<div class="container" style="margin-top:5px; margin-bottom:5px">');
 					html.push('<ul class="list-unstyled">');
 					html.push(children_row_html);
@@ -151,7 +160,20 @@ function hierarchy(parent_id, act_dom_id) {
 		var html = [];
 		for (var i = 0, length = children.length; i < length; i++) {
 			var child = children[i];
-			if (child.children.length > 0) {
+			var child_has_children = false;
+			var tog_html = '<span class="glyphicon glyphicon-file" aria-hidden="true"></span>';
+			var children_area_html = '';
+			if ('children' in child) {
+				if (child.children.length > 0 || child.more) {
+					//this child has children so make a loading carrot for it.
+					child_has_children = true;
+				}
+			}
+			else if ('more' in child) {
+				// the service says it has more children
+				child_has_children = true;
+			}
+			if (child_has_children) {
 				//this child has children so make a loading carrot for it.
 				var tog_html = this.make_load_more_html(child.id, node_i, i);
 				var children_area_html = this.make_more_div_html(node_i, i);
@@ -176,7 +198,7 @@ function hierarchy(parent_id, act_dom_id) {
 		var tog_html = [
 			'<span id="' + dom_id + '">',
 			'<a title="Click to load more data and expand" role="button" ',
-			'onclick="load_expand(\''+ item_id + '\', \''+ more_div_dom_id + '\', \''+ dom_id + '\');">',
+			'onclick="load_expand(\''+ this.object_prefix + '\', \''+ item_id + '\', \''+ more_div_dom_id + '\', \''+ dom_id + '\');">',
 			'<span class="glyphicon glyphicon-plus" aria-hidden="true">',
 			'</span>',
 			'</a>',
@@ -226,6 +248,9 @@ function hierarchy(parent_id, act_dom_id) {
 			item_html += 'title="' + title + '" href="' + href + '" >';
 		}
 		item_html += label + '</a>';
+		if (this.exec_primary_onclick == false && id.indexOf('/') > -1) {
+			item_html = label;
+		}
 		// add supplemental links, if configured for supplmental links.
 		var sups = [];
 		for (var i = 0, length = this.supplemental_links.length; i < length; i++) {
@@ -261,10 +286,14 @@ function hierarchy(parent_id, act_dom_id) {
 	}
 }
 
-function load_expand(parent_id, act_dom_id, button_dom_id){
+function load_expand(tree_key, parent_id, act_dom_id, button_dom_id){
 	// expand a node in the tree by loading new data and populating the html
 	if (document.getElementById(act_dom_id)) {
 		var expanded_tree = new hierarchy(parent_id, act_dom_id);
+		if (tree_key in hierarchy_objs) {
+			// so as to use the same request URL for the parent tree
+			expanded_tree.request_url = hierarchy_objs[tree_key].request_url;
+		}
 		expanded_tree.button_dom_id = button_dom_id;
 		expanded_tree.get_data();
 		var tree_key = expanded_tree.object_prefix; 
