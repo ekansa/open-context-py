@@ -11,6 +11,11 @@
         var uuid = '{{ item.uuid }}';
         var project_uuid = '{{ item.project.uuid }}';
         var base_url = '{{ base_url }}';
+        var field_group_vis = {
+        {% for key,val in field_group_vis.items %}
+            {{ key }}: '{% autoescape off %}{{ val }}{% endautoescape %}',
+        {% endfor %}
+        };
         -->
     </script>
     <style type="text/css">
@@ -64,6 +69,7 @@
         <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
         <script src="{{ base_url }}/static/oc/js/entities/entities.js" ></script>
         <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profile-fields-edit.js" ></script>
         <script src="{{ base_url }}/static/oc/js/edit/profile-edit.js" onload="load_profile();"></script> 
      </div>
 </div>

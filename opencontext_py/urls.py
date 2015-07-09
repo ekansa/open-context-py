@@ -18,7 +18,7 @@ from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
 from opencontext_py.apps.edit.projects import views as EditProjectsViews
-from opencontext_py.apps.edit.inputs.profiles import views as InputProfileViews
+from opencontext_py.apps.edit.inputs import views as InputProfileViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
@@ -177,6 +177,12 @@ urlpatterns = patterns('',
                            name='edit_input_profile_delete'),
                        url(r'^edit/inputs/duplicate-profile/(?P<profile_uuid>\S+)', InputProfileViews.duplicate,
                            name='edit_input_profile_duplicate'),
+                       url(r'^edit/inputs/create-field-group/(?P<profile_uuid>\S+)', InputProfileViews.create_field_group,
+                           name='edit_input_create_field_group'),
+                       url(r'^edit/inputs/update-field-group/(?P<fgroup_uuid>\S+)', InputProfileViews.update_field_group,
+                           name='edit_input_update_field_group'),
+                       url(r'^edit/inputs/delete-field-group/(?P<fgroup_uuid>\S+)', InputProfileViews.delete_field_group,
+                           name='edit_input_delete_field_group'),
                        # --------------------------
                        # EDITING ROOT
                        # --------------------------

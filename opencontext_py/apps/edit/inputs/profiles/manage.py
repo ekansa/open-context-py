@@ -67,11 +67,11 @@ class ManageInputProfile():
             self.errors['item_type'] = 'Missing parameter. '
             note += self.errors['item_type']
         if 'label' in post:
-            label = post['label']
+            label = post['label'].strip()
         else:
             label = ''
         if 'note' in post:
-            data_note = post['note']
+            data_note = post['note'].strip()
         else:
             data_note = ''
         if ok:
@@ -130,14 +130,14 @@ class ManageInputProfile():
             if len(exist_man_fields) > 0:
                 # at least one of the mandatory fields already exists,
                 # we sould add missing mandatory fields to this field-group
-                fg_uuid = exist_man_fields[0].fgroup_uuid
+                fgroup_uuid = exist_man_fields[0].fgroup_uuid
             else:
                 # we don't have any mandatory fields for this profile,
                 # so create a group for the mandatory fields
-                fg_uuid = GenUUID.uuid4()
-                fg_uuid = str(fg_uuid)
+                fgroup_uuid = GenUUID.uuid4()
+                fgroup_uuid = str(fgroup_uuid)
                 fgroup = InputFieldGroup()
-                fgroup.uuid = fg_uuid
+                fgroup.uuid = fgroup_uuid
                 fgroup.project_uuid = project_uuid
                 fgroup.profile_uuid = profile_uuid
                 fgroup.label = 'Open Context Required Fields'
@@ -158,7 +158,7 @@ class ManageInputProfile():
                     inp_field.uuid = f_uuid
                     inp_field.project_uuid = project_uuid
                     inp_field.profile_uuid = profile_uuid
-                    inp_field.fgroup_uuid = fg_uuid
+                    inp_field.fgroup_uuid = fgroup_uuid
                     inp_field.row_num = 1
                     inp_field.col_num = 1
                     inp_field.sort = new_field

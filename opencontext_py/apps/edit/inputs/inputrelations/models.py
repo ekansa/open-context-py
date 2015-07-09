@@ -7,6 +7,12 @@ from django.db import models
 # Models relationships between profiles, field groups, fields
 # and rules
 class InputRelation(models.Model):
+
+    OK_TYPES = ['profiles',
+                'fieldgroups',
+                'fields',
+                'rules']
+
     hash_id = models.CharField(max_length=50, primary_key=True)  # uuid for the rule itself
     project_uuid = models.CharField(max_length=50, db_index=True)
     profile_uuid = models.CharField(max_length=50, db_index=True)  # uuid for the input profile

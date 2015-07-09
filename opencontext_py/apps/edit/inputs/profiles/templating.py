@@ -84,34 +84,6 @@ class InputProfileTemplating():
             ok = self.exists_ok
         return ok
 
-    def get_make_mandatory_fields(self):
-        """ gets the mandatory fields used for this profile's item_type
-            makes them if needed.
-        """
-        mandatory_predicates = []
-        if self.inp_prof.item_type in InputField.PREDICATES_OC:
-            # exclude the mandatory fields for this type of item
-            mandatory_predicates = InputField.PREDICATES_OC[self.inp_prof.item_type]
-        for mand_pred in mandatory_predicates:
-            inp_fields = InputField.objects\
-                                   .filter(profile_uuid=self.uuid,
-                                           predicate_uuid__in=mand_pred)
-            if len(inp_fields) > 1:
-                i =0
-                fixed_inp_fields = []
-                for inp_field in inp_fields:
-                    # keep the first item, delete the rest
-                    if i < 1:
-                        fixed_inp_fields.append(inp_field)
-                    else:
-                        inp_field.delete()
-                    i += 1
-                inp_fields = fixed_inp_fields
-            if len(inp_fields) < 1:
-                pass
-            else:
-                pass
-
     def get_field_groups_and_fields(self):
         """ gets fields used in this import profile,
             it's not super efficient but it doesn't have to be
@@ -132,8 +104,11 @@ class InputProfileTemplating():
                 group = LastUpdatedOrderedDict()
                 group['id'] = inp_group.uuid
                 group['label'] = inp_group.label
+                group['visibility'] = inp_group.visibility
+                group['vis_note'] = InputFieldGroup.GROUP_VIS[inp_group.visibility]
                 if len(group['label']) < 1:
                     group['label'] = 'Field group: ' + str(index)
+                group['note'] = inp_group.note
                 group['fields'] = []
                 inp_group_fields = InputField.objects\
                                              .filter(profile_uuid=self.uuid,
@@ -156,6 +131,7 @@ class InputProfileTemplating():
                                 inp_field.save()
                             field['label'] = inp_field.label
                             field['data_type'] = ent.data_type
+                            field['oc_required'] = False
                         else:
                             # we've got data entry fields that don't exist, so delete them
                             add_ok = False
@@ -165,6 +141,7 @@ class InputProfileTemplating():
                         preset = InputField.PREDICATE_ITEMS[inp_field.predicate_uuid]
                         field['label'] = preset['label']
                         field['data_type'] = preset['data_type']
+                        field['oc_required'] = True
                     field['note'] = inp_field.note
                     try:
                         val_obj = json.loads(inp_field.validation)

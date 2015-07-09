@@ -7,19 +7,35 @@ from django.db import models
 
 # Stores information about fields for a data entry form
 class InputFieldGroup(models.Model):
+
+    GROUP_VIS = {'open': 'Show Field Group in an open panel',
+                 'closed': 'Show Field Group in a closed panel',
+                 'hidden': 'Field Group is not shown to the user until certain conditions are met'}
+
     uuid = models.CharField(max_length=50, primary_key=True)  # uuid for the rule itself
     project_uuid = models.CharField(max_length=50, db_index=True)
     profile_uuid = models.CharField(max_length=50, db_index=True)  # uuid for the input profile
     label = models.CharField(max_length=200)  # label for data entry form
-    note = models.TextField()  # note for instructions in data entry
     sort = models.IntegerField()  # sort value a field in a given cell
+    visibility = models.CharField(max_length=50)  # label for data entry form
+    note = models.TextField()  # note for instructions in data entry
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
+
+    def validate_visibility(self, visibility):
+        """ validates and updates the field group visibility """
+        if visibility not in self.GROUP_VIS:
+            # checks to make sure that
+            for real_vis_key, value in self.GROUP_VIS.items():
+                visibility = real_vis_key
+                break;
+        return visibility
 
     def save(self, *args, **kwargs):
         """
         saves the record with creation date
         """
+        self.visibility = self.validate_visibility(self.visibility)
         if self.created is None:
             self.created = datetime.now()
         super(InputFieldGroup, self).save(*args, **kwargs)
