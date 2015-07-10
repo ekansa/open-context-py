@@ -16,7 +16,7 @@ function searchEntityObj() {
 	this.limit_vocab_uri = false;
 	this.limit_item_type = false;
 	this.limit_ent_type = false;
-	this.url = "../../entities/look-up/";
+	this.url = make_url("/entities/look-up/");
 	this.interfaceDomID = false;
 	this.req = false;
 	this.selectReadOnly = true;
@@ -25,6 +25,7 @@ function searchEntityObj() {
 	this.show_type = false;
 	this.show_partof = false;
 	this.ids = {}
+	this.selected_entity = false
 	
 	this.generateEntitiesInterface = function (){
 		/* returns a HTML string to generate an entities search interface */
@@ -153,18 +154,20 @@ function searchEntityObj() {
 		searchEntityListDom.innerHTML = "";
 		for (var i = 0, length = data.length; i < length; i++) {
 			
-			var data_type = 'Not Specified';
-			if (data[i].class_uri != false) {
-				var data_type = data[i].class_uri;
-			}
-			else if (data[i].ent_type != false) {
-				var data_type = data[i].ent_type + ' (Linked Data)'; 
-			}
-			else{
-				var data_type = "Not specified";
+			if (!('data_type' in data[i])) {
+				var data_type = 'Not Specified';
+				if (data[i].class_uri != false) {
+					var data_type = data[i].class_uri;
+				}
+				else if (data[i].ent_type != false) {
+					var data_type = data[i].ent_type + ' (Linked Data)'; 
+				}
+				else{
+					var data_type = "Not specified";
+				}
+				data[i].data_type = data_type;
 			}
 			var partof = data[i].partOf_label;
-			data[i].data_type = data_type;
 			this.ids[data[i].id] = data[i]; // keep in memory for later use
 			
 			var tooltiplink = [
@@ -204,6 +207,9 @@ function searchEntityObj() {
 		var item_label = document.getElementById(act_domID).innerHTML;
 		var sel_label_dom = document.getElementById(this.name + "-sel-entity-label");
 		sel_label_dom.value = item_label;
+		if (item_id in this.ids) {
+			this.selected_entity = this.ids[item_id];
+		}
 		if (this.show_type && item_id in this.ids) {
 			document.getElementById(this.name + "-sel-type").innerHTML = this.ids[item_id].data_type;
 		}
@@ -225,7 +231,7 @@ function generateEntityLink(nodeID, entity_type, entity_id, entity_label){
 	var labelSpan = "<span id=\"" + nodeID + "\">" + entity_label + "</span>";
 	if (entity_type != "uri" && entity_type != "import-field" && entity_type != "user-typed-link") {
 		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
-		linkHTML = "<a title=\"View in new tab\" href=\"../../" + entity_type + "/" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
+		linkHTML = "<a title=\"View in new tab\" href=\"" + make_url("/" + entity_type + "/" + entity_id) + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
 	}
 	else if (entity_type == "uri") {
 		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
@@ -407,7 +413,7 @@ function addEntityObj() {
 				var ent_type = e_types[i].value;
 			}
 		}
-		var url = "../../edit/add-update-ld-entity/";
+		var url = make_url("/edit/add-update-ld-entity/");
 		if ((uri.length > 0 && label.length > 0)) {
 			//code
 			return $.ajax({
@@ -447,5 +453,15 @@ function addEntityObj() {
 			html += '</div>';
 		}
 		mes_dom.innerHTML = html;
+	}
+}
+
+function make_url(relative_url){
+	//makes a URL for requests, checking if the base_url is set	
+	if (typeof base_url != "undefined") {
+		return base_url + relative_url;
+	}
+	else{
+		return '../../' + relative_url;
 	}
 }

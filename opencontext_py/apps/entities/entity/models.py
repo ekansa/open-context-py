@@ -272,6 +272,12 @@ class Entity():
             item['label'] = man_entity.label
             item['slug'] = man_entity.slug
             item['type'] = man_entity.item_type
+            if man_entity.item_type == 'predicates':
+                try:
+                    pred = Predicate.objects.get(uuid=man_entity.uuid)
+                    item['data_type'] = pred.data_type
+                except Predicate.DoesNotExist:
+                    item['data_type'] = False
             item['class_uri'] = man_entity.class_uri
             item['ent_type'] = False
             item['partOf_id'] = man_entity.project_uuid

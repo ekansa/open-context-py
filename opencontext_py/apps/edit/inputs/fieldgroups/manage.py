@@ -8,6 +8,7 @@ from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
 from opencontext_py.apps.edit.inputs.inputfields.models import InputField
+from opencontext_py.apps.edit.inputs.inputfields.manage import ManageInputField
 from opencontext_py.apps.edit.inputs.rules.models import InputRule
 
 
@@ -92,7 +93,7 @@ class ManageInputFieldGroup():
                 inp_obj.label = label
                 inp_obj.note = data_note
                 inp_obj.save()
-                note = 'Input Field Group "' + label + '" (' + fgroup_uuid + ')' + note;
+                note = 'Input Field Group "' + label + '" (' + fgroup_uuid + ')' + note
         self.response = {'action': action,
                          'ok': ok,
                          'change': {'uuid': fgroup_uuid,
@@ -104,32 +105,12 @@ class ManageInputFieldGroup():
         """ Deletes a field group, including
             the fields it contains
         """
+        mif = ManageInputField()
         gfields = InputField.objects\
                             .filter(fgroup_uuid=fgroup_uuid)
         for gfield in gfields:
-            sub_rules = InputRelation.objects\
-                                     .filter(subject_type='rules',
-                                             object_uuid=gfield.uuid)
-            for rel_rule in sub_rules:
-                # delete the subject related rule
-                InputRule.objects\
-                         .filter(uuid=rel_rule.subject_uuid)\
-                         .delete()
-            obj_rules = InputRelation.objects\
-                                     .filter(object_type='rules',
-                                             subject_uuid=gfield.uuid)
-            for rel_rule in obj_rules:
-                # delete the object related rule
-                InputRule.objects\
-                         .filter(uuid=rel_rule.object_uuid)\
-                         .delete()
-            # now delete relations for these fields
-            InputRelation.objects\
-                         .filter(subject_uuid=gfield.uuid)\
-                         .delete()
-            InputRelation.objects\
-                         .filter(object_uuid=gfield.uuid)\
-                         .delete()
+            # use the manage input field object delete method
+            mif.delete(gfield.uuid)
         # now finally delete the fields in this field group
         gfields = InputField.objects\
                             .filter(fgroup_uuid=fgroup_uuid)\
@@ -158,7 +139,7 @@ class ManageInputFieldGroup():
             profile
         """
         if len(label) < 1:
-            label = 'Unamed data entry profile'
+            label = 'Unamed field group'
         if attempt > 1:
             label_check = label + ' [' + str(attempt) + ']'
         else:
@@ -184,3 +165,79 @@ class ManageInputFieldGroup():
         for fg in fgs:
             sort_vals.append(fg.sort)
         return max(sort_vals) + 1
+
+    def update_sort_field_group_or_field(self, sort_change, uuid, item_type):
+        """
+        updates the sorting of a field or field group
+        """
+        ok = True
+        note = ''
+        try:
+            sort_change = int(float(sort_change))
+        except:
+            sort_change = 0
+            ok = False
+            note = 'Error, sort_change needs to be an integer value. '
+        if ok:
+            rel_rows = False
+            if item_type == 'field-groups':
+                try:
+                    act_item = InputFieldGroup.objects.get(uuid=uuid)
+                except InputFieldGroup.DoesNotExist:
+                    act_item = False
+                if act_item is not False:
+                    rel_rows = InputFieldGroup.objects\
+                                              .filter(profile_uuid=act_item.profile_uuid)
+            else:
+                try:
+                    act_item = InputField.objects.get(uuid=uuid)
+                except InputField.DoesNotExist:
+                    act_item = False
+                if act_item is not False:
+                    rel_rows = InputField.objects\
+                                         .filter(profile_uuid=act_item.profile_uuid,
+                                                 fgroup_uuid=act_item.fgroup_uuid)
+            if rel_rows is False:
+                ok = False
+                note = 'Error, could not find ' + item_type + ': ' + uuid + 'to sort'
+            else:
+                pseudo_sort = 0 # used to make a sort value if none was given
+                i = -1
+                current_uuid_index = False
+                for row in rel_rows:
+                    pseudo_sort += 1
+                    i += 1
+                    if row.sort is None \
+                       or row.sort == 0:
+                        row.sort = pseudo_sort
+                        row.save()
+                    if row.uuid == uuid:
+                        current_uuid_index = i
+                if current_uuid_index is not False:
+                    item_b_index = current_uuid_index + sort_change
+                    if item_b_index >= 0 and item_b_index < len(rel_rows):
+                        row_a = rel_rows[current_uuid_index]
+                        row_b = rel_rows[item_b_index]
+                        new_sort_b = row_a.sort
+                        new_sort_a = row_b.sort
+                        if new_sort_a == new_sort_b:
+                            # so we don't have exactly the same values
+                            new_sort_a += sort_change
+                        row_a.sort = new_sort_a
+                        row_a.save()
+                        row_b.sort = new_sort_b
+                        row_b.save()
+                        ok = True
+                        note += item_type + ' successfully resorted. '
+                    else:
+                        ok = False
+                        note += 'Cannot change sorting, as at limit of the list of objects.'
+                        note += ' Current_uuid_index: ' + str(current_uuid_index)
+                        note += ' Exchange with index: ' + str(item_b_index)
+                else:
+                    ok = False
+                    note += 'A truly bizzare something happened. '
+        self.response = {'action': 'input-profile-sorting',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response

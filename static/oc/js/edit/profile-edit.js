@@ -8,6 +8,7 @@ function profile(uuid){
 	this.uuid = uuid;
 	this.data = false;
 	this.act_fgroup_uuid = false;
+	this.entitySearchObj = false
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID 
 	this.get_data = function(){
 		//AJAX request to get data about a profile
@@ -60,14 +61,12 @@ function profile(uuid){
 		var done = false;
 		if (this.act_fgroup_uuid != false) {
 			if (document.getElementById(this.act_fgroup_uuid)) {
-				for (var i = 0, length = data.fgroups.length; i < length; i++) {
-					var fgroup = data.fgroups[i];
-					if (fgroup.id == this.act_fgroup_uuid) {
-						// now update the HTML for this particular field group
-						var act_dom = document.getElementById(fgroup.id);
-						act_dom.innerHTML = this.make_field_group_html(fgroup);
-						done = true;
-					}
+				var fgroup = this.get_fieldgroup_obj(this.act_fgroup_uuid);
+				if (fgroup != false) {
+					// now update the HTML for this particular field group
+					var act_dom = document.getElementById(fgroup.id);
+					act_dom.innerHTML = this.make_field_group_html(fgroup);
+					done = true;
 				}
 			}
 			// now set it back to false after we used it
@@ -85,6 +84,13 @@ function profile(uuid){
 			}
 		}
 	}
+	
+	/* ---------------------------------------
+	 * Profile Update, Delete
+	 * functions
+	 * ---------------------------------------
+	 */
+	
 	this.make_profile_meta_html = function(data){
 		// makes HTML for profile metadata viewing and editing
 		var item_types = ['subjects',
@@ -239,10 +245,6 @@ function profile(uuid){
 		body_dom.innerHTML = body_html;
 		$("#smallModal").modal('show');
 	}
-	this.cancelDelete = function(){
-		$("#smallModal").modal('hide');
-	}
-	
 	this.execDeleteProfile = function(){
 		// actually executes the delete of a profile
 		var main_modal_body_domID = "smallModalBody";
@@ -268,11 +270,179 @@ function profile(uuid){
 			} 
 			});
 	}
-	
 	this.execDeleteProfileDone = function(data){
 		$("#smallModal").modal('hide');
 		alert('Data entry profile "' + item_label + '" deleted');
 		window.location = make_url('/edit/projects/' + project_uuid);
+	}
+	
+	
+	
+	/* ---------------------------------------
+	 * Field Group Create, Update, Delete
+	 * functions
+	 * ---------------------------------------
+	 */
+	this.make_field_groups_html = function(data){
+		// makes HTML for all of the field groups, each one in a panel
+		var html = ""
+		for (var i = 0, length = data.fgroups.length; i < length; i++) {
+			var fgroup = data.fgroups[i];
+			html += '<div id="' + fgroup.id + '">';
+			html += this.make_field_group_html(fgroup);
+			html += '</div>';
+		}
+		return html;
+	}
+	this.make_field_group_html = function(fgroup){
+		// makes the HTML for a panel that contains a field group
+		var table_html = '<table class="table table-condensed table-hover table-striped">';
+		table_html += '<tbody>';
+		for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+			var field = fgroup.fields[i];
+			var sort_buttons_html = "";
+			if (length > 1) {
+				var sort_buttons_html = [
+				'<div style="margin-top: 5px;">',
+				'<button class="btn btn btn-info btn-xs" ',
+				'onclick="' + this.name + '.rankField(\'' + fgroup.id + '\', \'' + field.id + '\', -1);" ',
+				'title="Higher rank in sort order">',
+				'<span class="glyphicon glyphicon-arrow-up"></span>',
+				'</button>',
+				'</div>',
+				'<div style="margin-top: 2px;">',
+				'<button class="btn btn btn-info btn-xs" ',
+				'onclick="' + this.name + '.rankField(\'' + fgroup.id + '\', \'' + field.id + '\', 1);" ',
+				'title="Lower rank in sort order">',
+				'<span class="glyphicon glyphicon-arrow-down"></span>',
+				'</button>',
+				'</div>'
+				].join("\n");
+			}
+			if (field.oc_required) {
+				var pred_link_html = "<em>Open Context required field</em>";
+				var delete_button_html = [
+				'<div style="margin-top: 10px;">',
+				'<button class="btn btn-danger btn-xs" ',
+				'disabled="disabled" title="Delete disabled for this field">',
+				'<span class="glyphicon glyphicon-remove-sign"></span>',
+				'</button>',
+				'</div>'
+				].join('\n');
+			}
+			else{
+				var pred_link_html = [
+				'<a target="_blank" href="' + this.make_url("/predicates/" + field.predicate_uuid) + '">',
+				'http://opencontext.org/predicates/' +  field.predicate_uuid + ' ',
+				'<span class="glyphicon glyphicon-new-window"></span></a>'
+				].join(' ');
+				var delete_button_html = [
+				'<div style="margin-top: 10px;">',
+				'<button class="btn btn-danger btn-xs" ',
+				'onclick="' + this.name + '.deleteField(\'' + fgroup.id + '\', \'' + field.id + '\');" title="Delete this field">',
+				'<span class="glyphicon glyphicon-remove-sign"></span>',
+				'</button>',
+				'</div>'
+				].join('\n');
+			}
+			var pred_html = [
+			'<div style="padding-bottom: 15px;">',
+			field.label,
+			'<br/>',
+			'<samp class="uri-id">',
+			pred_link_html,
+			'</samp>',
+			'</div>'
+			].join("\n");
+			
+			var field_html = [
+			'<tr>',
+			'<td class="col-xs-1">',
+			delete_button_html,
+			'</td>',
+			'<td class="col-xs-1">',
+			sort_buttons_html,
+			'</td>',
+			'<td class="col-xs-10">',
+			pred_html,
+			'</td>',
+			'</tr>'
+			].join('\n');
+			table_html += field_html;
+		}
+		table_html += '</tbody>';
+		table_html += '</table>';
+		
+		if (fgroup.note.length < 2) {
+			var note = '[No explanatory note provided]';
+		}
+		else{
+			var note = fgroup.note;
+		}
+		
+		var body_html = [
+			'<div class="well well-sm">',
+			'<p><strong>',
+			'<button class="btn btn-default btn-xs" ',
+			'onclick="' + this.name + '.editFieldGroup(\'' + fgroup.id + '\', -1);" ',
+			'title="Edit this field group">',
+			'<span class="glyphicon glyphicon-edit"></span>',
+			'</button>',
+			'<button class="btn btn-danger btn-xs" ',
+			'onclick="' + this.name + '.deleteFieldGroup(\'' + fgroup.id + '\', 1);" ',
+			'title="Delete this field group">',
+			'<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>',
+			'</button>',
+			'Field Group Metadata</strong></p>',
+			'<div class="row">',
+			'<div class="col-xs-1">',
+				'<div style="margin-top: 5px;">',
+					'<button class="btn btn btn-info btn-xs" ',
+					'onclick="' + this.name + '.rankFieldGroup(\'' + fgroup.id + '\', -1);" ',
+					'title="Higher rank in sort order">',
+					'<span class="glyphicon glyphicon-arrow-up"></span>',
+					'</button>',
+					'</div>',
+					'<div style="margin-top: 2px;">',
+					'<button class="btn btn btn-info btn-xs" ',
+					'onclick="' + this.name + '.rankFieldGroup(\'' + fgroup.id + '\', 1);" ',
+					'title="Lower rank in sort order">',
+					'<span class="glyphicon glyphicon-arrow-down"></span>',
+					'</button>',
+				'</div>',
+			'</div>',
+			'<div class="col-xs-4">',
+			'<dl>',
+			'<dt>Interface Visibility</dt>',
+			'<dd>' + fgroup.visibility.toUpperCase() + ': ' + fgroup.vis_note + '</dd>',
+			'</dl>',
+			'</div>',
+			'<div class="col-xs-7">',
+			'<dl>',
+			'<dt>Explanatory Note</dt>',
+			'<dd>' + note + '</dd>',
+			'</dl>',
+			'</div>',
+			'</div>',
+			'</div>',
+			'<div class="well well-sm">',
+			'<p><strong>',
+			'<button class="btn btn-primary btn-xs" ',
+			'onclick="' + this.name + '.addField(\'' + fgroup.id + '\', -1);" ',
+			'title="Add a field to this Field Group">',
+			'<span class="glyphicon glyphicon-plus-sign"></span>',
+			'</button>',
+			' Fields (' + fgroup.fields.length + ')</strong></p>',
+			table_html,
+			'</div>'
+		].join("\n");
+		
+		
+		var panel_num = this.get_next_panel_num();
+		var meta_panel = new panel(panel_num);
+		meta_panel.title_html = fgroup.label;
+		meta_panel.body_html = body_html;
+		return meta_panel.make_html();
 	}
 	this.addFieldGroup = function(){
 		var main_modal_title_domID = "myModalLabel";
@@ -290,17 +460,14 @@ function profile(uuid){
 		var title_dom = document.getElementById(main_modal_title_domID);
 		var body_dom = document.getElementById(main_modal_body_domID);
 		var body_html = false;
-		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
-			var fgroup = this.data.fgroups[i];
-			if (fgroup.id == fgroup_uuid){
-				this.act_fgroup_uuid = fgroup_uuid; 
-				var body_html = this.make_field_group_edit_html(fgroup_uuid, fgroup.visibility, fgroup.label, fgroup.note);
-				break;
-			}
+		var fgroup = this.get_fieldgroup_obj(fgroup_uuid);
+		if (fgroup != false) {
+			this.act_fgroup_uuid = fgroup_uuid; 
+			var body_html = this.make_field_group_edit_html(fgroup_uuid, fgroup.visibility, fgroup.label, fgroup.note);
+			title_dom.innerHTML = 'Edit this Field Group: "' + fgroup.label + '"';
+			body_dom.innerHTML = body_html;
+			$("#myModal").modal('show');
 		}
-		title_dom.innerHTML = 'Edit this Field Group: "' + fgroup.label + '"';
-		body_dom.innerHTML = body_html;
-		$("#myModal").modal('show');
 	}
 	this.deleteFieldGroup = function(fgroup_uuid){
 		var main_modal_title_domID = "smallModalLabel";
@@ -308,12 +475,9 @@ function profile(uuid){
 		var title_dom = document.getElementById(main_modal_title_domID);
 		var body_dom = document.getElementById(main_modal_body_domID);
 		var label = "";
-		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
-			var fgroup = this.data.fgroups[i];
-			if (fgroup.id == fgroup_uuid){
-				var label = fgroup.label;
-				break;
-			}
+		var fgroup = this.get_fieldgroup_obj(fgroup_uuid);
+		if (fgroup != false) {
+			label = fgroup.label;
 		}
 		var body_html = [
 		'<div>',
@@ -340,12 +504,9 @@ function profile(uuid){
 	}
 	this.confirmDeleteFieldGroup = function(fgroup_uuid){
 		var label = "";
-		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
-			var fgroup = this.data.fgroups[i];
-			if (fgroup.id == fgroup_uuid){
-				var label = fgroup.label;
-				break;
-			}
+		var fgroup = this.get_fieldgroup_obj(fgroup_uuid);
+		if (fgroup != false) {
+			label = fgroup.label;
 		}
 		var main_modal_body_domID = "smallModalBody";
 		var body_dom = document.getElementById(main_modal_body_domID);
@@ -538,161 +699,280 @@ function profile(uuid){
 		].join("\n");
 		mess_dom.innerHTML = html;
 	}
-	this.make_field_groups_html = function(data){
-		// makes HTML for all of the field groups, each one in a panel
-		var html = ""
-		for (var i = 0, length = data.fgroups.length; i < length; i++) {
-			var fgroup = data.fgroups[i];
-			html += '<div id="' + fgroup.id + '">';
-			html += this.make_field_group_html(fgroup);
-			html += '</div>';
+	
+	
+	/* ---------------------------------------
+	 * Field-Group and Field Sorting
+	 * ---------------------------------------
+	 */
+	this.rankFieldGroup = function(fgroup_uuid, sort_change){
+		// resorts a field group
+		this.exec_sort_change(fgroup_uuid, sort_change).then(this.get_fieldgroups_data);
+	}
+	this.rankField = function(fgroup_uuid, field_uuid, sort_change){
+		// resorts a field
+		// set the active field group, so we only redraw this group when done
+		this.act_fgroup_uuid = fgroup_uuid;
+		this.exec_sort_change(field_uuid, sort_change).then(this.get_fieldgroups_data);
+	}
+	this.exec_sort_change = function(uuid, sort_change){
+		// actually executes the resorting of the Field Group or the Field item
+		var url = this.make_url("/edit/inputs/reorder-item/") + encodeURIComponent(uuid);
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: {
+				sort_change: sort_change,
+				csrfmiddlewaretoken: csrftoken},
+			success: this.exec_sort_changeDone,
+			error: function (request, status, error) {
+				alert('Resorting failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
+	this.exec_sort_changeDone = function(data){
+		return true;
+	}
+	/* ---------------------------------------
+	 * Field Create, Update, Delete
+	 * functions
+	 * ---------------------------------------
+	 */
+	this.addField = function(fgroup_uuid){
+		//builds an interface to add a field to a group
+		var fgroup = this.get_fieldgroup_obj(fgroup_uuid);
+		if (fgroup != false) {
+			var main_modal_title_domID = "myModalLabel";
+			var main_modal_body_domID = "myModalBody";
+			var title_dom = document.getElementById(main_modal_title_domID);
+			var body_dom = document.getElementById(main_modal_body_domID);
+			var body_html = this.create_edit_field_html(fgroup_uuid, false);
+			title_dom.innerHTML = 'Add a Field to Group: "' + fgroup.label + '"';
+			body_dom.innerHTML = body_html;
+			$("#myModal").modal('show');
 		}
+	}
+	this.createField = function(){
+		// command to create the new field in a field-group
+		// the reload the data, displaying the field group with added field
+		this.exec_createField().then(this.get_fieldgroups_data);
+	}
+	this.exec_createField = function(){
+		// command to actually create it
+		var label = document.getElementById('field-label').value;
+		var predicate_uuid = document.getElementById('field-pred-id').value;
+		var note = document.getElementById('field-note').value;
+		// url is to make the field in the active field-group
+		var url = this.make_url("/edit/inputs/create-field/") + encodeURIComponent(this.act_fgroup_uuid);
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: {
+				label: label,
+				predicate_uuid: predicate_uuid,
+				note: note,
+				csrfmiddlewaretoken: csrftoken},
+			success: this.exec_createFieldDone,
+			error: function (request, status, error) {
+				alert('Creating the field failed, sadly. Status: ' + request.status);
+			} 
+		}); 
+	}
+	this.exec_createFieldDone = function(data){
+		return true;
+	}
+	this.deleteField = function(fgroup_uuid, field_uuid){
+		//set the active field group so as to only
+		//re-render the current field group panel after the change
+		this.act_fgroup_uuid = fgroup_uuid;
+		this.exec_deleteField(field_uuid).then(this.get_fieldgroups_data);
+	}
+	this.exec_deleteField = function(field_uuid){
+		var url = this.make_url("/edit/inputs/delete-field/") + encodeURIComponent(field_uuid);
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: {
+				csrfmiddlewaretoken: csrftoken},
+			success: this.exec_deleteFieldDone,
+			error: function (request, status, error) {
+				alert('Deleting the field failed, sadly. Status: ' + request.status);
+			} 
+		}); 
+	}
+	this.exec_deleteFieldDone = function(data){
+		return true;
+	}
+	this.selectPredicate = function(){
+		var pred = this.entitySearchObj.selected_entity;
+		document.getElementById('field-label').value = pred.label;
+		document.getElementById('field-pred-id').value = pred.id;
+		document.getElementById('field-data-type').value = this.get_human_readable_data_type(pred.data_type);
+		var button_html = [
+		'<button class="btn btn-default" id="field-button" ',
+		'onclick="' + this.name + '.createField();">',
+		'<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+		' Create',
+		'</button>'
+		].join(' ');
+		document.getElementById('field-button-area').innerHTML = button_html;
+	}
+	this.create_edit_field_html = function(fgroup_uuid, field_uuid){
+		this.act_fgroup_uuid = fgroup_uuid;
+		var field = false;
+		if (field_uuid != false){
+			var label_placeholder = '';
+			var pred_id_placeholder = '';
+			field = this.get_field_obj(field_uuid);
+			var human_field_uuid = field_uuid;
+			var human_data_type = this.get_human_readable_data_type(field.data_type);
+		}
+		if (field == false) {
+			//code for making a brand new field
+			var label_placeholder = ' placeholder="Data entry label for field" ';
+			var pred_id_placeholder = ' placeholder="UUID for the predicate" ';
+			var human_data_type = '';
+			var human_field_uuid = '[New field]';
+			field = {'id': false,
+					 'label': '',
+			         'note': '',
+					 'predicate_uuid': '',
+					 'data_type': ''};
+		}
+		/* changes global contextSearchObj from entities/entities.js */
+		var predicateSearchObj = new searchEntityObj();
+		predicateSearchObj.name = this.name + ".entitySearchObj";
+		predicateSearchObj.entities_panel_title = "Select Descriptive Field";
+		predicateSearchObj.limit_item_type = "predicates";
+		predicateSearchObj.limit_project_uuid = "0," + project_uuid;
+		var afterSelectDone = {
+			exec: function(){
+					return act_profile.selectPredicate();
+				}
+			};
+		predicateSearchObj.afterSelectDone = afterSelectDone;
+		var entityInterfaceHTML = predicateSearchObj.generateEntitiesInterface();
+		console.log(predicateSearchObj);
+		this.entitySearchObj = predicateSearchObj; 
+		
+		var html = [
+		'<div>',
+		'<div class="row">',
+		'<div class="col-xs-6">',
+			'<div class="form-group">',
+			'<label for="field-label">Field Label</label>',
+			'<input id="field-label" class="form-control input-sm" ',
+			'type="text" value="' + field.label + '" ' + label_placeholder + ' />',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="field-pred-id">Predicate UUID</label>',
+			'<input id="field-pred-id" class="form-control input-sm" ',
+			'type="text" value="' + field.predicate_uuid + '" ' + pred_id_placeholder + ' />',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="field-data-type">Data Type</label>',
+			'<input id="field-data-type" class="form-control input-sm" ',
+			'type="text" value="' + human_data_type + '" readonly />',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="field-note">Explanatory Note</label>',
+			'<textarea id="field-note" class="form-control input-sm" rows="3">',
+			field.note,
+			'</textarea>',
+			'</div>',
+			'<div class="form-group">',
+			'<input id="field-id" type="hidden" value="' + field.id + '" />',
+			'<label for="field-id-hr">Field ID</label>',
+			'<input id="field-id-hr" class="form-control input-sm" ',
+			'type="text" value="' + human_field_uuid + '" readonly />',
+			'<p class="small">ID for the field in this profile. Is different ',
+			'from the Predicate UUID, because a given predicate maybe used more ',
+			'than once in a data entry form.</p>',
+			'</div>',
+			'<div id="field-button-area">',
+			'</div>',
+		'</div>',
+		'<div class="col-xs-6">',
+		entityInterfaceHTML,
+		'</div>',
+		'</div>',
+		'</div>'
+		].join("\n");
 		return html;
 	}
-	this.make_field_group_html = function(fgroup){
-		// makes the HTML for a panel that contains a field group
-		var table_html = '<table class="table table-condensed table-hover table-striped">';
-		table_html += '<tbody>';
+	
+	
+	/* ---------------------------------------
+	 * Helper functions
+	 * used throughout
+	 * ---------------------------------------
+	 */
+	this.get_fieldgroup_obj = function(fgroup_uuid){
+		// looks through the list of fieldgroups from the downloaded
+		// data kept in memory to find an object for the
+		// field group with the right UUID
+		var output_fgroup = false;
+		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
+			var fgroup = this.data.fgroups[i];
+			if (fgroup.id == fgroup_uuid){
+				output_fgroup = fgroup;
+				break;
+			}
+		}
+		return output_fgroup; 
+	}
+	this.get_field_obj_in_fieldgroup = function(fgroup, field_uuid){
+		// looks for a field in a field group
+		var output_field = false;
 		for (var i = 0, length = fgroup.fields.length; i < length; i++) {
 			var field = fgroup.fields[i];
-			var sort_buttons_html = "";
-			if (length > 1) {
-				var sort_buttons_html = [
-				'<div style="margin-top: 5px;">',
-				'<button class="btn btn btn-info btn-xs" ',
-				'onclick="' + this.name + '.rankField(\'' + field.id + '\', -1);" ',
-				'title="Higher rank in sort order">',
-				'<span class="glyphicon glyphicon-arrow-up"></span>',
-				'</button>',
-				'</div>',
-				'<div style="margin-top: 2px;">',
-				'<button class="btn btn btn-info btn-xs" ',
-				'onclick="' + this.name + '.rankField(\'' + field.id + '\', 1);" ',
-				'title="Lower rank in sort order">',
-				'<span class="glyphicon glyphicon-arrow-down"></span>',
-				'</button>',
-				'</div>'
-				].join("\n");
+			if (field.id == field_uuuid) {
+				output_field = field;
+				break;
 			}
-			if (field.oc_required) {
-				var pred_link_html = "<em>Open Context required field</em>";
-				var delete_button_html = [
-				'<div style="margin-top: 10px;">',
-				'<button class="btn btn-danger btn-xs" ',
-				'disabled="disabled" title="Delete disabled for this field">',
-				'<span class="glyphicon glyphicon-remove-sign"></span>',
-				'</button>',
-				'</div>'
-				].join('\n');
-			}
-			else{
-				var pred_link_html = [
-				'<a target="_blank" href="' + this.make_url("/predicates/" + field.predicate_uuid) + '">',
-				'http://opencontext.org/predicates/' +  field.predicate_uuid + ' ',
-				'<span class="glyphicon glyphicon-new-window"></span></a>'
-				].join(' ');
-				var delete_button_html = [
-				'<div style="margin-top: 10px;">',
-				'<button class="btn btn-danger btn-xs" ',
-				'onclick="' + this.name + '.deleteField(\'' + field.id + '\');" title="Delete this field">',
-				'<span class="glyphicon glyphicon-remove-sign"></span>',
-				'</button>',
-				'</div>'
-				].join('\n');
-			}
-			var pred_html = [
-			'<div style="padding-bottom: 15px;">',
-			field.label,
-			'<br/>',
-			'<samp class="uri-id">',
-			pred_link_html,
-			'</samp>',
-			'</div>'
-			].join("\n");
-			
-			var field_html = [
-			'<tr>',
-			'<td class="col-xs-1">',
-			delete_button_html,
-			'</td>',
-			'<td class="col-xs-1">',
-			sort_buttons_html,
-			'</td>',
-			'<td class="col-xs-10">',
-			pred_html,
-			'</td>',
-			'</tr>'
-			].join('\n');
-			table_html += field_html;
 		}
-		table_html += '</tbody>';
-		table_html += '</table>';
-		
-		if (fgroup.note.length < 2) {
-			var note = '[No explanatory note provided]';
+		return output_field;
+	}
+	this.get_field_obj = function(field_uuid){
+		// looks through the list of fieldgroups from the downloaded
+		// data kept in memory to find an object for the
+		// field group with the right UUID
+		var output_field = false;
+		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
+			var fgroup = this.data.fgroups[i];
+			var field = this.get_field_obj_in_fieldgroup(fgroup, field_uuid);
+			if (field != false) {
+				output_field = field;
+				break;
+			}
+		}
+		return output_field; 
+	}
+	this.cancelDelete = function(){
+		$("#smallModal").modal('hide');
+	}
+	this.get_human_readable_data_type = function(data_type){
+		// gets the human readable version of a data-type
+		var data_types = {
+			'id': 'URI identified categories/types',
+			'xsd:double': 'Decimal',
+			'xsd:integer': 'Integer',
+			'xsd:boolean': 'True/false (Boolean)',
+			'xsd:date': 'Calendar date / datetime',
+			'xsd:string': 'Alphanumeric text'
+		};
+		if (data_type in data_types) {
+			return data_types[data_type];
 		}
 		else{
-			var note = fgroup.note;
+			return '[Unknown: ' + data_type + ']';
 		}
-		
-		var body_html = [
-			'<div class="well well-sm">',
-			'<p><strong>Field Group Metadata</strong></p>',
-			'<div class="row">',
-			'<div class="col-xs-1">',
-				'<div style="margin-top: 15px;">',
-					'<button class="btn btn-default btn-xs" ',
-					'onclick="' + this.name + '.editFieldGroup(\'' + fgroup.id + '\', -1);" ',
-					'title="Edit this field group">',
-					'<span class="glyphicon glyphicon-edit"></span>',
-					'</button>',
-				'</div>',
-			'</div>',
-			'<div class="col-xs-1">',
-				'<div style="margin-top: 15px;">',
-					'<button class="btn btn-danger btn-xs" ',
-					'onclick="' + this.name + '.deleteFieldGroup(\'' + fgroup.id + '\', 1);" ',
-					'title="Delete this field group">',
-					'<span class="glyphicon glyphicon-remove-sign" aria-hidden="true"></span>',
-					'</button>',
-				'</div>',
-			'</div>',
-			'<div class="col-xs-1">',
-				'<div style="margin-top: 5px;">',
-					'<button class="btn btn btn-info btn-xs" ',
-					'onclick="' + this.name + '.rankFieldGroup(\'' + fgroup.id + '\', -1);" ',
-					'title="Higher rank in sort order">',
-					'<span class="glyphicon glyphicon-arrow-up"></span>',
-					'</button>',
-					'</div>',
-					'<div style="margin-top: 2px;">',
-					'<button class="btn btn btn-info btn-xs" ',
-					'onclick="' + this.name + '.rankFieldGroup(\'' + fgroup.id + '\', 1);" ',
-					'title="Lower rank in sort order">',
-					'<span class="glyphicon glyphicon-arrow-down"></span>',
-					'</button>',
-				'</div>',
-			'</div>',
-			'<div class="col-xs-9">',
-				'<ul>',
-				'<li>' + fgroup.visibility.toUpperCase() + ': ' + fgroup.vis_note + '</li>',
-				'<li>' + note + '</li>',
-				'</ul>',
-			'</div>',
-			'</div>',
-			'</div>',
-			'<div class="well well-sm">',
-			'<p><strong>Fields (' + fgroup.fields.length + ')</strong></p>',
-			table_html,
-			'</div>'
-		].join("\n");
-		
-		
-		var panel_num = this.get_next_panel_num();
-		var meta_panel = new panel(panel_num);
-		meta_panel.title_html = fgroup.label;
-		meta_panel.body_html = body_html;
-		return meta_panel.make_html();
 	}
 	this.make_url = function(relative_url){
 	//makes a URL for requests, checking if the base_url is set	

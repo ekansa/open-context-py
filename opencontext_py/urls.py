@@ -183,6 +183,14 @@ urlpatterns = patterns('',
                            name='edit_input_update_field_group'),
                        url(r'^edit/inputs/delete-field-group/(?P<fgroup_uuid>\S+)', InputProfileViews.delete_field_group,
                            name='edit_input_delete_field_group'),
+                       url(r'^edit/inputs/create-field/(?P<fgroup_uuid>\S+)', InputProfileViews.create_field,
+                           name='edit_input_create_field'),
+                       url(r'^edit/inputs/update-field/(?P<field_uuid>\S+)', InputProfileViews.update_field,
+                           name='edit_input_update_field'),
+                       url(r'^edit/inputs/delete-field/(?P<field_uuid>\S+)', InputProfileViews.delete_field,
+                           name='edit_input_delete_field'),
+                       url(r'^edit/inputs/reorder-item/(?P<uuid>\S+)', InputProfileViews.reorder_item,
+                           name='edit_input_reorder_item'),
                        # --------------------------
                        # EDITING ROOT
                        # --------------------------

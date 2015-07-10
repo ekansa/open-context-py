@@ -10,6 +10,8 @@ from opencontext_py.apps.edit.inputs.profiles.manage import ManageInputProfile
 from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.fieldgroups.manage import ManageInputFieldGroup
+from opencontext_py.apps.edit.inputs.inputfields.manage import ManageInputField
+
 
 @ensure_csrf_cookie
 def profile_edit(request, profile_uuid):
@@ -74,13 +76,11 @@ def json_view(request, profile_uuid):
         raise Http404
 
 
-"""
-------------------------------------------------
-BELOW HANDLE AJAX REQUESTS
-TO CREATE, UPDATE, DELETE, and DUPLICATE
-InputProfiles
-------------------------------------------------
-"""
+# ------------------------------------------------
+# BELOW HANDLE AJAX REQUESTS
+# TO CREATE, UPDATE, DELETE, and DUPLICATE
+# InputProfiles
+# ------------------------------------------------
 def create(request, project_uuid):
     """ Handles POST requests to create a new input profile """
     proj_inp = ProjectInputs(project_uuid, request)
@@ -219,13 +219,62 @@ def duplicate(request, profile_uuid):
         raise Http404
 
 
-"""
-------------------------------------------------
-BELOW HANDLE AJAX REQUESTS
-TO CREATE, UPDATE, DELETE, and DUPLICATE
-InputFieldGroups
-------------------------------------------------
-"""
+# ------------------------------------------------
+# BELOW HANDLE AJAX REQUESTS
+# TO CREATE, UPDATE, DELETE, and DUPLICATE
+# InputFieldGroups AND InputFields
+# ------------------------------------------------
+def reorder_item(request, uuid):
+    """ handles a request to reorder an item """
+    found = False
+    fieldgroup_obj = False
+    field_obj = False
+    mifg = ManageInputFieldGroup()
+    fieldgroup_obj = mifg.get_field_group(uuid)
+    if fieldgroup_obj is not False:
+        found = True
+        project_uuid = fieldgroup_obj.project_uuid
+        item_type = 'field-groups'
+    else:
+        mif = ManageInputField()
+        field_obj = mif.get_field(uuid)
+        if field_obj is not False:
+            project_uuid = field_obj.project_uuid
+            found = True
+            item_type = 'fields'
+    if found:
+        if request.method == 'POST':
+            proj_inp = ProjectInputs(project_uuid, request)
+            if proj_inp.edit_permitted or request.user.is_superuser:
+                # ok to reorder the item
+                if 'sort_change' in request.POST:
+                    sort_change = request.POST['sort_change']
+                else:
+                    sort_change = 0
+                result = mifg.update_sort_field_group_or_field(sort_change, uuid, item_type)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+# ------------------------------------------------
+# BELOW HANDLE AJAX REQUESTS
+# TO CREATE, UPDATE, DELETE, and DUPLICATE
+# InputFieldGroups
+# ------------------------------------------------
 def create_field_group(request, profile_uuid):
     """ Creates a field group for a given InputProfile
     """
@@ -299,6 +348,104 @@ def delete_field_group(request, fgroup_uuid):
             proj_inp = ProjectInputs(inp_obj.project_uuid, request)
             if proj_inp.edit_permitted or request.user.is_superuser:
                 result = mifg.delete(fgroup_uuid)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+# ------------------------------------------------
+# BELOW HANDLE AJAX REQUESTS
+# TO CREATE, UPDATE, DELETE, and DUPLICATE
+# InputFields
+# ------------------------------------------------
+def create_field(request, fgroup_uuid):
+    """ Creates a field group for a given InputProfile
+    """
+    mifg = ManageInputFieldGroup()
+    inp_obj = mifg.get_field_group(fgroup_uuid)
+    if inp_obj is not False:
+        mif = ManageInputField()
+        mif.fgroup_uuid = fgroup_uuid
+        mif.profile_uuid = inp_obj.profile_uuid
+        mif.project_uuid = inp_obj.project_uuid
+        if request.method == 'POST':
+            # now check to see if the we have edit permissions
+            proj_inp = ProjectInputs(inp_obj.project_uuid, request)
+            if proj_inp.edit_permitted or request.user.is_superuser:
+                # now finally try to create the Field
+                result = mif.create_update_from_post(request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+def update_field(request, field_uuid):
+    """ Updates a field group for a given InputProfile
+    """
+    mifg = ManageInputFieldGroup()
+    inp_obj = mifg.get_field_group(fgroup_uuid)
+    if inp_obj is not False:
+        if request.method == 'POST':
+            # now check to see if the we have edit permissions
+            proj_inp = ProjectInputs(inp_obj.project_uuid, request)
+            if proj_inp.edit_permitted or request.user.is_superuser:
+                result = mifg.create_update_from_post(request.POST,
+                                                      fgroup_uuid)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+def delete_field(request, field_uuid):
+    """ Delete a field group for a given InputProfile
+    """
+    mif = ManageInputField()
+    inp_obj = mif.get_field(field_uuid)
+    if inp_obj is not False:
+        if request.method == 'POST':
+            # now check to see if the we have edit permissions
+            proj_inp = ProjectInputs(inp_obj.project_uuid, request)
+            if proj_inp.edit_permitted or request.user.is_superuser:
+                result = mif.delete(field_uuid)
                 json_output = json.dumps(result,
                                          indent=4,
                                          ensure_ascii=False)

@@ -19,6 +19,7 @@ class InputFieldGroup(models.Model):
     sort = models.IntegerField()  # sort value a field in a given cell
     visibility = models.CharField(max_length=50)  # label for data entry form
     note = models.TextField()  # note for instructions in data entry
+    obs_num = models.IntegerField()  # value for the observation number for 
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
 
@@ -36,6 +37,8 @@ class InputFieldGroup(models.Model):
         saves the record with creation date
         """
         self.visibility = self.validate_visibility(self.visibility)
+        if self.obs_num is None:
+            self.obs_num = 1
         if self.created is None:
             self.created = datetime.now()
         super(InputFieldGroup, self).save(*args, **kwargs)

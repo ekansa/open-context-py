@@ -117,8 +117,6 @@ class InputProfileTemplating():
                     add_ok = False
                     field = LastUpdatedOrderedDict()
                     field['id'] = inp_field.uuid
-                    field['row'] = inp_field.row_num
-                    field['col'] = inp_field.col_num
                     field['sort'] = inp_field.sort
                     field['predicate_uuid'] = inp_field.predicate_uuid
                     if inp_field.predicate_uuid not in InputField.PREDICATE_ITEMS:
