@@ -1,4 +1,5 @@
 import time
+import uuid as GenUUID
 from django.db import models
 from django.db.models import Q, Count
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -6,15 +7,9 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ocitems.documents.models import OCdocument
-from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
-from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
+from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
+from opencontext_py.apps.edit.inputs.inputfields.models import InputField
 
 
 class ProjectInputs():
@@ -39,3 +34,30 @@ class ProjectInputs():
         else:
             self.edit_permitted = False
         self.creator_uuid = False
+
+    def get_profiles(self):
+        """ gets the Input Profiles associated with a project """
+        output = []
+        profs = InputProfile.objects\
+                            .filter(project_uuid=self.project_uuid)
+        for prof in profs:
+            item = LastUpdatedOrderedDict()
+            item['id'] = prof.uuid
+            item['label'] = prof.label
+            item['item_type'] = prof.item_type
+            item['note'] = prof.note
+            fgroups = InputFieldGroup.objects\
+                                     .filter(profile_uuid=prof.uuid)
+            item['fgroup_count'] = len(fgroups)
+            fields = InputField.objects\
+                               .filter(profile_uuid=prof.uuid)
+            item['field_count'] = len(fields)
+            item['created'] = prof.created.date().isoformat()
+            item['updated'] = prof.updated.date().isoformat()
+            output.append(item)
+        return output
+
+    def mint_new_uuid(self):
+        """ Creates a new UUID """
+        uuid = GenUUID.uuid4()
+        return str(uuid)

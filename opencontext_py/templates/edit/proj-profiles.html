@@ -7,14 +7,28 @@
                 <h4 class="panel-title">Data Entry Profiles</h4>
             </div>            
             <div class="col-sm-6 text-right">
-                <h4 class="panel-title">{{ status.manifest_summary.persons|intcomma }} persons</h4>
+                <h4 class="panel-title" id="profile-total-count">0 profiles</h4>
             </div>
         </div>
     </div>
-    <div class="panel-body">
+    <div class="panel-body" id="project-profiles">
         Useful summary information will go here
     </div>
+    
+    <script type="text/javascript">
+        <!--
+        var proj_profiles = false;
+        function project_profiles(){
+            // loads the project input profiles
+            proj_profiles = new profiles("project-profiles", project_uuid);
+            proj_profiles.get_data();
+        }
+        -->
+    </script>
+    
+    
 </div>
+
 
 
 {% endblock %}

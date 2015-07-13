@@ -377,8 +377,20 @@ function createProfileFields(){
 	].join('\n');
 	return html;
 }
-
 function createNewProfile(){
+	 if (typeof profiles != "undefined" && typeof proj_profiles != "undefined") {
+		  // chain ajax requests
+		  exec_createNewProfile().then(function(){
+				proj_profiles = new profiles("project-profiles", project_uuid);
+            proj_profiles.get_data();
+		  });
+	 }
+	 else{
+		  exec_createNewProfile();
+	 }
+}
+
+function exec_createNewProfile(){
 	var label = document.getElementById("new-item-label").value;
 	var note = document.getElementById("new-item-note").value;
 	var new_project_uuid = document.getElementById("new-item-project-uuid").value;

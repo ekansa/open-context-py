@@ -141,6 +141,7 @@ class ManageInputProfile():
                 fgroup.project_uuid = project_uuid
                 fgroup.profile_uuid = profile_uuid
                 fgroup.label = 'Open Context Required Fields'
+                fgroup.visibility = 'open'
                 fgroup.sort = 0
                 fgroup.note = 'Automatically generated group of mandatory fields for ' + item_type + ' records.'
                 fgroup.save()

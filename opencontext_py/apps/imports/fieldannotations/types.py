@@ -10,7 +10,7 @@ from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
-from opencontext_py.apps.ocitems.octypes.management import TypeManagement
+from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement

@@ -5,12 +5,78 @@ from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.inputs.projectinputs import ProjectInputs
+from opencontext_py.apps.edit.inputs.labeling import InputLabeling
 from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.profiles.manage import ManageInputProfile
 from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.fieldgroups.manage import ManageInputFieldGroup
 from opencontext_py.apps.edit.inputs.inputfields.manage import ManageInputField
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+
+
+@ensure_csrf_cookie
+def profile_use(request, profile_uuid, edit_uuid):
+    """ Handle requests to use a profile to create
+        or edit a record
+    """
+    ipt = InputProfileTemplating()
+    exists = ipt.check_exists(profile_uuid)
+    if exists:
+        # now check to see if the we have edit permissions
+        proj_inp = ProjectInputs(ipt.project_uuid, request)
+        if proj_inp.edit_permitted or request.user.is_superuser:
+            if edit_uuid != 'new':
+                try:
+                    edit_man = Manifest.objects.get(uuid=edit_uuid)
+                except Manifest.DoesNotExist:
+                    # trying to use this profile to edit something that
+                    # does not exist
+                    edit_man = False
+                    raise Http404
+            else:
+                edit_uuid = proj_inp.mint_new_uuid
+                edit_man = False
+            if 'prefix' in request.GET:
+                prefix = request.GET['prefix']
+            else:
+                prefix = ''
+            if 'id_len' in request.GET:
+                try:
+                    id_len = int(float(request.GET['id_len']))
+                except:
+                    id_len = False
+            else:
+                id_len = False
+            rp = RootPath()
+            base_url = rp.get_baseurl()
+            temp_item = {'uuid': ipt.uuid,
+                         'label': ipt.inp_prof.label,
+                         'project_uuid': ipt.project_uuid,
+                         'project': ipt.project,
+                         'edit_man': edit_man,
+                         'edit_uuid': edit_uuid,
+                         'label_prefix': prefix,
+                         'label_id_len': id_len,
+                         'context': False,
+                         'act_nav': 'profiles'}
+            template = loader.get_template('edit/profiles/profile-use.html')
+            context = RequestContext(request,
+                                     {'item': temp_item,
+                                      'super_user': request.user.is_superuser,
+                                      'icons': ItemBasicEdit.UI_ICONS,
+                                      'field_group_vis': InputFieldGroup.GROUP_VIS,
+                                      'base_url': base_url})
+            return HttpResponse(template.render(context))
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        raise Http404
 
 
 @ensure_csrf_cookie
@@ -75,6 +141,95 @@ def json_view(request, profile_uuid):
     else:
         raise Http404
 
+
+# ------------------------------------------------
+# BELOW HANDLE AJAX REQUESTS
+# TO get a JSON Index of
+# InputProfiles for a project
+# ------------------------------------------------
+def index_json(request, project_uuid):
+    """ handles get requests to make
+        a JSON index of input profiles for a project
+    """
+    proj_inp = ProjectInputs(project_uuid, request)
+    if proj_inp.manifest is not False:
+        if proj_inp.edit_permitted or request.user.is_superuser:
+            result = proj_inp.get_profiles()
+            json_output = json.dumps(result,
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        raise Http404
+
+
+def label_check(request, project_uuid):
+    """ handles get requests to make
+        a JSON index of input profiles for a project
+    """
+    proj_inp = ProjectInputs(project_uuid, request)
+    if proj_inp.manifest is not False:
+        if proj_inp.edit_permitted or request.user.is_superuser:
+            ilab = InputLabeling()
+            ilab.project_uuid = project_uuid
+            in_error = False
+            error = {'error': ''}
+            if 'item_type' in request.GET:
+                ilab.item_type = request.GET['item_type']
+            else:
+                in_error = True
+                error['error'] += 'Need an "item_type" parameter in request. '
+                ilab.item_type = False
+            if 'context_uuid' in request.GET:
+                ilab.context_uuid = request.GET['context_uuid']
+            if 'prefix' in request.GET:
+                prefix = request.GET['prefix']
+            else:
+                prefix = ''
+            if 'id_len' in request.GET:
+                try:
+                    id_len = int(float(request.GET['id_len']))
+                except:
+                    error['error'] += 'Need an integer value for the "id_len" parameter. '
+            else:
+                id_len = False
+            if 'label' in request.GET:
+                label = request.GET['label']
+            else:
+                label = False
+            if in_error is False:
+                result = ilab.check_make_valid_label(label,
+                                                     prefix,
+                                                     id_len)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps(error,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=400)
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        raise Http404
 
 # ------------------------------------------------
 # BELOW HANDLE AJAX REQUESTS

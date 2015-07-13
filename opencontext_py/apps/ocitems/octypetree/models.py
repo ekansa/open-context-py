@@ -4,7 +4,7 @@ from datetime import datetime, date, time
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.octypes.management import TypeManagement
+from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement

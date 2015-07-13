@@ -4,8 +4,8 @@ from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
-from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
-from opencontext_py.apps.ocitems.strings.management import StringManagement
+from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 
 

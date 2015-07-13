@@ -232,7 +232,7 @@ class ManifestGeneration():
             print('Item: ' + nslug.label + ' has slug: ' + nslug.slug)
             cc += 1
         return cc
-    
+
     def redo_slugs_for_source_id(self, source_id):
         """ makes slugs for manifest items from a given source """
         man_objs = Manifest.objects.filter(source_id=source_id)

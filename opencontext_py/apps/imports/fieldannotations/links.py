@@ -5,7 +5,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.predicates.management import PredicateManagement
+from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile

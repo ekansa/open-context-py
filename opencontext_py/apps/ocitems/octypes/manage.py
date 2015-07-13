@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.strings.management import StringManagement
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 
