@@ -23,6 +23,7 @@ class InputLabeling():
     """
 
     def __init__(self):
+        self.uuid = False
         self.item_type = False
         self.project_uuid = False
         self.context_uuid = False
@@ -45,16 +46,20 @@ class InputLabeling():
             if len(label) < 1:
                 label = False
         output['checked'] = label
+        output['suggested'] = self.suggest_valid_label(prefix,
+                                                       num_id_len)
         if label is False:
             output['exists'] = None
+            output['valid'] = None
         else:
-            output['exists'] = self.check_label_exists_in_scope(label)
-        if output['exists'] \
-           or output['exists'] is None:
-            output['suggested'] = self.suggest_valid_label(prefix,
-                                                           num_id_len)
-        else:
-            output['suggested'] = label
+            exist_id = self.check_label_exists_in_scope(label)
+            if exist_id is False:
+                output['exists'] = False
+                output['valid'] = True
+            else:
+                output['exists'] = True
+                output['exists_uuid'] = exist_id
+                output['valid'] = False
         return output
 
     def suggest_valid_label(self,
@@ -65,6 +70,10 @@ class InputLabeling():
             unique for the whole project or
             for a context
         """
+        if self.uuid is not False:
+            uuid_exclude = 'skip'
+        else:
+            uuid_exclude = self.uuid
         man_list = []
         if self.context_uuid is not False:
             uuids = []
@@ -91,26 +100,32 @@ class InputLabeling():
                     man_list = Manifest.objects\
                                        .filter(project_uuid=self.project_uuid,
                                                uuid__in=uuids)\
+                                       .exclude(uuid=uuid_exclude)\
                                        .order_by('-label')
                 else:
                     man_list = Manifest.objects\
                                        .filter(project_uuid=self.project_uuid,
-                                               label__contains=prefix,
+                                               label__startswith=prefix,
                                                uuid__in=uuids)\
+                                       .exclude(uuid=uuid_exclude)\
                                        .order_by('-label')
         else:
+            # print('Params: ' + self.project_uuid + ', ' + self.item_type + ', ' + prefix);
             if len(prefix) < 1:
                 man_list = Manifest.objects\
                                    .filter(project_uuid=self.project_uuid,
                                            item_type=self.item_type)\
-                                   .order_by('-label')[:5]
+                                   .exclude(uuid=uuid_exclude)\
+                                   .order_by('-label')[:1]
             else:
                 man_list = Manifest.objects\
                                    .filter(project_uuid=self.project_uuid,
-                                           label__contains=prefix,
+                                           label__startswith=prefix,
                                            item_type=self.item_type)\
-                                   .order_by('-label')[:5]
+                                   .exclude(uuid=uuid_exclude)\
+                                   .order_by('-label')[:1]
         if len(man_list) > 0:
+            # print('Checking: ' + man_list[0].label)
             if len(prefix) > 0:
                 label_id_part = man_list[0].label.replace(prefix, '')
             else:
@@ -126,22 +141,26 @@ class InputLabeling():
             new_id = label_increment
         new_label = prefix + self.prepend_zeros(new_id, num_id_len)
         new_label_exists = self.check_label_exists_in_scope(new_label)
-        if new_label_exists:
+        if new_label_exists is not False:
             # despite our best efforts, we made a new label that already exists
             # try again
             self.recusion_count += 1
+            label_increment += 1
             if self.recusion_count <= 20:
                 # do this recursively to make a new label
-                new_label = self.suggest_valid_label(unique_in_project,
-                                                     prefix,
+                new_label = self.suggest_valid_label(prefix,
                                                      num_id_len,
-                                                     label_increment + 1)
+                                                     label_increment)
         return new_label
 
     def check_label_exists_in_scope(self, label):
         """ checks to see if a label already exists
             within the scope of a project or related context
         """
+        if self.uuid is not False:
+            uuid_exclude = 'skip'
+        else:
+            uuid_exclude = self.uuid
         man_list = []
         if self.context_uuid is not False:
             uuids = []
@@ -167,13 +186,15 @@ class InputLabeling():
                 man_list = Manifest.objects\
                                    .filter(project_uuid=self.project_uuid,
                                            label=label,
-                                           uuid__in=uuids)
+                                           uuid__in=uuids)\
+                                   .exclude(uuid=uuid_exclude)
         else:
             man_list = Manifest.objects\
                                .filter(project_uuid=self.project_uuid,
-                                       label=label)
+                                       label=label)\
+                               .exclude(uuid=uuid_exclude)
         if len(man_list) > 0:
-            label_exists = True
+            label_exists = man_list[0].uuid
         else:
             label_exists = False
         return label_exists

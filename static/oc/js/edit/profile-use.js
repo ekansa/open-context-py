@@ -4,14 +4,22 @@
 
 function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.act_dom_id = "profile-data";
+	this.act_meta_dom_id = "profile-meta";
 	this.name = "act_profile";
+	this.project_uuid = project_uuid;
 	this.profile_uuid = profile_uuid;
 	this.edit_uuid = edit_uuid;
 	this.edit_new = edit_new;
 	this.label_prefix = '';
 	this.label_id_len = false;
+	this.item_type = false;
+	this.context_uuid = false;
 	this.data = false;
 	this.act_fgroup_uuid = false;
+	this.act_field_uuid = false;
+	this.passed_value = false; // used to send data for AJAX requests when using the DOM is less reliable
+	this.preset_label = false;
+	this.label_pred_uuid = 'oc-gen:label';
 	this.entitySearchObj = false
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID 
 	this.get_data = function(){
@@ -31,11 +39,18 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	}
 	this.get_dataDone = function(data){
 		this.data = data;
+		this.item_type = data.item_type;
 		if (document.getElementById(this.act_dom_id)) {
+			// make metadata about the profile
+			// and put into the right dom id
+			var act_dom = document.getElementById(this.act_meta_dom_id);
+			var meta_html = this.make_profile_meta_html(data);
+			act_dom.innerHTML = meta_html;
+		}
+		if (document.getElementById(this.act_dom_id)) {
+			//put the field groups into the right dom ID
 			var act_dom = document.getElementById(this.act_dom_id);
 			var html = "";
-		    // creates metadata edit interface in a collapsable panel, id=1
-			html += this.make_profile_meta_html(data);
 			html += '<div id="field-groups">';
 			html += this.make_field_groups_html(data);
 			html += '</div>';
@@ -90,7 +105,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	}
 	
 	/* ---------------------------------------
-	 * Profile Update, Delete
+	 * Profile HTML display
 	 * functions
 	 * ---------------------------------------
 	 */
@@ -102,11 +117,11 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var fgroup = data.fgroups[i];
 			num_fields += fgroup.fields.length; 
 		}
-		var title_html = "About Profile: " + data.label;
+		var title_html = "About: " + data.label;
 		var body_html = [
 		'<div>',
 		'<div class="row">',
-		'<div class="col-xs-4">',
+		'<div class="col-xs-12">',
 			'<dl>',
 			'<dt>Item Type</dt>',
 			'<dd>' + this.describe_item_type_html(data.item_type) + '</dd>',
@@ -114,7 +129,9 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'<dd>' + num_fields + ' fields in ' + data.fgroups.length + ' groups</dd>',
 			'</dl>',
 		'</div>',
-		'<div class="col-xs-8">',
+		'</div>',
+		'<div class="row">',
+		'<div class="col-xs-12">',
 			'<dl>',
 			'<dt>Explanatory Note</dt>',
 			'<dd>' + data.note + '</dd>',
@@ -141,8 +158,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	
 	
 	/* ---------------------------------------
-	 * Field Group Create, Update, Delete
-	 * functions
+	 * Field Group and Field HTML 
 	 * ---------------------------------------
 	 */
 	this.make_field_groups_html = function(data){
@@ -161,17 +177,23 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var field_html = '';
 		for (var i = 0, length = fgroup.fields.length; i < length; i++) {
 			var field = fgroup.fields[i];
-			field_html += '<tr><td>';
-			if (field.predicate_uuid == 'oc-gen:label') {
+			if (field.predicate_uuid == this.label_pred_uuid) {
 				field_html += this.make_label_field_html(field);
 			}
 			else{
 				field_html += this.make_field_html(field);
 			}
-			field_html += '</td></tr>';
 		}
 		var body_html = [
 			'<table class="table table-striped">',
+			'<thead>',
+			'<tr>',
+			'<th class="col-xs-1">Update</th>',
+			'<th class="col-xs-5">Field</th>',
+			'<th class="col-xs-6">About</th>',
+			'</th>',
+			'</tr>',
+			'</thead>',
 			'<tbody>',
 			field_html,
 			'</tbody>',
@@ -186,21 +208,24 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.make_field_html = function(field){
 		
 		var html = [
-		'<div class="row">',
-		'<div class="col-xs-1">',
+		'<tr>',
+		'<td>',
       this.make_field_update_buttom(field.id),
-		'</div>',
-		'<div class="col-xs-5">',
-		'<div class="form-group">',
-		'<label for="f-' + field.id + '">' + field.label + '</label>',
-		'<input id="f-' + field.id + '" class="form-control input-sm" ',
-		'type="text" value="" />',
-		'</div>',
-		'</div>',
-		'<div class="col-xs-6">',
-		field.note,
-		'</div>',
-		'</div>'
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-' + field.id + '">' + field.label + '</label>',
+			'<input id="f-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" />',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
 		].join("\n");
 		return html;
 	}
@@ -224,34 +249,52 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		else{
 			var digit_len_val = this.label_id_len;
 		}
+		var id_part_placeholder = ' placeholder="ID number" ';
+		
 		var html = [
-		'<div class="row">',
-		'<div class="col-xs-1">',
+		'<tr>',
+		'<td>',
       this.make_field_update_buttom(field.id),
-		'</div>',
-		'<div class="col-xs-5">',
+		'</td>',
+		'<td>',
 			'<div class="form-group">',
 			'<label for="f-' + field.id + '">' + field.label + '</label>',
 			'<input id="f-' + field.id + '" class="form-control input-sm" ',
 			'type="text" value="" ' + label_placeholder,
-			'onkeydown="' + this.name + '.checkLabel(\'' + field.id + '\');" />',
+			'onkeydown="' + this.name + '.validateLabel(\'' + field.id + '\');" ',
+			'onkeyup="' + this.name + '.validateLabel(\'' + field.id + '\');" ',
+			'/>',
 			'</div>',
-			'<div class="well well-sm">',
+			'<div class="well well-sm small">',
 			'<form class="form-horizontal">',
+			'<div class="form-group">',
+				'<label for="label-prefix" class="col-sm-5 control-label">ID Part</label>',
+				'<div class="col-sm-5">',
+				'<input id="label-id-part" class="form-control input-sm" ',
+				'type="text" value="" ' + id_part_placeholder,
+				//'onkeydown="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'onkeyup="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'/>',
+				'</div>',
+			'</div>',
 			'<div class="form-group">',
 				'<label for="label-prefix" class="col-sm-5 control-label">Label Prefix</label>',
 				'<div class="col-sm-5">',
 				'<input id="label-prefix" class="form-control input-sm" ',
 				'type="text" value="' + this.label_prefix + '" ' + prefix_placeholder,
-				'onkeydown="' + this.name + '.checkLabel(\'' + field.id + '\');" />',
+				'onkeydown="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'onkeyup="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'/>',
 				'</div>',
 			'</div>',
 			'<div class="form-group">',
-				'<label for="label-prefix" class="col-sm-5 control-label">ID Digit Length</label>',
+				'<label for="label-id-len" class="col-sm-5 control-label">ID Digit Length</label>',
 				'<div class="col-sm-3">',
-				'<input id="label-prefix" class="form-control input-sm" ',
+				'<input id="label-id-len" class="form-control input-sm" ',
 				'type="text" value="' + digit_len_val + '" ',
-				'onkeydown="' + this.name + '.checkLabel(\'' + field.id + '\');" />',
+				'onkeydown="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'onkeyup="' + this.name + '.composeLabel(\'' + field.id + '\');" ',
+				'/>',
 				'</div>',
 			'</div>',
 			'</form>',
@@ -267,28 +310,226 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'Immediate Context</label>',
 			'</div>',
 			'</div>',
-		'</div>',
-		'<div class="col-xs-6">',
-		field.note,
-		'</div>',
-		'</div>'
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
 		].join("\n");
 		return html;
 	}
 	this.make_field_update_buttom = function(field_uuid){
 		
 		var button_html = [
-		'<label>Update</label>',
+		'<div style="margin-top: 22px;">',
 		'<button class="btn btn-default" onclick="' + this.name + '.updateField(\'' + field_uuid + '\');">',
 		'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
 		//' Delete',
 		'</button>',
+		'</div>'
 		].join('\n');
 
 		return button_html;
 	}
-	this.checkLabel = function(field_uuid){
+	
+	
+	/* ---------------------------------------
+	 * User interaction functions
+	 *
+	 * for item labels
+	 * ---------------------------------------
+	 */
+	this.composeLabel = function(field_uuid){
 		
+		var id_part = document.getElementById('label-id-part').value.trim();
+		var prefix = document.getElementById('label-prefix').value.trim();
+		var id_len = parseInt(document.getElementById('label-id-len').value);
+		if (!this.isInt(id_len)) {
+			document.getElementById('label-id-len').value = '';
+			id_len = '';
+			var id_part = id_part.replace(prefix, '');
+		}
+		else{
+			var id_part = id_part.replace(prefix, '');
+			id_part =  this.prepend_zeros(id_part, id_len);
+		}
+		var label = prefix + id_part;
+		document.getElementById('f-' + field_uuid).value = label.trim();
+		if (id_part.length > 0) {
+			if (id_part != ' ') {
+				// the ID part has some values, so one can validate it
+				// with an AJAX request
+				this.passed_value = label;
+				this.validateLabel(field_uuid);
+			}
+		}
+		
+	}
+	this.validateLabel = function(field_uuid){
+		
+		this.act_field_uuid = field_uuid; // so as to remember what field we're validating
+		var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
+		var data = {item_type: this.item_type};
+		
+		var id_len = parseInt(document.getElementById('label-id-len').value);
+		if (this.isInt(id_len)) {
+			data.id_len = id_len;
+		}
+		if (this.passed_value == false) {
+			var label = document.getElementById('f-' + field_uuid).value;
+			if (label.length > 0) {
+				data.label = label.trim();
+			}
+		}
+		else{
+			var label = this.passed_value;
+			this.passed_value = false;
+			if (label.length > 0) {
+				data.label = label.trim();
+			}
+		}
+		
+		var prefix = document.getElementById('label-prefix').value;
+		if (prefix.length > 0) {
+			data.prefix = prefix;
+		}
+		if (this.context_uuid != false) {
+			data.context_uuid = this.context_uuid;
+		}
+		var act_dom = document.getElementById('v-' + field_uuid);
+		act_dom.innerHTML = this.make_loading_gif('Checking label...');
+		return $.ajax({
+			type: "GET",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: data,
+			async: false,
+			success: this.validateLabelDone,
+			error: function (request, status, error) {
+				alert('Item Label validation failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
+   
+	this.presetLabel = function(){
+		var field = this.get_field_obj_by_predicate_uuid(this.label_pred_uuid);
+		if (field != false) {
+			this.act_field_uuid = field.id; // so as to remember what field we're validating
+			var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
+			var data = {
+				item_type: this.item_type,
+			   prefix: this.label_prefix,
+				id_len: this.label_id_len
+			};
+			var act_dom = document.getElementById('v-' + field.id);
+			act_dom.innerHTML = this.make_loading_gif('Suggesting label...');
+			return $.ajax({
+				type: "GET",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				async: true,
+				success: this.validateLabelDone,
+				error: function (request, status, error) {
+					alert('Item Label suggestion failed, sadly. Status: ' + request.status);
+				} 
+			});
+		}
+	}
+	this.validateLabelDone = function(data){
+		var field_uuid = this.act_field_uuid;
+		this.act_field_uuid = false;
+		var act_dom = document.getElementById('v-' + field_uuid);
+		if (data.exists == true) {
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var message_html = [
+				'The label "' + data.checked + '"',
+				'<a href="' + this.make_url('/edit/items/' +  encodeURIComponent(data.exists_uuid)) + '" target="_blank">',
+				'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>',
+				'</a> ',
+				'already exists.',
+			].join('\n');
+			var alert_class = "alert alert-danger";
+			var alert_html = [
+				'<div role="alert" class="' + alert_class + '">',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		}
+		else if (data.exists == false){
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var message_html = [
+				'The label "' + data.checked + '" is not yet in use.',
+			].join('\n');
+			var alert_class = "alert alert-success";
+			var alert_html = [
+				'<div role="alert" class="' + alert_class + '">',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		}
+		else{
+			var alert_html = '';
+		}
+		if (data.suggested != data.checked) {
+			var alert_class = "alert alert-info";
+			if (alert_html.length > 5) {
+				var div_start = ' style="margin-top:-25px;" ';
+			}
+			else{
+				var div_start = '';
+			}
+			var suggested_link = [
+				' role="button" onclick="' + this.name + '.useSuggestedLabel(\'' + field_uuid + '\');" '
+			].join(' ');
+			
+			var suggest_html = [
+			'<div ' + div_start + '>',
+			'<div role="alert" class="' + alert_class + '" id="suggested-alert">',
+			'Suggested Label (Click to use): ',
+			'<a title="Use suggested link" ' + suggested_link + ' >',
+			'<span class="glyphicon glyphicon-circle-arrow-left"></span>',
+			'</a> ',
+			'<a title="Use suggested link" ' + suggested_link + ' >',
+			'<samp class="uri-id" id="suggested-label" style="font-weight:bold;">',
+			data.suggested,
+			'</samp>',
+			'</a>',
+			'</div>',
+			'</div>'
+			].join('\n');
+		}
+		else{
+			var suggest_html = '';
+		}
+		if (this.preset_label) {
+			//we wanted to use the preset label
+			document.getElementById('f-' + field_uuid).value = data.suggested.trim();
+			this.preset_label = false;
+		}
+		
+		
+		var html = [
+			'<div style="margin-top:-16px;">',
+			alert_html,
+			suggest_html,
+			'</div>'
+		].join("\n");
+		act_dom.innerHTML = html;
+	}
+	this.useSuggestedLabel = function(field_uuid){
+		// copies the suggested label into the label field
+		var label = document.getElementById('suggested-label').innerHTML;
+		document.getElementById('f-' + field_uuid).value = label.trim();
+		document.getElementById('suggested-alert').innerHTML = "Using suggested label: " + label;
+		this.passed_value = label.trim();
 	}
 	
 	/* ---------------------------------------
@@ -337,8 +578,41 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		return output_field; 
 	}
+	this.get_field_obj_by_predicate_uuid = function(predicate_uuid){
+		// gets the first field object with a given predicate_uuid
+		var output = false;
+		for (var i = 0, length = this.data.fgroups.length; i < length; i++) {
+			var fgroup = this.data.fgroups[i];
+			for (var f_i = 0, f_length = fgroup.fields.length; f_i < f_length; f_i++) {
+				var field = fgroup.fields[f_i];
+				if (field.predicate_uuid == predicate_uuid) {
+					output = field;
+					break;
+				}
+			}
+		}
+		return output;
+	}
 	this.cancelDelete = function(){
 		$("#smallModal").modal('hide');
+	}
+	this.prepend_zeros = function(id_part, digit_length){
+		// prepends zeros to an appropriate digit length
+		if (this.isInt(digit_length)) {
+			//yes the digit_length is an integer
+			while (id_part.length < (digit_length)) {
+				// prepend a zero
+				id_part = '0' + id_part;
+		   }
+		}
+		return id_part;
+	}
+	this.isInt = function(x){
+        return (typeof x === 'number') && (x % 1 === 0);
+   }
+	this.isFloat = function(n){
+		//checks if something is a float
+		return (typeof n === 'number');
 	}
 	this.get_human_readable_data_type = function(data_type){
 		// gets the human readable version of a data-type
@@ -424,4 +698,5 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		return output;
 	}
+	this.addSecs = function(d, s) {return new Date(d.valueOf()+s*1000);}
 }

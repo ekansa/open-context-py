@@ -205,6 +205,10 @@ def label_check(request, project_uuid):
                 label = request.GET['label']
             else:
                 label = False
+            if 'uuid' in request.GET:
+                ilab.uuid = request.GET['uuid']
+            else:
+                ilab.uuid = False
             if in_error is False:
                 result = ilab.check_make_valid_label(label,
                                                      prefix,

@@ -24,6 +24,7 @@
         {% endif %}
         var edit_uuid = '{{ item.edit_uuid }}';
         {% if item.edit_man != False %}
+            item_type = '{{ item.edit_man.item_type }}';
         var edit_new = false;
         {% else %}
         var edit_new = true;
@@ -65,8 +66,11 @@
             </div>
          </div>
          <div class="col-sm-3">
-         {% include 'edit/item-create.html' %}
-         {% include 'items/project.html' %}
+            <div id="profile-meta">
+               
+            </div>
+            {% include 'edit/item-create.html' %}
+            {% include 'items/project.html' %}
          </div>
           
         {% include 'edit/edit-modal.html' %}
@@ -79,7 +83,17 @@
                 act_profile = new useProfile(uuid, edit_uuid, edit_new);
                 act_profile.label_prefix = label_prefix;
                 act_profile.label_id_len = label_id_len;
-                act_profile.get_data();
+                if (label_prefix.length > 0 || label_id_len != false) {
+                    // add a suggested label
+                    act_profile.preset_label = true;
+                    act_profile.get_data().then(function(){
+                        act_profile.presetLabel();
+                    });
+                }
+                else{
+                    // just get the data without making a suggested label
+                    act_profile.get_data();
+                }
             }
             -->
         </script> 
