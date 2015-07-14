@@ -308,17 +308,19 @@ function hierarchy(parent_id, act_dom_id) {
 
 function load_expand(tree_key, parent_id, act_dom_id, button_dom_id){
 	// expand a node in the tree by loading new data and populating the html
-	if (document.getElementById(act_dom_id)) {
-		var expanded_tree = new hierarchy(parent_id, act_dom_id);
-		if (tree_key in hierarchy_objs) {
-			// so as to use the same request URL for the parent tree
-			expanded_tree.request_url = hierarchy_objs[tree_key].request_url;
-		}
-		expanded_tree.button_dom_id = button_dom_id;
-		expanded_tree.get_data();
-		var tree_key = expanded_tree.object_prefix; 
-		hierarchy_objs[tree_key] = expanded_tree;
-	}
+	 if (document.getElementById(act_dom_id)) {
+		  var expanded_tree = new hierarchy(parent_id, act_dom_id);
+		  if (tree_key in hierarchy_objs) {
+				// so as to use the same request URL for the parent tree
+				expanded_tree.request_url = hierarchy_objs[tree_key].request_url;
+				expanded_tree.exec_primary_title = hierarchy_objs[tree_key].exec_primary_title;
+				expanded_tree.exec_primary_onclick = hierarchy_objs[tree_key].exec_primary_onclick;
+		  }
+		  expanded_tree.button_dom_id = button_dom_id;
+		  expanded_tree.get_data();
+		  var tree_key = expanded_tree.object_prefix; 
+		  hierarchy_objs[tree_key] = expanded_tree;
+	 }
 }
 
 function collapse_toggle(tree_key, act_dom_id){

@@ -379,6 +379,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var tree = new hierarchy(("oc-gen:" + this.item_type), "category-tree");
 			tree.root_node = true;  //root node of this tree
 			tree.object_prefix = 'ctree-0';
+			tree.exec_primary_title = 'Click to select this category';
 			tree.exec_primary_onclick = this.name + '.selectCategory';
 			tree.do_entity_hierarchy_tree();
 			tree.get_data();
