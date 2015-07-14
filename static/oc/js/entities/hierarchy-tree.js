@@ -25,6 +25,7 @@ function hierarchy(parent_id, act_dom_id) {
 	 this.button_dom_id = false;
 	 this.expanded = true;
 	 this.exec_primary_onclick = false;
+	 this.exec_primary_title = '';
 	 this.exec_primary_link = 'edit';
 	 //this.supplemental_links = ['view'];
 	 this.supplemental_links = [];
@@ -246,55 +247,62 @@ function hierarchy(parent_id, act_dom_id) {
 	 }
 	 this.make_item_linking_html = function(id, label, item_type){
 		 // makes the html for the primary link (for the label)
-		 var item_html = '<a ';
-		 if (this.exec_primary_onclick == false) {
-			 item_html += 'target="_blank" ';
-			 if (this.exec_primary_link == 'edit') {
-				 var title = 'Edit in new window';
-				 var href = base_url + '/edit/items/' + encodeURIComponent(id);
-			 }
-			 else{
-				 var title = 'View in new window';
-				 var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
-			 }
-			 item_html += 'title="' + title + '" href="' + href + '" >';
-		 }
-		 item_html += label + '</a>';
-		 if (this.exec_primary_onclick == false && id.indexOf('/') > -1) {
-			 item_html = label;
-		 }
-		 // add supplemental links, if configured for supplmental links.
-		 var sups = [];
-		 for (var i = 0, length = this.supplemental_links.length; i < length; i++) {
-			 var sup_type = this.supplemental_links[i];
-			 if (sup_type == 'view') {
-				 var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
-				 var sup_html = [
-				 '<a target="_blank" title="View in new window" href="' + href + '">',
-				 '<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>',
-				 '</a>'
-				 ].join('\n');
-			 }
-			 else if (sup_type == 'edit') {
-				 var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
-				 var sup_html = [
-				 '<a target="_blank" title="Edit in new window" href="' + href + '">',
-				 '<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>',
-				 '</a>'
-				 ].join('\n');
-			 }
-			 else{
-				 var sup_html = false;
-			 }
-			 if (sup_html != false) {
-				 sups.push(sup_html);
-			 }
-		 }
-		 if (sups.length > 0) {
-			 // only add supplemental links if there are 1 or more to add
-			 item_html += ' (' + sups.join(', ') + ')';
-		 }
-		 return item_html;
+		  var item_html = '<a ';
+		  if (this.exec_primary_onclick == false) {
+				item_html += 'target="_blank" ';
+				if (this.exec_primary_link == 'edit') {
+					var title = 'Edit in new window';
+					var href = base_url + '/edit/items/' + encodeURIComponent(id);
+				}
+				else{
+					var title = 'View in new window';
+					var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+				}
+				item_html += 'title="' + title + '" href="' + href + '" >';
+		  }
+		  else{
+				item_html += 'role="button" ';
+				item_html += ' onclick="' + this.exec_primary_onclick;
+				item_html += '(\'' + id + '\', \'' + label + '\', \'' + item_type + '\');';
+				item_html += '" ';
+				item_html += 'title="' + this.exec_primary_title + '" >';
+		  }
+		  item_html += label + '</a>';
+		  if (this.exec_primary_onclick == false && id.indexOf('/') > -1) {
+				item_html = label;
+		  }
+		  // add supplemental links, if configured for supplmental links.
+		  var sups = [];
+		  for (var i = 0, length = this.supplemental_links.length; i < length; i++) {
+				var sup_type = this.supplemental_links[i];
+				if (sup_type == 'view') {
+					var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+					var sup_html = [
+					'<a target="_blank" title="View in new window" href="' + href + '">',
+					'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>',
+					'</a>'
+					].join('\n');
+				}
+				else if (sup_type == 'edit') {
+					var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+					var sup_html = [
+					'<a target="_blank" title="Edit in new window" href="' + href + '">',
+					'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>',
+					'</a>'
+					].join('\n');
+				}
+				else{
+					var sup_html = false;
+				}
+				if (sup_html != false) {
+					sups.push(sup_html);
+				}
+		  }
+		  if (sups.length > 0) {
+				// only add supplemental links if there are 1 or more to add
+				item_html += ' (' + sups.join(', ') + ')';
+		  }
+		  return item_html;
 	 }
 }
 
