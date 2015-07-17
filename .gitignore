@@ -12,6 +12,8 @@ static/bootstrap/
 static/jquery/
 static/angularjs/
 static/leaflet/
+static/fontawesome/
+static/fonts/
 static/exports/
 static/robots/robots.txt
 *.pyc
