@@ -21,8 +21,12 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.preset_label = false;
 	this.label_pred_uuid = 'oc-gen:label';
 	this.class_pred_uuid = 'oc-gen:class_uri';
+	this.context_pred_uuid = 'oc-gen:contained-in';
+	this.field_trees = []; // user interface trees to be populated for selecting items 
 	this.entitySearchObj = false
-	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID 
+	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
+	this.search_nums = [0]; // id number for search entiity interface, used for making a dom ID
+	this.sobjs = {}; // search objects
 	this.get_data = function(){
 		//AJAX request to get data about a profile
 		this.show_loading();
@@ -39,6 +43,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		});
 	}
 	this.get_dataDone = function(data){
+		this.field_trees = []; // reset all of the hiearchy trees
 		this.data = data;
 		this.item_type = data.item_type;
 		if (document.getElementById(this.act_dom_id)) {
@@ -56,55 +61,10 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			html += this.make_field_groups_html(data);
 			html += '</div>';
 			act_dom.innerHTML = html;
-			this.make_category_tree();
+			this.make_trees();
 		}
 	}
-	this.get_fieldgroups_data = function(){
-		// gets field data for displaying field groups
-		var url = this.make_url("/edit/inputs/profiles/") + encodeURIComponent(this.profile_uuid) + ".json";
-		return $.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			context: this,
-			success: this.get_fieldgroups_dataDone,
-			error: function (request, status, error) {
-				alert('Data entry profile retrieval failed, sadly. Status: ' + request.status);
-			} 
-		});
-	}
-	this.get_fieldgroups_dataDone = function(data){
-		// this updates only a portion of the
-		// page
-		$("#myModal").modal('hide');
-		$("#smallModal").modal('hide');
-		this.data = data;
-		var done = false;
-		if (this.act_fgroup_uuid != false) {
-			if (document.getElementById(this.act_fgroup_uuid)) {
-				var fgroup = this.get_fieldgroup_obj(this.act_fgroup_uuid);
-				if (fgroup != false) {
-					// now update the HTML for this particular field group
-					var act_dom = document.getElementById(fgroup.id);
-					act_dom.innerHTML = this.make_field_group_html(fgroup);
-					done = true;
-				}
-			}
-			// now set it back to false after we used it
-			this.act_fgroup_uuid = false;
-		}
-		if (done == false) {	
-			if (document.getElementById("field-groups")) {
-				// just update the field groups
-				var act_dom = document.getElementById("field-groups");
-				act_dom.innerHTML = this.make_field_groups_html(data);
-			}
-			else{
-				// regenerate the whole profile
-				this.get_dataDone(data);
-			}
-		}
-	}
+	
 	
 	/* ---------------------------------------
 	 * Profile HTML display
@@ -185,8 +145,16 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			else if (field.predicate_uuid == this.class_pred_uuid) {
 				field_html += this.make_category_field_html(field);
 			}
+			else if (field.predicate_uuid == this.context_pred_uuid) {
+				field_html += this.make_context_field_html(field);
+			}
 			else{
-				field_html += this.make_field_html(field);
+				if (field.data_type == 'id') {
+					field_html += this.make_id_field_html(field);
+				}
+				else{
+				   field_html += this.make_field_html(field);	
+				}
 			}
 		}
 		var body_html = [
@@ -211,7 +179,6 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		return meta_panel.make_html();
 	}
 	this.make_field_html = function(field){
-		
 		var html = [
 		'<tr>',
 		'<td>',
@@ -222,6 +189,40 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'<label for="f-' + field.id + '">' + field.label + '</label>',
 			'<input id="f-' + field.id + '" class="form-control input-sm" ',
 			'type="text" value="" />',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
+		].join("\n");
+		return html;
+	}
+	this.make_id_field_html = function(field){
+		this.prep_field_tree(field.predicate_uuid, field.id, 'description');
+		var html = [
+		'<tr>',
+		'<td>',
+      this.make_field_update_buttom(field.id),
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-l-' + field.id + '">' + field.label + ' (Label)</label>',
+			'<input id="f-l-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" disabled="disabled"/>',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="f-id-' + field.id + '">' + field.label + ' (ID)</label>',
+			'<input id="f-id-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" />',
+			'</div>',
+			'<div class="well well-sm small">',
+			'<label>Select a Category or Type Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
+			'</div>',
 			'</div>',
 		'</td>',
 		'<td>',
@@ -328,6 +329,64 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	}
 	this.make_category_field_html = function(field){
 		// makes special HTML for the (class_uri) category field
+		this.prep_field_tree(('oc-gen:' + this.item_type), field.id, 'entities');
+		var html = [
+		'<tr>',
+		'<td>',
+      this.make_field_update_buttom(field.id),
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-l-' + field.id + '">' + field.label + ' (Label)</label>',
+			'<input id="f-l-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" disabled="disabled"/>',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="f-id-' + field.id + '">' + field.label + ' (ID)</label>',
+			'<input id="f-id-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" />',
+			'</div>',
+			'<div class="well well-sm small">',
+			'<label>Select a General Category Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
+			'</div>',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
+		].join("\n");
+		return html;
+	}
+	this.make_context_field_html = function(field){
+		// make a tree list for searching for contexts
+		this.prep_field_tree(this.project_uuid, field.id, 'context');
+		
+		// make an entity search for contexts
+		var entityInterfaceHTML = "";
+		/* changes global authorSearchObj from entities/entities.js */
+		var ent_num = 'sobj' + this.get_next_search_num();
+		entSearchObj = new searchEntityObj();
+		entSearchObj.name = ent_name;
+		entSearchObj.entities_panel_title = "Select a Context";
+		entSearchObj.limit_item_type = "subjects";
+		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
+		var afterSelectDone = {
+			name: ent_name,
+			field_uuid: field.id,
+			exec: function(){
+				var sel_id = document.getElementById(this.name + "-sel-entity-id").value;
+				var sel_label = document.getElementById(this.name +  "-sel-entity-label").value;
+				document.getElementById('f-l-' + this.field_uuid).value = sel_label;
+				document.getElementById('f-id-' + this.field_uuid).value = sel_id;
+			}
+		};
+		entSearchObj.afterSelectDone = afterSelectDone;
+		var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
 		
 		var html = [
 		'<tr>',
@@ -346,8 +405,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'type="text" value="" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>Select a Category Below</label><br/>',
-			'<div id="category-tree" class="container-fluid">',
+			'<label>Select a Context Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
 			'</div>',
 			'</div>',
 		'</td>',
@@ -356,13 +415,14 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'</div>',
 			'<label>Explanatory Note</label><br/>',
 			field.note,
+			entityInterfaceHTML,
 		'</td>',
 		'</tr>'
 		].join("\n");
 		return html;
 	}
 	this.make_field_update_buttom = function(field_uuid){
-		
+		// makes an update button for user to upload data when data entry is done
 		var button_html = [
 		'<div style="margin-top: 22px;">',
 		'<button class="btn btn-default" onclick="' + this.name + '.updateField(\'' + field_uuid + '\');">',
@@ -374,19 +434,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 
 		return button_html;
 	}
-	this.make_category_tree = function(){
-		if (document.getElementById("category-tree")) {
-			var tree = new hierarchy(("oc-gen:" + this.item_type), "category-tree");
-			tree.root_node = true;  //root node of this tree
-			tree.object_prefix = 'ctree-0';
-			tree.exec_primary_title = 'Click to select this category';
-			tree.exec_primary_onclick = this.name + '.selectCategory';
-			tree.do_entity_hierarchy_tree();
-			tree.get_data();
-         var tree_key = tree.object_prefix; 
-         hierarchy_objs[tree_key] = tree;
-		}	
-	}
+	
+	
 	
 	/* ---------------------------------------
 	 * User interaction functions
@@ -496,6 +545,13 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.validateLabelDone = function(data){
 		var field_uuid = this.act_field_uuid;
 		this.act_field_uuid = false;
+		
+		if (this.preset_label) {
+			//we wanted to use data.suggested to preset the label
+			document.getElementById('f-' + field_uuid).value = data.suggested.trim();
+			this.preset_label = false;
+		}
+		
 		var act_dom = document.getElementById('v-' + field_uuid);
 		if (data.exists == true) {
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
@@ -541,11 +597,17 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var suggested_link = [
 				' role="button" onclick="' + this.name + '.useSuggestedLabel(\'' + field_uuid + '\');" '
 			].join(' ');
+			if (document.getElementById('f-' + field_uuid).value != data.suggested) {
+				var suggest_hint = ' (Click to use)';
+			}
+			else{
+				var suggest_hint = '';
+			}
 			
 			var suggest_html = [
 			'<div ' + div_start + '>',
 			'<div role="alert" class="' + alert_class + '" id="suggested-alert">',
-			'Suggested Label (Click to use): ',
+			'Suggested Label' + suggest_hint + ': ',
 			'<a title="Use suggested link" ' + suggested_link + ' >',
 			'<span class="glyphicon glyphicon-circle-arrow-left"></span>',
 			'</a> ',
@@ -561,12 +623,6 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		else{
 			var suggest_html = '';
 		}
-		if (this.preset_label) {
-			//we wanted to use the preset label
-			document.getElementById('f-' + field_uuid).value = data.suggested.trim();
-			this.preset_label = false;
-		}
-		
 		
 		var html = [
 			'<div style="margin-top: 3px;">',
@@ -584,6 +640,71 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		this.passed_value = label.trim();
 		this.validateLabel(field_uuid);
 	}
+	
+	/* ---------------------------------------
+	 * Functions
+	 * related to tree interfaces for selecting values
+	 * for nominal (id) fields, categories (class_uri),
+	 * or spatial contexts (subjects)
+	 * ---------------------------------------
+	 */
+	this.selectTreeItem = function(id, label, item_type, field_uuid){
+		// this is the function called in onclick events when
+		// a user has selected an item from a tree to be used
+		// to populate a value for a field
+		document.getElementById('f-l-' + field_uuid).value = label.trim();
+		document.getElementById('f-id-' + field_uuid).value = id.trim();
+	}
+	this.prep_field_tree = function(root_node_id, field_uuid, tree_type){
+		// adds an object to a list to prepare for creating trees
+		// with values to be used to populate fields
+		var tree_item = {
+			root_node_id: root_node_id,
+			field_uuid: field_uuid,
+		   tree_type: tree_type
+		};
+		this.field_trees.push(tree_item);
+	}
+	this.make_trees = function(){
+		// goes throough the list of preped tree items to actually
+		// generate the tree HTML
+		for (var i = 0, length = this.field_trees.length; i < length; i++) {
+			var tree_item = this.field_trees[i];
+			this.make_field_tree_html(tree_item.root_node_id, tree_item.field_uuid, tree_item.tree_type, i);
+		}
+	}
+	this.make_field_tree_html = function(root_node_id, field_uuid, tree_type, tree_id){
+		// makes the actual tree interface based on parameters passed
+		// is useful for:
+		// categories (class_uri),
+		// descriptions (predicates + types),
+		// and contexts (subjects / locations / objects)
+		var parent_dom_id = 'tr-' + field_uuid;
+		var tree = new hierarchy(root_node_id, parent_dom_id);
+		tree.root_node = true;  //root node of this tree
+		tree.object_prefix = 'tree-' + tree_id;
+		tree.exec_primary_onclick = this.name + '.selectTreeItem'; // name of the function to use onclicking a tree item
+		tree.exec_primary_passed_val = field_uuid; //value to pass in the onclick function.
+		if (tree_type == 'description') {
+			// useful for predicates and types
+			tree.exec_primary_title = 'Click to select this description';
+			tree.do_description_tree();
+		}
+		else if (tree_type == 'entities') {
+			// useful for linked data, and also Open Context categories use in 'class_uri'
+			tree.exec_primary_title = 'Click to select this category';
+			tree.do_entity_hierarchy_tree();
+		}
+		else{
+			// it's a spatial tree
+			tree.exec_primary_title = 'Click to select this context';
+		}
+	
+		tree.get_data();
+		var tree_key = tree.object_prefix; 
+		hierarchy_objs[tree_key] = tree;
+	}
+	
 	
 	/* ---------------------------------------
 	 * Helper functions
@@ -725,6 +846,11 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var next_panel_num = Math.max.apply(Math, this.panel_nums) + 1;
 		this.panel_nums.push(next_panel_num);
 		return next_panel_num;
+	}
+	this.get_next_search_num = function(){
+		var next_search_num = Math.max.apply(Math, this.search_nums) + 1;
+		this.search_nums.push(next_search_num);
+		return next_search_num;
 	}
 	this.describe_item_type_html = function(item_type){
 		var des_type = this.describe_item_type(item_type);

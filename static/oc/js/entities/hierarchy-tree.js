@@ -24,8 +24,9 @@ function hierarchy(parent_id, act_dom_id) {
 	 this.data = false;
 	 this.button_dom_id = false;
 	 this.expanded = true;
-	 this.exec_primary_onclick = false;
-	 this.exec_primary_title = '';
+	 this.exec_primary_onclick = false;  //name of function for onclick interactions with an item in the tree
+	 this.exec_primary_title = ''; //text for titles that explain onclick interacction to user
+	 this.exec_primary_passed_val = false; //additional value passed as a parameter for function in onclick interations
 	 this.exec_primary_link = 'edit';
 	 //this.supplemental_links = ['view'];
 	 this.supplemental_links = [];
@@ -261,9 +262,12 @@ function hierarchy(parent_id, act_dom_id) {
 				item_html += 'title="' + title + '" href="' + href + '" >';
 		  }
 		  else{
+				// case with a function passed for onclick interactions with the
+				// item in the tree. useful for integrating the hierarchy tree
+				// with other UI components
 				item_html += 'role="button" ';
 				item_html += ' onclick="' + this.exec_primary_onclick;
-				item_html += '(\'' + id + '\', \'' + label + '\', \'' + item_type + '\');';
+				item_html += '(\'' + id + '\', \'' + label + '\', \'' + item_type + '\', \'' + this.exec_primary_passed_val + '\');'
 				item_html += '" ';
 				item_html += 'title="' + this.exec_primary_title + '" >';
 		  }
@@ -315,6 +319,7 @@ function load_expand(tree_key, parent_id, act_dom_id, button_dom_id){
 				expanded_tree.request_url = hierarchy_objs[tree_key].request_url;
 				expanded_tree.exec_primary_title = hierarchy_objs[tree_key].exec_primary_title;
 				expanded_tree.exec_primary_onclick = hierarchy_objs[tree_key].exec_primary_onclick;
+				expanded_tree.exec_primary_passed_val = hierarchy_objs[tree_key].exec_primary_passed_val;
 		  }
 		  expanded_tree.button_dom_id = button_dom_id;
 		  expanded_tree.get_data();

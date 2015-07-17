@@ -16,7 +16,7 @@ function searchEntityObj() {
 	this.limit_vocab_uri = false;
 	this.limit_item_type = false;
 	this.limit_ent_type = false;
-	this.url = make_url("entities/look-up/");
+	this.url = make_url("/entities/look-up/");
 	this.interfaceDomID = false;
 	this.req = false;
 	this.selectReadOnly = true;
@@ -457,11 +457,16 @@ function addEntityObj() {
 }
 
 function make_url(relative_url){
-	//makes a URL for requests, checking if the base_url is set	
-	if (typeof base_url != "undefined") {
-		return base_url + relative_url;
-	}
-	else{
-		return '../../' + relative_url;
-	}
+	 //makes a URL for requests, checking if the base_url is set
+	 if (typeof base_url != "undefined") {
+		  var base_url_last = base_url.slice(-1);
+		  var rel_first = relative_url.slice(0);
+		  if (base_url_last == '/' && rel_first == '/') {
+				return base_url + relative_url.substring(1);
+		  }
+		  return base_url + relative_url;
+	 }
+	 else{
+			return '../../' + relative_url;
+	 }
 }
