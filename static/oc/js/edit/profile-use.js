@@ -203,6 +203,33 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	}
 	this.make_id_field_html = function(field){
 		this.prep_field_tree(field.predicate_uuid, field.id, 'description');
+		
+		// make an entity search for contexts
+		var entityInterfaceHTML = "";
+		/* changes global authorSearchObj from entities/entities.js */
+		var ent_num = this.get_next_search_num();
+		var entSearchObj = new searchEntityObj();
+		var ent_name = 'sobjs[' + ent_num + ']';
+		entSearchObj.name = ent_name;
+		entSearchObj.parent_obj_name = this.name;
+		entSearchObj.entities_panel_title = "Select a Category";
+		entSearchObj.limit_item_type = "types";
+		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
+		var entDomID = entSearchObj.make_dom_name_id();
+		var afterSelectDone = {
+			name: ent_name,
+			field_uuid: field.id,
+			exec: function(){
+				var sel_id = document.getElementById(entDomID + "-sel-entity-id").value;
+				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;
+				document.getElementById('f-l-' + this.field_uuid).value = sel_label;
+				document.getElementById('f-id-' + this.field_uuid).value = sel_id;
+			}
+		};
+		entSearchObj.afterSelectDone = afterSelectDone;
+		this.sobjs[ent_num] = entSearchObj;
+		var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
+		
 		var html = [
 		'<tr>',
 		'<td>',
@@ -230,6 +257,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'</div>',
 			'<label>Explanatory Note</label><br/>',
 			field.note,
+			entityInterfaceHTML,
 		'</td>',
 		'</tr>'
 		].join("\n");
@@ -369,23 +397,27 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		// make an entity search for contexts
 		var entityInterfaceHTML = "";
 		/* changes global authorSearchObj from entities/entities.js */
-		var ent_num = 'sobj' + this.get_next_search_num();
-		entSearchObj = new searchEntityObj();
+		var ent_num = this.get_next_search_num();
+		var entSearchObj = new searchEntityObj();
+		var ent_name = 'sobjs[' + ent_num + ']';
 		entSearchObj.name = ent_name;
+		entSearchObj.parent_obj_name = this.name;
 		entSearchObj.entities_panel_title = "Select a Context";
 		entSearchObj.limit_item_type = "subjects";
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
+		var entDomID = entSearchObj.make_dom_name_id();
 		var afterSelectDone = {
 			name: ent_name,
 			field_uuid: field.id,
 			exec: function(){
-				var sel_id = document.getElementById(this.name + "-sel-entity-id").value;
-				var sel_label = document.getElementById(this.name +  "-sel-entity-label").value;
+				var sel_id = document.getElementById(entDomID + "-sel-entity-id").value;
+				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;
 				document.getElementById('f-l-' + this.field_uuid).value = sel_label;
 				document.getElementById('f-id-' + this.field_uuid).value = sel_id;
 			}
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
+		this.sobjs[ent_num] = entSearchObj;
 		var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
 		
 		var html = [

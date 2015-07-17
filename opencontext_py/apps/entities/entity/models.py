@@ -147,7 +147,8 @@ class Entity():
                class_uri=False,
                project_uuid=False,
                vocab_uri=False,
-               ent_type=False):
+               ent_type=False,
+               context_uuid=False):
         """ Searches for entities limited by query strings
             and optionally other criteria
         """

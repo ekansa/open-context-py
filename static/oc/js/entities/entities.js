@@ -7,6 +7,7 @@
 function searchEntityObj() {
 	/* Object for composing search entities */
 	this.name = "ent"; //object name, used for DOM-ID prefixes and object labeling
+	this.parent_obj_name = false; //name of the parent object making the search object
 	this.search_text_domID = "entity-string";
 	this.searchEntityListDomID = "search-entity-list";
 	this.selectFoundEntityFunction = "selectEntity";
@@ -63,13 +64,13 @@ function searchEntityObj() {
 			if (this.show_type) {
 				context_html += '<div class="row small">';
 				context_html += '<div class="col-xs-2"><label>Type</label></div>';
-				context_html += '<div class="col-xs-10" id="' + this.name + '-sel-type"></div>';
+				context_html += '<div class="col-xs-10" id="' + this.make_dom_name_id() + '-sel-type"></div>';
 				context_html += '</div>';
 			}
 			if (this.show_partof) {
 				context_html += '<div class="row small">';
 				context_html += '<div class="col-xs-2"><label>Part of</label></div>';
-				context_html += '<div class="col-xs-10" id="' + this.name + '-sel-partof"></div>';
+				context_html += '<div class="col-xs-10" id="' + this.make_dom_name_id() + '-sel-partof"></div>';
 				context_html += '</div>';
 			}
 			context_html += '<div class="row small">';
@@ -86,13 +87,13 @@ function searchEntityObj() {
 						"<div class=\"form-group form-group-sm\">",
 							"<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
 							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+								"<input id=\"" + this.make_dom_name_id() + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
 							"</div>",
 						"</div>",
 						"<div class=\"form-group form-group-sm\">",
 							"<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
 							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+								"<input id=\"" + this.make_dom_name_id() + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
 							"</div>",
 						"</div>",
 						context_html,
@@ -100,11 +101,11 @@ function searchEntityObj() {
 						"<div class=\"form-group form-group-sm\">",
 							"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
 							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"javascript:" + this.name + ".searchEntities();\" class=\"form-control input-sm\" />",
+								"<input id=\"" + this.make_dom_name_id() + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"" + this.make_obj_name_id() + ".searchEntities();\" class=\"form-control input-sm\" />",
 							"</div>",
 						"</div>",
 					"</form>",
-					"<ul id=\"" + this.name + "-" + this.searchEntityListDomID + "\">",
+					"<ul id=\"" + this.make_dom_name_id() + "-" + this.searchEntityListDomID + "\">",
 					"</ul>",
 				"</div>",
 			"</div>"].join("\n");
@@ -114,11 +115,33 @@ function searchEntityObj() {
 		}
 		return interfaceString;
 	};
+	this.make_dom_name_id = function(){
+		  if (this.parent_obj_name != false) {
+				// this object is in a parent object
+				var dom_name_id = this.parent_obj_name + '_' + this.name;
+				dom_name_id = dom_name_id.replace('[', '_');
+				dom_name_id = dom_name_id.replace(']', '');
+				return dom_name_id;
+		  }
+		  else{
+				return this.name;
+		  }
+	}
+	this.make_obj_name_id = function(){
+		  if (this.parent_obj_name != false) {
+				// this object is in a parent object
+				var obj_name_id = this.parent_obj_name + '.' + this.name;
+				return obj_name_id;
+		  }
+		  else{
+				return this.name;
+		  }
+	}
 	this.searchEntities = function(){
 		this.ids = {}; // clear IDs
 		var url = this.url;
-		var qstring = document.getElementById(this.name + "-" + this.search_text_domID).value;
-		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
+		var qstring = document.getElementById(this.make_dom_name_id() + "-" + this.search_text_domID).value;
+		var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
 		searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
 		var data = { q:qstring };
 		if (this.limit_class_uri != false) {
@@ -150,7 +173,7 @@ function searchEntityObj() {
 	}
 	this.searchEntitiesDone = function(data){
 		/* Displays list of entities that meet search criteria */
-		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
+		var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
 		searchEntityListDom.innerHTML = "";
 		for (var i = 0, length = data.length; i < length; i++) {
 			
@@ -171,18 +194,18 @@ function searchEntityObj() {
 			this.ids[data[i].id] = data[i]; // keep in memory for later use
 			
 			var tooltiplink = [
-				'<a onclick="' + this.name + '.selectEntity(' + i + ')" ',
+				'<a onclick="' + this.make_obj_name_id() + '.selectEntity(' + i + ')" ',
 				'data-toggle="tooltip" data-placement="bottom" ',
 				'style="cursor:pointer;" ',
 				'title="Type: ' + data_type + '; part of: ' + partof + '" ',
-				'id="' + this.name + '-search-entity-label-' + i + '" >',
+				'id="' + this.make_dom_name_id() + '-search-entity-label-' + i + '" >',
 				data[i].label,
 				'</a>'
 			].join('');
 			
 			var newListItem = document.createElement("li");
-			newListItem.id = this.name + "-search-entity-item-" + i;
-			var entityIDdomID = this.name + "-search-entity-id-" + i;
+			newListItem.id = this.make_dom_name_id() + "-search-entity-item-" + i;
+			var entityIDdomID = this.make_dom_name_id() + "-search-entity-id-" + i;
 			var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
 			var entityString = tooltiplink;
 			// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
@@ -199,22 +222,22 @@ function searchEntityObj() {
 	}
 	this.selectEntity = function(item_num){
 		/* Adds selected entity label and ID to the right dom element */
-		var act_domID = this.name + "-search-entity-id-" + item_num;
+		var act_domID = this.make_dom_name_id() + "-search-entity-id-" + item_num;
 		var item_id = document.getElementById(act_domID).innerHTML;
-		var sel_id_dom = document.getElementById(this.name + "-sel-entity-id");
+		var sel_id_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-id");
 		sel_id_dom.value = item_id;
-		act_domID =  this.name + "-search-entity-label-" + item_num;
+		act_domID =  this.make_dom_name_id() + "-search-entity-label-" + item_num;
 		var item_label = document.getElementById(act_domID).innerHTML;
-		var sel_label_dom = document.getElementById(this.name + "-sel-entity-label");
+		var sel_label_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-label");
 		sel_label_dom.value = item_label;
 		if (item_id in this.ids) {
 			this.selected_entity = this.ids[item_id];
 		}
 		if (this.show_type && item_id in this.ids) {
-			document.getElementById(this.name + "-sel-type").innerHTML = this.ids[item_id].data_type;
+			document.getElementById(this.make_dom_name_id() + "-sel-type").innerHTML = this.ids[item_id].data_type;
 		}
 		if (this.show_partof && item_id in this.ids) {
-			document.getElementById(this.name + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
+			document.getElementById(this.make_dom_name_id() + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
 		}
 		if (this.afterSelectDone != false) {
 			// execute a post selection entity is done function
