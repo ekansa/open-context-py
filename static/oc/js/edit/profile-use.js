@@ -152,6 +152,12 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				if (field.data_type == 'id') {
 					field_html += this.make_id_field_html(field);
 				}
+				else if (field.data_type == 'xsd:integer' || field.data_type == 'xsd:double') {
+					field_html += this.make_num_field_html(field);
+				}
+				else if (field.data_type == 'xsd:string') {
+					field_html += this.make_string_field_html(field);
+				}
 				else{
 				   field_html += this.make_field_html(field);	
 				}
@@ -201,6 +207,57 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		].join("\n");
 		return html;
 	}
+	this.make_num_field_html = function(field){
+		var hr_data_type = this.get_human_readable_data_type(field.data_type);
+		var placeholder = ' placeholder="' + hr_data_type + ' values" ';
+		var html = [
+		'<tr>',
+		'<td>',
+      this.make_field_update_buttom(field.id),
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-' + field.id + '">' + field.label + '</label>',
+			'<input id="f-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" ' + placeholder,
+			'onkeydown="' + this.name + '.validateNumber(\'' + field.id + '\', \'' + field.data_type + '\');" ',
+			'onkeyup="' + this.name + '.validateNumber(\'' + field.id + '\', \'' + field.data_type + '\');" ',
+			'/>',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
+		].join("\n");
+		return html;
+	}
+	this.make_string_field_html = function(field){
+		var html = [
+		'<tr>',
+		'<td>',
+      this.make_field_update_buttom(field.id),
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-' + field.id + '">' + field.label + '</label>',
+			'<textarea id="f-' + field.id + '" class="form-control input-sm" rows="3">',
+			'</textarea>',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
+		].join("\n");
+		return html;
+	}
 	this.make_id_field_html = function(field){
 		this.prep_field_tree(field.predicate_uuid, field.id, 'description');
 		
@@ -212,7 +269,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var ent_name = 'sobjs[' + ent_num + ']';
 		entSearchObj.name = ent_name;
 		entSearchObj.parent_obj_name = this.name;
-		entSearchObj.entities_panel_title = "Select a Category";
+		entSearchObj.entities_panel_title = "Select a Category for " + field.label;
 		entSearchObj.limit_item_type = "types";
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
@@ -739,10 +796,67 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	
 	
 	/* ---------------------------------------
+	 * Field Validation functions
+	 * used throughout
+	 * ---------------------------------------
+	 */
+	this.validateNumber = function(field_uuid, data_type){
+		//validates numeric fields
+		var is_valid = false;
+		if (data_type == 'xsd:double') {
+			var check_val = parseFloat(document.getElementById('f-' + field_uuid).value);
+			if (this.isFloat(check_val)) {
+				var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+				this.make_validation_html(val_mes, true, field_uuid);
+			}
+			else{
+				var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+				this.make_validation_html(val_mes, false, field_uuid);
+			}
+		}
+		if (data_type == 'xsd:integer') {
+			var check_val = parseInt(document.getElementById('f-' + field_uuid).value);
+			if (this.isInt(check_val)) {
+				var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+				this.make_validation_html(val_mes, true, field_uuid);
+			}
+			else{
+				var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+				this.make_validation_html(val_mes, false, field_uuid);
+			}
+		}
+	}
+	
+	
+	/* ---------------------------------------
 	 * Helper functions
 	 * used throughout
 	 * ---------------------------------------
 	 */
+	this.make_validation_html = function(message_html, is_valid, field_uuid){
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var val_class = "alert alert-danger";
+		}
+	
+		var alert_html = [
+				'<div role="alert" class="' + alert_class + '">',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		
+		if (field_uuid != false) {
+			//add this to the dom
+			var act_dom = document.getElementById('v-' + field_uuid);
+			act_dom.innerHTML = alert_html;
+		}
+		return alert_html;
+	}
 	this.get_fieldgroup_obj = function(fgroup_uuid){
 		// looks through the list of fieldgroups from the downloaded
 		// data kept in memory to find an object for the
