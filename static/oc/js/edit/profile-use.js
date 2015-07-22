@@ -803,28 +803,38 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.validateNumber = function(field_uuid, data_type){
 		//validates numeric fields
 		var is_valid = false;
-		if (data_type == 'xsd:double') {
-			var check_val = parseFloat(document.getElementById('f-' + field_uuid).value);
-			if (this.isFloat(check_val)) {
-				var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
-				this.make_validation_html(val_mes, true, field_uuid);
-			}
-			else{
-				var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
-				this.make_validation_html(val_mes, false, field_uuid);
-			}
+		var check_val = document.getElementById('f-' + field_uuid).value;
+		if (isNaN(check_val)){
+			// not a number returned true
+			var val_mes = 'Not a numeric ' + this.get_human_readable_data_type(data_type) + ' value.';
+			this.make_validation_html(val_mes, false, field_uuid);
 		}
-		if (data_type == 'xsd:integer') {
-			var check_val = parseInt(document.getElementById('f-' + field_uuid).value);
-			if (this.isInt(check_val)) {
-				var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
-				this.make_validation_html(val_mes, true, field_uuid);
+		else{
+			// numeric result detected, now make sure it fits the specific datatype
+			if (data_type == 'xsd:double') {
+				check_val = parseFloat(check_val);
+				if (this.isFloat(check_val)) {
+					var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					this.make_validation_html(val_mes, true, field_uuid);
+				}
+				else{
+					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					this.make_validation_html(val_mes, false, field_uuid);
+				}
 			}
-			else{
-				var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
-				this.make_validation_html(val_mes, false, field_uuid);
-			}
+			if (data_type == 'xsd:integer') {
+				var check_val = parseFloat(check_val);
+				if (this.isInt(check_val)) {
+					var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					this.make_validation_html(val_mes, true, field_uuid);
+				}
+				else{
+					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					this.make_validation_html(val_mes, false, field_uuid);
+				}
+			}	
 		}
+		
 	}
 	
 	
@@ -840,7 +850,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		else{
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
-			var val_class = "alert alert-danger";
+			var alert_class = "alert alert-danger";
 		}
 	
 		var alert_html = [
