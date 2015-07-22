@@ -836,6 +836,19 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		
 	}
+	this.validateDate = function(field_uuid){
+		// validates date fields to a yyyy-mm-dd format
+		var str = document.getElementById('f-' + field_uuid).value;
+	   var valid_date = this.isValidDate(str);
+		if (valid_date) {
+			var val_mes = 'Valid calendar date value.';
+			this.make_validation_html(val_mes, true, field_uuid);
+		}
+		else{
+			var val_mes = 'Not a valid calendar date (yyyy-mm-dd) value.';
+			this.make_validation_html(val_mes, false, field_uuid);
+		}
+	}
 	
 	
 	/* ---------------------------------------
@@ -943,6 +956,32 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.isFloat = function(n){
 		//checks if something is a float
 		return (typeof n === 'number');
+	}
+	this.isValidDate = function(str){
+		// checks to see if a string is a valid yyyy-mm-dd date
+		if(str=="" || str==null){return false;}								
+	
+		// m[1] is year 'YYYY' * m[2] is month 'MM' * m[3] is day 'DD'					
+		var m = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+		
+		// STR IS NOT FIT m IS NOT OBJECT
+		if( m === null || typeof m !== 'object'){return false;}				
+		
+		// CHECK m TYPE
+		if (typeof m !== 'object' && m !== null && m.size!==3){return false;}
+					
+		var ret = true; //RETURN VALUE						
+		var thisYear = new Date().getFullYear(); //YEAR NOW
+		var minYear = 0; //MIN YEAR
+		
+		// YEAR CHECK
+		if( (m[1].length < 4) || m[1] < minYear || m[1] > thisYear){ret = false;}
+		// MONTH CHECK			
+		if( (m[1].length < 2) || m[2] < 1 || m[2] > 12){ret = false;}
+		// DAY CHECK
+		if( (m[1].length < 2) || m[3] < 1 || m[3] > 31){ret = false;}
+		
+		return ret;	
 	}
 	this.get_human_readable_data_type = function(data_type){
 		// gets the human readable version of a data-type
