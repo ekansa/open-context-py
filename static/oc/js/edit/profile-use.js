@@ -83,6 +83,12 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var body_html = [
 		'<div>',
 		'<div class="row">',
+		'<div class="col-xs-4" id="submit-all">',
+		'</div>',
+		'<div class="col-xs-8" id="fields-complete-mes">',
+		'</div>',
+		'</div>',
+		'<div class="row">',
 		'<div class="col-xs-12">',
 			'<dl>',
 			'<dt>Item Type</dt>',
@@ -281,6 +287,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;
 				document.getElementById('f-l-' + this.field_uuid).value = sel_label;
 				document.getElementById('f-id-' + this.field_uuid).value = sel_id;
+				//now check the fields
+				this.checkFields();
 			}
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
@@ -471,6 +479,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;
 				document.getElementById('f-l-' + this.field_uuid).value = sel_label;
 				document.getElementById('f-id-' + this.field_uuid).value = sel_id;
+				//now check the fields
+				this.checkFields();
 			}
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
@@ -720,6 +730,9 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'</div>'
 		].join("\n");
 		act_dom.innerHTML = html;
+		
+		//now check the fields
+		this.checkFields();
 	}
 	this.useSuggestedLabel = function(field_uuid){
 		// copies the suggested label into the label field
@@ -743,6 +756,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		// to populate a value for a field
 		document.getElementById('f-l-' + field_uuid).value = label.trim();
 		document.getElementById('f-id-' + field_uuid).value = id.trim();
+		//now check the fields
+		this.checkFields();
 	}
 	this.prep_field_tree = function(root_node_id, field_uuid, tree_type){
 		// adds an object to a list to prepare for creating trees
@@ -800,6 +815,74 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	 * used throughout
 	 * ---------------------------------------
 	 */
+	this.checkFields = function(){
+		// does a validation on all fields to show how many are completed
+		var valid_submit = true;
+		var num_completed = 0;
+		var missing_required = '';
+		for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
+			var fgroup = this.data.fgroups[j];
+			for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+				var field = fgroup.fields[i];
+				var field_val = false;
+				if (document.getElementById('f-' + field.id)) {
+					if (document.getElementById('f-' + field.id).value.length > 0){
+						field_val = true;
+					}
+				}
+				else{
+					if (document.getElementById('f-id-' + field.id)) {
+						if (document.getElementById('f-id-' + field.id).value.length > 0){
+							field_val = true;
+						}
+					}
+				}
+				if (field_val) {
+					num_completed += 1;
+				}
+				else{
+					if (field.oc_required) {
+						// a required field is missing a value, so not valid for
+						// creating a record
+						valid_submit = false;
+						if (missing_required.length < 1) {
+							missing_required = field.label;
+						}
+						else{
+							missing_required += ', ' + field.label;
+						}
+					}	
+				}
+			}
+		}
+		if (valid_submit) {
+			var message = 'Can create or update item with data for ' + num_completed + ' fields';
+			var button_html = [
+				'<div style="margin-top: 22px;">',
+				'<button class="btn large btn-primary" onclick="' + this.name + '.submitAll();">',
+				'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
+				//' Delete',
+				'</button>',
+				'</div>'
+				].join('\n');
+		}
+		else{
+			var message = 'Need to provide data for the following required fields: ' + missing_required;
+			var button_html = [
+				'<div style="margin-top: 22px;">',
+				'<button class="btn large btn-default" disabled="disabled">',
+				'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
+				//' Delete',
+				'</button>',
+				'</div>'
+				].join('\n');
+		}
+		var act_dom = document.getElementById('submit-all');
+		act_dom.innerHTML = button_html;
+		var alert_html = this.make_validation_html(message, valid_submit, false);
+		var act_dom = document.getElementById('fields-complete-mes');
+		act_dom.innerHTML = alert_html;
+	}
 	this.validateNumber = function(field_uuid, data_type){
 		//validates numeric fields
 		var is_valid = false;
@@ -834,7 +917,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				}
 			}	
 		}
-		
+		//now check the fields
+		this.checkFields();
 	}
 	this.validateDate = function(field_uuid){
 		// validates date fields to a yyyy-mm-dd format
@@ -848,6 +932,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var val_mes = 'Not a valid calendar date (yyyy-mm-dd) value.';
 			this.make_validation_html(val_mes, false, field_uuid);
 		}
+		//now check the fields
+		this.checkFields();
 	}
 	
 	
