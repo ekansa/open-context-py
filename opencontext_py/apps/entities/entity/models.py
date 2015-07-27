@@ -214,36 +214,28 @@ class Entity():
                                                 | Q(alt_label__icontains=qstring))[:15]
         elif item_type is not False and item_type != 'uri':
             """ Look only for manifest items """
+            args = {}
             item_type = self.make_id_list(item_type)
-            if class_uri is False and project_uuid is False:
-                manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            elif class_uri is not False and project_uuid is False:
+            args['item_type__in'] = item_type
+            if class_uri is not False:
                 class_uri = self.make_id_list(class_uri)
+                args['class_uri__in'] = class_uri
+            if project_uuid is not False:
+                project_uuid = self.make_id_list(project_uuid)
+                args['project_uuid__in'] = project_uuid
+            if context_uuid is not False and 'types' in item_type:
+                l_tables = 'oc_types'
+                filter_types = 'oc_manifest.uuid = oc_types.uuid \
+                                AND oc_types.predicate_uuid = \'' + context_uuid + '\' '
                 manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                class_uri__in=class_uri)\
+                                        .extra(tables=[l_tables], where=[filter_types])\
+                                        .filter(**args)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
-            elif class_uri is False and project_uuid is not False:
-                project_uuid = self.make_id_list(project_uuid)
+            else:
                 manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                project_uuid__in=project_uuid)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            elif class_uri is not False and project_uuid is not False:
-                class_uri = self.make_id_list(class_uri)
-                project_uuid = self.make_id_list(project_uuid)
-                manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                class_uri__in=class_uri,
-                                                project_uuid__in=project_uuid)\
+                                        .filter(**args)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]

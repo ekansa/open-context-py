@@ -277,11 +277,15 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		entSearchObj.parent_obj_name = this.name;
 		entSearchObj.entities_panel_title = "Select a Category for " + field.label;
 		entSearchObj.limit_item_type = "types";
+		entSearchObj.limit_context_uuid = field.predicate_uuid;
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
 		var afterSelectDone = {
 			name: ent_name,
 			field_uuid: field.id,
+			checkFields: this.checkFields, //needed for checking fields
+		   data: this.data, //needed for checking fields
+			make_validation_html: this.make_validation_html, //needed for checking fields
 			exec: function(){
 				var sel_id = document.getElementById(entDomID + "-sel-entity-id").value;
 				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;
@@ -474,6 +478,9 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var afterSelectDone = {
 			name: ent_name,
 			field_uuid: field.id,
+			checkFields: this.checkFields, //needed for checking fields
+		   data: this.data, //needed for checking fields
+			make_validation_html: this.make_validation_html, //needed for checking fields
 			exec: function(){
 				var sel_id = document.getElementById(entDomID + "-sel-entity-id").value;
 				var sel_label = document.getElementById(entDomID +  "-sel-entity-label").value;

@@ -17,6 +17,7 @@ function searchEntityObj() {
 	this.limit_vocab_uri = false;
 	this.limit_item_type = false;
 	this.limit_ent_type = false;
+	this.limit_context_uuid = false;
 	this.url = make_url("/entities/look-up/");
 	this.interfaceDomID = false;
 	this.req = false;
@@ -158,6 +159,9 @@ function searchEntityObj() {
 		}
 		if (this.limit_item_type != false) {
 			url += this.limit_item_type;
+		}
+		if (this.limit_context_uuid != false) {
+		  data['context_uuid'] = this.limit_context_uuid;
 		}
 		else{
 			url += "0";
