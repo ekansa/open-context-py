@@ -22,7 +22,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.label_pred_uuid = 'oc-gen:label';
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
-	this.field_trees = []; // user interface trees to be populated for selecting items 
+	this.field_trees = []; // user interface trees to be populated for selecting items
+	this.date_fields = []; // date fields to active calendar picker interface
 	this.entitySearchObj = false
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
 	this.search_nums = [0]; // id number for search entiity interface, used for making a dom ID
@@ -62,6 +63,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			html += '</div>';
 			act_dom.innerHTML = html;
 			this.make_trees();
+			this.activate_calendars();
 		}
 	}
 	
@@ -161,6 +163,9 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				else if (field.data_type == 'xsd:integer' || field.data_type == 'xsd:double') {
 					field_html += this.make_num_field_html(field);
 				}
+				else if (field.data_type == 'xsd:date') {
+					field_html += this.make_date_field_html(field);
+				}
 				else if (field.data_type == 'xsd:string') {
 					field_html += this.make_string_field_html(field);
 				}
@@ -201,6 +206,41 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'<label for="f-' + field.id + '">' + field.label + '</label>',
 			'<input id="f-' + field.id + '" class="form-control input-sm" ',
 			'type="text" value="" />',
+			'</div>',
+		'</td>',
+		'<td>',
+			'<div id="v-' + field.id + '">',
+			'</div>',
+			'<label>Explanatory Note</label><br/>',
+			field.note,
+		'</td>',
+		'</tr>'
+		].join("\n");
+		return html;
+	}
+	this.make_date_field_html = function(field){
+		this.date_fields.push(field);
+		var hr_data_type = this.get_human_readable_data_type(field.data_type);
+		var placeholder = ' placeholder="' + hr_data_type + ' values" ';
+		var html = [
+		'<tr>',
+		'<td>',
+      this.make_field_update_buttom(field.id),
+		'</td>',
+		'<td>',
+			'<div class="form-group">',
+			'<label for="f-' + field.id + '">' + field.label + '</label>',
+			'<div class="input-group date" id="fd-' + field.id + '">',
+			'<input id="f-' + field.id + '" class="form-control input-sm" ',
+			'type="text" value="" ' + placeholder,
+			'onkeydown="' + this.name + '.validateDate(\'' + field.id + '\');" ',
+			'onkeyup="' + this.name + '.validateDate(\'' + field.id + '\');" ',
+			'onchange="' + this.name + '.validateDate(\'' + field.id + '\');" ',
+			'aria-describedby="icon-' + field.id + '" />',
+			'<span class="input-group-addon" id="icon-' + field.id + '">',
+			'<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>',
+			'</span>',
+			'</div>',
 			'</div>',
 		'</td>',
 		'<td>',
@@ -815,7 +855,15 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var tree_key = tree.object_prefix; 
 		hierarchy_objs[tree_key] = tree;
 	}
-	
+	this.activate_calendars = function(){
+		for (var i = 0, length = this.date_fields.length; i < length; i++) {
+			var field = this.date_fields[i];
+			$("#fd-" + field.id).datepicker({
+				format: "yyyy-mm-dd",
+				todayHighlight: true
+			});
+		}
+	}
 	
 	/* ---------------------------------------
 	 * Field Validation functions
@@ -829,36 +877,33 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var missing_required = '';
 		for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
 			var fgroup = this.data.fgroups[j];
-			for (var i = 0, length = fgroup.fields.length; i < length; i++) {
-				var field = fgroup.fields[i];
-				var field_val = false;
-				if (document.getElementById('f-' + field.id)) {
-					if (document.getElementById('f-' + field.id).value.length > 0){
-						field_val = true;
-					}
-				}
-				else{
-					if (document.getElementById('f-id-' + field.id)) {
-						if (document.getElementById('f-id-' + field.id).value.length > 0){
+			if (fgroup) {
+				for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+					var field = fgroup.fields[i];
+					var field_val = false;
+					if (document.getElementById('f-' + field.id)) {
+						if (document.getElementById('f-' + field.id).value.length > 0){
 							field_val = true;
 						}
 					}
-				}
-				if (field_val) {
-					num_completed += 1;
-				}
-				else{
-					if (field.oc_required) {
-						// a required field is missing a value, so not valid for
-						// creating a record
-						valid_submit = false;
-						if (missing_required.length < 1) {
-							missing_required = field.label;
+					else{
+						if (document.getElementById('f-id-' + field.id)) {
+							if (document.getElementById('f-id-' + field.id).value.length > 0){
+								field_val = true;
+							}
 						}
-						else{
-							missing_required += ', ' + field.label;
-						}
-					}	
+					}
+					if (field_val) {
+						num_completed += 1;
+					}
+					else{
+						if (field.oc_required) {
+							// a required field is missing a value, so not valid for
+							// creating a record
+							valid_submit = false;
+							missing_required += '<li>' + field.label + '</li>';
+						}	
+					}
 				}
 			}
 		}
@@ -874,7 +919,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				].join('\n');
 		}
 		else{
-			var message = 'Need to provide data for the following required fields: ' + missing_required;
+			missing_required = '<ul>' + missing_required + '</ul>';
+			var message = 'Need to provide data for the following required fields:' + missing_required;
 			var button_html = [
 				'<div style="margin-top: 22px;">',
 				'<button class="btn large btn-default" disabled="disabled">',
@@ -960,7 +1006,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 	
 		var alert_html = [
-				'<div role="alert" class="' + alert_class + '">',
+				'<div role="alert" class="' + alert_class + '" style="margin-top: 4px;">',
 					icon_html,
 					message_html,
 				'</div>'

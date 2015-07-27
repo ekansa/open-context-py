@@ -157,11 +157,11 @@ function searchEntityObj() {
 		if (this.limit_ent_type != false) {
 			data['ent_type'] = this.limit_ent_type;
 		}
-		if (this.limit_item_type != false) {
-			url += this.limit_item_type;
-		}
 		if (this.limit_context_uuid != false) {
 		  data['context_uuid'] = this.limit_context_uuid;
+		}
+		if (this.limit_item_type != false) {
+			url += this.limit_item_type;
 		}
 		else{
 			url += "0";
