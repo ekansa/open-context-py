@@ -860,7 +860,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var field = this.date_fields[i];
 			$("#fd-" + field.id).datepicker({
 				format: "yyyy-mm-dd",
-				todayHighlight: true
+				todayHighlight: true,
+				forceParse: false
 			});
 		}
 	}
