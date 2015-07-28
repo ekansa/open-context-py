@@ -263,7 +263,7 @@ server {
 }
 ```
 
-You can save that file as something like "oc-nginx.conf" and leave it conveniently located in the "/path/your-virtual-env/web" directory with the other Web related configurations. Next you need to make a symbolic link so Nginx can find it and use it:
+You can save that file as something like "oc_nginx.conf" and leave it conveniently located in the "/path/your-virtual-env/web" directory with the other Web related configurations. Next you need to make a symbolic link so Nginx can find it and use it:
 
     sudo ln -s /path/your-virtual-env/web/oc_nginx.conf /etc/nginx/sites-enabled/oc_nginx.conf
 
