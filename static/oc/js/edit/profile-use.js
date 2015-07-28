@@ -23,6 +23,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.field_trees = []; // user interface trees to be populated for selecting items
+	this.field_tree_collapsed = {}; // key is the field ID, boolean value for collapsed state
 	this.date_fields = []; // date fields to active calendar picker interface
 	this.entitySearchObj = false
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
@@ -356,8 +357,15 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'type="text" value="" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>Select a Category or Type Below</label><br/>',
-			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
+			'<label>',
+			'<a title="Click to expand" role="button" ',
+			'id="tx-' + field.id + '" ',
+			'onclick="'+ this.name + '.toggleCollapseTree(\''+ field.id + '\');">',
+			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
+			'</span>',
+			'</a>',
+			' Select a Category or Type Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
 			'</div>',
 			'</div>',
 		'</td>',
@@ -484,8 +492,15 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'type="text" value="" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>Select a General Category Below</label><br/>',
-			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
+			'<label>',
+			'<a title="Click to expand" role="button" ',
+			'id="tx-' + field.id + '" ',
+			'onclick="'+ this.name + '.toggleCollapseTree(\''+ field.id + '\');">',
+			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
+			'</span>',
+			'</a>',
+			' Select a General Category Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
 			'</div>',
 			'</div>',
 		'</td>',
@@ -551,8 +566,15 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'type="text" value="" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>Select a Context Below</label><br/>',
-			'<div id="tr-' + field.id + '" class="container-fluid">', // where the tree will go
+			'<label>',
+			'<a title="Click to expand" role="button" ',
+			'id="tx-' + field.id + '" ',
+			'onclick="'+ this.name + '.toggleCollapseTree(\''+ field.id + '\');">',
+			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
+			'</span>',
+			'</a>',
+			' Select a Context Below</label><br/>',
+			'<div id="tr-' + field.id + '" class="container-fluid collapse in" aria-expanded="true">', // where the tree will go
 			'</div>',
 			'</div>',
 		'</td>',
@@ -833,6 +855,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var parent_dom_id = 'tr-' + field_uuid;
 		var tree = new hierarchy(root_node_id, parent_dom_id);
 		tree.root_node = true;  //root node of this tree
+		tree.collapse_root = true;
 		tree.object_prefix = 'tree-' + tree_id;
 		tree.exec_primary_onclick = this.name + '.selectTreeItem'; // name of the function to use onclicking a tree item
 		tree.exec_primary_passed_val = field_uuid; //value to pass in the onclick function.
@@ -851,9 +874,46 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			tree.exec_primary_title = 'Click to select this context';
 		}
 	
-		tree.get_data();
+		tree.get_data().then(this.collapseTree(field_uuid));
 		var tree_key = tree.object_prefix; 
 		hierarchy_objs[tree_key] = tree;
+		this.collapseTree(field_uuid);
+	}
+	this.collapseTree = function(field_uuid){
+		var link_dom_id = 'tx-' + field_uuid;
+		$('#tr-' + field_uuid).collapse('hide');
+		this.field_tree_collapsed[field_uuid] = true;
+		if (document.getElementById(link_dom_id)) {
+			var a_link = document.getElementById(link_dom_id);
+			a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-plus" aria-hidden="true"></span>';
+		}
+		//console.log(this.field_tree_collapsed);
+	}
+	this.toggleCollapseTree = function(field_uuid){
+		var link_dom_id = 'tx-' + field_uuid;
+		if (field_uuid in this.field_tree_collapsed) {
+			var collapsed = this.field_tree_collapsed[field_uuid];
+		}
+		else{
+			var collapsed = false; // start out with assumption the tree is not collapsed
+		}
+		if (collapsed) {
+			$('#tr-' + field_uuid).collapse('show');
+			this.field_tree_collapsed[field_uuid] = false;
+			if (document.getElementById(link_dom_id)) {
+				var a_link = document.getElementById(link_dom_id);
+				a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-minus" aria-hidden="true"></span>';
+			}
+		}
+		else{
+			$('#tr-' + field_uuid).collapse('hide');
+			this.field_tree_collapsed[field_uuid] = true;
+			if (document.getElementById(link_dom_id)) {
+				var a_link = document.getElementById(link_dom_id);
+				a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-plus" aria-hidden="true"></span>';
+			}
+		}
+		//console.log(this.field_tree_collapsed);
 	}
 	this.activate_calendars = function(){
 		for (var i = 0, length = this.date_fields.length; i < length; i++) {

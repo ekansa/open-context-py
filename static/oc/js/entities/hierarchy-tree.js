@@ -21,6 +21,7 @@ function hierarchy(parent_id, act_dom_id) {
 	 this.class_subdivide = true;
 	 this.request_url = this.make_url("/entities/contain-children/");
 	 this.root_node = false;
+	 this.collapse_root = false;
 	 this.data = false;
 	 this.button_dom_id = false;
 	 this.expanded = true;
@@ -78,18 +79,24 @@ function hierarchy(parent_id, act_dom_id) {
 	 }
 	 this.show_data = function(){
 		 //display data loaded from 
-		 if (document.getElementById(this.act_dom_id)) {
-			 if (this.parent_id in hierarchy_data) {
-				 var data = hierarchy_data[this.parent_id];
-				 //get the cashed data to display a tree
-				 var act_dom = document.getElementById(this.act_dom_id);
-				 var html = this.make_data_html(data);
-				 act_dom.innerHTML = html;
-			 }
-			 this.make_collapse_botton();
-			 $('#' + this.act_dom_id).collapse('show');
-			 this.expanded = true;
-		 }
+		  if (document.getElementById(this.act_dom_id)) {
+			   if (this.parent_id in hierarchy_data) {
+					 var data = hierarchy_data[this.parent_id];
+					 //get the cashed data to display a tree
+					 var act_dom = document.getElementById(this.act_dom_id);
+					 var html = this.make_data_html(data);
+					 act_dom.innerHTML = html;
+				}
+				this.make_collapse_button();
+				if (this.root_node && this.collapse_root) {
+					 $('#' + this.act_dom_id).collapse('hide');
+					 this.expanded = false;
+				}
+				else{
+					 $('#' + this.act_dom_id).collapse('show');
+					 this.expanded = true;
+				}
+		  }
 	 }
 	 this.exec_toggle_collapse = function(){
 		 var link_dom_id = this.act_dom_id.replace('-more-', '-expa-');
@@ -228,7 +235,7 @@ function hierarchy(parent_id, act_dom_id) {
 		 ].join('\n');
 		 return html;
 	 }
-	 this.make_collapse_botton = function(){
+	 this.make_collapse_button = function(){
 		 if (this.button_dom_id != false) {
 			 if (document.getElementById(this.button_dom_id)) {
 				 var button_a_id = this.button_dom_id.replace('-exp-', '-expa-');
