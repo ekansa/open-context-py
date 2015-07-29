@@ -109,6 +109,7 @@ class InputProfileTemplating():
                 if len(group['label']) < 1:
                     group['label'] = 'Field group: ' + str(index)
                 group['note'] = inp_group.note
+                group['obs_num'] = inp_group.obs_num
                 group['fields'] = []
                 inp_group_fields = InputField.objects\
                                              .filter(profile_uuid=self.uuid,

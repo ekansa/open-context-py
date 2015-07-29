@@ -274,8 +274,8 @@ def create_update_profle_item(request, profile_uuid, edit_uuid):
                 ipu.profile_uuid = profile_uuid
                 ipu.profile_obj = profile_obj
                 ipu.project_uuid = project_uuid
-                # result = ipu.create_update(post_data)
-                result = ipu.test(field_data)
+                result = ipu.create_update(field_data)
+                # result = ipu.test(field_data)
                 result['errors'] = ipu.errors
                 json_output = json.dumps(result,
                                          indent=4,

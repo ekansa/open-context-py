@@ -96,8 +96,8 @@ class SubjectGeneration():
                     act_contain = Containment()
                     # get the contents recusivelhy
                     contents = act_contain.get_children_by_parent_uuid(uuid, True)
-                    if isinstance(child_list, dict):
-                        for tree_node, children in self.contents.items():
+                    if isinstance(contents, dict):
+                        for tree_node, children in contents.items():
                             for child_uuid in children:
                                 # do the children, but not recursively since we
                                 # already have a resurive look up of contents

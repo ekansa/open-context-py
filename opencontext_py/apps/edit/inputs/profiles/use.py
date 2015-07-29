@@ -20,10 +20,12 @@ from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.manifest.classes import ManifestClasses
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
+from opencontext_py.apps.indexer.crawler import Crawler
 
 
 class InputProfileUse():
@@ -34,6 +36,7 @@ class InputProfileUse():
     def __init__(self):
         self.errors = {}
         self.ok = True
+        self.new_item = False
         self.create_ok = False
         self.edit_uuid = False
         self.item_type = False
@@ -48,34 +51,54 @@ class InputProfileUse():
         self.contain_obs_node = '#contents-1'
         self.contain_obs_num = 1
         self.contain_sort = 1
+        self.do_solr_index = True
 
     def test(self, field_data):
         output = {'field_data': field_data}
         output['required'] = self.get_required_make_data(field_data)
         output['ok'] = False
-        for field_uuid, field_values in field_data.items():
-            self.profile_field_update(field_uuid, field_values)
         return output
 
     def create_update(self, field_data):
         """ creates or updates an item with post data """
-        # we're dealing with a new item to be created
-        required_make_data = self.get_required_make_data(field_data)
         # first check to see if the item exists
         try:
             item_man = Manifest.objects.get(uuid=self.edit_uuid)
+            action = 'update-profle-item'
+            note = 'Item found, updating.'
+            self.new_item = False
         except Manifest.DoesNotExist:
             item_man = False
+            action = 'create-profle-item'
+            note = 'Item not found, creating.'
+            self.new_item = True
+        # now collect the required field data
+        required_make_data = self.get_required_make_data(field_data)
         if item_man is not False:
             # we've found a record for this item, so we can
             # update any of the required fields.
             self.update_required_make_data(item_man, required_make_data)
         else:
             item_man = self.create_item(required_make_data)
-        for field_uuid, field_values in field_data.items():
-            self.profile_field_update(field_uuid, field_values)
+        if item_man is not False:
+            label = item_man.label
+            for field_uuid, field_values in field_data.items():
+                self.profile_field_update(item_man, field_uuid, field_values)
+            if self.do_solr_index:
+                crawler = Crawler()
+                crawler.index_single_document(item_man.uuid)
+        else:
+            self.ok = False
+            label = 'No item'
+            note += '.. FAILED!'
+        self.response = {'action': action,
+                         'ok': self.ok,
+                         'change': {'uuid': self.edit_uuid,
+                                    'label': label,
+                                    'note': note}}
+        return self.response
 
-    def profile_field_update(self, field_uuid, field_values):
+    def profile_field_update(self, item_man, field_uuid, field_values):
         """ lookup the object for the profile's input field
             based on the field_uuid
 
@@ -83,31 +106,47 @@ class InputProfileUse():
             required by open context,
             since those get special handling
         """
-        output = True
-        done = False
         for fgroup in self.profile_obj['fgroups']:
+            obs_num = fgroup['obs_num']
             for field in fgroup['fields']:
                 if field['oc_required'] is False \
                    and field['id'] == field_uuid:
                     # we've found the field!
+                    # first delete existing uses of this field
+                    Assertion.objects\
+                             .filter(uuid=item_man.uuid,
+                                     predicate_uuid=field['predicate_uuid'])\
+                             .delete()
                     value_index = 0
                     for field_value in field_values:
-                        valid = self.validate_field_value(field, field_value, value_index)
+                        self.validate_save_field_value(item_man,
+                                                       obs_num,
+                                                       field,
+                                                       field_value,
+                                                       value_index)
                         value_index += 1
-                    done = True
-                    break
-            if done:
-                break
-        return output
 
-    def validate_field_value(self, field, field_value, value_index):
-        """ validates a field_value for a field,
-            the value_index parameter is useful if there is a
-            limit in the number of values for a field
+    def validate_save_field_value(self,
+                                  item_man,
+                                  obs_num,
+                                  field,
+                                  field_value,
+                                  value_index):
+        """ Valididates a field value for a field and
+            then saves it to the database if valid
         """
         error_key = field['id'] + '-' + str(value_index)
-        valid = True  # default to optimism
-        if field['data_type'] == 'id':
+        valid = True
+        object_uuid = None
+        object_type = field['data_type']
+        data_num = None
+        data_date = None
+        if field['data_type'] == 'xsd:string':
+            str_man = StringManagement()
+            str_man.project_uuid = item_man.project_uuid
+            str_man.source_id = item_man.source_id
+            object_uuid = str_man.get_make_string(str(field_value))
+        elif field['data_type'] == 'id':
             # first check is to see if the field_value exists in the manifest
             try:
                 val_man = Manifest.objects.get(uuid=field_value)
@@ -117,6 +156,8 @@ class InputProfileUse():
             if valid:
                 # OK, the field_value is an ID in the manifest
                 # so let's check to make sure it is OK to associate
+                object_type = val_man.item_type
+                object_uuid = val_man.uuid
                 try:
                     pred_man = Manifest.objects.get(uuid=field['predicate_uuid'])
                 except Manifest.DoesNotExist:
@@ -128,28 +169,82 @@ class InputProfileUse():
                         self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
                         self.errors[error_key] += val_man.label + ' (' + val_man.uuid + ') is not a type/category.'
                         valid = False
+        elif field['data_type'] == 'xsd:boolean':
+            data_num = self.validate_convert_boolean(field_value)
+            if t_f_data is None:
+                self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                self.errors[error_key] += '"' + str(field_value) + '" is not a recognized boolean (T/F) value.'
+                valid = False
         elif field['data_type'] == 'xsd:integer':
             try:
-                int_data = int(float(field_value))
+                data_num = int(float(field_value))
             except:
                 self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
                 self.errors[error_key] += '"' + str(field_value) + '" is not an integer.'
                 valid = False
         elif field['data_type'] == 'xsd:double':
             try:
-                float_data = float(field_value)
+                data_num = float(field_value)
             except:
                 self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
                 self.errors[error_key] += '"' + str(field_value) + '" is not a number.'
                 valid = False
         elif field['data_type'] == 'xsd:date':
             try:
-                date_obj = parse(field_value)
+                data_date = parse(field_value)
             except:
                 self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
                 self.errors[error_key] += '"' + str(field_value) + '" is not a yyyy-mm-dd date.'
                 valid = False
-        return valid
+        if valid:
+            # we've validated the field_value data. Now to save the assertions!
+            new_ass = Assertion()
+            new_ass.uuid = item_man.uuid
+            new_ass.subject_type = item_man.item_type
+            new_ass.project_uuid = item_man.project_uuid
+            new_ass.source_id = item_man.source_id
+            new_ass.obs_node = '#obs-' + str(obs_num)
+            new_ass.obs_num = obs_num
+            new_ass.sort = field['sort'] + (value_index / 100)
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = field['predicate_uuid']
+            new_ass.object_type = object_type
+            if object_uuid is not None:
+                new_ass.object_uuid = object_uuid
+            if data_num is not None:
+                new_ass.data_num = data_num
+            if data_date is not None:
+                new_ass.data_date = data_date
+            new_ass.save()
+        else:
+            if self.new_item is False:
+                # we're updating an item and
+                # encoutered some wrong data. indicate error
+                self.ok = False
+
+    def validate_convert_boolean(self, field_value):
+        """ Validates boolean values for a record
+            returns a boolean 0 or 1 if
+        """
+        output = None
+        record = str(field_value).lower()
+        booleans = {'n': 0,
+                    'no': 0,
+                    'none': 0,
+                    'absent': 0,
+                    'a': 0,
+                    'false': 0,
+                    'f': 0,
+                    '0': 0,
+                    'y': 1,
+                    'yes': 1,
+                    'present': 1,
+                    'p': 1,
+                    'true': 1,
+                    't': 1}
+        if record in booleans:
+            output = booleans[record]
+        return output
 
     def update_required_make_data(self, item_man, required_make_data):
         """ updates items based on required make data
@@ -181,7 +276,7 @@ class InputProfileUse():
             elif req_field['predicate_uuid'] == 'oc-gen:contained-in':
                 context_uuid = req_field['value']
                 if item_man.item_type == 'subjects':
-                    self.save_contained_subject(content_uuid, item_man)
+                    self.save_contained_subject(context_uuid, item_man)
             elif req_field['predicate_uuid'] == 'oc-gen:class_uri':
                 item_man.class_uri = req_field['value']
                 item_man.save()
@@ -203,6 +298,7 @@ class InputProfileUse():
                     context_uuid = req_field['value']
                 elif req_field['predicate_uuid'] == 'oc-gen:class_uri':
                     class_uri = req_field['value']
+        if self.create_ok:
             item_man = Manifest()
             item_man.uuid = self.edit_uuid
             item_man.project_uuid = self.project_uuid
@@ -261,8 +357,8 @@ class InputProfileUse():
                 con_ass.object_type = item_man.item_type
                 con_ass.save()
                 # now make or update the subject record with context path for this item
-                sg = SubjectGeneration()
-                sq.generate_save_context_path_from_uuid(item_man.uuid)
+                subgen = SubjectGeneration()
+                subgen.generate_save_context_path_from_uuid(item_man.uuid)
             else:
                 self.ok = False
                 self.errors['context'] = 'Parent context ' + parent.label + ' (' + parent.uuid + ') is: '
@@ -285,12 +381,31 @@ class InputProfileUse():
                             act_field_data = field_data[field['id']][0]
                             if len(act_field_data) > 0:
                                 # we have the required data!
-                                missing_data = False
-                                field['value'] = act_field_data
-                                required_make_data.append(field)
+                                if field['predicate_uuid'] == 'oc-gen:class_uri':
+                                    # check to make sure the class_uri is valid
+                                    man_class = ManifestClasses()
+                                    if self.item_type == 'subjects':
+                                        man_class.allow_blank = False
+                                    class_uri = man_class.validate_class_uri(act_field_data)
+                                    if class_uri is not False:
+                                        missing_data = False
+                                        field['value'] = class_uri
+                                        required_make_data.append(field)
+                                    else:
+                                        self.ok = False
+                                        self.errors[field['predicate_uuid']] = 'Cannot find "' + str(act_field_data)
+                                        self.errors[field['predicate_uuid']] += '" for ' + field['label']
+                                else:
+                                    missing_data = False
+                                    field['value'] = act_field_data
+                                    required_make_data.append(field)
                     if missing_data:
                         missing_required = True
-                        self.errors[field['predicate_uuid']] = 'Missing required data for: ' + field['label']
+                        if field['predicate_uuid'] not in self.errors\
+                           and self.new_item:
+                            # only add the error if it's not present, since it maybe about a
+                            # bad class
+                            self.errors[field['predicate_uuid']] = 'Missing required data for: ' + field['label']
         if missing_required is False:
             self.create_ok = True
         else:

@@ -171,8 +171,11 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				else if (field.data_type == 'xsd:string') {
 					field_html += this.make_string_field_html(field);
 				}
+				else if (field.data_type == 'xsd:boolean') {
+					field_html += this.make_boolean_field_html(field);
+				}
 				else{
-				   field_html += this.make_field_html(field);	
+				   field_html += '';	
 				}
 			}
 		}
@@ -197,18 +200,33 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		meta_panel.body_html = body_html;
 		return meta_panel.make_html();
 	}
-	this.make_field_html = function(field){
+	this.make_boolean_field_html = function(field){
+		var hr_data_type = this.get_human_readable_data_type(field.data_type);
+		var placeholder = ' placeholder="' + hr_data_type + ' values" ';
+		
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
 			'<label for="f-' + field.id + '">' + field.label + '</label>',
 			'<input id="f-' + field.id + '" class="form-control input-sm" ',
-			'type="text" value="" />',
+			'type="text" value="" ' + placeholder,
+			'onkeydown="' + this.name + '.validateBoolean(\'' + field.id + '\');" ',
+			'onkeyup="' + this.name + '.validateBoolean(\'' + field.id + '\');" ',
+			'onchange="' + this.name + '.validateBoolean(\'' + field.id + '\');" ',
+			'/>',
 			'</div>',
+			'<label class="radio-inline">',
+			'<input type="radio" name="boolean-tf" id="f-tf-t-' + field.id + '" ',
+			'value="true" onclick="' + this.name + '.booleanSelect(1, \'' + field.id + '\');">',
+			'True</label>',
+			'<label class="radio-inline">',
+			'<input type="radio" name="boolean-tf" id="f-tf-f-' + field.id + '" ',
+			'value="false" onclick="' + this.name + '.booleanSelect(0, \'' + field.id + '\');">',
+			'False</label>',
 		'</td>',
 		'<td>',
 			'<div id="v-' + field.id + '">',
@@ -226,8 +244,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var placeholder = ' placeholder="' + hr_data_type + ' values" ';
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -260,8 +278,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var placeholder = ' placeholder="' + hr_data_type + ' values" ';
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -286,8 +304,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.make_string_field_html = function(field){
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -343,8 +361,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -405,8 +423,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -478,8 +496,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		this.prep_field_tree(('oc-gen:' + this.item_type), field.id, 'entities');
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -532,7 +550,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
 		var afterSelectDone = {
-			name: ent_name,
+			// name: ent_name,
 			field_uuid: field.id,
 			checkFields: this.checkFields, //needed for checking fields
 		   data: this.data, //needed for checking fields
@@ -552,8 +570,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		
 		var html = [
 		'<tr>',
-		'<td>',
-      this.make_field_update_buttom(field.id),
+		'<td id="f-bu-' + field.id + '">',
+      this.make_field_update_buttom_html(field.id),
 		'</td>',
 		'<td>',
 			'<div class="form-group">',
@@ -590,17 +608,25 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		].join("\n");
 		return html;
 	}
-	this.make_field_update_buttom = function(field_uuid){
+	this.make_field_update_buttom_html = function(field_uuid){
 		// makes an update button for user to upload data when data entry is done
-		var button_html = [
-		'<div style="margin-top: 22px;">',
-		'<button class="btn btn-default" onclick="' + this.name + '.updateField(\'' + field_uuid + '\');">',
-		'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
-		//' Delete',
-		'</button>',
-		'</div>'
-		].join('\n');
-
+		if (this.edit_new) {
+			// disabled button because it's a new item that is not yet saved
+			var button_html = [
+			
+			].join('\n');
+		}
+		else{
+			// active button because each individual field can now be updated independently
+			var button_html = [
+			'<div style="margin-top: 22px;">',
+			'<button class="btn btn-default" onclick="' + this.name + '.updateField(\'' + field_uuid + '\');">',
+			'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+			//' Delete',
+			'</button>',
+			'</div>'
+			].join('\n');
+		}
 		return button_html;
 	}
 	
@@ -613,6 +639,42 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	 * or spatial contexts (subjects)
 	 * ---------------------------------------
 	 */
+	this.updateField = function(field_uuid){
+		if (!this.edit_new) {
+			// not a new item, so we can update an individual field
+			var act_dom = document.getElementById('fields-complete-mes');
+			act_dom.innerHTML = this.make_loading_gif('Updating a field...');
+			data = {csrfmiddlewaretoken: csrftoken};
+			field_data = {};
+			for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
+				var fgroup = this.data.fgroups[j];
+				if (fgroup) {
+					for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+						var field = fgroup.fields[i];
+						if (field.id == field_uuid) {
+							field_data[field.id] = this.makeFieldValuesList(field);
+						}
+					}
+				}
+			}
+			data['field_data'] = JSON.stringify(field_data, null, 2);
+			// data['field_data'] = '{}';
+			var url = this.make_url("/edit/inputs/create-update-profile-item/");
+			url += encodeURIComponent(this.profile_uuid);
+			url += '/' + encodeURIComponent(this.edit_uuid);
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.submitDataDone,
+				error: function (request, status, error) {
+					alert('Data submission failed, sadly. Status: ' + request.status);
+				} 
+			});
+		}
+	}
 	this.submitAll = function(){
 		// submits all field data if valid
 		if (this.is_valid) {
@@ -678,6 +740,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				mess += error_html;
 			}
 			var alert_html = this.make_validation_html(mess, true, false);
+			this.activateFieldUpdateButtons(); // make the individual field update buttons active
 		}
 		else{
 			if (this.edit_new) {
@@ -740,7 +803,18 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		return output;
 	}
-	
+	this.activateFieldUpdateButtons = function(){
+		for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
+			var fgroup = this.data.fgroups[j];
+			if (fgroup) {
+				for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+					var field = fgroup.fields[i];
+					var act_dom = document.getElementById("f-bu-" + field.id);
+					act_dom.innerHTML = this.make_field_update_buttom_html(field.id);
+				}
+			}
+		}
+	}
 	/* ---------------------------------------
 	 * User interaction functions
 	 *
@@ -1186,7 +1260,50 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		//now check the fields
 		this.checkFields();
 	}
-	
+	this.validateBoolean = function(field_uuid){
+		// validates date fields to a yyyy-mm-dd format
+		var ok_values = {	'n': 0,
+								'no': 0,
+								'none': 0,
+								'absent': 0,
+								'a': 0,
+								'false': 0,
+								'f': 0,
+								'0': 0,
+								'y': 1,
+								'yes': 1,
+								'present': 1,
+								'p': 1,
+								'true': 1,
+								't': 1}
+		var str = document.getElementById('f-' + field_uuid).value.toLowerCase();
+	   if (str in ok_values) {
+			var boolean_ok = true;
+			var truth_val = ok_values[str];
+			if (truth_val == 1) {
+				var val_mes = 'Valid <strong>True</strong> value indicated.';	
+			}
+			else{
+				var val_mes = 'Valid <strong>False</strong> value indicated.';
+			}
+			this.make_validation_html(val_mes, true, field_uuid);
+		}
+		else{
+			var boolean_ok = false;
+			var val_mes = 'Cannot be understood as a Boolean (True/False) value.';
+			this.make_validation_html(val_mes, false, field_uuid);
+		}
+		//now check the fields
+		this.checkFields();
+	}
+	this.booleanSelect = function(bool_num, field_uuid){
+		if (bool_num == 1) {
+			document.getElementById('f-' + field_uuid).value = 'True';
+		}
+		else{
+			document.getElementById('f-' + field_uuid).value = 'False';
+		}
+	}
 	
 	/* ---------------------------------------
 	 * Helper functions
