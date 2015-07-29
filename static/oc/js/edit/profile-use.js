@@ -29,6 +29,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
 	this.search_nums = [0]; // id number for search entiity interface, used for making a dom ID
 	this.sobjs = {}; // search objects
+	this.is_valid = false; //the item has enough data to add
 	this.get_data = function(){
 		//AJAX request to get data about a profile
 		this.show_loading();
@@ -606,6 +607,141 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	
 	
 	/* ---------------------------------------
+	 * Data submission Functions
+	 * related to tree interfaces for selecting values
+	 * for nominal (id) fields, categories (class_uri),
+	 * or spatial contexts (subjects)
+	 * ---------------------------------------
+	 */
+	this.submitAll = function(){
+		// submits all field data if valid
+		if (this.is_valid) {
+			var act_dom = document.getElementById('fields-complete-mes');
+			act_dom.innerHTML = this.make_loading_gif('Submitting data...');
+			data = {csrfmiddlewaretoken: csrftoken};
+			field_data = {};
+			for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
+				var fgroup = this.data.fgroups[j];
+				if (fgroup) {
+					for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+						var field = fgroup.fields[i];
+						field_data[field.id] = this.makeFieldValuesList(field);
+					}
+				}
+			}
+			data['field_data'] = JSON.stringify(field_data, null, 2);
+			// data['field_data'] = '{}';
+			var url = this.make_url("/edit/inputs/create-update-profile-item/");
+			url += encodeURIComponent(this.profile_uuid);
+			url += '/' + encodeURIComponent(this.edit_uuid);
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.submitDataDone,
+				error: function (request, status, error) {
+					alert('Data submission failed, sadly. Status: ' + request.status);
+				} 
+			});
+		}
+	}
+	this.submitDataDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			// the request was OK
+			if (this.edit_new) {
+				// we succeeded in creating a new item
+				var mess = 'Item successfully created!';
+				this.edit_new = false;
+			}
+			else{
+				var mess = 'Item successfully updated.';
+				this.edit_new = false;
+			}
+			if ('errors' in data) {
+				var found_errors = false;
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					if (errors.hasOwnProperty(k)) {
+						error_html += '<li>' + errors[k] + '</li>';
+						found_errors = true;
+					}
+				}
+				error_html += '</ul>';
+				if (found_errors) {
+					mess += ' But there are some problems:';
+					mess += error_html;
+				}
+				mess += error_html;
+			}
+			var alert_html = this.make_validation_html(mess, true, false);
+		}
+		else{
+			if (this.edit_new) {
+				// we succeeded in creating a new item
+				var mess = 'Item creation failed! ';
+			}
+			else{
+				var mess = 'Item updated failed. ';
+			}
+			if ('errors' in data) {
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					if (errors.hasOwnProperty(k)) {
+						error_html += '<li>' + errors[k] + '</li>';
+					}
+				}
+				error_html += '</ul>';
+				mess += error_html;
+			}
+			var alert_html = this.make_validation_html(mess, false, false);
+		}
+		var act_dom = document.getElementById('fields-complete-mes');
+		act_dom.innerHTML = alert_html;
+	}
+	this.makeFieldValuesList = function(field){
+		//makes a list of values for a field
+		var output = [];
+		var loop_continue = true;
+		var i = 0;
+		while (loop_continue) {
+			loop_continue = false;
+			if (i < 1) {
+				var literal_id = 'f-' + field.id;
+				var id_id = 'f-id-' + field.id;
+			}
+			else{
+				var literal_id = 'f-' + i + '-' + field.id;
+				var id_id = 'f-id-' + i + '-' + field.id;
+			}
+			var field_val = null;
+			if (document.getElementById(literal_id)) {
+				loop_continue = true;
+				if (document.getElementById(literal_id).value.length > 0){
+					field_val = document.getElementById(literal_id).value;
+				}
+			}
+			else{
+				if (document.getElementById(id_id)) {
+					loop_continue = true;
+					if (document.getElementById(id_id).value.length > 0){
+						field_val = document.getElementById(id_id).value;
+					}
+				}
+			}
+			if (field_val != null) {
+				output.push(field_val);
+			}
+			i++;
+		}
+		return output;
+	}
+	
+	/* ---------------------------------------
 	 * User interaction functions
 	 *
 	 * for item labels
@@ -968,6 +1104,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 				}
 			}
 		}
+		this.is_valid = valid_submit;
 		if (valid_submit) {
 			var message = 'Can create or update item with data for ' + num_completed + ' fields';
 			var button_html = [
@@ -1067,7 +1204,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 	
 		var alert_html = [
-				'<div role="alert" class="' + alert_class + '" style="margin-top: 4px;">',
+				'<div role="alert" class="' + alert_class + '" style="margin-top: 3px;">',
 					icon_html,
 					message_html,
 				'</div>'

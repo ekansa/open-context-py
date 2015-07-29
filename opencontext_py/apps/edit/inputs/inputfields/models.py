@@ -11,7 +11,8 @@ class InputField(models.Model):
                                   'oc-gen:class_uri',
                                   'oc-gen:contained-in'],
                      'media': ['oc-gen:label'],
-                     'documents': ['oc-gen:label'],
+                     'documents': ['oc-gen:label',
+                                   'oc-gen:content'],
                      'persons': ['oc-gen:label']}
 
     PREDICATE_ITEMS = {'oc-gen:label': {'label': 'Item Label',
@@ -24,6 +25,10 @@ class InputField(models.Model):
                                             'validation': {'search': {'search_type': 'hierarchy',
                                                                       'ent_type': 'uri'}}
                                             },
+                       'oc-gen:content': {'label': 'Text Content',
+                                          'data_type': 'xsd:string',
+                                          'note': 'Body of text representing the content of the item (HTML is ok).',
+                                          'validation': {}},
                        'oc-gen:contained-in': {'label': 'Contained within',
                                                'data_type': 'id',
                                                'note': 'Context of where the item was discovered.',

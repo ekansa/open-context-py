@@ -9,6 +9,7 @@ from opencontext_py.apps.edit.inputs.labeling import InputLabeling
 from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.profiles.manage import ManageInputProfile
 from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
+from opencontext_py.apps.edit.inputs.profiles.use import InputProfileUse
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.fieldgroups.manage import ManageInputFieldGroup
 from opencontext_py.apps.edit.inputs.inputfields.manage import ManageInputField
@@ -172,8 +173,8 @@ def index_json(request, project_uuid):
 
 
 def label_check(request, project_uuid):
-    """ handles get requests to make
-        a JSON index of input profiles for a project
+    """ handles get requests to check on the
+        validity of a proposed item label
     """
     proj_inp = ProjectInputs(project_uuid, request)
     if proj_inp.manifest is not False:
@@ -232,6 +233,64 @@ def label_check(request, project_uuid):
             return HttpResponse(json_output,
                                 content_type='application/json; charset=utf8',
                                 status=401)
+    else:
+        raise Http404
+
+
+def create_update_profle_item(request, profile_uuid, edit_uuid):
+    """ handles POST requests to make
+        or update an item with a given profile
+    """
+    try:
+        inp_prof = InputProfile.objects.get(uuid=profile_uuid)
+        project_uuid = inp_prof.project_uuid
+    except InputProfile.DoesNotExist:
+        inp_prof = False
+        project_uuid = False
+        raise Http404
+    proj_inp = ProjectInputs(project_uuid, request)
+    if proj_inp.manifest is not False:
+        if request.method == 'POST':
+            field_data = False
+            if 'field_data' in request.POST:
+                field_data_json = request.POST['field_data']
+                try:
+                    field_data = json.loads(field_data_json)
+                except:
+                    field_data = False
+            if field_data is False:
+                json_output = json.dumps({'error': 'Need to POST "field_data" with JSON encoded text.'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=400)
+            if proj_inp.edit_permitted or request.user.is_superuser:
+                ipt = InputProfileTemplating()
+                profile_obj = ipt.make_json(profile_uuid)
+                ipu = InputProfileUse()
+                ipu.edit_uuid = edit_uuid
+                ipu.item_type = profile_obj['item_type']
+                ipu.profile_uuid = profile_uuid
+                ipu.profile_obj = profile_obj
+                ipu.project_uuid = project_uuid
+                # result = ipu.create_update(post_data)
+                result = ipu.test(field_data)
+                result['errors'] = ipu.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
     else:
         raise Http404
 
