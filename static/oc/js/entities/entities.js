@@ -485,15 +485,22 @@ function addEntityObj() {
 
 function make_url(relative_url){
 	 //makes a URL for requests, checking if the base_url is set
+	 var rel_first = relative_url.charAt(0);
 	 if (typeof base_url != "undefined") {
-		  var base_url_last = base_url.slice(-1);
-		  var rel_first = relative_url.slice(0);
+		  var base_url_last = base_url.charAt(-1);
 		  if (base_url_last == '/' && rel_first == '/') {
 				return base_url + relative_url.substring(1);
 		  }
-		  return base_url + relative_url;
+		  else{
+				return base_url + relative_url;
+		  }
 	 }
 	 else{
-			return '../../' + relative_url;
+		  if (rel_first == '/') {
+				return '../..' + relative_url;
+		  }
+		  else{
+				return '../../' + relative_url;
+		  }
 	 }
 }

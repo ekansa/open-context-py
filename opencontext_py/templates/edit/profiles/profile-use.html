@@ -83,6 +83,15 @@
                 act_profile = new useProfile(uuid, edit_uuid, edit_new);
                 act_profile.label_prefix = label_prefix;
                 act_profile.label_id_len = label_id_len;
+                if (!edit_new) {
+                    act_profile.item_type = item_type;
+                    var item_json_ld_obj = new item_object(item_type, edit_uuid);
+                    act_profile.item_json_ld_obj = item_json_ld_obj;
+                    act_profile.get_data().then(function(){
+                        act_profile.getItemJSON();
+                    });
+                }
+               
                 if (label_prefix.length > 0 || label_id_len != false) {
                     // add a suggested label
                     act_profile.preset_label = true;
@@ -99,6 +108,7 @@
         </script> 
         
         <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
+        <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
         <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
         <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
         <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>

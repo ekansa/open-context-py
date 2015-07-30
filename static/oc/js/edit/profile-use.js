@@ -10,6 +10,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.profile_uuid = profile_uuid;
 	this.edit_uuid = edit_uuid;
 	this.edit_new = edit_new;
+	this.item_json_ld_obj = false;
 	this.label_prefix = '';
 	this.label_id_len = false;
 	this.item_type = false;
@@ -33,6 +34,14 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.get_data = function(){
 		//AJAX request to get data about a profile
 		this.show_loading();
+		if (this.item_json_ld_obj != false) {
+			return this.get_profile_data();
+		}
+		else{
+			return this.get_profile_data();	
+		}
+	}
+	this.get_profile_data = function(){
 		var url = this.make_url("/edit/inputs/profiles/") + encodeURIComponent(this.profile_uuid) + ".json";
 		return $.ajax({
 			type: "GET",
@@ -66,9 +75,106 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			act_dom.innerHTML = html;
 			this.make_trees();
 			this.activate_calendars();
+			this.show_existing_data();
 		}
 	}
-	
+	this.getItemJSON = function(){
+		/* gets the item JSON-LD from the server */
+		if (this.item_json_ld_obj != false) {
+			
+			var url = this.make_url("/" + this.item_type + "/" + encodeURIComponent(this.item_json_ld_obj.uuid) + ".json");
+			return $.ajax({
+				type: "GET",
+				url: url,
+				context: this,
+				dataType: "json",
+				success: this.getItemJSONDone,
+				error: function (request, status, error) {
+					alert('Item JSON retrieval failed, sadly. Status: ' + request.status);
+				}
+			});
+		}
+	}
+	this.getItemJSONDone = function(data){
+		/* the JSON-LD becomes this object's data */
+		this.item_json_ld_obj.data = data;
+		this.show_existing_data();
+	}
+	this.show_existing_data = function(){
+		if (this.item_json_ld_obj != false) {
+			if (this.item_json_ld_obj.data != false) {
+				//we actually have the data!
+				for (var j = 0, length = this.data.fgroups.length; j < length; j++) {
+					var fgroup = this.data.fgroups[j];
+					if (fgroup) {
+						for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+							var field = fgroup.fields[i];
+							var field_values = [];
+							if (field.predicate_uuid == this.label_pred_uuid) {
+								var act_val = {
+									'label': this.item_json_ld_obj.data.label,
+								   'id': false
+								};
+								field_values.push(act_val);
+							}
+							else if (field.predicate_uuid == this.class_pred_uuid) {
+								var field_values = this.item_json_ld_obj.getItemCategories();
+							}
+							else if (field.predicate_uuid == this.context_pred_uuid) {
+								var act_val = this.item_json_ld_obj.getParent();
+								field_values.push(act_val);
+							}
+							else{
+								var field_values = this.item_json_ld_obj.getValuesByPredicateUUID(field.predicate_uuid);
+							}
+							this.populateFieldValuesList(field, field_values);
+						}//end loop through fields
+					}//end case with fgroup
+				}//end loop through fieldgroups
+			}
+		}
+	}
+	this.populateFieldValuesList = function(field, field_values){
+		//makes a list of values for a field
+		for (var i = 0, length = field_values.length; i < length; i++) {
+			if (i < 1) {
+				var literal_id = 'f-' + field.id;
+				var label_id = 'f-l-' + field.id;
+				var id_id = 'f-id-' + field.id;
+			}
+			else{
+				var literal_id = 'f-' + i + '-' + field.id;
+				var label_id = 'f-l-' + i + '-' + field.id;
+				var id_id = 'f-id-' + i + '-' + field.id;
+			}
+			var field_val = field_values[i];
+			if (field_val.hasOwnProperty('uuid')) {
+				// has UUID identifiers
+				if (document.getElementById(id_id)) {
+					document.getElementById(id_id).value = field_val.uuid;
+				}
+			}
+			else if (field_val.id != false) {
+				// field value has identifiers
+				if (document.getElementById(id_id)) {
+					document.getElementById(id_id).value = field_val.id;
+				}
+			}
+			if (field_val.hasOwnProperty('label')) {
+				if (document.getElementById(literal_id)) {
+					document.getElementById(literal_id).value = field_val.label;
+				}
+				if (document.getElementById(label_id)) {
+					document.getElementById(label_id).value = field_val.label;
+				}
+			}
+			if (document.getElementById(literal_id)) {
+				if(field_val.hasOwnProperty('literal')){
+					document.getElementById(literal_id).value = field_val.literal;
+				}
+			}
+		}
+	}
 	
 	/* ---------------------------------------
 	 * Profile HTML display
@@ -341,7 +447,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
 		var afterSelectDone = {
-			name: ent_name,
+			
 			field_uuid: field.id,
 			checkFields: this.checkFields, //needed for checking fields
 		   data: this.data, //needed for checking fields
@@ -550,7 +656,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
 		var afterSelectDone = {
-			// name: ent_name,
+			// 
 			field_uuid: field.id,
 			checkFields: this.checkFields, //needed for checking fields
 		   data: this.data, //needed for checking fields
@@ -851,7 +957,10 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		
 		this.act_field_uuid = field_uuid; // so as to remember what field we're validating
 		var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
-		var data = {item_type: this.item_type};
+		var data = {
+			item_type: this.item_type,
+		   edit_uuid: this.edit_uuid
+		};
 		
 		var id_len = parseInt(document.getElementById('label-id-len').value);
 		if (this.isInt(id_len)) {
@@ -902,7 +1011,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			var data = {
 				item_type: this.item_type,
 			   prefix: this.label_prefix,
-				id_len: this.label_id_len
+				id_len: this.label_id_len,
+				edit_uuid: this.edit_uuid
 			};
 			var act_dom = document.getElementById('v-' + field.id);
 			act_dom.innerHTML = this.make_loading_gif('Suggesting label...');
