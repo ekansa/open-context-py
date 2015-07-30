@@ -15,6 +15,7 @@ from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.indexer.reindex import SolrReIndex
 
 
 # Help organize the code, with a class to make editing items easier
@@ -86,6 +87,9 @@ class ItemBasicEdit():
             except Person.DoesNotExist:
                 self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                 ok = False
+        # now reindex for solr, including child items impacted by the changes
+        sri = SolrReIndex()
+        sri.reindex_related(self.manifest.uuid)
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',

@@ -26,6 +26,7 @@ from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.indexer.crawler import Crawler
+from opencontext_py.apps.indexer.reindex import SolrReIndex
 
 
 class InputProfileUse():
@@ -52,6 +53,7 @@ class InputProfileUse():
         self.contain_obs_num = 1
         self.contain_sort = 1
         self.do_solr_index = True
+        self.solr_reindex_uuids = []
 
     def test(self, field_data):
         output = {'field_data': field_data}
@@ -85,8 +87,11 @@ class InputProfileUse():
             for field_uuid, field_values in field_data.items():
                 self.profile_field_update(item_man, field_uuid, field_values)
             if self.do_solr_index:
-                crawler = Crawler()
-                crawler.index_single_document(item_man.uuid)
+                if item_man.uuid not in self.solr_reindex_uuids:
+                    self.solr_reindex_uuids.append(item_man.uuid)
+                sri = SolrReIndex()
+                num_reindexed = sri.reindex_uuids(self.solr_reindex_uuids)
+                note += ' Indexed ' + str(num_reindexed) + ' items.'
         else:
             self.ok = False
             label = 'No item'
@@ -259,6 +264,11 @@ class InputProfileUse():
             if req_field['predicate_uuid'] == 'oc-gen:label':
                 item_man.label = req_field['value']
                 item_man.save()
+                if item_man.item_type == 'subjects':
+                    subj_gen = SubjectGeneration()
+                    subj_gen.generate_save_context_path_from_uuid(item_man.uuid)
+                # now get uuids for solr reindexing, including child items impacted by the changes
+                self.collect_solr_reindex_uuids(item_man.uuid)
             elif req_field['predicate_uuid'] == 'oc-gen:content':
                 # string content, as in for documents
                 content = req_field['value']
@@ -277,6 +287,8 @@ class InputProfileUse():
                 context_uuid = req_field['value']
                 if item_man.item_type == 'subjects':
                     self.save_contained_subject(context_uuid, item_man)
+                # now get uuids for solr reindexing, including child items impacted by the changes
+                self.collect_solr_reindex_uuids(item_man.uuid)
             elif req_field['predicate_uuid'] == 'oc-gen:class_uri':
                 item_man.class_uri = req_field['value']
                 item_man.save()
@@ -411,6 +423,15 @@ class InputProfileUse():
         else:
             self.create_ok = False
         return required_make_data
+
+    def collect_solr_reindex_uuids(self, uuid):
+        """ collects uuids for solr to reindex """
+        sri = SolrReIndex()
+        uuids = sri.get_related_uuids(uuid)
+        for solr_uuid in uuids:
+            if solr_uuid not in self.solr_reindex_uuids:
+                self.solr_reindex_uuids.append(solr_uuid)
+        return self.solr_reindex_uuids
 
     def make_source_id(self):
         """ makes a source id based on the profile_uuid """

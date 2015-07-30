@@ -131,6 +131,8 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 						}//end loop through fields
 					}//end case with fgroup
 				}//end loop through fieldgroups
+				//now validate so as to get the submit button
+				this.checkFields();
 			}
 		}
 	}
@@ -1290,7 +1292,12 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		}
 		this.is_valid = valid_submit;
 		if (valid_submit) {
-			var message = 'Can create or update item with data for ' + num_completed + ' fields';
+			if (this.edit_new) {
+				var message = 'Can create item with data for ' + num_completed + ' fields';
+			}
+			else{
+				var message = 'Can update item with data for ' + num_completed + ' fields';	
+			}
 			var button_html = [
 				'<div style="margin-top: 22px;">',
 				'<button class="btn large btn-primary" onclick="' + this.name + '.submitAll();">',
