@@ -23,6 +23,7 @@ class InputProfileTemplating():
 
     def __init__(self):
         self.uuid = False
+        self.label = False
         self.project_uuid = False
         self.project_man = False
         self.project = False
@@ -60,6 +61,7 @@ class InputProfileTemplating():
             ok = True
             try:
                 self.inp_prof = InputProfile.objects.get(uuid=uuid)
+                self.label = self.inp_prof.label
                 self.project_uuid = self.inp_prof.project_uuid
             except InputProfile.DoesNotExist:
                 self.inp_prof = False

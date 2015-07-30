@@ -18,6 +18,22 @@ def index(request):
     return HttpResponse("Hello, world. You're at the edit index.")
 
 
+def check_profile_use(manifest):
+    """ checks to see if the item
+        was created using a input profile
+    """
+    output = False
+    if ':' in manifest.source_id:
+        source_ex = manifest.source_id.split(':')
+        if(len(source_ex) == 2):
+            profile_uuid = source_ex[1]
+            ipt = InputProfileTemplating()
+            exists = ipt.check_exists(profile_uuid)
+            if exists:
+                output = ipt.inp_prof
+    return output
+
+
 @ensure_csrf_cookie
 def html_view(request, uuid):
     """ Displays the HTML item editing interface """
@@ -33,6 +49,7 @@ def html_view(request, uuid):
             template = loader.get_template('edit/view.html')
             context = RequestContext(request,
                                      {'item': temp_item,
+                                      'profile': check_profile_use(ocitem.manifest),
                                       'super_user': request.user.is_superuser,
                                       'icons': ItemBasicEdit.UI_ICONS,
                                       'base_url': base_url})
