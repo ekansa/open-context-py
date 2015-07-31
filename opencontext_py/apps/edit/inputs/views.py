@@ -143,6 +143,50 @@ def json_view(request, profile_uuid):
         raise Http404
 
 
+def profile_item_list(request, profile_uuid):
+    """ Handles JSON requests for a profile
+    """
+    ipt = InputProfileTemplating()
+    exists = ipt.check_exists(profile_uuid)
+    if exists:
+        rp = RootPath()
+        ipt.base_url = rp.get_baseurl()
+        # now check to see if the we have edit permissions
+        proj_inp = ProjectInputs(ipt.project_uuid, request)
+        if proj_inp.edit_permitted or request.user.is_superuser:
+            start = 0
+            rows = 10
+            sort = False
+            last = False
+            if 'start' in request.GET:
+                start = request.GET['start']
+            if 'rows' in request.GET:
+                rows = request.GET['rows']
+            if 'sort' in request.GET:
+                sort = request.GET['sort']
+            if 'last' in request.GET:
+                last = True
+            result = ipt.get_item_list(profile_uuid,
+                                       start,
+                                       rows,
+                                       sort,
+                                       last)
+            json_output = json.dumps(result,
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8')
+        else:
+            json_output = json.dumps({'error': 'edit permission required'},
+                                     indent=4,
+                                     ensure_ascii=False)
+            return HttpResponse(json_output,
+                                content_type='application/json; charset=utf8',
+                                status=401)
+    else:
+        raise Http404
+
+
 # ------------------------------------------------
 # BELOW HANDLE AJAX REQUESTS
 # TO get a JSON Index of

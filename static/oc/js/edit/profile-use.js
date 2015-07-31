@@ -11,6 +11,11 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	this.edit_uuid = edit_uuid;
 	this.edit_new = edit_new;
 	this.item_json_ld_obj = false;
+	this.profile_items = new profile_items(profile_uuid);
+	this.profile_items.current_uuid = edit_uuid;
+	this.profile_items.parent_obj_name = this.name;
+	this.profile_items.act_dom_id = "profile-items"; //dom id to put item list
+	this.profile_items.do_last_revised_list = true;
 	this.label_prefix = '';
 	this.label_id_len = false;
 	this.item_type = false;
@@ -201,13 +206,18 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		'</div>',
 		'</div>',
 		'<div class="row">',
-		'<div class="col-xs-12">',
+		'<div class="col-xs-5">',
 			'<dl>',
 			'<dt>Item Type</dt>',
 			'<dd>' + this.describe_item_type_html(data.item_type) + '</dd>',
 			'<dt>Fields</dt>',
 			'<dd>' + num_fields + ' fields in ' + data.fgroups.length + ' groups</dd>',
 			'</dl>',
+		'</div>',
+		'<div class="col-xs-7">',
+			'<label>Recent Items</label>',
+			'<div id="profile-items">',
+			'</div>',
 		'</div>',
 		'</div>',
 		'<div class="row">',
@@ -225,6 +235,10 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 			'</dl>',
 		'</div>',
 		'</div>',
+		// '<div class="row">',
+		// '<div class="col-xs-12" id="profile-items">',
+		// '</div>',
+		// '</div>',
 		'</div>',
 		].join('\n');
 		var panel_num = this.get_next_panel_num();
@@ -785,6 +799,11 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 	}
 	this.submitAll = function(){
 		// submits all field data if valid
+		this.exec_submitAll().then(function(){
+			this.profile_items.get_data();
+		});
+	}
+	this.exec_submitAll = function(){
 		if (this.is_valid) {
 			var act_dom = document.getElementById('fields-complete-mes');
 			act_dom.innerHTML = this.make_loading_gif('Submitting data...');

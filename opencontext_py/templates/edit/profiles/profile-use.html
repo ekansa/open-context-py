@@ -89,6 +89,8 @@
                     act_profile.item_json_ld_obj = item_json_ld_obj;
                     act_profile.get_data().then(function(){
                         act_profile.getItemJSON();
+                    }).then(function(){
+                        act_profile.profile_items.get_data();
                     });
                 }
                
@@ -97,11 +99,15 @@
                     act_profile.preset_label = true;
                     act_profile.get_data().then(function(){
                         act_profile.presetLabel();
+                    }).then(function(){
+                        act_profile.profile_items.get_data();
                     });
                 }
                 else{
                     // just get the data without making a suggested label
-                    act_profile.get_data();
+                    act_profile.get_data().then(function(){
+                        act_profile.profile_items.get_data();
+                    });
                 }
             }
             -->
@@ -114,6 +120,7 @@
         <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
         <script src="{{ base_url }}/static/oc/js/entities/entities.js" ></script>
         <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profile-item-list.js" ></script>
         <script src="{{ base_url }}/static/oc/js/edit/profile-use.js" onload="use_profile();"></script>
      </div>
 </div>

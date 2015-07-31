@@ -109,6 +109,13 @@ class Manifest(models.Model):
         """
         super(Manifest, self).save(update_fields=['archived'])
 
+    def revised_save(self):
+        """
+        Updates with the last indexed time
+        """
+        self.revised = timezone.now()
+        super(Manifest, self).save(update_fields=['revised'])
+
     def slug_save(self, project_indices=False):
         """
         save only slug value

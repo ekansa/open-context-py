@@ -31,6 +31,7 @@ class InputProfileTemplating():
         self.mandatory_fields = []
         self.field_groups = []
         self.exists_ok = None
+        self.base_url = '../../'
 
     def make_json(self, uuid):
         """ makes JSON for the profile item """
@@ -45,6 +46,7 @@ class InputProfileTemplating():
             profile['id'] = self.uuid
             profile['label'] = self.inp_prof.label
             profile['note'] = self.inp_prof.note
+            profile['updated'] = self.inp_prof.updated.date().isoformat()
             profile['item_type'] = self.inp_prof.item_type
             profile['project'] = LastUpdatedOrderedDict()
             profile['project']['uuid'] = self.project.uuid
@@ -160,3 +162,135 @@ class InputProfileTemplating():
                       .delete()
         self.field_groups = groups
         return self.field_groups
+
+    def get_item_list(self,
+                      uuid,
+                      start=0,
+                      rows=10,
+                      sort=False,
+                      last=False):
+        """ returns a list of items
+            made with the current profile
+        """
+        ok_sorts = ['label',
+                    '-label',
+                    'revised',
+                    '-revised']
+        output = False
+        if start != 0:
+            try:
+                start = int(float(start))
+            except:
+                start = 0
+        if rows != 10:
+            try:
+                rows = int(float(rows))
+            except:
+                rows = 10
+        if sort is False:
+            sort = '-label,-revised'
+        if ',' in sort:
+            sort_ex = sort.split(',')
+        else:
+            sort_ex = [sort, '']
+        sort_param_ok = True
+        if sort_ex[0] not in ok_sorts:
+            sort_ex[0] = '-label'
+            sort_param_ok = False
+        if sort_ex[1] not in ok_sorts:
+            sort_ex[1] = '-revised'
+        if self.rev_sort(sort_ex[1]) == sort_ex[0]:
+            sort_ex[1] = sort_ex[0]
+        if sort_param_ok:
+            sort_param = '?sort=' + ','.join(sort_ex);
+        else:
+            sort_param = ''
+        ok = self.check_exists(uuid)
+        if ok:
+            # the profile exists
+            url = self.base_url + '/edit/inputs/profile-item-list/' + uuid + sort_param
+            if '?' in url:
+                param_r = '&rows=' + str(rows)
+            else:
+                param_r = '?rows=' + str(rows)
+            output = LastUpdatedOrderedDict()
+            # the profile exists
+            source_id = 'profile:' + uuid
+            output['uuid'] = uuid
+            output['source_id'] = source_id
+            output['label'] = self.inp_prof.label
+            man_count = Manifest.objects\
+                                .filter(source_id=source_id)\
+                                .values('source_id')\
+                                .annotate(total=Count('uuid'))
+            total = man_count[0]['total']
+            end = start + rows
+            output['count'] = total
+            num_pages = round(total / rows, 0)
+            if num_pages * rows >= total:
+                num_pages -= 1
+            last_start = int(num_pages * rows)
+            if start == 0:
+                output['href'] = url
+            else:
+                output['href'] = url + param_r + '&start=' + str(start)
+            if total <= rows:
+                output['first'] = False
+                output['previous'] = False
+                output['next'] = False
+                output['last'] = False
+            else:
+                if start > 0:
+                    output['first'] = url + param_r
+                else:
+                    output['first'] = False
+                prev_start = start - rows
+                if start > 0 and prev_start < 0:
+                    prev_start = 0
+                if prev_start >= 0:
+                    output['previous'] = url + param_r + '&start=' + str(prev_start)
+                else:
+                    output['previous'] = False
+                if end < total:
+                    output['next'] = url + param_r + '&start=' + str(end)
+                else:
+                    output['next'] = False
+                if end < total:
+                    if last_start > 0 and last_start < total:
+                        output['last'] = url + param_r + '&start=' + str(last_start)
+                    else:
+                        output['last'] = False
+                else:
+                    output['last'] = False
+            if last:
+                man_list = Manifest.objects\
+                                   .filter(source_id=source_id)\
+                                   .order_by(sort_ex[0], sort_ex[1])[last_start:total]
+            else:
+                man_list = Manifest.objects\
+                                   .filter(source_id=source_id)\
+                                   .order_by(sort_ex[0], sort_ex[1])[start:end]
+            output['items'] = []
+            if last:
+                index = last_start
+            else:
+                index = start
+            for man in man_list:
+                index += 1
+                item = LastUpdatedOrderedDict()
+                item['index'] = index
+                item['uuid'] = man.uuid
+                item['label'] = man.label
+                item['revised'] = man.revised.date().isoformat()
+                output['items'].append(item)
+        return output
+
+    def rev_sort(self, sort_item):
+        """ reverses / inverts a
+            sorting term
+        """
+        if '-' in sort_item:
+            output = sort_item.replace('-', '')
+        else:
+            output = '-' + sort_item
+        return output

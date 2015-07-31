@@ -56,6 +56,7 @@ class ItemBasicEdit():
         old_label = self.manifest.label
         self.manifest.label = label
         self.manifest.save()
+        self.manifest.revised_save()
         note = ''
         if self.manifest.item_type == 'projects':
             try:
