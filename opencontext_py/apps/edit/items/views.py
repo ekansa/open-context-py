@@ -202,6 +202,7 @@ def edit_annotation(request, entity_id):
     else:
         raise Http404
 
+
 def delete_annotation(request, entity_id):
     """ Handles POST requests to delete an annotation on an item """
     item_anno = ItemAnnotation(entity_id, request)
@@ -225,6 +226,7 @@ def delete_annotation(request, entity_id):
             return HttpResponseForbidden
     else:
         raise Http404
+
 
 def add_update_ld_entity(request):
     """ Handles POST requests to create or update a linked-data entity """
@@ -304,6 +306,7 @@ def add_item_stable_id(request, uuid):
     else:
         raise Http404
 
+
 def delete_item_stable_id(request, uuid):
     """ Handles POST requests to add an annotation to an item """
     item_anno = ItemAnnotation(uuid, request)
@@ -347,6 +350,9 @@ def create_item_into(request, project_uuid):
                     if request.POST['item_type'] == 'persons':
                         item_type_fail = False
                         result = item_create.create_person(request.POST)
+                    elif request.POST['item_type'] == 'types':
+                        item_type_fail = False
+                        result = item_create.create_type(request.POST)
                     else:
                         item_type_fail = True
                     result['errors'] = item_create.errors

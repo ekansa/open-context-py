@@ -25,6 +25,8 @@ class ItemBasicEdit():
     """
     UI_ICONS = {'persons': '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
                 'projects': '<i class="fa fa-database"></i>',
+                'predicates': '<span class="glyphicon glyphicon-stats" aria-hidden="true"></span>',
+                'types': '<i class="fa fa-sitemap"></i>',
                 'profiles': '<span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>'}
 
     def __init__(self,

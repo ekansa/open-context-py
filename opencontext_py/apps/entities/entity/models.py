@@ -148,7 +148,8 @@ class Entity():
                project_uuid=False,
                vocab_uri=False,
                ent_type=False,
-               context_uuid=False):
+               context_uuid=False,
+               data_type=False):
         """ Searches for entities limited by query strings
             and optionally other criteria
         """
@@ -227,6 +228,16 @@ class Entity():
                 l_tables = 'oc_types'
                 filter_types = 'oc_manifest.uuid = oc_types.uuid \
                                 AND oc_types.predicate_uuid = \'' + context_uuid + '\' '
+                manifest_list = Manifest.objects\
+                                        .extra(tables=[l_tables], where=[filter_types])\
+                                        .filter(**args)\
+                                        .filter(Q(uuid__icontains=qstring)\
+                                                | Q(slug__icontains=qstring)\
+                                                | Q(label__icontains=qstring))[:15]
+            elif data_type is not False and 'predicates' in item_type:
+                l_tables = 'oc_predicates'
+                filter_types = 'oc_manifest.uuid = oc_predicates.uuid \
+                                AND oc_predicates.data_type = \'' + data_type + '\' '
                 manifest_list = Manifest.objects\
                                         .extra(tables=[l_tables], where=[filter_types])\
                                         .filter(**args)\

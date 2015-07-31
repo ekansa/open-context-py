@@ -25,6 +25,18 @@ function createItemInterface(type){
 		this.title += ' Create a New Project or Collection';
 		this.body = createProjectFields();
 	}
+	else if (type == 'predicates') {
+		//make a new persons interface
+		this.title = icons.predicates;
+		this.title += ' Create a New Descriptive Property or Relation';
+		this.body = '';
+	}
+	else if (type == 'types') {
+		//make a new persons interface
+		this.title = icons.types;
+		this.title += ' Create a New Category or Type';
+		this.body = createTypesFields();
+	}
 	else if (type == 'profiles') {
 		//make a new persons interface
 		this.title = icons.profiles;
@@ -309,6 +321,301 @@ function createNewProjectDone(data){
 }
 
 
+
+
+
+/*
+ *  TYPES CREATION
+ *
+ */
+
+//object for the predicate search interface (entity search)
+var predicateSearchObj = false;
+
+function createTypesFields(){
+	 
+	 /* changes global contextSearchObj from entities/entities.js */
+	 predicateSearchObj = new searchEntityObj();
+	 predicateSearchObj.name = "predicateSearchObj";
+	 predicateSearchObj.entities_panel_title = "Select a Descriptive Field for the Category";
+	 predicateSearchObj.limit_item_type = "predicates";
+	 predicateSearchObj.limit_data_type  = "id";
+	 predicateSearchObj.limit_project_uuid = "0," + project_uuid;
+	 var afterSelectDone = {
+		  exec: function(){
+				return selectTypePredicate();
+		  }
+	 };
+	 predicateSearchObj.afterSelectDone = afterSelectDone;
+	 var entityInterfaceHTML = predicateSearchObj.generateEntitiesInterface();
+	 
+	 var id_options_html = [
+		  '<div class="row">',
+				'<div class="col-xs-4">',
+					 '<div class="form-group">',
+					 '<label for="new-item-uuid">UUID for New Category</label>',
+					 '<input id="new-item-uuid" class="form-control input-sm" ',
+					 'type="text" value="" placeholder="Mint new UUID" />',
+					 '</div>',
+					 '<div class="form-group">',
+					 '<label for="new-item-content-uuid">UUID for String Content</label>',
+					 '<input id="new-item-content-uuid" class="form-control input-sm" ',
+					 'type="text" value="" placeholder="Mint new UUID" />',
+					 '</div>',
+				'</div>',
+				'<div class="col-xs-4">',
+					 '<div class="form-group">',
+					 '<label for="new-item-project-uuid">Add Category to Project UUID</label>',
+					 '<input id="new-item-project-uuid" class="form-control input-sm" ',
+					 'type="text" value="' + project_uuid + '" />',
+					 '</div>',
+				'</div>',
+				'<div class="col-xs-4">',
+					 '<div class="form-group">',
+					 '<label for="new-item-project-uuid">Source ID</label>',
+					 '<input id="new-item-source-id" class="form-control input-sm" ',
+					 'type="text" value="manual-web-form" />',
+					 '</div>',
+				'</div>',
+		 '</div>'
+	 ].join('\n');
+	 
+	 if (typeof panel != "undefined") {
+		  // use a panel if we have panels defined
+		  var meta_panel = new panel('type-more-1');
+		  meta_panel.title_html = "More Category Creation Options";
+		  meta_panel.body_html = id_options_html;
+		  meta_panel.collapsed = true;
+		  var more_options_html = meta_panel.make_html();
+	 }
+	 else{
+		  var more_options_html = id_options_html;
+	 }
+	 
+	 var html = [
+	 '<div>',
+	 '<div class="row">',
+		  '<div class="col-xs-6">',
+				'<div class="form-group">',
+				'<label for="pred-label">Category to use with the Property (Label)</label>',
+				'<input id="pred-label" class="form-control input-sm" ',
+				'type="text" value="" disabled="disabled"/>',
+				'</div>',
+				'<div class="form-group">',
+				'<label for="pred-id">Category to use with the Property (ID)</label>',
+				'<input id="pred-id" class="form-control input-sm" ',
+				'onkeydown="validateTypeCreate();" ',
+				'onkeyup="validateTypeCreate();" ',
+				'onchange="validateTypeCreate();" ',
+				'type="text" value="" />',
+				'</div>',
+		  '</div>',
+		  '<div class="col-xs-6">',
+				entityInterfaceHTML,
+		  '</div>',
+	 '</div>',
+	 
+	 '<div class="row">',
+		  '<div class="col-xs-6">',
+				'<div class="form-group">',
+				'<label for="new-item-label">New Category Label</label>',
+				'<input id="new-item-label" class="form-control input-sm" ',
+				'onkeydown="validateTypeCreate();" ',
+				'onkeyup="validateTypeCreate();" ',
+				'onchange="validateTypeCreate();" ',
+				'type="text" value="" />',
+				'</div>',
+				'<div class="form-group">',
+				'<label for="new-item-note">Note Explaining the Category</label>',
+				'<textarea id="new-item-note" class="form-control input-sm" >',
+				'</textarea>',
+				'</div>',
+		  '</div>',
+		  '<div class="col-xs-6">',
+				'<label>Note</label>',
+				'<p><small>',
+				'You can create a new category / type to use with ',
+				'a descriptive property. A category is a member of ',
+				'a controlled vocabulary such as a typology or a ',
+				'some other classification system. One uses categories ',
+				'to make consistent classifications.',
+				'</small></p>',
+		  '</div>',
+	 '</div>',
+	 
+	 '<div class="row">',
+		  '<div class="col-xs-6" id="new-type-button-container">',
+		  '<label>Create</label><br/>',
+		  '<button class="btn btn-default" disabled="disabled">',
+		  '<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+		  ' Submit',
+		  '</button>',
+		  '</div>',
+		  '<div class="col-xs-6" id="new-type-exp-container">',
+		  '<p><small>After creating the category, you can add and edit how your new category ',
+		  'links with other categories in the project or use Linked Data to ',
+		  'further annotate your category.',
+		  '</small></p>',
+		  '</div>',
+	 '</div>',
+	 
+	 more_options_html,
+	 
+	 '</div>'
+	 ].join('\n');
+	 return html;
+}
+
+function selectTypePredicate(){
+	 var pred = predicateSearchObj.selected_entity;
+	 document.getElementById('pred-label').value = pred.label;
+	 document.getElementById('pred-id').value = pred.id;
+	 validateTypeCreateButton();
+}
+
+function validateTypeCreate(){
+	 var valid = true;
+	 if (document.getElementById('pred-id').value.length < 2) {
+		  // need to have a predicate
+		  valid = false;
+	 }
+	 if (document.getElementById('new-item-label').value.length < 1) {
+		  // need to have a predicate
+		  valid = false;
+	 }
+	 validateTypeCreateButton(valid);
+	 return valid;
+}
+
+function validateTypeCreateButton(valid){
+	 if (valid) {
+		  var button_html = [
+		  '<label>Create</label><br/>',
+		  '<button class="btn btn-default" onclick="createNewType();">',
+		  '<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+		  ' Submit',
+		  '</button>'
+		  ].join('\n');
+	 }
+	 else{
+		  var button_html = [
+		  '<label>Create</label><br/>',
+		  '<button class="btn btn-default" disabled="disabled">',
+		  '<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+		  ' Submit',
+		  '</button>',	  
+		  ].join('\n');
+	 }
+	 document.getElementById('new-type-button-container').innerHTML = button_html;
+}
+
+
+function createNewType(){
+	 var valid = validateTypeCreate();
+	 if (valid) {
+		  if (typeof act_profile != "undefined") {
+				// the type is being created while the user is
+				// using a profile for data entry. So update
+				// trees to reflect the change
+				
+				exec_createNewType().then(function(){
+					 act_profile.make_trees();
+				});
+		  }
+		  else{
+				exec_createNewType();
+		  }
+	 }
+	 else{
+		  alert('Both a predicate ID and a non-blank label for the category / type are needed.');
+	 }
+}
+function exec_createNewType(){
+	 
+	 var predicate_uuid = document.getElementById('pred-id').value;
+	 var label = document.getElementById('new-item-label').value;
+	 var note = document.getElementById('new-item-note').value;
+	 
+	 var new_item_uuid = document.getElementById("new-item-uuid").value;
+	 if (new_item_uuid.length < 1) {
+		  new_item_uuid = false;
+	 }
+	 var new_content_uuid = document.getElementById("new-item-content-uuid").value;
+	 if (new_content_uuid.length < 1) {
+		  new_content_uuid = false;
+	 }
+	 
+	 var new_project_uuid = document.getElementById("new-item-project-uuid").value;
+	 var new_source_id = document.getElementById("new-item-source-id").value;
+	 var url = make_url("/edit/create-item-into/") + encodeURIComponent(new_project_uuid);	 
+	 
+	 return $.ajax({
+		  type: "POST",
+		  url: url,
+		  dataType: "json",
+		  data: {
+				uuid: new_item_uuid,
+				content_uuid: new_content_uuid,
+				project_uuid: new_project_uuid,
+				source_id: new_source_id,
+				item_type: 'types',
+				predicate_uuid: predicate_uuid,
+				label: label,
+				note: note,
+				csrfmiddlewaretoken: csrftoken},
+		  success: createNewTypeDone,
+		  error: function (request, status, error) {
+			  alert('Category creation failed, sadly. Status: ' + request.status);
+		  } 
+	 });
+}
+
+function createNewTypeDone(data) {
+	 var button_con = document.getElementById("new-type-button-container");
+	 var note_con = document.getElementById("new-type-exp-container");
+	 if (data.ok) {
+		  var url = make_url('/edit/items/' + data.change.uuid);
+		  var link_html = 'New Category / Type: <a target="_blank" ';
+		  link_html += 'href="' +  url + '">';
+		  link_html += data.change.label + '</a>';
+		  var id_list = '<ul class="small">';
+		  id_list += '<li>Type UUID: ' + data.change.uuid + '</li>';
+		  id_list += '<li>Content UUID: ' + data.change.content_uuid + '</li>';
+		  id_list += '</ul>';
+		  button_con.innerHTML = '<p>' + link_html + '</p>' + id_list;
+		  var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-success";
+		  var error_html = "";
+	 }
+	 else{
+		  if ('errors' in data) {
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					 if (errors.hasOwnProperty(k)) {
+						  if (errors[k] != false) {
+								if (errors[k].length > 1) {
+									 error_html += '<li>' + errors[k] + '</li>';
+								}
+						  }
+					 }
+				}
+				error_html += '</ul>';
+		  }
+		  var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-warning";
+	 }
+	 var alert_html = [
+		  '<div role="alert" class="' + alert_class + '" style="margin-top: 3px;">',
+			  icon_html,
+			  data.change.note,
+			  error_html,
+		  '</div>'
+	 ].join('\n');
+	 
+	 note_con.innerHTML = alert_html; 
+}
+
 /*--------------------------------------
  * Create input profile
  *
@@ -379,7 +686,8 @@ function createProfileFields(){
 }
 function createNewProfile(){
 	 if (typeof profiles != "undefined" && typeof proj_profiles != "undefined") {
-		  // chain ajax requests
+		  // chain ajax requests if we're already seeing profiles.
+		  // this updates the list of profiles to show the new one.
 		  exec_createNewProfile().then(function(){
 				proj_profiles = new profiles("project-profiles", project_uuid);
             proj_profiles.get_data();
@@ -402,21 +710,21 @@ function exec_createNewProfile(){
 	}
 	var url = make_url("/edit/inputs/create-profile/") + encodeURIComponent(new_project_uuid);
 	if (label.length > 0) {
-		return $.ajax({
-			type: "POST",
-			url: url,
-			dataType: "json",
-			data: {
-				project_uuid: new_project_uuid,
-				item_type: item_type,
-				label: label,
-				note: note,
-				csrfmiddlewaretoken: csrftoken},
-			success: createNewProfileDone,
-			error: function (request, status, error) {
-				alert('Data entry profile creation failed, sadly. Status: ' + request.status);
-			} 
-		});
+		  return $.ajax({
+			  type: "POST",
+			  url: url,
+			  dataType: "json",
+			  data: {
+				  project_uuid: new_project_uuid,
+				  item_type: item_type,
+				  label: label,
+				  note: note,
+				  csrfmiddlewaretoken: csrftoken},
+			  success: createNewProfileDone,
+			  error: function (request, status, error) {
+				  alert('Data entry profile creation failed, sadly. Status: ' + request.status);
+			  } 
+		  });
 	}
 	else{
 		alert('Please provide a label for this profile');
@@ -424,17 +732,17 @@ function exec_createNewProfile(){
 }
 
 function createNewProfileDone(data){
-	var button_con = document.getElementById("new-profile-button-container");
-	if (data.change.uuid != false) {
-		var url = make_url('/edit/inputs/profiles/' + data.change.uuid + '/edit')
-		var link_html = 'New profile: <a target="_blank" ';
-		link_html += 'href="' +  url + '">';
-		link_html += data.change.label + '</a>';
-	}
-	else{
-		var link_html = data.change.label;
-	}
-	button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>'; 
+	 var button_con = document.getElementById("new-profile-button-container");
+	 if (data.change.uuid != false) {
+		 var url = make_url('/edit/inputs/profiles/' + data.change.uuid + '/edit')
+		 var link_html = 'New profile: <a target="_blank" ';
+		 link_html += 'href="' +  url + '">';
+		 link_html += data.change.label + '</a>';
+	 }
+	 else{
+		 var link_html = data.change.label;
+	 }
+	 button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>'; 
 }
 
 // this is useful to compose urls for the AJAX requests 

@@ -14,6 +14,7 @@ class StringManagement():
         self.oc_string = False
         self.project_uuid = False
         self.source_id = self.SOURCE_ID
+        self.suggested_uuid = False  # make sure this is not already used!
 
     def get_make_string(self, content):
         """
@@ -22,8 +23,11 @@ class StringManagement():
         """
         found = self.check_string_exists(content)
         if(found is False):
-            # string is new to the project so make it.
-            uuid = GenUUID.uuid4()
+            if self.suggested_uuid is not False:
+                uuid = self.suggested_uuid
+            else:
+                # string is new to the project so make it.
+                uuid = GenUUID.uuid4()
             newstring = OCstring()
             newstring.uuid = uuid
             newstring.project_uuid = self.project_uuid
