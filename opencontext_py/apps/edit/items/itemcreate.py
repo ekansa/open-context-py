@@ -10,17 +10,13 @@ from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
-from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
-from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
-from opencontext_py.apps.ocitems.subjects.models import Subject
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.edit.items.itemassertion import ItemAssertion
 
 
 class ItemCreate():
@@ -401,6 +397,11 @@ class ItemCreate():
                                                                   content_uuid)
                 content_uuid = newtype.content_uuid
                 uuid = newtype.uuid
+            # now add the note if not empty
+            self.add_description_note(newtype.uuid,
+                                      'types',
+                                      newtype.source_id,
+                                      note)
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -408,6 +409,19 @@ class ItemCreate():
                                     'label': label,
                                     'note': self.add_creation_note(ok)}}
         return self.response
+
+    def add_description_note(self,
+                             uuid,
+                             item_type,
+                             source_id,
+                             note):
+        """ adds a descriptive note to a created item """
+        item_assert = ItemAssertion()
+        item_assert.project_uuid = self.project_uuid
+        item_assert.source_id = source_id
+        item_assert.uuid = uuid
+        item_assert.item_type = item_type
+        item_assert.add_description_note(note)
 
     def add_creation_note(self, ok):
         """ adds a note about the creation of a new item """

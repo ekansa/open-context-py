@@ -5,6 +5,7 @@ from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalenc
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
 
+
 # This class has methods to create and update linked data entities
 class LinkEntityManage():
 
@@ -21,7 +22,7 @@ class LinkEntityManage():
         self.build_sensitive_list(item_context_obj.context)
         self.build_sensitive_list(search_context_obj.context)
         self.uri = False
-    
+
     def is_uri_sensitive(self, uri):
         """ checks to see if a URI is in a sensitive vocabulary """
         is_sensitive = False
@@ -30,7 +31,7 @@ class LinkEntityManage():
                 is_sensitive = True
                 break
         return is_sensitive
-        
+
     def add_update(self, post_data):
         """ Creates or updates a linked data entity """
         ok = True
@@ -120,7 +121,7 @@ class LinkEntityManage():
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
-    
+
     def suggest_vocabulary(self, uri):
         """ suggests a vocabulary based on
             the content of the URI
@@ -145,7 +146,7 @@ class LinkEntityManage():
                     # the uri prefix was not ambiguous, so we can use it
                     vocab_uri = vocab_uris[0]
         return vocab_uri
-        
+
     def check_vocab_uri(self, vocab_uri):
         """ checks to see if the vocabulary
             has a linked entity record, returns
@@ -188,4 +189,3 @@ class LinkEntityManage():
             if 'http://' in uri or 'https://' in uri:
                 if uri not in self.sensitive_ns:
                     self.sensitive_ns.append(uri)
-        

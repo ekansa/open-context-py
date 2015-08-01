@@ -28,8 +28,8 @@ function createItemInterface(type){
 	else if (type == 'predicates') {
 		//make a new persons interface
 		this.title = icons.predicates;
-		this.title += ' Create a New Descriptive Property or Relation';
-		this.body = '';
+		this.title += ' Create a New Descriptive Property or Relation (Predicate)';
+		this.body = createPredicateFields();
 	}
 	else if (type == 'types') {
 		//make a new persons interface
@@ -320,6 +320,145 @@ function createNewProjectDone(data){
 	button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>'; 
 }
 
+
+
+
+/*
+ *  Predicate CREATION
+ *
+ */
+
+function createPredicateFields(){
+	var html = [
+	'<div>',
+	
+	 '<div class="row">',
+		  '<div class="col-xs-6">',
+				'<div class="form-group">',
+				'<label for="new-item-label">New Property or Relation (Predicate) Label</label>',
+				'<input id="new-item-label" class="form-control input-sm" ',
+				'onkeydown="validateTypeCreate();" ',
+				'onkeyup="validateTypeCreate();" ',
+				'onchange="validateTypeCreate();" ',
+				'type="text" value="" />',
+				'</div>',
+				'<div class="form-group">',
+				'<label for="new-item-note">Note Explaining the Predicate</label>',
+				'<textarea id="new-item-note" class="form-control input-sm" >',
+				'</textarea>',
+				'</div>',
+		  '</div>',
+		  '<div class="col-xs-6">',
+		      '<div class="well">',
+					 '<label>Predicate Type</label><br/>',
+					 '<label class="radio-inline">',
+					 '<input type="radio" name="new-pred-class" id="new-pred-class-v" ',
+					 'class="new-pred-class" value="variable" checked="checked">',
+					 'Descriptive Variable </label>',
+					 '<label class="radio-inline">',
+					 '<input type="radio" name="new-pred-class" id="new-pred-class-l" ',
+					 'class="new-pred-class" value="link">',
+					 'Linking Relation </label>',
+				'</div>',
+				
+				'<div class="well">',
+					 '<label>Data Type</label><br/>',
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-str" ',
+						  'class="new-pred-data-type" value="xsd:string" checked="checked" /> ',
+						  'Text (Free text for notes, comments)',
+						  '</label>',
+					 '</div>',
+						
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-id" ',
+						  'class="new-pred-data-type" value="id" /> ',
+						  'Category (Classification using a controlled vocabulary)',
+						  '</label>',
+					 '</div>',
+					 
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-tf" ',
+						  'class="new-pred-data-type" value="xsd:boolean" /> ',
+						  'Boolean (True or False)',
+						  '</label>',
+					 '</div>',
+					 
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-int" ',
+						  'class="new-pred-data-type" value="xsd:integer" /> ',
+						  'Integer',
+						  '</label>',
+					 '</div>',
+					 
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-dec" ',
+						  'class="new-pred-data-type" value="xsd:double" /> ',
+						  'Decimal',
+						  '</label>',
+					 '</div>',
+					 
+					 '<div class="radio">',
+						  '<label>',
+						  '<input type="radio" name="new-pred-data-type" id="new-pred-data-type-date" ',
+						  'class="new-pred-data-type" value="xsd:date" /> ',
+						  'Calendar, date (Use for recent dates, not ancient)',
+						  '</label>',
+					 '</div>',
+					 
+				'</div>',
+		  '</div>',
+	 '</div>',
+	 
+	 '<div class="row">',
+		  '<div class="col-xs-6" id="new-predicate-button-container">',
+		  '<label>Create</label><br/>',
+		  '<button class="btn btn-default" disabled="disabled">',
+		  '<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+		  ' Submit',
+		  '</button>',
+		  '</div>',
+		  '<div class="col-xs-6" id="new-predicate-exp-container">',
+		  '<p><small>After creating the predicate, you can ',
+		  'link it with other predicates in the project or use Linked Data to ',
+		  'further annotate this predicate with related data on the Web.',
+		  '</small></p>',
+		  '</div>',
+	 '</div>',
+	
+	
+	 '<div class="row" id="new-predicate-bottom-row">',
+		 '<div class="col-xs-4">',
+		 '<div class="form-group">',
+		 '<label for="new-item-uuid">UUID for New Predicate</label>',
+		 '<input id="new-item-uuid" class="form-control input-sm" ',
+		 'type="text" value="" placeholder="Mint new UUID" />',
+		 '</div>',
+		 '</div>',
+		 '<div class="col-xs-4">',
+		 '<div class="form-group">',
+		 '<label for="new-item-project-uuid">Add Item to Project UUID</label>',
+		 '<input id="new-item-project-uuid" class="form-control input-sm" ',
+		 'type="text" value="' + project_uuid + '" />',
+		 '</div>',
+		 '</div>',
+		 '<div class="col-xs-4">',
+		 '<div class="form-group">',
+		 '<label for="new-item-project-uuid">Source ID</label>',
+		 '<input id="new-item-source-id" class="form-control input-sm" ',
+		 'type="text" value="manual-web-form" />',
+		 '</div>',
+		 '</div>',
+	 '</div>',
+	'</div>'
+	].join('\n');
+	return html;
+}
 
 
 
