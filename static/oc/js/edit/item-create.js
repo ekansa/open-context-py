@@ -35,7 +35,7 @@ function createItemInterface(type){
 		//make a new persons interface
 		this.title = icons.types;
 		this.title += ' Create a New Category or Type';
-		this.body = createTypesFields();
+		this.body = createTypesFields(false, false);
 	}
 	else if (type == 'profiles') {
 		//make a new persons interface
@@ -45,6 +45,18 @@ function createItemInterface(type){
 	}
 }
 
+
+function createTypeForPredicate(pred_label, pred_uuid){
+	 // function to open the create a type for
+	 // specifi predicate
+	 var main_modal_title_domID = "myModalLabel";
+	 var main_modal_body_domID = "myModalBody";
+	 var title_dom = document.getElementById(main_modal_title_domID);
+	 var body_dom = document.getElementById(main_modal_body_domID);
+	 title_dom.innerHTML = icons.types + ' Create a New Category for <em>' + pred_label + '</em>';
+	 body_dom.innerHTML = createTypesFields(pred_label, pred_uuid);
+	 $("#myModal").modal('show');
+}
 
 /*
  *  PERSON / ORGANIZATION CREATION
@@ -471,22 +483,42 @@ function createPredicateFields(){
 //object for the predicate search interface (entity search)
 var predicateSearchObj = false;
 
-function createTypesFields(){
+function createTypesFields(pred_label, pred_uuid){
 	 
-	 /* changes global contextSearchObj from entities/entities.js */
-	 predicateSearchObj = new searchEntityObj();
-	 predicateSearchObj.name = "predicateSearchObj";
-	 predicateSearchObj.entities_panel_title = "Select a Descriptive Field for the Category";
-	 predicateSearchObj.limit_item_type = "predicates";
-	 predicateSearchObj.limit_data_type  = "id";
-	 predicateSearchObj.limit_project_uuid = "0," + project_uuid;
-	 var afterSelectDone = {
-		  exec: function(){
-				return selectTypePredicate();
-		  }
-	 };
-	 predicateSearchObj.afterSelectDone = afterSelectDone;
-	 var entityInterfaceHTML = predicateSearchObj.generateEntitiesInterface();
+	 var node_cell_html = [
+		  '<label>Note</label>',
+		  '<p><small>',
+		  'You can create a new category / type to use with ',
+		  'a descriptive property. A category is a member of ',
+		  'a controlled vocabulary such as a typology or a ',
+		  'some other classification system. One uses categories ',
+		  'to make consistent classifications.',
+		  '</small></p>'
+		  ].join('\n');
+	 
+	 if (pred_uuid == false) {
+		  pred_label = '';
+		  pred_uuid = '';
+		  /* changes global contextSearchObj from entities/entities.js */
+		  predicateSearchObj = new searchEntityObj();
+		  predicateSearchObj.name = "predicateSearchObj";
+		  predicateSearchObj.entities_panel_title = "Select a Descriptive Field for the Category";
+		  predicateSearchObj.limit_item_type = "predicates";
+		  predicateSearchObj.limit_data_type  = "id";
+		  predicateSearchObj.limit_project_uuid = "0," + project_uuid;
+		  var afterSelectDone = {
+				exec: function(){
+					 return selectTypePredicate();
+				}
+		  };
+		  predicateSearchObj.afterSelectDone = afterSelectDone;
+		  var upper_cell_html = predicateSearchObj.generateEntitiesInterface();
+		  var lower_cell_html = node_cell_html;
+	 }
+	 else{
+		  var upper_cell_html = node_cell_html;
+		  var lower_cell_html = ''; 
+	 }
 	 
 	 var id_options_html = [
 		  '<div class="row">',
@@ -538,7 +570,7 @@ function createTypesFields(){
 				'<div class="form-group">',
 				'<label for="pred-label">Category to use with the Property (Label)</label>',
 				'<input id="pred-label" class="form-control input-sm" ',
-				'type="text" value="" disabled="disabled"/>',
+				'type="text" value="' + pred_label + '" disabled="disabled"/>',
 				'</div>',
 				'<div class="form-group">',
 				'<label for="pred-id">Category to use with the Property (ID)</label>',
@@ -546,11 +578,11 @@ function createTypesFields(){
 				'onkeydown="validateTypeCreate();" ',
 				'onkeyup="validateTypeCreate();" ',
 				'onchange="validateTypeCreate();" ',
-				'type="text" value="" />',
+				'type="text" value="' + pred_uuid + '" />',
 				'</div>',
 		  '</div>',
 		  '<div class="col-xs-6">',
-				entityInterfaceHTML,
+				upper_cell_html,
 		  '</div>',
 	 '</div>',
 	 
@@ -571,14 +603,7 @@ function createTypesFields(){
 				'</div>',
 		  '</div>',
 		  '<div class="col-xs-6">',
-				'<label>Note</label>',
-				'<p><small>',
-				'You can create a new category / type to use with ',
-				'a descriptive property. A category is a member of ',
-				'a controlled vocabulary such as a typology or a ',
-				'some other classification system. One uses categories ',
-				'to make consistent classifications.',
-				'</small></p>',
+				lower_cell_html,
 		  '</div>',
 	 '</div>',
 	 
