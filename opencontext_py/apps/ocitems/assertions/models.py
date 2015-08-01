@@ -14,6 +14,8 @@ class Assertion(models.Model):
     PREDICATES_CONTAINS = 'oc-gen:contains'
     # standard predicate for generic link
     PREDICATES_LINK = 'oc-3'
+    # standard predicate for a note
+    PREDICATES_NOTE = 'oc-gen:has-note'
     # standard predicate for a link relation that's from the object
     # use this to not make the subject too cluttered with visible links
     # this is provisional, I may decide this is stupid beyond hope

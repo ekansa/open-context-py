@@ -445,9 +445,9 @@ class ItemConstruction():
         raw_pred_list = list()
         pred_types = {}
         for assertion in assertions:
-            if(assertion.obs_num not in self.obs_list):
+            if assertion.obs_num not in self.obs_list:
                 self.obs_list.append(assertion.obs_num)
-            if(assertion.predicate_uuid not in raw_pred_list):
+            if assertion.predicate_uuid not in raw_pred_list:
                 raw_pred_list.append(assertion.predicate_uuid)
                 if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
                     pred_types[assertion.predicate_uuid] = '@id'
@@ -494,6 +494,10 @@ class ItemConstruction():
             del l_data['uuid']
             local_context[key] = l_data
             l += 1
+        # last handling to proccess general notes
+        if Assertion.PREDICATES_NOTE in raw_pred_list:
+            self.predicates[Assertion.PREDICATES_NOTE] = Assertion.PREDICATES_NOTE
+            self.pred_strings[Assertion.PREDICATES_NOTE] = []
         context.append(local_context)  # add the local context to the context list
         json_ld['@context'] = context
         return json_ld
@@ -530,7 +534,7 @@ class ItemConstruction():
                                 act_obs[OCitem.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
                         add_obs_def = False
                         act_obs['type'] = 'oc-gen:observations'
-                    if(assertion.predicate_uuid in self.predicates):
+                    if assertion.predicate_uuid in self.predicates:
                         act_pred_key = self.predicates[assertion.predicate_uuid]
                         act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
             observations.append(act_obs)
@@ -556,7 +560,7 @@ class ItemConstruction():
             if (assertion.object_type == 'xsd:string'):
                 new_object_item = LastUpdatedOrderedDict()
                 if assertion.object_uuid not in self.pred_strings[act_pred_key]:
-                    self.pred_strings[act_pred_key].append(assertion.object_uuid) # for linked data
+                    self.pred_strings[act_pred_key].append(assertion.object_uuid)  # for linked data
                 new_object_item['id'] = '#string-' + str(assertion.object_uuid)
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
