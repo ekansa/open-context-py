@@ -12,6 +12,8 @@ function searchEntityObj() {
 	this.searchEntityListDomID = "search-entity-list";
 	this.selectFoundEntityFunction = "selectEntity";
 	this.entities_panel_title = "Entity Lookup";
+	this.compact_display = false;
+	this.data = false;
 	this.limit_class_uri = false;
 	this.limit_project_uuid = false;
 	this.limit_vocab_uri = false;
@@ -79,6 +81,11 @@ function searchEntityObj() {
 			context_html += '<div class="col-xs-12"><div style="padding:10px;"></div></div>';
 			context_html += '</div>';
 		}
+		var display_style = '';
+		if (this.compact_display) {
+		  // we want a compact version of this display, so hife the selected entity input fields
+		  display_style = " style=\"display:none;\" ";
+		}
 		var interfaceString = [	
 			"<div class=\"panel panel-default\">",
 				"<div class=\"panel-heading\">",
@@ -86,26 +93,28 @@ function searchEntityObj() {
 				"</div>",
 				"<div class=\"panel-body\">",
 					"<form class=\"form-horizontal\" role=\"form\">",
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.make_dom_name_id() + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
-							"</div>",
-						"</div>",
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.make_dom_name_id() + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
-							"</div>",
-						"</div>",
-						context_html,
-						buttonGroupHTML,
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.make_dom_name_id() + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"" + this.make_obj_name_id() + ".searchEntities();\" class=\"form-control input-sm\" />",
-							"</div>",
-						"</div>",
+						  "<div " + display_style + ">",
+								"<div class=\"form-group form-group-sm\">",
+									"<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
+									"<div class=\"col-xs-10\">",
+										"<input id=\"" + this.make_dom_name_id() + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									"</div>",
+								"</div>",
+								"<div class=\"form-group form-group-sm\">",
+									"<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
+									"<div class=\"col-xs-10\">",
+										"<input id=\"" + this.make_dom_name_id() + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									"</div>",
+								"</div>",
+						  "</div>",
+						  context_html,
+						  buttonGroupHTML,
+						  "<div class=\"form-group form-group-sm\">",
+							  "<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
+							  "<div class=\"col-xs-10\">",
+								  "<input id=\"" + this.make_dom_name_id() + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"" + this.make_obj_name_id() + ".searchEntities();\" class=\"form-control input-sm\" />",
+							  "</div>",
+						  "</div>",
 					"</form>",
 					"<ul id=\"" + this.make_dom_name_id() + "-" + this.searchEntityListDomID + "\">",
 					"</ul>",
@@ -179,81 +188,103 @@ function searchEntityObj() {
 			success: this.searchEntitiesDone
 		});
 	}
-	this.searchEntitiesDone = function(data){
-		/* Displays list of entities that meet search criteria */
-		var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
-		searchEntityListDom.innerHTML = "";
-		for (var i = 0, length = data.length; i < length; i++) {
-			
-			if (!('data_type' in data[i])) {
-				var data_type = 'Not Specified';
-				if (data[i].class_uri != false) {
-					var data_type = data[i].class_uri;
+	 this.searchEntitiesDone = function(data){
+		  /* Displays list of entities that meet search criteria */
+		  this.data = data;
+		  // now display the full list, with a 'false' argument passed
+		  // so as not to limit this display to 1 item
+		  this.displayEntityListHTML(false);
+	 }
+	 this.displayEntityListHTML = function(display_only_id){
+		  // displays the HTML for entities
+		  // found in the search
+		  var data = this.data;
+		  var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
+		  searchEntityListDom.innerHTML = "";
+		  for (var i = 0, length = data.length; i < length; i++) {
+				
+				if (!('data_type' in data[i])) {
+					var data_type = 'Not Specified';
+					if (data[i].class_uri != false) {
+						var data_type = data[i].class_uri;
+					}
+					else if (data[i].ent_type != false) {
+						var data_type = data[i].ent_type + ' (Linked Data)'; 
+					}
+					else{
+						var data_type = "Not specified";
+					}
+					data[i].data_type = data_type;
 				}
-				else if (data[i].ent_type != false) {
-					var data_type = data[i].ent_type + ' (Linked Data)'; 
+				var partof = data[i].partOf_label;
+				this.ids[data[i].id] = data[i]; // keep in memory for later use
+				
+				var tooltiplink = [
+					'<a onclick="' + this.make_obj_name_id() + '.selectEntity(' + i + ')" ',
+					'data-toggle="tooltip" data-placement="bottom" ',
+					'style="cursor:pointer;" ',
+					'title="Type: ' + data_type + '; part of: ' + partof + '" ',
+					'id="' + this.make_dom_name_id() + '-search-entity-label-' + i + '" >',
+					data[i].label,
+					'</a>'
+				].join('');
+				
+				var newListItem = document.createElement("li");
+				newListItem.id = this.make_dom_name_id() + "-search-entity-item-" + i;
+				var entityIDdomID = this.make_dom_name_id() + "-search-entity-id-" + i;
+				var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
+				var entityString = tooltiplink;
+				// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
+				entityString += "<br/><small>" + linkHTML + "</small>";
+				newListItem.innerHTML = entityString;
+				if (this.compact_display && display_only_id != false) {
+					 if ( display_only_id == data[i].id) {
+						  // display only those that match the id
+						  searchEntityListDom.appendChild(newListItem);
+					 }
 				}
 				else{
-					var data_type = "Not specified";
+					 //display all of the search finds
+					 searchEntityListDom.appendChild(newListItem);	 
 				}
-				data[i].data_type = data_type;
-			}
-			var partof = data[i].partOf_label;
-			this.ids[data[i].id] = data[i]; // keep in memory for later use
-			
-			var tooltiplink = [
-				'<a onclick="' + this.make_obj_name_id() + '.selectEntity(' + i + ')" ',
-				'data-toggle="tooltip" data-placement="bottom" ',
-				'style="cursor:pointer;" ',
-				'title="Type: ' + data_type + '; part of: ' + partof + '" ',
-				'id="' + this.make_dom_name_id() + '-search-entity-label-' + i + '" >',
-				data[i].label,
-				'</a>'
-			].join('');
-			
-			var newListItem = document.createElement("li");
-			newListItem.id = this.make_dom_name_id() + "-search-entity-item-" + i;
-			var entityIDdomID = this.make_dom_name_id() + "-search-entity-id-" + i;
-			var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
-			var entityString = tooltiplink;
-			// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
-			entityString += "<br/><small>" + linkHTML + "</small>";
-			newListItem.innerHTML = entityString;
-			searchEntityListDom.appendChild(newListItem);
-		}
-
-		// turn on tool tips for these search results
-		$(function () {
-			$('[data-toggle="tooltip"]').tooltip()
-		})
-		
-	}
-	this.selectEntity = function(item_num){
-		/* Adds selected entity label and ID to the right dom element */
-		var act_domID = this.make_dom_name_id() + "-search-entity-id-" + item_num;
-		var item_id = document.getElementById(act_domID).innerHTML;
-		var sel_id_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-id");
-		sel_id_dom.value = item_id;
-		act_domID =  this.make_dom_name_id() + "-search-entity-label-" + item_num;
-		var item_label = document.getElementById(act_domID).innerHTML;
-		var sel_label_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-label");
-		sel_label_dom.value = item_label;
-		if (item_id in this.ids) {
-			this.selected_entity = this.ids[item_id];
-		}
-		if (this.show_type && item_id in this.ids) {
-			document.getElementById(this.make_dom_name_id() + "-sel-type").innerHTML = this.ids[item_id].data_type;
-		}
-		if (this.show_partof && item_id in this.ids) {
-			document.getElementById(this.make_dom_name_id() + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
-		}
-		if (this.afterSelectDone != false) {
-			// execute a post selection entity is done function
-			if (typeof(this.afterSelectDone.exec) !== 'undefined') {
-				this.afterSelectDone.exec();
-			}
-		}
-	}
+		  }
+	
+		  // turn on tool tips for these search results
+		  $(function () {
+				$('[data-toggle="tooltip"]').tooltip()
+		  })
+	 }
+	 this.selectEntity = function(item_num){
+		  /* Adds selected entity label and ID to the right dom element */
+		  var act_domID = this.make_dom_name_id() + "-search-entity-id-" + item_num;
+		  var item_id = document.getElementById(act_domID).innerHTML;
+		  var sel_id_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-id");
+		  sel_id_dom.value = item_id;
+		  act_domID =  this.make_dom_name_id() + "-search-entity-label-" + item_num;
+		  var item_label = document.getElementById(act_domID).innerHTML;
+		  var sel_label_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-label");
+		  sel_label_dom.value = item_label;
+		  if (item_id in this.ids) {
+				this.selected_entity = this.ids[item_id];
+		  }
+		  if (this.show_type && item_id in this.ids) {
+				document.getElementById(this.make_dom_name_id() + "-sel-type").innerHTML = this.ids[item_id].data_type;
+		  }
+		  if (this.show_partof && item_id in this.ids) {
+				document.getElementById(this.make_dom_name_id() + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
+		  }
+		  if (this.compact_display) {
+				// shrink the search list to only show the item
+				// selected
+				this.displayEntityListHTML(item_id);
+		  }
+		  if (this.afterSelectDone != false) {
+				// execute a post selection entity is done function
+				if (typeof(this.afterSelectDone.exec) !== 'undefined') {
+					this.afterSelectDone.exec();
+				}
+		  }
+	 }
 }
 
 

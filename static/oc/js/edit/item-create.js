@@ -503,6 +503,7 @@ function createTypesFields(pred_label, pred_uuid){
 		  predicateSearchObj = new searchEntityObj();
 		  predicateSearchObj.name = "predicateSearchObj";
 		  predicateSearchObj.entities_panel_title = "Select a Descriptive Field for the Category";
+		  predicateSearchObj.compact_display = true;
 		  predicateSearchObj.limit_item_type = "predicates";
 		  predicateSearchObj.limit_data_type  = "id";
 		  predicateSearchObj.limit_project_uuid = "0," + project_uuid;

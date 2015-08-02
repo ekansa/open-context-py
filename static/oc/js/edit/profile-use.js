@@ -456,6 +456,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var entSearchObj = new searchEntityObj();
 		var ent_name = 'sobjs[' + ent_num + ']';
 		entSearchObj.name = ent_name;
+		entSearchObj.compact_display = true;
 		entSearchObj.parent_obj_name = this.name;
 		entSearchObj.entities_panel_title = "Select a Category for " + field.label;
 		entSearchObj.limit_item_type = "types";
@@ -675,6 +676,7 @@ function useProfile(profile_uuid, edit_uuid, edit_new){
 		var entSearchObj = new searchEntityObj();
 		var ent_name = 'sobjs[' + ent_num + ']';
 		entSearchObj.name = ent_name;
+		entSearchObj.compact_display = true;
 		entSearchObj.parent_obj_name = this.name;
 		entSearchObj.entities_panel_title = "Select a Context";
 		entSearchObj.limit_item_type = "subjects";
