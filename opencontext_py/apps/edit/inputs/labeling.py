@@ -135,7 +135,10 @@ class InputLabeling():
             q_nums_strs = re.findall(r'[-+]?\d*\.\d+|\d+', label_id_part)
             for q_num_str in q_nums_strs:
                 vals.append(q_num_str)
-            last_id = float(''.join(vals))
+            try:
+                last_id = float(''.join(vals))
+            except:
+                last_id = 0
             new_id = last_id + label_increment
         else:
             new_id = label_increment

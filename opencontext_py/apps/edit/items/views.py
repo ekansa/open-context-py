@@ -350,6 +350,9 @@ def create_item_into(request, project_uuid):
                     if request.POST['item_type'] == 'persons':
                         item_type_fail = False
                         result = item_create.create_person(request.POST)
+                    elif request.POST['item_type'] == 'predicates':
+                        item_type_fail = False
+                        result = item_create.create_predicate(request.POST)
                     elif request.POST['item_type'] == 'types':
                         item_type_fail = False
                         result = item_create.create_type(request.POST)

@@ -317,7 +317,8 @@ class ItemCreate():
         if ok:
             # now check to see if this already exists
             label = post_data['label'].strip()
-            note = post_data['note'].strip()
+            type_note = post_data['note'].strip()
+            tm.source_id = post_data['source_id'].strip()
             predicate_uuid = post_data['predicate_uuid'].strip()
             if self.check_non_blank_param(post_data, 'uuid')\
                and self.check_non_blank_param(post_data, 'content_uuid'):
@@ -401,11 +402,98 @@ class ItemCreate():
             self.add_description_note(newtype.uuid,
                                       'types',
                                       newtype.source_id,
-                                      note)
+                                      type_note)
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
                                     'content_uuid': content_uuid,
+                                    'label': label,
+                                    'note': self.add_creation_note(ok)}}
+        return self.response
+
+    def create_predicate(self, post_data):
+        """ creates a type item into a project
+        """
+        ok = True
+        required_params = ['source_id',
+                           'item_type',
+                           'label',
+                           'note',
+                           'class_uri',
+                           'data_type']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                if self.errors['params'] is False:
+                    self.errors['params'] = message
+                else:
+                    self.errors['params'] += '; ' + message
+        uuid = self.create_or_validate_uuid(post_data)
+        if uuid is False:
+            ok = False
+            note = self.errors['uuid']
+        if ok:
+            # now check to see if this already exists
+            note = ''
+            item_type = 'predicates'
+            source_id = post_data['source_id'].strip()
+            label = post_data['label'].strip()
+            if len(label) < 1:
+                ok = False
+                self.errors['label'] = 'The label cannot be blank.'
+                note += self.errors['label'] + ' '
+            else:
+                exist_uuid = self.get_uuid_manifest_label(label,
+                                                          item_type)
+                if exist_uuid is not False:
+                    ok = False
+                    self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
+                    self.errors['uuid'] += ', becuase it already exists with UUID: ' + uuid
+                    note += self.errors['uuid'] + ' '
+            pred_note = post_data['note'].strip()
+            class_uri = post_data['class_uri'].strip()
+            if class_uri not in Predicate.CLASS_TYPES:
+                ok = False
+                self.errors['class_uri'] = class_uri + ' is not a valid Predicate class.'
+                note += self.errors['class_uri'] + ' '
+            data_type = post_data['data_type'].strip()
+            if data_type not in Predicate.DATA_TYPES_HUMAN:
+                ok = False
+                self.errors['data_type'] = data_type + ' is not a valid Predicate data-type.'
+                note += self.errors['data_type'] + ' '
+        if ok:
+            note = 'Predicate "' + label + '" created with UUID:' + uuid
+            # everything checked out OK, so make the predicate
+            new_pred = Predicate()
+            new_pred.uuid = uuid
+            new_pred.project_uuid = self.project_uuid
+            new_pred.source_id = source_id
+            new_pred.data_type = data_type
+            new_pred.sort = 1
+            new_pred.save()
+            # now save to the manifest
+            new_man = Manifest()
+            new_man.uuid = uuid
+            new_man.project_uuid = self.project_uuid
+            new_man.source_id = source_id
+            new_man.item_type = 'predicates'
+            new_man.repo = ''
+            new_man.class_uri = class_uri
+            new_man.label = label
+            new_man.des_predicate_uuid = ''
+            new_man.views = 0
+            new_man.save()
+            # now add the note if not empty
+            self.add_description_note(uuid,
+                                      'predicates',
+                                      source_id,
+                                      pred_note)
+        self.response = {'action': 'create-item-into',
+                         'ok': ok,
+                         'change': {'uuid': uuid,
                                     'label': label,
                                     'note': self.add_creation_note(ok)}}
         return self.response
@@ -422,6 +510,20 @@ class ItemCreate():
         item_assert.uuid = uuid
         item_assert.item_type = item_type
         item_assert.add_description_note(note)
+
+    def get_uuid_manifest_label(self, label, item_type):
+        """ Gets the UUID for a label of a certain item_type
+            from the manifest.
+            Returns false if the label is not matched
+        """
+        uuid = False
+        man_labs = Manifest.objects\
+                           .filter(label=label,
+                                   item_type=item_type,
+                                   project_uuid=self.project_uuid)[:1]
+        if len(man_labs) > 0:
+            uuid = man_labs[0].uuid
+        return uuid
 
     def add_creation_note(self, ok):
         """ adds a note about the creation of a new item """

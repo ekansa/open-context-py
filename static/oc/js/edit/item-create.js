@@ -349,10 +349,12 @@ function createPredicateFields(){
 				'<div class="form-group">',
 				'<label for="new-item-label">New Property or Relation (Predicate) Label</label>',
 				'<input id="new-item-label" class="form-control input-sm" ',
-				'onkeydown="validateTypeCreate();" ',
-				'onkeyup="validateTypeCreate();" ',
-				'onchange="validateTypeCreate();" ',
+				'onkeydown="validatePredicateCreate();" ',
+				'onkeyup="validatePredicateCreate();" ',
+				'onchange="validatePredicateCreate();" ',
 				'type="text" value="" />',
+				'</div>',
+				'<div id="pred-label-validation">',
 				'</div>',
 				'<div class="form-group">',
 				'<label for="new-item-note">Note Explaining the Predicate</label>',
@@ -430,7 +432,7 @@ function createPredicateFields(){
 	 '<div class="row">',
 		  '<div class="col-xs-6" id="new-predicate-button-container">',
 		  '<label>Create</label><br/>',
-		  '<button class="btn btn-default" disabled="disabled">',
+		  '<button class="btn btn-default" onclick="createNewPredicate();">',
 		  '<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
 		  ' Submit',
 		  '</button>',
@@ -472,7 +474,150 @@ function createPredicateFields(){
 	return html;
 }
 
+function validatePredicateCreate(){
+	 // checks to see if a label is already in use.
+	 var label = document.getElementById('new-item-label').value;
+	 if (label.length > 1) {
+		  var new_project_uuid = document.getElementById("new-item-project-uuid").value;
+		  var url = make_url("/edit/inputs/item-label-check/" + encodeURIComponent(new_project_uuid));
+		  return $.ajax({
+		  type: "GET",
+		  url: url,
+		  dataType: "json",
+		  data: {
+				label: label,
+				item_type: 'predicates'},
+		  success: validatePredicateCreateDone,
+		  error: function (request, status, error) {
+			  alert('Label validity check failed, sadly. Status: ' + request.status);
+		  } 
+	 });
+		  
+	 }
+}
 
+function validatePredicateCreateDone(data){
+	 // displays predicate label validation results
+	 if (data.exists){
+		  var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-warning";
+		  var url = make_url('/edit/items/' + data.exists_uuid);
+		  var mess = ' <small>A predicate "' + data.checked + '" already exists, see: '
+		  mess += '<a href="' + url + '" target="_blank" title="View in new window" >' + data.exists_uuid;
+		  mess += ' <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>';
+		  mess += '</a></small>';
+	 }
+	 else{
+		  var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-success";
+		  var mess = ' <small>The label: "' + data.checked + '" is not yet in use.</small>';
+	 }
+	 
+	 var alert_html = [
+		  '<div role="alert" class="' + alert_class + '" style="margin-top: 3px;">',
+			  icon_html,
+			  mess,
+		  '</div>'
+	 ].join('\n');
+	 
+	 var note_con = document.getElementById('pred-label-validation');
+	 note_con.innerHTML = alert_html;
+}
+
+function createNewPredicate(){
+	 var label = document.getElementById('new-item-label').value;
+	 if (label.length > 1) {
+		  var note = document.getElementById('new-item-note').value;
+		  var p_classes = document.getElementsByClassName("new-pred-class");
+		  for (var i = 0, length = p_classes.length; i < length; i++) {
+			  if (p_classes[i].checked) {
+				  var pred_class = p_classes[i].value;
+			  }
+		  }
+		  var p_types = document.getElementsByClassName("new-pred-data-type");
+		  for (var i = 0, length = p_types.length; i < length; i++) {
+			  if (p_types[i].checked) {
+				  var data_type = p_types[i].value;
+			  }
+		  }
+		  var new_item_uuid = document.getElementById("new-item-uuid").value;
+		  if (new_item_uuid.length < 1) {
+				new_item_uuid = false;
+		  }
+		  var new_project_uuid = document.getElementById("new-item-project-uuid").value;
+		  var new_source_id = document.getElementById("new-item-source-id").value;
+		  var url = make_url("/edit/create-item-into/") + encodeURIComponent(new_project_uuid);	 
+		  
+		  return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				data: {
+					 uuid: new_item_uuid,
+					 project_uuid: new_project_uuid,
+					 source_id: new_source_id,
+					 item_type: 'predicates',
+					 class_uri: pred_class,
+					 data_type: data_type,
+					 label: label,
+					 note: note,
+					 csrfmiddlewaretoken: csrftoken},
+				success: createNewPredicateDone,
+				error: function (request, status, error) {
+					alert('Predicate creation failed, sadly. Status: ' + request.status);
+				} 
+		  });
+	 }
+	 else{
+		  alert("The predicate needs to have a label.");
+	 }
+}
+
+function createNewPredicateDone(data){
+	 // handle response for the creation of a new predicate
+	 var button_con = document.getElementById("new-predicate-button-container");
+	 var note_con = document.getElementById("new-predicate-exp-container");
+	 if (data.ok) {
+		  var url = make_url('/edit/items/' + data.change.uuid);
+		  var link_html = 'New Predicate: <a target="_blank" ';
+		  link_html += 'href="' +  url + '">';
+		  link_html += data.change.label + '</a>';
+		  var id_list = '<ul class="small">';
+		  id_list += '<li>Predicate UUID: ' + data.change.uuid + '</li>';
+		  id_list += '</ul>';
+		  button_con.innerHTML = '<p>' + link_html + '</p>' + id_list;
+		  var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-success";
+		  var error_html = "";
+	 }
+	 else{
+		  if ('errors' in data) {
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					 if (errors.hasOwnProperty(k)) {
+						  if (errors[k] != false) {
+								if (errors[k].length > 1) {
+									 error_html += '<li>' + errors[k] + '</li>';
+								}
+						  }
+					 }
+				}
+				error_html += '</ul>';
+		  }
+		  var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+		  var alert_class = "alert alert-warning";
+	 }
+	 var alert_html = [
+		  '<div role="alert" class="' + alert_class + '" style="margin-top: 3px;">',
+			  icon_html,
+			  data.change.note,
+			  error_html,
+		  '</div>'
+	 ].join('\n');
+	 
+	 note_con.innerHTML = alert_html;
+}
 
 
 /*
@@ -676,23 +821,17 @@ function validateTypeCreateButton(valid){
 
 
 function createNewType(){
-	 var valid = validateTypeCreate();
-	 if (valid) {
-		  if (typeof act_profile != "undefined") {
-				// the type is being created while the user is
-				// using a profile for data entry. So update
-				// trees to reflect the change
-				
-				exec_createNewType().then(function(){
-					 act_profile.make_trees();
-				});
-		  }
-		  else{
-				exec_createNewType();
-		  }
+	 if (typeof act_profile != "undefined") {
+		  // the type is being created while the user is
+		  // using a profile for data entry. So update
+		  // trees to reflect the change
+		  
+		  exec_createNewType().then(function(){
+				act_profile.make_trees();
+		  });
 	 }
 	 else{
-		  alert('Both a predicate ID and a non-blank label for the category / type are needed.');
+		  exec_createNewType();
 	 }
 }
 function exec_createNewType(){
