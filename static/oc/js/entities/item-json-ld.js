@@ -175,6 +175,50 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	}
+	this.getObsValuesByPredicateUUID = function(obs_num, predicate_uuid){
+		var output = [];
+		var predicates = this.getPredicates();
+		if (predicate_uuid in this.predicates_by_uuid) {
+			var slug_key = this.predicates_by_uuid[predicate_uuid].slug_key;
+			var data_type = this.predicates_by_uuid[predicate_uuid].data_type;
+			var observations = this.getObservations();
+			for (var i = 0, length = observations.length; i < length; i++) {
+				if (obs_num == i) {
+					// only look in a specific observation for values
+					var obs = observations[i];
+					if (slug_key in obs) {
+						var raw_values = obs[slug_key];
+						for (var vi = 0, vlength = raw_values.length; vi < vlength; vi++) {
+							var raw_value = raw_values[vi];
+							if (data_type == 'id') {
+								var act_value = {
+									id: raw_value.id,
+									uuid: this.getUUIDfrom_OC_URI(raw_value.id),
+									slug: raw_value.slug,
+									label: raw_value.label,
+									literal: null
+								}
+							}
+							else if(data_type == 'xsd:string') {
+								var act_value = {
+									id: raw_value.id,
+									literal: raw_value['xsd:string']
+								}
+							}
+							else{
+								var act_value = {
+									id: false,
+									literal: raw_value
+								}
+							}
+							output.push(act_value);
+						}
+					}
+				}
+			}
+		}
+		return output;
+	}
 	this.getObservations = function(){
 		var observations = [];
 		if (this.data != false) {

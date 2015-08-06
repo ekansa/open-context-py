@@ -172,6 +172,14 @@ class SolrReIndex():
                             for child_uuid in children:
                                 if child_uuid not in uuids:
                                     uuids.append(child_uuid)
+                elif m_obj.item_type == 'predicates':
+                    # reindex all of the items described by a given predicate
+                    # this can take a while!
+                    rel_objs = Assertion.objects\
+                                        .filter(predicate_uuid=m_obj.uuid)
+                    for rel_item in rel_objs:
+                        if rel_item.uuid not in uuids:
+                            uuids.append(rel_item.uuid)
                 rel_objs = Assertion.objects\
                                     .filter(uuid=m_obj.uuid,
                                             object_type__in=link_item_types)

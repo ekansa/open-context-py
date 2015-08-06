@@ -5,6 +5,7 @@
     <!-- BEGIN item edit general javascript includes -->
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
+        var base_url = '{{ base_url }}';
         var item_label = '{{ item.label }}';
         var item_type = '{{ item.act_nav }}';
         var uuid = '{{ item.uuid }}';
@@ -38,22 +39,22 @@
                 </ul>
                 <div class="tab-content obs-multi">
                     <div id="edit-1" class="tab-pane fade in active">
-                        {% include 'edit/item-basic.html' %}
+                        {% include 'edit/item-2-basic.html' %}
                     </div>
                     <div id="edit-2" class="tab-pane fade">
-                        {% include 'edit/item-context.html' %}
+                        {% include 'edit/item-2-context.html' %}
                     </div>
                     <div id="edit-3" class="tab-pane fade">
-                        {% include 'edit/item-description.html' %}
+                        {% include 'edit/item-2-description.html' %}
                     </div>
                     <div id="edit-4" class="tab-pane fade">
                         
                     </div>
                     <div id="edit-5" class="tab-pane fade">
-                        {% include 'edit/item-annotations.html' %}
+                        {% include 'edit/item-2-annotations.html' %}
                     </div>
                     <div id="edit-6" class="tab-pane fade">
-                        {% include 'edit/item-geo-chrono.html' %}
+                        {% include 'edit/item-2-geo-chrono.html' %}
                     </div>
                 </div>
             </div>
@@ -69,14 +70,31 @@
           
         {% include 'edit/edit-modal.html' %}
          
-         <script src="../../static/oc/js/entities/entities.js"></script>
-         <script src="../../static/oc/js/entities/item-json-ld.js"></script>
-         <script src="../../static/oc/js/entities/item-annotations.js"></script>
-         <script src="../../static/oc/js/edit/context-edit.js"></script>
-         <script src="../../static/oc/js/edit/geo-chrono-edit.js"></script>
-         <script src="../../static/oc/js/edit/item-annotate.js"></script>
-         <script src="../../static/oc/js/edit/item-field.js"></script>
-         <script src="../../static/oc/js/edit/item-edit.js" onload="javascript:start();"></script>
+         <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
+         <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/entities/entities.js"></script>
+         <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
+         <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/context-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
+         
+         <script type="text/javascript">
+            <!--
+            var edit_item = false;
+            function start_item_edit(){
+                edit_item = new itemEdit(item_type, uuid);
+                edit_item.getItemJSON();
+            }
+            -->
+        </script> 
+         
+         
+        <script src="../../static/oc/js/edit/item-edit-alt.js" onload="start_item_edit();"></script>
+         
      </div>
 </div>
 {% endblock %} 

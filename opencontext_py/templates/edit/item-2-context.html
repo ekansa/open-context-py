@@ -92,55 +92,7 @@
         </tr>
     </thead>
     <tbody>
-        <div id="contents-list">
-        {% if item.children != False %}
-        {% if item.children.children|length > 0 %}
-        {% for row in item.children.children    %}
-            <tr>
-                <td>
-                    
-                </td>
-                <td>
-                    <div class="row subject-list-row">
-                        <div class="col-sm-2">
-                            <a target="_blank" href="{% url 'subjects_html' row.uuid %}"><img src="{{ row.icon }}" alt="Icon for {{ row.typelabel }}"/></a>
-                        </div>    
-                        <div class="col-sm-10">
-                            <div class="subject-list-text">
-                                <a target="_blank" href="{% url 'subjects_html' row.uuid %}">{{ row.label }}</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </td>
-                <td>
-                    <div class="subject-list-text">
-                                <a href="{% url 'edit_item_html_view' row.uuid %}" target="_blank">
-                                    <span class="glyphicon glyphicon-new-window" aria-hidden="true"></span>
-                                    [Edit: <code>{{ row.uuid }}</code>]
-                                </a>
-                            </div>
-                </td>
-            </tr>
-        {% endfor %}
-        {% endif %}
-        {% endif %}
-        </div>
         
-            <tr>
-                <td>
-                    <button id="add-child-button" type="button" class="btn btn-warning" onclick="javascript:addChild();" disabled="disabled">
-                        <span class="glyphicon glyphicon-link" aria-hidden="true"></span>
-                        Add Child
-                    </button>    
-                </td>
-                <td id="sel-child-entities">
-                    
-                </td>
-                <td>
-                    <small>Choose another item to be contained as a child of this item.</small>
-                </td>
-            </tr>
         
     </tbody>
 </table>

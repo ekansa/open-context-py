@@ -7,14 +7,26 @@ var data_loads = 1;
 function hierarchy(parent_id, act_dom_id) {
 	 this.make_url = function(relative_url){
 	 //makes a URL for requests, checking if the base_url is set	
-		 if (typeof base_url != "undefined") {
-			 return base_url + relative_url;
-		 }
-		 else{
-			 return '../../' + relative_url;
-		 }
+		  //makes a URL for requests, checking if the base_url is set
+		  var rel_first = relative_url.charAt(0);
+		  if (typeof base_url != "undefined") {
+				var base_url_last = base_url.charAt(-1);
+				if (base_url_last == '/' && rel_first == '/') {
+					 return base_url + relative_url.substring(1);
+				}
+				else{
+					 return base_url + relative_url;
+				}
+		  }
+		  else{
+				if (rel_first == '/') {
+					 return '../..' + relative_url;
+				}
+				else{
+					 return '../../' + relative_url;
+				}
+		  }
 	 }
-	 
 	 this.act_dom_id = act_dom_id;
 	 this.parent_id = parent_id;
 	 this.object_prefix = 'tree_' + data_loads;
@@ -58,27 +70,27 @@ function hierarchy(parent_id, act_dom_id) {
 		 this.show_data();
 	 }
 	 this.show_loading = function(){
-		 //display a spinning gif for loading
-		 if (document.getElementById(this.act_dom_id)) {
-			 if (!this.root_node) {
-				 $('#' + this.act_dom_id).collapse('show');
-			 }
-			 var act_dom = document.getElementById(this.act_dom_id);
-			 var html = [
-			 '<div class="row">',
-			 '<div class="col-sm-1">',
-			 '<img alt="loading..." src="' + base_url + '/static/oc/images/ui/waiting.gif" />',
-			 '</div>',
-			 '<div class="col-sm-11">',
-			 'Loading...',
-			 '</div>',
-			 '</div>'
-			 ].join('\n');
-			 act_dom.innerHTML = html;
-		 }
+		  //display a spinning gif for loading
+		  if (document.getElementById(this.act_dom_id)) {
+			  if (!this.root_node) {
+				  $('#' + this.act_dom_id).collapse('show');
+			  }
+			  var act_dom = document.getElementById(this.act_dom_id);
+			  var html = [
+			  '<div class="row">',
+			  '<div class="col-sm-1">',
+			  '<img alt="loading..." src="' + base_url + '/static/oc/images/ui/waiting.gif" />',
+			  '</div>',
+			  '<div class="col-sm-11">',
+			  'Loading...',
+			  '</div>',
+			  '</div>'
+			  ].join('\n');
+			  act_dom.innerHTML = html;
+		  }
 	 }
 	 this.show_data = function(){
-		 //display data loaded from 
+		 //display data loaded from
 		  if (document.getElementById(this.act_dom_id)) {
 			   if (this.parent_id in hierarchy_data) {
 					 var data = hierarchy_data[this.parent_id];
@@ -99,25 +111,25 @@ function hierarchy(parent_id, act_dom_id) {
 		  }
 	 }
 	 this.exec_toggle_collapse = function(){
-		 var link_dom_id = this.act_dom_id.replace('-more-', '-expa-');
-		 if (this.expanded) {
-			 $('#' + this.act_dom_id).collapse('hide');
-			 //alert('hidden: ' + link_dom_id);
-			 if (document.getElementById(link_dom_id)) {
-				 var a_link = document.getElementById(link_dom_id);
-				 a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-plus" aria-hidden="true"></span>';
-			 }
-			 this.expanded = false;
-		 }
-		 else{
-			 $('#' + this.act_dom_id).collapse('show');
-			 //alert('hidden: ' + link_dom_id);
-			 if (document.getElementById(link_dom_id)) {
-				 var a_link = document.getElementById(link_dom_id);
-				 a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-minus" aria-hidden="true"></span>';
-			 }
-			 this.expanded = true;
-		 }
+		  var link_dom_id = this.act_dom_id.replace('-more-', '-expa-');
+		  if (this.expanded) {
+			  $('#' + this.act_dom_id).collapse('hide');
+			  //alert('hidden: ' + link_dom_id);
+			  if (document.getElementById(link_dom_id)) {
+				  var a_link = document.getElementById(link_dom_id);
+				  a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-plus" aria-hidden="true"></span>';
+			  }
+			  this.expanded = false;
+		  }
+		  else{
+			  $('#' + this.act_dom_id).collapse('show');
+			  //alert('hidden: ' + link_dom_id);
+			  if (document.getElementById(link_dom_id)) {
+				  var a_link = document.getElementById(link_dom_id);
+				  a_link.innerHTML = '<span class="hierarchy-tog glyphicon glyphicon-minus" aria-hidden="true"></span>';
+			  }
+			  this.expanded = true;
+		  }
 	 }
 	 this.make_data_html = function(data){
 		 var html = [];
