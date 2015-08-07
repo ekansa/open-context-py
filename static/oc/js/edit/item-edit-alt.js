@@ -27,7 +27,7 @@ function itemEdit(item_type, item_uuid){
 		/* the JSON-LD becomes this object's data */
 		this.item_json_ld_obj.data = data;
 		this.show_existing_data();
-		console.log(this.fields);
+		// console.log(this.fields);
 	}
 	this.show_existing_data = function(){
 		if (this.item_json_ld_obj != false) {
@@ -55,6 +55,7 @@ function itemEdit(item_type, item_uuid){
 					var field = new edit_field();
 					field.id = this.fields.length;
 					field.project_uuid = this.project_uuid;
+					field.pred_type = pred_item.pred_type;
 					field.parent_obj_name = this.obj_name;
 					field.obj_name = 'fields[' + field.id + ']';
 					field.add_new_data_row = true;
@@ -65,6 +66,7 @@ function itemEdit(item_type, item_uuid){
 					field.predicate_uuid = predicate_uuid;
 					field.data_type = pred_item.data_type;
 					field.values_obj = this.item_json_ld_obj.getValuesByPredicateUUID(predicate_uuid);
+					field.initialize();
 					var field_html = field.make_field_html();
 					fields_html += field_html;
 					this.fields.push(field);

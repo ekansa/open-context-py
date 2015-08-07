@@ -101,6 +101,7 @@ function item_object(item_type, uuid){
 								var uri = false;
 								var label = false;
 								var data_type = false;
+								var pred_type = 'variable';
 								var slug = slug_key.replace('oc-pred:', '');
 								if ('owl:sameAs' in context_pred) {
 									uri = context_pred['owl:sameAs'];
@@ -108,6 +109,9 @@ function item_object(item_type, uuid){
 								}
 								if ('label' in context_pred) {
 									label = context_pred['label'];
+								}
+								if ('oc-gen:predType' in context_pred) {
+									pred_type = context_pred['oc-gen:predType'];
 								}
 								if ('type' in context_pred) {
 									data_type = context_pred['type'].replace('@', '');
@@ -120,6 +124,7 @@ function item_object(item_type, uuid){
 								                 id: uri,
 													  uuid: uuid,
 													  label: label,
+													  pred_type: pred_type,
 													  data_type: data_type};
 							   if (uri != false) {
 									output.push(pred_item);

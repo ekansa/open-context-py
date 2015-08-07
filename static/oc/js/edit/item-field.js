@@ -12,6 +12,7 @@ function edit_field(){
 	this.project_uuid = false;
 	this.field_uuid = false;
 	this.label = false;
+	this.pred_type = 'variable';
 	this.data_type = false;
 	this.predicate_uuid = false;
 	this.note = false;
@@ -31,7 +32,16 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
+	this.single_value_preds = [this.label_pred_uuid,
+										this.class_pred_uuid,
+										this.context_pred_uuid];
+	this.class_vocab_uri = 'http://opencontext.org/vocabularies/oc-general/';
 	this.add_new_data_row = true;
+	this.initialized = false;
+	this.single_value_only = false;
+	// for checking on IDs being valid
+	this.ids_validation = {};
+	this.active_value_num = false; //used to handle results of AJAX validation requests
 	// for panel ids
 	this.panels = [];
 	// entity search object
@@ -43,7 +53,7 @@ function edit_field(){
 	
 	this.make_field_html = function(){
 		
-		this.make_name();
+		this.initialize();
 		var vals_html = this.make_vals_html();
 		var note_html = '';
 		if (this.note != false) {
@@ -80,9 +90,9 @@ function edit_field(){
 		this.make_trees();
 	}
 	
+	
 	this.make_vals_html = function(){
-		//make the html for the field
-		this.make_name();
+		this.initialize();
 		var values_obj = this.values_obj;
 		if (this.add_new_data_row) {
 			// add a data entry row
@@ -138,75 +148,47 @@ function edit_field(){
 					'</span>',
 					'</button>'].join("\n");
 				
+				if (this.single_value_only && i > 0) {
+					var action = ' Change the <em>' + this.label + '</em> value';
+				}
+				else{
+					var action = ' Add a <em>' + this.label + '</em> value';
+				}
+				
 				var exp_html = [
 					this.make_focal_html(i),
 					'<div class="panel-group">',
 						'<div class="panel panel-default" style="margin-top:4px;">',
 							'<div class="panel-heading">',
-								//'<p>',
 								button_html,
-								' Add a <em>' + this.label + '</em> value',
-								//'</p>',
+								action,
 							'</div>',
 							'<div id="' +  dom_ids.newrec + '" class="collapse" >',
 								'<div class="panel-body">',
-								val_html,
+									'<div class="row">',
+										'<div class="col-xs-8">',
+										val_html,
+										'</div>',
+										'<div class="col-xs-4">',
+											'<div id="' + dom_ids.valid + '">',
+											'</div>',
+											'<div id="' + dom_ids.submitcon + '">',
+											'</div>',
+										'</div>',
+									'</div>',
 								'</div>',
 							'</div>',
 						'</div>',
 					'</div>',
 				].join("\n");
 				
-				if (this.data_type == 'id') {
-					var row_html = [
-						'<div class="row">',
-							'<div class="col-xs-1">',
-							button_html,
-							'</div>',
-							'<div class="col-xs-7">',
-							exp_html,
-							'</div>',
-							'<div class="' + this.valid_col_class + '" id="' + dom_ids.valid + '">',
-							'</div>',
+				var row_html = [
+					'<div class="row">',
+						'<div class="col-xs-12">',
+						exp_html,
 						'</div>',
-					].join('\n');
-					
-					var row_html = [
-						'<div class="row">',
-							'<div class="col-xs-8">',
-							exp_html,
-							'</div>',
-							'<div class="' + this.valid_col_class + '" id="' + dom_ids.valid + '">',
-							'</div>',
-						'</div>',
-					].join('\n');
-				}
-				else{
-					var row_html = [
-						'<div class="row">',
-							'<div class="col-xs-1">',
-							button_html,
-							'</div>',
-							'<div class="col-xs-1">',
-							'</div>',
-							'<div class="' + this.value_col_class + '">',
-							exp_html,
-							'</div>',
-							'<div class="' + this.valid_col_class + '" id="' + dom_ids.valid + '">',
-							'</div>',
-						'</div>',
-					].join('\n');
-					
-					var row_html = [
-						'<div class="row">',
-							'<div class="col-xs-8">',
-							exp_html,
-							'</div>',
-							'<div class="' + this.valid_col_class + '" id="' + dom_ids.valid + '">',
-							'</div>',
-						'</div>',
-					].join('\n');
-				}
+					'</div>',
+				].join('\n');
 			}
 			else{
 				var row_html = [
@@ -218,7 +200,11 @@ function edit_field(){
 						'<div class="' + this.value_col_class + '">',
 						val_html,
 						'</div>',
-						'<div class="' + this.valid_col_class + '" id="' + dom_ids.valid + '">',
+						'<div class="' + this.valid_col_class + '">',
+							'<div id="' + dom_ids.valid + '">',
+							'</div>',
+							'<div id="' + dom_ids.submitcon + '">',
+							'</div>',
 						'</div>',
 					'</div>',
 				].join('\n');
@@ -229,15 +215,28 @@ function edit_field(){
 		vals_html.push('</div>');
 		return vals_html.join("\n");
 	}
-	this.make_name = function(){
+	this.initialize = function(){
 		// makes the name of the object for called functions
-		if (this.parent_obj_name != false) {
-			this.name = this.parent_obj_name + '.' + this.obj_name;
-		}
-		else{
-			this.name = this.obj_name;
+		if (this.initialized == false) {
+			// only do this if it hasn't been done yet
+			if (this.parent_obj_name != false) {
+				this.name = this.parent_obj_name + '.' + this.obj_name;
+			}
+			else{
+				this.name = this.obj_name;
+			}
+			if (this.predicate_uuid in this.single_value_preds) {
+				//this predicate can only have single values
+				this.single_value_only = true;
+			}
+			if (this.data_type == 'xsd:boolean') {
+				//only allow a single value for boolean fields
+				this.single_value_only = true;
+			}
+			this.initialized = true;
 		}
 	}
+	
 	
 	this.make_boolean_val_html = function(value_num, value_obj){
 		var dom_ids = this.make_field_val_domids(value_num);
@@ -282,8 +281,8 @@ function edit_field(){
 				this.make_validation_html('Cannot interpret "' + value_obj.literal + '" as a boolean (true/false) value.', false, value_num);
 			}
 			var html = [
-				'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
-				'type="hidden" value="' + bool_value + '" ',
+				'<input id="' + value_obj.literal + '" class="form-control input-sm" ',
+				'type="text" value="' + bool_value + '" ',
 				'/>',
 				'</div>',
 				'<label class="radio-inline">',
@@ -364,50 +363,12 @@ function edit_field(){
 		var display_id = '';
 		if (value_obj.hasOwnProperty('new')) {
 			var sobj_id = this.sobjs.length;
-			this.prep_field_tree(value_num, this.predicate_uuid, 'description');
-		
-			// make an entity search for contexts
-			var entityInterfaceHTML = "";
-			/* changes global authorSearchObj from entities/entities.js */
-			
-			var entSearchObj = new searchEntityObj();
-			var ent_name = 'sobjs[' + sobj_id + ']';
-			entSearchObj.name = ent_name;
-			entSearchObj.ultra_compact_display = true;
-			entSearchObj.parent_obj_name = this.name;
-			entSearchObj.entities_panel_title = "Select a Category for " + this.label;
-			entSearchObj.limit_item_type = "types";
-			entSearchObj.limit_context_uuid = this.predicate_uuid;
-			entSearchObj.limit_project_uuid = "0," + this.project_uuid;
-			var entDomID = entSearchObj.make_dom_name_id();
-			var afterSelectDone = {
-				dom_ids: dom_ids,
-				entDomID: entDomID,
-				exec: function(){
-					var sel_id = document.getElementById(this.entDomID + "-sel-entity-id").value;
-					var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
-					document.getElementById(this.dom_ids.label).value = sel_label;
-					document.getElementById(this.dom_ids.id).value = sel_id;
-				}
-			};
-			entSearchObj.afterSelectDone = afterSelectDone;
-			this.sobjs.push(entSearchObj);
-			var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
-			
-			var html = [
-				'<div class="form-group">',
-				'<label for="' + dom_ids.label + '">' + this.label + ' (Label)</label>',
-				'<input id="' + dom_ids.label + '" class="form-control input-sm" ',
-				'type="text" value="' + display_label + '" disabled="disabled"/>',
-				'</div>',
-				'<div class="form-group">',
-				'<label for="' + dom_ids.id + '">' + this.label + ' (ID)</label>',
-				'<input id="' + dom_ids.id + '" class="form-control input-sm" ',
-				'type="text" value="' + display_id + '" />',
-				'</div>',
-				'<div class="well well-sm small">',
-					'<label><u>Option A</u>: Search <em>' + this.label + '</em></label>',
-					entityInterfaceHTML,
+			if (this.pred_type == 'variable') {
+				// only prepare a search tree if this is a variable
+				this.prep_field_tree(value_num, this.predicate_uuid, 'description');
+				var limit_item_type = "types";
+				var entities_panel_title = "Select a Category for " + this.label;
+				var search_sup_html = [
 					'<br/>',
 					'<label>',
 					'<u>Option B</u>: Select a Category Below ',
@@ -427,6 +388,87 @@ function edit_field(){
 					' Add another category for ' + this.label,
 					'</a>',
 					'</small></p>',
+				].join("\n");
+			}
+			else{
+				var limit_item_type = "*";
+				var entities_panel_title = "Select a <em>" + this.label + "</em> linked item";
+				var search_sup_html = [
+					'<div class="radio">',
+						'<label>',
+							'<input type="radio" ',
+							'value="*" ',
+							'checked>',
+							'All item types',
+						'</label>',
+					'</div>'
+				].join("\n");
+				search_sup_html = '';
+			}
+		
+			// make an entity search for contexts
+			var entityInterfaceHTML = "";
+			/* changes global authorSearchObj from entities/entities.js */
+			
+			var entSearchObj = new searchEntityObj();
+			var ent_name = 'sobjs[' + sobj_id + ']';
+			entSearchObj.name = ent_name;
+			entSearchObj.ultra_compact_display = true;
+			entSearchObj.parent_obj_name = this.name;
+			entSearchObj.entities_panel_title = entities_panel_title;
+			entSearchObj.limit_item_type = limit_item_type;
+			entSearchObj.limit_context_uuid = this.predicate_uuid;
+			entSearchObj.limit_project_uuid = "0," + this.project_uuid;
+			var entDomID = entSearchObj.make_dom_name_id();
+			var afterSelectDone = {
+				dom_ids: dom_ids,
+				entDomID: entDomID,
+				value_num: value_num,
+				id: this.id,
+				make_field_val_domids: this.make_field_val_domids,
+			   make_validation_html: this.make_validation_html,
+				make_submit_button: this.make_submit_button,
+				ids_validation: this.ids_validation,
+				pred_type: this.pred_type,
+				predicate_uuid: this.predicate_uuid,
+				class_pred_uuid: this.class_pred_uuid,
+				class_vocab_uri: this.class_vocab_uri,
+				context_pred_uuid: this.context_pred_uuid,
+				validation_id_response: this.validation_id_response,
+				exec: function(){
+					var sel_id = document.getElementById(this.entDomID + "-sel-entity-id").value;
+					var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
+					document.getElementById(this.dom_ids.label).value = sel_label;
+					document.getElementById(this.dom_ids.id).value = sel_id;
+					this.ids_validation[sel_id] = {label: sel_label,
+											             item_type: 'types',
+											             vocab_uri: false};
+					var val_mes = 'Valid category selected.';
+					this.validation_id_response(true, this.value_num);
+				}
+			};
+			entSearchObj.afterSelectDone = afterSelectDone;
+			this.sobjs.push(entSearchObj);
+			var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
+			
+			var html = [
+				'<div class="form-group">',
+				'<label for="' + dom_ids.label + '">' + this.label + ' (Label)</label>',
+				'<input id="' + dom_ids.label + '" class="form-control input-sm" ',
+				'type="text" value="' + display_label + '" disabled="disabled"/>',
+				'</div>',
+				'<div class="form-group">',
+				'<label for="' + dom_ids.id + '">' + this.label + ' (ID)</label>',
+				'<input id="' + dom_ids.id + '" class="form-control input-sm" ',
+				//'onkeydown="' + this.name + '.validateID(\'' + value_num + '\');" ',
+				//'onkeyup="' + this.name + '.validateID(\'' + value_num + '\');" ',
+				'onchange="' + this.name + '.validateID(\'' + value_num + '\');" ',
+				'type="text" value="' + display_id + '" />',
+				'</div>',
+				'<div class="well well-sm small">',
+					'<label><u>Option A</u>: Search <em>' + this.label + '</em></label>',
+					entityInterfaceHTML,
+					search_sup_html,
 				'</div>',
 			].join("\n");
 		}
@@ -728,16 +770,17 @@ function edit_field(){
 	this.make_field_val_domids = function(value_num){
 		// makes dom ids for values
 		var dom_ids = {
-			literal: (value_num + '-field-' + this.id),
-			label: (value_num + '-field-l-' + this.id),
-			id: (value_num + '-field-id-' + this.id),
-			valid: (value_num + '-field-valid-' + this.id),
-			icon: (value_num + '-field-icon-' + this.id),
-			datecon: (value_num + '-field-datecon-' + this.id),
-			treebut: (value_num + '-field-tx-' + this.id),
-			tree: (value_num + '-field-tr-' + this.id),
-			newrec: (value_num + '-field-new-' + this.id),
-			focal: (value_num + '-field-fcl-' + this.id)
+			literal: (value_num + '-field-' + this.id), //id for input element of literals
+			label: (value_num + '-field-l-' + this.id), //label for ID value fields
+			id: (value_num + '-field-id-' + this.id), //id value field
+			valid: (value_num + '-field-valid-' + this.id), //container ID for validation feedback
+			submitcon: (value_num + '-field-sbcon-' + this.id), //container ID for submitt button
+			icon: (value_num + '-field-icon-' + this.id), //for calendar icon, used with date picker
+			datecon: (value_num + '-field-datecon-' + this.id), //containers for dates, needed to activate calender date picker
+			treebut: (value_num + '-field-tx-' + this.id), //button for making parents
+			tree: (value_num + '-field-tr-' + this.id), //parent for the tree
+			newrec: (value_num + '-field-new-' + this.id), //for the new record collapse panel
+			focal: (value_num + '-field-fcl-' + this.id)  //for scrolling to a part of the page
 		};
 		return dom_ids;	
 	}
@@ -771,6 +814,139 @@ function edit_field(){
 	/*
 	 * VALIDATION FUNCTIONS
 	 */
+	
+	this.validateID = function(value_num){
+
+		var is_valid = this.check_cached_id_valid(value_num);
+
+		if (is_valid) {
+			this.validation_id_response(is_valid, value_num);
+		}
+		else{
+			// the item is not yet known to be valid (either null or false)
+			// so make an AJAX request to check
+			this.ajax_validate_id(value_num);
+		}
+	}
+	this.check_cached_id_valid = function(value_num){
+		var is_valid = null; //not cached
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.id)) {
+			var item_id = document.getElementById(dom_ids.id).value;
+			var item = false;
+			if (item_id in this.ids_validation) {
+				var item = this.ids_validation[item_id];
+			}
+			if (item != false) {
+				is_valid = false;
+				if (document.getElementById(dom_ids.label)) {
+					document.getElementById(dom_ids.label).value = item.label;
+				}
+				if (this.predicate_uuid == this.class_pred_uuid) {
+					if (item.vocab_uri == this.class_vocab_uri) {
+						is_valid = true;
+					}
+				}
+				else if (this.predicate_uuid == this.context_pred_uuid)  {
+					if (item.item_type == 'subjects') {
+						is_valid = true;
+					}
+				}
+				else{
+					if (this.pred_type == 'variable') {
+						if (item.item_type == 'types') {
+							is_valid = true;
+						}
+					}
+					else{
+						is_valid = true;	
+					}
+				}
+			}
+			else{
+				is_valid = false;
+			}
+		}
+		return is_valid;
+	}
+	this.ajax_validate_id = function(value_num){
+		this.active_value_num = value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		var item_id = false;
+		if (document.getElementById(dom_ids.id)) {
+			var item_id = document.getElementById(dom_ids.id).value;
+		}
+		if (item_id == false) {
+			return false;
+		}
+		else{
+			var url = this.make_url("/entities/id-summary/" + encodeURIComponent(item_id));
+			return $.ajax({
+				type: "GET",
+				url: url,
+				dataType: "json",
+				context: this,
+				success: this.ajax_validate_idDone,
+				error: function (request, status, error) {
+					this.ids_validation[item_id] = false;
+					this.validation_id_response(false, value_num);
+				}
+			});
+		}
+	}
+	this.ajax_validate_idDone = function(data){
+		var is_valid = false;
+		var value_num = this.active_value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		this.active_value_num = false;
+		if (document.getElementById(dom_ids.id)) {
+			var item_id = document.getElementById(dom_ids.id).value;
+			this.ids_validation[item_id] = data;
+			var is_valid = this.check_cached_id_valid(value_num);
+		}
+		this.validation_id_response(is_valid, value_num);
+		//console.log(this.ids_validation);
+	}
+	this.validation_id_response = function(is_valid, value_num){
+		//console.log(this.pred_type);
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (is_valid) {
+			if (this.predicate_uuid == this.class_pred_uuid) {
+				var val_mes = 'Valid classification input.'; 
+			}
+			else if (this.predicate_uuid == this.context_pred_uuid) {
+				var val_mes = 'Valid context input.';
+			}
+			else{
+				if (this.pred_type == 'variable') {
+					var val_mes = 'Valid category input.';
+				}
+				else{
+					var val_mes = 'Valid linked item input.';
+				}
+			}
+		}
+		else{
+			if (this.predicate_uuid == this.class_pred_uuid) {
+				var val_mes = 'Classification input not valid Open Context class'; 
+			}
+			else if (this.predicate_uuid == this.context_pred_uuid) {
+				var val_mes = 'Context input not a recognized subject item';
+			}
+			else{
+				if (this.pred_type == 'variable') {
+					var val_mes = 'Category input not a recognized type item';
+				}
+				else{
+					var val_mes = 'Linked item not recognized';
+				}
+			}
+		}
+		if (document.getElementById(dom_ids.id)) {
+			var item_id = document.getElementById(dom_ids.id).value;
+		}
+		this.make_validation_html(val_mes, is_valid, value_num);
+	}
 	this.validateNumber = function(literal_id){
 		//validates numeric fields
 		var is_valid = false;
@@ -848,6 +1024,7 @@ function edit_field(){
 		return boolean_ok;
 	}
 	this.parseStrBoolean = function(check_str){
+		check_str = check_str + '';
 		var str = check_str.toLowerCase();
 		var ok_values = {	'n': false,
 								'no': false,
@@ -870,7 +1047,7 @@ function edit_field(){
 		else{
 			var truth_val = null;
 		}
-		return truth-val;
+		return truth_val;
 	}
 	this.booleanSelect = function(bool_num, literal_id){
 		if (bool_num == 1) {
@@ -889,9 +1066,8 @@ function edit_field(){
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
 			var alert_class = this.invalid_alert_class;
 		}
-	
 		var alert_html = [
-				'<div role="alert" class="' + alert_class + '" style="margin-top: 3px;">',
+				'<div role="alert" class="' + alert_class + '" >',
 					icon_html,
 					message_html,
 				'</div>'
@@ -900,11 +1076,44 @@ function edit_field(){
 		if (value_num != false) {
 			//add this to the dom
 			var dom_ids = this.make_field_val_domids(value_num);
-			var act_dom = document.getElementById(dom_ids.valid);
-			act_dom.innerHTML = alert_html;
+			if (document.getElementById(dom_ids.valid)) {
+				var act_dom = document.getElementById(dom_ids.valid);
+				act_dom.innerHTML = alert_html;
+			}
 		}
+		this.make_submit_button(is_valid, value_num);
 		return alert_html;
 	}
+	this.make_submit_button = function(is_valid, value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		
+		if (is_valid) {
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-success btn-block" onclick="' + this.name + '.updateValue(\'' + value_num + '\');">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit',
+					'</button>',
+				'</div>'
+			].join('\n');
+		}
+		else{
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-warning btn-block" disabled="disbled">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit',
+					'</button>',
+				'</div>'
+			].join('\n');
+			button_html = '';
+		}
+		if (document.getElementById(dom_ids.submitcon)) {
+			document.getElementById(dom_ids.submitcon).innerHTML = button_html;
+		}
+		return button_html;
+	}
+	
 	this.prepend_zeros = function(id_part, digit_length){
 		// prepends zeros to an appropriate digit length
 		if (this.isInt(digit_length)) {
@@ -963,10 +1172,15 @@ function edit_field(){
 		// this is the function called in onclick events when
 		// a user has selected an item from a tree to be used
 		// to populate a value for a field
+		id = id.trim();
 		var value_num = this.value_num_from_domid(tree_dom_id);
 		var dom_ids = this.make_field_val_domids(value_num);
 		document.getElementById(dom_ids.label).value = label.trim();
-		document.getElementById(dom_ids.id).value = id.trim();
+		document.getElementById(dom_ids.id).value = id;
+		this.ids_validation[id] = {label: label.trim(),
+											item_type: item_type,
+											vocab_uri: false};
+		this.validation_id_response(true, value_num);
 	}
 	this.prep_field_tree = function(value_num, root_node_id, tree_type){
 		// adds an object to a list to prepare for creating trees
@@ -1032,7 +1246,7 @@ function edit_field(){
 		var tree_key = tree.object_prefix; 
 		hierarchy_objs[tree_key] = tree;
 		//this.collapseTree(value_num);
-		console.log(hierarchy_objs);
+		//console.log(hierarchy_objs);
 	}
 	this.collapseTree = function(value_num){
 		var dom_ids = this.make_field_val_domids(value_num);

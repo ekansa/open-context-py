@@ -73,6 +73,32 @@ def look_up(request, item_type):
                         content_type='application/json; charset=utf8')
 
 
+def id_summary(request, identifier):
+    """ Returns JSON data for entities
+        limited by certain criteria
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        entity_obj = LastUpdatedOrderedDict()
+        entity_obj['id'] = ent.uri
+        entity_obj['label'] = ent.label
+        entity_obj['uuid'] = ent.uuid
+        entity_obj['slug'] = ent.slug
+        entity_obj['item_type'] = ent.item_type
+        entity_obj['class_uri'] = ent.class_uri
+        entity_obj['data_type'] = ent.data_type
+        entity_obj['vocab_uri'] = ent.vocab_uri
+        entity_obj['project_uuid'] = ent.project_uuid
+        json_output = json.dumps(entity_obj,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
 def entity_annotations(request, subject):
     """ Returns JSON data with
         annotations on a given subject entity

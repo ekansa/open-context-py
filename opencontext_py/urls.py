@@ -213,6 +213,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
                            name='entity_hierarchy_children'),
+                       url(r'^entities/id-summary/(?P<identifier>\S+)', EntityViews.id_summary,
+                           name='entity_id_summary'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
                            name='entity_look_up'),
                        url(r'^entities/annotations/(?P<subject>\S+)', EntityViews.entity_annotations,

@@ -153,6 +153,8 @@ class Entity():
         """ Searches for entities limited by query strings
             and optionally other criteria
         """
+        ent_equivs = EntityEquivalents()
+        uri_alts = ent_equivs.get_identifier_list_variants(qstring);
         entity_list = []
         manifest_list = []
         if ent_type is not False:
@@ -167,6 +169,7 @@ class Entity():
             """ Search all types of entities, only limit by string matching """
             entity_list = LinkEntity.objects\
                                     .filter(Q(uri__icontains=qstring)\
+                                            | Q(uri__in=uri_alts)\
                                             | Q(slug__icontains=qstring)\
                                             | Q(label__icontains=qstring)\
                                             | Q(alt_label__icontains=qstring))[:10]
@@ -181,6 +184,7 @@ class Entity():
                 # don't limit by entity type
                 entity_list = LinkEntity.objects\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -189,6 +193,7 @@ class Entity():
                 entity_list = LinkEntity.objects\
                                         .filter(ent_type__in=ents)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -201,6 +206,7 @@ class Entity():
                 entity_list = LinkEntity.objects\
                                         .filter(vocab_uri__in=vocab_uri)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -210,6 +216,7 @@ class Entity():
                                         .filter(ent_type__in=ents)\
                                         .filter(vocab_uri__in=vocab_uri)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -326,3 +333,41 @@ class Entity():
                 output = manifest_item.label
             self.ids_meta[uuid] = output
         return output
+
+
+class EntityEquivalents():
+    """ usefult to get alternative ids for entities """
+
+    def __init__(self):
+        pass
+
+    def get_identifier_list_variants(self, id_list):
+        """ makes different variants of identifiers
+            for a list of identifiers
+        """
+        output_list = []
+        if not isinstance(id_list, list):
+            id_list = [str(id_list)]
+        for identifier in id_list:
+            output_list.append(identifier)
+            if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
+                oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
+                if oc_uuid is not False:
+                    output_list.append(oc_uuid)
+                else:
+                    prefix_id = URImanagement.prefix_common_uri(identifier)
+                    output_list.append(prefix_id)
+            elif ':' in identifier:
+                full_uri = URImanagement.convert_prefix_to_full_uri(identifier)
+                output_list.append(full_uri)
+            else:
+                # probably an open context uuid or a slug
+                ent = Entity()
+                found = ent.dereference(identifier)
+                if found:
+                    full_uri = ent.uri
+                    output_list.append(full_uri)
+                    prefix_uri = URImanagement.prefix_common_uri(full_uri)
+                    if prefix_uri != full_uri:
+                        output_list.append(prefix_uri)
+        return output_list
