@@ -205,20 +205,24 @@ function edit_field(){
 				}
 				
 				var row_html = [
-					'<div class="row">',
-						'<div class="' + this.value_del_col_class + '">',
-						this.make_val_delete_button_html(i),
-						'</div>',
-						'<div class="' + this.value_sort_col_class + '">',
-						sort_buttons,
-						'</div>',
-						'<div class="' + this.value_col_class + '">',
-						val_html,
-						'</div>',
-						'<div class="' + this.valid_col_class + '">',
-							'<div id="' + dom_ids.valid + '">',
-							'</div>',
-							'<div id="' + dom_ids.submitcon + '">',
+					'<div class="panel panel-default">',
+						'<div class="panel-body">',
+							'<div class="row">',
+								'<div class="' + this.value_del_col_class + '">',
+								this.make_val_delete_button_html(i),
+								'</div>',
+								'<div class="' + this.value_sort_col_class + '">',
+								sort_buttons,
+								'</div>',
+								'<div class="' + this.value_col_class + '">',
+								val_html,
+								'</div>',
+								'<div class="' + this.valid_col_class + '">',
+									'<div id="' + dom_ids.valid + '">',
+									'</div>',
+									'<div id="' + dom_ids.submitcon + '">',
+									'</div>',
+								'</div>',
 							'</div>',
 						'</div>',
 					'</div>',
@@ -977,6 +981,8 @@ function edit_field(){
 				this.values_obj = data.data[this.id];
 				if (document.getElementById(this.values_dom_id)) {
 					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
 					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
 					this.postprocess();
 					this.active_value_num = false;
@@ -1035,6 +1041,8 @@ function edit_field(){
 				this.values_obj = data.data[this.id];
 				if (document.getElementById(this.values_dom_id)) {
 					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
 					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
 					this.postprocess();
 					this.active_value_num = false;
@@ -1079,6 +1087,8 @@ function edit_field(){
 				this.values_obj = data.data[this.id];
 				if (document.getElementById(this.values_dom_id)) {
 					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
 					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
 					this.postprocess();
 					this.active_value_num = false;
