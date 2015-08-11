@@ -1042,6 +1042,50 @@ function edit_field(){
 			}
 		}
 	}
+	this.rankFieldValue = function(value_num, sort_change){
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.hash_id)) {
+			var hash_id = document.getElementById(dom_ids.hash_id).value;
+			this.ajax_sort_value(hash_id, sort_change);
+		}
+	}
+	this.ajax_sort_value = function(hash_id, sort_change){
+		// sends an ajax request to delete a value
+		var data = {
+			hash_id: hash_id,
+			sort_change: sort_change,
+			id: this.id,
+			predicate_uuid: this.predicate_uuid,
+			obs_num: this.obs_num,
+			csrfmiddlewaretoken: csrftoken};
+		var url = this.make_url("/edit/sort-item-assertion/");
+		url += encodeURIComponent(this.edit_uuid);
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_sort_valueDone,
+				error: function (request, status, error) {
+					alert('Data sort change failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
+	this.ajax_sort_valueDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			if (this.id in data.data) {
+				this.values_obj = data.data[this.id];
+				if (document.getElementById(this.values_dom_id)) {
+					// data successfully updated, added new values so add them to the dom
+					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
+					this.postprocess();
+					this.active_value_num = false;
+				}
+			}
+		}
+	}
 	this.makeAllValuesList = function(){
 		//makes a list of values for a field
 		var values_list = [];

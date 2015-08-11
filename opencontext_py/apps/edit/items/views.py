@@ -199,6 +199,37 @@ def add_edit_item_assertion(request, uuid):
         raise Http404
 
 
+def sort_item_assertion(request, uuid):
+    """ Handles POST requests to DELETE an assertion for an item """
+    item_edit = ItemBasicEdit(uuid, request)
+    if item_edit.manifest is not False:
+        if request.method == 'POST':
+            if item_edit.edit_permitted or request.user.is_superuser:
+                item_ass = ItemAssertion()
+                item_ass.uuid = uuid
+                item_ass.project_uuid = item_edit.manifest.project_uuid
+                if 'hash_id' in request.POST:
+                    result = item_ass.rank_assertion_value(request.POST,
+                                                           item_edit.manifest)
+                    result['errors'] = item_edit.errors
+                    json_output = json.dumps(result,
+                                             indent=4,
+                                             ensure_ascii=False)
+                    return HttpResponse(json_output,
+                                        content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
 def delete_item_assertion(request, uuid):
     """ Handles POST requests to DELETE an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)

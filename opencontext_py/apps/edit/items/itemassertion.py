@@ -135,11 +135,115 @@ class ItemAssertion():
         """
         return post_data
 
-    def update_assertion(self, post_data):
+    def rank_assertion_value(self, post_data, item_man=False):
         """ adds an assertion to an item
             based on posted data
         """
-        return post_data
+        self.ok = True
+        note = 'Re-rank an assertion'
+        new_data = False
+        uuid = False
+        obs_num = False
+        predicate_uuid = False
+        if item_man is False:
+            item_man = self.get_manifest_item(self.uuid)
+        if item_man is False:
+            self.ok = False
+            label = 'Item not found'
+            self.errors['uuid'] = 'Cannot find the item for editing assertions: ' + str(self.uuid)
+        else:
+            label = item_man.label
+        if 'hash_id' in post_data \
+           and 'sort_change' in post_data:
+            hash_id = post_data['hash_id']
+            sort_change = 0
+            try:
+                sort_change = int(float(post_data['sort_change']))
+            except:
+                sort_change = 0
+                self.ok = False
+                note += 'Error, sort_change needs to be an integer value. '
+        else:
+            self.ok = False
+            self.errors['hash_id'] = 'Need a hash_id parameter and a sort_change paramenter to change assertion value sorting'
+            note = self.errors['hash_id']
+        if self.ok:
+            try:
+                sort_ass = Assertion.objects.get(hash_id=hash_id)
+            except Assertion.DoesNotExist:
+                sort_ass = False
+                self.ok = False
+                self.errors['hash_id'] = 'Cannot find ' + str(hash_id) + ' do sort'
+            if sort_ass is not False:
+                uuid = sort_ass.uuid
+                obs_num = sort_ass.obs_num
+                predicate_uuid = sort_ass.predicate_uuid
+                rel_asses = Assertion.objects\
+                                     .filter(uuid=uuid,
+                                             obs_num=obs_num,
+                                             predicate_uuid=predicate_uuid)
+                max_sort = 0
+                min_sort = 0
+                for rel_ass in rel_asses:
+                    if rel_ass.sort is None:
+                        rel_ass.sort = 0
+                    if rel_ass.sort > max_sort:
+                        max_sort = rel_ass.sort
+                    if rel_ass.sort < min_sort:
+                        min_sort = rel_ass.sort
+                pseudo_sort = 0  # used to make a sort value if none was given
+                i = -1
+                current_hash_index = False
+                for rel_ass in rel_asses:
+                    pseudo_sort += .001
+                    i += 1
+                    if rel_ass.sort is None:
+                        rel_ass.sort = 0
+                    if max_sort == min_sort \
+                       and rel_ass.sort == 0:
+                        rel_ass.sort += pseudo_sort
+                        rel_ass.save()
+                    if rel_ass.hash_id == hash_id:
+                        current_hash_index = i
+                if current_hash_index is not False:
+                    item_b_index = current_hash_index + sort_change
+                    if item_b_index >= 0 and item_b_index < len(rel_asses):
+                        rec_a = rel_asses[current_hash_index]
+                        rec_b = rel_asses[item_b_index]
+                        new_sort_rec_b = rec_a.sort
+                        new_sort_rec_a = rec_b.sort
+                        if new_sort_rec_a == new_sort_rec_b:
+                            # so we don't have exactly the same values
+                            new_sort_rec_a += (sort_change / 1000)
+                        rec_a.sort = new_sort_rec_a
+                        rec_a.save()
+                        rec_b.sort = new_sort_rec_b
+                        rec_b.save()
+                        ok = True
+                        note += 'Assertion value successfully resorted. '
+                    else:
+                        ok = False
+                        note += 'Cannot change sorting, as at limit of the list of objects.'
+                        note += ' Current_hash_index: ' + str(current_hash_index)
+                        note += ' Exchange with index: ' + str(item_b_index)
+                else:
+                    ok = False
+                    note += 'A truly bizzare something happened. '
+            if uuid is not False \
+               and obs_num is not False\
+               and predicate_uuid is not False:
+                new_data = LastUpdatedOrderedDict()
+                new_field_data = self.get_assertion_values(uuid,
+                                                           obs_num,
+                                                           predicate_uuid)
+                new_data[post_data['id']] = new_field_data
+        self.response = {'action': 'rank-item-assertion-value',
+                         'ok': self.ok,
+                         'data': new_data,
+                         'change': {'uuid': self.uuid,
+                                    'label': label,
+                                    'note': note}}
+        return self.response
 
     def delete_assertion(self, post_data, item_man=False):
         """ adds an assertion to an item
