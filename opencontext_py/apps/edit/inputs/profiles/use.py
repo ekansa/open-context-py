@@ -12,6 +12,7 @@ from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
 from opencontext_py.apps.edit.inputs.inputrelations.models import InputRelation
 from opencontext_py.apps.edit.inputs.inputfields.models import InputField
 from opencontext_py.apps.edit.inputs.rules.models import InputRule
+from opencontext_py.apps.edit.items.itemassertion import ItemAssertion
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -111,11 +112,15 @@ class InputProfileUse():
             required by open context,
             since those get special handling
         """
+        item_ass = ItemAssertion()
+        item_ass.source_id = item_man.source_id
         for fgroup in self.profile_obj['fgroups']:
             obs_num = fgroup['obs_num']
             for field in fgroup['fields']:
                 if field['oc_required'] is False \
                    and field['id'] == field_uuid:
+                    if 'obs_num' not in field:
+                        field['obs_num'] = obs_num
                     # we've found the field!
                     # first delete existing uses of this field
                     Assertion.objects\
@@ -124,132 +129,11 @@ class InputProfileUse():
                              .delete()
                     value_index = 0
                     for field_value in field_values:
-                        self.validate_save_field_value(item_man,
-                                                       obs_num,
-                                                       field,
-                                                       field_value,
-                                                       value_index)
+                        item_ass.validate_save_field_value(item_man,
+                                                           field,
+                                                           field_value,
+                                                           value_index)
                         value_index += 1
-
-    def validate_save_field_value(self,
-                                  item_man,
-                                  obs_num,
-                                  field,
-                                  field_value,
-                                  value_index):
-        """ Valididates a field value for a field and
-            then saves it to the database if valid
-        """
-        error_key = field['id'] + '-' + str(value_index)
-        valid = True
-        object_uuid = None
-        object_type = field['data_type']
-        data_num = None
-        data_date = None
-        if field['data_type'] == 'xsd:string':
-            str_man = StringManagement()
-            str_man.project_uuid = item_man.project_uuid
-            str_man.source_id = item_man.source_id
-            object_uuid = str_man.get_make_string(str(field_value))
-        elif field['data_type'] == 'id':
-            # first check is to see if the field_value exists in the manifest
-            try:
-                val_man = Manifest.objects.get(uuid=field_value)
-            except Manifest.DoesNotExist:
-                valid = False
-                self.errors[error_key] = 'Problem with: ' + field['label'] + '; cannot find: ' + str(field_value)
-            if valid:
-                # OK, the field_value is an ID in the manifest
-                # so let's check to make sure it is OK to associate
-                object_type = val_man.item_type
-                object_uuid = val_man.uuid
-                try:
-                    pred_man = Manifest.objects.get(uuid=field['predicate_uuid'])
-                except Manifest.DoesNotExist:
-                    pred_man = False
-                if pred_man is not False:
-                    if pred_man.class_uri == 'variable' \
-                       and val_man.item_type != 'types':
-                        # we've got a variable that does not link to a type!
-                        self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
-                        self.errors[error_key] += val_man.label + ' (' + val_man.uuid + ') is not a type/category.'
-                        valid = False
-        elif field['data_type'] == 'xsd:boolean':
-            data_num = self.validate_convert_boolean(field_value)
-            if t_f_data is None:
-                self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
-                self.errors[error_key] += '"' + str(field_value) + '" is not a recognized boolean (T/F) value.'
-                valid = False
-        elif field['data_type'] == 'xsd:integer':
-            try:
-                data_num = int(float(field_value))
-            except:
-                self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
-                self.errors[error_key] += '"' + str(field_value) + '" is not an integer.'
-                valid = False
-        elif field['data_type'] == 'xsd:double':
-            try:
-                data_num = float(field_value)
-            except:
-                self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
-                self.errors[error_key] += '"' + str(field_value) + '" is not a number.'
-                valid = False
-        elif field['data_type'] == 'xsd:date':
-            try:
-                data_date = parse(field_value)
-            except:
-                self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
-                self.errors[error_key] += '"' + str(field_value) + '" is not a yyyy-mm-dd date.'
-                valid = False
-        if valid:
-            # we've validated the field_value data. Now to save the assertions!
-            new_ass = Assertion()
-            new_ass.uuid = item_man.uuid
-            new_ass.subject_type = item_man.item_type
-            new_ass.project_uuid = item_man.project_uuid
-            new_ass.source_id = item_man.source_id
-            new_ass.obs_node = '#obs-' + str(obs_num)
-            new_ass.obs_num = obs_num
-            new_ass.sort = field['sort'] + (value_index / 100)
-            new_ass.visibility = 1
-            new_ass.predicate_uuid = field['predicate_uuid']
-            new_ass.object_type = object_type
-            if object_uuid is not None:
-                new_ass.object_uuid = object_uuid
-            if data_num is not None:
-                new_ass.data_num = data_num
-            if data_date is not None:
-                new_ass.data_date = data_date
-            new_ass.save()
-        else:
-            if self.new_item is False:
-                # we're updating an item and
-                # encoutered some wrong data. indicate error
-                self.ok = False
-
-    def validate_convert_boolean(self, field_value):
-        """ Validates boolean values for a record
-            returns a boolean 0 or 1 if
-        """
-        output = None
-        record = str(field_value).lower()
-        booleans = {'n': 0,
-                    'no': 0,
-                    'none': 0,
-                    'absent': 0,
-                    'a': 0,
-                    'false': 0,
-                    'f': 0,
-                    '0': 0,
-                    'y': 1,
-                    'yes': 1,
-                    'present': 1,
-                    'p': 1,
-                    'true': 1,
-                    't': 1}
-        if record in booleans:
-            output = booleans[record]
-        return output
 
     def update_required_make_data(self, item_man, required_make_data):
         """ updates items based on required make data

@@ -37,18 +37,19 @@ class ItemBasicEdit():
         self.errors = {'uuid': False,
                        'html': False}
         self.response = {}
-        try:
-            self.manifest = Manifest.objects.get(uuid=uuid)
-        except Manifest.DoesNotExist:
-            self.manifest = False
-            self.errors['uuid'] = 'Item ' + uuid + ' not in manifest'
-        if request is not False and self.manifest is not False:
-            # check to make sure edit permissions OK
-            pp = ProjectPermissions(self.manifest.project_uuid)
-            self.edit_permitted = pp.edit_allowed(request)
-        else:
-            # default to no editting permissions
-            self.edit_permitted = False
+        if uuid is not False:
+            try:
+                self.manifest = Manifest.objects.get(uuid=uuid)
+            except Manifest.DoesNotExist:
+                self.manifest = False
+                self.errors['uuid'] = 'Item ' + uuid + ' not in manifest'
+            if request is not False and self.manifest is not False:
+                # check to make sure edit permissions OK
+                pp = ProjectPermissions(self.manifest.project_uuid)
+                self.edit_permitted = pp.edit_allowed(request)
+            else:
+                # default to no editting permissions
+                self.edit_permitted = False
 
     def update_label(self, label, post_data):
         """ Updates an item's label. Generally straightforward

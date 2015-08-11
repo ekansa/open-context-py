@@ -152,27 +152,7 @@ function item_object(item_type, uuid){
 					var raw_values = obs[slug_key];
 					for (var vi = 0, vlength = raw_values.length; vi < vlength; vi++) {
 						var raw_value = raw_values[vi];
-						if (data_type == 'id') {
-							var act_value = {
-								id: raw_value.id,
-								uuid: this.getUUIDfrom_OC_URI(raw_value.id),
-								slug: raw_value.slug,
-								label: raw_value.label,
-								literal: null
-							}
-						}
-						else if(data_type == 'xsd:string') {
-							var act_value = {
-								id: raw_value.id,
-								literal: raw_value['xsd:string']
-							}
-						}
-						else{
-							var act_value = {
-								id: false,
-								literal: raw_value
-							}
-						}
+						var act_value = this.obs_prop_raw_to_active_value(data_type, raw_value);
 						output.push(act_value);
 					}
 				}
@@ -195,27 +175,7 @@ function item_object(item_type, uuid){
 						var raw_values = obs[slug_key];
 						for (var vi = 0, vlength = raw_values.length; vi < vlength; vi++) {
 							var raw_value = raw_values[vi];
-							if (data_type == 'id') {
-								var act_value = {
-									id: raw_value.id,
-									uuid: this.getUUIDfrom_OC_URI(raw_value.id),
-									slug: raw_value.slug,
-									label: raw_value.label,
-									literal: null
-								}
-							}
-							else if(data_type == 'xsd:string') {
-								var act_value = {
-									id: raw_value.id,
-									literal: raw_value['xsd:string']
-								}
-							}
-							else{
-								var act_value = {
-									id: false,
-									literal: raw_value
-								}
-							}
+							var act_value = this.obs_prop_raw_to_active_value(data_type, raw_value);
 							output.push(act_value);
 						}
 					}
@@ -223,6 +183,48 @@ function item_object(item_type, uuid){
 			}
 		}
 		return output;
+	}
+	this.obs_prop_raw_to_active_value = function(data_type, raw_value){
+		// converts a raw observation property value
+		// to an active value useful for editing functions, etc.
+		if (data_type == 'id') {
+			var act_value = {
+				id: raw_value.id,
+				uuid: this.getUUIDfrom_OC_URI(raw_value.id),
+				slug: raw_value.slug,
+				label: raw_value.label,
+				literal: null,
+				hash_id: null,
+			}
+		}
+		else if(data_type == 'xsd:string') {
+			var act_value = {
+				id: raw_value.id,
+				uuid: raw_value.id.replace('#string-', ''),
+				literal: raw_value['xsd:string'],
+				hash_id: null,
+			}
+		}
+		else{
+			if (raw_value.hasOwnProperty('literal')) {
+				var act_value = {
+					id: false,
+					literal: raw_value.literal,
+					hash_id: null,
+				}
+			}
+			else{
+				var act_value = {
+					id: false,
+					literal: raw_value,
+					hash_id: null,
+				}	
+			}
+		}
+		if (raw_value.hasOwnProperty('hash_id')) {
+			act_value.hash_id = raw_value.hash_id;
+		}
+		return act_value;
 	}
 	this.getObservations = function(){
 		var observations = [];

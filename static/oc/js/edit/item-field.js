@@ -10,11 +10,16 @@ function edit_field(){
 	this.item_type = false;
 	this.id = 1;
 	this.project_uuid = false;
+	this.profile_uuid = false; //using an input profile if not false.
 	this.field_uuid = false;
 	this.label = false;
 	this.pred_type = 'variable';
 	this.data_type = false;
 	this.predicate_uuid = false;
+	this.sort = false;
+	this.draft_sort = false;
+	this.obs_num = false;
+	this.obs_node = false;
 	this.note = false;
 	this.oc_required = false;
 	this.validation = false;
@@ -32,14 +37,17 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
+	this.values_dom_id = false;
 	this.single_value_preds = [this.label_pred_uuid,
 										this.class_pred_uuid,
 										this.context_pred_uuid];
 	this.class_vocab_uri = 'http://opencontext.org/vocabularies/oc-general/';
 	this.add_new_data_row = true;
+	this.add_field_sort_buttons = true;
 	this.initialized = false;
 	this.single_value_only = false;
 	// for checking on IDs being valid
+	this.value_nums_hash_ids = {}; //value_num is the key, hash_id is the value
 	this.ids_validation = {};
 	this.active_value_num = false; //used to handle results of AJAX validation requests
 	// for panel ids
@@ -66,20 +74,17 @@ function edit_field(){
 				].join("\n");
 			}
 		}
-		
+
 		var html = [
-		'<tr>',
-		'<td id="f-bu-' + this.id + '">',
-      this.make_field_update_buttom_html(this.id),
+		'<td>',
+			this.make_pred_label_html(),
 		'</td>',
 		'<td>',
-		this.make_pred_label_html(),
+			'<div id="'+ this.values_dom_id + '">',
+				vals_html,
+			'</div>',
+			note_html,
 		'</td>',
-		'<td id="f-vals-' + this.id + '">',
-		vals_html,
-		note_html,
-		'</td>',
-		'</tr>'
 		].join("\n");
 		return html;
 	}
@@ -89,8 +94,6 @@ function edit_field(){
 		this.activate_expand_collapse();
 		this.make_trees();
 	}
-	
-	
 	this.make_vals_html = function(){
 		this.initialize();
 		var values_obj = this.values_obj;
@@ -100,7 +103,7 @@ function edit_field(){
 			values_obj.push(new_value_obj);	
 		}
 		var vals_html = [
-			'<div class="container-fluid">'
+			'<div class="container-fluid" id="' + this.values_dom_id + '">'
 		];
 		
 		for (var i = 0, length = values_obj.length; i < length; i++) {
@@ -191,11 +194,23 @@ function edit_field(){
 				].join('\n');
 			}
 			else{
+				
+				if (length > 2 ) {
+					// add sort buttons for multi value fields
+					var sort_buttons = this.make_val_sort_button_html(i, -1);
+					sort_buttons += this.make_val_sort_button_html(i, 1);
+				}
+				else{
+					var sort_buttons = '';
+				}
+				
 				var row_html = [
 					'<div class="row">',
 						'<div class="' + this.value_del_col_class + '">',
+						this.make_val_delete_button_html(i),
 						'</div>',
 						'<div class="' + this.value_sort_col_class + '">',
+						sort_buttons,
 						'</div>',
 						'<div class="' + this.value_col_class + '">',
 						val_html,
@@ -219,6 +234,7 @@ function edit_field(){
 		// makes the name of the object for called functions
 		if (this.initialized == false) {
 			// only do this if it hasn't been done yet
+			this.values_dom_id = 'field-values-' + this.id;
 			if (this.parent_obj_name != false) {
 				this.name = this.parent_obj_name + '.' + this.obj_name;
 			}
@@ -237,7 +253,6 @@ function edit_field(){
 		}
 	}
 	
-	
 	this.make_boolean_val_html = function(value_num, value_obj){
 		var dom_ids = this.make_field_val_domids(value_num);
 		
@@ -250,9 +265,9 @@ function edit_field(){
 				'<div class="form-group">',
 				'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
 				'type="text" value="" ' + placeholder,
-				'onkeydown="' + this.name + '.validateBoolean(\'' + dom_ids.literal + '\');" ',
-				'onkeyup="' + this.name + '.validateBoolean(\'' + dom_ids.literal + '\');" ',
-				'onchange="' + this.name + '.validateBoolean(\'' + dom_ids.literal + '\');" ',
+				'onkeydown="' + this.name + '.validateBoolean(\'' + value_num + '\');" ',
+				'onkeyup="' + this.name + '.validateBoolean(\'' + value_num + '\');" ',
+				'onchange="' + this.name + '.validateBoolean(\'' + value_num + '\');" ',
 				'/>',
 				'</div>',
 				'<label class="radio-inline">',
@@ -281,6 +296,7 @@ function edit_field(){
 				this.make_validation_html('Cannot interpret "' + value_obj.literal + '" as a boolean (true/false) value.', false, value_num);
 			}
 			var html = [
+				this.make_hash_id_hidden_html(value_num, value_obj),
 				'<input id="' + value_obj.literal + '" class="form-control input-sm" ',
 				'type="text" value="' + bool_value + '" ',
 				'/>',
@@ -308,11 +324,12 @@ function edit_field(){
 		var html = [
 			'<div class="form-group">',
 				'<div class="input-group date" id="' + dom_ids.datecon + '">',
+					this.make_hash_id_hidden_html(value_num, value_obj),
 					'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
 					'type="text" value="' + display_value + '" ' + placeholder,
-					'onkeydown="' + this.name + '.validateDate(\'' + dom_ids.literal + '\');" ',
-					'onkeyup="' + this.name + '.validateDate(\'' + dom_ids.literal + '\');" ',
-					'onchange="' + this.name + '.validateDate(\'' + dom_ids.literal + '\');" ',
+					'onkeydown="' + this.name + '.validateDate(\'' + value_num + '\');" ',
+					'onkeyup="' + this.name + '.validateDate(\'' + value_num + '\');" ',
+					'onchange="' + this.name + '.validateDate(\'' + value_num + '\');" ',
 					'aria-describedby="' + dom_ids.icon + '" />',
 					'<span class="input-group-addon" id="' + dom_ids.icon + '">',
 						'<span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>',
@@ -332,10 +349,11 @@ function edit_field(){
 		}
 		var html = [
 			'<div class="form-group">',
+			this.make_hash_id_hidden_html(value_num, value_obj),
 			'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
 			'type="text" value="' + display_value +  '" ' + placeholder,
-			'onkeydown="' + this.name + '.validateNumber(\'' + dom_ids.literal + '\');" ',
-			'onkeyup="' + this.name + '.validateNumber(\'' + dom_ids.literal + '\');" ',
+			'onkeydown="' + this.name + '.validateNumber(\'' + value_num + '\');" ',
+			'onkeyup="' + this.name + '.validateNumber(\'' + value_num + '\');" ',
 			'/>',
 			'</div>',
 		].join("\n");
@@ -343,14 +361,23 @@ function edit_field(){
 	}
 	this.make_string_val_html = function(value_num, value_obj){
 		var display_value = '';
+		var display_id = '';
 		var dom_ids = this.make_field_val_domids(value_num);
 		var hr_data_type = this.get_human_readable_data_type(this.data_type);
 		var placeholder = ' placeholder="Free-form alphanumeric text (including HTML)" ';
 		if (value_obj.hasOwnProperty('literal')) {
 			display_value = value_obj.literal;
 		}
+		if (value_obj.hasOwnProperty('uuid')) {
+			display_id = value_obj.uuid;
+		}
 		var html = [
-			'<textarea id="' + dom_ids.literal + '" class="form-control input-sm" rows="3" ' + placeholder + ' >',
+			this.make_hash_id_hidden_html(value_num, value_obj),
+			'<input id="' + dom_ids.id + '" ',
+			'type="hidden" value="' + display_id + '" />',
+			'<textarea id="' + dom_ids.literal + '" ',
+			'onchange="' + this.name + '.validateHTML(\'' + value_num + '\');" ',
+			'class="form-control input-sm" rows="3" ' + placeholder + ' >',
 			display_value,
 			'</textarea>'
 		].join("\n");
@@ -425,6 +452,7 @@ function edit_field(){
 				entDomID: entDomID,
 				value_num: value_num,
 				id: this.id,
+				name: this.name,
 				make_field_val_domids: this.make_field_val_domids,
 			   make_validation_html: this.make_validation_html,
 				make_submit_button: this.make_submit_button,
@@ -473,7 +501,28 @@ function edit_field(){
 			].join("\n");
 		}
 		else{
-			var html = this.make_labeled_id_link_html(value_obj.label, value_obj.uuid, dom_ids);
+			var html = [
+				this.make_hash_id_hidden_html(value_num, value_obj),
+				'<input id="' + dom_ids.label + '" ',
+				'type="hidden" value="' + value_obj.label + '" />',
+				'<input id="' + dom_ids.id + '" ',
+				'type="hidden" value="' + value_obj.uuid + '" />',
+				this.make_labeled_id_link_html(value_obj.label, value_obj.uuid, dom_ids)
+			].join("\n");
+		}
+		return html;
+	}
+	
+	this.make_hash_id_hidden_html = function(value_num, value_obj){
+		var html = '';
+		if (value_obj.hasOwnProperty('hash_id')) {
+			if (value_obj.hash_id != null) {
+				if (value_obj.hash_id.length > 0) {
+					var dom_ids = this.make_field_val_domids(value_num);
+					html = '<input id="' + dom_ids.hash_id + '" type="hidden" value="' + value_obj.hash_id + '" />';
+					this.value_nums_hash_ids[value_num] = value_obj.hash_id;
+				}
+			}
 		}
 		return html;
 	}
@@ -731,6 +780,42 @@ function edit_field(){
 		}
 		return button_html;
 	}
+	this.make_val_delete_button_html = function(value_num){
+		var style = ' style="margin-top: 5px;" ';
+		var title = 'Delete this value';
+		var button_html = [
+			'<div ' + style + ' >',
+			'<button title="' + title + '" ',
+			'class="btn btn btn-danger btn-xs" ',
+			'onclick="' + this.name + '.deleteFieldValue(\'' + value_num + '\');">',
+			'<span class="glyphicon glyphicon-remove-sign"></span>',
+			'</button>',
+			'</div>',
+			].join('\n');
+		return button_html;
+	}
+	this.make_val_sort_button_html = function(value_num, sort_change){
+		if (sort_change < 0) {
+			var icon = '<span class="glyphicon glyphicon-arrow-up"></span>';
+			var title = 'Higher rank in sort order';
+			var style = 'style="margin-top:5px;"';
+		}
+		else{
+			var icon = '<span class="glyphicon glyphicon-arrow-down"></span>';
+			var title = 'Lower rank in sort order';
+			var style = 'style="margin-top:2px;"';
+		}
+		var button_html = [
+			'<div ' + style + ' >',
+			'<button title="' + title + '" ',
+			'class="btn btn btn-info btn-xs" ',
+			'onclick="' + this.name + '.rankFieldValue(\'' + value_num + '\', ' + sort_change + ');">',
+			icon,
+			'</button>',
+			'</div>',
+			].join('\n');
+		return button_html;
+	}
 	this.make_pred_label_html = function(){
 		// makes a label and a link to the ID for the predicate
 		if (this.show_predicate_link) {
@@ -747,20 +832,21 @@ function edit_field(){
 	}
 	this.make_labeled_id_link_html = function(label, uuid, dom_ids){
 		if (dom_ids != false) {
-			var label_id = ' id="' + dom_ids.label + '" ';
-			var id_id = ' id="' + dom_ids.id + '" ';
+			var label_id = ' id="' + dom_ids.label_dis + '" ';
+			var id_id = ' id="' + dom_ids.id_dis + '" ';
 		}
 		else{
 			var label_id = '';
 			var id_id = '';
 		}
 		var html = [
-			'<p ' + label_id + '>',
+			'<span ' + label_id + '>',
 			label,
-			'</p>',
+			'</span>',
+			'<br/>',
 			'<samp class="uri-id small">',
 			'<a href="' + this.make_url('/edit/items/' + uuid) + '" target="_blank">',
-			'<div ' + id_id + '>' + uuid + '</div> ',
+			'<span ' + id_id + '>' + uuid + '</span>',
 			'<span class="glyphicon glyphicon-new-window"></span>',
 			'</a>',
 			'</samp>'
@@ -770,9 +856,12 @@ function edit_field(){
 	this.make_field_val_domids = function(value_num){
 		// makes dom ids for values
 		var dom_ids = {
+			hash_id: (value_num + '-field-hash-' + this.id), //id for hash-id for an individual assertion
 			literal: (value_num + '-field-' + this.id), //id for input element of literals
 			label: (value_num + '-field-l-' + this.id), //label for ID value fields
 			id: (value_num + '-field-id-' + this.id), //id value field
+			label_dis: (value_num + '-field-l-dis-' + this.id), //label for ID value fields, for display only
+			id_dis: (value_num + '-field-id-dis-' + this.id), //id value field, for display only
 			valid: (value_num + '-field-valid-' + this.id), //container ID for validation feedback
 			submitcon: (value_num + '-field-sbcon-' + this.id), //container ID for submitt button
 			icon: (value_num + '-field-icon-' + this.id), //for calendar icon, used with date picker
@@ -812,9 +901,233 @@ function edit_field(){
 	}
 	
 	/*
+	 * AJAX DATA CREATION, EDITING, DELETE FUNCTIONS
+	 */
+	this.addUpdateValue = function(value_num){
+		// updates a value if the hash_id is not null
+		// adds a new value if the hash_id is null
+		var values_list = [];
+		var field_val =  this.get_field_value(value_num);
+		console.log(field_val);
+		if (field_val != null) {
+			var is_valid = this.validateValue(value_num);
+			if (is_valid) {
+				values_list.push(field_val);
+			}
+		}
+		if (values_list.length > 0) {
+			var dom_ids = this.make_field_val_domids(value_num);
+			if (document.getElementById(dom_ids.valid)) {
+				document.getElementById(dom_ids.valid).innerHTML = this.make_loading_gif('Submitting data...');
+			}
+			if (document.getElementById(dom_ids.submitcon)) {
+				document.getElementById(dom_ids.valid).innerHTML = '';
+			}
+			this.active_value_num = value_num;
+			this.ajax_add_update_values(values_list, false);
+		}
+	}
+	this.ajax_add_update_values = function(values_list, replace_all){
+		// sends an ajax request to create or update assertion values
+		var data = {
+			csrfmiddlewaretoken: csrftoken};
+		act_field = {
+			id: this.id,
+			label: this.label,
+			predicate_uuid: this.predicate_uuid,
+			obs_num: this.obs_num,
+			replace_all: replace_all,
+			values: values_list
+		};
+		if (this.sort != false) {
+			act_field.sort = this.sort;
+		}
+		if (this.draft_sort != false) {
+			act_field.draft_sort = this.draft_sort;
+		}
+		var field_key = this.id;
+		field_data = {};
+		field_data[field_key] = act_field;
+		data['field_data'] = JSON.stringify(field_data, null, 2);
+		if (this.profile_uuid == false) {
+			var url = this.make_url("/edit/add-edit-item-assertion/");
+			url += encodeURIComponent(this.edit_uuid);
+		}
+		else{
+			var url = this.make_url("/edit/inputs/create-update-profile-item/");
+			url += encodeURIComponent(this.profile_uuid);
+			url += '/' + encodeURIComponent(this.edit_uuid);
+		}
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_add_update_valuesDone,
+				error: function (request, status, error) {
+					alert('Data submission failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
+	this.ajax_add_update_valuesDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			if (this.id in data.data) {
+				this.values_obj = data.data[this.id];
+				if (document.getElementById(this.values_dom_id)) {
+					// data successfully updated, added new values so add them to the dom
+					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
+					this.postprocess();
+					this.active_value_num = false;
+				}
+			}
+		}
+		else{
+			if (data.hasOwnProperty('additions')) {
+				if (this.id in data.additions) {
+					for (var i = 0, length = data.additions[this.id].length; i <= length; i++) {
+						var val_result = data.additions[this.id][i];
+						if (typeof val_result != "undefined") {
+							if (val_result.valid == false) {
+								this.make_validation_html(val_result.errors, false, val_result.value_num);
+							}
+						}
+					}
+				}
+			}
+			this.active_value_num = false;
+		}
+	}
+	this.deleteFieldValue = function(value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.hash_id)) {
+			var hash_id = document.getElementById(dom_ids.hash_id).value;
+			this.ajax_delete_value(hash_id);
+		}
+	}
+	this.ajax_delete_value = function(hash_id){
+		// sends an ajax request to delete a value
+		var data = {
+			hash_id: hash_id,
+			id: this.id,
+			predicate_uuid: this.predicate_uuid,
+			obs_num: this.obs_num,
+			csrfmiddlewaretoken: csrftoken};
+		var url = this.make_url("/edit/delete-item-assertion/");
+		url += encodeURIComponent(this.edit_uuid);
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_delete_valueDone,
+				error: function (request, status, error) {
+					alert('Data deletetion failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
+	this.ajax_delete_valueDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			if (this.id in data.data) {
+				this.values_obj = data.data[this.id];
+				if (document.getElementById(this.values_dom_id)) {
+					// data successfully updated, added new values so add them to the dom
+					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
+					this.postprocess();
+					this.active_value_num = false;
+				}
+			}
+		}
+	}
+	this.makeAllValuesList = function(){
+		//makes a list of values for a field
+		var values_list = [];
+		for (var i = 0, length = this.values_obj.length; i <= length; i++) {
+			// get all of the values, even the last added one, hence the <= in the line above
+			var field_val = this.get_field_value(i);
+			if (field_val != null) {
+				var is_valid = this.validateValue(i);
+				if (is_valid) {
+					values_list.push(field_val);
+				}
+			}
+		}
+		return values_list;
+	}
+	this.get_field_value = function(value_num){
+		// get the value for submitting
+		var field_val = null;
+		var literal_val = null;
+		var id_val = null;
+		var hash_id = null;
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.literal)) {
+			if (document.getElementById(dom_ids.literal).value.length > 0){
+				literal_val = document.getElementById(dom_ids.literal).value;
+			}
+		}
+		if (document.getElementById(dom_ids.id)) {
+			if (document.getElementById(dom_ids.id).value.length > 0){
+				id_val = document.getElementById(dom_ids.id).value;
+			}
+		}
+		if (document.getElementById(dom_ids.hash_id)) {
+			if (document.getElementById(dom_ids.hash_id).value.length > 0){
+				hash_id = document.getElementById(dom_ids.hash_id).value;
+			}
+		}
+		if (literal_val != null || id_val != null) {
+			var field_val = {
+				'hash_id': hash_id,
+				'id': id_val,
+				'literal': literal_val,
+				'value_num': value_num};
+		}
+		return field_val;
+	}
+	
+	/*
 	 * VALIDATION FUNCTIONS
 	 */
-	
+	this.validateValue = function(value_num){
+		// chooses the appropriate validation method, returns a validation result
+		if (this.predicate_uuid == this.label_pred_uuid) {
+			var is_valid = false;
+		}
+		else if (this.predicate_uuid == this.class_pred_uuid) {
+			var is_valid = false;
+		}
+		else if (this.predicate_uuid == this.context_pred_uuid) {
+			var is_valid = false;
+		}
+		else if (this.predicate_uuid == this.note_pred_uuid) {
+			var is_valid = false;
+		}
+		else{
+			if (this.data_type == 'id') {
+				var is_valid = this.validateID(value_num);
+			}
+			else if (this.data_type == 'xsd:integer' || this.data_type == 'xsd:double') {
+				var is_valid = this.validateNumber(value_num);
+			}
+			else if (this.data_type == 'xsd:date') {
+				var is_valid = this.validateDate(value_num);
+			}
+			else if (this.data_type == 'xsd:boolean') {
+				var is_valid = this.validateBoolean(value_num);
+ 			}
+			else if (this.data_type == 'xsd:string') {
+				var is_valid = this.validateHTML(value_num);
+			}
+			else{
+				var is_valid = false;	
+			}
+		}
+		return is_valid;
+	}
 	this.validateID = function(value_num){
 
 		var is_valid = this.check_cached_id_valid(value_num);
@@ -827,6 +1140,7 @@ function edit_field(){
 			// so make an AJAX request to check
 			this.ajax_validate_id(value_num);
 		}
+		return is_valid;
 	}
 	this.check_cached_id_valid = function(value_num){
 		var is_valid = null; //not cached
@@ -947,11 +1261,56 @@ function edit_field(){
 		}
 		this.make_validation_html(val_mes, is_valid, value_num);
 	}
-	this.validateNumber = function(literal_id){
+	this.validateHTML = function(value_num){
+		// calls a function to make an ajax request to validate HTML
+		this.ajax_validate_html(value_num);
+	}
+	this.ajax_validate_html = function(value_num){
+		//
+		this.active_value_num = value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.literal)) {
+			var text = document.getElementById(dom_ids.literal).value;
+			var url = this.make_url('/edit/html-validate/');
+			var data = {
+				text: text,
+				csrfmiddlewaretoken: csrftoken};
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_validate_htmlDone,
+				error: function (request, status, error) {
+					alert('Request to validate HTML failed, sadly. Status: ' + request.status);
+				}
+			});
+		}
+		else{
+			return false;
+		}
+	}
+	this.ajax_validate_htmlDone = function(data){
+		var value_num = this.active_value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		this.active_value_num = false;
+		if (data.ok) {
+			var val_mes = 'Input text OK to use as HTML';
+			this.make_validation_html(val_mes, true, value_num);
+			this.make_submit_button(true, value_num);
+		}
+		else{
+			var val_mes = data.errors.html;
+			this.make_validation_html(val_mes, false, value_num);
+			this.make_submit_button(false, value_num);
+		}
+	}
+	this.validateNumber = function(value_num){
 		//validates numeric fields
 		var is_valid = false;
-		var check_val = document.getElementById(literal_id).value;
-		var value_num = this.value_num_from_domid(literal_id);
+		var dom_ids = this.make_field_val_domids(value_num);
+		var check_val = document.getElementById(dom_ids.literal).value;
 		if (isNaN(check_val)){
 			// not a number returned true
 			var val_mes = 'Not a numeric ' + this.get_human_readable_data_type(this.data_type) + ' value.';
@@ -986,10 +1345,10 @@ function edit_field(){
 		}
 		return is_valid;
 	}
-	this.validateDate = function(literal_id){
+	this.validateDate = function(value_num){
 		// validates date fields to a yyyy-mm-dd format
-		var str = document.getElementById(literal_id).value;
-		var value_num = this.value_num_from_domid(literal_id);
+		var dom_ids = this.make_field_val_domids(value_num);
+		var str = document.getElementById(dom_ids.literal).value;
 	   var valid_date = this.isValidDate(str);
 		if (valid_date) {
 			var val_mes = 'Valid calendar date value.';
@@ -1001,10 +1360,10 @@ function edit_field(){
 		}
 		return valid_date;
 	}
-	this.validateBoolean = function(literal_id){
+	this.validateBoolean = function(value_num){
 		// validates date fields to a yyyy-mm-dd format
-		var str = document.getElementById(literal_id).value.toLowerCase();
-		var value_num = this.value_num_from_domid(literal_id);
+		var dom_ids = this.make_field_val_domids(value_num);
+		var str = document.getElementById(dom_ids.literal).value.toLowerCase();
 		var parsed_boolean = this.parseStrBoolean(str);
 	   if (parsed_boolean != null) {
 			var boolean_ok = true;
@@ -1090,7 +1449,7 @@ function edit_field(){
 		if (is_valid) {
 			var button_html = [
 				'<div style="margin-top: 10px;">',
-					'<button class="btn btn-success btn-block" onclick="' + this.name + '.updateValue(\'' + value_num + '\');">',
+					'<button class="btn btn-success btn-block" onclick="' + this.name + '.addUpdateValue(\'' + value_num + '\');">',
 					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
 					' Submit',
 					'</button>',
@@ -1301,7 +1660,7 @@ function edit_field(){
 	
 	
 	
-	/*  Post-processing funcitons executed
+	/*  Post-processing functions executed
 	 *  the fields have been added to the DOM
 	 */
 	

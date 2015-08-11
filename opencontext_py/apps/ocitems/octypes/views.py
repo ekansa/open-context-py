@@ -61,6 +61,8 @@ def html_view(request, uuid):
 
 def json_view(request, uuid):
     ocitem = OCitem()
+    if 'hashes' in request.GET:
+        ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
         ts = TypeSupplement(ocitem.json_ld)

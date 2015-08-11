@@ -80,6 +80,7 @@ class OCitem():
         self.table = False
         self.predicate = False
         self.octype = False
+        self.assertion_hashes = False
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
 
@@ -292,6 +293,9 @@ class OCitem():
         item_con = ItemConstruction()
         item_con.uuid = self.uuid
         item_con.project_uuid = self.project_uuid
+        if self.assertion_hashes:
+            # case to show hashs of observation values, useful for editing
+            item_con.assertion_hashes = self.assertion_hashes
         json_ld = item_con.intialize_json_ld(self.assertions)
         json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
         json_ld['uuid'] = self.uuid
@@ -406,6 +410,7 @@ class ItemConstruction():
     def __init__(self):
         self.uuid = False
         self.project_uuid = False
+        self.assertion_hashes = False
         self.add_item_labels = True
         self.add_linked_data_labels = True
         self.add_media_thumnails = True
@@ -536,7 +541,12 @@ class ItemConstruction():
                         act_obs['type'] = 'oc-gen:observations'
                     if assertion.predicate_uuid in self.predicates:
                         act_pred_key = self.predicates[assertion.predicate_uuid]
-                        act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
+                        if self.assertion_hashes:
+                            # when we need to have hash identifiers on assertions
+                            act_obs = self.add_predicate_value_hash_id(act_obs, act_pred_key, assertion)
+                        else:
+                            # default case, no has identifiers.
+                            act_obs = self.add_predicate_value(act_obs, act_pred_key, assertion)
             observations.append(act_obs)
         if(len(observations) > 0):
             act_dict[OCitem.PREDICATES_OCGEN_HASOBS] = observations
@@ -572,6 +582,42 @@ class ItemConstruction():
                 act_list.append(assertion.data_date.date().isoformat())
             else:
                 act_list.append(assertion.data_num)
+            act_dict[act_pred_key] = act_list
+            return act_dict
+
+    def add_predicate_value_hash_id(self, act_dict, act_pred_key, assertion):
+        """
+        creates an object value for a predicate assertion
+        """
+        if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+            if(assertion.object_uuid not in self.type_list):
+                self.type_list.append(assertion.object_uuid)
+            return self.add_json_predicate_list_ocitem(act_dict, act_pred_key,
+                                                       assertion.object_uuid,
+                                                       assertion.object_type,
+                                                       False,
+                                                       assertion.hash_id)
+        else:
+            if act_pred_key in act_dict:
+                act_list = act_dict[act_pred_key]
+            else:
+                act_list = []
+            new_object_item = LastUpdatedOrderedDict()
+            new_object_item['hash_id'] = assertion.hash_id
+            if (assertion.object_type == 'xsd:string'):
+                if assertion.object_uuid not in self.pred_strings[act_pred_key]:
+                    self.pred_strings[act_pred_key].append(assertion.object_uuid)  # for linked data
+                new_object_item['id'] = '#string-' + str(assertion.object_uuid)
+                try:
+                    string_item = OCstring.objects.get(uuid=assertion.object_uuid)
+                    new_object_item[assertion.object_type] = string_item.content
+                except OCstring.DoesNotExist:
+                    new_object_item[assertion.object_type] = 'string content missing'
+            elif (assertion.object_type == 'xsd:date'):
+                new_object_item['literal'] = assertion.data_date.date().isoformat()
+            else:
+                new_object_item['literal'] = assertion.data_num
+            act_list.append(new_object_item)
             act_dict[act_pred_key] = act_list
             return act_dict
 
@@ -678,7 +724,8 @@ class ItemConstruction():
         return act_dict
 
     def add_json_predicate_list_ocitem(self, act_dict, act_pred_key,
-                                       object_id, item_type, do_slug_uri=False):
+                                       object_id, item_type, do_slug_uri=False,
+                                       add_hash_id=False):
         """
         creates a list for an act_predicate of the json_ld dictionary object if it doesn't exist
         adds a list item of a dictionary object for a linked Open Context item
@@ -699,6 +746,8 @@ class ItemConstruction():
         else:
             ent = self.get_entity_metadata(object_id)
             if(ent is not False):
+                if add_hash_id is not False:
+                    new_object_item['hash_id'] = add_hash_id
                 new_object_item['id'] = ent.uri
                 new_object_item['slug'] = ent.slug
                 if(ent.label is not False):
@@ -832,7 +881,7 @@ class ItemConstruction():
         else:
             print('crap, no license')
         return act_dict
-    
+
     def add_json_temporal(self, act_dict, temporal_meta):
         """ adds temporal metadata predicate """
         if temporal_meta is not False:
@@ -861,7 +910,7 @@ class ItemConstruction():
                                 pedantic. It's easier just to treat this assertion
                                 directly to the period, rather than some fragment
                                 identifier.
-                                
+
                                 if people complain, we will uncomment this code.
                                 i += 1
                                 new_object_item['id'] = '#period-' + str(i)
