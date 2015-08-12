@@ -1,0 +1,453 @@
+import time
+import datetime
+from dateutil.parser import parse
+import uuid as GenUUID
+from lxml import etree
+import lxml.html
+from django.db import models
+from django.db.models import Q
+from django.conf import settings
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
+from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
+
+
+class ItemAssertion():
+    """ This class contains methods
+        creating, editing, and deleting
+        assertions
+    """
+
+    def __init__(self):
+        self.uuid = False
+        self.project_uuid = False
+        self.item_type = False
+        self.source_id = False
+        self.obs_node = False
+        self.obs_num = 1
+        self.sort = 1
+        self.note_sort = 1000  # default to last
+        self.errors = {}
+        self.manifest_items = {}
+        self.predicate_items = {}
+        self.ok = True
+        self.response = False
+
+    def add_edit_assertions(self, field_data, item_man=False):
+        """ adds or edits assertion data """
+        additions = LastUpdatedOrderedDict()
+        new_data = LastUpdatedOrderedDict()
+        self.ok = True
+        note = ''
+        if item_man is False:
+            item_man = self.get_manifest_item(self.uuid)
+        if item_man is False:
+            self.ok = False
+            label = 'Item not found'
+            self.errors['uuid'] = 'Cannot find the item for editing assertions: ' + str(self.uuid)
+            note = self.errors['uuid']
+        else:
+            label = item_man.label
+            self.uuid = item_man.uuid
+            for field_key, field in field_data.items():
+                new_field_data = []
+                if 'id' in field:
+                    field_id = field['id']
+                else:
+                    field_id = field_key
+                if 'predicate_uuid' not in field:
+                    self.ok = False
+                    self.errors[field_key] = 'Missing a predicate_uuid for the field'
+                data_type = self.get_predicate_data_type(field['predicate_uuid'])
+                pred_man = self.get_manifest_item(field['predicate_uuid'])
+                if data_type is False or pred_man is False:
+                    self.ok = False
+                    self.errors['uuid'] = 'Cannot find records for predicate_uuid: ' + field['predicate_uuid']
+                    note = self.errors['uuid']
+                if self.ok:
+                    if 'label' not in field:
+                        field['label'] = pred_man.label
+                    if 'sort' not in field:
+                        field['sort'] = self.get_predicate_sort(field['predicate_uuid'])
+                    if field['sort'] == 0 and 'draft_sort' in field:
+                        try:
+                            field['sort'] = int(float(field['draft_sort']))
+                        except:
+                            field['sort'] = 0
+                    if 'replace_all' in field:
+                        if field['replace_all']:
+                            Assertion.objects\
+                                     .filter(uuid=item_man.uuid,
+                                             obs_num=field['obs_num'],
+                                             predicate_uuid=pred_man.uuid)\
+                                     .delete()
+                    if 'values' in field:
+                        i = 0
+                        additions[field_id] = []
+                        for field_value_dict in field['values']:
+                            i += 1
+                            if 'value_num' not in field_value_dict:
+                                value_num = i
+                            else:
+                                try:
+                                    value_num = int(float(field_value_dict['value_num']))
+                                except:
+                                    value_num = i
+                            valid = self.validate_save_field_value(item_man,
+                                                                   field,
+                                                                   field_value_dict,
+                                                                   value_num)
+                            add_outcome = LastUpdatedOrderedDict()
+                            add_outcome['value_num'] = value_num
+                            add_outcome['valid'] = valid
+                            add_outcome['errors'] = False
+                            if valid is False:
+                                self.ok = False
+                                note = 'Validation error in creating an assertion'
+                                add_outcome['errors'] = True
+                                error_key = str(field['id']) + '-' + str(value_num)
+                                if error_key in self.errors:
+                                    add_outcome['errors'] = self.errors[error_key]
+                            additions[field_id].append(add_outcome)
+                    new_field_data = self.get_assertion_values(item_man.uuid,
+                                                               field['obs_num'],
+                                                               field['predicate_uuid'])
+                new_data[field_key] = new_field_data
+        self.response = {'action': 'add-edit-item-assertions',
+                         'ok': self.ok,
+                         'additions': additions,
+                         'data': new_data,
+                         'change': {'uuid': self.uuid,
+                                    'label': label,
+                                    'note': note}}
+        return self.response
+
+    def add_assertion(self, post_data):
+        """ adds an assertion to an item
+            based on posted data
+        """
+        return post_data
+
+    def update_assertion(self, post_data):
+        """ adds an assertion to an item
+            based on posted data
+        """
+        return post_data
+
+    def delete_assertion(self, post_data, item_man=False):
+        """ adds an assertion to an item
+            based on posted data
+        """
+        self.ok = True
+        note = 'Delete an assertion'
+        new_data = False
+        if item_man is False:
+            item_man = self.get_manifest_item(self.uuid)
+        if item_man is False:
+            self.ok = False
+            label = 'Item not found'
+            self.errors['uuid'] = 'Cannot find the item for editing assertions: ' + str(self.uuid)
+        else:
+            label = item_man.label
+        if 'hash_id' not in post_data:
+            self.ok = False
+            self.errors['hash_id'] = 'Need a hash_id parameter to delete'
+            note = self.errors['hash_id']
+        if self.ok:
+            hash_id = post_data['hash_id']
+            try:
+                del_ass = Assertion.objects.get(hash_id=hash_id)
+            except Assertion.DoesNotExist:
+                del_ass = False
+                self.ok = False
+                self.errors['hash_id'] = 'Cannot find ' + str(hash_id) + ' do delete'
+            if del_ass is not False:
+                del_ass.delete()
+            if 'id' in post_data \
+               and 'predicate_uuid' in post_data\
+               and 'obs_num' in post_data:
+                new_data = LastUpdatedOrderedDict()
+                new_field_data = self.get_assertion_values(item_man.uuid,
+                                                           post_data['obs_num'],
+                                                           post_data['predicate_uuid'])
+                new_data[post_data['id']] = new_field_data
+        self.response = {'action': 'delete-item-assertion',
+                         'ok': self.ok,
+                         'data': new_data,
+                         'change': {'uuid': self.uuid,
+                                    'label': label,
+                                    'note': note}}
+        return self.response
+
+    def get_predicate_data_type(self, predicate_uuid):
+        """ gets a predicate data type """
+        pred = self.get_predicate_item(predicate_uuid)
+        if pred is not False:
+            data_type = pred.data_type
+        else:
+            data_type = False
+        return data_type
+
+    def get_predicate_sort(self, predicate_uuid):
+        """ gets a predicate data type """
+        pred = self.get_predicate_item(predicate_uuid)
+        if pred is not False:
+            try:
+                sort = float(pred.sort)
+            except:
+                sort = 0
+        else:
+            sort = 0
+        return sort
+
+    def get_predicate_item(self, predicate_uuid):
+        """ gets a predicate item """
+        if predicate_uuid not in self.predicate_items:
+            try:
+                pred = Predicate.objects.get(uuid=predicate_uuid)
+            except Predicate.DoesNotExist:
+                pred = False
+            self.predicate_items[predicate_uuid] = pred
+        return self.predicate_items[predicate_uuid]
+
+    def get_manifest_item(self, uuid):
+        """ gets the manifest item, if present """
+        if uuid not in self.manifest_items:
+            try:
+                item_man = Manifest.objects.get(uuid=uuid)
+            except Manifest.DoesNotExist:
+                item_man = False
+            self.manifest_items[uuid] = item_man
+        else:
+            item_man = self.manifest_items[uuid]
+        return item_man
+
+    def get_assertion_values(self, uuid, obs_num, predicate_uuid):
+        """ gets the current assertion values
+            in a format for easy use by
+            the item-field.js object
+        """
+        output = []
+        ass_list = Assertion.objects\
+                            .filter(uuid=uuid,
+                                    obs_num=obs_num,
+                                    predicate_uuid=predicate_uuid)
+        i = 0
+        for ass in ass_list:
+            i += 1
+            error_key = 'obs-' + str(obs_num) + '-pred-' + predicate_uuid + '-val-' + str(i)
+            item = LastUpdatedOrderedDict()
+            item['hash_id'] = ass.hash_id
+            item['id'] = None
+            item['uuid'] = None
+            item['slug'] = None
+            item['label'] = None
+            item['literal'] = None
+            item_ok = False
+            if any(ass.object_type in item_type for item_type in settings.ITEM_TYPES):
+                id_man = self.get_manifest_item(ass.object_uuid)
+                if id_man is not False:
+                    item_ok = True
+                    item['id'] = URImanagement.make_oc_uri(id_man.uuid, id_man.item_type)
+                    item['uuid'] = id_man.uuid
+                    item['slug'] = id_man.slug
+                    item['label'] = id_man.label
+                else:
+                    self.errors[error_key] = 'Cannot find object_uuid: ' + ass.object_uuid
+            elif ass.object_type == 'xsd:string':
+                try:
+                    act_string = OCstring.objects.get(uuid=ass.object_uuid)
+                except OCstring.DoesNotExist:
+                    act_string = False
+                if act_string is not False:
+                    item_ok = True
+                    item['uuid'] = act_string.uuid
+                    item['literal'] = act_string.content
+                else:
+                    self.errors[error_key] = 'Cannot find string_uuid: ' + ass.object_uuid
+            elif ass.object_type == 'xsd:date':
+                item_ok = True
+                item['literal'] = ass.data_date.date().isoformat()
+            else:
+                item_ok = True
+                item['literal'] = ass.data_num
+            if item_ok:
+                output.append(item)
+        return output
+
+    def validate_save_field_value(self,
+                                  item_man,  # subject manifest object
+                                  field,
+                                  field_value_dict,
+                                  value_num):
+        """ Valididates a field value for a field and
+            then saves it to the database if valid
+        """
+        error_key = str(field['id']) + '-' + str(value_num)
+        valid = True
+        id_val = None
+        literal_val = None
+        if isinstance(field_value_dict, dict):
+            if 'id' in field_value_dict:
+                id_val = field_value_dict['id']
+            if 'literal' in field_value_dict:
+                literal_val = field_value_dict['literal']
+        else:
+            valid = False
+            self.errors[error_key] = 'Value submitted to ' + field['label'] + ' has the wrong format'
+        data_type = self.get_predicate_data_type(field['predicate_uuid'])
+        object_uuid = None
+        object_type = data_type
+        data_num = None
+        data_date = None
+        pred_man = self.get_manifest_item(field['predicate_uuid'])
+        if pred_man is False or data_type is False:
+            # could not find a predicate_uuid!!
+            valid = False
+            self.errors[error_key] = 'Problem with: ' + field['label'] + ' '
+            self.errors[error_key] += '(' + field['predicate_uuid'] + ') is not found.'
+        else:
+            # predicate_uuid exists
+            if data_type == 'xsd:string':
+                str_man = StringManagement()
+                str_man.project_uuid = item_man.project_uuid
+                str_man.source_id = item_man.source_id
+                object_uuid = str_man.get_make_string(str(literal_val))
+            elif data_type == 'id':
+                # first check is to see if the field_value exists in the manifest
+                val_man = self.get_manifest_item(id_val)
+                if val_man is False:
+                    valid = False
+                    self.errors[error_key] = 'Problem with: ' + field['label'] + '; cannot find: ' + str(id_val)
+                if valid:
+                    # OK, the field_value is an ID in the manifest
+                    # so let's check to make sure it is OK to associate
+                    object_type = val_man.item_type
+                    object_uuid = val_man.uuid
+                    if pred_man.class_uri == 'variable' \
+                       and val_man.item_type != 'types':
+                        # we've got a variable that does not link to a type!
+                        self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                        self.errors[error_key] += val_man.label + ' (' + val_man.uuid + ') is not a type/category.'
+                        valid = False
+            elif data_type == 'xsd:boolean':
+                data_num = self.validate_convert_boolean(literal_val)
+                if t_f_data is None:
+                    self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                    self.errors[error_key] += '"' + str(literal_val) + '" is not a recognized boolean (T/F) value.'
+                    valid = False
+            elif data_type == 'xsd:integer':
+                try:
+                    data_num = int(float(literal_val))
+                except:
+                    self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                    self.errors[error_key] += '"' + str(literal_val) + '" is not an integer.'
+                    valid = False
+            elif data_type == 'xsd:double':
+                try:
+                    data_num = float(literal_val)
+                except:
+                    self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                    self.errors[error_key] += '"' + str(literal_val) + '" is not a number.'
+                    valid = False
+            elif data_type == 'xsd:date':
+                try:
+                    data_date = parse(literal_val)
+                except Exception as e:
+                    self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
+                    self.errors[error_key] += '"' + str(literal_val) + '" is not a yyyy-mm-dd date'
+                    valid = False
+            if valid:
+                # we've validated the field_value data. Now to save the assertions!
+                new_ass = Assertion()
+                new_ass.uuid = item_man.uuid
+                new_ass.subject_type = item_man.item_type
+                new_ass.project_uuid = item_man.project_uuid
+                new_ass.source_id = self.source_id
+                new_ass.obs_node = '#obs-' + str(field['obs_num'])
+                new_ass.obs_num = field['obs_num']
+                new_ass.sort = field['sort'] + (value_num / 1000)
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = field['predicate_uuid']
+                new_ass.object_type = object_type
+                if object_uuid is not None:
+                    new_ass.object_uuid = object_uuid
+                if data_num is not None:
+                    new_ass.data_num = data_num
+                if data_date is not None:
+                    new_ass.data_date = data_date
+                try:
+                    new_ass.save()
+                except:
+                    valid = False
+                    self.errors[error_key] = 'Same assertion for: ' + field['label'] + ' '
+                    self.errors[error_key] += 'already exists.'
+        return valid
+
+    def validate_convert_boolean(self, field_value):
+        """ Validates boolean values for a record
+            returns a boolean 0 or 1 if
+        """
+        output = None
+        record = str(field_value).lower()
+        booleans = {'n': 0,
+                    'no': 0,
+                    'none': 0,
+                    'absent': 0,
+                    'a': 0,
+                    'false': 0,
+                    'f': 0,
+                    '0': 0,
+                    'y': 1,
+                    'yes': 1,
+                    'present': 1,
+                    'p': 1,
+                    'true': 1,
+                    't': 1}
+        if record in booleans:
+            output = booleans[record]
+        return output
+
+    def add_description_note(self, note):
+        """ adds a description note about a new item
+        """
+        # first make sure the has-note predicate exists
+        self.create_note_entity()
+        note = str(note)
+        if len(note) > 1:
+            # save the note as a string
+            str_man = StringManagement()
+            str_man.project_uuid = self.project_uuid
+            str_man.source_id = self.source_id
+            object_uuid = str_man.get_make_string(str(note))
+            # now make the assertion
+            new_ass = Assertion()
+            new_ass.uuid = self.uuid
+            new_ass.subject_type = self.item_type
+            new_ass.project_uuid = self.project_uuid
+            new_ass.source_id = self.source_id
+            if self.obs_node is False:
+                new_ass.obs_node = '#obs-' + str(self.obs_num)
+            else:
+                new_ass.obs_node = self.obs_node
+            new_ass.obs_num = self.obs_num
+            new_ass.sort = self.note_sort
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = Assertion.PREDICATES_NOTE
+            new_ass.object_type = 'xsd:string'
+            new_ass.object_uuid = object_uuid
+            new_ass.save()
+
+    def create_note_entity(self):
+        """ creates a note predicate entity if it does not yet
+            exist
+        """
+        leg = LinkEntityGeneration()
+        leg.check_add_note_pred()

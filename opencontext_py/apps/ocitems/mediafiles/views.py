@@ -59,6 +59,8 @@ def html_view(request, uuid):
 
 def html_full(request, uuid):
     ocitem = OCitem()
+    if 'hashes' in request.GET:
+        ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
         rp = RootPath()

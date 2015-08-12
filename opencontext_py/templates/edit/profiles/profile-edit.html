@@ -1,0 +1,75 @@
+{% extends 'edit/item.html' %}
+
+{% block itemcontent %}
+<div id="item-content">
+    <!-- BEGIN item edit general javascript includes -->
+    <script type="text/javascript">
+        <!--
+        var csrftoken = $.cookie('csrftoken');
+        var item_label = '{{ item.label }}';
+        var item_type = '{{ item.act_nav }}';
+        var uuid = '{{ item.uuid }}';
+        var project_uuid = '{{ item.project.uuid }}';
+        var base_url = '{{ base_url }}';
+        var field_group_vis = {
+        {% for key,val in field_group_vis.items %}
+            {{ key }}: '{% autoescape off %}{{ val }}{% endautoescape %}',
+        {% endfor %}
+        };
+        -->
+    </script>
+    <style type="text/css">
+        #fieldtabfields .ui-selecting { background: #FFFF99; }
+        #fieldtabfields .ui-selected { background: #FFFF66; }
+        #status-map {
+            width: 400px;
+            height: 400px;
+         }
+    </style>
+    <!-- END of item edit javascript includes -->
+    
+    <div class="row">
+        <div class="col-sm-12">
+         {% include 'edit/context.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-9">
+            <div id="observations">
+                <div id="profile-data">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Edit Data Entry Profile: {{ item.label }}</h3>
+                        </div>
+                        <div class="panel-body">
+                            Profile content...
+                        </div>
+                    </div>
+                </div>
+            </div>
+         </div>
+         <div class="col-sm-3">
+         {% include 'edit/item-create.html' %}
+         {% include 'items/project.html' %}
+         </div>
+          
+        {% include 'edit/edit-modal.html' %}
+        {% include 'edit/edit-small-modal.html' %}
+        
+        <script type="text/javascript">
+            <!--
+            var act_profile = false;
+            function load_profile(){
+                act_profile = new profile(uuid);
+                act_profile.get_data();
+            }
+            -->
+        </script> 
+        
+        <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/entities/entities.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profile-edit.js" onload="load_profile();"></script> 
+     </div>
+</div>
+{% endblock %} 

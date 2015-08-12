@@ -1,0 +1,20 @@
+{% load humanize %}
+{% block proj-documents %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Documents (Fieldnotes, Diaries, other Texts)</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.documents|intcomma }} items</h4>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        Useful summary information will go here
+    </div>
+</div>
+
+
+{% endblock %}

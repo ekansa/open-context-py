@@ -147,10 +147,14 @@ class Entity():
                class_uri=False,
                project_uuid=False,
                vocab_uri=False,
-               ent_type=False):
+               ent_type=False,
+               context_uuid=False,
+               data_type=False):
         """ Searches for entities limited by query strings
             and optionally other criteria
         """
+        ent_equivs = EntityEquivalents()
+        uri_alts = ent_equivs.get_identifier_list_variants(qstring);
         entity_list = []
         manifest_list = []
         if ent_type is not False:
@@ -165,6 +169,7 @@ class Entity():
             """ Search all types of entities, only limit by string matching """
             entity_list = LinkEntity.objects\
                                     .filter(Q(uri__icontains=qstring)\
+                                            | Q(uri__in=uri_alts)\
                                             | Q(slug__icontains=qstring)\
                                             | Q(label__icontains=qstring)\
                                             | Q(alt_label__icontains=qstring))[:10]
@@ -179,6 +184,7 @@ class Entity():
                 # don't limit by entity type
                 entity_list = LinkEntity.objects\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -187,6 +193,7 @@ class Entity():
                 entity_list = LinkEntity.objects\
                                         .filter(ent_type__in=ents)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -199,6 +206,7 @@ class Entity():
                 entity_list = LinkEntity.objects\
                                         .filter(vocab_uri__in=vocab_uri)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
@@ -208,41 +216,44 @@ class Entity():
                                         .filter(ent_type__in=ents)\
                                         .filter(vocab_uri__in=vocab_uri)\
                                         .filter(Q(uri__icontains=qstring)\
+                                                | Q(uri__in=uri_alts)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
         elif item_type is not False and item_type != 'uri':
             """ Look only for manifest items """
+            args = {}
             item_type = self.make_id_list(item_type)
-            if class_uri is False and project_uuid is False:
-                manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            elif class_uri is not False and project_uuid is False:
+            args['item_type__in'] = item_type
+            if class_uri is not False:
                 class_uri = self.make_id_list(class_uri)
+                args['class_uri__in'] = class_uri
+            if project_uuid is not False:
+                project_uuid = self.make_id_list(project_uuid)
+                args['project_uuid__in'] = project_uuid
+            if context_uuid is not False and 'types' in item_type:
+                l_tables = 'oc_types'
+                filter_types = 'oc_manifest.uuid = oc_types.uuid \
+                                AND oc_types.predicate_uuid = \'' + context_uuid + '\' '
                 manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                class_uri__in=class_uri)\
+                                        .extra(tables=[l_tables], where=[filter_types])\
+                                        .filter(**args)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
-            elif class_uri is False and project_uuid is not False:
-                project_uuid = self.make_id_list(project_uuid)
+            elif data_type is not False and 'predicates' in item_type:
+                l_tables = 'oc_predicates'
+                filter_types = 'oc_manifest.uuid = oc_predicates.uuid \
+                                AND oc_predicates.data_type = \'' + data_type + '\' '
                 manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                project_uuid__in=project_uuid)\
+                                        .extra(tables=[l_tables], where=[filter_types])\
+                                        .filter(**args)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
-            elif class_uri is not False and project_uuid is not False:
-                class_uri = self.make_id_list(class_uri)
-                project_uuid = self.make_id_list(project_uuid)
+            else:
                 manifest_list = Manifest.objects\
-                                        .filter(item_type__in=item_type,
-                                                class_uri__in=class_uri,
-                                                project_uuid__in=project_uuid)\
+                                        .filter(**args)\
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
@@ -272,6 +283,12 @@ class Entity():
             item['label'] = man_entity.label
             item['slug'] = man_entity.slug
             item['type'] = man_entity.item_type
+            if man_entity.item_type == 'predicates':
+                try:
+                    pred = Predicate.objects.get(uuid=man_entity.uuid)
+                    item['data_type'] = pred.data_type
+                except Predicate.DoesNotExist:
+                    item['data_type'] = False
             item['class_uri'] = man_entity.class_uri
             item['ent_type'] = False
             item['partOf_id'] = man_entity.project_uuid
@@ -316,3 +333,41 @@ class Entity():
                 output = manifest_item.label
             self.ids_meta[uuid] = output
         return output
+
+
+class EntityEquivalents():
+    """ usefult to get alternative ids for entities """
+
+    def __init__(self):
+        pass
+
+    def get_identifier_list_variants(self, id_list):
+        """ makes different variants of identifiers
+            for a list of identifiers
+        """
+        output_list = []
+        if not isinstance(id_list, list):
+            id_list = [str(id_list)]
+        for identifier in id_list:
+            output_list.append(identifier)
+            if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
+                oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
+                if oc_uuid is not False:
+                    output_list.append(oc_uuid)
+                else:
+                    prefix_id = URImanagement.prefix_common_uri(identifier)
+                    output_list.append(prefix_id)
+            elif ':' in identifier:
+                full_uri = URImanagement.convert_prefix_to_full_uri(identifier)
+                output_list.append(full_uri)
+            else:
+                # probably an open context uuid or a slug
+                ent = Entity()
+                found = ent.dereference(identifier)
+                if found:
+                    full_uri = ent.uri
+                    output_list.append(full_uri)
+                    prefix_uri = URImanagement.prefix_common_uri(full_uri)
+                    if prefix_uri != full_uri:
+                        output_list.append(prefix_uri)
+        return output_list

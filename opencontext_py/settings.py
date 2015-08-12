@@ -60,6 +60,8 @@ else:
     TEMPLATE_DEBUG = False
 
 
+
+
 ALLOWED_HOSTS = ['.opencontext.org']
 
 # saves configuration problems
@@ -79,6 +81,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
+    'opencontext_py.apps.edit.inputs.profiles',
+    'opencontext_py.apps.edit.inputs.fieldgroups',
+    'opencontext_py.apps.edit.inputs.inputfields',
+    'opencontext_py.apps.edit.inputs.inputrelations',
+    'opencontext_py.apps.edit.inputs.rules',
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
     'opencontext_py.apps.ocitems.namespaces',
@@ -205,6 +212,21 @@ else:
 
 CANONICAL_HOST = 'http://opencontext.org'
 CANONICAL_SITENAME = 'Open Context'
+
+# useful hack to allow presence of a 'debug.json' file to
+# toggle debug mode
+if os.path.isfile('debug.json'):
+    # get secret configuration information from the secrets.json file
+    DEBUG = True
+    TEMPLATE_DEBUG = True
+    DEPLOYED_HOST = 'http://localhost'
+elif os.path.isfile(BASE_DIR + '/debug.json'):
+    DEBUG = True
+    TEMPLATE_DEBUG = True
+    DEPLOYED_HOST = 'http://localhost'
+else:
+    # do nothing, no debug file flag
+    pass
 
 
 ITEM_TYPES = (

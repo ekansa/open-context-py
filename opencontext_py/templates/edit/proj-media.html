@@ -1,0 +1,33 @@
+{% load humanize %}
+{% block proj-media %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Media Items (Images, Videos, PDFs, 3D, etc.)</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.media|intcomma }} items</h4>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        {% if status.class_summary.media|length > 1 %}
+        <h5>Summary of Media Categories</h5>
+        <ul>
+        {% for class in status.class_summary.media %}
+            <li>
+                {% if class.label != False  %}
+                {{ class.label }}: {{ class.count }}
+                {% else %}
+                {{ class.id }}: {{ class.count }}    
+                {% endif %}    
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</div>
+
+
+{% endblock %}

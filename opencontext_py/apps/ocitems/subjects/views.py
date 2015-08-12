@@ -62,6 +62,8 @@ def html_view(request, uuid):
 def json_view(request, uuid):
     """ returns a json representation """
     ocitem = OCitem()
+    if 'hashes' in request.GET:
+        ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):
         req_neg = RequestNegotiation('application/json')

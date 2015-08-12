@@ -7,7 +7,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.management import LinkAnnoManagement
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 
 
 # This class is used for the mass editing of category data

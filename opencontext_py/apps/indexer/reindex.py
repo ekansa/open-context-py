@@ -7,6 +7,7 @@ from opencontext_py.apps.indexer.crawler import Crawler
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ocitems.assertions.containment import Containment
 
 
 class SolrReIndex():
@@ -120,6 +121,78 @@ class SolrReIndex():
                 self.reindex()
             else:
                 print('Problem with: ' + str(uuids))
+
+    def reindex_uuids(self, uuids):
+        """ reindexes a list of uuids
+        """
+        if isinstance(uuids, list):
+            crawler = Crawler()
+            crawler.index_document_list(uuids)
+            return len(uuids)
+        else:
+            return False
+
+    def reindex_related(self, uuid):
+        """ Reindexes an item
+            and related items, especially
+            child items from containment
+        """
+        uuids = self.get_related_uuids(uuid)
+        return self.reindex_uuids(uuids)
+
+    def get_related_uuids(self, uuid, inclusive=True):
+        """ gets a list of uuids related to a given uuid
+            if inclusive, include the UUID passed in the
+            output list
+        """
+        link_item_types = ['subjects',
+                           'media',
+                           'persons',
+                           'documents',
+                           'projects']
+        uuids = []
+        if isinstance(uuid, list):
+            start_uuids = uuid
+        else:
+            start_uuids = [uuid]
+        for uuid in start_uuids:
+            try:
+                m_obj = Manifest.objects.get(uuid=uuid)
+            except Manifest.DoesNotExist:
+                m_obj = False
+            if m_obj is not False:
+                if inclusive:
+                    uuids.append(m_obj.uuid)
+                if m_obj.item_type == 'subjects':
+                    act_contain = Containment()
+                    # get the contents recusivelhy
+                    contents = act_contain.get_children_by_parent_uuid(m_obj.uuid, True)
+                    if isinstance(contents, dict):
+                        for tree_node, children in contents.items():
+                            for child_uuid in children:
+                                if child_uuid not in uuids:
+                                    uuids.append(child_uuid)
+                elif m_obj.item_type == 'predicates':
+                    # reindex all of the items described by a given predicate
+                    # this can take a while!
+                    rel_objs = Assertion.objects\
+                                        .filter(predicate_uuid=m_obj.uuid)
+                    for rel_item in rel_objs:
+                        if rel_item.uuid not in uuids:
+                            uuids.append(rel_item.uuid)
+                rel_objs = Assertion.objects\
+                                    .filter(uuid=m_obj.uuid,
+                                            object_type__in=link_item_types)
+                for rel_item in rel_objs:
+                    if rel_item.object_uuid not in uuids:
+                        uuids.append(rel_item.object_uuid)
+                rel_subs = Assertion.objects\
+                                    .filter(subject_type__in=link_item_types,
+                                            object_uuid=m_obj.uuid)
+                for rel_item in rel_subs:
+                    if rel_item.object_uuid not in uuids:
+                        uuids.append(rel_item.object_uuid)
+        return uuids
 
     def get_uuids_solr_direct(self, solr_request_url):
         """ gets uuids from solr by direct request

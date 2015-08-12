@@ -14,7 +14,7 @@ class LinkEntity(models.Model):
     vocab_uri = models.CharField(max_length=200)
     ent_type = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
-    
+
     def clean_uri(self, uri):
         """
         cleans a uri to remove cruft that's not part of the identifier
@@ -44,12 +44,12 @@ class LinkEntity(models.Model):
 
 
 class LinkEntityGeneration():
-    
+
     # URIs that end in a numeric value
     NUMERIC_URI_PREFIXES = ['http://pleiades.stoa.org/places/',
                             'http://eol.org/pages/',
                             'http://www.geonames.org/']
-    
+
     USE_HTTPS_PARTS = []
 
     def make_clean_uri(self, uri, http_default=True):
@@ -224,5 +224,19 @@ class LinkEntityGeneration():
             le.label = 'Temporal Coverage'
             le.alt_label = 'Temporal Coverage'
             le.vocab_uri = 'http://purl.org/dc/terms'
+            le.ent_type = 'property'
+            le.save()
+
+    def check_add_note_pred(self):
+        """ Adds dublin core temporal if it doesn't exist yet
+        """
+        pred = 'http://opencontext.org/vocabularies/oc-general/has-note'
+        lev = LinkEntity.objects.filter(uri=pred)[:1]
+        if len(lev) < 1:
+            le = LinkEntity()
+            le.uri = pred
+            le.label = 'Has note'
+            le.alt_label = 'Has note'
+            le.vocab_uri = 'http://opencontext.org/vocabularies/oc-general/'
             le.ent_type = 'property'
             le.save()

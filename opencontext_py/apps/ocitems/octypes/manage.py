@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.strings.management import StringManagement
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 
@@ -17,6 +17,8 @@ class TypeManagement():
         self.project_uuid = False
         self.source_id = False
         self.content = False
+        self.suggested_uuid = False  # make sure this is not already used!
+        self.suggested_content_uuid = False  # make sure this is not already used!
 
     def get_make_type_within_pred_uuid(self, predicate_uuid, content):
         """
@@ -26,6 +28,7 @@ class TypeManagement():
         str_manage = StringManagement()
         str_manage.project_uuid = self.project_uuid
         str_manage.source_id = self.source_id
+        str_manage.suggested_uuid = self.suggested_content_uuid
         # get an existing or create a new string object
         oc_string = str_manage.get_make_string(content)
         self.content = content
@@ -47,7 +50,11 @@ class TypeManagement():
                     self.content = False
             if self.content is not False:
                 # make a new oc_type object!
-                uuid = GenUUID.uuid4()
+                if self.suggested_uuid is not False:
+                    uuid = self.suggested_uuid
+                else:
+                    # string is new to the project so make it.
+                    uuid = GenUUID.uuid4()
                 newtype = OCtype()
                 newtype.uuid = uuid
                 newtype.project_uuid = self.project_uuid
@@ -72,7 +79,34 @@ class TypeManagement():
                 newman.save()
         return self.oc_type
 
-    def check_exists_pred_uuid_content_uuid(self, predicate_uuid, content_uuid):
+    def check_exists_pred_uuid_content(self,
+                                       predicate_uuid,
+                                       content,
+                                       show_uuid=False):
+        """
+        Checks if a predicate_uuid and a content string already
+        exists
+        This is useful, since it does not change anything in the database,
+        it just checks to see if a content string is used with a predicate
+        """
+        found = False
+        str_manage = StringManagement()
+        str_manage.project_uuid = self.project_uuid
+        # get an existing or create a new string object
+        content_uuid = str_manage.check_string_exists(content,
+                                                      True)
+        if content_uuid is not False:
+            # we've seen the string before, so
+            # now check if
+            found = self.check_exists_pred_uuid_content_uuid(predicate_uuid,
+                                                             content_uuid,
+                                                             show_uuid)
+        return found
+
+    def check_exists_pred_uuid_content_uuid(self,
+                                            predicate_uuid,
+                                            content_uuid,
+                                            show_uuid=False):
         """
         Checks if a predicate_uuid and content_uuid already exists
         """
@@ -84,4 +118,6 @@ class TypeManagement():
             self.oc_type = False
         if(self.oc_type is not False):
             found = True
+            if show_uuid:
+                found = self.oc_type.uuid
         return found

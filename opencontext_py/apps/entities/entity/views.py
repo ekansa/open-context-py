@@ -9,6 +9,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
+
 # These views display an HTML form for classifying import fields,
 # and handles AJAX requests / responses to change classifications
 def index(request):
@@ -39,6 +40,8 @@ def look_up(request, item_type):
     project_uuid = False
     vocab_uri = False
     ent_type = False
+    context_uuid = False
+    data_type = False
     if len(item_type) < 2:
         item_type = False
     if 'q' in request.GET:
@@ -51,17 +54,50 @@ def look_up(request, item_type):
         vocab_uri = request.GET['vocab_uri']
     if 'ent_type' in request.GET:
         ent_type = request.GET['ent_type']
+    if 'context_uuid' in request.GET:
+        context_uuid = request.GET['context_uuid']
+    if 'data_type' in request.GET:
+        data_type = request.GET['data_type']
     entity_list = ent.search(qstring,
                              item_type,
                              class_uri,
                              project_uuid,
                              vocab_uri,
-                             ent_type)
+                             ent_type,
+                             context_uuid,
+                             data_type)
     json_output = json.dumps(entity_list,
                              indent=4,
                              ensure_ascii=False)
     return HttpResponse(json_output,
                         content_type='application/json; charset=utf8')
+
+
+def id_summary(request, identifier):
+    """ Returns JSON data for entities
+        limited by certain criteria
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        entity_obj = LastUpdatedOrderedDict()
+        entity_obj['id'] = ent.uri
+        entity_obj['label'] = ent.label
+        entity_obj['uuid'] = ent.uuid
+        entity_obj['slug'] = ent.slug
+        entity_obj['item_type'] = ent.item_type
+        entity_obj['class_uri'] = ent.class_uri
+        entity_obj['data_type'] = ent.data_type
+        entity_obj['vocab_uri'] = ent.vocab_uri
+        entity_obj['project_uuid'] = ent.project_uuid
+        json_output = json.dumps(entity_obj,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
 
 def entity_annotations(request, subject):
     """ Returns JSON data with
@@ -145,6 +181,72 @@ def entity_annotations(request, subject):
                 stable_id['id'] += s_id.stable_id
             result['stable_ids'].append(stable_id)
         json_output = json.dumps(result,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
+def contain_children(request, identifier):
+    """ Returns JSON data with
+        spatial containment for a given
+        uuid identiffied entity
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        depth = 1
+        recursive = False
+        if 'depth' in request.GET:
+            try:
+                depth = int(float(request.GET['depth']))
+            except:
+                depth = 1
+        et = EntityTemplate()
+        children = et.get_containment_children(ent,
+                                               depth)
+        json_output = json.dumps(children,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404
+
+
+def description_hierarchy(request, identifier):
+    """ Returns JSON data with
+        descriptive property and type hierarchies
+        for a given uuid identiffied entity
+    """
+    item_type = False
+    class_uri = False
+    if '/' in identifier:
+        id_ex = identifier.split('/')
+        identifier = id_ex[0]
+        if len(id_ex) >= 2:
+            item_type = id_ex[1]
+        if len(id_ex) >= 3:
+            class_uri = id_ex[2]
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        depth = 1
+        recursive = False
+        if 'depth' in request.GET:
+            try:
+                depth = int(float(request.GET['depth']))
+            except:
+                depth = 1
+        et = EntityTemplate()
+        children = et.get_description_tree(ent,
+                                           depth,
+                                           True,
+                                           item_type,
+                                           class_uri)
+        json_output = json.dumps(children,
                                  indent=4,
                                  ensure_ascii=False)
         return HttpResponse(json_output,

@@ -12,6 +12,30 @@
                 </tr>
             </thead>
             <tbody>
+                {% if profile != False %}
+                <tr>
+                    <td>
+                        <dl>
+                            <dt>Input Profile</dt>
+                            <dd><a href="{% url 'edit_input_profile_use' profile.uuid item.uuid %}" tilte="Edit via the Input Profile Interface">{{ profile.label }}</a>
+                            <p><small>Click the Input Profile above to edit this item using the same interface used to create it.</small></p>
+                            </dd>
+                        </dl>
+                        <dl>
+                            <dt>Profile Description</dt>
+                            <dd>{{ profile.note }}</dd>
+                        </dl>
+                    </td>
+                    <td>
+                        <p><small>An "Input Profile" makes manual data entry easier. Users can create Input Profiles
+                        to make customized data entry forms with fields needed to describe different kinds of records.
+                        For example, one can make an Input Profile to describe an archaeological feature and that
+                        profile will have fields needed to describe features. On can similarly make an Input Profile
+                        to describe an animal bone that has a different set of descriptive fields.
+                        </small></p>
+                    </td>
+                </tr>
+                {% endif %}    
                 <tr>
                     <td>
                         <form>

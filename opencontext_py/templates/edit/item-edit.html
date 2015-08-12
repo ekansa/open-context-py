@@ -1,0 +1,101 @@
+{% extends 'edit/item.html' %}
+
+{% block itemcontent %}
+<div id="item-content">
+    <!-- BEGIN item edit general javascript includes -->
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+        var base_url = '{{ base_url }}';
+        var item_label = '{{ item.label }}';
+        var item_type = '{{ item.act_nav }}';
+        var uuid = '{{ item.uuid }}';
+        var project_uuid = '{{ item.project.uuid }}';
+    </script>
+    <style type="text/css">
+        #fieldtabfields .ui-selecting { background: #FFFF99; }
+        #fieldtabfields .ui-selected { background: #FFFF66; }
+        #edit-map {
+            width: 400px;
+            height: 400px;
+         }
+    </style>
+    <!-- END of item edit javascript includes -->
+    
+    <div class="row">
+        <div class="col-sm-12">
+         {% include 'edit/context.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
+            <div id="observations">
+                <ul class="nav nav-tabs" id="editTabs" data-tabs="tabs">
+                    <li class="active"><a data-toggle="tab" href="#edit-1">Edit Item</a></li>
+                    <li><a data-toggle="tab" href="#edit-2">Context</a></li>
+                    <li><a data-toggle="tab" href="#edit-3">Description</a></li>
+                    <li><a data-toggle="tab" href="#edit-4">Links</a></li>
+                    <li><a data-toggle="tab" href="#edit-5">Annotations</a></li>
+                    <li><a data-toggle="tab" href="#edit-6">Map and Time</a></li>
+                </ul>
+                <div class="tab-content obs-multi">
+                    <div id="edit-1" class="tab-pane fade in active">
+                        {% include 'edit/item-2-basic.html' %}
+                    </div>
+                    <div id="edit-2" class="tab-pane fade">
+                        {% include 'edit/item-2-context.html' %}
+                    </div>
+                    <div id="edit-3" class="tab-pane fade">
+                        {% include 'edit/item-2-description.html' %}
+                    </div>
+                    <div id="edit-4" class="tab-pane fade">
+                        
+                    </div>
+                    <div id="edit-5" class="tab-pane fade">
+                        {% include 'edit/item-2-annotations.html' %}
+                    </div>
+                    <div id="edit-6" class="tab-pane fade">
+                        {% include 'edit/item-2-geo-chrono.html' %}
+                    </div>
+                </div>
+            </div>
+         </div>
+         <div class="col-sm-4">
+         {% include 'items/citation.html' %}
+         {% include 'items/project.html' %}
+         {% include 'items/map.html' %}
+         <div style="margin-top: 20px;">
+            {% include 'edit/item-create.html' %}
+         </div>
+         </div>
+          
+        {% include 'edit/edit-modal.html' %}
+         
+         <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
+         <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
+          <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/entities/entities.js"></script>
+         <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
+         <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/context-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
+         
+         <script type="text/javascript">
+            <!--
+            var edit_item = false;
+            function start_item_edit(){
+                edit_item = new itemEdit(item_type, uuid);
+                edit_item.getItemJSON();
+            }
+            -->
+        </script> 
+         
+         
+        <script src="../../static/oc/js/edit/item-edit-alt.js" onload="start_item_edit();"></script>
+         
+     </div>
+</div>
+{% endblock %} 

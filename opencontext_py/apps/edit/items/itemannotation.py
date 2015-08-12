@@ -127,7 +127,7 @@ class ItemAnnotation():
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
-    
+
     def sort_change_annotation(self, post_data):
         """ Adds a linked data annotation to an item
         """
@@ -205,7 +205,7 @@ class ItemAnnotation():
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
-    
+
     def check_orcid_ok(self, post_data):
         """ checks to see if it's OK to add ORCID
             stable identifiers

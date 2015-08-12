@@ -7,16 +7,22 @@
 function searchEntityObj() {
 	/* Object for composing search entities */
 	this.name = "ent"; //object name, used for DOM-ID prefixes and object labeling
+	this.parent_obj_name = false; //name of the parent object making the search object
 	this.search_text_domID = "entity-string";
 	this.searchEntityListDomID = "search-entity-list";
 	this.selectFoundEntityFunction = "selectEntity";
 	this.entities_panel_title = "Entity Lookup";
+	this.compact_display = false;
+	this.ultra_compact_display = false;
+	this.data = false;
 	this.limit_class_uri = false;
 	this.limit_project_uuid = false;
 	this.limit_vocab_uri = false;
 	this.limit_item_type = false;
 	this.limit_ent_type = false;
-	this.url = "../../entities/look-up/";
+	this.limit_context_uuid = false;
+	this.limit_data_type = false;
+	this.url = make_url("/entities/look-up/");
 	this.interfaceDomID = false;
 	this.req = false;
 	this.selectReadOnly = true;
@@ -25,198 +31,308 @@ function searchEntityObj() {
 	this.show_type = false;
 	this.show_partof = false;
 	this.ids = {}
+	this.selected_entity = false
 	
 	this.generateEntitiesInterface = function (){
-		/* returns a HTML string to generate an entities search interface */
-		if (this.selectReadOnly) {
-			this.selectReadOnly = "readonly";
+		  /* returns a HTML string to generate an entities search interface */
+		  if (this.selectReadOnly) {
+				this.selectReadOnly = "readonly";
+		  }
+		  else{
+				this.selectReadOnly = "";
+		  }
+		  this.selectReadOnly = this.selectReadOnly || "readonly";
+		  if (this.additionalButton != false) {
+				//request to add an additional button to add more functionality
+				var disabled = "";
+				if (this.additionalButton.buttonDisabled) {
+					disabled = "disabled=\"disabled\"";
+				}
+				var buttonGroupHTML = [
+					"<div class=\"form-group form-group-sm\">",
+						"<label for=\"sel-added-control\" class=\"col-xs-2 control-label\">" + this.additionalButton.label + "</label>",
+							"<div class=\"col-xs-10\">",
+								"<button id=\"" + this.additionalButton.buttonID + "\" style=\"margin-bottom:1%;\" type=\"button\" ",
+								"class=\"" + this.additionalButton.buttonClass + "\" onclick=\"javascript:" + this.additionalButton.funct + ";\"",
+								disabled + ">",
+								"<span class=\"" + this.additionalButton.icon + "\"></span>",
+								" " + this.additionalButton.buttonText + "</button>",
+							"</div>",
+						"</div>"
+				].join("\n");
+		  }
+		  else{
+				var buttonGroupHTML = "";
+		  }
+		  var context_html = "";
+		  if (this.show_type || this.show_partof) {
+				if (this.show_type) {
+					 context_html += '<div class="row small">';
+					 context_html += '<div class="col-xs-2"><label>Type</label></div>';
+					 context_html += '<div class="col-xs-10" id="' + this.make_dom_name_id() + '-sel-type"></div>';
+					 context_html += '</div>';	
+				}
+				if (this.show_partof) {
+					 context_html += '<div class="row small">';
+					 context_html += '<div class="col-xs-2"><label>Part of</label></div>';
+					 context_html += '<div class="col-xs-10" id="' + this.make_dom_name_id() + '-sel-partof"></div>';
+					 context_html += '</div>';
+				}
+				context_html += '<div class="row small">';
+				context_html += '<div class="col-xs-12"><div style="padding:10px;"></div></div>';
+				context_html += '</div>';
+		  }
+		  var display_style = '';
+		  if (this.compact_display) {
+				// we want a compact version of this display, so hife the selected entity input fields
+				display_style = " style=\"display:none;\" ";
+		  }
+		if (this.ultra_compact_display) {
+		  var interfaceString = [
+				"<div>",
+					 "<form class=\"form-horizontal\" role=\"form\">",
+						  "<div style=\"display:none;\">",
+								"<div class=\"form-group form-group-sm\">",
+									 "<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
+									  "<div class=\"col-xs-10\">",
+										  "<input id=\"" + this.make_dom_name_id() + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									  "</div>",
+								  "</div>",
+								  "<div class=\"form-group form-group-sm\">",
+									  "<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
+									  "<div class=\"col-xs-10\">",
+										  "<input id=\"" + this.make_dom_name_id() + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									  "</div>",
+								  "</div>",
+							 "</div>",
+							 context_html,
+							 buttonGroupHTML,
+							 "<div class=\"form-group form-group-sm\">",
+								 "<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
+								 "<div class=\"col-xs-10\">",
+									 "<input id=\"" + this.make_dom_name_id() + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"" + this.make_obj_name_id() + ".searchEntities();\" class=\"form-control input-sm\" />",
+								 "</div>",
+							 "</div>",
+					  "</form>",
+					  "<ul id=\"" + this.make_dom_name_id() + "-" + this.searchEntityListDomID + "\">",
+					  "</ul>",
+				  "</div>",
+		  ].join("\n");
 		}
 		else{
-			this.selectReadOnly = "";
+		  var interfaceString = [	
+			  "<div class=\"panel panel-default\">",
+				  "<div class=\"panel-heading\">",
+					  "<h4 class=\"panel-title\">" + this.entities_panel_title + "</h4>",
+				  "</div>",
+				  "<div class=\"panel-body\">",
+					  "<form class=\"form-horizontal\" role=\"form\">",
+							 "<div " + display_style + ">",
+								  "<div class=\"form-group form-group-sm\">",
+									  "<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
+									  "<div class=\"col-xs-10\">",
+										  "<input id=\"" + this.make_dom_name_id() + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									  "</div>",
+								  "</div>",
+								  "<div class=\"form-group form-group-sm\">",
+									  "<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
+									  "<div class=\"col-xs-10\">",
+										  "<input id=\"" + this.make_dom_name_id() + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
+									  "</div>",
+								  "</div>",
+							 "</div>",
+							 context_html,
+							 buttonGroupHTML,
+							 "<div class=\"form-group form-group-sm\">",
+								 "<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
+								 "<div class=\"col-xs-10\">",
+									 "<input id=\"" + this.make_dom_name_id() + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"" + this.make_obj_name_id() + ".searchEntities();\" class=\"form-control input-sm\" />",
+								 "</div>",
+							 "</div>",
+					  "</form>",
+					  "<ul id=\"" + this.make_dom_name_id() + "-" + this.searchEntityListDomID + "\">",
+					  "</ul>",
+				  "</div>",
+			  "</div>"].join("\n");
 		}
-		this.selectReadOnly = this.selectReadOnly || "readonly";
-		if (this.additionalButton != false) {
-			//request to add an additional button to add more functionality
-			var disabled = "";
-			if (this.additionalButton.buttonDisabled) {
-				disabled = "disabled=\"disabled\"";
-			}
-			var buttonGroupHTML = [
-				"<div class=\"form-group form-group-sm\">",
-					"<label for=\"sel-added-control\" class=\"col-xs-2 control-label\">" + this.additionalButton.label + "</label>",
-						"<div class=\"col-xs-10\">",
-							"<button id=\"" + this.additionalButton.buttonID + "\" style=\"margin-bottom:1%;\" type=\"button\" ",
-							"class=\"" + this.additionalButton.buttonClass + "\" onclick=\"javascript:" + this.additionalButton.funct + ";\"",
-							disabled + ">",
-							"<span class=\"" + this.additionalButton.icon + "\"></span>",
-							" " + this.additionalButton.buttonText + "</button>",
-						"</div>",
-					"</div>"
-			].join("\n");
-		}
-		else{
-			var buttonGroupHTML = "";
-		}
-		var context_html = "";
-		if (this.show_type || this.show_partof) {
-			if (this.show_type) {
-				context_html += '<div class="row small">';
-				context_html += '<div class="col-xs-2"><label>Type</label></div>';
-				context_html += '<div class="col-xs-10" id="' + this.name + '-sel-type"></div>';
-				context_html += '</div>';
-			}
-			if (this.show_partof) {
-				context_html += '<div class="row small">';
-				context_html += '<div class="col-xs-2"><label>Part of</label></div>';
-				context_html += '<div class="col-xs-10" id="' + this.name + '-sel-partof"></div>';
-				context_html += '</div>';
-			}
-			context_html += '<div class="row small">';
-			context_html += '<div class="col-xs-12"><div style="padding:10px;"></div></div>';
-			context_html += '</div>';
-		}
-		var interfaceString = [	
-			"<div class=\"panel panel-default\">",
-				"<div class=\"panel-heading\">",
-					"<h4 class=\"panel-title\">" + this.entities_panel_title + "</h4>",
-				"</div>",
-				"<div class=\"panel-body\">",
-					"<form class=\"form-horizontal\" role=\"form\">",
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"sel-entity-label\" class=\"col-xs-2 control-label\">Label</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-sel-entity-label\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
-							"</div>",
-						"</div>",
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"sel-entity-id\" class=\"col-xs-2 control-label\">ID</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-sel-entity-id\" type=\"text\"  value=\"\" placeholder=\"Select an entity\" class=\"form-control input-sm\" " + this.selectReadOnly + "/>",
-							"</div>",
-						"</div>",
-						context_html,
-						buttonGroupHTML,
-						"<div class=\"form-group form-group-sm\">",
-							"<label for=\"entity-string\" class=\"col-xs-2 control-label\">Search</label>",
-							"<div class=\"col-xs-10\">",
-								"<input id=\"" + this.name + "-" + this.search_text_domID + "\" type=\"text\"  value=\"\" onkeydown=\"javascript:" + this.name + ".searchEntities();\" class=\"form-control input-sm\" />",
-							"</div>",
-						"</div>",
-					"</form>",
-					"<ul id=\"" + this.name + "-" + this.searchEntityListDomID + "\">",
-					"</ul>",
-				"</div>",
-			"</div>"].join("\n");
 		if (this.interfaceDomID != false) {
 			var act_dom = document.getElementById(this.interfaceDomID);
 			act_dom.innerHTML = interfaceString;
 		}
 		return interfaceString;
 	};
-	this.searchEntities = function(){
-		this.ids = {}; // clear IDs
-		var url = this.url;
-		var qstring = document.getElementById(this.name + "-" + this.search_text_domID).value;
-		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
-		searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
-		var data = { q:qstring };
-		if (this.limit_class_uri != false) {
-			data['class_uri'] = this.limit_class_uri;
-		}
-		if (this.limit_project_uuid != false) {
-			data['project_uuid'] = this.limit_project_uuid;
-		}
-		if (this.limit_vocab_uri != false) {
-			data['vocab_uri'] = this.limit_vocab_uri;
-		}
-		if (this.limit_ent_type != false) {
-			data['ent_type'] = this.limit_ent_type;
-		}
-		if (this.limit_item_type != false) {
-			url += this.limit_item_type;
-		}
-		else{
-			url += "0";
-		}
-		this.req = $.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			data: data,
-			context: this,
-			success: this.searchEntitiesDone
-		});
+	this.make_dom_name_id = function(){
+		  if (this.parent_obj_name != false) {
+				// this object is in a parent object
+				var dom_name_id = this.parent_obj_name + '.' + this.name;
+				dom_name_id = this.replaceAll('.', '_', dom_name_id);
+				dom_name_id = this.replaceAll('[', '_', dom_name_id);
+				dom_name_id = this.replaceAll(']', '', dom_name_id);
+				return dom_name_id;
+		  }
+		  else{
+				return this.name;
+		  }
 	}
-	this.searchEntitiesDone = function(data){
-		/* Displays list of entities that meet search criteria */
-		var searchEntityListDom = document.getElementById(this.name + "-" + this.searchEntityListDomID);
-		searchEntityListDom.innerHTML = "";
-		for (var i = 0, length = data.length; i < length; i++) {
-			
-			var data_type = 'Not Specified';
-			if (data[i].class_uri != false) {
-				var data_type = data[i].class_uri;
-			}
-			else if (data[i].ent_type != false) {
-				var data_type = data[i].ent_type + ' (Linked Data)'; 
-			}
-			else{
-				var data_type = "Not specified";
-			}
-			var partof = data[i].partOf_label;
-			data[i].data_type = data_type;
-			this.ids[data[i].id] = data[i]; // keep in memory for later use
-			
-			var tooltiplink = [
-				'<a onclick="' + this.name + '.selectEntity(' + i + ')" ',
-				'data-toggle="tooltip" data-placement="bottom" ',
-				'style="cursor:pointer;" ',
-				'title="Type: ' + data_type + '; part of: ' + partof + '" ',
-				'id="' + this.name + '-search-entity-label-' + i + '" >',
-				data[i].label,
-				'</a>'
-			].join('');
-			
-			var newListItem = document.createElement("li");
-			newListItem.id = this.name + "-search-entity-item-" + i;
-			var entityIDdomID = this.name + "-search-entity-id-" + i;
-			var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
-			var entityString = tooltiplink;
-			// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
-			entityString += "<br/><small>" + linkHTML + "</small>";
-			newListItem.innerHTML = entityString;
-			searchEntityListDom.appendChild(newListItem);
-		}
-
-		// turn on tool tips for these search results
-		$(function () {
-			$('[data-toggle="tooltip"]').tooltip()
-		})
+	this.make_obj_name_id = function(){
+		  if (this.parent_obj_name != false) {
+				// this object is in a parent object
+				var obj_name_id = this.parent_obj_name + '.' + this.name;
+				return obj_name_id;
+		  }
+		  else{
+				return this.name;
+		  }
+	}
+	 this.searchEntities = function(){
+		  this.ids = {}; // clear IDs
+		  var url = this.url;
+		  var qstring = document.getElementById(this.make_dom_name_id() + "-" + this.search_text_domID).value;
+		  var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
+		  if (qstring.length > 0) {
+				searchEntityListDom.innerHTML = "<li>Searching for '" + qstring + "'...</li>";
+				var data = { q:qstring };
+				if (this.limit_class_uri != false) {
+					data['class_uri'] = this.limit_class_uri;
+				}
+				if (this.limit_project_uuid != false) {
+					data['project_uuid'] = this.limit_project_uuid;
+				}
+				if (this.limit_vocab_uri != false) {
+					data['vocab_uri'] = this.limit_vocab_uri;
+				}
+				if (this.limit_ent_type != false) {
+					data['ent_type'] = this.limit_ent_type;
+				}
+				if (this.limit_context_uuid != false) {
+				  data['context_uuid'] = this.limit_context_uuid;
+				}
+				if (this.limit_data_type != false) {
+				  data['data_type'] = this.limit_data_type;
+				}
+				if (this.limit_item_type != false) {
+					url += this.limit_item_type;
+				}
+				else{
+					url += "0";
+				}
+				this.req = $.ajax({
+					type: "GET",
+					url: url,
+					dataType: "json",
+					data: data,
+					context: this,
+					success: this.searchEntitiesDone
+				});
+		  }
+		  else{
+				searchEntityListDom.innerHTML = "";
+		  }
 		
 	}
-	this.selectEntity = function(item_num){
-		/* Adds selected entity label and ID to the right dom element */
-		var act_domID = this.name + "-search-entity-id-" + item_num;
-		var item_id = document.getElementById(act_domID).innerHTML;
-		var sel_id_dom = document.getElementById(this.name + "-sel-entity-id");
-		sel_id_dom.value = item_id;
-		act_domID =  this.name + "-search-entity-label-" + item_num;
-		var item_label = document.getElementById(act_domID).innerHTML;
-		var sel_label_dom = document.getElementById(this.name + "-sel-entity-label");
-		sel_label_dom.value = item_label;
-		if (this.show_type && item_id in this.ids) {
-			document.getElementById(this.name + "-sel-type").innerHTML = this.ids[item_id].data_type;
-		}
-		if (this.show_partof && item_id in this.ids) {
-			document.getElementById(this.name + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
-		}
-		if (this.afterSelectDone != false) {
-			// execute a post selection entity is done function
-			if (typeof(this.afterSelectDone.exec) !== 'undefined') {
-				this.afterSelectDone.exec();
-			}
-		}
-	}
+	 this.searchEntitiesDone = function(data){
+		  /* Displays list of entities that meet search criteria */
+		  this.data = data;
+		  // now display the full list, with a 'false' argument passed
+		  // so as not to limit this display to 1 item
+		  this.displayEntityListHTML(false);
+	 }
+	 this.displayEntityListHTML = function(display_only_id){
+		  // displays the HTML for entities
+		  // found in the search
+		  var data = this.data;
+		  var searchEntityListDom = document.getElementById(this.make_dom_name_id() + "-" + this.searchEntityListDomID);
+		  searchEntityListDom.innerHTML = "";
+		  for (var i = 0, length = data.length; i < length; i++) {
+				
+				if (!('data_type' in data[i])) {
+					var data_type = 'Not Specified';
+					if (data[i].class_uri != false) {
+						var data_type = data[i].class_uri;
+					}
+					else if (data[i].ent_type != false) {
+						var data_type = data[i].ent_type + ' (Linked Data)'; 
+					}
+					else{
+						var data_type = "Not specified";
+					}
+					data[i].data_type = data_type;
+				}
+				var partof = data[i].partOf_label;
+				this.ids[data[i].id] = data[i]; // keep in memory for later use
+				
+				var tooltiplink = [
+					'<a onclick="' + this.make_obj_name_id() + '.selectEntity(' + i + ')" ',
+					'data-toggle="tooltip" data-placement="bottom" ',
+					'style="cursor:pointer;" ',
+					'title="Type: ' + data_type + '; part of: ' + partof + '" ',
+					'id="' + this.make_dom_name_id() + '-search-entity-label-' + i + '" >',
+					data[i].label,
+					'</a>'
+				].join('');
+				
+				var newListItem = document.createElement("li");
+				newListItem.id = this.make_dom_name_id() + "-search-entity-item-" + i;
+				var entityIDdomID = this.make_dom_name_id() + "-search-entity-id-" + i;
+				var linkHTML = generateEntityLink(entityIDdomID, data[i].type, data[i].id, data[i].id);
+				var entityString = tooltiplink;
+				// entityString += "<br/><small id=\"search-entity-id-" + i + "\">" + data[i].id + "</small>";
+				entityString += "<br/><small>" + linkHTML + "</small>";
+				newListItem.innerHTML = entityString;
+				if (this.compact_display && display_only_id != false) {
+					 if ( display_only_id == data[i].id) {
+						  // display only those that match the id
+						  searchEntityListDom.appendChild(newListItem);
+					 }
+				}
+				else{
+					 //display all of the search finds
+					 searchEntityListDom.appendChild(newListItem);	 
+				}
+		  }
+	
+		  // turn on tool tips for these search results
+		  $(function () {
+				$('[data-toggle="tooltip"]').tooltip()
+		  })
+	 }
+	 this.selectEntity = function(item_num){
+		  /* Adds selected entity label and ID to the right dom element */
+		  var act_domID = this.make_dom_name_id() + "-search-entity-id-" + item_num;
+		  var item_id = document.getElementById(act_domID).innerHTML;
+		  var sel_id_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-id");
+		  sel_id_dom.value = item_id;
+		  act_domID =  this.make_dom_name_id() + "-search-entity-label-" + item_num;
+		  var item_label = document.getElementById(act_domID).innerHTML;
+		  var sel_label_dom = document.getElementById(this.make_dom_name_id() + "-sel-entity-label");
+		  sel_label_dom.value = item_label;
+		  if (item_id in this.ids) {
+				this.selected_entity = this.ids[item_id];
+		  }
+		  if (this.show_type && item_id in this.ids) {
+				document.getElementById(this.make_dom_name_id() + "-sel-type").innerHTML = this.ids[item_id].data_type;
+		  }
+		  if (this.show_partof && item_id in this.ids) {
+				document.getElementById(this.make_dom_name_id() + "-sel-partof").innerHTML = this.ids[item_id].partOf_label;
+		  }
+		  if (this.compact_display) {
+				// shrink the search list to only show the item
+				// selected
+				this.displayEntityListHTML(item_id);
+		  }
+		  if (this.afterSelectDone != false) {
+				// execute a post selection entity is done function
+				if (typeof(this.afterSelectDone.exec) !== 'undefined') {
+					this.afterSelectDone.exec();
+				}
+		  }
+	 }
+	 this.replaceAll = function(find, replace, str) {
+		   return str.replace(new RegExp(this.escapeRegExp(find), 'g'), replace);
+	 }
+	 this.escapeRegExp = function (string) {
+		  return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+	 }
 }
 
 
@@ -225,7 +341,7 @@ function generateEntityLink(nodeID, entity_type, entity_id, entity_label){
 	var labelSpan = "<span id=\"" + nodeID + "\">" + entity_label + "</span>";
 	if (entity_type != "uri" && entity_type != "import-field" && entity_type != "user-typed-link") {
 		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
-		linkHTML = "<a title=\"View in new tab\" href=\"../../" + entity_type + "/" + entity_id + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
+		linkHTML = "<a title=\"View in new tab\" href=\"" + make_url("/" + entity_type + "/" + entity_id) + "\" target=\"_blank\">" + icon + labelSpan + "</a>";
 	}
 	else if (entity_type == "uri") {
 		var icon = "<span class=\"glyphicon glyphicon-new-window\"></span> ";
@@ -407,7 +523,7 @@ function addEntityObj() {
 				var ent_type = e_types[i].value;
 			}
 		}
-		var url = "../../edit/add-update-ld-entity/";
+		var url = make_url("/edit/add-update-ld-entity/");
 		if ((uri.length > 0 && label.length > 0)) {
 			//code
 			return $.ajax({
@@ -448,4 +564,26 @@ function addEntityObj() {
 		}
 		mes_dom.innerHTML = html;
 	}
+}
+
+function make_url(relative_url){
+	 //makes a URL for requests, checking if the base_url is set
+	 var rel_first = relative_url.charAt(0);
+	 if (typeof base_url != "undefined") {
+		  var base_url_last = base_url.charAt(-1);
+		  if (base_url_last == '/' && rel_first == '/') {
+				return base_url + relative_url.substring(1);
+		  }
+		  else{
+				return base_url + relative_url;
+		  }
+	 }
+	 else{
+		  if (rel_first == '/') {
+				return '../..' + relative_url;
+		  }
+		  else{
+				return '../../' + relative_url;
+		  }
+	 }
 }

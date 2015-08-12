@@ -1,0 +1,54 @@
+{% load humanize %}
+{% block proj-subjects %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Subjects (Records of Observed Items)</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.subjects|intcomma }} records</h4>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        {% if status.class_summary.subjects|length > 1 %}
+        <h5>Summary of Subjects Categories</h5>
+        <ul>
+        {% for class in status.class_summary.subjects %}
+            <li>
+                {% if class.label != False  %}
+                {{ class.label }}: {{ class.count }}
+                {% else %}
+                {{ class.id }}: {{ class.count }}    
+                {% endif %}    
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+    
+        <div class="container">
+            <p>Project Contexts</p>
+            <div id="root-more-0" class="container"></div>
+        </div>
+    
+    </div>
+    
+    <script type="text/javascript">
+        <!--
+        function root_contexts(){
+            var root_tree = new hierarchy(project_uuid, "root-more-0");
+            root_tree.root_node = true; // indicate this is the root-node
+			root_tree.get_data();
+            var root_tree_key = root_tree.object_prefix; 
+            hierarchy_objs[root_tree_key] = root_tree;
+        }
+        -->
+    </script>
+    
+    
+    
+</div>
+
+
+{% endblock %}

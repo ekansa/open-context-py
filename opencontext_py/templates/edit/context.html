@@ -25,7 +25,17 @@
         <ol id="context" class="breadcrumb">
             <li><strong>Descriptive Property or Relation:</strong></li>
             <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
-        </ol> 
+        </ol>
+        {% elif item.act_nav == 'projects' %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Project or Collection:</strong></li>
+            <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
+        </ol>
+        {% elif item.act_nav == 'profiles' %}
+        <ol id="context" class="breadcrumb">
+            <li><strong>Data Entry Profile:</strong></li>
+            <li id="context-root" class="active" id="item-in-context"><strong>{{ item.label }}</strong></li>
+        </ol>
         {% else %}    
         <ol id="context" class="breadcrumb">
             <li><strong>Context:</strong></li>

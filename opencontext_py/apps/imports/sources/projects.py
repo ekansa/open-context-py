@@ -10,7 +10,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.imports.refine.api import RefineAPI
 
 
-# Finalizes an import by processing data
+# Methods for checking on the Edit and Import status of projects
 class ImportProjects():
 
     def __init__(self):

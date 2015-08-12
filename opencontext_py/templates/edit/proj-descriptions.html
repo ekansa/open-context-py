@@ -1,0 +1,38 @@
+{% load humanize %}
+{% block proj-types %}
+<div class="panel panel-default top-panel">
+    <div class="panel-heading">
+        <div class="row">
+            <div class="col-sm-6">
+                <h4 class="panel-title">Descriptive Properties and Categories</h4>
+            </div>            
+            <div class="col-sm-6 text-right">
+                <h4 class="panel-title">{{ status.manifest_summary.predicates|intcomma }} properties/relations and {{ status.manifest_summary.types|intcomma }} types</h4>
+            </div>
+        </div>
+    </div>
+    <div class="panel-body">
+        <div class="container">
+            <p>Project Descriptions</p>
+            <div id="proot-more-0" class="container"></div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        <!--
+        function root_descriptions(){
+            var p_root_tree = new hierarchy(project_uuid, "proot-more-0");
+            p_root_tree.root_node = true;  //root node of this tree
+            p_root_tree.object_prefix = 'ptree-0';
+			   p_root_tree.do_description_tree();
+            p_root_tree.get_data();
+            var p_root_tree_key = p_root_tree.object_prefix; 
+            hierarchy_objs[p_root_tree_key] = p_root_tree;
+        }
+        -->
+    </script>
+        
+</div>
+
+
+{% endblock %}

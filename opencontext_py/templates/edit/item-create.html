@@ -1,5 +1,5 @@
 {% block item-create %}
-<div style="margin-top:20px;">
+<div style="margin-top:0px;">
     
     <div class="panel panel-default">
         <div class="panel-heading">
@@ -12,7 +12,16 @@
                 </li>
                 <li>
                     <a href="javascript:showCreateItemInterface('persons');">{% autoescape off %}{{ icons.persons }}{% endautoescape %} Person / Organization</a>
-                </li>    
+                </li>
+                <li>
+                    <a href="javascript:showCreateItemInterface('predicates');">{% autoescape off %}{{ icons.predicates }}{% endautoescape %} Property (Predicate)</a>
+                </li>
+                <li>
+                    <a href="javascript:showCreateItemInterface('types');">{% autoescape off %}{{ icons.types }}{% endautoescape %} Category / Type</a>
+                </li>
+                <li>
+                    <a href="javascript:showCreateItemInterface('profiles');">{% autoescape off %}{{ icons.profiles }}{% endautoescape %} Data Entry Profile</a>
+                </li>
             </ul>
         </div>
     </div>
@@ -28,7 +37,7 @@
     </script>
     
     <!-- Javascript for creating items -->
-    <script src="../../static/oc/js/edit/item-create.js"></script>
+    <script src="{{ base_url }}/static/oc/js/edit/item-create.js"></script>
     
 </div>
 {% endblock %}

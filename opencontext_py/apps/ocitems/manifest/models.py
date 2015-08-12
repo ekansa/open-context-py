@@ -109,6 +109,13 @@ class Manifest(models.Model):
         """
         super(Manifest, self).save(update_fields=['archived'])
 
+    def revised_save(self):
+        """
+        Updates with the last indexed time
+        """
+        self.revised = timezone.now()
+        super(Manifest, self).save(update_fields=['revised'])
+
     def slug_save(self, project_indices=False):
         """
         save only slug value
@@ -232,7 +239,7 @@ class ManifestGeneration():
             print('Item: ' + nslug.label + ' has slug: ' + nslug.slug)
             cc += 1
         return cc
-    
+
     def redo_slugs_for_source_id(self, source_id):
         """ makes slugs for manifest items from a given source """
         man_objs = Manifest.objects.filter(source_id=source_id)

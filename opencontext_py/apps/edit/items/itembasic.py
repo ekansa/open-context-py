@@ -15,6 +15,7 @@ from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.indexer.reindex import SolrReIndex
 
 
 # Help organize the code, with a class to make editing items easier
@@ -23,7 +24,10 @@ class ItemBasicEdit():
         for basic item eding
     """
     UI_ICONS = {'persons': '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
-                'projects': '<i class="fa fa-database"></i>'}
+                'projects': '<i class="fa fa-database"></i>',
+                'predicates': '<span class="glyphicon glyphicon-stats" aria-hidden="true"></span>',
+                'types': '<i class="fa fa-sitemap"></i>',
+                'profiles': '<span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>'}
 
     def __init__(self,
                  uuid,
@@ -33,18 +37,19 @@ class ItemBasicEdit():
         self.errors = {'uuid': False,
                        'html': False}
         self.response = {}
-        try:
-            self.manifest = Manifest.objects.get(uuid=uuid)
-        except Manifest.DoesNotExist:
-            self.manifest = False
-            self.errors['uuid'] = 'Item ' + uuid + ' not in manifest'
-        if request is not False and self.manifest is not False:
-            # check to make sure edit permissions OK
-            pp = ProjectPermissions(self.manifest.project_uuid)
-            self.edit_permitted = pp.edit_allowed(request)
-        else:
-            # default to no editting permissions
-            self.edit_permitted = False
+        if uuid is not False:
+            try:
+                self.manifest = Manifest.objects.get(uuid=uuid)
+            except Manifest.DoesNotExist:
+                self.manifest = False
+                self.errors['uuid'] = 'Item ' + uuid + ' not in manifest'
+            if request is not False and self.manifest is not False:
+                # check to make sure edit permissions OK
+                pp = ProjectPermissions(self.manifest.project_uuid)
+                self.edit_permitted = pp.edit_allowed(request)
+            else:
+                # default to no editting permissions
+                self.edit_permitted = False
 
     def update_label(self, label, post_data):
         """ Updates an item's label. Generally straightforward
@@ -54,6 +59,7 @@ class ItemBasicEdit():
         old_label = self.manifest.label
         self.manifest.label = label
         self.manifest.save()
+        self.manifest.revised_save()
         note = ''
         if self.manifest.item_type == 'projects':
             try:
@@ -85,6 +91,9 @@ class ItemBasicEdit():
             except Person.DoesNotExist:
                 self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                 ok = False
+        # now reindex for solr, including child items impacted by the changes
+        sri = SolrReIndex()
+        sri.reindex_related(self.manifest.uuid)
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',

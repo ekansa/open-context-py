@@ -8,6 +8,8 @@ from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -21,8 +23,17 @@ class ProjectOverview():
         projects
     """
 
+    TYPE_KEYS = ['subjects',
+                 'media',
+                 'documents',
+                 'persons',
+                 'predicates',
+                 'types',
+                 'tables']
+
     def __init__(self,
                  project_uuid):
+        self.errors = {}
         self.project_uuid = project_uuid
         try:
             self.manifest = Manifest.objects.get(uuid=project_uuid,
@@ -32,18 +43,13 @@ class ProjectOverview():
             self.errors['uuid'] = 'No project ' + project_uuid + ' not in manifest'
         self.manifest_summary = False
         self.class_summary = LastUpdatedOrderedDict()
-        self.blank_items = LastUpdatedOrderedDict() # items with no description
+        self.data_type_summary = []  # summary datatype
+        self.blank_items = LastUpdatedOrderedDict()  # items with no description
         self.no_context_items = LastUpdatedOrderedDict()  # items with no context
+        self.mem_entities = {}  # entities kept in memory to reduce database lookups
 
     def get_manifest_summary(self):
         """ gets a summary of items in the manifest """
-        type_keys = ['subjects',
-                     'media',
-                     'documents',
-                     'persons',
-                     'predicates',
-                     'types',
-                     'tables']
         output = LastUpdatedOrderedDict()
         man_sum = Manifest.objects\
                           .filter(project_uuid=self.project_uuid)\
@@ -52,7 +58,7 @@ class ProjectOverview():
                           .order_by('-total')
         for sum_type in man_sum:
             item_type = sum_type['item_type']
-            if item_type in type_keys:
+            if item_type in self.TYPE_KEYS:
                 output[item_type] = sum_type['total']
                 self.get_class_uri_summary(item_type)
         self.manifest_summary = output
@@ -82,6 +88,30 @@ class ProjectOverview():
             output.append(res_item)
         self.class_summary[item_type] = output
         return output
+
+    def get_data_type_summary(self):
+        """ gets a summary for
+            predicates of different data types
+        """
+        filter_predicates = 'oc_manifest.uuid = oc_predicates.uuid \
+                             AND oc_manifest.class_uri = \'variable\' '
+        l_tables = 'oc_manifest'
+        pred_sum = Predicate.objects\
+                            .filter(project_uuid=self.project_uuid)\
+                            .extra(tables=[l_tables], where=[filter_predicates])\
+                            .values('data_type')\
+                            .annotate(total=Count('data_type'))\
+                            .order_by('-total')
+        for pred in pred_sum:
+            item = LastUpdatedOrderedDict()
+            item['id'] = pred['data_type']
+            if item['id'] in Predicate.DATA_TYPES_HUMAN:
+                item['label'] = Predicate.DATA_TYPES_HUMAN[item['id']]
+            else:
+                item['label'] = pred['data_type'].replace('xsd:', '')
+            item['count'] = pred['total']
+            self.data_type_summary.append(item)
+        return self.data_type_summary
 
     def get_no_context_items(self):
         """ returns a list of subject items
@@ -123,7 +153,7 @@ class ProjectOverview():
             item['label'] = nc_man.label
             self.no_context_items[class_uri]['items'].append(item)
         return self.no_context_items
-    
+
     def get_orphan_items(self,
                          item_type,
                          consider=['contain',
@@ -175,3 +205,21 @@ class ProjectOverview():
             item['label'] = dull_man.label
             self.blank_items[item_type][class_uri]['items'].append(item)
         return self.blank_items
+
+    def get_cache_entity(self, identifier, get_icon=False):
+        """ gets an entity either from memory or
+            from the database, if from the database, 
+            cache the entity in memory to make lookups faster
+        """
+        output = False
+        if identifier in self.mem_entities:
+            # found in memory
+            output = self.mem_entities[identifier]
+        else:
+            ent = Entity()
+            ent.get_icon = get_icon
+            found = ent.dereference(identifier)
+            if found:
+                self.mem_entities[identifier] = ent
+                output = ent
+        return output

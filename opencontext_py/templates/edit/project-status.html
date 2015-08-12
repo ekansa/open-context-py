@@ -1,0 +1,83 @@
+{% extends 'edit/item.html' %}
+
+{% block itemcontent %}
+<div id="item-content">
+    <!-- BEGIN item edit general javascript includes -->
+    <script type="text/javascript">
+        <!--
+        var csrftoken = $.cookie('csrftoken');
+        var item_label = '{{ item.label }}';
+        var item_type = '{{ item.act_nav }}';
+        var uuid = '{{ item.uuid }}';
+        var project_uuid = '{{ item.project.uuid }}';
+        var base_url = '{{ base_url }}';
+        -->
+    </script>
+    <style type="text/css">
+        #fieldtabfields .ui-selecting { background: #FFFF99; }
+        #fieldtabfields .ui-selected { background: #FFFF66; }
+        #status-map {
+            width: 400px;
+            height: 400px;
+         }
+    </style>
+    <!-- END of item edit javascript includes -->
+    
+    <div class="row">
+        <div class="col-sm-12">
+         {% include 'edit/context.html' %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-9">
+            <div id="observations">
+                <ul class="nav nav-tabs" id="editTabs" data-tabs="tabs">
+                    <li class="active"><a data-toggle="tab" href="#status-1">Project Status</a></li>
+                    <li><a data-toggle="tab" href="#status-2">Subjects</a></li>
+                    <li><a data-toggle="tab" href="#status-3">Media</a></li>
+                    <li><a data-toggle="tab" href="#status-4">Documents</a></li>
+                    <li><a data-toggle="tab" href="#status-5">Persons</a></li>
+                    <li><a data-toggle="tab" href="#status-6">Descriptions</a></li>
+                    <li><a data-toggle="tab" href="#status-7">Data Entry Profiles</a></li>
+                </ul>
+                <div class="tab-content obs-multi">
+                    <div id="status-1" class="tab-pane fade in active">
+                        {% include 'edit/proj-basic.html' %}
+                    </div>
+                    <div id="status-2" class="tab-pane fade">
+                        {% include 'edit/proj-subjects.html' %}
+                    </div>
+                    <div id="status-3" class="tab-pane fade">
+                        {% include 'edit/proj-media.html' %}
+                    </div>
+                    <div id="status-4" class="tab-pane fade">
+                        {% include 'edit/proj-documents.html' %}
+                    </div>
+                    <div id="status-5" class="tab-pane fade">
+                        {% include 'edit/proj-persons.html' %}
+                    </div>
+                    <div id="status-6" class="tab-pane fade">
+                        {% include 'edit/proj-descriptions.html' %}
+                    </div>
+                    <div id="status-7" class="tab-pane fade">
+                        {% include 'edit/proj-profiles.html' %}
+                    </div>
+                </div>
+            </div>
+         </div>
+         <div class="col-sm-3">
+         {% include 'edit/item-create.html' %}
+         {% include 'items/project.html' %}
+         {% include 'items/map.html' %}
+         </div>
+          
+        {% include 'edit/edit-modal.html' %}
+         
+        
+        <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" onload="root_contexts();"></script>
+        <script src="{{ base_url }}/static/oc/js/entities/entities.js" onload="root_descriptions();"></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profiles.js" onload="project_profiles();"></script>
+         
+     </div>
+</div>
+{% endblock %} 

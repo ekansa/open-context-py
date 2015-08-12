@@ -17,6 +17,8 @@ from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
+from opencontext_py.apps.edit.projects import views as EditProjectsViews
+from opencontext_py.apps.edit.inputs import views as InputProfileViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
@@ -83,8 +85,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        # IMPORTER INTERFACE PAGES
                        # --------------------------
-                       url(r'^imports/project/(?P<project_uuid>\S+)',  Imp_sources.project,
-                           name='imp_sources_project'),
+                       url(r'^imports/projects/(?P<project_uuid>\S+)',  Imp_sources.project,
+                           name='imp_sources_projects'),
                        url(r'^imports/field-types/(?P<source_id>\S+)', Imp_sources.field_types,
                            name='field_types'),
                        url(r'^imports/field-types-more/(?P<source_id>\S+)', Imp_sources.field_types_more,
@@ -142,6 +144,12 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^edit/update-item-basics/(?P<uuid>\S+)', EditItemViews.update_item_basics,
                            name='edit_item_basics'),
+                       url(r'^edit/add-edit-item-assertion/(?P<uuid>\S+)', EditItemViews.add_edit_item_assertion,
+                           name='edit_add_edit_item_assertion'),
+                       url(r'^edit/delete-item-assertion/(?P<uuid>\S+)', EditItemViews.delete_item_assertion,
+                           name='edit_delete_item_assertion'),
+                       url(r'^edit/html-validate/', EditItemViews.html_validate,
+                           name='edit_html_validate'),
                        url(r'^edit/add-item-annotation/(?P<uuid>\S+)', EditItemViews.add_item_annotation,
                            name='add_item_annotation'),
                        url(r'^edit/add-item-stable-id/(?P<uuid>\S+)', EditItemViews.add_item_stable_id,
@@ -158,15 +166,69 @@ urlpatterns = patterns('',
                            name='create_project'),
                        url(r'^edit/add-update-ld-entity', EditItemViews.add_update_ld_entity,
                            name='add_update_ld_entity'),
+                       url(r'^edit/projects/(?P<project_uuid>\S+)', EditProjectsViews.status,
+                           name='edit_projects_status'),
+                       # --------------------------
+                       # BELOW ARE URLs FOR INPUT PROFILE RELATED AJAX REQUESTS
+                       # --------------------------
+                       url(r'^edit/inputs/profiles/(?P<profile_uuid>\S+).json', InputProfileViews.json_view,
+                           name='edit_input_profile_json_view'),
+                       url(r'^edit/inputs/profiles/(?P<profile_uuid>\S+)/edit', InputProfileViews.profile_edit,
+                           name='edit_input_profile_edit'),
+                       url(r'^edit/inputs/profiles/(?P<profile_uuid>\S+)/(?P<edit_uuid>\S+)', InputProfileViews.profile_use,
+                           name='edit_input_profile_use'),
+                       url(r'^edit/inputs/create-update-profile-item/(?P<profile_uuid>\S+)/(?P<edit_uuid>\S+)',
+                           InputProfileViews.create_update_profle_item,
+                           name='edit_input_profile_create_update_profle_item'),
+                       url(r'^edit/inputs/profile-item-list/(?P<profile_uuid>\S+)', InputProfileViews.profile_item_list,
+                           name='edit_input_profile_item_list'),
+                       url(r'^edit/inputs/create-profile/(?P<project_uuid>\S+)', InputProfileViews.create,
+                           name='edit_input_profile_create'),
+                       url(r'^edit/inputs/update-profile/(?P<profile_uuid>\S+)', InputProfileViews.update,
+                           name='edit_input_profile_update'),
+                       url(r'^edit/inputs/delete-profile/(?P<profile_uuid>\S+)', InputProfileViews.delete,
+                           name='edit_input_profile_delete'),
+                       url(r'^edit/inputs/duplicate-profile/(?P<profile_uuid>\S+)', InputProfileViews.duplicate,
+                           name='edit_input_profile_duplicate'),
+                       url(r'^edit/inputs/create-field-group/(?P<profile_uuid>\S+)', InputProfileViews.create_field_group,
+                           name='edit_input_create_field_group'),
+                       url(r'^edit/inputs/update-field-group/(?P<fgroup_uuid>\S+)', InputProfileViews.update_field_group,
+                           name='edit_input_update_field_group'),
+                       url(r'^edit/inputs/delete-field-group/(?P<fgroup_uuid>\S+)', InputProfileViews.delete_field_group,
+                           name='edit_input_delete_field_group'),
+                       url(r'^edit/inputs/create-field/(?P<fgroup_uuid>\S+)', InputProfileViews.create_field,
+                           name='edit_input_create_field'),
+                       url(r'^edit/inputs/update-field/(?P<field_uuid>\S+)', InputProfileViews.update_field,
+                           name='edit_input_update_field'),
+                       url(r'^edit/inputs/delete-field/(?P<field_uuid>\S+)', InputProfileViews.delete_field,
+                           name='edit_input_delete_field'),
+                       url(r'^edit/inputs/reorder-item/(?P<uuid>\S+)', InputProfileViews.reorder_item,
+                           name='edit_input_reorder_item'),
+                       url(r'^edit/inputs/item-label-check/(?P<project_uuid>\S+)', InputProfileViews.label_check,
+                           name='edit_input_label_check'),
+                       url(r'^edit/inputs/(?P<project_uuid>\S+).json', InputProfileViews.index_json,
+                           name='edit_input_index_json'),
+                       # --------------------------
+                       # EDITING ROOT
+                       # --------------------------
+                       url(r'^edit/', EditProjectsViews.index,
+                           name='edit_projects_index'),
+                       # --------------------------
                        # --------------------------
                        # BELOW ARE URLs FOR ENTITY LOOKUP AJAX REQUESTS
                        # --------------------------
                        url(r'^entities/hierarchy-children/(?P<identifier>\S+)', EntityViews.hierarchy_children,
                            name='entity_hierarchy_children'),
+                       url(r'^entities/id-summary/(?P<identifier>\S+)', EntityViews.id_summary,
+                           name='entity_id_summary'),
                        url(r'^entities/look-up/(?P<item_type>\S+)', EntityViews.look_up,
                            name='entity_look_up'),
                        url(r'^entities/annotations/(?P<subject>\S+)', EntityViews.entity_annotations,
                            name='entity_annotations'),
+                       url(r'^entities/contain-children/(?P<identifier>\S+)', EntityViews.contain_children,
+                           name='entity_contain_children'),
+                       url(r'^entities/description-children/(?P<identifier>\S+)', EntityViews.description_hierarchy,
+                           name='entity_description_hierarchy'),
                        #----------------------------
                        # BELOW ARE INDEX REQUESTS
                        #----------------------------
