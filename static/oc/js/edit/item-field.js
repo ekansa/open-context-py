@@ -1310,9 +1310,6 @@ function edit_field(){
 				}
 			}
 		}
-		if (document.getElementById(dom_ids.id)) {
-			var item_id = document.getElementById(dom_ids.id).value;
-		}
 		this.make_validation_html(val_mes, is_valid, value_num);
 	}
 	this.validateHTML = function(value_num){
@@ -1486,13 +1483,13 @@ function edit_field(){
 				'</div>'
 			].join('\n');
 		
-		if (value_num != false) {
-			//add this to the dom
-			var dom_ids = this.make_field_val_domids(value_num);
-			if (document.getElementById(dom_ids.valid)) {
-				var act_dom = document.getElementById(dom_ids.valid);
-				act_dom.innerHTML = alert_html;
-			}
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.valid)) {
+			var act_dom = document.getElementById(dom_ids.valid);
+			act_dom.innerHTML = alert_html;
+		}
+		else{
+			alert("cannot find " + dom_ids.valid);
 		}
 		this.make_submit_button(is_valid, value_num);
 		return alert_html;

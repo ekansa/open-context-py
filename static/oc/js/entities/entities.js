@@ -293,7 +293,7 @@ function searchEntityObj() {
 	
 		  // turn on tool tips for these search results
 		  $(function () {
-				$('[data-toggle="tooltip"]').tooltip()
+				$('[data-toggle="tooltip"]').tooltip();
 		  })
 	 }
 	 this.selectEntity = function(item_num){
@@ -323,6 +323,12 @@ function searchEntityObj() {
 		  if (this.afterSelectDone != false) {
 				// execute a post selection entity is done function
 				if (typeof(this.afterSelectDone.exec) !== 'undefined') {
+					 if (item_id in this.ids) {
+						  this.afterSelectDone.selected_entity = this.ids[item_id];
+					 }
+					 else{
+						  this.afterSelectDone.selected_entity = false;
+					 }
 					this.afterSelectDone.exec();
 				}
 		  }
