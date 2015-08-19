@@ -11,6 +11,7 @@ from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
 from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
+from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliation
 
 
 def index(request, spatial_context=None):
@@ -47,6 +48,9 @@ def html_view(request, spatial_context=None):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if 'json' in req_neg.use_response_type:
             # content negotiation requested JSON or JSON-LD
+            recon_obj = Reconciliation()
+            json_ld = recon_obj.process(request.GET,
+                                        json_ld)
             return HttpResponse(json.dumps(json_ld,
                                 ensure_ascii=False, indent=4),
                                 content_type=req_neg.use_response_type + "; charset=utf8")
@@ -90,6 +94,9 @@ def json_view(request, spatial_context=None):
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
         req_neg = RequestNegotiation('application/json')
         req_neg.supported_types = ['application/ld+json']
+        recon_obj = Reconciliation()
+        json_ld = recon_obj.process(request.GET,
+                                    json_ld)
         if 'HTTP_ACCEPT' in request.META:
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:

@@ -14,6 +14,7 @@ class FilterLinks():
     BASE_SOLR_FIELD_PARAM_MAPPINGS = \
         {'___project_id': 'proj',
          '___context_id': 'path',
+         'obj_all___biol_term_hastaxonomy___pred_id': 'reconcile',
          '___pred_': 'prop',
          'item_type': 'type'}
 

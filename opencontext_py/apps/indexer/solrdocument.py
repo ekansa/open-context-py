@@ -4,6 +4,7 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -60,6 +61,7 @@ class SolrDocument:
         self._process_projects()
         self._process_persistent_ids()
         self._process_associated_linkedata()
+        self.process_equivalent_linked_data()
         self._process_interest_score()
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
@@ -741,6 +743,85 @@ class SolrDocument:
                                                 if last_object_uri is not False:
                                                     self.process_object_uri(last_object_uri)
 
+    def process_equivalent_linked_data(self):
+        """ Types are useful for entity reconciliation
+            this checks for linked data associated
+            with a type
+        """
+        for equiv_uri in self.LD_EQUIVALENT_PREDICATES:
+            if equiv_uri in self.oc_item.json_ld \
+               and 'foaf' not in equiv_uri:
+                # for now, default to a close match
+                fname = 'skos_closematch___pred_id'
+                allname = 'obj_all___skos_closematch___pred_id'
+                if fname not in self.fields:
+                    self.fields[fname] = []
+                    if self.ROOT_LINK_DATA_SOLR not in self.fields:
+                        self.fields[self.ROOT_LINK_DATA_SOLR] = []
+                    item = self._concat_solr_string_value(
+                        'skos-closematch',
+                        'id',
+                        'http://www.w3.org/2004/02/skos/core#closeMatch',
+                        'Close Match')
+                    self.fields[self.ROOT_LINK_DATA_SOLR].append(item)
+                if allname not in self.fields:
+                    self.fields[allname] = []
+                for entity in self.oc_item.json_ld[equiv_uri]:
+                    if 'http://' in entity['id'] \
+                       or 'https://' in entity['id']:
+                        self.fields['text'] += entity['label'] + '\n'
+                        self.fields['text'] += entity['id'] + '\n'
+                        item = self._concat_solr_string_value(
+                            entity['slug'],
+                            'id',
+                            entity['id'],
+                            entity['label'])
+                        self.fields[fname].append(item)
+                        self.fields[allname].append(item)
+                        self.process_object_uri(entity['id'])
+        if 'skos:related' in self.oc_item.json_ld:
+            fname = 'skos_related___pred_id'
+            allname = 'obj_all___skos_related___pred_id'
+            if fname not in self.fields:
+                self.fields[fname] = []
+                if self.ROOT_LINK_DATA_SOLR not in self.fields:
+                    self.fields[self.ROOT_LINK_DATA_SOLR] = []
+                item = self._concat_solr_string_value(
+                    'skos-related',
+                    'id',
+                    'http://www.w3.org/2004/02/skos/core#related',
+                    'Related')
+                self.fields[self.ROOT_LINK_DATA_SOLR].append(item)
+            if allname not in self.fields:
+                self.fields[allname] = []
+            for entity in self.oc_item.json_ld['skos:related']:
+                if 'http://' in entity['id'] \
+                   or 'https://' in entity['id']:
+                    self.fields['text'] += entity['label'] + '\n'
+                    self.fields['text'] += entity['id'] + '\n'
+                    item = self._concat_solr_string_value(
+                        entity['slug'],
+                        'id',
+                        entity['id'],
+                        entity['label'])
+                    self.fields[fname].append(item)
+                    self.fields[allname].append(item)
+                    self.process_object_uri(entity['id'])
+                elif 'oc-pred:' in entity['id'] \
+                    and 'owl:sameAs' in entity:
+                    pred_uuid = URImanagement.get_uuid_from_oc_uri(
+                                entity['owl:sameAs']
+                                )
+                    self.fields['text'] += entity['label'] + '\n'
+                    self.fields['text'] += entity['id'] + '\n'
+                    item = self._concat_solr_string_value(
+                        entity['slug'],
+                        'id',
+                        '/predicates/' + pred_uuid,
+                        entity['label'])
+                    self.fields[fname].append(item)
+                    self.fields[allname].append(item)
+    
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
             Useful to have a simple field that
