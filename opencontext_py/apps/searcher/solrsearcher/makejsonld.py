@@ -833,6 +833,11 @@ class MakeJsonLd():
             facet['rdfs:isDefinedBy'] = 'dc-terms:isReferencedBy'
             facet['label'] = 'Is referenced by'
             facet['data-type'] = 'id'
+        elif solr_facet_key == 'obj_all___biol_term_hastaxonomy___pred_id':
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'http://purl.org/NET/biol/ns#term_hasTaxonomy'
+            facet['label'] = 'Has Biological Taxonomy'
+            facet['data-type'] = 'id'
         else:
             # ------------------------
             # Facet is not at the root

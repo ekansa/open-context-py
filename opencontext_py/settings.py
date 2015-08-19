@@ -154,6 +154,15 @@ MANAGERS = (
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
 )
 
+# CACHES, Makes things faster
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'oc_cache_table',
+    }
+}
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 

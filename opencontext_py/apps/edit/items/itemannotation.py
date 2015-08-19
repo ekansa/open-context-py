@@ -143,7 +143,7 @@ class ItemAnnotation():
                 sort_change = 0
                 ok = False
                 note += 'Error, sort_change needs to be an integer value. '
-            if sort_change !=0 :
+            if sort_change != 0:
                 try:
                     la_act = LinkAnnotation.objects\
                                            .get(hash_id=hash_id)

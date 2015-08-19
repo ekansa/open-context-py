@@ -205,20 +205,24 @@ function edit_field(){
 				}
 				
 				var row_html = [
-					'<div class="row">',
-						'<div class="' + this.value_del_col_class + '">',
-						this.make_val_delete_button_html(i),
-						'</div>',
-						'<div class="' + this.value_sort_col_class + '">',
-						sort_buttons,
-						'</div>',
-						'<div class="' + this.value_col_class + '">',
-						val_html,
-						'</div>',
-						'<div class="' + this.valid_col_class + '">',
-							'<div id="' + dom_ids.valid + '">',
-							'</div>',
-							'<div id="' + dom_ids.submitcon + '">',
+					'<div class="panel panel-default">',
+						'<div class="panel-body">',
+							'<div class="row">',
+								'<div class="' + this.value_del_col_class + '">',
+								this.make_val_delete_button_html(i),
+								'</div>',
+								'<div class="' + this.value_sort_col_class + '">',
+								sort_buttons,
+								'</div>',
+								'<div class="' + this.value_col_class + '">',
+								val_html,
+								'</div>',
+								'<div class="' + this.valid_col_class + '">',
+									'<div id="' + dom_ids.valid + '">',
+									'</div>',
+									'<div id="' + dom_ids.submitcon + '">',
+									'</div>',
+								'</div>',
 							'</div>',
 						'</div>',
 					'</div>',
@@ -977,6 +981,8 @@ function edit_field(){
 				this.values_obj = data.data[this.id];
 				if (document.getElementById(this.values_dom_id)) {
 					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
 					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
 					this.postprocess();
 					this.active_value_num = false;
@@ -1035,6 +1041,54 @@ function edit_field(){
 				this.values_obj = data.data[this.id];
 				if (document.getElementById(this.values_dom_id)) {
 					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
+					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
+					this.postprocess();
+					this.active_value_num = false;
+				}
+			}
+		}
+	}
+	this.rankFieldValue = function(value_num, sort_change){
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.hash_id)) {
+			var hash_id = document.getElementById(dom_ids.hash_id).value;
+			this.ajax_sort_value(hash_id, sort_change);
+		}
+	}
+	this.ajax_sort_value = function(hash_id, sort_change){
+		// sends an ajax request to delete a value
+		var data = {
+			hash_id: hash_id,
+			sort_change: sort_change,
+			id: this.id,
+			predicate_uuid: this.predicate_uuid,
+			obs_num: this.obs_num,
+			csrfmiddlewaretoken: csrftoken};
+		var url = this.make_url("/edit/sort-item-assertion/");
+		url += encodeURIComponent(this.edit_uuid);
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_sort_valueDone,
+				error: function (request, status, error) {
+					alert('Data sort change failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
+	this.ajax_sort_valueDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			if (this.id in data.data) {
+				this.values_obj = data.data[this.id];
+				if (document.getElementById(this.values_dom_id)) {
+					// data successfully updated, added new values so add them to the dom
+					this.prepped_trees = false;
+					this.prep_field_trees = []; // prepare field trees
 					document.getElementById(this.values_dom_id).innerHTML = this.make_vals_html();
 					this.postprocess();
 					this.active_value_num = false;
@@ -1256,9 +1310,6 @@ function edit_field(){
 				}
 			}
 		}
-		if (document.getElementById(dom_ids.id)) {
-			var item_id = document.getElementById(dom_ids.id).value;
-		}
 		this.make_validation_html(val_mes, is_valid, value_num);
 	}
 	this.validateHTML = function(value_num){
@@ -1432,13 +1483,13 @@ function edit_field(){
 				'</div>'
 			].join('\n');
 		
-		if (value_num != false) {
-			//add this to the dom
-			var dom_ids = this.make_field_val_domids(value_num);
-			if (document.getElementById(dom_ids.valid)) {
-				var act_dom = document.getElementById(dom_ids.valid);
-				act_dom.innerHTML = alert_html;
-			}
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.valid)) {
+			var act_dom = document.getElementById(dom_ids.valid);
+			act_dom.innerHTML = alert_html;
+		}
+		else{
+			alert("cannot find " + dom_ids.valid);
 		}
 		this.make_submit_button(is_valid, value_num);
 		return alert_html;

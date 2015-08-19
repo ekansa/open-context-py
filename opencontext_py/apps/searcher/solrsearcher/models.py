@@ -318,6 +318,13 @@ class SolrSearch():
             obj_query = qm.process_ld_object(obj)
             query['fq'] += obj_query['fq']
         """ -----------------------------------------
+            Add default facet fields, used for most
+            searches
+            -----------------------------------------
+        """
+        query = self.add_default_facet_fields(query,
+                                              request_dict)
+        """ -----------------------------------------
             Additional, dataset specific specialized
             queries
             -----------------------------------------
@@ -346,9 +353,13 @@ class SolrSearch():
         if trinomial is not False:
             query = spsearch.process_trinonial_reconcile(trinomial,
                                                          query)
-        # Now add default facet fields
-        query = self.add_default_facet_fields(query,
-                                              request_dict)
+        reconcile = self.get_request_param(request_dict,
+                                           'reconcile',
+                                           False,
+                                           True)
+        if reconcile is not False:
+            query = spsearch.process_reconcile(reconcile,
+                                               query)
         if len(self.prequery_stats) > 0:
             #  we have fields that need a stats prequery
             statsq = StatsQuery()
