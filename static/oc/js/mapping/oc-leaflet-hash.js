@@ -53,12 +53,18 @@
                     }
                     if (args.length >= 4) {
                         //map layer type to display
-                        if (this.map.hasOwnProperty('default_layer')) {
-                            this.map.default_layer = false;
+                        if (this.map.hasOwnProperty('default_overlay_layer')) {
+                            this.map.default_overlay_layer = false;
                             if (args[4] != 'false') {
                                 // type of map layer to display
-                                this.map.default_layer = args[4];
+                                this.map.default_overlay_layer = args[4];
                             }
+                        }
+                    }
+                    if (args.length >= 5) {
+                        //map base layer type to display
+                        if (this.map.hasOwnProperty('base_name')) {
+                            this.map.base_name = args[5];
                         }
                     }
                     return {
@@ -75,18 +81,36 @@
             var center = map.getCenter(),
                 zoom = map.getZoom(),
                 precision = Math.max(0, Math.ceil(Math.log(zoom) / Math.LN2));
-            if (this.map.hasOwnProperty('geodeep')) {
-                var default_layer = 'false';
-                if (this.map.hasOwnProperty('default_layer')) {
-                    var default_layer = this.map.default_layer; 
-                }
-                return "#" + [
+            var hash_list = [
                     zoom,
                     center.lat.toFixed(precision),
-                    center.lng.toFixed(precision),
-                    this.map.geodeep,
-                    default_layer
-                ].join("/");
+                    center.lng.toFixed(precision)
+                ];
+            if (map.hasOwnProperty('geodeep')) {
+                hash_list.push(map.geodeep);
+                var default_overlay_layer = 'any';
+                if (map.hasOwnProperty('default_overlay_layer')) {
+                    if (typeof this.map.default_overlay_layer != "undefined") {
+                        var default_overlay_layer = map.default_overlay_layer; 
+                    }
+                }
+                // now add the over-lay layer
+                hash_list.push(default_overlay_layer);
+                var base_name = map.default_base_name;
+                if (map.hasOwnProperty('base_name')) {
+                    // we've got mapping layer base id
+                    if (typeof map.default_overlay_layer != "undefined") {
+                        base_name = map.base_name;
+                    }
+                }
+                 // now add the base layer
+                hash_list.push(base_name);
+                /*
+                console.log(default_overlay_layer);
+                console.log(map.base_name);
+                console.log(hash_list);
+                */
+                return "#" + hash_list.join("/");
             }
             else{
                 return "#" + [zoom,
@@ -114,6 +138,16 @@
             this.map = null;
             if (this.isListening) {
                 this.stopListening();
+            }
+        },
+        
+        forceHashChange: function(map) {
+            // change the hash, in response to changes
+            // in base layers
+            var hash = this.formatHash(this.map);
+            if (this.lastHash != hash) {
+                location.replace(hash);
+                this.lastHash = hash;
             }
         },
         

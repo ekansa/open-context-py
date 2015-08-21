@@ -56,7 +56,7 @@ function search_map(json_url) {
 	//map.fit_bounds exists to set an inital attractive view
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
-	map.default_layer = 'any';
+	map.default_overlay_layer = 'any';
 	map.layer_limit = false;
 	map.button_ready = true;
 	map.min_tile_count_display = 25;
@@ -70,25 +70,31 @@ function search_map(json_url) {
 	}
 	var bounds = new L.LatLngBounds();
 	var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		id: 'osm',
 		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
 	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		id: 'mapbox-light',
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
 	
 	var mapboxDark = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		id: 'mapbox-dark',
 		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
    
-	var ESRISatelliteTiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	var ESRISatelliteTiles = L.tileLayer(							'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		id: 'esri-sat',
 		attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
 	var gmapRoad = new L.Google('ROADMAP');
+	gmapRoad.id = 'gmap-road';
 	var gmapSat = new L.Google('SATELLITE');
+	gmapSat.id = 'gmap-sat';
 	var gmapTer = new L.Google('TERRAIN');
-   
+	gmapTer.id = 'gmap-ter';
 	var baseMaps = {
 		"Google-Terrain": gmapTer,
 		"Google-Satellite": gmapSat,
@@ -98,21 +104,38 @@ function search_map(json_url) {
 		"Mapbox-Light": mapboxLight,
 		"Mapbox-Dark": mapboxDark,
 	};
-  
 	map._layersMaxZoom = 20;
+	map.default_base_name = "Google-Satellite";
+	map.base_name = map.default_base_name;
+	map.act_base_map = gmapSat; //default base map
+	map.base_layers = baseMaps;
+	map.record_base_change = false;
+	// add the layer control
 	var layerControl = L.control.layers(baseMaps).addTo(map);
-	map.addLayer(gmapSat);
+	map.on('baselayerchange', function(e) {
+		// when the base layer changes, keep the id
+		this.base_name = e.name;
+		if (this.record_base_change) {
+			hash.forceHashChange(this);
+		}
+		else{
+			// don't record the hash change
+			// for the fist layer change
+			this.record_base_change = true;
+		}
+	});
+	// now add the active base map
+	map.addLayer(map.act_base_map);
 	
 	/*
 	 * Check for hashes in the URL that may indicate map parameters
 	 */
-	map.req_hash = false;
+	map.req_hash = window.location.hash;
 	map.req_hash_layer = false;
 	map.get_request_hash = function(){
 		// get the original map hash
-		if(window.location.hash) {
+		if(map.req_hash) {
 			// Fragment exists
-			map.req_hash = window.location.hash;
 			var args = map.req_hash.split("/");
 			if (args.length >= 3) {
 				var geodeep = parseInt(args[3], 10);
@@ -124,12 +147,24 @@ function search_map(json_url) {
 						map.req_hash_layer = args[4];
 					}	
 				}
+				if (args.length >= 5) {
+					var map_name = args[5];
+					if (map_name in map.base_layers){
+						map.base_name = map_name;
+						var act_base_map = map.act_base_map;
+						map.removeLayer(act_base_map);
+						var act_base_map = map.base_layers[map_name];
+						map.act_base_map = act_base_map;
+						map.addLayer(act_base_map);
+					}	
+				}
 			}
 		} else {
 			// Fragment doesn't exist
 			map.req_hash = false;
 		}
 	}
+	
 	map.show_title_menu = function(map_type, geodeep){
 		/*
 		* Show current layer type
@@ -164,7 +199,7 @@ function search_map(json_url) {
 			var deep_tile_control = L.easyButton('glyphicon-th',
 				// the control for higher resolution region tiles
 				function (){
-					map.default_layer = 'tile';
+					map.default_overlay_layer = 'tile';
 					var new_geodeep = parseInt(map.geodeep) + 1;
 					if (new_geodeep <= map.max_tile_zoom) {
 						//can still zoom in
@@ -177,7 +212,7 @@ function search_map(json_url) {
 			var big_tile_control = L.easyButton('glyphicon-th-large',
 				// control for lower resolution region tiles
 				function (){
-					map.default_layer = 'tile';
+					map.default_overlay_layer = 'tile';
 					var new_geodeep = map.geodeep - 1;
 					if (new_geodeep > 3) {
 						//can still zoom out
@@ -193,7 +228,7 @@ function search_map(json_url) {
 						// delete the currently displayed layer
 						map.removeLayer(tile_region_layer);
 					}
-					map.default_layer = 'circle';
+					map.default_overlay_layer = 'circle';
 					map.circle_regions();
 				},
 				'Circle-markers for Open Context regions',
@@ -582,7 +617,7 @@ function search_map(json_url) {
 					else{
 						// intital has request did not specify circle or tile
 						if (data.features.length > map.min_tile_count_display
-						    || map.default_layer == 'tile') {
+						    || map.default_overlay_layer == 'tile') {
 							map.render_region_layer();
 						}
 						else{
