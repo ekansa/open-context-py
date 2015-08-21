@@ -44,6 +44,7 @@ function search_map(json_url) {
 	}
 	
 	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
+	hash = new L.Hash(map);
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	map.map_title_dom_id = 'map-title';
@@ -102,6 +103,33 @@ function search_map(json_url) {
 	var layerControl = L.control.layers(baseMaps).addTo(map);
 	map.addLayer(gmapSat);
 	
+	/*
+	 * Check for hashes in the URL that may indicate map parameters
+	 */
+	map.req_hash = false;
+	map.req_hash_layer = false;
+	map.get_request_hash = function(){
+		// get the original map hash
+		if(window.location.hash) {
+			// Fragment exists
+			map.req_hash = window.location.hash;
+			var args = map.req_hash.split("/");
+			if (args.length >= 3) {
+				var geodeep = parseInt(args[3], 10);
+				if (!isNaN(geodeep)) {
+					map.geodeep = geodeep;
+				}
+				if (args.length >= 4) {
+					if (args[4] != 'false'){
+						map.req_hash_layer = args[4];
+					}	
+				}
+			}
+		} else {
+			// Fragment doesn't exist
+			map.req_hash = false;
+		}
+	}
 	map.show_title_menu = function(map_type, geodeep){
 		/*
 		* Show current layer type
@@ -133,7 +161,8 @@ function search_map(json_url) {
 		if (!region_controls) {
 			var buttonControls = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
 			buttonControls.id = 'region-facet-buttons';
-			var deep_tile_control = L.easyButton('glyphicon-th', 
+			var deep_tile_control = L.easyButton('glyphicon-th',
+				// the control for higher resolution region tiles
 				function (){
 					map.default_layer = 'tile';
 					var new_geodeep = parseInt(map.geodeep) + 1;
@@ -145,7 +174,8 @@ function search_map(json_url) {
 				'Higher resolution Open Context regions',
 				buttonControls
 			);
-			var big_tile_control = L.easyButton('glyphicon-th-large', 
+			var big_tile_control = L.easyButton('glyphicon-th-large',
+				// control for lower resolution region tiles
 				function (){
 					map.default_layer = 'tile';
 					var new_geodeep = map.geodeep - 1;
@@ -541,11 +571,23 @@ function search_map(json_url) {
 				map.geojson_facets[map.geodeep] = data;
 				if (map.layer_limit == false) {
 					//code
-					if (data.features.length > map.min_tile_count_display || map.default_layer == 'tile') {
+					if (map.req_hash_layer == 'circle') {
+						// initial hash request wants a circle
+						map.circle_regions();
+					}
+					else if (map.req_hash_layer == 'tile') {
+						// initial hash request wants a tile
 						map.render_region_layer();
 					}
 					else{
-						map.circle_regions();
+						// intital has request did not specify circle or tile
+						if (data.features.length > map.min_tile_count_display
+						    || map.default_layer == 'tile') {
+							map.render_region_layer();
+						}
+						else{
+							map.circle_regions();
+						}
 					}
 				}
 				else if(map.layer_limit == 'circle'){
@@ -556,9 +598,17 @@ function search_map(json_url) {
 				}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
+				if (map.req_hash != false) {
+					// for the initial load of the page,
+					// go back to the original request hash
+					window.location.replace(map.req_hash);
+					// do it only once, for the first page load
+					map.req_hash = false;
+					map.req_hash_layer  = false;
+				}
 			}
 		})
 	}
-
+	
 	this.map = map;
 }
