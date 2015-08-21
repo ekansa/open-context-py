@@ -95,6 +95,7 @@ L.Control.ZoomBox = L.Control.extend({
                     // hopefully better scaling when zoomed in
                     new_zoom = Math.round(distance * 3.5, 0);
                 }
+                
                 var bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
                 if (map.getZoom() == map.getMaxZoom()){
                     L.DomUtil.addClass(link, 'leaflet-disabled');
@@ -102,7 +103,14 @@ L.Control.ZoomBox = L.Control.extend({
                 else {
                     L.DomUtil.removeClass(link, 'leaflet-disabled');
                 }
+                
+            
+                var hashed_part = ''; 
                 var url = window.location.href;
+                if ( url.indexOf('#') > -1) {
+                    hashed_part = window.location.hash;
+                    url = url.substr(0, url.indexOf('#'));
+                }
                 url = replaceURLparameter(url, 'geodeep', new_zoom);
                 url = replaceURLparameter(url, 'disc-bbox', bbox_query);
                 //console.log(url);
