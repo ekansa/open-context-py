@@ -53,9 +53,11 @@
     <script type="text/javascript">
         <!--
         var base_url = "{{ base_url }}";
+        var hash = false;
         var search_map = new search_map("{{ json_url }}");
         var total_count = {{ st.total_count }};
         if (total_count > 0) {
+            search_map.map.get_request_hash();
             search_map.map.get_geojson_regions();
         }
         -->
