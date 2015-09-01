@@ -7,6 +7,7 @@ import lxml.html
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
+from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -120,6 +121,9 @@ class ItemAssertion():
                                                                field['obs_num'],
                                                                field['predicate_uuid'])
                 new_data[field_key] = new_field_data
+        if self.ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'add-edit-item-assertions',
                          'ok': self.ok,
                          'additions': additions,
@@ -237,6 +241,9 @@ class ItemAssertion():
                                                            obs_num,
                                                            predicate_uuid)
                 new_data[post_data['id']] = new_field_data
+        if self.ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'rank-item-assertion-value',
                          'ok': self.ok,
                          'data': new_data,
@@ -282,6 +289,9 @@ class ItemAssertion():
                                                            post_data['obs_num'],
                                                            post_data['predicate_uuid'])
                 new_data[post_data['id']] = new_field_data
+        if self.ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'delete-item-assertion',
                          'ok': self.ok,
                          'data': new_data,
@@ -530,7 +540,7 @@ class ItemAssertion():
             str_man = StringManagement()
             str_man.project_uuid = self.project_uuid
             str_man.source_id = self.source_id
-            object_uuid = str_man.get_make_string(str(note))
+            str_obj = str_man.get_make_string(str(note))
             # now make the assertion
             new_ass = Assertion()
             new_ass.uuid = self.uuid
@@ -546,8 +556,10 @@ class ItemAssertion():
             new_ass.visibility = 1
             new_ass.predicate_uuid = Assertion.PREDICATES_NOTE
             new_ass.object_type = 'xsd:string'
-            new_ass.object_uuid = object_uuid
+            new_ass.object_uuid = str_obj.uuid
             new_ass.save()
+            # now clear the cache a change was made
+            cache.clear()
 
     def create_note_entity(self):
         """ creates a note predicate entity if it does not yet

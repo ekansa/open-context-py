@@ -4,6 +4,7 @@ from lxml import etree
 import lxml.html
 from django.db import models
 from django.db.models import Q
+from django.core.cache import cache
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
@@ -159,6 +160,9 @@ class ItemCreate():
         else:
             label = '[Item not created]'
             uuid = False
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -219,6 +223,9 @@ class ItemCreate():
         else:
             label = '[Item not created]'
             uuid = False
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -403,6 +410,9 @@ class ItemCreate():
                                       'types',
                                       newtype.source_id,
                                       type_note)
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -491,6 +501,9 @@ class ItemCreate():
                                       'predicates',
                                       source_id,
                                       pred_note)
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,

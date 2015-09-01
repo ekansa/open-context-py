@@ -4,6 +4,7 @@ from lxml import etree
 import lxml.html
 from django.db import models
 from django.db.models import Q
+from django.core.cache import cache
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
@@ -94,6 +95,9 @@ class ItemBasicEdit():
         # now reindex for solr, including child items impacted by the changes
         sri = SolrReIndex()
         sri.reindex_related(self.manifest.uuid)
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',
@@ -165,6 +169,9 @@ class ItemBasicEdit():
             else:
                 ok = False
                 note += ' Edit status must be an integer between 0 and 5 inclusively.'
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': action,
                          'ok': ok,
                          'change': {'note': note}}
@@ -199,6 +206,9 @@ class ItemBasicEdit():
         else:
             note = 'Cannot dereference the class-uri'
             ok = False
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'update-class-uri',
                          'ok': ok,
                          'change': {'prop': 'class_uri',
@@ -229,8 +239,8 @@ class ItemBasicEdit():
                 except Project.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                     ok = False
-            elif self.manifest.item_type == 'documents'\
-                and content_type == 'content':
+            elif self.manifest.item_type == 'documents' \
+                  and content_type == 'content':
                 try:
                     cobj = OCdocument.objects.get(uuid=self.manifest.uuid)
                     cobj.content = content
@@ -241,6 +251,9 @@ class ItemBasicEdit():
                     ok = False
             else:
                 ok = False
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'update-string-content',
                          'ok': ok,
                          'change': {'prop': content_type,

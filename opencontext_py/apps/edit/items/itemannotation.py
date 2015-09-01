@@ -2,6 +2,7 @@ import time
 import uuid as GenUUID
 from django.db import models
 from django.db.models import Q
+from django.core.cache import cache
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
@@ -94,6 +95,8 @@ class ItemAnnotation():
                     new_la.object_uri = object_uri
                     new_la.creator_uuid = self.creator_uuid
                     new_la.save()
+                    # now clear the cache a change was made
+                    cache.clear()
                 else:
                     ok = False
                     note = 'This annotation already exists.'
@@ -119,6 +122,8 @@ class ItemAnnotation():
                                      .delete()
             ok = True
             note = 'annotation deleteted'
+            # now clear the cache a change was made
+            cache.clear()
         else:
             ok = False
             note = 'Missing a annotation hash-id.'
@@ -189,6 +194,8 @@ class ItemAnnotation():
                             anno_b.save()
                             ok = True
                             note += 'Annotation successfully resorted. '
+                            # now clear the cache a change was made
+                            cache.clear()
                         else:
                             ok = False
                             note += 'Cannot change sorting, as at limit of the list of objects.'
@@ -227,7 +234,7 @@ class ItemAnnotation():
                     orcid_ok = True
             self.orcid_ok = orcid_ok
         return self.orcid_ok
-    
+
     def add_item_stable_id(self, post_data):
         """ adds a stable identifier to an item """
         ok = False
@@ -261,11 +268,14 @@ class ItemAnnotation():
                 note = 'Identifier already in use'
         else:
             note = 'Problems with the ID request'
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'add-item-stable-id',
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
-    
+
     def delete_item_stable_id(self, post_data):
         """ deletes a stable identifier from an item """
         orcid_ok = self.check_orcid_ok(post_data)
@@ -287,11 +297,14 @@ class ItemAnnotation():
             note = 'Deleteted: ' + stable_id + ' from ' + self.manifest.uuid
         else:
             note = 'Need to indicate what stable_id to delete'
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': 'delete-item-stable-id',
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
-    
+
     def request_param_val(self,
                           data,
                           param,

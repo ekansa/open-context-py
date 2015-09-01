@@ -6,6 +6,7 @@ from dateutil.parser import parse
 import uuid as GenUUID
 from django.db import models
 from django.db.models import Q, Count
+from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
@@ -97,6 +98,9 @@ class InputProfileUse():
             self.ok = False
             label = 'No item'
             note += '.. FAILED!'
+        if self.ok:
+            # now clear the cache a change was made
+            cache.clear()
         self.response = {'action': action,
                          'ok': self.ok,
                          'change': {'uuid': self.edit_uuid,
