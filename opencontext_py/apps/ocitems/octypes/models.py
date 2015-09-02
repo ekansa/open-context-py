@@ -1,7 +1,9 @@
+import reversion  # version control object
 from django.db import models
 
 
 # OCtype stores a type, or an item from a project's controlled vocabulary
+@reversion.register  # records in this model under version control
 class OCtype(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

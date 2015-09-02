@@ -1,10 +1,12 @@
 import re
+import reversion  # version control object
 from django.db import models
 from unidecode import unidecode
 from django.template.defaultfilters import slugify
 
 
 # This class stores linked data annotations made on the data contributed to open context
+@reversion.register  # records in this model under version control
 class LinkEntity(models.Model):
     uri = models.CharField(max_length=200, primary_key=True)
     slug = models.SlugField(max_length=70, unique=True)

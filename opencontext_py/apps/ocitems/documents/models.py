@@ -1,7 +1,9 @@
+import reversion  # version control object
 from django.db import models
 
 
 # OCdocument stores the content of a document resource (structured text)
+@reversion.register  # records in this model under version control
 class OCdocument(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

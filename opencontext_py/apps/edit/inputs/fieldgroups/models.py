@@ -1,3 +1,4 @@
+import reversion
 import collections
 from jsonfield import JSONField
 from datetime import datetime
@@ -5,7 +6,8 @@ from django.utils import timezone
 from django.db import models
 
 
-# Stores information about fields for a data entry form
+# Stores information about groups of fields for a data entry form
+@reversion.register
 class InputFieldGroup(models.Model):
 
     GROUP_VIS = {'open': 'Show Field Group in an open panel',

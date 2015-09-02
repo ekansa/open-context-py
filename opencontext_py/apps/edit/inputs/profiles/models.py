@@ -1,3 +1,4 @@
+import reversion  # version control object
 from datetime import datetime
 from django.utils import timezone
 from django.db import models
@@ -5,6 +6,7 @@ from django.db import models
 
 # Stores information about a type of data record to be created through
 # manual user data entry
+@reversion.register  # records in this model under version control
 class InputProfile(models.Model):
     #  item types allowed for profiles
     PROFILE_TYPES = ['subjects',

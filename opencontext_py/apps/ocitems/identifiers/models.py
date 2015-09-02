@@ -1,21 +1,23 @@
 import hashlib
+import reversion  # version control object
 from django.db import models
 
 
 # OCstring stores stable identifiers of various types
+@reversion.register  # records in this model under version control
 class StableIdentifer(models.Model):
-    
+
     ID_TYPE_PREFIXES = {'ark': 'http://n2t.net/ark:/',
                         'doi': 'http://dx.doi.org/',
                         'orcid': 'http://orcid.org/'}
-    
+
     stable_id = models.CharField(max_length=200, primary_key=True)
     stable_type = models.CharField(max_length=50)
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     item_type = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
-    
+
     def type_uri_check(self, stable_type, stable_id):
         """ returns the type of identifier in a stable_id
             if it has a uri prefix in it. If there's no

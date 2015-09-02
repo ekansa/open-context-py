@@ -1,4 +1,5 @@
 import hashlib
+import reversion  # version control object
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
@@ -7,6 +8,7 @@ from django.db import models
 
 # Assertions store descriptions and linking relations for Open Context items
 # Assertion data mainly represents data contributed from data authors, not OC editors
+@reversion.register  # records in this model under version control
 class Assertion(models.Model):
     # standard predicate for project root children
     PREDICATES_PROJ_ROOT = 'oc-gen:contains-root'

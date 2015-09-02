@@ -1,3 +1,4 @@
+import reversion
 import hashlib
 from datetime import datetime
 from django.utils import timezone
@@ -6,6 +7,7 @@ from django.db import models
 
 # Models relationships between profiles, field groups, fields
 # and rules
+@reversion.register
 class InputRelation(models.Model):
 
     OK_TYPES = ['profiles',

@@ -1,9 +1,11 @@
+import reversion
 from datetime import datetime
 from django.utils import timezone
 from django.db import models
 
 
 # Stores information about fields for a data entry form
+@reversion.register
 class InputField(models.Model):
 
     # required fields for creating items in open context

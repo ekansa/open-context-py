@@ -1,4 +1,5 @@
 import hashlib
+import reversion  # version control object
 from django.db import models
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 
@@ -6,6 +7,7 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 # Events enables modeling of aspects of time and space for an item
 # a zero in the feature_id field means that the time data is not tied to
 # a specific feature associated with an item.
+@reversion.register  # records in this model under version control
 class Event(models.Model):
     DEFAULT_METATYPE = 'oc-gen:formation-use-life'
     DEFAULT_WHENTYPE = 'Interval'
