@@ -142,7 +142,17 @@ Also, here are some handy git commands to execute (assuming you are navigated in
     git reset --hard origin
     git pull
 
-You can check on things and interact with the Open Context Django application directly through the Python shell. To do so, (assuming you've already activated your virtual environment), navigate into the directory with 'manag.py' and type:
+
+(1.20) Enable Database Caching:
+
+Open Context uses Django's caching system to temporarily store views of different resources (records, search results, etc.). This makes Open Context faster when deployed on the open Web. The specific caching method adopted by Open Context uses Django's database caching method (see: https://docs.djangoproject.com/en/1.8/topics/cache/). Once you have Open Context and its Postgres database installed, you'll need to set up database caching with the following command after navigating to the directory containing Open Context's Django "manage.py" file:
+
+     python manage.py createcachetable
+
+
+(1.21) Open Context via a Python Shell
+
+You can check on things and interact with the Open Context Django application directly through the Python shell. To do so, (assuming you've already activated your virtual environment), navigate into the directory with 'manage.py' and type:
 
      python manage.py shell
 

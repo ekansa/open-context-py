@@ -1,9 +1,11 @@
+import reversion  # version control object
 from datetime import datetime
 from django.db import models
 
 
 # Predicate stores a predicate (decriptive property or linking relation)
 # that is contributed by open context data contributors
+@reversion.register  # records in this model under version control
 class Predicate(models.Model):
     CLASS_TYPES = ['variable',
                    'link']

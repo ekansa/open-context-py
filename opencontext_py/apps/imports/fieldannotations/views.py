@@ -9,6 +9,7 @@ from opencontext_py.apps.imports.fieldannotations.links import ProcessLinks
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_control
 
 
 # These views display an HTML form for classifying import fields,
@@ -17,6 +18,7 @@ def index(request):
     return HttpResponse("Hello, world. You're at the imports fields annotations index.")
 
 
+@cache_control(no_cache=True)
 def view(request, source_id):
     """ Returns JSON data for an identifier in its hierarchy """
     if not request.user.is_superuser:
@@ -35,6 +37,7 @@ def view(request, source_id):
             raise Http404
 
 
+@cache_control(no_cache=True)
 def subjects_hierarchy_examples(request, source_id):
     """ Returns JSON data with examples of the subjects hierarchy """
     if not request.user.is_superuser:
@@ -52,6 +55,7 @@ def subjects_hierarchy_examples(request, source_id):
             raise Http404
 
 
+@cache_control(no_cache=True)
 def described_examples(request, source_id):
     """ Returns JSON data with examples of described entites """
     if not request.user.is_superuser:
@@ -69,6 +73,7 @@ def described_examples(request, source_id):
             raise Http404
 
 
+@cache_control(no_cache=True)
 def linked_examples(request, source_id):
     """ Returns JSON data with examples of described entites """
     if not request.user.is_superuser:
@@ -86,6 +91,7 @@ def linked_examples(request, source_id):
             raise Http404
 
 
+@cache_control(no_cache=True)
 def delete(request, source_id, annotation_id):
     """ Returns JSON data for an identifier in its hierarchy """
     if not request.user.is_superuser:
@@ -109,6 +115,7 @@ def delete(request, source_id, annotation_id):
             return HttpResponseForbidden
 
 
+@cache_control(no_cache=True)
 def create(request, source_id):
     """ Classifies one or more fields with posted data """
     if not request.user.is_superuser:

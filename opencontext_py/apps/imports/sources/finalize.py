@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -26,7 +27,7 @@ class FinalizeImport():
     # prefix to save the state of the import process
     DEFAULT_STAGE_ROW_PREFIX = 'imp-stage-row'
     DEFAULT_DONE_STATUS = 'import-done'
-    
+
     def __init__(self, source_id):
         self.source_id = source_id
         pg = ProcessGeneral(source_id)
@@ -88,6 +89,8 @@ class FinalizeImport():
         else:
             outcomes['done_stage_num'] = outcomes['total_stages']
             outcomes['next_stage'] = 'All completed'
+            # now clear the cache a change was made
+            cache.clear()
         return outcomes
 
     def process_active_batch(self):

@@ -12,6 +12,7 @@ from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemp
 from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_control
 
 
 # These views provide forms for editing items
@@ -36,6 +37,7 @@ def check_profile_use(manifest):
 
 
 @ensure_csrf_cookie
+@cache_control(no_cache=True)
 def html_view(request, uuid):
     """ Displays the HTML item editing interface """
     ocitem = OCitem()
@@ -77,6 +79,7 @@ def html_view(request, uuid):
 
 
 @ensure_csrf_cookie
+@cache_control(no_cache=True)
 def check_list_view(request, uuid):
     """ Displays the HTML item editing interface """
     ocitem = OCitem()
@@ -108,6 +111,7 @@ def check_list_view(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def update_item_basics(request, uuid):
     """ Handles POST requests to update an item """
     item_edit = ItemBasicEdit(uuid, request)
@@ -154,6 +158,7 @@ def update_item_basics(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def add_edit_item_assertion(request, uuid):
     """ Handles POST requests to add an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)
@@ -199,6 +204,7 @@ def add_edit_item_assertion(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def sort_item_assertion(request, uuid):
     """ Handles POST requests to DELETE an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)
@@ -230,6 +236,7 @@ def sort_item_assertion(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete_item_assertion(request, uuid):
     """ Handles POST requests to DELETE an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)
@@ -259,6 +266,7 @@ def delete_item_assertion(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def add_item_annotation(request, uuid):
     """ Handles POST requests to add an annotation to an item """
     item_anno = ItemAnnotation(uuid, request)
@@ -285,6 +293,7 @@ def add_item_annotation(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def edit_annotation(request, entity_id):
     """ Handles POST requests to edit an annotation of an item """
     item_anno = ItemAnnotation(entity_id, request)
@@ -312,6 +321,7 @@ def edit_annotation(request, entity_id):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete_annotation(request, entity_id):
     """ Handles POST requests to delete an annotation on an item """
     item_anno = ItemAnnotation(entity_id, request)
@@ -337,6 +347,7 @@ def delete_annotation(request, entity_id):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def html_validate(request):
     """ checks to see if a posted string is valid for use as xhtml """
     item_edit = ItemBasicEdit(False, request)
@@ -363,6 +374,7 @@ def html_validate(request):
         return HttpResponseForbidden
 
 
+@cache_control(no_cache=True)
 def add_update_ld_entity(request):
     """ Handles POST requests to create or update a linked-data entity """
     if request.method == 'POST':
@@ -411,6 +423,7 @@ def add_update_ld_entity(request):
         return HttpResponseForbidden
 
 
+@cache_control(no_cache=True)
 def add_item_stable_id(request, uuid):
     """ Handles POST requests to add an annotation to an item """
     item_anno = ItemAnnotation(uuid, request)
@@ -442,6 +455,7 @@ def add_item_stable_id(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete_item_stable_id(request, uuid):
     """ Handles POST requests to add an annotation to an item """
     item_anno = ItemAnnotation(uuid, request)
@@ -472,6 +486,7 @@ def delete_item_stable_id(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def create_item_into(request, project_uuid):
     """ Handles POST requests to create an item """
     item_create = ItemCreate(project_uuid, request)
@@ -519,6 +534,7 @@ def create_item_into(request, project_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def create_project(request):
     """ Handles POST requests to create a project item """
     if request.method == 'POST':

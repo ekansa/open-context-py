@@ -3,6 +3,7 @@ from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_control
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.inputs.projectinputs import ProjectInputs
 from opencontext_py.apps.edit.inputs.labeling import InputLabeling
@@ -17,6 +18,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 @ensure_csrf_cookie
+@cache_control(no_cache=True)
 def profile_use(request, profile_uuid, edit_uuid):
     """ Handle requests to use a profile to create
         or edit a record
@@ -81,6 +83,7 @@ def profile_use(request, profile_uuid, edit_uuid):
 
 
 @ensure_csrf_cookie
+@cache_control(no_cache=True)
 def profile_edit(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
@@ -117,6 +120,7 @@ def profile_edit(request, profile_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def json_view(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
@@ -143,6 +147,7 @@ def json_view(request, profile_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def profile_item_list(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
@@ -192,6 +197,7 @@ def profile_item_list(request, profile_uuid):
 # TO get a JSON Index of
 # InputProfiles for a project
 # ------------------------------------------------
+@cache_control(no_cache=True)
 def index_json(request, project_uuid):
     """ handles get requests to make
         a JSON index of input profiles for a project
@@ -216,6 +222,7 @@ def index_json(request, project_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def label_check(request, project_uuid):
     """ handles get requests to check on the
         validity of a proposed item label
@@ -281,6 +288,7 @@ def label_check(request, project_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def create_update_profle_item(request, profile_uuid, edit_uuid):
     """ handles POST requests to make
         or update an item with a given profile
@@ -344,6 +352,7 @@ def create_update_profle_item(request, profile_uuid, edit_uuid):
 # TO CREATE, UPDATE, DELETE, and DUPLICATE
 # InputProfiles
 # ------------------------------------------------
+@cache_control(no_cache=True)
 def create(request, project_uuid):
     """ Handles POST requests to create a new input profile """
     proj_inp = ProjectInputs(project_uuid, request)
@@ -373,6 +382,7 @@ def create(request, project_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def update(request, profile_uuid):
     """ Handles POST requests to update an existing profile """
     try:
@@ -409,6 +419,7 @@ def update(request, profile_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete(request, profile_uuid):
     """ Handles POST requests to delete an existing profile """
     try:
@@ -445,6 +456,7 @@ def delete(request, profile_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def duplicate(request, profile_uuid):
     """ Handles POST requests to duplicate an existing profile """
     try:
@@ -487,6 +499,7 @@ def duplicate(request, profile_uuid):
 # TO CREATE, UPDATE, DELETE, and DUPLICATE
 # InputFieldGroups AND InputFields
 # ------------------------------------------------
+@cache_control(no_cache=True)
 def reorder_item(request, uuid):
     """ handles a request to reorder an item """
     found = False
@@ -538,6 +551,7 @@ def reorder_item(request, uuid):
 # TO CREATE, UPDATE, DELETE, and DUPLICATE
 # InputFieldGroups
 # ------------------------------------------------
+@cache_control(no_cache=True)
 def create_field_group(request, profile_uuid):
     """ Creates a field group for a given InputProfile
     """
@@ -570,6 +584,7 @@ def create_field_group(request, profile_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def update_field_group(request, fgroup_uuid):
     """ Updates a field group for a given InputProfile
     """
@@ -600,6 +615,7 @@ def update_field_group(request, fgroup_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete_field_group(request, fgroup_uuid):
     """ Delete a field group for a given InputProfile
     """
@@ -634,6 +650,7 @@ def delete_field_group(request, fgroup_uuid):
 # TO CREATE, UPDATE, DELETE, and DUPLICATE
 # InputFields
 # ------------------------------------------------
+@cache_control(no_cache=True)
 def create_field(request, fgroup_uuid):
     """ Creates a field group for a given InputProfile
     """
@@ -668,6 +685,7 @@ def create_field(request, fgroup_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def update_field(request, field_uuid):
     """ Updates a field group for a given InputProfile
     """
@@ -698,6 +716,7 @@ def update_field(request, field_uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def delete_field(request, field_uuid):
     """ Delete a field group for a given InputProfile
     """

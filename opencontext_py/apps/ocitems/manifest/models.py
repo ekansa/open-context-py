@@ -1,6 +1,7 @@
 import time
 import re
 import roman
+import reversion  # version control object
 from django.conf import settings
 from datetime import datetime
 from django.utils import timezone
@@ -12,6 +13,7 @@ from opencontext_py.apps.ocitems.projects.models import Project
 
 
 # Manifest provides basic item metadata for all open context items that get a URI
+@reversion.register  # records in this model under version control
 class Manifest(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

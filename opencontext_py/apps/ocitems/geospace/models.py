@@ -1,9 +1,11 @@
 import hashlib
+import reversion  # version control object
 from django.db import models
 
 
 # Geodata provides geospatial feature data for an item. These get used through spatial
 # inheritance for items without their own geospatial data.
+@reversion.register  # records in this model under version control
 class Geospace(models.Model):
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)

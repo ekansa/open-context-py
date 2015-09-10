@@ -1,9 +1,11 @@
 import requests
+import reversion  # version control object
 from time import sleep
 from django.db import models
 
 
 # Mediafile has basic metadata about media resources (binary files) associated with a media resource item
+@reversion.register  # records in this model under version control
 class Mediafile(models.Model):
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
     uuid = models.CharField(max_length=50, db_index=True)

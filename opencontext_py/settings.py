@@ -74,6 +74,7 @@ if len(added_host) > 1:
 # Application definition
 
 INSTALLED_APPS = (
+    'reversion',
     'django.contrib.admin',
     'django.contrib.auth',
     # 'django.contrib.staticfiles',
@@ -81,6 +82,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
+    'opencontext_py.apps.edit.versioning',
     'opencontext_py.apps.edit.inputs.profiles',
     'opencontext_py.apps.edit.inputs.fieldgroups',
     'opencontext_py.apps.edit.inputs.inputfields',

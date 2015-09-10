@@ -1,4 +1,5 @@
 import numpy as np
+import reversion  # version control object
 from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
 from django.db import models
@@ -10,6 +11,7 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 
 
 # Project stores the content of a project resource (structured text)
+@reversion.register  # records in this model under version control
 class Project(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

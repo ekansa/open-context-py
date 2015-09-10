@@ -1,9 +1,11 @@
+import reversion  # version control object
 import hashlib
 from django.db import models
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 
 
 # This class stores linked data annotations made on the data contributed to open context
+@reversion.register  # records in this model under version control
 class LinkAnnotation(models.Model):
     # predicates indicating that a subject has an object that is a broader, more general class or property
     # used for establising hierarchy relations among oc-predicates and oc-types

@@ -1,3 +1,4 @@
+import reversion
 import collections
 from jsonfield import JSONField
 from datetime import datetime
@@ -6,6 +7,7 @@ from django.db import models
 
 
 # Stores information about fields for a data entry form
+@reversion.register
 class InputRule(models.Model):
     uuid = models.CharField(max_length=50, primary_key=True)  # uuid for the rule itself
     project_uuid = models.CharField(max_length=50, db_index=True)
