@@ -1,5 +1,5 @@
 /*
- * Functions to edit a profile
+ * Functions to create or edit an item using an input a profile
  */
 
 function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
@@ -18,6 +18,9 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.profile_data = false;
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
 	this.fields = []; // list of field objects used for data entry
+	this.submit_all_dom_id = 'submit-all-fields-outer';
+	this.fields_complete_dom_id = 'fields-complete-message-outer';
+	this.profile_items_dom_id = 'recent-profile-items-outer';
 	
 	this.get_all_data = function(){
 		//AJAX request to get data about a profile
@@ -69,8 +72,8 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	}
 	this.get_profile_dataDone = function(data){
 		this.profile_data = data;		
-		console.log(this.item_json_ld_obj);
-		console.log(this.profile_data);
+		// console.log(this.item_json_ld_obj);
+		// console.log(this.profile_data);
 		this.item_type = data.item_type;
 		this.display_profile_data();
 	}
@@ -111,9 +114,9 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		var body_html = [
 		'<div>',
 		'<div class="row">',
-		'<div class="col-xs-4" id="submit-all">',
+		'<div class="col-xs-4" id="' + this.submit_all_dom_id + '">',
 		'</div>',
-		'<div class="col-xs-8" id="fields-complete-mes">',
+		'<div class="col-xs-8" id="' + this.fields_complete_dom_id + '">',
 		'</div>',
 		'</div>',
 		'<div class="row">',
@@ -127,7 +130,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		'</div>',
 		'<div class="col-xs-7">',
 			'<label>Recent Items</label>',
-			'<div id="profile-items">',
+			'<div id="' + this.profile_items_dom_id + '">',
 			'</div>',
 		'</div>',
 		'</div>',
@@ -160,6 +163,99 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	}
 	
 	
+	
+	/* ---------------------------------------
+	 * Validation and New Item Creation or mass Update 
+	 * ---------------------------------------
+	 */
+	this.prep_all_create_update = function(){
+		// prepares a general creation or update button
+		var submit_ok = false;
+		var required_valid = this.check_valid_oc_required();
+		if (required_valid.all) {
+			// all the required fields are valid
+			submit_ok = true;
+			if (this.edit_new) {
+				var message_html = 'Ready to create the item.';
+			}
+			else{
+				var message_html = 'Ready to update the item.';
+			}
+			
+			var button_html = [
+				'<div style="margin-top: 22px;">',
+				'<button class="btn large btn-primary" onclick="' + this.obj_name + '.submitAll();">',
+				'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
+				//' Delete',
+				'</button>',
+				'</div>'
+			].join('\n');
+			
+		}
+		else{
+			// some missing validation fields
+			var message_html = '<ul>';
+			for (var i = 0, length = required_valid.missing.length; i < length; i++) {
+				message_html += '<li>' + required_valid.missing[i] + '</li>';
+			}
+			message_html += '</ul>';
+			
+			var button_html = [
+				'<div style="margin-top: 22px;">',
+				'<button class="btn large btn-default" disabled="disabled">',
+				'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
+				//' Delete',
+				'</button>',
+				'</div>'
+			].join('\n');
+			
+		}
+		if (document.getElementById(this.fields_complete_dom_id)) {
+			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
+		}
+		if (document.getElementById(this.submit_all_dom_id)) {
+			document.getElementById(this.submit_all_dom_id).innerHTML = button_html;
+		}
+		return submit_ok;
+	}
+	this.check_valid_oc_required = function(){
+		// checks to see if oc_required fields are valid
+		var required_valid = {all: true,
+		                      missing: []};
+		for (var i = 0, length = this.fields.length; i < length; i++) {
+			var field = this.fields[i];
+			if (field.oc_required) {
+				if (0 in field.value_num_validations) {
+					//checks if the first, or value_num 0 value
+					var is_valid = field.value_num_validations[0];
+					if (is_valid == false) {
+						// we have an invalid required field value!!!
+						required_valid.all = false;
+						required_valid.missing.push(field.label);
+					}
+				}
+				else{
+					required_valid.all = false;
+					required_valid.missing.push(field.label);
+				}
+			}
+		}
+		return required_valid;
+	}
+	this.submitAll = function(){
+		var submit_ok = this.prep_all_create_update();
+		if (submit_ok) {
+			var submit_data_obj = {};
+			for (var i = 0, length = this.fields.length; i < length; i++) {
+				var field = this.fields[i];
+				var field_values = field.getValues();
+				if (field_values.length > 0) {
+					submit_data_obj[i] = field_values;
+				}
+			}
+			console.log(submit_data_obj);
+		}
+	}
 	
 	/* ---------------------------------------
 	 * Field Group and Field HTML 
@@ -202,7 +298,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			field.parent_obj_name = this.obj_name;
 			field.obj_name = 'fields[' + field.id + ']';
 			field.add_new_data_row = true;
-			field.edit_new = false;
+			field.edit_new = this.edit_new;
 			field.edit_uuid = this.edit_uuid;
 			field.item_type = this.item_type;
 			field.label = profile_field.label;
@@ -278,8 +374,25 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.postprocess_fields = function(){
 		// activates hiearchy trees + other post-processing functions
 		// than need to happen after fields are addded to the DOM
+		
+		// execute this after validation is completed for required fields
+		var after_validation_done = {
+			obj_name: this.obj_name,
+			submit_all_dom_id: this.submit_all_dom_id,
+			fields_complete_dom_id: this.fields_complete_dom_id,
+			fields: this.fields,
+			check_valid_oc_required: this.check_valid_oc_required,
+			prep_all_create_update: this.prep_all_create_update,
+			exec: function(){
+				this.prep_all_create_update();
+			}
+		};
+		
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
+			if (field.oc_required) {
+				field.after_validation_done = after_validation_done;
+			}
 			field.postprocess();
 		}
 	}
