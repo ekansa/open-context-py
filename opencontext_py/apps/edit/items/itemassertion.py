@@ -18,6 +18,7 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
+from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
 
 
 class ItemAssertion():
@@ -27,6 +28,7 @@ class ItemAssertion():
     """
 
     def __init__(self):
+        self.hash_id = False
         self.uuid = False
         self.project_uuid = False
         self.item_type = False
@@ -38,6 +40,7 @@ class ItemAssertion():
         self.errors = {}
         self.manifest_items = {}
         self.predicate_items = {}
+        self.user_id = False
         self.ok = True
         self.response = False
 
@@ -84,11 +87,21 @@ class ItemAssertion():
                             field['sort'] = 0
                     if 'replace_all' in field:
                         if field['replace_all']:
-                            Assertion.objects\
-                                     .filter(uuid=item_man.uuid,
-                                             obs_num=field['obs_num'],
-                                             predicate_uuid=pred_man.uuid)\
-                                     .delete()
+                            drev = DeletionRevision()
+                            drev.project_uuid = item_man.project_uuid
+                            drev.uuid = item_man.uuid
+                            drev.item_type = item_man.item_type
+                            drev.user_id = self.user_id
+                            rev_label = 'Updated ' + item_man.label
+                            rev_label += ', field: ' + field['label']
+                            del_objs = Assertion.objects\
+                                                .filter(uuid=item_man.uuid,
+                                                        obs_num=field['obs_num'],
+                                                        predicate_uuid=pred_man.uuid)
+                            for del_obj in del_objs:
+                                drev.assertion_keys.append(del_obj.hash_id)
+                                del_obj.delete()
+                            drev.save_delete_revision(rev_label, '')
                     if 'values' in field:
                         i = 0
                         additions[field_id] = []
@@ -280,6 +293,7 @@ class ItemAssertion():
                 self.ok = False
                 self.errors['hash_id'] = 'Cannot find ' + str(hash_id) + ' do delete'
             if del_ass is not False:
+                self.hash_id = hash_id
                 del_ass.delete()
             if 'id' in post_data \
                and 'predicate_uuid' in post_data\
