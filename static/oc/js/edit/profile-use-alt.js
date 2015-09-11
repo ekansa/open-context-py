@@ -1,0 +1,372 @@
+/*
+ * Functions to edit a profile
+ */
+
+function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
+	this.act_dom_id = "profile-data";
+	this.act_meta_dom_id = "profile-meta";
+	this.obj_name = "profile_obj";
+	this.project_uuid = project_uuid;
+	this.profile_uuid = profile_uuid;
+	this.edit_uuid = edit_uuid;
+	this.item_type = edit_item_type;
+	this.edit_new = edit_new;
+	this.label_prefix = ''; // for composing new labels
+	this.label_id_len = false; //for composing new labels
+	this.context_uuid = false; //for creating a new item
+	this.item_json_ld_obj = false;
+	this.profile_data = false;
+	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
+	this.fields = []; // list of field objects used for data entry
+	
+	this.get_all_data = function(){
+		//AJAX request to get data about a profile
+		this.show_loading();
+		if (this.edit_new) {
+			// we've got a new item, so don't look for existing JSON-LD data
+         this.get_profile_data();
+		}
+		else{
+			// we've got an existing item, so look for existing JSON-LD data first
+			this.getItemJSON().then(this.get_profile_data);
+		}
+	}
+	this.getItemJSON = function(){
+		/* gets the item JSON-LD from the server */
+		this.item_json_ld_obj = new item_object(this.item_type, this.edit_uuid);
+		var url = this.make_url("/" + this.item_type + "/" + encodeURIComponent(this.item_json_ld_obj.uuid) + ".json");
+		// so as to get hashes for individual assertions, keep things easy
+		var data = {hashes: true};
+		return $.ajax({
+			type: "GET",
+			url: url,
+			context: this,
+			dataType: "json",
+			data: data,
+			success: this.getItemJSONDone,
+			error: function (request, status, error) {
+				alert('Item JSON retrieval failed, sadly. Status: ' + request.status);
+			}
+		});
+	}
+	this.getItemJSONDone = function(data){
+		/* the JSON-LD becomes this object's data */
+		this.item_json_ld_obj.data = data;
+	}
+	this.get_profile_data = function(){
+		// AJAX request to get data about a profile
+		var url = this.make_url("/edit/inputs/profiles/") + encodeURIComponent(this.profile_uuid) + ".json";
+		return $.ajax({
+			type: "GET",
+			url: url,
+			dataType: "json",
+			context: this,
+			success: this.get_profile_dataDone,
+			error: function (request, status, error) {
+				alert('Data entry profile retrieval failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
+	this.get_profile_dataDone = function(data){
+		this.profile_data = data;		
+		console.log(this.item_json_ld_obj);
+		console.log(this.profile_data);
+		this.item_type = data.item_type;
+		this.display_profile_data();
+	}
+	this.display_profile_data = function(){
+		if (document.getElementById(this.act_meta_dom_id)) {
+			// make metadata about the profile
+			// and put into the right dom id
+			var act_dom = document.getElementById(this.act_meta_dom_id);
+			var meta_html = this.make_profile_meta_html();
+			act_dom.innerHTML = meta_html;
+		}
+		if (document.getElementById(this.act_dom_id)) {
+			//put the field groups into the right dom ID
+			var act_dom = document.getElementById(this.act_dom_id);
+			var html = "";
+			html += '<div id="field-groups">';
+			html += this.make_field_groups_html();
+			html += '</div>';
+			act_dom.innerHTML = html;
+			this.postprocess_fields();
+		}
+	}
+	
+	/* ---------------------------------------
+	 * Profile HTML display
+	 * functions
+	 * ---------------------------------------
+	 */
+	this.make_profile_meta_html = function(){
+		// makes HTML for profile metadata viewing and editing
+		var num_fields = 0;
+		var data = this.profile_data;
+		for (var i = 0, length = data.fgroups.length; i < length; i++) {
+			var fgroup = data.fgroups[i];
+			num_fields += fgroup.fields.length; 
+		}
+		var title_html = "About: " + data.label;
+		var body_html = [
+		'<div>',
+		'<div class="row">',
+		'<div class="col-xs-4" id="submit-all">',
+		'</div>',
+		'<div class="col-xs-8" id="fields-complete-mes">',
+		'</div>',
+		'</div>',
+		'<div class="row">',
+		'<div class="col-xs-5">',
+			'<dl>',
+			'<dt>Item Type</dt>',
+			'<dd>' + this.describe_item_type_html(data.item_type) + '</dd>',
+			'<dt>Fields</dt>',
+			'<dd>' + num_fields + ' fields in ' + data.fgroups.length + ' groups</dd>',
+			'</dl>',
+		'</div>',
+		'<div class="col-xs-7">',
+			'<label>Recent Items</label>',
+			'<div id="profile-items">',
+			'</div>',
+		'</div>',
+		'</div>',
+		'<div class="row">',
+		'<div class="col-xs-12">',
+			'<dl>',
+			'<dt>Explanatory Note</dt>',
+			'<dd>' + data.note + '</dd>',
+			'<dt>Edit Profile</dt>',
+			'<dd>',
+			'<a title="Edit this Input Profile" target="_blank" ',
+			'href="' + this.make_url('/edit/inputs/profiles/' +  encodeURIComponent(data.id) + '/edit') + '">',
+			'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span> Edit',
+			'</a>',
+			'</dd>',
+			'</dl>',
+		'</div>',
+		'</div>',
+		// '<div class="row">',
+		// '<div class="col-xs-12" id="profile-items">',
+		// '</div>',
+		// '</div>',
+		'</div>',
+		].join('\n');
+		var panel_num = this.get_next_panel_num();
+		var meta_panel = new panel(panel_num);
+		meta_panel.title_html = title_html;
+		meta_panel.body_html = body_html;
+		return meta_panel.make_html();
+	}
+	
+	
+	
+	/* ---------------------------------------
+	 * Field Group and Field HTML 
+	 * ---------------------------------------
+	 */
+	this.make_field_groups_html = function(){
+		// makes HTML for all of the field groups, each one in a panel
+		var data = this.profile_data;
+		var html = "";
+		for (var i = 0, length = data.fgroups.length; i < length; i++) {
+			var fgroup = data.fgroups[i];
+			html += '<div id="' + fgroup.id + '">';
+			html += this.make_field_group_html(fgroup);
+			html += '</div>';
+		}
+		return html;
+	}
+	this.make_field_group_html = function(fgroup){
+		// makes the HTML for a panel that contains a field group
+		var field_html = '';
+		var obs_num =  fgroup.obs_num;
+		var raw_obs_num = obs_num - 1;
+		if (raw_obs_num < 0) {
+			raw_obs_num = 0;
+		}
+		var fields_html = [];
+		for (var i = 0, length = fgroup.fields.length; i < length; i++) {
+			var profile_field = fgroup.fields[i];
+			var field = new edit_field();
+			field.id = this.fields.length;
+			field.project_uuid = this.project_uuid;
+			field.profile_uuid = this.profile_uuid;
+			field.field_uuid = profile_field.id;
+			field.note = profile_field.note;
+			field.oc_required = profile_field.oc_required;
+			field.label_prefix = this.label_prefix; // for composing new labels
+			field.label_id_len = this.label_id_len; //for composing new labels
+			field.context_uuid = this.context_uuid; //for creating a new item
+			field.pred_type = 'variable';
+			field.parent_obj_name = this.obj_name;
+			field.obj_name = 'fields[' + field.id + ']';
+			field.add_new_data_row = true;
+			field.edit_new = false;
+			field.edit_uuid = this.edit_uuid;
+			field.item_type = this.item_type;
+			field.label = profile_field.label;
+			field.predicate_uuid = profile_field.predicate_uuid;
+			field.draft_sort = this.fields.length + 1;
+			field.obs_num = obs_num;
+			field.obs_node = '#obs-' + obs_num;
+			field.data_type = profile_field.data_type;
+			if (this.item_json_ld_obj != false) {
+				// show existing data for this predicate
+				field.values_obj = [];
+				if (profile_field.predicate_uuid == field.label_pred_uuid) {
+					// we have a field for the label
+					field.item_label = this.item_json_ld_obj.data.label;
+				}
+				else if (profile_field.predicate_uuid == field.class_pred_uuid) {
+					// we have a field for class_uri
+					var categories = this.item_json_ld_obj.getItemCategories();
+					if (categories.length > 0) {
+						field.class_uri = categories[0].id;
+						field.class_label = categories[0].label;
+					}
+				}
+				else if (profile_field.predicate_uuid == field.class_pred_uuid) {
+					// we have a field for class_uri
+					var categories = this.item_json_ld_obj.getItemCategories();
+					if (categories.length > 0) {
+						field.class_uri = categories[0].id;
+						field.class_label = categories[0].label;
+					}
+				}
+				else if (profile_field.predicate_uuid == field.context_pred_uuid) {
+					// we have a field for class_uri
+					var parent = this.item_json_ld_obj.getParent();
+					if (parent != false) {
+						field.context_uuid = parent.uuid;
+						field.context_label = parent.label;
+					}
+				}
+				else{
+					var values_obj = this.item_json_ld_obj.getObsValuesByPredicateUUID(raw_obs_num, profile_field.predicate_uuid);
+					field.values_obj = values_obj;
+				}
+			}
+			else{
+				field.values_obj = [];
+			}
+			field.initialize();
+			var field_html = '<tr>' + field.make_field_html() + '</tr>';
+			fields_html.push(field_html);
+			this.fields.push(field);
+		}
+		var body_html = [
+			'<table class="table table-striped">',
+			'<thead>',
+			'<tr>',
+			'<th class="col-xs-3">Field</th>',
+			'<th class="col-xs-6">Values</th>',
+			'</th>',
+			'</tr>',
+			'</thead>',
+			'<tbody>',
+			fields_html.join('\n'),
+			'</tbody>',
+			'</table>'
+		].join("\n");
+		var panel_num = this.get_next_panel_num();
+		var meta_panel = new panel(panel_num);
+		meta_panel.title_html = fgroup.label;
+		meta_panel.body_html = body_html;
+		return meta_panel.make_html();
+	}
+	this.postprocess_fields = function(){
+		// activates hiearchy trees + other post-processing functions
+		// than need to happen after fields are addded to the DOM
+		for (var i = 0, length = this.fields.length; i < length; i++) {
+			var field = this.fields[i];
+			field.postprocess();
+		}
+	}
+	
+	
+	
+	/*
+	 * GENERAL FUNCTIONS
+	 */
+	this.make_url = function(relative_url){
+		//makes a URL for requests, checking if the base_url is set	
+		var rel_first = relative_url.charAt(0);
+		if (typeof base_url != "undefined") {
+			var base_url_last = base_url.charAt(-1);
+			if (base_url_last == '/' && rel_first == '/') {
+				return base_url + relative_url.substring(1);
+			}
+			else{
+				return base_url + relative_url;
+			}
+		}
+		else{
+			if (rel_first == '/') {
+				return '../..' + relative_url;
+			}
+			else{
+				return '../../' + relative_url;
+			}
+		}
+	}
+	this.show_loading = function(){
+		//display a spinning gif for loading
+		if (document.getElementById(this.act_dom_id)) {
+			var act_dom = document.getElementById(this.act_dom_id);
+			var title_html = 'Loading Data Entry Profile "' + item_label + '"';
+			var body_html = this.make_loading_gif('Loading...');
+			loading_panel = new panel(0);
+			loading_panel.title_html = title_html;
+			loading_panel.body_html = body_html;
+			loading_panel.collapsing = false;
+			var html = loading_panel.make_html();
+			act_dom.innerHTML = html;
+		}
+	}
+	this.make_loading_gif = function(message){
+		var src = this.make_url('/static/oc/images/ui/waiting.gif');
+		var html = [
+			'<div class="row">',
+			'<div class="col-sm-1">',
+			'<img alt="loading..." src="' + src + '" />',
+			'</div>',
+			'<div class="col-sm-11">',
+			message,
+			'</div>',
+			'</div>'
+			].join('\n');
+		return html;
+	}
+	this.get_next_panel_num = function(){
+		var next_panel_num = Math.max.apply(Math, this.panel_nums) + 1;
+		this.panel_nums.push(next_panel_num);
+		return next_panel_num;
+	}
+	this.describe_item_type_html = function(item_type){
+		var des_type = this.describe_item_type(item_type);
+		if (des_type != false) {
+			var html = [
+			'<span title="' + des_type.note + '">' + des_type.sup_label + '</span>',
+			'<br/><samp class="uri-id">' + item_type+ '</samp>',		
+			].join('\n');
+		}
+		else{
+			var html = '<samp class="uri-id">(' + item_type + ')</samp>';		
+		}
+		return html;
+	}
+	this.describe_item_type = function(item_type){
+		types = {'subjects': {'sup_label': 'Locations, objects', 'note': 'Primary records of locations, contexts, objects + ecofacts'},
+		         'media': {'sup_label': 'Media', 'note': 'Media files (images, videos, 3D files, PDFs, etc.) that help document subjects items'},
+					'documents': {'sup_label': 'Documents', 'note': 'Text documents HTML text records of notes, diaries, logs, and other forms of narrative'},
+					'persons': {'sup_label': 'Persons, organizations', 'note': 'Persons or organizations that have some role in the project'}
+					}
+		var output = false;
+		if (item_type in types) {
+			output = types[item_type];
+		}
+		return output;
+	}
+	this.addSecs = function(d, s) {return new Date(d.valueOf()+s*1000);}
+}

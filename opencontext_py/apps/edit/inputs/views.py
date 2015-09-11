@@ -63,7 +63,10 @@ def profile_use(request, profile_uuid, edit_uuid):
                          'label_id_len': id_len,
                          'context': False,
                          'act_nav': 'profiles'}
-            template = loader.get_template('edit/profiles/profile-use.html')
+            if 'alt' in request.GET:
+                template = loader.get_template('edit/profiles/profile-use-alt.html')
+            else:
+                template = loader.get_template('edit/profiles/profile-use.html')
             context = RequestContext(request,
                                      {'item': temp_item,
                                       'super_user': request.user.is_superuser,

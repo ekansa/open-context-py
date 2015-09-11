@@ -438,10 +438,9 @@ function itemEdit(item_type, item_uuid){
 	this.ajax_get_active_idDone = function(data){
 		this.active_search_entity = data;
 	}
-	
 	this.make_url = function(relative_url){
-	//makes a URL for requests, checking if the base_url is set	
-		 //makes a URL for requests, checking if the base_url is set
+	   //makes a URL for requests, checking if the base_url is set	
+		//makes a URL for requests, checking if the base_url is set
 		var rel_first = relative_url.charAt(0);
 		if (typeof base_url != "undefined") {
 			var base_url_last = base_url.charAt(-1);
