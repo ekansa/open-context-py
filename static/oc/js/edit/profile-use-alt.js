@@ -245,15 +245,16 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.submitAll = function(){
 		var submit_ok = this.prep_all_create_update();
 		if (submit_ok) {
-			var submit_data_obj = {};
+			var data = {csrfmiddlewaretoken: csrftoken};
+			var field_data = [];
 			for (var i = 0, length = this.fields.length; i < length; i++) {
 				var field = this.fields[i];
-				var field_values = field.getValues();
-				if (field_values.length > 0) {
-					submit_data_obj[i] = field_values;
+				var act_field = field.make_field_submission_obj(true);
+				if (act_field.values.length > 0 && field.values_modified) {
+					field_data.push(act_field);
 				}
 			}
-			console.log(submit_data_obj);
+			console.log(field_data);
 		}
 	}
 	
@@ -395,6 +396,9 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			}
 			field.postprocess();
 		}
+		
+		//now validate for preparing for all fields submissions
+		this.prep_all_create_update(); 
 	}
 	
 	

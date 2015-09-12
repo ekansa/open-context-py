@@ -38,6 +38,7 @@ function edit_field(){
 	this.after_validation_done = false;
 	this.value_num_validations = {};
 	
+	this.values_modified = false;
 	this.values_obj = []; // list of values associated with an item
 	this.parent_obj_name = false;
 	this.obj_name = false;
@@ -905,6 +906,7 @@ function edit_field(){
 			label_dis: (value_num + '-field-l-dis-' + this.id), //label for ID value fields, for display only
 			id_dis: (value_num + '-field-id-dis-' + this.id), //id value field, for display only
 			valid: (value_num + '-field-valid-' + this.id), //container ID for validation feedback
+			valid_val: (value_num + '-field-valid-val-' + this.id), //hidden input field for value validation results
 			submitcon: (value_num + '-field-sbcon-' + this.id), //container ID for submitt button
 			icon: (value_num + '-field-icon-' + this.id), //for calendar icon, used with date picker
 			datecon: (value_num + '-field-datecon-' + this.id), //containers for dates, needed to activate calender date picker
@@ -947,6 +949,9 @@ function edit_field(){
 		return html;
 	}
 	this.make_afterSelectDone_obj = function(value_num, entDomID){
+		// starts an object that will include a function to be executed
+		// after a user has selected an item in the entity search object
+		// result list
 		var dom_ids = this.make_field_val_domids(value_num);
 		var afterSelectDone = {
 			dom_ids: dom_ids,
@@ -967,6 +972,7 @@ function edit_field(){
 			validation_id_response: this.validation_id_response,
 			after_validation_done: this.after_validation_done,
 			after_validation_function: this.after_validation_function,
+			values_modified: this.values_modified,
 			exec: false
 		}
 		return afterSelectDone;
@@ -975,19 +981,43 @@ function edit_field(){
 	/*
 	 * AJAX DATA CREATION, EDITING, DELETE FUNCTIONS
 	 */
-	this.getValues = function(){
+	this.make_field_submission_obj = function(replace_all){
+      // make an object for submitting the data
+		var values_list = this.get_valid_field_values();
+		var act_field = {
+			id: this.id,
+			label: this.label,
+			field_uuid: this.field_uuid,
+			predicate_uuid: this.predicate_uuid,
+			edit_uuid: this.edit_uuid,
+			obs_num: this.obs_num,
+			replace_all: replace_all,
+			values: values_list
+		};
+		return act_field;
+	}
+	this.get_valid_field_values = function(){
+		// gets valid values for this field
 		var value_num = 0;
 		var more = true;
 		var value_list = [];
 		while (more){
-			var values = false;
+			var act_value = null;
 			if (value_num in this.value_num_validations) {
 				if (this.value_num_validations[value_num]) {
-					var values = this.getValue(value_num);
+					var act_value = this.get_field_value(value_num);
 				}
 			}
-			if (values != false) {
-				value_list.push(values);
+			else{
+				var dom_ids = this.make_field_val_domids(value_num);
+				if (document.getElementById(dom_ids.valid_val)) {
+					if (document.getElementById(dom_ids.valid_val).value == '1') {
+						var act_value = this.get_field_value(value_num);
+					}
+				}
+			}
+			if (act_value != null) {
+				value_list.push(act_value);
 				value_num += 1;
 			}
 			else{
@@ -996,25 +1026,7 @@ function edit_field(){
 		}
 		return value_list;
 	}
-	this.getValue = function(value_num){
-		var dom_ids = this.make_field_val_domids(value_num);
-		var literal = null;
-		var id = null;
-		if (document.getElementById(dom_ids.literal)) {
-			literal = document.getElementById(dom_ids.literal).value;
-		}
-		if (document.getElementById(dom_ids.id)) {
-			id = document.getElementById(dom_ids.id).value;
-		}
-		if (literal != null || id != null) {
-			var values = {id: id,
-			              literal: literal};
-		}
-		else{
-			var values = false;
-		}
-		return values;
-	}
+	
 	this.addUpdateValue = function(value_num){
 		// updates a value if the hash_id is not null
 		// adds a new value if the hash_id is null
@@ -1043,7 +1055,7 @@ function edit_field(){
 		// sends an ajax request to create or update assertion values
 		var data = {
 			csrfmiddlewaretoken: csrftoken};
-		act_field = {
+		var act_field = {
 			id: this.id,
 			label: this.label,
 			predicate_uuid: this.predicate_uuid,
@@ -1241,6 +1253,18 @@ function edit_field(){
 				hash_id = document.getElementById(dom_ids.hash_id).value;
 			}
 		}
+		if (document.getElementById(dom_ids.valid_val)) {
+			// check to see if value_num has a hidden input element
+			// that has validation information
+			if (document.getElementById(dom_ids.valid_val).value == '1') {
+				this.value_num_validations[value_num] = true;
+				this.values_modified = true;
+			}
+			else{
+				this.value_num_validations[value_num] = false;
+				this.values_modified = true;
+			}
+		}
 		if (literal_val != null || id_val != null) {
 			var field_val = {
 				'hash_id': hash_id,
@@ -1389,7 +1413,7 @@ function edit_field(){
 			var is_valid = this.check_cached_id_valid(value_num);
 		}
 		this.validation_id_response(is_valid, value_num);
-		//console.log(this.ids_validation);
+		this.values_modified = true; // a value was modified
 	}
 	this.validation_id_response = function(is_valid, value_num){
 		//console.log(this.pred_type);
@@ -1428,6 +1452,7 @@ function edit_field(){
 		}
 		this.make_validation_html(val_mes, is_valid, value_num);
 		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true;
 		this.after_validation_function();
 	}
 	this.validateHTML = function(value_num){
@@ -1477,6 +1502,7 @@ function edit_field(){
 		}
 		this.html_validation = false;
 		this.value_num_validations[value_num] = data.ok;
+		this.values_modified = true; // a value was modified
 	}
 	this.validateNumber = function(value_num){
 		//validates numeric fields
@@ -1516,6 +1542,7 @@ function edit_field(){
 			}	
 		}
 		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true; // a value was modified
 		return is_valid;
 	}
 	this.validateDate = function(value_num){
@@ -1532,6 +1559,7 @@ function edit_field(){
 			this.make_validation_html(val_mes, false, value_num);
 		}
 		this.value_num_validations[value_num] = valid_date;
+		this.values_modified = true; // a value was modified
 		return valid_date;
 	}
 	this.validateBoolean = function(value_num){
@@ -1555,6 +1583,7 @@ function edit_field(){
 			this.make_validation_html(val_mes, false, value_num);
 		}
 		this.value_num_validations[value_num] = boolean_ok;
+		this.values_modified = true; // a value was modified
 		return boolean_ok;
 	}
 	this.parseStrBoolean = function(check_str){
@@ -1592,22 +1621,25 @@ function edit_field(){
 		}
 	}
 	this.make_validation_html = function(message_html, is_valid, value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
 		if (is_valid) {
 			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
 			var alert_class = "alert alert-success";
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="1" />';
 		}
 		else{
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
 			var alert_class = this.invalid_alert_class;
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="0" />';
 		}
 		var alert_html = [
 				'<div role="alert" class="' + alert_class + '" >',
 					icon_html,
 					message_html,
+					val_status,
 				'</div>'
 			].join('\n');
 		
-		var dom_ids = this.make_field_val_domids(value_num);
 		if (document.getElementById(dom_ids.valid)) {
 			var act_dom = document.getElementById(dom_ids.valid);
 			act_dom.innerHTML = alert_html;
@@ -1632,6 +1664,11 @@ function edit_field(){
 			].join('\n');
 		}
 		else if (is_valid == false && this.html_validation) {
+			
+			if (document.getElementById(dom_ids.valid_val)) {
+				document.getElementById(dom_ids.valid_val).value = '1';
+			}
+			
 			//code allow submission of bad HTML
 			var button_html = [
 				'<div style="margin-top: 10px;">',
@@ -1910,15 +1947,24 @@ function edit_field(){
 			var suggest_html = '';
 		}
 		
+		if (is_valid) {
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="1" />';
+		}
+		else{
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="0" />';
+		}
+		
 		var html = [
 			'<div style="margin-top: 3px;">',
 			alert_html,
+			val_status,
 			suggest_html,
 			'</div>'
 		].join("\n");
 		act_dom.innerHTML = html;
 		this.make_submit_button(is_valid, value_num);
 		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true; // a value was modified
 		this.after_validation_function();
 	}
 	this.useSuggestedLabel = function(value_num){
