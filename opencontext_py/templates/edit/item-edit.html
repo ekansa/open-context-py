@@ -78,17 +78,19 @@
          <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
-         <script src="{{ base_url }}/static/oc/js/edit/context-edit.js"></script>
-         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit-alt.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
+
          
          <script type="text/javascript">
             <!--
             var edit_item = false;
+            var edit_geoevents = false;
             function start_item_edit(){
                 edit_item = new itemEdit(item_type, uuid);
-                edit_item.getItemJSON();
+                edit_geoevents = new geoChronoEdit(item_type, uuid);
+                edit_item.getItemJSON().then(edit_geoevents.getItemJSON);
             }
             -->
         </script> 
