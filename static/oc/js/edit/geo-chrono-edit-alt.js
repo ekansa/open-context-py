@@ -77,6 +77,23 @@ function geoChronoEdit(item_type, item_uuid){
 		}
 		return features;
 	}
+	this.make_edit_feature_html = function(editfeat){
+		
+		
+		
+	}
+	this.make_when_html = function(when_obj){
+		if (when_obj['reference-type'] == 'specified') {
+			// this 
+		}
+		
+		
+	}
+	
+	
+	/* Generally useful functions for making urls, loading gifs
+	 *
+	 */
 	this.make_url = function(relative_url){
 		//makes a URL for requests, checking if the base_url is set	
 		var rel_first = relative_url.charAt(0);

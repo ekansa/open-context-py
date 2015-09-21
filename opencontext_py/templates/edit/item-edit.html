@@ -90,7 +90,7 @@
             function start_item_edit(){
                 edit_item = new itemEdit(item_type, uuid);
                 edit_geoevents = new geoChronoEdit(item_type, uuid);
-                edit_item.getItemJSON().then(edit_geoevents.getItemJSON);
+                edit_item.getItemJSON();
             }
             -->
         </script> 

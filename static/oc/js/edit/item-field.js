@@ -154,7 +154,8 @@ function edit_field(){
 		if (this.add_new_data_row) {
 			// add a data entry row
 			var new_value_obj = {'new': true};
-			values_obj.push(new_value_obj);	
+			values_obj.push(new_value_obj);
+			this.add_new_data_row = false;
 		}
 		var vals_html = [
 			'<div class="container-fluid" id="' + this.values_dom_id + '">'
