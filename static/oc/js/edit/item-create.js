@@ -878,6 +878,8 @@ function createNewTypeDone(data) {
 	 var button_con = document.getElementById("new-type-button-container");
 	 var note_con = document.getElementById("new-type-exp-container");
 	 if (data.ok) {
+		  var predicate_uuid = document.getElementById('pred-id').value;
+		  var predicate_label = document.getElementById('pred-label').value;
 		  var url = make_url('/edit/items/' + data.change.uuid);
 		  var link_html = 'New Category / Type: <a target="_blank" ';
 		  link_html += 'href="' +  url + '">';
@@ -886,7 +888,17 @@ function createNewTypeDone(data) {
 		  id_list += '<li>Type UUID: ' + data.change.uuid + '</li>';
 		  id_list += '<li>Content UUID: ' + data.change.content_uuid + '</li>';
 		  id_list += '</ul>';
-		  button_con.innerHTML = '<p>' + link_html + '</p>' + id_list;
+		  var add_another_button_html = [
+				'<div class="small" style="padding-bottom: 5px;">',
+				'<label>Add More to <em>' + predicate_label + '</em></label><br/>',
+				'<button class="btn btn-info" ',
+				'onclick="createTypeForPredicate(\'' + predicate_label + '\', \'' + predicate_uuid + '\');">',
+				'<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+				' Add Another',
+				'</button>',
+				'</div>'
+		  ].join('\n');
+		  button_con.innerHTML = '<p>' + link_html + '</p>' + id_list + add_another_button_html;
 		  var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
 		  var alert_class = "alert alert-success";
 		  var error_html = "";
