@@ -391,7 +391,7 @@ class ItemCreate():
             if type_uuid is not False:
                 # we already have this type!
                 ok = False
-                uuid = type_uuid
+                uuid = str(type_uuid)
                 self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
                 self.errors['uuid'] += ', becuase it already exists with UUID: ' + uuid
                 note = self.errors['uuid']
@@ -400,8 +400,8 @@ class ItemCreate():
             if content_uuid is False:
                 newtype = tm.get_make_type_within_pred_uuid(predicate_uuid,
                                                             label)
-                content_uuid = newtype.content_uuid
-                uuid = newtype.uuid
+                content_uuid = str(newtype.content_uuid)
+                uuid = str(newtype.uuid)
             else:
                 tm.content = label
                 newtype = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,

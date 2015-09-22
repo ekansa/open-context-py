@@ -1,4 +1,5 @@
 import json
+from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from django.template import RequestContext, loader
@@ -124,6 +125,7 @@ def profile_edit(request, profile_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def json_view(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
