@@ -5,9 +5,12 @@ function geoChronoEdit(item_type, item_uuid){
 	this.project_uuid = project_uuid;
 	this.item_uuid = item_uuid;
 	this.item_type = item_type;
-	this.obj_name = 'geochrono_item';
+	this.obj_name = 'edit_geoevents';
+	this.name = this.obj_name;
 	this.item_json_ld_obj = false;
 	this.edit_features = [];
+	this.default_location_type = 'oc-gen:discovey-location';
+	this.default_time_type = 'oc-gen:formation-use-life';
 	this.getItemJSON = function(){
 		if (typeof edit_item !=  "undefined") {
 			if (edit_item.item_json_ld_obj != false) {
@@ -34,6 +37,7 @@ function geoChronoEdit(item_type, item_uuid){
 					var features = this.get_event_features();
 					this.get_edit_features(features);
 					console.log(this.edit_features);
+					this.make_edit_features_html();
 				}
 			}
 		}
@@ -50,6 +54,8 @@ function geoChronoEdit(item_type, item_uuid){
 				var when_list = this.get_feature_when_list(features, geo_hash_id);
 				feature.when_list = when_list;
 				this.edit_features.push(feature);
+				// so we don't repeat this geo_hash id
+				geo_hash_ids.push(geo_hash_id);
 			}
 		}
 	}
@@ -77,17 +83,259 @@ function geoChronoEdit(item_type, item_uuid){
 		}
 		return features;
 	}
-	this.make_edit_feature_html = function(editfeat){
-		
-		
-		
+	this.make_edit_features_html = function(){
+		var html_list = [];
+		for (var edit_i = 0, length = this.edit_features.length; edit_i < length; edit_i++) {
+			var editfeat = this.edit_features[edit_i];
+			var feat_html = this.make_edit_feature_html(edit_i, editfeat);
+			html_list.push(feat_html);
+		}
+		var html = html_list.join('\n');
+		if (document.getElementById('edit-geo-features')) {
+			document.getElementById('edit-geo-features').innerHTML = html;
+		}
+		return html;
 	}
-	this.make_when_html = function(when_obj){
+	
+	this.make_edit_feature_html = function(edit_i, editfeat){
+		
+		//a blank when object to create a new record
+		var new_when_obj = {
+			start: false,
+			stop: false,
+			hash_id: false
+		};
+		if (editfeat.hasOwnProperty('when_list') == false) {
+			// for some reason we need to add a when_list property
+			editfeat.when_list = [];
+		}
+		editfeat.when_list.push(new_when_obj);
+		
+		//this bit makes the rows for date range associated with this feature
+		var when_html_list = [];
+		for (var when_i = 0, length = editfeat.when_list.length; when_i < length; when_i++) {
+			var when_obj = editfeat.when_list[when_i];
+			var when_row_html = this.make_when_html(edit_i, when_i, when_obj);
+			when_html_list.push(when_row_html);
+		}
+		var when_rows_html = when_html_list.join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-xs-5">',
+					
+				'</div>',
+				'<div class="col-xs-7">',
+					'<label>Time Spans</label>',
+					'<table class="table table-condensed table-striped">',
+						'<tbody>',
+							when_rows_html,
+						'</tbody>',
+					'</table>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		return html;
+	}
+	this.make_when_html = function(edit_i, when_i, when_obj){
 		if (when_obj['reference-type'] == 'specified') {
-			// this 
+			// this makes an editing form for existing ranges
+			var html = this.make_when_form_html(edit_i, when_i, when_obj);
+		}
+		else if (when_obj.hash_id == false) {
+			// a new when edit form
+			var html = this.make_when_form_html(edit_i, when_i, when_obj);
+		}
+		else{
+			var html = '';
+		}
+		return html;
+	}
+	this.make_when_form_html = function(edit_i, when_i, when_obj){
+		var dom_ids = this.make_when_dom_ids(edit_i, when_i);
+		if (when_obj.start != false) {
+			var start_year = this.iso_to_float_date(when_obj.start);
+		}
+		else{
+			var start_year = '';
+		}
+		if (when_obj.stop != false) {
+			var stop_year = this.iso_to_float_date(when_obj.stop);
+		}
+		else{
+			var stop_year = '';
+		}
+		if (when_obj.hash_id != false) {
+			var hash_id = when_obj.hash_id;
+			var del_style = ' style="margin-top: 10px;" ';
+			var del_title = 'Delete this date range';
+			var del_button_html = [
+				'<div ' + del_style + ' >',
+				'<button title="' + del_title + '" ',
+				'class="btn btn btn-danger btn-xs" ',
+				'onclick="' + this.name + '.deleteDateRange(' + edit_i + ', ' + when_i + ');">',
+				'<span class="glyphicon glyphicon-remove-sign"></span>',
+				'</button>',
+				'</div>'
+			].join('\n');
+			var new_button_html = this.make_date_range_submit_html(edit_i, when_i, false);
+		}
+		else{
+			var hash_id = '';
+			var del_button_html = '';
+			var new_button_html = '<p class="small">If needing a new date range, add valid integer start and end years</p>';
 		}
 		
+		var html = [
+			'<tr>',	
+				'<td class="col-xs-1">',
+					del_button_html,
+				'</td>',
+				'<td class="col-xs-3">',
+					'<input type="hidden" id="' + dom_ids.hash_id + '" ',
+					'value="' + hash_id + '" />',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.start + '">Start Year</label>',
+						'<input id="' + dom_ids.start + '" class="form-control input-sm" ',
+						'onkeydown="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
+						'onkeyup="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
+						'type="text" value="' + start_year + '" placeholder="Beginning of date range (- for BCE)" />',
+					'</div>',
+				'</td>',
+				'<td class="col-xs-3">',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.stop + '">End Year</label>',
+						'<input id="' + dom_ids.stop + '" class="form-control input-sm" ',
+						'onkeydown="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
+						'onkeyup="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
+						'type="text" value="' + stop_year + '" placeholder="End of date range (- for BCE)" />',
+					'</div>',
+				'</td>',
+				'<td class="col-xs-5">',
+					'<div id="' + dom_ids.valid + '">',
+					'</div>',
+					'<div id="' + dom_ids.new_outer + '">',
+					new_button_html,	
+					'</div>',
+				'</td>',
+			'</tr>'
+		].join('\n');
 		
+		return html;
+	}
+	this.make_date_range_submit_html = function(edit_i, when_i, new_range){
+		if (new_range) {
+			var new_button_label = 'Submit New';
+			var new_button_icon = 'glyphicon glyphicon-plus';
+		}
+		else{
+			var new_button_label = 'Submit Edit';
+			var new_button_icon = 'glyphicon glyphicon-edit';
+		}
+		var new_button_html = [
+			'<button title="Submit date range" ',
+			'class="btn btn-primary btn-xs btn-block" ',
+			'onclick="' + this.name + '.submitDateRange(' + edit_i + ', ' + when_i + ');">',
+			'<span class="' + new_button_icon + '"></span>' ,
+			new_button_label,
+			'</button>',
+		].join('\n');
+		return new_button_html;
+	}
+	this.make_when_dom_ids = function(edit_i, when_i){
+		//makes dom_ids for when items, based on the
+		//edit feature index (edit_i) and the
+		//when_list index (when_i)
+		var dom_ids = {
+			start: 'when-start-' + edit_i + '-' + when_i,
+			stop: 'when-stop-' + edit_i + '-' + when_i,
+			hash_id: 'when-hash-id-' + edit_i + '-' + when_i,
+			new_outer: 'when-new-outer-' + edit_i + '-' + when_i,
+			valid: 'when-valid-' + edit_i + '-' + when_i
+		};
+		return dom_ids;
+	}
+	
+	/*
+	 * Validation related functions
+	 */
+	this.validate_year_range = function(edit_i, when_i){
+		var dom_ids = this.make_when_dom_ids(edit_i, when_i);
+		var valid_dom = document.getElementById(dom_ids.valid);
+		var button_parent_dom = document.getElementById(dom_ids.new_outer);
+		var start_year = document.getElementById(dom_ids.start).value;
+		var stop_year = document.getElementById(dom_ids.stop).value;
+		var hash_id = document.getElementById(dom_ids.hash_id).value;
+		if (hash_id.length > 1) {
+			//we've got the hash_id for an existing date range
+			var new_range = false;
+		}
+		else{
+			var new_range = true;
+		}
+		
+		var start_valid = this.validate_year_val(start_year);
+		var stop_valid = this.validate_year_val(stop_year);	
+		if (start_valid == false || stop_valid == false) {
+			this.make_validation_html('Make sure your start and end years are integer values',
+											  false,
+											  dom_ids.valid);
+			button_parent_dom.innerHTML = '';
+		}
+		else{
+			this.make_validation_html('Start and end years are valid integer values',
+											  true,
+											  dom_ids.valid);
+			button_parent_dom.innerHTML = this.make_date_range_submit_html(edit_i,
+																								when_i,
+																								new_range);
+		}
+	}
+	this.make_validation_html = function(message_html, is_valid, valid_dom_id){
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var alert_class = 'alert alert-warning';
+		}
+		var alert_html = [
+				'<div role="alert" class="' + alert_class + '" >',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		
+		if (valid_dom_id != false) {
+			if (document.getElementById(valid_dom_id)) {
+				var act_dom = document.getElementById(valid_dom_id);
+				act_dom.innerHTML = alert_html;
+			}
+		}
+		return alert_html;
+	}
+	this.validate_year_val = function(raw_check_val){	
+		var objRegExp  = /(^-?\d\d*$)/;  
+		//check for integer characters
+		var is_valid = objRegExp.test(raw_check_val);
+		return is_valid;
+	}
+	this.isInt = function(x){
+        return (typeof x === 'number') && (x % 1 === 0);
+   }
+	this.iso_to_float_date = function(iso_text){
+		if (iso_text.indexOf('-') == 0) {
+			//the date is a negative, it's BCE
+			var output = parseInt(iso_text) - 1;
+		}
+		else if (iso_text == '0000' || iso_text == '+0000') {
+			var output = -1;
+		}
+		else{
+			var output = parseInt(iso_text);
+		}
+		return output;
 	}
 	
 	
