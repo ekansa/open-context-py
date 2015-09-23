@@ -99,6 +99,8 @@ function geoChronoEdit(item_type, item_uuid){
 	
 	this.make_edit_feature_html = function(edit_i, editfeat){
 		
+		var dom_ids = this.make_feature_dom_ids(edit_i);
+		
 		//a blank when object to create a new record
 		var new_when_obj = {
 			start: false,
@@ -120,13 +122,55 @@ function geoChronoEdit(item_type, item_uuid){
 		}
 		var when_rows_html = when_html_list.join('\n');
 		
+		var plain_geojson = this.make_plain_geojson_from_edit_feat(editfeat);
+		var plain_geojson_str = JSON.stringify(plain_geojson);
+		if (editfeat.geometry.type == "Point") {
+			var lon_lat = editfeat.geometry.coordinates;
+			var lon = lon_lat[0];
+			var lat = lon_lat[1];
+		}
+		else{
+			var lon = '';
+			var lat = '';
+		}
+		
+		
 		var html = [
 			'<div class="row">',
 				'<div class="col-xs-5">',
-					
+					'<div class="form-group">',
+						'<label for="' + dom_ids.lat + '">Latitude (WGS-84, decimal degrees)</label>',
+						'<input class="form-control input-sm" ',
+						'type="text" ',
+						'id="' + dom_ids.lat + '" ',
+						'value="' + lat + '" >',
+					'</div>',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.lon + '">Longitude (WGS-84, decimal degrees)</label>',
+						'<input class="form-control input-sm" ',
+						'type="text" ',
+						'id="' + dom_ids.lon + '" ',
+						'value="' + lon + '" >',
+					'</div>',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.geojson + '">GeoJSON</label>',
+						'<textarea class="form-control input-sm" ',
+						'rows="4" ',
+						'id="' + dom_ids.geojson + '" >',
+						plain_geojson_str,
+						'</textarea>',
+						'<div class="small">',
+							'Note: You can use a service like ',
+							'<a title="GeoJSON editing service" target="_blank" ',
+							'href="http://geojson.io/">',
+							'http://geojson.io/',
+							'<span class="glyphicon glyphicon-new-window"></span></a> ',
+							'to create GeoJSON formatted geospatial data for ',
+							'pasting in the text area above.',
+						'</div>',
+					'</div>',
 				'</div>',
 				'<div class="col-xs-7">',
-					'<label>Time Spans</label>',
 					'<table class="table table-condensed table-striped">',
 						'<tbody>',
 							when_rows_html,
@@ -136,6 +180,35 @@ function geoChronoEdit(item_type, item_uuid){
 			'</div>'
 		].join('\n');
 		return html;
+	}
+	this.make_plain_geojson_from_edit_feat = function(editfeat){
+		// deletes all of the extra stuff, leaving very plain GeoJSON
+		// the idea here is that one can directly paste in GeoJSON
+		// to make an edit on location
+		delete editfeat.id;
+		delete editfeat.geometry.id;
+		delete editfeat.properties;
+		if (editfeat.hasOwnProperty('when')) {
+			delete editfeat.when;
+		}
+		if (editfeat.hasOwnProperty('when_list')) {
+			delete editfeat.when_list;
+		}
+		editfeat.properties = {};
+		return editfeat;
+	}
+	this.make_feature_dom_ids = function(edit_i){
+		//makes dom_ids for when items, based on the
+		//edit feature index (edit_i) and the
+		//when_list index (when_i)
+		var dom_ids = {
+			geojson: 'geo-geojson-' + edit_i,
+			lat: 'geo-lat-' + edit_i,
+			lon: 'geo-lon-' + edit_i,
+			new_outer: 'geo-new-outer-' + edit_i,
+			valid: 'geo-valid-' + edit_i
+		};
+		return dom_ids;
 	}
 	this.make_when_html = function(edit_i, when_i, when_obj){
 		if (when_obj['reference-type'] == 'specified') {
@@ -152,6 +225,7 @@ function geoChronoEdit(item_type, item_uuid){
 		return html;
 	}
 	this.make_when_form_html = function(edit_i, when_i, when_obj){
+		var button_height_offset = '26px;';
 		var dom_ids = this.make_when_dom_ids(edit_i, when_i);
 		if (when_obj.start != false) {
 			var start_year = this.iso_to_float_date(when_obj.start);
@@ -167,7 +241,7 @@ function geoChronoEdit(item_type, item_uuid){
 		}
 		if (when_obj.hash_id != false) {
 			var hash_id = when_obj.hash_id;
-			var del_style = ' style="margin-top: 10px;" ';
+			var del_style = ' style="margin-top: ' + button_height_offset + '" ';
 			var del_title = 'Delete this date range';
 			var del_button_html = [
 				'<div ' + del_style + ' >',
@@ -212,7 +286,8 @@ function geoChronoEdit(item_type, item_uuid){
 					'</div>',
 				'</td>',
 				'<td class="col-xs-5">',
-					'<div id="' + dom_ids.valid + '">',
+					'<div style="min-height: ' + button_height_offset + '" ',
+					'id="' + dom_ids.valid + '">',
 					'</div>',
 					'<div id="' + dom_ids.new_outer + '">',
 					new_button_html,	
@@ -256,6 +331,18 @@ function geoChronoEdit(item_type, item_uuid){
 		return dom_ids;
 	}
 	
+	
+	/*
+	 * AJAX functions for editing date ranges
+	 */
+	this.submitDateRange = function(edit_i, when_i){
+		var is_valid = this.validate_year_range(edit_i, when_i);
+		if (is_valid) {
+			//submit the date range data
+		}
+	}
+	
+	
 	/*
 	 * Validation related functions
 	 */
@@ -277,12 +364,14 @@ function geoChronoEdit(item_type, item_uuid){
 		var start_valid = this.validate_year_val(start_year);
 		var stop_valid = this.validate_year_val(stop_year);	
 		if (start_valid == false || stop_valid == false) {
+			var is_valid = false;
 			this.make_validation_html('Make sure your start and end years are integer values',
 											  false,
 											  dom_ids.valid);
 			button_parent_dom.innerHTML = '';
 		}
 		else{
+			var is_valid = true;
 			this.make_validation_html('Start and end years are valid integer values',
 											  true,
 											  dom_ids.valid);
@@ -290,6 +379,7 @@ function geoChronoEdit(item_type, item_uuid){
 																								when_i,
 																								new_range);
 		}
+		return is_valid;
 	}
 	this.make_validation_html = function(message_html, is_valid, valid_dom_id){
 		if (is_valid) {
