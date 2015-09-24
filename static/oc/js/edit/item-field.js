@@ -1754,7 +1754,7 @@ function edit_field(){
 	this.composeLabel = function(value_num){
 		var dom_ids = this.make_field_val_domids(value_num);
 		var id_part = document.getElementById(dom_ids.id_part).value.trim();
-		var prefix = document.getElementById(dom_ids.label_prefix).value.trim();
+		var prefix = document.getElementById(dom_ids.label_prefix).value;
 		var id_len = parseInt(document.getElementById(dom_ids.id_len).value);
 		if (!this.isInt(id_len)) {
 			document.getElementById(dom_ids.id_len).value = '';
