@@ -1,3 +1,4 @@
+import json
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
@@ -194,6 +195,9 @@ class ProcessSubjects():
                 # print('Reconciled item: ' + show_item)
                 # print('--- Has uuid: ' + str(cs.uuid))
                 if cs.uuid is not False:
+                    self.process_geospace_item(field_num,
+                                               cs.import_rows,
+                                               cs.uuid)
                     if cs.is_new:
                         self.new_entities.append({'id': str(cs.uuid),
                                                   'label': cs.context})
@@ -254,6 +258,102 @@ class ProcessSubjects():
                             self.not_reconciled_entities.append({'id': bad_id,
                                                                  'label': dist_rec['imp_cell_obj'].record})
 
+    def process_geospace_item(self,
+                              subject_field_num,
+                              subject_in_rows,
+                              subject_uuid):
+        """ adds lat lon data if it exists for an item
+        """
+        if subject_field_num in self.geospace_fields:
+            # this subject field has associated lat - lon data
+            # now make a list where of rows that have non-blank lat data
+            act_geo_fields = self.geospace_fields[subject_field_num]
+            rows = {}
+            lat_recs = ImportCell.objects\
+                                 .filter(source_id=self.source_id,
+                                         field_num=act_geo_fields['lat'],
+                                         row_num__in=subject_in_rows)\
+                                 .exclude(record=u'')
+            for lat_rec in lat_recs:
+                rows[lat_rec.row_num] = {'lat': False,
+                                         'lon': False}
+                rows[lat_rec.row_num]['lat'] = self.validate_geo_coordinate(lat_rec.record,
+                                                                            'lat')
+            lon_recs = ImportCell.objects\
+                                 .filter(source_id=self.source_id,
+                                         field_num=act_geo_fields['lon'],
+                                         row_num__in=subject_in_rows)\
+                                 .exclude(record=u'')
+            for lon_rec in lon_recs:
+                if lon_rec.row_num not in rows:
+                    rows[lon_rec.row_num] = {'lat': False,
+                                             'lon': False}
+                rows[lon_rec.row_num]['lon'] = self.validate_geo_coordinate(lon_rec.record,
+                                                                            'lon')
+            # the rows object now has a list of all the rows, with validated coordinate
+            # data. Now we can add these to the database!
+            geo_feature = 1
+            geo_keys_done = []
+            for row_key, row in rows.items():
+                if row['lat'] is not False and \
+                   row['lon'] is not False:
+                    geo_key = str(row['lat']) + ',' + str(row['lon'])
+                    if geo_key not in geo_keys_done:
+                        # we havent checked this set of coordinates yet
+                        geo_keys_done.append(geo_key)
+                        # now check to make sure we don't already have these coordinates
+                        # on this item
+                        same_geos = Geospace.objects\
+                                            .filter(uuid=subject_uuid,
+                                                    latitude=row['lat'],
+                                                    longitude=row['lon'])[:1]
+                        if len(same_geos) < 1:
+                            # it is a new coordinate, ok to add
+                            geo = Geospace()
+                            geo.uuid = str(subject_uuid)
+                            geo.project_uuid = self.project_uuid
+                            geo.source_id = self.source_id
+                            geo.item_type = 'subjects'
+                            geo.feature_id = geo_feature
+                            geo.meta_type = ImportFieldAnnotation.PRED_GEO_LOCATION
+                            geo.ftype = 'Point'
+                            geo.latitude = row['lat']
+                            geo.longitude = row['lon']
+                            geo.specificity = 0
+                            # dump coordinates as json string in lon - lat (GeoJSON order)
+                            geo.coordinates = json.dumps([row['lon'], row['lat']],
+                                                         indent=4,
+                                                         ensure_ascii=False)
+                            try:
+                                geo.save()
+                                geo_feature += 1
+                            except:
+                                print('Did not like ' + str(row) + ' with ' + str(subject_uuid))
+                                quit()
+
+    def validate_geo_coordinate(self, coordinate, coord_type):
+        """ validates a geo-spatial coordinate
+            returns a float if valid, or false if not valid
+        """
+        is_valid = False
+        try:
+            fl_coord = float(coordinate)
+        except ValueError:
+            fl_coord = False
+        if fl_coord is not False:
+            if 'lat' in coord_type:
+                if fl_coord <= 90 and\
+                   fl_coord >= -90:
+                    is_valid = True
+            elif 'lon' in coord_type:
+                if fl_coord <= 180 and\
+                   fl_coord >= -180:
+                    is_valid = True
+        if is_valid:
+            return fl_coord
+        else:
+            return False
+
     def get_geospace_fields(self):
         """ finds geospatial (lat + lon) fields that may describe
             subjects fields.
@@ -267,6 +367,7 @@ class ProcessSubjects():
                                                predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
                                                object_field_num__in=sub_field_list)
         if len(geo_des) >= 2:
+            # print('Found ' + str(len(geo_des)) + ' lat lon fields')
             # we have geospatial coordinate data describing our subjects
             # now get the lat fields, and the lon fields
             lats = {}
@@ -288,11 +389,12 @@ class ProcessSubjects():
                 if geo_anno.object_field_num not in geo_lats_lons:
                     geo_lats_lons[geo_anno.object_field_num] = {'lats': [],
                                                                 'lons': []}
-                    if geo_anno.field_num in lats:
-                        # it's a lat field
-                        geo_lats_lons[geo_anno.object_field_num]['lats'].append(geo_anno.field_num)
-                    elif geo_anno.field_num in lons:
-                        geo_lats_lons[geo_anno.object_field_num]['lons'].append(geo_anno.field_num)
+                if geo_anno.field_num in lats:
+                    # it's a lat field
+                    geo_lats_lons[geo_anno.object_field_num]['lats'].append(geo_anno.field_num)
+                elif geo_anno.field_num in lons:
+                    geo_lats_lons[geo_anno.object_field_num]['lons'].append(geo_anno.field_num)
+            # print('geo_lat_lons: ' + str(geo_lats_lons))
             for subject_field_num, act_geo_lats_lons in geo_lats_lons.items():
                 if len(act_geo_lats_lons['lats']) == 1 \
                    and len(act_geo_lats_lons['lons']) == 1:
