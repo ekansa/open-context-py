@@ -84,12 +84,20 @@ function geoChronoEdit(item_type, item_uuid){
 		return features;
 	}
 	this.make_edit_features_html = function(){
-		var html_list = [];
+		var html_list = [
+			'<ul class="list-group">'
+		];
 		for (var edit_i = 0, length = this.edit_features.length; edit_i < length; edit_i++) {
 			var editfeat = this.edit_features[edit_i];
 			var feat_html = this.make_edit_feature_html(edit_i, editfeat);
-			html_list.push(feat_html);
+			var feat_item = [
+				'<li class="list-group-item">',
+				feat_html,
+				'</li>'
+			].join('\n');
+			html_list.push(feat_item);
 		}
+		html_list.push('</ul>');
 		var html = html_list.join('\n');
 		if (document.getElementById('edit-geo-features')) {
 			document.getElementById('edit-geo-features').innerHTML = html;
@@ -100,6 +108,23 @@ function geoChronoEdit(item_type, item_uuid){
 	this.make_edit_feature_html = function(edit_i, editfeat){
 		
 		var dom_ids = this.make_feature_dom_ids(edit_i);
+		
+		//get the hash_id or make it blank for a new input form
+		var hash_id = '';
+		if (editfeat.properties.hasOwnProperty('hash_id')) {
+			if (editfeat.properties.hash_id != false) {
+				hash_id = editfeat.properties.hash_id;
+			}
+		}
+		
+		//now check to see if this geospatial data is specific to this
+		//item or is inherited through spatial containment relations
+		var inherited = true;
+		if (editfeat.properties.hasOwnProperty('reference-type')) {
+			if (editfeat.properties['reference-type'] == 'specified') {
+				inherited = false;
+			}
+		}
 		
 		//a blank when object to create a new record
 		var new_when_obj = {
@@ -122,6 +147,8 @@ function geoChronoEdit(item_type, item_uuid){
 		}
 		var when_rows_html = when_html_list.join('\n');
 		
+		
+		//now make some plain GeoJSON to show in a text area
 		var plain_geojson = this.make_plain_geojson_from_edit_feat(editfeat);
 		var plain_geojson_str = JSON.stringify(plain_geojson);
 		if (editfeat.geometry.type == "Point") {
@@ -134,51 +161,64 @@ function geoChronoEdit(item_type, item_uuid){
 			var lat = '';
 		}
 		
-		
-		var html = [
-			'<div class="row">',
-				'<div class="col-xs-5">',
-					'<div class="form-group">',
-						'<label for="' + dom_ids.lat + '">Latitude (WGS-84, decimal degrees)</label>',
-						'<input class="form-control input-sm" ',
-						'type="text" ',
-						'id="' + dom_ids.lat + '" ',
-						'value="' + lat + '" >',
-					'</div>',
-					'<div class="form-group">',
-						'<label for="' + dom_ids.lon + '">Longitude (WGS-84, decimal degrees)</label>',
-						'<input class="form-control input-sm" ',
-						'type="text" ',
-						'id="' + dom_ids.lon + '" ',
-						'value="' + lon + '" >',
-					'</div>',
-					'<div class="form-group">',
-						'<label for="' + dom_ids.geojson + '">GeoJSON</label>',
-						'<textarea class="form-control input-sm" ',
-						'rows="4" ',
-						'id="' + dom_ids.geojson + '" >',
-						plain_geojson_str,
-						'</textarea>',
-						'<div class="small">',
-							'Note: You can use a service like ',
-							'<a title="GeoJSON editing service" target="_blank" ',
-							'href="http://geojson.io/">',
-							'http://geojson.io/',
-							'<span class="glyphicon glyphicon-new-window"></span></a> ',
-							'to create GeoJSON formatted geospatial data for ',
-							'pasting in the text area above.',
+		if (inherited) {
+			// HTML for location information that is inherited via spatial context
+			// note, location data cannot be edited here, only reviewed
+		}
+		else{
+			// HTML for location information specific to the item iself
+			var html = [
+				'<div class="row">',
+					'<div class="col-xs-5">',
+						'<div class="well well-sm">',
+							'<div class="form-group">',
+								'<label for="' + dom_ids.lat + '">Latitude (WGS-84, decimal degrees)</label>',
+								'<input class="form-control input-sm" ',
+								'type="text" ',
+								'id="' + dom_ids.lat + '" ',
+								'value="' + lat + '" >',
+							'</div>',
+							'<div class="form-group">',
+								'<label for="' + dom_ids.lon + '">Longitude (WGS-84, decimal degrees)</label>',
+								'<input class="form-control input-sm" ',
+								'type="text" ',
+								'id="' + dom_ids.lon + '" ',
+								'value="' + lon + '" >',
+							'</div>',
+						'</div>',
+						'<div class="well well-sm">',
+							'<div class="form-group">',
+								'<label for="' + dom_ids.geojson + '">GeoJSON</label>',
+								'<textarea class="form-control input-sm" ',
+								'rows="4" ',
+								'id="' + dom_ids.geojson + '" >',
+								plain_geojson_str,
+								'</textarea>',
+								'<div class="small">',
+									'Note: You can use a service like ',
+									'<a title="GeoJSON editing service" target="_blank" ',
+									'href="http://geojson.io/">',
+									'http://geojson.io/',
+									'<span class="glyphicon glyphicon-new-window"></span></a> ',
+									'to create GeoJSON formatted geospatial data for ',
+									'pasting in the text area above.',
+								'</div>',
+							'</div>',
 						'</div>',
 					'</div>',
-				'</div>',
-				'<div class="col-xs-7">',
-					'<table class="table table-condensed table-striped">',
-						'<tbody>',
-							when_rows_html,
-						'</tbody>',
-					'</table>',
-				'</div>',
-			'</div>'
-		].join('\n');
+					'<div class="col-xs-7">',
+						'<div class="well well-sm">',
+							'<label>Time Spans for this Location</label>',
+							'<table class="table table-condensed table-striped">',
+								'<tbody>',
+									when_rows_html,
+								'</tbody>',
+							'</table>',
+						'</div>',
+					'</div>',
+				'</div>'
+			].join('\n');
+		}
 		return html;
 	}
 	this.make_plain_geojson_from_edit_feat = function(editfeat){
@@ -269,7 +309,7 @@ function geoChronoEdit(item_type, item_uuid){
 					'<input type="hidden" id="' + dom_ids.hash_id + '" ',
 					'value="' + hash_id + '" />',
 					'<div class="form-group">',
-						'<label for="' + dom_ids.start + '">Start Year</label>',
+						'<label class="small" for="' + dom_ids.start + '">Start Year</label>',
 						'<input id="' + dom_ids.start + '" class="form-control input-sm" ',
 						'onkeydown="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
 						'onkeyup="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
@@ -278,7 +318,7 @@ function geoChronoEdit(item_type, item_uuid){
 				'</td>',
 				'<td class="col-xs-3">',
 					'<div class="form-group">',
-						'<label for="' + dom_ids.stop + '">End Year</label>',
+						'<label class="small" for="' + dom_ids.stop + '">End Year</label>',
 						'<input id="' + dom_ids.stop + '" class="form-control input-sm" ',
 						'onkeydown="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
 						'onkeyup="' + this.name + '.validate_year_range(' + edit_i + ', ' + when_i + ');" ',
