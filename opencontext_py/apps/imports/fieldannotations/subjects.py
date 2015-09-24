@@ -26,6 +26,7 @@ class ProcessSubjects():
         pg.get_source()
         self.project_uuid = pg.project_uuid
         self.subjects_fields = False
+        self.geospace_fields = {}  # subject field num is key, dict has valid lat + lon fields
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
@@ -49,6 +50,7 @@ class ProcessSubjects():
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
             unimport.delete_containment_assertions()
+            unimport.delete_geospaces()
             unimport.delete_subjects_entities()
 
     def get_contained_examples(self):
@@ -133,7 +135,7 @@ class ProcessSubjects():
         """ processes containment fields for subject
             entities starting with a given row number.
             This iterates over all containment fields, starting
-            with the root subjhect field
+            with the root subject field
 
             Once containment subjects are done, this looks up
             subjects entities not in a containment hierarchy
@@ -141,6 +143,7 @@ class ProcessSubjects():
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
+        self.get_geospace_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
         self.process_non_contain_subjects()
@@ -250,6 +253,53 @@ class ProcessSubjects():
                             bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
                             self.not_reconciled_entities.append({'id': bad_id,
                                                                  'label': dist_rec['imp_cell_obj'].record})
+
+    def get_geospace_fields(self):
+        """ finds geospatial (lat + lon) fields that may describe
+            subjects fields.
+        """
+        # first make a list of subject field numbers
+        sub_field_list = []
+        for sub_field_num, sub_field in self.subjects_fields.items():
+            sub_field_list.append(sub_field_num)
+        geo_des = ImportFieldAnnotation.objects\
+                                       .filter(source_id=self.source_id,
+                                               predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
+                                               object_field_num__in=sub_field_list)
+        if len(geo_des) >= 2:
+            # we have geospatial coordinate data describing our subjects
+            # now get the lat fields, and the lon fields
+            lats = {}
+            lons = {}
+            lats_lons = ImportField.objects\
+                                   .filter(source_id=self.source_id,
+                                           field_type__in=['lat', 'lon'])
+            for act_f in lats_lons:
+                if act_f.field_type == 'lat':
+                    lats[act_f.field_num] = act_f
+                else:
+                    lons[act_f.field_num] = act_f
+            # now make an object that checks to see if
+            # the subject (location/object field), which is the
+            # object of the ImportFieldAnnotations, has exactly 1
+            # lat field and 1 lon field
+            geo_lats_lons = {}
+            for geo_anno in geo_des:
+                if geo_anno.object_field_num not in geo_lats_lons:
+                    geo_lats_lons[geo_anno.object_field_num] = {'lats': [],
+                                                                'lons': []}
+                    if geo_anno.field_num in lats:
+                        # it's a lat field
+                        geo_lats_lons[geo_anno.object_field_num]['lats'].append(geo_anno.field_num)
+                    elif geo_anno.field_num in lons:
+                        geo_lats_lons[geo_anno.object_field_num]['lons'].append(geo_anno.field_num)
+            for subject_field_num, act_geo_lats_lons in geo_lats_lons.items():
+                if len(act_geo_lats_lons['lats']) == 1 \
+                   and len(act_geo_lats_lons['lons']) == 1:
+                    # case where the subject_field_num has exactly 1 lat and 1 lon field. OK for
+                    # making geospatial data
+                    self.geospace_fields[subject_field_num] = {'lat': act_geo_lats_lons['lats'][0],
+                                                               'lon': act_geo_lats_lons['lons'][0]}
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy

@@ -37,6 +37,16 @@ class UnImport():
                                               object_type='subjects')\
                                       .delete()
 
+    def delete_geospaces(self):
+        """ Deletes geolocation data for an
+            import
+        """
+        if self.delete_ok:
+            rem_geo = Geospace.objects\
+                              .filter(source_id=self.source_id,
+                                      project_uuid=self.project_uuid)\
+                              .delete()
+
     def delete_describe_assertions(self):
         """ Deletes an import of description assertions
         """
