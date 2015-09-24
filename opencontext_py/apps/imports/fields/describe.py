@@ -115,16 +115,22 @@ class ImportFieldDescribe():
         are assigned to describe an object_field_num entity
         """
         self.get_field_num_list(field_num)
-        # delete cases where the object_field_num is contained by another field
+        # delete cases where the field_num is already used
+        del_preds = [ImportFieldAnnotation.PRED_DESCRIBES,
+                     ImportFieldAnnotation.PRED_GEO_LOCATION]
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
-                                                 predicate=ImportFieldAnnotation.PRED_DESCRIBES,
+                                                 predicate__in=del_preds,
                                                  field_num__in=self.field_num_list)\
                                          .delete()
         entity_ok = self.check_field_type(object_field_num, ImportProfile.DEFAULT_SUBJECT_TYPE_FIELDS)
+        # now check to see if this is OK for making a geolocation
+        geo_object_ok = self.check_field_type(object_field_num, ['subjects'])
         for field_num in self.field_num_list:
             des_ok = self.check_field_type(field_num, ['description',
                                                        'variable'])
+            geo_ok = self.check_field_type(field_num, ['lat',
+                                                       'lon'])
             if des_ok and entity_ok:
                 # only make the annotation if the subject is a value, object is a variable
                 ifa = ImportFieldAnnotation()
@@ -132,6 +138,17 @@ class ImportFieldDescribe():
                 ifa.project_uuid = self.project_uuid
                 ifa.field_num = field_num
                 ifa.predicate = ImportFieldAnnotation.PRED_DESCRIBES
+                ifa.predicate_field_num = 0
+                ifa.object_field_num = object_field_num
+                ifa.object_uuid = ''
+                ifa.save()
+            elif geo_ok and geo_object_ok:
+                # we have a geospatial annotation
+                ifa = ImportFieldAnnotation()
+                ifa.source_id = self.source_id
+                ifa.project_uuid = self.project_uuid
+                ifa.field_num = field_num
+                ifa.predicate = ImportFieldAnnotation.PRED_GEO_LOCATION
                 ifa.predicate_field_num = 0
                 ifa.object_field_num = object_field_num
                 ifa.object_uuid = ''
