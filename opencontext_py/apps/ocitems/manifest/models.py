@@ -53,6 +53,14 @@ class Manifest(models.Model):
                                            self.project_uuid)
         self.slug = slug
         self.sort = sort
+        if len(slug) > 70:
+            raise Exception(str(unidecode(slug))
+                            + ' a slug, has wrong length (Chars: '
+                            + str(len(slug)))
+        if len(sort) > 70:
+            raise Exception(str(unidecode(sort))
+                            + ' a sort, has wrong length (Chars: '
+                            + str(len(sort)))
 
     def make_slug(self, project_indices=False):
         """
@@ -65,6 +73,10 @@ class Manifest(models.Model):
                                           self.label,
                                           self.item_type,
                                           self.project_uuid)
+        if len(slug) > 70:
+            raise Exception(str(unidecode(slug))
+                            + ' a slug, has wrong length (Chars: '
+                            + str(len(slug)))
         return slug
 
     def make_sort(self, project_indices=False):
@@ -131,7 +143,7 @@ class Manifest(models.Model):
         save only slug value
         """
         self.sort = self.make_sort()
-        print(str(unidecode(self.label)) + ' has sort: ' + str(self.sort))
+        # print(str(unidecode(self.label)) + ' has sort: ' + str(self.sort))
         super(Manifest, self).save(update_fields=['sort'])
 
     class Meta:
@@ -191,6 +203,7 @@ class ManifestGeneration():
         """ Converts a raw to a final slug, checks if the slug exists. If it does, add a suffix.
         If the suffixed slug already exists, try the next suffix until we get one that does not exist.
         """
+        raw_slug = raw_slug[:66]
         slug_exists = False
         try:
             slug_exists_res = Manifest.objects\
