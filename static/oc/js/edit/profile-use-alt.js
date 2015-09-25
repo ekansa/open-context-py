@@ -175,30 +175,18 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		if (required_valid.all) {
 			// all the required fields are valid
 			submit_ok = true;
-			if (this.edit_new) {
-				var message_html = 'Ready to create the item.';
-			}
-			else{
-				var message_html = 'Ready to update the item.';
-			}
-			
-			var button_html = [
-				'<div style="margin-top: 22px;">',
-				'<button class="btn large btn-primary" onclick="' + this.obj_name + '.submitAll();">',
-				'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
-				//' Delete',
-				'</button>',
-				'</div>'
-			].join('\n');
-			
+			var button_html = this.make_valid_submit_all_button_html();
+			var message_html = this.make_submit_all_validation_message_html(true, '');
 		}
 		else{
 			// some missing validation fields
-			var message_html = '<ul>';
+			var error_html = 'Still needed:';
+			error_html += '<ul>';
 			for (var i = 0, length = required_valid.missing.length; i < length; i++) {
-				message_html += '<li>' + required_valid.missing[i] + '</li>';
+				error_html += '<li>' + required_valid.missing[i] + '</li>';
 			}
-			message_html += '</ul>';
+			error_html += '</ul>';
+			var message_html = this.make_submit_all_validation_message_html(false, error_html);
 			
 			var button_html = [
 				'<div style="margin-top: 22px;">',
@@ -209,14 +197,58 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				'</div>'
 			].join('\n');
 			
+			if (document.getElementById(this.submit_all_dom_id)) {
+				document.getElementById(this.submit_all_dom_id).innerHTML = button_html;
+			}
 		}
-		if (document.getElementById(this.fields_complete_dom_id)) {
-			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
-		}
+		
+		return submit_ok;
+	}
+	this.make_valid_submit_all_button_html = function(){
+		// makes a submit_all button when fields are valid
+		var button_html = [
+			'<div style="margin-top: 22px;">',
+			'<button class="btn large btn-primary" onclick="' + this.obj_name + '.submitAll();">',
+			'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span> Submit',
+			//' Delete',
+			'</button>',
+			'</div>'
+		].join('\n');
+		
 		if (document.getElementById(this.submit_all_dom_id)) {
 			document.getElementById(this.submit_all_dom_id).innerHTML = button_html;
 		}
-		return submit_ok;
+		
+		return button_html;
+	}
+	this.make_submit_all_validation_message_html = function(is_valid, error_text){
+		// makes a validation message for
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+			if (this.edit_new) {
+				var message_text = 'Ready to create the item.';
+			}
+			else{
+				var message_text = 'Ready to update the item.';
+			}
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var alert_class = "alert alert-warning";
+			var message_text = error_text;
+		}
+		var message_html = [
+			'<div role="alert" class="' + alert_class + '" >',
+				icon_html,
+				message_text,
+			'</div>'
+		].join('\n');
+		
+		if (document.getElementById(this.fields_complete_dom_id)) {
+			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
+		}
+		return message_html;
 	}
 	this.check_valid_oc_required = function(){
 		// checks to see if oc_required fields are valid
@@ -255,6 +287,79 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				}
 			}
 			console.log(field_data);
+			data['field_data'] = JSON.stringify(field_data, null, 2);
+			var url = this.make_url("/edit/inputs/create-update-profile-item/");
+			url += encodeURIComponent(this.profile_uuid);
+			url += '/' + encodeURIComponent(this.edit_uuid);
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.submitDataDone,
+				error: function (request, status, error) {
+					alert('Data submission failed, sadly. Status: ' + request.status);
+				} 
+			});
+		}
+	}
+	this.submitDataDone = function(data){
+		console.log(data);
+		if (data.ok) {
+			// the request was OK
+			if (this.edit_new) {
+				// we succeeded in creating a new item
+				var mess = 'Item successfully created!';
+				this.edit_new = false;
+			}
+			else{
+				var mess = 'Item successfully updated.';
+				this.edit_new = false;
+			}
+			if ('errors' in data) {
+				var found_errors = false;
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					if (errors.hasOwnProperty(k)) {
+						error_html += '<li>' + errors[k] + '</li>';
+						found_errors = true;
+					}
+				}
+				error_html += '</ul>';
+				if (found_errors) {
+					mess += ' But there are some problems:';
+					mess += error_html;
+				}
+				mess += error_html;
+			}
+			var alert_html = this.make_validation_html(mess, true, false);
+			this.activateFieldUpdateButtons(); // make the individual field update buttons active
+		}
+		else{
+			if (this.edit_new) {
+				// we succeeded in creating a new item
+				var mess = 'Item creation failed! ';
+			}
+			else{
+				var mess = 'Item updated failed. ';
+			}
+			if ('errors' in data) {
+				var error_html = '<ul class="small">';
+				var errors = data.errors;
+				for (var k in errors) {
+					if (errors.hasOwnProperty(k)) {
+						error_html += '<li>' + errors[k] + '</li>';
+					}
+				}
+				error_html += '</ul>';
+				mess += error_html;
+			}
+			var alert_html = this.make_validation_html(mess, false, false);
+		}
+		if (document.getElementById(this.fields_complete_dom_id)) {
+			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
 		}
 	}
 	
@@ -384,6 +489,8 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			fields: this.fields,
 			check_valid_oc_required: this.check_valid_oc_required,
 			prep_all_create_update: this.prep_all_create_update,
+			make_valid_submit_all_button_html: this.make_valid_submit_all_button_html,
+			make_submit_all_validation_message_html: this.make_submit_all_validation_message_html,
 			exec: function(){
 				this.prep_all_create_update();
 			}
