@@ -39,16 +39,12 @@ imp_sj = ImportSerizializedJSON()
 imp_sj.load_data_in_directory('64-oracle-bone-test')
 
     """
+
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
-<<<<<<< HEAD
         self.files_imported = 0
         self.import_recs = 0
         self.error_recs = 0
-=======
-        self.json_file_count = 0
-        self.imported_records = 0
->>>>>>> origin/master
 
     def load_data_in_directory(self, act_dir):
         """ Loads data in a directory """
@@ -59,7 +55,6 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                 dir_file = self.root_import_dir + act_dir + '/' + filename
                 json_obj = self.load_json_file(dir_file)
                 if json_obj is not False:
-<<<<<<< HEAD
                     self.import_serialized_json_obj(json_obj)
                     self.files_imported += 1
                     
@@ -79,18 +74,6 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                 self.import_recs += 1
             else:
                 self.error_recs += 1
-        
-=======
-                    self.json_file_count += 1
-                    self.import_serialized_json_obj(json_obj)
-
-    def import_serialized_json_obj(self, json_obj):
-        """ Imports a serialized JSON object """
-        for obj in serializers.deserialize("json", json_obj):
-            # this just saves it, no matter what.
-            obj.save()
-            self.imported_records += 1
->>>>>>> origin/master
 
     def get_directory_files(self, act_dir):
         """ Gets a list of files from a directory """
