@@ -109,7 +109,7 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
                                                      indent=4,
                                                      ensure_ascii=False)
                             file = codecs.open(file_path, 'w', 'utf-8')
-                            file.write(codecs.BOM_UTF8)
+                            # file.write(codecs.BOM_UTF8)
                             file.write(json_output)
                             file.close()
                             """
