@@ -41,6 +41,9 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
     """
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+        self.files_imported = 0
+        self.import_recs = 0
+        self.error_recs = 0
 
     def load_data_in_directory(self, act_dir):
         """ Loads data in a directory """
@@ -50,6 +53,27 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                 print('Reading: ' + filename)
                 dir_file = self.root_import_dir + act_dir + '/' + filename
                 json_obj = self.load_json_file(dir_file)
+                if json_obj is not False:
+                    self.import_serialized_json_obj(json_obj)
+                    self.files_imported += 1
+                    
+    def import_serialized_json_obj(self, json_obj):
+        """ imports a serialized json object
+            to add records to the database
+        """
+        for obj in serializers.deserialize("json", json_obj):
+            # this just saves the object, so as to
+            # synch different instances of open context
+            try:
+                obj.save()
+                saved = True
+            except:
+                saved = False
+            if saved:
+                self.import_recs += 1
+            else:
+                self.error_recs += 1
+        
 
     def get_directory_files(self, act_dir):
         """ Gets a list of files from a directory """
@@ -66,9 +90,10 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
         """
         json_obj = False
         if os.path.exists(dir_file):
-            fp = open(dir_file, 'r')
             try:
-                json_obj = json.load(fp)
+                json_obj = json.load(codecs.open(dir_file,
+                                                 'r',
+                                                 'utf-8-sig'))
             except:
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False

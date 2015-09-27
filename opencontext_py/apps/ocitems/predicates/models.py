@@ -1,5 +1,6 @@
 import reversion  # version control object
 from datetime import datetime
+from django.utils import timezone
 from django.db import models
 
 
@@ -31,7 +32,7 @@ class Predicate(models.Model):
         if self.sort is None:
             self.sort = 0
         if self.created is None:
-            self.created = datetime.now()
+            self.created = timezone.now()
         super(Predicate, self).save(*args, **kwargs)
 
     class Meta:
