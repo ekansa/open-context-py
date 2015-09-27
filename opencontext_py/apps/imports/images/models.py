@@ -149,5 +149,3 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         if os.path.exists(full_dir):
             output = full_dir
         return output
-
-    
