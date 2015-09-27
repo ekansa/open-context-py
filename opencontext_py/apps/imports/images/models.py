@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, shutil
 import codecs
 from PIL import Image
 from django.db import models
@@ -14,7 +14,8 @@ class ImageImport():
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
-ii.class_uri = 'oc-gen:cat-feature'
+ii.make_image_versions('OB_Illustrations')
+ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
 
@@ -23,10 +24,118 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.project_uuid = False
         self.source_id = False
         self.class_uri = False
-        self.load_into_importer = False
-        self.props_config = [{'prop': 'FeatureNum',
-                              'prefix': 'Feat. ',
-                              'data_type': 'xsd:integer'}]
+        self.thumbnail_width_height = 150
+        self.preview_width = 500
+        self.full_dir = 'full'
+        self.preview_dir = 'preview'
+        self.thumbs_dir = 'thumbs'
+
+    def make_image_versions(self, src):
+        """ Copies a directory structure
+            and makes thumbnail and preview files
+        """
+        src_dir = self.set_check_directory(src)
+        new_root_dir = self.set_check_directory('copy-' + src)
+        new_dirs = [self.full_dir,
+                    self.preview_dir,
+                    self.thumbs_dir]
+        for new_dir in new_dirs:
+            dst_dir = new_root_dir + new_dir
+            if not os.path.exists(dst_dir):
+                for dirpath, dirnames, filenames in os.walk(src_dir):
+                    act_dir = os.path.join(dst_dir,
+                                           dirpath[1+len(src_dir):])
+                    os.mkdir(act_dir)
+                    for filename in filenames:
+                        src_file = os.path.join(dirpath, filename)
+                        new_file = os.path.join(act_dir, filename)
+                        if new_dir == self.full_dir:
+                            # its the full size file, just copy it without modification
+                            print('Copy full: ' + new_file)
+                            # shutil.copy2(src_file, new_file)
+                        else:
+                            # we need to modify the image
+                            try:
+                                im = Image.open(src_file)
+                            except:
+                                print('Cannot use as image: ' + src_file)
+                                im = False
+                            if im is not False:
+                                ratio = 1  # default to same size
+                                if new_dir == self.preview_dir:
+                                    print('Make preview: ' + new_file)
+                                    self.make_preview_file(src_file, new_file)
+                                elif new_dir == self.thumbs_dir:
+                                    print('Make thumbnail: ' + new_file)
+                                    self.make_thumbnail_file(src_file, new_file)
+
+    def make_preview_file(self, src_file, new_file):
+        """ Makes preview images. This preserves the orginal
+            aspect ratio. The height can be greater than the width,
+            so we're not just going to use the thumbnail
+            method
+        """
+        output = False
+        if src_file != new_file:
+            if os.path.exists(src_file):
+                try:
+                    im = Image.open(src_file)
+                except:
+                    print('Cannot use as image: ' + src_file)
+                    im = False
+                if im is not False:
+                    ratio = 1  # default to same size
+                    if im.width > self.preview_width:
+                        new_width = self.preview_width
+                        ratio = im.width / self.preview_width
+                    else:
+                        new_width = im.width
+                    new_neight = int(round((im.height * ratio), 0))
+                    size = (new_width, new_neight)
+                    im.thumbnail(size, Image.ANTIALIAS)
+                    try:
+                        im.save(new_file, "JPEG", quality=100)
+                        output = new_file
+                    except:
+                        print('cannot save the preview file: ' + new_file)
+        return output
+
+    def make_thumbnail_file(self, src_file, new_file):
+        """ This makes a thumbnail file. It is a little more
+            simple, since it uses the default thumbnail method,
+            meaning it has a max height and a max width
+        """
+        output = False
+        if src_file != new_file:
+            if os.path.exists(src_file):
+                try:
+                    im = Image.open(src_file)
+                except:
+                    print('Cannot use as image: ' + src_file)
+                    im = False
+                if im is not False:
+                    size = (self.thumbnail_width_height,
+                            self.thumbnail_width_height)
+                    im.thumbnail(size, Image.ANTIALIAS)
+                    try:
+                        im.save(new_file, "JPEG", quality=100)
+                        output = new_file
+                    except:
+                        print('cannot save the thumbnail file: ' + new_file)
+        return output
+
+    def copy_dir_not_files(self, src, dst):
+        """ Copies only a directory structure """
+        src_dir = self.set_check_directory(src)
+        dst_dir = self.root_export_dir + dst
+        if not os.path.exists(dst_dir):
+            for dirpath, dirnames, filenames in os.walk(src_dir):
+                act_dir = os.path.join(dst_dir,
+                                       dirpath[1+len(src_dir):])
+                os.mkdir(act_dir)
+                for filename in filenames:
+                    src_file = os.path.join(dirpath, filename)
+                    new_file = os.path.join(act_dir, filename)
 
     def set_check_directory(self, act_dir):
         """ Prepares a directory to find import GeoJSON files """
@@ -41,18 +150,4 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
             output = full_dir
         return output
 
-    def make_thumbnail(self, act_dir, filename):
-        """ Loads a file and parse it into a
-            json object
-        """
-        json_obj = False
-        dir_file = self.set_check_directory(act_dir) + filename
-        save_file = self.set_check_directory(act_dir) + 'thumb-' + filename
-        if os.path.exists(dir_file):
-            size = (128, 128)
-            try:
-                im = Image.open(dir_file)
-                im.thumbnail(size)
-                im.save(save_file, "JPEG")
-            except IOError:
-                print("cannot create thumbnail for", dir_file)
+    
