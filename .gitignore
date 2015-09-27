@@ -15,6 +15,7 @@ static/leaflet/
 static/fontawesome/
 static/fonts/
 static/exports/
+static/imports/
 static/robots/robots.txt
 *.pyc
 solr-config/schema.xml.old
