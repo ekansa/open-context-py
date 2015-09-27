@@ -90,7 +90,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         projects = Project.objects\
                           .filter(updated__gte=after_date)
         for proj in projects:
-            print('Output: ' + str(proj.label))
+            print('Output: ' + str(proj.label) + ' (' + str(proj.uuid) + ')')
             self.dump_serialized_data(proj.uuid)
 
     def dump_serialized_data(self, project_uuid):
