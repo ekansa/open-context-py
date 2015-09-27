@@ -59,7 +59,7 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                     if all_ok is False:
                         print('Problem: ' + dir_file)
                     self.files_imported += 1
-   
+
     def import_serialized_json_obj(self, json_obj):
         """ imports a serialized json object
             to add records to the database

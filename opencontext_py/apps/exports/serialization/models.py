@@ -37,6 +37,7 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
     """
@@ -79,6 +80,16 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
                                       start,
                                       end)
         print(table_name + ' has ' + str(len(query_set)))
+
+    def dump_serialize_recent_projects(self, after_date):
+        """ Finds projects that have been recently created,
+            dumps them in serialized JSON format
+        """
+        projects = Project.objects\
+                          .filter(updated__gte=after_date)
+        for proj in projects:
+            print('Output: ' + str(proj.label))
+            self.dump_serialized_data(proj.uuid)
 
     def dump_serialized_data(self, project_uuid):
         """ dumps serialized data for a project """
