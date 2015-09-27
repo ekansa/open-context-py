@@ -1,6 +1,7 @@
 import os
 import json
 import codecs
+from itertools import islice
 from django.db import models
 from django.conf import settings
 from django.core import serializers
@@ -37,7 +38,7 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
-sj.act_export_dir = '/home/dainst_ekansa'
+# sj.act_export_dir = '/home/dainst_ekansa'
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
@@ -90,7 +91,8 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
             dumps them in serialized JSON format
         """
         projects = Project.objects\
-                          .filter(updated__gte=after_date)
+                          .filter(updated__gte=after_date)\
+                          .iterator()
         for proj in projects:
             if len(proj.label) < 1:
                 man_proj = Manifest.objects\
@@ -107,53 +109,48 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         proj_dir = self.prepare_dump_directory(project_uuid)
         if proj_dir is not False:
             # we're good to go to dump data
-            JSONserializer = serializers.get_serializer('json')
-            json_serializer = JSONserializer()
             table_list = self.all_models + self.project_models
             for table_name in table_list:
                 print('Working on ' + table_name + ' for ' + project_uuid)
-                file_num = 1
-                do_more = True
-                start = 0
-                end = self.chunk_size
                 batch = 1
-                while do_more:
-                    filename = table_name + '-' + self.prepend_zeros(str(batch), 3) + '.json'
-                    file_path = proj_dir + filename
-                    do_more = False
-                    query_set = self.get_queryset(table_name,
-                                                  start,
-                                                  end)
-                    if query_set is not None:
-                        if len(query_set) > 0:
-                            data = json_serializer.serialize(query_set,
-                                                             ensure_ascii=False)
-                            json_output = json.dumps(data,
-                                                     indent=4,
-                                                     ensure_ascii=False)
-                            file = codecs.open(file_path, 'w', 'utf-8')
-                            # file.write(codecs.BOM_UTF8)
-                            file.write(json_output)
-                            file.close()
-                            """
-                            with open(file_path, "w") as out:
-                                json_serializer.serialize(query_set,
-                                                          stream=out,
-                                                          ensure_ascii=False)
-                            """
-                            do_more = True
-                            start = end
-                            end = end + self.chunk_size
+                query_set = self.get_queryset(table_name)
+                if query_set is not False and query_set is not None:
+                    act_set = []
+                    for obj in query_set.iterator():
+                        if len(act_set) < self.chunk_size:
+                            act_set.append(obj)
+                        if len(act_set) >= self.chunk_size:
+                            self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
                             batch = batch + 1
+                            act_set = []  # start the act set from scratch again
+                    if len(act_set) > 0:
+                        # now save the remaining batch
+                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
 
-    def get_queryset(self, table_name, start, end):
+    def save_serialized_json_batch(self, proj_dir, table_name, batch, act_set):
+        """ saves a batch of data, serialized as JSON """
+        JSONserializer = serializers.get_serializer('json')
+        json_serializer = JSONserializer()
+        filename = table_name + '-' + self.prepend_zeros(str(batch), 3) + '.json'
+        file_path = proj_dir + filename
+        data = json_serializer.serialize(act_set,
+                                         ensure_ascii=False)
+        json_output = json.dumps(data,
+                                 indent=4,
+                                 ensure_ascii=False)
+        file = codecs.open(file_path, 'w', 'utf-8')
+        # file.write(codecs.BOM_UTF8)
+        file.write(json_output)
+        file.close()
+
+    def get_queryset(self, table_name):
         """ gets the query set for a specific
             model. 
         """
         query_set = False
         if table_name in self.all_models:
             if table_name == 'link_entities':
-                query_set = LinkEntity.objects.all()[start:end]
+                query_set = LinkEntity.objects.all()
             else:
                 query_set = False
         elif table_name in self.project_models:
@@ -170,81 +167,81 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                     args['record_updated__gte'] = self.after_date
             if table_name == 'oc_assertions':
                 query_set = Assertion.objects\
-                                     .filter(**args)[start:end]
+                                     .filter(**args)
             elif table_name == 'oc_documents':
                 query_set = OCdocument.objects\
-                                      .filter(**args)[start:end]
+                                      .filter(**args)
             elif table_name == 'oc_events':
                 query_set = Event.objects\
-                                 .filter(**args)[start:end]
+                                 .filter(**args)
             elif table_name == 'oc_geospace':
                 query_set = Geospace.objects\
-                                    .filter(**args)[start:end]
+                                    .filter(**args)
             elif table_name == 'oc_identifiers':
                 query_set = StableIdentifer.objects\
-                                           .filter(**args)[start:end]
+                                           .filter(**args)
             elif table_name == 'oc_manifest':
                 query_set = Manifest.objects\
-                                    .filter(**args)[start:end]
+                                    .filter(**args)
             elif table_name == 'oc_mediafiles':
                 query_set = Mediafile.objects\
-                                     .filter(**args)[start:end]
+                                     .filter(**args)
             elif table_name == 'oc_obsmetadata':
                 query_set = ObsMetadata.objects\
-                                       .filter(**args)[start:end]
+                                       .filter(**args)
             elif table_name == 'oc_persons':
                 query_set = Person.objects\
-                                  .filter(**args)[start:end]
+                                  .filter(**args)
             elif table_name == 'oc_predicates':
                 query_set = Predicate.objects\
-                                     .filter(**args)[start:end]
+                                     .filter(**args)
             elif table_name == 'oc_projects':
                 query_set = Project.objects\
-                                   .filter(**args)[start:end]
+                                   .filter(**args)
             elif table_name == 'oc_strings':
                 query_set = OCstring.objects\
-                                    .filter(**args)[start:end]
+                                    .filter(**args)
             elif table_name == 'oc_subjects':
                 query_set = Subject.objects\
-                                   .filter(**args)[start:end]
+                                   .filter(**args)
             elif table_name == 'oc_types':
                 query_set = OCtype.objects\
-                                  .filter(**args)[start:end]
+                                  .filter(**args)
             elif table_name == 'exp_fields':
                 dist_tables = ExpCell.objects\
                                      .filter(**args)\
                                      .values_list('table_id', flat=True)\
                                      .distinct()
                 query_set = ExpField.objects\
-                                    .filter(table_id__in=dist_tables)[start:end]
+                                    .filter(table_id__in=dist_tables)
             elif table_name == 'exp_records':
                 query_set = ExpCell.objects\
-                                   .filter(**args)[start:end]
+                                   .filter(**args)
             elif table_name == 'exp_tables':
                 dist_tables = ExpCell.objects\
                                      .filter(**args)\
                                      .values_list('table_id', flat=True)\
                                      .distinct()
                 query_set = ExpTable.objects\
-                                    .filter(table_id__in=dist_tables)[start:end]
+                                    .filter(table_id__in=dist_tables)
             elif table_name == 'crt_fieldgroups':
                 query_set = InputFieldGroup.objects\
-                                           .filter(**args)[start:end]
+                                           .filter(**args)
             elif table_name == 'crt_fields':
                 query_set = InputField.objects\
-                                      .filter(**args)[start:end]
+                                      .filter(**args)
             elif table_name == 'crt_profiles':
                 query_set = InputProfile.objects\
-                                        .filter(**args)[start:end]
+                                        .filter(**args)
             elif table_name == 'crt_relations':
                 query_set = InputRelation.objects\
-                                         .filter(**args)[start:end]
+                                         .filter(**args)
             elif table_name == 'crt_rules':
                 query_set = InputRule.objects\
-                                     .filter(**args)[start:end]
+                                     .filter(**args)
             elif table_name == 'link_annotations':
                 query_set = LinkAnnotation.objects\
-                                          .filter(**args)[start:end]
+                                          .filter(**args)
             else:
                 query_set = False
         return query_set
@@ -255,6 +252,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         full_dir = self.root_export_dir + act_dir + '/'
         if self.act_export_dir is not False:
             full_dir = self.act_export_dir + '/' + act_dir
+        full_dir.replace('//', '/')
         if not os.path.exists(full_dir):
             os.makedirs(full_dir)
         if os.path.exists(full_dir):
