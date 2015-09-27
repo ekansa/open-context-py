@@ -55,25 +55,31 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                 dir_file = self.root_import_dir + act_dir + '/' + filename
                 json_obj = self.load_json_file(dir_file)
                 if json_obj is not False:
-                    self.import_serialized_json_obj(json_obj)
+                    all_ok = self.import_serialized_json_obj(json_obj)
+                    if all_ok is False:
+                        print('Problem: ' + dir_file)
                     self.files_imported += 1
-                    
+   
     def import_serialized_json_obj(self, json_obj):
         """ imports a serialized json object
             to add records to the database
         """
+        all_ok = True
         for obj in serializers.deserialize("json", json_obj):
             # this just saves the object, so as to
             # synch different instances of open context
             try:
                 obj.save()
                 saved = True
-            except:
+            except Exception as e:
+                print(str(e))
                 saved = False
             if saved:
                 self.import_recs += 1
             else:
                 self.error_recs += 1
+                all_ok = False
+        return all_ok
 
     def get_directory_files(self, act_dir):
         """ Gets a list of files from a directory """
