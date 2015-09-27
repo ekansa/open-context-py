@@ -79,7 +79,6 @@ gimp.process_features_in_file('OpenContext_GeoJSON', 'Interpreted_Architecture_K
                     if uuid is not False:
                         # found a uuid for this item!
                         print('Found: ' + prop_id + ' is ' + uuid)
-                        
 
     def process_features_in_file(self, act_dir, filename):
         """ Processes a file to extract geojson features
