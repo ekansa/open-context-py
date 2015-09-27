@@ -40,6 +40,8 @@ sj = SerizializeJSON()
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
+projects = Project.objects.filter(updated__gte="2015-06-01")
+
     """
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
@@ -88,11 +90,18 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
         projects = Project.objects\
                           .filter(updated__gte=after_date)
         for proj in projects:
-            print('Output: ' + str(proj.label))
+            if len(proj.label) < 1:
+                man_proj = Manifest.objects\
+                                   .filter(item_type='projects',
+                                           uuid=proj.uuid)[:1]
+                if len(man_proj) > 0:
+                    proj.label = man_proj[0].label
+                    proj.save()
+            print('Output: ' + str(proj.label) + ' (' + str(proj.uuid) + ')')
             self.dump_serialized_data(proj.uuid)
 
     def dump_serialized_data(self, project_uuid):
-        """ dumps serialized data for a project """
+        """ dumps serialized data for a projproect """
         proj_dir = self.prepare_dump_directory(project_uuid)
         if proj_dir is not False:
             # we're good to go to dump data
@@ -100,6 +109,7 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
             json_serializer = JSONserializer()
             table_list = self.all_models + self.project_models
             for table_name in table_list:
+                print('Working on ' + table_name ' for ' + project_uuid)
                 file_num = 1
                 do_more = True
                 start = 0
