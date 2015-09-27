@@ -72,22 +72,24 @@
          
          <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
          <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
-          <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
+         <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
          <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
          <script src="{{ base_url }}/static/oc/js/entities/entities.js"></script>
          <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
-         <script src="{{ base_url }}/static/oc/js/edit/context-edit.js"></script>
-         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit-alt.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
+
          
          <script type="text/javascript">
             <!--
             var edit_item = false;
+            var edit_geoevents = false;
             function start_item_edit(){
                 edit_item = new itemEdit(item_type, uuid);
+                edit_geoevents = new geoChronoEdit(item_type, uuid);
                 edit_item.getItemJSON();
             }
             -->

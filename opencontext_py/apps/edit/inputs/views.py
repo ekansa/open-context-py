@@ -1,4 +1,5 @@
 import json
+from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from django.template import RequestContext, loader
@@ -19,6 +20,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def profile_use(request, profile_uuid, edit_uuid):
     """ Handle requests to use a profile to create
         or edit a record
@@ -63,7 +65,10 @@ def profile_use(request, profile_uuid, edit_uuid):
                          'label_id_len': id_len,
                          'context': False,
                          'act_nav': 'profiles'}
-            template = loader.get_template('edit/profiles/profile-use.html')
+            if 'alt' in request.GET:
+                template = loader.get_template('edit/profiles/profile-use-alt.html')
+            else:
+                template = loader.get_template('edit/profiles/profile-use.html')
             context = RequestContext(request,
                                      {'item': temp_item,
                                       'super_user': request.user.is_superuser,
@@ -121,6 +126,7 @@ def profile_edit(request, profile_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def json_view(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
@@ -148,6 +154,7 @@ def json_view(request, profile_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def profile_item_list(request, profile_uuid):
     """ Handles JSON requests for a profile
     """
@@ -198,6 +205,7 @@ def profile_item_list(request, profile_uuid):
 # InputProfiles for a project
 # ------------------------------------------------
 @cache_control(no_cache=True)
+@never_cache
 def index_json(request, project_uuid):
     """ handles get requests to make
         a JSON index of input profiles for a project
@@ -223,6 +231,7 @@ def index_json(request, project_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def label_check(request, project_uuid):
     """ handles get requests to check on the
         validity of a proposed item label

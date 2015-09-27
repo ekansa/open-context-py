@@ -10,6 +10,7 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 # These views display an HTML form for classifying import fields,
@@ -19,6 +20,7 @@ def index(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def view(request, source_id):
     """ Returns JSON data for an identifier in its hierarchy """
     if not request.user.is_superuser:
@@ -38,6 +40,7 @@ def view(request, source_id):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def subjects_hierarchy_examples(request, source_id):
     """ Returns JSON data with examples of the subjects hierarchy """
     if not request.user.is_superuser:
@@ -56,6 +59,7 @@ def subjects_hierarchy_examples(request, source_id):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def described_examples(request, source_id):
     """ Returns JSON data with examples of described entites """
     if not request.user.is_superuser:
@@ -74,6 +78,7 @@ def described_examples(request, source_id):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def linked_examples(request, source_id):
     """ Returns JSON data with examples of described entites """
     if not request.user.is_superuser:

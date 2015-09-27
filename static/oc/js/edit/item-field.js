@@ -8,6 +8,19 @@ function edit_field(){
 	this.edit_uuid = false;  //uuid of the item being edited
 	this.edit_new = false;  //is the item new (true, not created) or false (being edited)
 	this.item_type = false;
+	
+	// used for required fields
+	this.oc_required = false;
+	this.item_label = false;
+	this.label_prefix = ''; // for composing new labels
+	this.label_id_len = false; //for composing new labels
+	this.passed_value = false; // for label validation
+	this.preset_label = false; // for presetting a label
+	this.class_uri = false;
+	this.class_label = false;
+	this.context_uuid = false; // the parent context uuid
+	this.context_label = false; // the parent context label
+	
 	this.id = 1;
 	this.project_uuid = false;
 	this.profile_uuid = false; //using an input profile if not false.
@@ -21,8 +34,11 @@ function edit_field(){
 	this.obs_num = false;
 	this.obs_node = false;
 	this.note = false;
-	this.oc_required = false;
 	this.validation = false;
+	this.after_validation_done = false;
+	this.value_num_validations = {};
+	
+	this.values_modified = false;
 	this.values_obj = []; // list of values associated with an item
 	this.parent_obj_name = false;
 	this.obj_name = false;
@@ -37,6 +53,7 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
+	this.html_validation = false;
 	this.values_dom_id = false;
 	this.single_value_preds = [this.label_pred_uuid,
 										this.class_pred_uuid,
@@ -62,6 +79,16 @@ function edit_field(){
 	this.make_field_html = function(){
 		
 		this.initialize();
+		if (this.profile_uuid != false) {
+			//we're using this field in an input profile
+			var html = this.make_field_profile_html();
+		}
+		else{
+			var html = this.make_field_edit_html();
+		}
+		return html;
+	}
+	this.make_field_edit_html = function(){
 		var vals_html = this.make_vals_html();
 		var note_html = '';
 		if (this.note != false) {
@@ -88,6 +115,33 @@ function edit_field(){
 		].join("\n");
 		return html;
 	}
+	this.make_field_profile_html = function(){
+		var vals_html = this.make_vals_html();
+		var note_html = '';
+		if (this.note != false) {
+			if (this.note.length > 0) {
+				var note_html = [
+					'<p class="small">',
+						this.note,
+					'</p>'
+				].join("\n");
+			}
+		}
+
+		var html = [
+		'<td>',
+			this.label,
+			note_html,
+		'</td>',
+		'<td>',
+			'<div id="'+ this.values_dom_id + '">',
+				vals_html,
+			'</div>',
+		'</td>',
+		].join("\n");
+		return html;
+	}
+	
 	this.postprocess = function(){
 		//do these functions after the html is added to the dom
 		this.activate_calendars();
@@ -100,7 +154,8 @@ function edit_field(){
 		if (this.add_new_data_row) {
 			// add a data entry row
 			var new_value_obj = {'new': true};
-			values_obj.push(new_value_obj);	
+			values_obj.push(new_value_obj);
+			this.add_new_data_row = false;
 		}
 		var vals_html = [
 			'<div class="container-fluid" id="' + this.values_dom_id + '">'
@@ -155,7 +210,12 @@ function edit_field(){
 					var action = ' Change the <em>' + this.label + '</em> value';
 				}
 				else{
-					var action = ' Add a <em>' + this.label + '</em> value';
+					if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
+						var action = ' Edit <em>' + this.label + '</em>';
+					}
+					else{
+						var action = ' Add a <em>' + this.label + '</em> value';
+					}
 				}
 				
 				var exp_html = [
@@ -194,6 +254,10 @@ function edit_field(){
 				].join('\n');
 			}
 			else{
+				// we're dealing with existing values, probably
+				// already added to an item
+				// default to believing them to be valid
+				this.value_num_validations[i] = true;
 				
 				if (length > 2 ) {
 					// add sort buttons for multi value fields
@@ -245,7 +309,7 @@ function edit_field(){
 			else{
 				this.name = this.obj_name;
 			}
-			if (this.predicate_uuid in this.single_value_preds) {
+			if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
 				//this predicate can only have single values
 				this.single_value_only = true;
 			}
@@ -437,7 +501,7 @@ function edit_field(){
 				search_sup_html = '';
 			}
 		
-			// make an entity search for contexts
+			// make an entity search for items in the id field
 			var entityInterfaceHTML = "";
 			/* changes global authorSearchObj from entities/entities.js */
 			
@@ -451,33 +515,17 @@ function edit_field(){
 			entSearchObj.limit_context_uuid = this.predicate_uuid;
 			entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 			var entDomID = entSearchObj.make_dom_name_id();
-			var afterSelectDone = {
-				dom_ids: dom_ids,
-				entDomID: entDomID,
-				value_num: value_num,
-				id: this.id,
-				name: this.name,
-				make_field_val_domids: this.make_field_val_domids,
-			   make_validation_html: this.make_validation_html,
-				make_submit_button: this.make_submit_button,
-				ids_validation: this.ids_validation,
-				pred_type: this.pred_type,
-				predicate_uuid: this.predicate_uuid,
-				class_pred_uuid: this.class_pred_uuid,
-				class_vocab_uri: this.class_vocab_uri,
-				context_pred_uuid: this.context_pred_uuid,
-				validation_id_response: this.validation_id_response,
-				exec: function(){
-					var sel_id = document.getElementById(this.entDomID + "-sel-entity-id").value;
-					var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
-					document.getElementById(this.dom_ids.label).value = sel_label;
-					document.getElementById(this.dom_ids.id).value = sel_id;
-					this.ids_validation[sel_id] = {label: sel_label,
-											             item_type: 'types',
-											             vocab_uri: false};
-					var val_mes = 'Valid category selected.';
-					this.validation_id_response(true, this.value_num);
-				}
+			var afterSelectDone = this.make_afterSelectDone_obj(value_num, entDomID);
+			afterSelectDone.exec = function(){
+				var sel_id = document.getElementById(this.entDomID + "-sel-entity-id").value;
+				var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
+				document.getElementById(this.dom_ids.label).value = sel_label;
+				document.getElementById(this.dom_ids.id).value = sel_id;
+				this.ids_validation[sel_id] = {label: sel_label,
+														 item_type: 'types',
+														 vocab_uri: false};
+				var val_mes = 'Valid category selected.';
+				this.validation_id_response(true, this.value_num);
 			};
 			entSearchObj.afterSelectDone = afterSelectDone;
 			this.sobjs.push(entSearchObj);
@@ -530,8 +578,15 @@ function edit_field(){
 		}
 		return html;
 	}
-	this.make_label_val_html = function(){
+	this.make_label_val_html = function(value_num, value_obj){
 		// makes special HTML for the label field
+		var dom_ids = this.make_field_val_domids(value_num);
+		var display_label = '';
+		if (this.item_label != false) {
+			display_label = this.item_label;
+			//default to accepting a current value as valid
+			this.value_num_validations[0] = true;
+		}
 		if (this.edit_new) {
 			var label_placeholder = ' placeholder="Type a label for this item" ';
 		}
@@ -553,48 +608,43 @@ function edit_field(){
 		var id_part_placeholder = ' placeholder="ID number" ';
 		
 		var html = [
-		'<tr>',
-		'<td id="f-bu-' + this.id + '">',
-      this.make_field_update_buttom_html(this.id),
-		'</td>',
-		'<td>',
-			'<div class="form-group">',
-			'<label for="f-' + this.id + '">' + this.label + '</label>',
-			'<input id="f-' + this.id + '" class="form-control input-sm" ',
-			'type="text" value="" ' + label_placeholder,
-			'onkeydown="' + this.name + '.validateLabel(\'' + this.id + '\');" ',
-			'onkeyup="' + this.name + '.validateLabel(\'' + this.id + '\');" ',
+		'<div class="form-group">',
+			'<label for="' + dom_ids.literal + '">' + this.label + '</label>',
+			'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
+			'type="text" value="' + display_label + '" ' + label_placeholder,
+			'onkeydown="' + this.name + '.validateLabel(' + value_num + ');" ',
+			'onkeyup="' + this.name + '.validateLabel(' + value_num + ');" ',
 			'/>',
 			'</div>',
 			'<div class="well well-sm small">',
 			'<form class="form-horizontal">',
 			'<div class="form-group">',
-				'<label for="label-prefix" class="col-sm-5 control-label">ID Part</label>',
+				'<label for="' + dom_ids.id_part + '" class="col-sm-5 control-label">ID Part</label>',
 				'<div class="col-sm-5">',
-				'<input id="label-id-part" class="form-control input-sm" ',
+				'<input id="' + dom_ids.id_part + '" class="form-control input-sm" ',
 				'type="text" value="" ' + id_part_placeholder,
 				//'onkeydown="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
-				'onkeyup="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
+				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
 				'/>',
 				'</div>',
 			'</div>',
 			'<div class="form-group">',
-				'<label for="label-prefix" class="col-sm-5 control-label">Label Prefix</label>',
+				'<label for="' + dom_ids.label_prefix + '" class="col-sm-5 control-label">Label Prefix</label>',
 				'<div class="col-sm-5">',
-				'<input id="label-prefix" class="form-control input-sm" ',
+				'<input id="' + dom_ids.label_prefix + '" class="form-control input-sm" ',
 				'type="text" value="' + this.label_prefix + '" ' + prefix_placeholder,
-				'onkeydown="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
-				'onkeyup="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
+				'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
+				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
 				'/>',
 				'</div>',
 			'</div>',
 			'<div class="form-group">',
-				'<label for="label-id-len" class="col-sm-5 control-label">ID Digit Length</label>',
+				'<label for="' + dom_ids.id_len + '" class="col-sm-5 control-label">ID Digit Length</label>',
 				'<div class="col-sm-3">',
-				'<input id="label-id-len" class="form-control input-sm" ',
+				'<input id="' + dom_ids.id_len + '" class="form-control input-sm" ',
 				'type="text" value="' + digit_len_val + '" ',
-				'onkeydown="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
-				'onkeyup="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
+				'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
+				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
 				'/>',
 				'</div>',
 			'</div>',
@@ -602,165 +652,155 @@ function edit_field(){
 			'<div class="form-group">',
 			'<label>Label Unique within:</label><br/>',
 			'<label class="radio-inline">',
-			'<input type="radio" name="label-unique" id="label-unique-p" ',
+			'<input type="radio" name="label-unique" ',
 			'class="label-unique" value="project" checked="checked" >',
 			'Entire project</label>',
 			'<label class="radio-inline">',
-			'<input type="radio" name="label-unique" id="label-unique-c" ',
+			'<input type="radio" name="label-unique" ',
 			'class="label-unique" value="context" >',
 			'Immediate Context</label>',
 			'</div>',
-			'</div>',
-		'</td>',
-		'<td>',
-			'<div id="v-' + this.id + '">',
-			'</div>',
-			'<label>Explanatory Note</label><br/>',
-			field.note,
-		'</td>',
-		'</tr>'
+			'</div>'
 		].join("\n");
 		return html;
 	}
-	this.make_category_val_html = function(){
+	this.make_category_val_html = function(value_num, value_obj){
 		// makes special HTML for the (class_uri) category field
-		this.prep_field_tree(('oc-gen:' + this.item_type), this.id, 'entities');
+		var dom_ids = this.make_field_val_domids(value_num);
+		var display_label = '';
+		var display_id = '';
+		if (this.class_label != false) {
+			display_label = this.class_label;
+		}
+		if (this.class_uri != false) {
+			display_id = this.class_uri;
+			//default to accepting a current value as valid
+			this.value_num_validations[0] = true;
+		}
+		
+		var tree_root_node_id = 'oc-gen:' + this.item_type;
+		this.prep_field_tree(value_num, tree_root_node_id, 'entities');
+		var limit_item_type = "types";
+		var entities_panel_title = "Select a Category for " + this.label;
+		var search_sup_html = [
+			'<label>',
+			'Select a Category Below ',
+			'(<a title="Click to expand" role="button" ',
+			'id="' + dom_ids.treebut + '" ',
+			'onclick="'+ this.name + '.toggleCollapseTree(\''+ value_num + '\');">',
+			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
+			'</span></a>)',
+			'</label><br/>',
+			'<div id="' + dom_ids.tree + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
+			'</div>',
+		].join("\n");
+		
 		var html = [
-		'<tr>',
-		'<td id="f-bu-' + this.id + '">',
-      this.make_field_update_buttom_html(this.id),
-		'</td>',
-		'<td>',
 			'<div class="form-group">',
-			'<label for="f-l-' + this.id + '">' + this.label + ' (Label)</label>',
-			'<input id="f-l-' + this.id + '" class="form-control input-sm" ',
-			'type="text" value="" disabled="disabled"/>',
+			'<label for="' + dom_ids.label + '">' + this.label + ' (Label)</label>',
+			'<input id="' + dom_ids.label + '" class="form-control input-sm" ',
+			'type="text" value="' + display_label + '" disabled="disabled"/>',
 			'</div>',
 			'<div class="form-group">',
-			'<label for="f-id-' + this.id + '">' + this.label + ' (ID)</label>',
-			'<input id="f-id-' + this.id + '" class="form-control input-sm" ',
-			'type="text" value="" />',
+			'<label for="' + dom_ids.id + '">' + this.label + ' (ID)</label>',
+			'<input id="' + dom_ids.id + '" class="form-control input-sm" ',
+			//'onkeydown="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			//'onkeyup="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			'onchange="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			'type="text" value="' + display_id + '" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>',
-			'<a title="Click to expand" role="button" ',
-			'id="tx-' + this.id + '" ',
-			'onclick="'+ this.name + '.toggleCollapseTree(\''+ this.id + '\');">',
-			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
-			'</span>',
-			'</a>',
-			' Select a General Category Below</label><br/>',
-			'<div id="tr-' + this.id + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
+				search_sup_html,
 			'</div>',
-			'</div>',
-		'</td>',
-		'<td>',
-			'<div id="v-' + this.id + '">',
-			'</div>',
-			'<label>Explanatory Note</label><br/>',
-			field.note,
-		'</td>',
-		'</tr>'
 		].join("\n");
+		
 		return html;
 	}
-	this.make_context_val_html = function(){
+	this.make_context_val_html = function(value_num, value_obj){
 		// make a tree list for searching for contexts
-		this.prep_field_tree(this.project_uuid, this.id, 'context');
+		var dom_ids = this.make_field_val_domids(value_num);
+		var display_label = '';
+		var display_id = '';
+		if (this.context_label != false) {
+			display_label = this.context_label;
+		}
+		if (this.context_uuid != false) {
+			display_id = this.context_uuid;
+			//default to accepting a current value as valid
+			this.value_num_validations[0] = true;
+		}
 		
-		// make an entity search for contexts
+		this.prep_field_tree(value_num, this.project_uuid, 'context');
+		var entities_panel_title = "Select a Context";
+		var search_sup_html = [
+			'<br/>',
+			'<label>',
+			'<u>Option B</u>: Select a Context Below ',
+			'(<a title="Click to expand" role="button" ',
+			'id="' + dom_ids.treebut + '" ',
+			'onclick="'+ this.name + '.toggleCollapseTree(\''+ value_num + '\');">',
+			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
+			'</span></a>)',
+			'</label><br/>',
+			'<div id="' + dom_ids.tree + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
+			'</div>',
+		].join("\n");
+		
+		
+		// make an entity search for items in the id field
 		var entityInterfaceHTML = "";
 		/* changes global authorSearchObj from entities/entities.js */
-		
+		var sobj_id = this.sobjs.length;
 		var entSearchObj = new searchEntityObj();
-		var ent_name = 'sobjs';
+		var ent_name = 'sobjs[' + sobj_id + ']';
 		entSearchObj.name = ent_name;
-		entSearchObj.compact_display = true;
+		entSearchObj.ultra_compact_display = true;
 		entSearchObj.parent_obj_name = this.name;
-		entSearchObj.entities_panel_title = "Select a Context";
-		entSearchObj.limit_item_type = "subjects";
+		entSearchObj.entities_panel_title = entities_panel_title;
+		entSearchObj.limit_item_type = 'subjects';
 		entSearchObj.limit_project_uuid = "0," + this.project_uuid;
 		var entDomID = entSearchObj.make_dom_name_id();
-		var afterSelectDone = {
-			// done after the selection is done
-			sel_id: document.getElementById(entDomID + "-sel-entity-id").value,
-			sel_label: document.getElementById(entDomID +  "-sel-entity-label").value,
-			field_id: this.id,
-			checkFields: this.checkFields, //needed for checking fields
-		   data: this.data, //needed for checking fields
-			make_validation_html: this.make_validation_html, //needed for checking fields
-			exec: function(){
-				document.getElementById('f-l-' + this.field_id).value = this.sel_label;
-				document.getElementById('f-id-' + this.field_id).value = this.sel_id;
-				//now check the fields
-				this.checkFields();
-			}
+		var afterSelectDone = this.make_afterSelectDone_obj(value_num, entDomID);
+		afterSelectDone.exec = function(){
+			var sel_id = document.getElementById(this.entDomID + "-sel-entity-id").value;
+			var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
+			document.getElementById(this.dom_ids.label).value = sel_label;
+			document.getElementById(this.dom_ids.id).value = sel_id;
+			this.ids_validation[sel_id] = {label: sel_label,
+													 item_type: 'types',
+													 vocab_uri: false};
+			var val_mes = 'Valid context selected.';
+			this.validation_id_response(true, this.value_num);
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
-		this.sobjs = entSearchObj;
+		this.sobjs.push(entSearchObj);
 		var entityInterfaceHTML = entSearchObj.generateEntitiesInterface();
 		
 		var html = [
-		'<tr>',
-		'<td id="f-bu-' + this.id + '">',
-      this.make_field_update_buttom_html(this.id),
-		'</td>',
-		'<td>',
 			'<div class="form-group">',
-			'<label for="f-l-' + this.id + '">' + this.label + ' (Label)</label>',
-			'<input id="f-l-' + this.id + '" class="form-control input-sm" ',
-			'type="text" value="" disabled="disabled"/>',
+			'<label for="' + dom_ids.label + '">' + this.label + ' (Label)</label>',
+			'<input id="' + dom_ids.label + '" class="form-control input-sm" ',
+			'type="text" value="' + display_label + '" disabled="disabled"/>',
 			'</div>',
 			'<div class="form-group">',
-			'<label for="f-id-' + this.id + '">' + this.label + ' (ID)</label>',
-			'<input id="f-id-' + this.id + '" class="form-control input-sm" ',
-			'type="text" value="" />',
+			'<label for="' + dom_ids.id + '">' + this.label + ' (ID)</label>',
+			'<input id="' + dom_ids.id + '" class="form-control input-sm" ',
+			//'onkeydown="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			//'onkeyup="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			'onchange="' + this.name + '.validateID(\'' + value_num + '\');" ',
+			'type="text" value="' + display_id + '" />',
 			'</div>',
 			'<div class="well well-sm small">',
-			'<label>',
-			'<a title="Click to expand" role="button" ',
-			'id="tx-' + this.id + '" ',
-			'onclick="'+ this.name + '.toggleCollapseTree(\''+ this.id + '\');">',
-			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
-			'</span>',
-			'</a>',
-			' Select a Context Below</label><br/>',
-			'<div id="tr-' + this.id + '" class="container-fluid collapse in" aria-expanded="true">', // where the tree will go
+				'<label><u>Option A</u>: Search <em>' + this.label + '</em></label>',
+				entityInterfaceHTML,
+				search_sup_html,
 			'</div>',
-			'</div>',
-		'</td>',
-		'<td>',
-			'<div id="v-' + this.id + '">',
-			'</div>',
-			'<label>Explanatory Note</label><br/>',
-			field.note,
-			entityInterfaceHTML,
-		'</td>',
-		'</tr>'
 		].join("\n");
+		
 		return html;
 	}
 	this.make_note_val_html = function(){
-		var html = [
-		'<tr>',
-		'<td id="f-bu-' + this.id + '">',
-      this.make_field_update_buttom_html(this.id),
-		'</td>',
-		'<td>',
-			'<div class="form-group">',
-			'<label for="f-' + this.id + '">Note</label>',
-			'<textarea id="f-' + this.id + '" class="form-control input-sm" rows="3">',
-			'</textarea>',
-			'</div>',
-		'</td>',
-		'<td>',
-			'<div id="v-' + this.id + '">',
-			'</div>',
-			'<label>Explanatory Note</label><br/>',
-			field.note,
-		'</td>',
-		'</tr>'
-		].join("\n");
+		var html = '';
 		return html;
 	}
 	this.make_field_update_buttom_html = function(field_id){
@@ -867,12 +907,18 @@ function edit_field(){
 			label_dis: (value_num + '-field-l-dis-' + this.id), //label for ID value fields, for display only
 			id_dis: (value_num + '-field-id-dis-' + this.id), //id value field, for display only
 			valid: (value_num + '-field-valid-' + this.id), //container ID for validation feedback
+			valid_val: (value_num + '-field-valid-val-' + this.id), //hidden input field for value validation results
 			submitcon: (value_num + '-field-sbcon-' + this.id), //container ID for submitt button
 			icon: (value_num + '-field-icon-' + this.id), //for calendar icon, used with date picker
 			datecon: (value_num + '-field-datecon-' + this.id), //containers for dates, needed to activate calender date picker
 			treebut: (value_num + '-field-tx-' + this.id), //button for making parents
 			tree: (value_num + '-field-tr-' + this.id), //parent for the tree
 			newrec: (value_num + '-field-new-' + this.id), //for the new record collapse panel
+			label_prefix: (value_num + '-field-label-prefix-' + this.id), //for label comosition, label prefix
+			id_part: (value_num + '-field-id-part-' + this.id), //for label composition, numeric id part
+			id_len: (value_num + '-field-id-len-' + this.id), //for label comosition, id length
+			sug_alert: (value_num + '-field-sug-alert-' + this.id), //for label comosition, id length
+			sug_label: (value_num + '-field-sug-label-' + this.id), //suggested label
 			focal: (value_num + '-field-fcl-' + this.id)  //for scrolling to a part of the page
 		};
 		return dom_ids;	
@@ -903,10 +949,85 @@ function edit_field(){
 		].join("\n");
 		return html;
 	}
+	this.make_afterSelectDone_obj = function(value_num, entDomID){
+		// starts an object that will include a function to be executed
+		// after a user has selected an item in the entity search object
+		// result list
+		var dom_ids = this.make_field_val_domids(value_num);
+		var afterSelectDone = {
+			dom_ids: dom_ids,
+			entDomID: entDomID,
+			value_num: value_num,
+			id: this.id,
+			name: this.name,
+			make_field_val_domids: this.make_field_val_domids,
+			make_validation_html: this.make_validation_html,
+			make_submit_button: this.make_submit_button,
+			ids_validation: this.ids_validation,
+			value_num_validations: this.value_num_validations,
+			pred_type: this.pred_type,
+			predicate_uuid: this.predicate_uuid,
+			class_pred_uuid: this.class_pred_uuid,
+			class_vocab_uri: this.class_vocab_uri,
+			context_pred_uuid: this.context_pred_uuid,
+			validation_id_response: this.validation_id_response,
+			after_validation_done: this.after_validation_done,
+			after_validation_function: this.after_validation_function,
+			values_modified: this.values_modified,
+			exec: false
+		}
+		return afterSelectDone;
+	}
 	
 	/*
 	 * AJAX DATA CREATION, EDITING, DELETE FUNCTIONS
 	 */
+	this.make_field_submission_obj = function(replace_all){
+      // make an object for submitting the data
+		var values_list = this.get_valid_field_values();
+		var act_field = {
+			id: this.id,
+			label: this.label,
+			field_uuid: this.field_uuid,
+			predicate_uuid: this.predicate_uuid,
+			edit_uuid: this.edit_uuid,
+			obs_num: this.obs_num,
+			replace_all: replace_all,
+			values: values_list
+		};
+		return act_field;
+	}
+	this.get_valid_field_values = function(){
+		// gets valid values for this field
+		var value_num = 0;
+		var more = true;
+		var value_list = [];
+		while (more){
+			var act_value = null;
+			if (value_num in this.value_num_validations) {
+				if (this.value_num_validations[value_num]) {
+					var act_value = this.get_field_value(value_num);
+				}
+			}
+			else{
+				var dom_ids = this.make_field_val_domids(value_num);
+				if (document.getElementById(dom_ids.valid_val)) {
+					if (document.getElementById(dom_ids.valid_val).value == '1') {
+						var act_value = this.get_field_value(value_num);
+					}
+				}
+			}
+			if (act_value != null) {
+				value_list.push(act_value);
+				value_num += 1;
+			}
+			else{
+				more = false;
+			}
+		}
+		return value_list;
+	}
+	
 	this.addUpdateValue = function(value_num){
 		// updates a value if the hash_id is not null
 		// adds a new value if the hash_id is null
@@ -935,7 +1056,7 @@ function edit_field(){
 		// sends an ajax request to create or update assertion values
 		var data = {
 			csrfmiddlewaretoken: csrftoken};
-		act_field = {
+		var act_field = {
 			id: this.id,
 			label: this.label,
 			predicate_uuid: this.predicate_uuid,
@@ -1133,6 +1254,18 @@ function edit_field(){
 				hash_id = document.getElementById(dom_ids.hash_id).value;
 			}
 		}
+		if (document.getElementById(dom_ids.valid_val)) {
+			// check to see if value_num has a hidden input element
+			// that has validation information
+			if (document.getElementById(dom_ids.valid_val).value == '1') {
+				this.value_num_validations[value_num] = true;
+				this.values_modified = true;
+			}
+			else{
+				this.value_num_validations[value_num] = false;
+				this.values_modified = true;
+			}
+		}
 		if (literal_val != null || id_val != null) {
 			var field_val = {
 				'hash_id': hash_id,
@@ -1149,16 +1282,16 @@ function edit_field(){
 	this.validateValue = function(value_num){
 		// chooses the appropriate validation method, returns a validation result
 		if (this.predicate_uuid == this.label_pred_uuid) {
-			var is_valid = false;
+			var is_valid = this.validateLabel(value_num)
 		}
 		else if (this.predicate_uuid == this.class_pred_uuid) {
-			var is_valid = false;
+			var is_valid  = this.validateID(value_num);
 		}
 		else if (this.predicate_uuid == this.context_pred_uuid) {
-			var is_valid = false;
+			var is_valid = this.validateID(value_num);
 		}
 		else if (this.predicate_uuid == this.note_pred_uuid) {
-			var is_valid = false;
+			var is_valid = this.validateHTML(value_num);
 		}
 		else{
 			if (this.data_type == 'id') {
@@ -1181,6 +1314,14 @@ function edit_field(){
 			}
 		}
 		return is_valid;
+	}
+	this.after_validation_function = function(){
+		if (this.after_validation_done != false && this.oc_required) {
+			// execute function after validation
+			if (typeof(this.after_validation_done.exec) !== 'undefined') {
+				this.after_validation_done.exec();
+			}
+		}
 	}
 	this.validateID = function(value_num){
 
@@ -1273,7 +1414,7 @@ function edit_field(){
 			var is_valid = this.check_cached_id_valid(value_num);
 		}
 		this.validation_id_response(is_valid, value_num);
-		//console.log(this.ids_validation);
+		this.values_modified = true; // a value was modified
 	}
 	this.validation_id_response = function(is_valid, value_num){
 		//console.log(this.pred_type);
@@ -1311,13 +1452,17 @@ function edit_field(){
 			}
 		}
 		this.make_validation_html(val_mes, is_valid, value_num);
+		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true;
+		this.after_validation_function();
 	}
 	this.validateHTML = function(value_num){
 		// calls a function to make an ajax request to validate HTML
 		this.ajax_validate_html(value_num);
 	}
 	this.ajax_validate_html = function(value_num){
-		//
+		// AJAX request to validate HTML
+		this.html_validation = true;
 		this.active_value_num = value_num;
 		var dom_ids = this.make_field_val_domids(value_num);
 		if (document.getElementById(dom_ids.literal)) {
@@ -1356,6 +1501,9 @@ function edit_field(){
 			this.make_validation_html(val_mes, false, value_num);
 			this.make_submit_button(false, value_num);
 		}
+		this.html_validation = false;
+		this.value_num_validations[value_num] = data.ok;
+		this.values_modified = true; // a value was modified
 	}
 	this.validateNumber = function(value_num){
 		//validates numeric fields
@@ -1394,6 +1542,8 @@ function edit_field(){
 				}
 			}	
 		}
+		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true; // a value was modified
 		return is_valid;
 	}
 	this.validateDate = function(value_num){
@@ -1409,6 +1559,8 @@ function edit_field(){
 			var val_mes = 'Not a valid calendar date (yyyy-mm-dd) value.';
 			this.make_validation_html(val_mes, false, value_num);
 		}
+		this.value_num_validations[value_num] = valid_date;
+		this.values_modified = true; // a value was modified
 		return valid_date;
 	}
 	this.validateBoolean = function(value_num){
@@ -1431,6 +1583,8 @@ function edit_field(){
 			var val_mes = 'Cannot be understood as a Boolean (True/False) value.';
 			this.make_validation_html(val_mes, false, value_num);
 		}
+		this.value_num_validations[value_num] = boolean_ok;
+		this.values_modified = true; // a value was modified
 		return boolean_ok;
 	}
 	this.parseStrBoolean = function(check_str){
@@ -1468,22 +1622,25 @@ function edit_field(){
 		}
 	}
 	this.make_validation_html = function(message_html, is_valid, value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
 		if (is_valid) {
 			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
 			var alert_class = "alert alert-success";
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="1" />';
 		}
 		else{
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
 			var alert_class = this.invalid_alert_class;
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="0" />';
 		}
 		var alert_html = [
 				'<div role="alert" class="' + alert_class + '" >',
 					icon_html,
 					message_html,
+					val_status,
 				'</div>'
 			].join('\n');
 		
-		var dom_ids = this.make_field_val_domids(value_num);
 		if (document.getElementById(dom_ids.valid)) {
 			var act_dom = document.getElementById(dom_ids.valid);
 			act_dom.innerHTML = alert_html;
@@ -1507,6 +1664,22 @@ function edit_field(){
 				'</div>'
 			].join('\n');
 		}
+		else if (is_valid == false && this.html_validation) {
+			
+			if (document.getElementById(dom_ids.valid_val)) {
+				document.getElementById(dom_ids.valid_val).value = '1';
+			}
+			
+			//code allow submission of bad HTML
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-warning btn-block" onclick="' + this.name + '.addUpdateValue(\'' + value_num + '\');">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit Anyway',
+					'</button>',
+				'</div>'
+			].join('\n');
+		}
 		else{
 			var button_html = [
 				'<div style="margin-top: 10px;">',
@@ -1518,12 +1691,14 @@ function edit_field(){
 			].join('\n');
 			button_html = '';
 		}
-		if (document.getElementById(dom_ids.submitcon)) {
-			document.getElementById(dom_ids.submitcon).innerHTML = button_html;
+		if (edit_new == false) {
+			// only add the button if edit_new is false
+			if (document.getElementById(dom_ids.submitcon)) {
+				document.getElementById(dom_ids.submitcon).innerHTML = button_html;
+			}
 		}
 		return button_html;
 	}
-	
 	this.prepend_zeros = function(id_part, digit_length){
 		// prepends zeros to an appropriate digit length
 		if (this.isInt(digit_length)) {
@@ -1567,6 +1742,240 @@ function edit_field(){
 		if( (m[1].length < 2) || m[3] < 1 || m[3] > 31){ret = false;}
 		
 		return ret;	
+	}
+	
+	
+	/* ---------------------------------------
+	 * User interaction functions
+	 *
+	 * for item labels
+	 * ---------------------------------------
+	 */
+	this.composeLabel = function(value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		var id_part = document.getElementById(dom_ids.id_part).value.trim();
+		var prefix = document.getElementById(dom_ids.label_prefix).value;
+		var id_len = parseInt(document.getElementById(dom_ids.id_len).value);
+		if (!this.isInt(id_len)) {
+			document.getElementById(dom_ids.id_len).value = '';
+			id_len = '';
+			var id_part = id_part.replace(prefix, '');
+		}
+		else{
+			var id_part = id_part.replace(prefix, '');
+			id_part =  this.prepend_zeros(id_part, id_len);
+		}
+		var label = prefix + id_part;
+		document.getElementById(dom_ids.literal).value = label.trim();
+		if (id_part.length > 0) {
+			if (id_part != ' ') {
+				// the ID part has some values, so one can validate it
+				// with an AJAX request
+				this.passed_value = label;
+				this.validateLabel(value_num);
+			}
+		}
+		
+	}
+	this.validateLabel = function(value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		this.active_value_num = value_num; // so as to remember what we are validating
+		var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
+		var data = {
+			item_type: this.item_type,
+		   uuid: this.edit_uuid
+		};
+		
+		var id_len = parseInt(document.getElementById(dom_ids.id_len).value);
+		if (this.isInt(id_len)) {
+			data.id_len = id_len;
+		}
+		if (this.passed_value == false) {
+			var label = document.getElementById(dom_ids.literal).value;
+			if (label.length > 0) {
+				data.label = label.trim();
+			}
+		}
+		else{
+			var label = this.passed_value;
+			this.passed_value = false;
+			if (label.length > 0) {
+				data.label = label.trim();
+			}
+		}
+		
+		var prefix = document.getElementById(dom_ids.label_prefix).value;
+		if (prefix.length > 0) {
+			data.prefix = prefix;
+		}
+		if (this.context_uuid != false) {
+			data.context_uuid = this.context_uuid;
+		}
+		var act_dom = document.getElementById(dom_ids.valid);
+		act_dom.innerHTML = this.make_loading_gif('Checking label...');
+		return $.ajax({
+			type: "GET",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: data,
+			async: false,
+			success: this.validateLabelDone,
+			error: function (request, status, error) {
+				alert('Item Label validation failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
+   
+	this.presetLabel = function(value_num){
+		
+		var field = this.get_field_obj_by_predicate_uuid(this.label_pred_uuid);
+		if (field != false) {
+			this.act_field_uuid = field.id; // so as to remember what field we're validating
+			var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
+			var data = {
+				item_type: this.item_type,
+			   prefix: this.label_prefix,
+				id_len: this.label_id_len,
+				edit_uuid: this.edit_uuid
+			};
+			var act_dom = document.getElementById('v-' + field.id);
+			act_dom.innerHTML = this.make_loading_gif('Suggesting label...');
+			return $.ajax({
+				type: "GET",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				async: true,
+				success: this.validateLabelDone,
+				error: function (request, status, error) {
+					alert('Item Label suggestion failed, sadly. Status: ' + request.status);
+				} 
+			});
+		}
+	}
+	this.validateLabelDone = function(data){
+		var value_num = this.active_value_num;
+		this.active_value_num = false;
+		var dom_ids = this.make_field_val_domids(value_num); 
+		
+		if (this.preset_label) {
+			//we wanted to use data.suggested to preset the label
+			document.getElementById(dom_ids.literal).value = data.suggested.trim();
+			this.preset_label = false;
+		}
+		
+		var act_dom = document.getElementById(dom_ids.valid);
+		var is_valid = false;
+		if (data.exists == true) {
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var message_html = [
+				'The label "' + data.checked + '"',
+				'<a href="' + this.make_url('/edit/items/' +  encodeURIComponent(data.exists_uuid)) + '" target="_blank">',
+				'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>',
+				'</a> ',
+				'already exists.',
+			].join('\n');
+			var alert_class = "alert alert-danger";
+			var alert_html = [
+				'<div role="alert" class="' + alert_class + '">',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		}
+		else if (data.exists == false){
+			is_valid = true;
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			if (data.checked == data.suggested) {
+				// checked label is the same as the suggested
+				var message_html = [
+					'The label "' + data.checked + '" is valid.',
+				].join('\n');	
+			}
+			else{
+				var message_html = [
+					'The label "' + data.checked + '" is not yet in use.',
+				].join('\n');	
+			}
+			var alert_class = "alert alert-success";
+			var alert_html = [
+				'<div role="alert" class="' + alert_class + '">',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		}
+		else{
+			var alert_html = '';
+		}
+		if (data.suggested != data.checked) {
+			var alert_class = "alert alert-info";
+			if (alert_html.length > 5) {
+				var div_start = ' style="margin-top:-25px;" ';
+			}
+			else{
+				var div_start = '';
+			}
+			var suggested_link = [
+				' role="button" onclick="' + this.name + '.useSuggestedLabel(' + value_num + ');" '
+			].join(' ');
+			if (document.getElementById(dom_ids.literal).value != data.suggested) {
+				var suggest_hint = ' (Click to use)';
+			}
+			else{
+				var suggest_hint = '';
+			}
+			
+			var suggest_html = [
+			'<div ' + div_start + '>',
+			'<div role="alert" class="' + alert_class + '" id="' + dom_ids.sug_alert + '">',
+			'Suggested Label' + suggest_hint + ': ',
+			'<a title="Use suggested link" ' + suggested_link + ' >',
+			'<span class="glyphicon glyphicon-circle-arrow-left"></span>',
+			'</a> ',
+			'<a title="Use suggested link" ' + suggested_link + ' >',
+			'<samp class="uri-id" id="' + dom_ids.sug_label + '" style="font-weight:bold;">',
+			data.suggested,
+			'</samp>',
+			'</a>',
+			'</div>',
+			'</div>'
+			].join('\n');
+		}
+		else{
+			var suggest_html = '';
+		}
+		
+		if (is_valid) {
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="1" />';
+		}
+		else{
+			var val_status = '<input id="' + dom_ids.valid_val + '" type="hidden" value="0" />';
+		}
+		
+		var html = [
+			'<div style="margin-top: 3px;">',
+			alert_html,
+			val_status,
+			suggest_html,
+			'</div>'
+		].join("\n");
+		act_dom.innerHTML = html;
+		this.make_submit_button(is_valid, value_num);
+		this.value_num_validations[value_num] = is_valid;
+		this.values_modified = true; // a value was modified
+		this.after_validation_function();
+	}
+	this.useSuggestedLabel = function(value_num){
+		// copies the suggested label into the label field
+		var dom_ids = this.make_field_val_domids(value_num); 
+		var label = document.getElementById(dom_ids.sug_label).innerHTML;
+		document.getElementById(dom_ids.literal).value = label.trim();
+		document.getElementById(dom_ids.sug_alert).innerHTML = "Using suggested label: " + label;
+		this.passed_value = label.trim();
+		this.validateLabel(value_num);
 	}
 	
 	

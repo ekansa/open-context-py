@@ -56,6 +56,11 @@ class InputLabeling():
             if exist_id is False:
                 output['exists'] = False
                 output['valid'] = True
+                if self.uuid is not False:
+                    manifest_item = self.get_manifest_item(self.uuid)
+                    if manifest_item is not False:
+                        output['suggested'] = manifest_item.label
+                        output['uuid'] = manifest_item.uuid
             else:
                 output['exists'] = True
                 output['exists_uuid'] = exist_id
@@ -160,7 +165,7 @@ class InputLabeling():
         """ checks to see if a label already exists
             within the scope of a project or related context
         """
-        if self.uuid is not False:
+        if self.uuid is False:
             uuid_exclude = 'skip'
         else:
             uuid_exclude = self.uuid
@@ -216,3 +221,12 @@ class InputLabeling():
                 while len(num_id_part) < digit_length:
                     num_id_part = '0' + num_id_part
         return num_id_part
+
+    def get_manifest_item(self, uuid):
+        """ gets the manifest item, if present """
+        try:
+            item_man = Manifest.objects.get(uuid=uuid)
+        except Manifest.DoesNotExist:
+            item_man = False
+        return item_man
+

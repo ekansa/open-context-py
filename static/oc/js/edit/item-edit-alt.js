@@ -44,13 +44,17 @@ function itemEdit(item_type, item_uuid){
 				this.prepare_fields();
 				this.show_observation_data();
 				this.fields_postprocess();
+				if (typeof edit_geoevents !=  "undefined") {
+					// prep geospatial interface if interface object exists
+					edit_geoevents.show_existing_data()
+				}
 			}
 		}
 	}
 	this.show_observation_data = function(){
 		// first get information on the predicates from the JSON-LD context
 		console.log(this.fields);
-		this.item_json_ld_obj.getPredicates();
+		//this.item_json_ld_obj.getPredicates();
 		var observations = this.item_json_ld_obj.getObservations();
 		var number_obs = observations.length;
 		var obs_html_list = [];
@@ -80,7 +84,17 @@ function itemEdit(item_type, item_uuid){
 					// we have multiple observations, so put them into collapsable panels
 					var panel_num = this.panels.length;
 					var obs_panel = new panel(panel_num);
-					obs_panel.title_html = fgroup.label;
+					if (obs.hasOwnProperty('label')) {
+						obs_panel.title_html = obs.label;
+					}
+					else{
+						obs_panel.title_html = obs.id;
+						if (obs.id == '#obs-1') {
+							//first observation, the main description
+							obs_panel.title_html = 'Main Description';
+						}
+					}
+					
 					obs_panel.body_html = fields_html;
 					var observation_html = obs_panel.make_html();
 					obs_html_list.push(observation_html);
@@ -351,6 +365,7 @@ function itemEdit(item_type, item_uuid){
 	}
 	
 	this.prepare_fields = function(){
+		this.fields = [];
 		this.item_json_ld_obj.getPredicates();
 		var observations = this.item_json_ld_obj.getObservations();
 		var number_obs = observations.length;
@@ -438,10 +453,8 @@ function itemEdit(item_type, item_uuid){
 	this.ajax_get_active_idDone = function(data){
 		this.active_search_entity = data;
 	}
-	
-	this.make_url = function(relative_url){
-	//makes a URL for requests, checking if the base_url is set	
-		 //makes a URL for requests, checking if the base_url is set
+	this.make_url = function(relative_url){	
+		//makes a URL for requests, checking if the base_url is set
 		var rel_first = relative_url.charAt(0);
 		if (typeof base_url != "undefined") {
 			var base_url_last = base_url.charAt(-1);

@@ -33,6 +33,7 @@ class ItemCreate():
         self.request = request
         self.errors = {'params': False}
         self.response = {}
+        self.created_uuid = False
         try:
             self.project = Project.objects.get(uuid=project_uuid)
         except Project.DoesNotExist:
@@ -157,6 +158,7 @@ class ItemCreate():
             new_man.des_predicate_uuid = ''
             new_man.views = 0
             new_man.save()
+            self.created_uuid = uuid
         else:
             label = '[Item not created]'
             uuid = False
@@ -220,6 +222,7 @@ class ItemCreate():
             new_man.des_predicate_uuid = ''
             new_man.views = 0
             new_man.save()
+            self.created_uuid = uuid
         else:
             label = '[Item not created]'
             uuid = False
@@ -388,7 +391,7 @@ class ItemCreate():
             if type_uuid is not False:
                 # we already have this type!
                 ok = False
-                uuid = type_uuid
+                uuid = str(type_uuid)
                 self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
                 self.errors['uuid'] += ', becuase it already exists with UUID: ' + uuid
                 note = self.errors['uuid']
@@ -397,8 +400,8 @@ class ItemCreate():
             if content_uuid is False:
                 newtype = tm.get_make_type_within_pred_uuid(predicate_uuid,
                                                             label)
-                content_uuid = newtype.content_uuid
-                uuid = newtype.uuid
+                content_uuid = str(newtype.content_uuid)
+                uuid = str(newtype.uuid)
             else:
                 tm.content = label
                 newtype = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
@@ -412,6 +415,7 @@ class ItemCreate():
                                       type_note)
         if ok:
             # now clear the cache a change was made
+            self.created_uuid = uuid
             cache.clear()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
@@ -496,6 +500,7 @@ class ItemCreate():
             new_man.des_predicate_uuid = ''
             new_man.views = 0
             new_man.save()
+            self.created_uuid = uuid
             # now add the note if not empty
             self.add_description_note(uuid,
                                       'predicates',

@@ -31,7 +31,7 @@ class ISOyears():
             iso_year = self.prepend_zeros(iso_year)
             iso_year = '-' + iso_year
         return iso_year
-    
+
     def make_float_from_iso(self, iso_year):
         """ makes a float year from an ISO year"""
         if '-' in iso_year:

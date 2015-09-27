@@ -10,6 +10,7 @@ from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 """
@@ -22,6 +23,7 @@ AND IMPORT DATA TO A PROJECT FROM REFINE
 
 
 @cache_control(no_cache=True)
+@never_cache
 def create_project(request):
     """ Create a new project """
     if not request.user.is_superuser:
@@ -47,6 +49,7 @@ def create_project(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def edit_project(request, project_uuid):
     """ Create a new project """
     if not request.user.is_superuser:
@@ -76,6 +79,7 @@ def edit_project(request, project_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def project_import_refine(request, project_uuid):
     """ Imports data from refine to a project """
     if not request.user.is_superuser:
@@ -107,6 +111,7 @@ def project_import_refine(request, project_uuid):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def import_finalize(request, source_id):
     """ Finalizes an import """
     if not request.user.is_superuser:
@@ -139,6 +144,7 @@ TO CHOOSE TO ADD ADDITIONAL DATA FROM REFINE
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def index(request):
     """ Index for sources is going to be a list of projects """
     if not request.user.is_superuser:
@@ -158,6 +164,7 @@ def index(request):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def project(request, project_uuid):
     """ Show HTML form for importing sources to a project """
     if not request.user.is_superuser:
@@ -187,6 +194,7 @@ INTERFACES.
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def field_types(request, source_id):
     """ Show HTML form listing fields classified by field type """
     if not request.user.is_superuser:
@@ -209,6 +217,7 @@ def field_types(request, source_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def field_types_more(request, source_id):
     """ Show HTML form further classifying subject fields """
     if not request.user.is_superuser:
@@ -235,6 +244,7 @@ def field_types_more(request, source_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def field_entity_relations(request, source_id):
     """ Show HTML form to change relationships for entities
         to be created / or updated from an import table
@@ -265,6 +275,7 @@ def field_entity_relations(request, source_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def field_descriptions(request, source_id):
     """ Show HTML form to change relationships for entities
         to be created / or updated from an import table
@@ -289,6 +300,7 @@ def field_descriptions(request, source_id):
 
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
+@never_cache
 def finalize(request, source_id):
     """ Show HTML form to change relationships for entities
         to be created / or updated from an import table

@@ -187,7 +187,9 @@ function generate_field_describesHTML(field){
 	// makes HTML snippet for what the field describes
 	var outputHTML = "";
 	for (var i = 0, length = field.annotations.length; i < length; i++) {
-		if (field.annotations[i].predicate.id == PRED_DESCRIBES || field.annotations[i].predicate.id == PRED_VALUE_OF) {
+		if (field.annotations[i].predicate.id == PRED_DESCRIBES ||
+			 field.annotations[i].predicate.id == PRED_GEO_LOCATION ||
+			 field.annotations[i].predicate.id == PRED_VALUE_OF) {
 			outputHTML = "<button type=\"button\" class=\"btn btn-warning btn-xs\" ";
 			outputHTML += "onclick=\"javascript:removeDescriptionAnno(" + field.annotations[i].id + ");\" >";
 			outputHTML += "<span class=\"glyphicon glyphicon-remove\"></span></button> ";

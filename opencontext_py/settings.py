@@ -202,7 +202,8 @@ if DEBUG:
         os.path.join(BASE_DIR, 'static'),
         '/static/',
     )
-    STATIC_EXPORTS_ROOT = BASE_DIR + '/static/exports/'
+    STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
+    STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
 else:
     ADMIN_MEDIA_PREFIX = '/static/admin/'
     STATIC_URL = '/static/'
@@ -210,6 +211,8 @@ else:
     STATICFILES_DIRS = (
         normpath(join(BASE_DIR, 'static')),
     )
+    STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
+    STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
 
 import socket
 

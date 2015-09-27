@@ -1069,6 +1069,8 @@ class ItemConstruction():
                         geo_props['reference-label'] = rel_meta.label
                 else:
                     geo_props['reference-type'] = 'specified'
+                    if self.assertion_hashes:
+                        geo_props['hash_id'] = geo.hash_id
                 if(geo.specificity < 0):
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
@@ -1224,6 +1226,8 @@ class ItemConstruction():
                 when['reference-label'] = rel_meta.label
         else:
             when['reference-type'] = 'specified'
+            if self.assertion_hashes:
+                when['hash_id'] = event.hash_id
         act_dict['when'] = when
         return act_dict
 

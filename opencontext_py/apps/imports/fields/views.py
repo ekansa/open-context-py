@@ -5,6 +5,7 @@ from opencontext_py.apps.imports.fields.describe import ImportFieldDescribe
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 # These views display an HTML form for classifying import fields,
@@ -14,6 +15,7 @@ def index(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def field_classify(request, source_id):
     """ Classifies one or more fields with posted data """
     if not request.user.is_superuser:
@@ -42,6 +44,7 @@ def field_classify(request, source_id):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def field_meta_update(request, source_id):
     """ Classifies one or more fields with posted data """
     if not request.user.is_superuser:
@@ -73,6 +76,7 @@ def field_meta_update(request, source_id):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def field_list(request, source_id):
     """ Gets list of fields with annotations from source table """
     if not request.user.is_superuser:

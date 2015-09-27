@@ -25,7 +25,9 @@ class ImportProfile():
 
     DEFAULT_DESCRIBE_TYPE_FIELDS = ['description',
                                     'variable',
-                                    'value']
+                                    'value',
+                                    'lat',
+                                    'lon']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -51,6 +53,7 @@ class ImportProfile():
         self.PRED_DESCRIBES = ImportFieldAnnotation.PRED_DESCRIBES
         self.PRED_VALUE_OF = ImportFieldAnnotation.PRED_VALUE_OF
         self.PRED_MEDIA_PART_OF = ImportFieldAnnotation.PRED_MEDIA_PART_OF
+        self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
         self.nav = False
 
     def get_fields(self, field_num_list=False):

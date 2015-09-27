@@ -10,6 +10,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
+from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
 
 
 # Help organize the code, with a class to make editing items easier
@@ -21,6 +22,7 @@ class ItemAnnotation():
     def __init__(self,
                  uuid,
                  request=False):
+        self.hash_id = False
         self.creator_uuid = False
         self.super_user = False
         self.uuid = uuid
@@ -120,6 +122,7 @@ class ItemAnnotation():
             la_exist = LinkAnnotation.objects\
                                      .filter(hash_id=hash_id)\
                                      .delete()
+            self.hash_id = hash_id
             ok = True
             note = 'annotation deleteted'
             # now clear the cache a change was made
@@ -290,10 +293,20 @@ class ItemAnnotation():
                     # just in case the stable_id is a given as a URI
                     # delete multiple varients of it
                     stable_id_list.append(id_variant)
-            del_id = StableIdentifer.objects\
-                                    .filter(uuid=self.manifest.uuid,
-                                            stable_id__in=stable_id_list)\
-                                    .delete()
+            drev = DeletionRevision()
+            drev.project_uuid = self.manifest.project_uuid
+            drev.uuid = self.manifest.uuid
+            drev.item_type = self.manifest.item_type
+            drev.user_id = self.creator_uuid
+            rev_label = 'Updated ' + item_man.label
+            rev_label += ', removed stable ID: ' + stable_id
+            del_ids = StableIdentifer.objects\
+                                     .filter(uuid=self.manifest.uuid,
+                                             stable_id__in=stable_id_list)
+            for del_id in del_ids:
+                drev.identifier_keys.append(del_id.hash_id)
+                del_id.delete()
+            drev.save_delete_revision(rev_label, '')
             note = 'Deleteted: ' + stable_id + ' from ' + self.manifest.uuid
         else:
             note = 'Need to indicate what stable_id to delete'
