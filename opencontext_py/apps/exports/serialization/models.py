@@ -103,8 +103,8 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
                                                   end)
                     if query_set is not None:
                         if len(query_set) > 0:
-                            """
-                            data = json_serializer.serialize(query_set)
+                            data = json_serializer.serialize(query_set,
+                                                             ensure_ascii=False)
                             json_output = json.dumps(data,
                                                      indent=4,
                                                      ensure_ascii=False)
@@ -113,7 +113,10 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
                             file.close()
                             """
                             with open(file_path, "w") as out:
-                                json_serializer.serialize(query_set, stream=out)
+                                json_serializer.serialize(query_set,
+                                                          stream=out,
+                                                          ensure_ascii=False)
+                            """
                             do_more = True
                             start = end
                             end = end + self.chunk_size

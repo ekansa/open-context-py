@@ -34,13 +34,22 @@ from opencontext_py.apps.edit.inputs.rules.models import InputRule
 class ImportSerizializedJSON():
     """
 
-from opencontext_py.apps.Imports.serialization.models import ImportSerizializedJSON
-sj = SerizializeJSON()
-sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
+from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
+imp_sj = ImportSerizializedJSON()
+imp_sj.load_data_in_directory('64-oracle-bone-test')
 
     """
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+
+    def load_data_in_directory(self, act_dir):
+        """ Loads data in a directory """
+        files = self.get_directory_files(act_dir)
+        if isinstance(files, list):
+            for filename in files:
+                print('Reading: ' + filename)
+                dir_file = self.root_import_dir + act_dir + '/' + filename
+                json_obj = self.load_json_file(dir_file)
 
     def get_directory_files(self, act_dir):
         """ Gets a list of files from a directory """
@@ -48,7 +57,7 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
         full_dir = self.root_import_dir + act_dir + '/'
         if os.path.exists(full_dir):
             for dirpath, dirnames, filenames in os.walk(full_dir):
-                files = filenames
+                files = sorted(filenames)
         return files
 
     def load_json_file(self, dir_file):
@@ -58,5 +67,9 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
         json_obj = False
         if os.path.exists(dir_file):
             fp = open(dir_file, 'r')
-            json_obj = json.load(fp)
+            try:
+                json_obj = json.load(fp)
+            except:
+                print('Cannot parse as JSON: ' + dir_file)
+                json_obj = False
         return json_obj
