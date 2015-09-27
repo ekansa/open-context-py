@@ -109,7 +109,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
             json_serializer = JSONserializer()
             table_list = self.all_models + self.project_models
             for table_name in table_list:
-                print('Working on ' + table_name ' for ' + project_uuid)
+                print('Working on ' + table_name + ' for ' + project_uuid)
                 file_num = 1
                 do_more = True
                 start = 0
