@@ -37,6 +37,7 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.act_export_dir = '/home/dainst_ekansa'
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
@@ -48,6 +49,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.project_uuid = False
         self.after_date = False
         self.chunk_size = 2500
+        self.act_export_dir = False
         self.all_models = ['link_entities']
         self.project_models = ['oc_assertions',
                                'oc_documents',
@@ -251,10 +253,15 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         """ Prepares a directory to receive export files """
         output = False
         full_dir = self.root_export_dir + act_dir + '/'
+        if self.act_export_dir is not False:
+            full_dir = self.act_export_dir + '/' + act_dir
         if not os.path.exists(full_dir):
             os.makedirs(full_dir)
         if os.path.exists(full_dir):
             output = full_dir
+        if output[-1] != '/':
+            output += '/'
+        print('Prepared directory: ' + str(output))
         return output
 
     def prepare_dump_directory(self, project_uuid):
