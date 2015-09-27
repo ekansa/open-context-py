@@ -255,6 +255,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
             os.makedirs(full_dir)
         if os.path.exists(full_dir):
             output = full_dir
+        print('Prepared directory: ' + str(output))
         return output
 
     def prepare_dump_directory(self, project_uuid):
