@@ -1,4 +1,5 @@
 from datetime import datetime
+from django.utils import timezone
 from django.db import models
 
 
@@ -21,7 +22,7 @@ class ImportSource(models.Model):
         saves with created time if None
         """
         if self.created is None:
-            self.created = datetime.now()
+            self.created = timezone.now()
         super(ImportSource, self).save(*args, **kwargs)
 
     class Meta:

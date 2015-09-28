@@ -52,7 +52,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         if new_dir == self.full_dir:
                             # its the full size file, just copy it without modification
                             print('Copy full: ' + new_file)
-                            # shutil.copy2(src_file, new_file)
+                            shutil.copy2(src_file, new_file)
                         else:
                             # we need to modify the image
                             try:
