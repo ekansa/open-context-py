@@ -36,7 +36,7 @@ class ImportSerizializedJSON():
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
-imp_sj.act_import_dir = '/home/dainst_ekansa'
+imp_sj.act_import_dir = '/home/ekansa'
 imp_sj.data_dirs = [
 '0-hybrid-objects-and-intercultural-assemblages-in-colonia',
 '38-digital-companion-to-animal-consumption-at-the-monumen',
