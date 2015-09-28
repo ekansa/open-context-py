@@ -273,7 +273,7 @@ class ProcessSubjects():
                                  .filter(source_id=self.source_id,
                                          field_num=act_geo_fields['lat'],
                                          row_num__in=subject_in_rows)\
-                                 .exclude(record=u'')
+                                 .exclude(record='')
             for lat_rec in lat_recs:
                 rows[lat_rec.row_num] = {'lat': False,
                                          'lon': False}
