@@ -50,6 +50,7 @@ class ImportRefineSource():
         self.get_refine_source_meta()  # get's metadata about the refine source as stored in the database
         if self.imp_status is False:
             # new import, create a new refine source metadata record
+            # print('Wholly new import!')
             self.create_new_refine_source()
         if self.imp_status == self.DEFAULT_LOADING_STATUS:
             # still have records to import from refine
@@ -98,6 +99,7 @@ class ImportRefineSource():
         # check to see if refine is active by asking for the project schema
         schema_ok = imp_f.get_refine_schema(refine_project)
         if schema_ok:
+            # print('Schema ok...')
             start = self.get_max_row_num()
             # ok, refine works, schema is OK. Save old project data as obsolute source_id
             if start == 0:
@@ -105,14 +107,19 @@ class ImportRefineSource():
                 imp_f.obsolete_source_id = self.obsolete_source_id
                 model_ok = imp_f.save_refine_model(refine_project)
                 if model_ok:
+                    print('Saved model ok')
                     # now that we've save the current schema, get+save the project records
                     last_row = imp_r.save_refine_records(refine_project, start)
+                else:
+                    print('Saved model problem')
             else:
                 if start < self.row_count:
                     # save the batch of refine records
                     last_row = imp_r.save_refine_records(refine_project, start)
                 else:
                     last_row = self.row_count
+        else:
+            print('Bad schema!')
         if last_row >= self.row_count:
             if self.make_uuids:
                 self.imp_source_obj.imp_status = self.DEFAULT_FIELD_UUID_ASSIGN + '1'
