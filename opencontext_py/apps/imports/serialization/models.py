@@ -91,8 +91,6 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                     if all_ok is False:
                         print('Problem: ' + dir_file)
                     self.files_imported += 1
-        else:
-            print('Cannot find files in ' + act_dir)
 
     def import_serialized_json_obj(self, json_obj):
         """ imports a serialized json object
@@ -122,6 +120,8 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
         if os.path.exists(full_dir):
             for dirpath, dirnames, filenames in os.walk(full_dir):
                 files = sorted(filenames)
+        else:
+            print('Cannot find: ' + full_dir)
         return files
 
     def load_json_file(self, dir_file):
