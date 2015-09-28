@@ -83,7 +83,10 @@ class ProcessMedia():
                                         # file type is in the field_value_cat
                                         cmf.file_type = part_field_obj.field_value_cat
                                         file_uri = part_dist_rec['imp_cell_obj'].record
-                                        cmf.reconcile_media_file(file_uri)
+                                        if file_uri[:7] == 'http://' \
+                                           or file_uri[:8] == 'https://':
+                                            # its a URI part
+                                            cmf.reconcile_media_file(file_uri)
                         else:
                             bad_id = str(dist_rec['imp_cell_obj'].field_num)
                             bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
