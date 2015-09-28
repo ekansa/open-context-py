@@ -36,6 +36,27 @@ class ImportSerizializedJSON():
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
+imp_sj.data_dirs = [
+'0-hybrid-objects-and-intercultural-assemblages-in-colonia',
+'38-digital-companion-to-animal-consumption-at-the-monumen',
+'38-digital-companion-to-archaeological-animals-of-the-sou',
+'38-digital-companion-to-dog-remains-from-the-marismas-nac',
+'38-digital-companion-to-inferring-the-archaeological-cont',
+'38-digital-companion-to-late-nineteenth-and-early-twentie',
+'38-digital-companion-to-molluscs-as-food-in-a-prolific-co',
+'38-digital-companion-to-preliminary-analysis-of-the-zooar',
+'38-digital-companion-to-the-use-of-animals-by-the-pre-his',
+'38-the-archaeology-of-mesoamerican-animals',
+'63-hybrid-objects-and-intercultural',
+'65-biometrical-database-of-european-aurochs-and-domestic-c',
+'66-essays-from-the-edge-of-academia-supplements-to-sushi',
+'67-northern-mesopotamian-pig-husbandry-late-neolithic-eba',
+'68-zooarchaeology-and-cultural-ecology-of-puesteros-in-sou',
+'69-images-documenting-looting-in-the-north-cemetery-at-aby',
+'70-middle-and-late-byzantine-glazed-fine-wares',
+'71-the-middle-and-late-byzantine-glazed-fine-wares'
+]
+imp_sj.load_data_in_directories()
 imp_sj.load_data_in_directory('64-oracle-bone-test')
 
     """
@@ -46,6 +67,15 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
         self.files_imported = 0
         self.import_recs = 0
         self.error_recs = 0
+        self.data_dirs = []
+
+    def load_data_in_directories(self):
+        """ Loads data in a variety of directories """
+        for act_dir in self.data_dirs:
+            print('*********************')
+            print('Working on ' + act_dir)
+            print('*********************')
+            self.load_data_in_directory(act_dir)
 
     def load_data_in_directory(self, act_dir):
         """ Loads data in a directory """
