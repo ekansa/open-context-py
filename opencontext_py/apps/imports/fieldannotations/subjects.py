@@ -283,7 +283,7 @@ class ProcessSubjects():
                                  .filter(source_id=self.source_id,
                                          field_num=act_geo_fields['lon'],
                                          row_num__in=subject_in_rows)\
-                                 .exclude(record=u'')
+                                 .exclude(record='')
             for lon_rec in lon_recs:
                 if lon_rec.row_num not in rows:
                     rows[lon_rec.row_num] = {'lat': False,
