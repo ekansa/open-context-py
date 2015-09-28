@@ -38,7 +38,7 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
-# sj.act_export_dir = '/home/dainst_ekansa'
+sj.act_export_dir = '/home/dainst_ekansa'
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
@@ -49,7 +49,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.project_uuid = False
         self.after_date = False
-        self.chunk_size = 2500
+        self.chunk_size = 5000
         self.act_export_dir = False
         self.all_models = ['link_entities']
         self.project_models = ['oc_assertions',
@@ -131,7 +131,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         """ saves a batch of data, serialized as JSON """
         JSONserializer = serializers.get_serializer('json')
         json_serializer = JSONserializer()
-        filename = table_name + '-' + self.prepend_zeros(str(batch), 3) + '.json'
+        filename = table_name + '-' + self.prepend_zeros(str(batch), 5) + '.json'
         file_path = proj_dir + filename
         data = json_serializer.serialize(act_set,
                                          ensure_ascii=False)
