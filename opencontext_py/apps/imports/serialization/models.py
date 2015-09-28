@@ -144,8 +144,10 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
             to be the default or somewhere else on the file system
         """
         if self.act_import_dir is not False:
-            full_dir = self.act_import_dir + '/' + act_dir + '/' + filename
+            full_dir = self.act_import_dir + '/' + act_dir
         else:
-            full_dir = self.root_import_dir + '/' + act_dir + '/' + filename
+            full_dir = self.root_import_dir + '/' + act_dir
+        if len(filename) > 0:
+            full_dir += '/' + filename
         full_dir.replace('//', '/')
         return full_dir
