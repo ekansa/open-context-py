@@ -2,6 +2,7 @@ import os
 import json
 import codecs
 from django.db import models
+from django.db import transaction
 from django.conf import settings
 from django.core import serializers
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -97,20 +98,14 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
             to add records to the database
         """
         all_ok = True
-        for obj in serializers.deserialize("json", json_obj):
-            # this just saves the object, so as to
-            # synch different instances of open context
-            try:
-                obj.save()
-                saved = True
-            except Exception as e:
-                print(str(e))
-                saved = False
-            if saved:
-                self.import_recs += 1
-            else:
-                self.error_recs += 1
-                all_ok = False
+        try:
+            with transaction.atomic():
+                for obj in serializers.deserialize("json", json_obj):
+                    # this just saves the object, so as to
+                    # synch different instances of open contex
+                    obj.save()
+        except Exception as e:
+            all_ok = False
         return all_ok
 
     def get_directory_files(self, act_dir):
