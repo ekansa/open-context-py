@@ -42,6 +42,7 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
 
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+        self.act_import_dir = False
         self.files_imported = 0
         self.import_recs = 0
         self.error_recs = 0
@@ -52,7 +53,7 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
         if isinstance(files, list):
             for filename in files:
                 print('Reading: ' + filename)
-                dir_file = self.root_import_dir + act_dir + '/' + filename
+                dir_file = self.define_import_directory(act_dir, filename)
                 json_obj = self.load_json_file(dir_file)
                 if json_obj is not False:
                     all_ok = self.import_serialized_json_obj(json_obj)
@@ -84,7 +85,7 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
     def get_directory_files(self, act_dir):
         """ Gets a list of files from a directory """
         files = False
-        full_dir = self.root_import_dir + act_dir + '/'
+        full_dir = self.define_import_directory(act_dir)
         if os.path.exists(full_dir):
             for dirpath, dirnames, filenames in os.walk(full_dir):
                 files = sorted(filenames)
@@ -104,3 +105,14 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False
         return json_obj
+
+    def define_import_directory(self, act_dir, filename=''):
+        """ defines the import directory
+            to be the default or somewhere else on the file system
+        """
+        if self.act_import_dir is not False:
+            full_dir = self.act_import_dir + '/' + act_dir + '/' + filename
+        else:
+            full_dir = self.root_import_dir + '/' + act_dir + '/' + filename
+        full_dir.replace('//', '/')
+        return full_dir
