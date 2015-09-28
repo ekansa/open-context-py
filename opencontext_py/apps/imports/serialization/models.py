@@ -36,6 +36,7 @@ class ImportSerizializedJSON():
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
+imp_sj.act_import_dir = '/home/dainst_ekansa'
 imp_sj.data_dirs = [
 '0-hybrid-objects-and-intercultural-assemblages-in-colonia',
 '38-digital-companion-to-animal-consumption-at-the-monumen',
@@ -90,6 +91,8 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
                     if all_ok is False:
                         print('Problem: ' + dir_file)
                     self.files_imported += 1
+        else:
+            print('Cannot find files in ' + act_dir)
 
     def import_serialized_json_obj(self, json_obj):
         """ imports a serialized json object
