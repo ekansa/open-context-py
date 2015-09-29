@@ -1,4 +1,5 @@
 import uuid as GenUUID
+from unidecode import unidecode
 import datetime
 from django.db import models
 from django.db.models import Q
@@ -32,6 +33,7 @@ class ImportFields():
         output = False
         schema_ok = self.get_refine_schema(refine_project)
         if schema_ok:
+            # print('Refine schema is OK')
             new_fields = []
             for col_index, col in self.refine_schema.items():
                 imp_f = ImportField()
@@ -50,9 +52,13 @@ class ImportFields():
                 new_fields.append(imp_f)
             # Now that we've got likely related UUIDs, let's delete the old
             ImportField.objects.filter(source_id=self.source_id).delete()
+            print('New fields to save: ' + str(len(new_fields)))
             for new_imp_f in new_fields:
+                print('Saving field: ' + str(unidecode(new_imp_f.label)))
                 new_imp_f.save()
             output = True
+        else:
+            print('Problem with refine schema: ' + refine_project)
         return output
 
     def check_for_updated_field(self,
