@@ -173,6 +173,23 @@ CACHES = {
 }
 
 
+# -----------------------
+# EMAIL settings
+# -----------------------
+if get_secret('EMAIL_USE_TLS') == 1:
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_USE_TLS = False
+EMAIL_HOST = get_secret('EMAIL_HOST')
+EMAIL_PORT = get_secret('EMAIL_PORT')
+EMAIL_HOST_USER = get_secret('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = get_secret('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = get_secret('DEFAULT_FROM_EMAIL')
+DEFAULT_TO_EMAIL = get_secret('DEFAULT_TO_EMAIL')
+
+
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/
 
@@ -189,7 +206,7 @@ USE_TZ = True
 # ----------------------------
 # IMPORTER SETIINGS
 # ----------------------------
-IMPORT_BATCH_SIZE = 500 # number of records to import in 1 batch
+IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 
 
 # Static files (CSS, JavaScript, Images)

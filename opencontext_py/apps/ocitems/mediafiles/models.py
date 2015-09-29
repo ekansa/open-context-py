@@ -58,10 +58,10 @@ class ManageMediafiles():
     def get_head_info(self, file_uri, redirect_ok=False):
         output = False
         r = requests.head(file_uri)
-        if(r.status_code == requests.codes.ok):
-            if('Content-Length' in r.headers):
+        if r.status_code == requests.codes.ok:
+            if 'Content-Length' in r.headers:
                 self.filesize = r.headers['Content-Length']
-            if('Content-Type' in r.headers):
+            if 'Content-Type' in r.headers:
                 self.raw_mime_type = r.headers['Content-Type']
                 self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
                 self.genfile_type = self.mime_to_general_file_type(self.genfile_type)
