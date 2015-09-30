@@ -27,7 +27,7 @@ class CostEstimator():
         self.user_email = False
         self.user_phone = ''
         self.project_name = ''
-        self.is_doctoral = False
+        self.is_grad_student = False
         self.duration = 0
         self.count_spec_datasets = 0
         self.count_tables = 0

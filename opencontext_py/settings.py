@@ -176,10 +176,7 @@ CACHES = {
 # -----------------------
 # EMAIL settings
 # -----------------------
-if get_secret('EMAIL_USE_TLS') == 1:
-    EMAIL_USE_TLS = True
-else:
-    EMAIL_USE_TLS = False
+EMAIL_USE_TLS = True
 EMAIL_HOST = get_secret('EMAIL_HOST')
 EMAIL_PORT = get_secret('EMAIL_PORT')
 EMAIL_HOST_USER = get_secret('EMAIL_HOST_USER')

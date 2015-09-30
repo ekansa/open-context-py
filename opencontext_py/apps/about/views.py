@@ -5,6 +5,9 @@ from django.template import RequestContext, loader
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 def index_view(request):
@@ -72,7 +75,8 @@ def pub_view(request):
         return HttpResponse(req_neg.error_message,
                             status=415)
 
-
+@cache_control(no_cache=True)
+@never_cache
 def estimate_view(request):
     """ Get the search context JSON-LD """
     rp = RootPath()
@@ -82,7 +86,7 @@ def estimate_view(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        template = loader.get_template('about/temp.html')
+        template = loader.get_template('about/estimate.html')
         context = RequestContext(request,
                                  {'base_url': base_url,
                                   'page_title': 'Open Context: About - Cost Estimate',

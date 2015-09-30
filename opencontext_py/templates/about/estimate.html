@@ -1,0 +1,131 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Publishing and Archiving Costs</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="height: 240px; margin-top:-15px;" src="{{ base_url }}/static/oc/images/about/finance-noun-176033.png" alt="Finance Icon" />
+                        </div>
+                        <div class="media-body">
+                            <p>Open Context provides researchers with the following services:</p>
+                            <ul>
+                                <li>Editing, annotation, peer-review and open access publishing for research data and media</li>
+                                <li>Data archiving with the University of California's Merritt digital repository
+                                (managed by the California Digital Library)</li>
+                            </ul>
+                            <p>While data published by Open Context are free to use, Open Context charges
+                            contributing researchers fees for publishing and archiving services.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">        
+        <div class="row">
+            <div class="col-sm-12">
+                <h3>Data Management Plan Cost Estimates for Publishing and Archiving</h3>
+                <p>The form provided below will help you prepare and budget for your grant "Data Management Plan". Once you successfully complete this form, you will receive an email with a budget estimate and language to add to your Data Management Plan. This language will include a description of interoperability, access, and archiving issues that help determine the research value of shared data. Please note, completing this form does not imply or constitute a binding agreement.</p>
+                <div class="well">
+                    <form action="{{ base_url }}/about/process-estimate" method="post" class="form-horizontal" >
+                        <h5><strong>Project Contact Information</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="form-group">
+                                <label for="input-name" class="col-sm-3 control-label">Researcher Name</label>
+                                <div class="col-sm-8">
+                                    <input name="user_name"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-name"
+                                           placeholder="Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-email" class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-8">                          
+                                    <div class="input-group">
+                                    <span class="input-group-addon">@</span>
+                                    <input name="user_email"
+                                           type="email"
+                                           class="form-control"
+                                           id="input-email"
+                                           placeholder="Email" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-phone" class="col-sm-3 control-label">Phone</label>
+                                <div class="col-sm-8">
+                                    <input name="user_phone"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-phone"
+                                           placeholder="Telephone Number (Optional)" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-proj-name" class="col-sm-3 control-label">Project Name</label>
+                                <div class="col-sm-8">
+                                    <input name="project_name"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-proj-name"
+                                           placeholder="Project Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-diss-proj-yes" class="col-sm-3 control-label">Dissertation Project</label>
+                                <div class="col-sm-8">
+                                    <label class="radio-inline">
+                                        <input type="radio"
+                                               name="is_grad_student"
+                                               id="input-diss-proj-yes"
+                                               aria-describedby="input-diss-proj-help"
+                                               value="1"/> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio"
+                                               name="is_grad_student"
+                                               id="input-diss-proj-no"
+                                               checked="checked"
+                                               value="0" /> No
+                                    </label>
+                                    <span id="input-diss-proj-help" class="help-block">Graduate student projects, including Data Management Plan costs for doctoral dissertation grants, receive a 25% discount</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Finance icon by <a target="_blank" href="https://thenounproject.com/term/finance/176033/">Creative Stall</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+    </div>
+    
+{% endblock %} 
