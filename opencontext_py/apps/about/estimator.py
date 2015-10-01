@@ -32,7 +32,6 @@ class CostEstimator():
         self.count_spec_datasets = 0
         self.count_tables = 0
         self.count_images = 0
-        self.count_video = 0
         self.count_docs = 0
         self.count_gis = 0
         self.count_other = 0

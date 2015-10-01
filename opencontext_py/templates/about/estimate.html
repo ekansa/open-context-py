@@ -11,6 +11,11 @@
         ul.code-samp {
             list-style-type: none;
         }
+        div.count_radio_outer {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            margin-left: 20px;
+        }
     </style>
     
     <div class="jumbotron" id="overview">
@@ -50,6 +55,7 @@
                 <p>The form provided below will help you prepare and budget for your grant "Data Management Plan". Once you successfully complete this form, you will receive an email with a budget estimate and language to add to your Data Management Plan. This language will include a description of interoperability, access, and archiving issues that help determine the research value of shared data. Please note, completing this form does not imply or constitute a binding agreement.</p>
                 <div class="well">
                     <form action="{{ base_url }}/about/process-estimate" method="post" class="form-horizontal" >
+                        <!-- General project related fields -->
                         <h5><strong>Project Contact Information</strong></h5>
                         <div class="well well-sm" style="padding-top: 3%;">
                             <div class="form-group">
@@ -115,6 +121,236 @@
                                     <span id="input-diss-proj-help" class="help-block">Graduate student projects, including Data Management Plan costs for doctoral dissertation grants, receive a 25% discount</span>
                                 </div>
                             </div>
+                        </div>
+                    
+                        <!-- General project complexity -->
+                        <h5><strong>Project Database Size and Complexity</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="form-group">
+                                <label for="input-proj-years" class="col-sm-4 control-label">Duration of Project (Years)</label>
+                                <div class="col-sm-2">
+                                    <input name="duration"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-proj-years"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-spec-datasets" class="col-sm-4 control-label">Number of specialist datasets</label>
+                                <div class="col-sm-2">    
+                                    <input name="count_spec_datasets"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-spec-datasets"
+                                           aria-describedby="input-spec-datasets-help"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4"> </div>
+                                <div class="col-sm-8" style="margin-top: -10px;">
+                                <span id="input-spec-datasets-help" class="help-block">The number of different specialists making datasets (zooarchaeology, lithic analysis, etc.)</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-count-tables" class="col-sm-4 control-label">Number of tables</label>
+                                <div class="col-sm-2">    
+                                    <input name="count_tables"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-count-tables"
+                                           aria-describedby="input-count-tables-help"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4"> </div>
+                                <div class="col-sm-8" style="margin-top: -10px;">
+                                <span id="input-count-tables-help" class="help-block">Estimated number of tables in all of the project's relational databases and spreadsheets</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Media numbers -->
+                        <h5><strong>Project Media Size and Complexity</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Image Files</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_images"
+                                               id="input-count-images-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_images"
+                                               id="input-count-images-100"
+                                               value="100"
+                                               /> 1 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_images"
+                                               id="input-count-images-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_images"
+                                               id="input-count-images-10000"
+                                               value="1000"
+                                               /> 1000 - 10000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_images"
+                                               id="input-count-images-100000"
+                                               value="10000"
+                                               /> more than 10000
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Documents (<em>HTML, text, PDF</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_docs"
+                                               id="input-count-docs-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_docs"
+                                               id="input-count-docs-10"
+                                               value="10"
+                                               /> 1 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_docs"
+                                               id="input-count-docs-100"
+                                               value="100"
+                                               /> 10 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_docs"
+                                               id="input-count-images-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_docs"
+                                               id="input-count-images-10000"
+                                               value="10000"
+                                               /> more than 1000
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of GIS "Layers" (<em>Point, line, polygon feature types and rasters</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_gis"
+                                               id="input-count-gis-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_gis"
+                                               id="input-count-gis-1"
+                                               value="1"
+                                               /> 1
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_gis"
+                                               id="input-count-gis-5"
+                                               value="100"
+                                               /> 1 - 5
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_gis"
+                                               id="input-count-gis-10"
+                                               value="10"
+                                               /> 5 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_gis"
+                                               id="input-count-gis-100"
+                                               value="100"
+                                               /> More than 10
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Other Media Files (<em>Videos, 3D models, VR, CAD, etc.</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_other"
+                                               id="input-count-other-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_other"
+                                               id="input-count-other-10"
+                                               value="10"
+                                               /> 1 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_other"
+                                               id="input-count-other-100"
+                                               value="100"
+                                               /> 10 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_other"
+                                               id="input-count-other-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               name="count_other"
+                                               id="input-count-other-10000"
+                                               value="10000"
+                                               /> more than 1000
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Comments and Submit -->
+                        <h5><strong>Comment and Submit Estimate Request</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            This feature will be activated soon!
                         </div>
                     </form>
                 </div>
