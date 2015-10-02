@@ -16,6 +16,9 @@
             margin-bottom: 20px;
             margin-left: 20px;
         }
+        div.lic_help_outer {
+            margin-top: 8px;
+        }
     </style>
     
     <div class="jumbotron" id="overview">
@@ -348,9 +351,74 @@
                         </div>
                         
                         <!-- Comments and Submit -->
-                        <h5><strong>Comment and Submit Estimate Request</strong></h5>
+                        <h5><strong>Comment and Copyright Licensing</strong></h5>
                         <div class="well well-sm" style="padding-top: 3%;">
-                            This feature will be activated soon!
+                            <div class="form-group">
+                                <label for="input-name" class="col-sm-3 control-label">Comments</label>
+                                <div class="col-sm-8">
+                                    <textarea
+                                        class="form-control"
+                                        style="width: 100%;"
+                                        name="comment"
+                                        id="input-comment"
+                                        placeholder="Additional comments to help Open Context editors understand your project"
+                                        rows="4"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-3" style="text-align: right; padding-top: 10px;">
+                                    <label>Copyright License</label>
+                                </div>
+                                <div class="col-sm-7 count_radio_outer">
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <div class="radio">
+                                                <input type="radio"
+                                                       name="license_uri"
+                                                       id="input-license-0"
+                                                       value="https://creativecommons.org/publicdomain/zero/1.0"
+                                                       aria-describedby="input-license-0-help"
+                                                       checked="checked" /> CC-Zero
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-10 small lic_help_outer">
+                                            <label>Creative Commons Zero (Public Domain)</label>
+                                            <span id="input-license-0-help" class="help-block">If I choose to publish with Open Context, I plan to waive all copyright and other intellectual property rights on my content and dedicate my content to the public domain by using the Creative Commons-Zero (public domain) declaration. Legal experts believe that this choice maximizes scientific interoperability and potential for reuse. While not legally required, citation is expected through norms of professional conduct.</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <div class="radio">
+                                                <input type="radio"
+                                                       name="license_uri"
+                                                       id="input-license-by"
+                                                       value="https://creativecommons.org/licenses/by/4.0"
+                                                       aria-describedby="input-license-by-help"
+                                                       /> CC-By
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-10 small lic_help_outer">
+                                            <label>Creative Commons Attribution License</label>
+                                            <span id="input-license-by-help" class="help-block">If I choose to publish with Open Context,
+                                            I plan to license my content under a Creative Commons-Attribution License.
+                                            This license allows others to:
+                                            <ul>
+                                                <li>to copy, distribute and transmit the work</li>
+                                                <li>to adapt the work</li>
+                                            </ul>
+                                            These permissions apply under the condition that others attribute your work in the
+                                            manner specified by Open Context (which is proper citation). The above permissions
+                                            help promote reuse and interoperability of your data, and give explicity permission
+                                            for digital archives to preserve content.</span>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            
                         </div>
                     </form>
                 </div>
