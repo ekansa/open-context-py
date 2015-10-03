@@ -43,6 +43,8 @@ body {
 #footer-upper {
 	margin-top: 5%;
 	background-color: #666666;
+	margin-right:-45px;
+	margin-left:-45px;
 }
 div.footer-cell {
 	display: table-cell;
@@ -60,6 +62,8 @@ div.footer-cell img {
 	color: #fff;
 	text-align: center;
 	font-size: 75%;
+	margin-right:-45px;
+	margin-left:-45px;
 }
 .project-edit-stars {
 	color: #EE7600;
