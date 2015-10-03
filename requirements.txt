@@ -21,5 +21,6 @@ python-dateutil==2.2
 feedparser==5.1.3
 lxml==3.4.4
 jsonfield==1.0.3
-django-revision==1.9.3
+django-reversion==1.9.3
+django-revision==0.1.6
 pillow==2.9.0
