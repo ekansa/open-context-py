@@ -49,6 +49,8 @@ function estimation(){
 					'<footer>Based on provided project size and complexity, and assuming good data quality</footer>',
 				'</blockquote>',
 				error_html,
+				'<p><strong>Note:</strong> ',
+				'Emailing of results is a feature that is not yet ready. It will be implemented shortly.</p>',
 				'</div>',
 			'</div>',
 		].join('\n');
