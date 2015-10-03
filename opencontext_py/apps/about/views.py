@@ -11,6 +11,8 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 
 
+@cache_control(no_cache=True)
+@never_cache
 def index_view(request):
     """ Get the search context JSON-LD """
     rp = RootPath()
@@ -20,7 +22,7 @@ def index_view(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        template = loader.get_template('about/temp.html')
+        template = loader.get_template('about/index.html')
         context = RequestContext(request,
                                  {'base_url': base_url,
                                   'page_title': 'Open Context: About',
@@ -78,8 +80,8 @@ def pub_view(request):
 
 
 @ensure_csrf_cookie
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
 def estimate_view(request):
     """ Get the search context JSON-LD """
     rp = RootPath()
