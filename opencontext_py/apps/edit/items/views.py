@@ -640,6 +640,9 @@ def create_item_into(request, project_uuid):
                     elif request.POST['item_type'] == 'types':
                         item_type_fail = False
                         result = item_create.create_type(request.POST)
+                    elif request.POST['item_type'] == 'media':
+                        item_type_fail = False
+                        result = item_create.create_media(request.POST)
                     else:
                         item_type_fail = True
                     result['errors'] = item_create.errors

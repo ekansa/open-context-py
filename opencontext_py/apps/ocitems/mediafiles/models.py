@@ -7,6 +7,10 @@ from django.db import models
 # Mediafile has basic metadata about media resources (binary files) associated with a media resource item
 @reversion.register  # records in this model under version control
 class Mediafile(models.Model):
+    FILE_TYPES = ['oc-gen:fullfile',
+                  'oc-gen:preview',
+                  'oc-gen:thumbnail',
+                  'oc-gen:hero']
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
@@ -15,6 +19,7 @@ class Mediafile(models.Model):
     mime_type_uri = models.CharField(max_length=200)
     file_uri = models.CharField(max_length=400)
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
+    highlight = models.IntegerField(null=True)  # rank for showcasing, highlighting as interesting
     updated = models.DateTimeField(auto_now=True)
 
     def get_file_info(self):
@@ -34,6 +39,8 @@ class Mediafile(models.Model):
             self.filesize = 0
         if self.mime_type_uri is None:
             self.mime_type_uri = ''
+        if self.highlight is None:
+            self.highlight = 0
         self.get_file_info()
         super(Mediafile, self).save(*args, **kwargs)
 

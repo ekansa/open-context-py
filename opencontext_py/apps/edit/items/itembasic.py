@@ -25,6 +25,7 @@ class ItemBasicEdit():
         for basic item eding
     """
     UI_ICONS = {'persons': '<span class="glyphicon glyphicon-user" aria-hidden="true"></span>',
+                'media': '<span class="glyphicon glyphicon-camera" aria-hidden="true"></span>',
                 'projects': '<i class="fa fa-database"></i>',
                 'predicates': '<span class="glyphicon glyphicon-stats" aria-hidden="true"></span>',
                 'types': '<i class="fa fa-sitemap"></i>',
