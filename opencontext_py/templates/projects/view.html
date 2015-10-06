@@ -2,7 +2,7 @@
 
 {% block itemcontent %}
 <style type="text/css">
-    .bosom-none {
+    div.bosom-none {
         position: aboslute;
         display: block;
         margin-top: -19px;
@@ -11,23 +11,29 @@
         width: auto;
         padding: 0;
         height: 350px;
-        background-image: url('http://www.placehold.it/960x350');
+        {% if item.project_hero_uri != False %}
+        background-image: url('{{ item.project_hero_uri }}');
+        {% else %}
+        background-image: url('{{ base_url }}/static/oc/images/projects/project-default-hero.png');
+        {% endif %}
         background-repeat: no-repeat;
-        background-size: 100% 100%;
+        background-size: 100% auto;
     }
 </style>
 
 <div class="container-fluid bosom-none">
-    
+    <!--
+    <img class="img-responsive center-block" src="http://www.placehold.it/960x350" alt="Project hero image"/>
+    -->
 </div>
 
 
-<div id="item-content" style="margin-top: 20px;">
+<div id="item-content" style="margin-top: -40px;">
     <div class="row">
         <div class="col-sm-8">
-            <div class="well">
-                <h3 style="margin-top:-8px;">Project</h3>
-                <h4>{{ item.label }}</h4>
+            <div class="well well-sm">
+                <h2 style="margin-top:-4px;">Project</h2>
+                <h3 style="margin-top:-8px;">{{ item.label }}</h3>
                 {% if item.content != False %}
                 {% if item.content.sum_text != False %}
                 <p>{{ item.content.sum_text }}</p>

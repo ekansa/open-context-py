@@ -18,6 +18,7 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
+from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
 
 
@@ -69,71 +70,85 @@ class ItemAssertion():
                 if 'predicate_uuid' not in field:
                     self.ok = False
                     self.errors[field_key] = 'Missing a predicate_uuid for the field'
-                data_type = self.get_predicate_data_type(field['predicate_uuid'])
-                pred_man = self.get_manifest_item(field['predicate_uuid'])
-                if data_type is False or pred_man is False:
-                    self.ok = False
-                    self.errors['uuid'] = 'Cannot find records for predicate_uuid: ' + field['predicate_uuid']
-                    note = self.errors['uuid']
-                if self.ok:
-                    if 'label' not in field:
-                        field['label'] = pred_man.label
-                    if 'sort' not in field:
-                        field['sort'] = self.get_predicate_sort(field['predicate_uuid'])
-                    if field['sort'] == 0 and 'draft_sort' in field:
-                        try:
-                            field['sort'] = int(float(field['draft_sort']))
-                        except:
-                            field['sort'] = 0
-                    if 'replace_all' in field:
-                        if field['replace_all']:
-                            drev = DeletionRevision()
-                            drev.project_uuid = item_man.project_uuid
-                            drev.uuid = item_man.uuid
-                            drev.item_type = item_man.item_type
-                            drev.user_id = self.user_id
-                            rev_label = 'Updated ' + item_man.label
-                            rev_label += ', field: ' + field['label']
-                            del_objs = Assertion.objects\
-                                                .filter(uuid=item_man.uuid,
-                                                        obs_num=field['obs_num'],
-                                                        predicate_uuid=pred_man.uuid)
-                            for del_obj in del_objs:
-                                drev.assertion_keys.append(del_obj.hash_id)
-                                del_obj.delete()
-                            drev.save_delete_revision(rev_label, '')
+                elif field['predicate_uuid'] == 'oc-gen:label':
+                    # special case of updating an item label
                     if 'values' in field:
-                        i = 0
-                        additions[field_id] = []
-                        for field_value_dict in field['values']:
-                            i += 1
-                            if 'value_num' not in field_value_dict:
-                                value_num = i
-                            else:
-                                try:
-                                    value_num = int(float(field_value_dict['value_num']))
-                                except:
+                        if 'literal' in field['values'][0]:
+                            label = field['values'][0]['literal']
+                            i_basic = ItemBasicEdit(self.uuid)
+                            i_basic.edit_permitted = True
+                            resp = i_basic.update_label(label, {})
+                            if resp['ok']:
+                                self.ok = True
+                                additions = []
+                                new_data = resp
+                                note = 'Item Label updated to ' + label
+                else:
+                    data_type = self.get_predicate_data_type(field['predicate_uuid'])
+                    pred_man = self.get_manifest_item(field['predicate_uuid'])
+                    if data_type is False or pred_man is False:
+                        self.ok = False
+                        self.errors['uuid'] = 'Cannot find records for predicate_uuid: ' + field['predicate_uuid']
+                        note = self.errors['uuid']
+                    if self.ok:
+                        if 'label' not in field:
+                            field['label'] = pred_man.label
+                        if 'sort' not in field:
+                            field['sort'] = self.get_predicate_sort(field['predicate_uuid'])
+                        if field['sort'] == 0 and 'draft_sort' in field:
+                            try:
+                                field['sort'] = int(float(field['draft_sort']))
+                            except:
+                                field['sort'] = 0
+                        if 'replace_all' in field:
+                            if field['replace_all']:
+                                drev = DeletionRevision()
+                                drev.project_uuid = item_man.project_uuid
+                                drev.uuid = item_man.uuid
+                                drev.item_type = item_man.item_type
+                                drev.user_id = self.user_id
+                                rev_label = 'Updated ' + item_man.label
+                                rev_label += ', field: ' + field['label']
+                                del_objs = Assertion.objects\
+                                                    .filter(uuid=item_man.uuid,
+                                                            obs_num=field['obs_num'],
+                                                            predicate_uuid=pred_man.uuid)
+                                for del_obj in del_objs:
+                                    drev.assertion_keys.append(del_obj.hash_id)
+                                    del_obj.delete()
+                                drev.save_delete_revision(rev_label, '')
+                        if 'values' in field:
+                            i = 0
+                            additions[field_id] = []
+                            for field_value_dict in field['values']:
+                                i += 1
+                                if 'value_num' not in field_value_dict:
                                     value_num = i
-                            valid = self.validate_save_field_value(item_man,
-                                                                   field,
-                                                                   field_value_dict,
-                                                                   value_num)
-                            add_outcome = LastUpdatedOrderedDict()
-                            add_outcome['value_num'] = value_num
-                            add_outcome['valid'] = valid
-                            add_outcome['errors'] = False
-                            if valid is False:
-                                self.ok = False
-                                note = 'Validation error in creating an assertion'
-                                add_outcome['errors'] = True
-                                error_key = str(field['id']) + '-' + str(value_num)
-                                if error_key in self.errors:
-                                    add_outcome['errors'] = self.errors[error_key]
-                            additions[field_id].append(add_outcome)
-                    new_field_data = self.get_assertion_values(item_man.uuid,
-                                                               field['obs_num'],
-                                                               field['predicate_uuid'])
-                new_data[field_key] = new_field_data
+                                else:
+                                    try:
+                                        value_num = int(float(field_value_dict['value_num']))
+                                    except:
+                                        value_num = i
+                                valid = self.validate_save_field_value(item_man,
+                                                                       field,
+                                                                       field_value_dict,
+                                                                       value_num)
+                                add_outcome = LastUpdatedOrderedDict()
+                                add_outcome['value_num'] = value_num
+                                add_outcome['valid'] = valid
+                                add_outcome['errors'] = False
+                                if valid is False:
+                                    self.ok = False
+                                    note = 'Validation error in creating an assertion'
+                                    add_outcome['errors'] = True
+                                    error_key = str(field['id']) + '-' + str(value_num)
+                                    if error_key in self.errors:
+                                        add_outcome['errors'] = self.errors[error_key]
+                                additions[field_id].append(add_outcome)
+                        new_field_data = self.get_assertion_values(item_man.uuid,
+                                                                   field['obs_num'],
+                                                                   field['predicate_uuid'])
+                    new_data[field_key] = new_field_data
         if self.ok:
             # now clear the cache a change was made
             cache.clear()
