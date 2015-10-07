@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.core.cache import cache
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
@@ -178,6 +179,58 @@ class ItemBasicEdit():
                          'change': {'note': note}}
         return self.response
 
+    def update_project_hero(self, post_data):
+        """ Updates a project's hero picture """
+        ok = True
+        errors = []
+        note = ''
+        required_params = ['source_id',
+                           'file_uri']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                errors.append(message)
+                note = '; '.join(errors)
+        if self.manifest.item_type != 'projects':
+            ok = False
+            message = 'Item type must be a project'
+            errors.append(message)
+            note = '; '.join(errors)
+        if ok:
+            file_uri = post_data['file_uri'].strip()
+            source_id = post_data['source_id'].strip()
+            if 'http://' in file_uri or 'https://' in file_uri:
+                ok = True
+            else:
+                ok = False
+                message = 'Need "http://" or "https://" in file_uri: ' + file_uri
+                errors.append(message)
+                note = '; '.join(errors)
+            if ok:
+                # delete the old hero picture
+                Mediafile.objects\
+                         .filter(uuid=self.manifest.uuid,
+                                 file_type='oc-gen:hero')\
+                         .delete()
+                new_hero = Mediafile()
+                new_hero.uuid = self.manifest.uuid
+                new_hero.project_uuid = self.manifest.project_uuid
+                new_hero.source_id = source_id
+                new_hero.file_type = 'oc-gen:hero'
+                new_hero.file_uri = file_uri
+                new_hero.save()
+                note = 'Updated hero image for project'
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
+        self.response = {'action': 'update-project-hero',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+
     def update_class_uri(self, class_uri):
         """ Updates an item's label. Generally straightforward
             except for subjects
@@ -190,9 +243,9 @@ class ItemBasicEdit():
             note = 'Updated to class: ' + str(entity.label)
             self.manifest.class_uri = class_uri
             self.manifest.save()
-        elif (class_uri == 'foaf:Person'\
-             or class_uri == 'foaf:Organization')\
-             and self.manifest.item_type == 'persons':
+        elif (class_uri == 'foaf:Person' \
+              or class_uri == 'foaf:Organization') \
+              and self.manifest.item_type == 'persons':
             note = 'Updated to class: ' + str(class_uri)
             self.manifest.class_uri = class_uri
             self.manifest.save()

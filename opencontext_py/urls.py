@@ -145,6 +145,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^edit/update-item-basics/(?P<uuid>\S+)', EditItemViews.update_item_basics,
                            name='edit_item_basics'),
+                       url(r'^edit/update-project-hero/(?P<uuid>\S+)', EditItemViews.update_project_hero,
+                           name='edit_update_project_hero'),
                        url(r'^edit/add-edit-item-assertion/(?P<uuid>\S+)', EditItemViews.add_edit_item_assertion,
                            name='edit_add_edit_item_assertion'),
                        url(r'^edit/sort-item-assertion/(?P<uuid>\S+)', EditItemViews.sort_item_assertion,

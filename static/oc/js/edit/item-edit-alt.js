@@ -858,7 +858,42 @@ function itemEdit(item_type, item_uuid){
 		].join('\n');
 		document.getElementById("edit-proj-hero").innerHTML = html;
 	}
-	
+	this.updateProjectHero = function() {
+		/* updates the short description of a project item
+		*/
+		var act_domID = "proj-hero-uri";
+		var file_uri = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-project-hero/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById('proj-hero-uri-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('proj-hero-uri-valid');
+		act_note.innerHTML = 'Updating project image...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				file_uri: file_uri,
+				source_id: 'web-form',
+				content_type: 'content',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateProjectHeroDone,
+			error: function (request, status, error) {
+				alert('Problem updating the project image: ' + status);
+			}
+		});
+	}
+	this.updateProjectHeroDone = function(data){
+		// handles successful result of short description updates
+		var act_icon = document.getElementById('proj-hero-uri-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('proj-hero-uri-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('proj-hero-uri-respncon');
+		}
+	}
 	
 	this.display_proj_edit_status = function(){
 		if (this.super_user) {
