@@ -132,8 +132,8 @@ def index_json(request):
         return HttpResponse(template.render(context), status=503)
 
 
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid, True)

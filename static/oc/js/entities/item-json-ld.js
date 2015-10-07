@@ -312,6 +312,59 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	}
+	this.getPersonData = function(){
+		// makes an object with person names using the same
+		// keys as the database
+		var output = false;
+		if (this.data != false) {
+	        if (this.data['category'] !== undefined) {
+				var foaf_type = this.data['category'][0];
+			}
+			else{
+				var foaf_type = '';
+			}
+			if (this.data['foaf:name'] !== undefined) {
+				var combined_name = this.data['foaf:name'];
+			}
+			else{
+				var combined_name = '';
+			}
+			if (this.data['foaf:givenName'] !== undefined) {
+				var given_name = this.data['foaf:givenName'];
+			}
+			else{
+				var given_name = '';
+			}
+			if (this.data['foaf:familyName'] !== undefined) {
+				var surname = this.data['foaf:familyName'];
+			}
+			else{
+				var surname = '';
+			}
+			if (this.data['foaf:nick'] !== undefined) {
+				var initials = this.data['foaf:nick'];
+			}
+			else{
+				var initials = '';
+			}
+			if (this.data['oc-gen:familyName'] !== undefined) {
+				var mid_init = this.data['oc-gen:familyName'];
+			}
+			else{
+				var mid_init = '';
+			}
+			var output = {
+				foaf_type: foaf_type,
+				combined_name: combined_name,
+				given_name: given_name,
+				surname: surname,
+				initials: initials,
+				mid_init: mid_init
+			};
+			
+		}
+		return output;
+	}
 	this.getCategoryLabel = function(category){
 		// gets an icon image src for a category, if it exists
 		var output = false;

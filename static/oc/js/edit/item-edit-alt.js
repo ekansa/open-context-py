@@ -85,6 +85,10 @@ function itemEdit(item_type, item_uuid){
 					// display project specifics
 					this.display_project_edits();
 				}
+				if (this.item_type == 'persons') {
+					// display person specifics
+					this.display_person_edits();
+				}
 			}
 		}
 	}
@@ -994,6 +998,9 @@ function itemEdit(item_type, item_uuid){
 				}
 			});
 		}
+		else{
+			return false;
+		}
 	}
 	this.updateEditorialStatusDone = function(data){
 		// too many things to change, so reload the whole page
@@ -1145,6 +1152,9 @@ function itemEdit(item_type, item_uuid){
 				}
 			});
 		}
+		else{
+			return false;
+		}
 	}
 	this.updateParentProjectDone = function(data){
 		// too many things to change, so reload the whole page
@@ -1158,12 +1168,260 @@ function itemEdit(item_type, item_uuid){
 	 * ***************************************************/
 	this.display_person_edits = function(){
 		//displays project edit fields
-		this.display_proj_short_des();
+		this.display_person_names();
+		this.display_person_foaf_types();
+	}
+	
+	this.display_person_names = function(){
+		var person_obj = this.item_json_ld_obj.getPersonData();
+		
+		var jscript = [
+		 ' onkeydown="' + this.obj_name + '.compose_combined_name();" ',
+		 ' onkeyup="' + this.obj_name + '.compose_combined_name();" '
+		].join(' ');
+		
+		var inputs = {
+			combined_name: {label: 'Full Name', html: '', len: '', js: ''},
+			given_name: {label: 'Given Name', html: '', len: '', js: jscript},
+			surname: {label: 'Surname', html: '', len: '', js:jscript},
+			initials: {label: 'Initials', html: '', len: ' length="5" ', js: ''},
+			mid_init: {label: 'Middle Initial', html: '', len: ' length="3" ', js: jscript}
+		};
+		
+		for (var key in inputs) {
+			
+			var html = [
+				'<div class="form-group">',
+					'<label for="proj-input-' + key + '">' + inputs[key].label + '</label>',
+					'<input id="proj-input-' + key + '" ',
+					'class="form-control input-sm" type="text" ',
+					'value="' + person_obj[key] + '" ' + inputs[key].len + inputs[key].js,
+					' />',
+				'</div>'
+			].join('\n');
+		    inputs[key].html = html;
+		}
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updatePersonNames();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-6">',
+					inputs.combined_name.html,
+					inputs.given_name.html,
+					inputs.surname.html,
+					'<div class="row">',
+						'<div class="col-sm-6">',
+							inputs.mid_init.html,
+						'</div>',
+						'<div class="col-sm-6">',
+							inputs.initials.html,
+						'</div>',
+					'</div>',
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="proj-person-names-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="proj-person-names-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="proj-person-names-valid">',
+					'</div>',
+				'</div>',
+				'<div class="col-sm-3">',
+					'<label>Note</label>',
+					'<p class="small">',
+					'Use this interface to modify personal (or organizational) names. ',
+					'</p>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-person-names").innerHTML = html;
+	}
+	this.compose_combined_name = function(){
+		// composes a person's combined name based on inputs
+		// to given_name, mid_init, and surname
+		var given_name = document.getElementById('proj-input-given_name').value;
+		var surname = document.getElementById('proj-input-surname').value;
+		var mid_init = document.getElementById('proj-input-mid_init').value;
+		var act_dom = document.getElementById('proj-input-combined_name');
+		var all_list = [];
+		if (given_name.length > 0) {
+			all_list.push(given_name);
+		}
+		if (mid_init.length > 0) {
+			mid_init += '.'
+			all_list.push(mid_init);
+		}
+		if (surname.length > 0) {
+			all_list.push(surname);
+		}
+		var combined_name = all_list.join(' ');
+		act_dom.value = combined_name;
+	}
+	
+	this.updatePersonNames = function(){
+		// sends an AJAX request to update a person name
+		var combined_name = document.getElementById('proj-input-combined_name').value;
+		var given_name = document.getElementById('proj-input-given_name').value;
+		var surname = document.getElementById('proj-input-surname').value;
+		var mid_init = document.getElementById('proj-input-mid_init').value;
+		var initials = document.getElementById('proj-input-initials').value;
+		if (combined_name.length > 0) {
+			var act_icon = document.getElementById('proj-person-names-respncon');
+			act_icon.innerHTML = '';
+			var act_note = document.getElementById('proj-person-names-valid');
+			act_note.innerHTML = 'Updating names...';
+			var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: {
+					label: combined_name,
+					combined_name: combined_name,
+					given_name: given_name,
+					surname: surname,
+					initials: initials,
+					mid_init: mid_init,
+					csrfmiddlewaretoken: csrftoken},
+				success: this.updatePersonNamesDone,
+				error: function (request, status, error) {
+					alert('Problem updating person/organization names: ' + status);
+				}
+			});
+		}
+		else{
+			alert('Cannot have a blank value for a full name.');
+			return false;
+		}
+	}
+	this.updatePersonNamesDone = function(data){
+		// too many things to change, so reload the whole page
+		location.reload(true);
+	}
+	
+	
+	
+	this.display_person_foaf_types = function(){
+		var person_obj = this.item_json_ld_obj.getPersonData();
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updatePersonType();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		if (person_obj.foaf_type == 'foaf:Person') {
+			var pers_checked = ' checked="checked" ';
+			var org_checked = '';
+		}
+		else{
+			var org_checked = ' checked="checked" ';
+			var pers_checked = '';
+		}
+		
+		var radio_html = [
+			'<li class="list-group-item">',
+				'<div class="row">',
+					'<div class="col-sm-1" style="padding-top: 0px; text-align:right;">',
+						'<input type="radio" name="person-foaf-type" ',
+						'class="person-foaf-type" value="foaf:Person" ',
+						pers_checked + '/>',
+					'</div>',
+					'<div class="col-sm-10">',
+						'Individual Person',
+					'</div>',
+				'</div>',
+			'</li>',
+			'<li class="list-group-item">',
+				'<div class="row">',
+					'<div class="col-sm-1" style="padding-top: 0px; text-align:right;">',
+						'<input type="radio" name="person-foaf-type" ',
+						'class="person-foaf-type" value="foaf:Organization" ',
+						org_checked + ' />',
+					'</div>',
+					'<div class="col-sm-10" id="parent-project-label-outer">',
+						'Organization',
+					'</div>',
+				'</div>',
+			'</li>'
+		].join('\n');
 		
 		
-		this.display_proj_abstract();
-		this.display_proj_edit_status();
-		this.display_proj_parent();
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-2">',
+				'</div>',
+				'<div class="col-sm-4">',
+				    '<label>Person or Organization Type</label>',
+					radio_html,
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="person-foaf-type-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="person-foaf-type-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="person-foaf-type-valid">',
+					'</div>',
+				'</div>',
+				'<div class="col-sm-3">',
+					'<label>Note</label>',
+					'<p class="small">',
+					'Does this record describe a person or an organization? ',
+					'</p>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-person-type").innerHTML = html;
+	}
+	this.updatePersonType = function(){
+		var foaf_type = this.get_checked_radio_value_by_class('person-foaf-type');
+		if (foaf_type != null) {
+			var act_icon = document.getElementById('person-foaf-type-respncon');
+			act_icon.innerHTML = '';
+			var act_note = document.getElementById('person-foaf-type-valid');
+			act_note.innerHTML = 'Updating type...';
+			
+			var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(uuid);
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: {
+					class_uri: foaf_type,
+					csrfmiddlewaretoken: csrftoken},
+				success: this.updatePersonTypeDone,
+				error: function (request, status, error) {
+					alert('Problem updating person/organization type: ' + status);
+				}
+			});
+			
+			
+		}
+		else{
+			return false;
+		}
+	}
+	this.updatePersonTypeDone = function(data){
+		var act_icon = document.getElementById('person-foaf-type-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('person-foaf-type-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('person-foaf-type-respncon');
+		}
 	}
 	
 	

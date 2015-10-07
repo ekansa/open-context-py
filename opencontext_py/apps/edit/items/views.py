@@ -53,10 +53,7 @@ def html_view(request, uuid):
         temp_item.check_edit_permitted = True
         temp_item.read_jsonld_dict(ocitem.json_ld)
         if temp_item.edit_permitted:
-            if 'alt' in request.GET:
-                template = loader.get_template('edit/item-edit.html')
-            else:
-                template = loader.get_template('edit/view.html')
+            template = loader.get_template('edit/item-edit.html')
             context = RequestContext(request,
                                      {'item': temp_item,
                                       'profile': check_profile_use(ocitem.manifest),
