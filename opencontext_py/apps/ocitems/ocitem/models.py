@@ -327,6 +327,8 @@ class OCitem():
                 json_ld['foaf:familyName'] = self.person.surname
             if len(self.person.initials) > 0:
                 json_ld['foaf:nick'] = self.person.initials
+            if self.assertion_hashes and len(self.person.mid_init) >0:
+                json_ld['oc-gen:mid_init'] = self.person.mid_init
         # add related type data
         rel_pred = self.add_related_predicate(item_con,
                                               json_ld)

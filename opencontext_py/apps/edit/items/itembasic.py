@@ -89,6 +89,8 @@ class ItemBasicEdit():
                     cobj.surname = post_data['surname']
                 if 'initials' in post_data:
                     cobj.initials = post_data['initials']
+                if 'mid_init' in post_data:
+                    cobj.mid_init = post_data['mid_init']
                 cobj.save()
                 ok = True
             except Person.DoesNotExist:
