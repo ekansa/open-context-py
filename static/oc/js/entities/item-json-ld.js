@@ -249,6 +249,24 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	};
+	this.getParentProject = function(){
+		// gets an object for the item's parent project
+		var output = false;
+		if (this.data != false) {
+			if (this.data['dc-terms:isPartOf'] !== undefined) {
+				for (var i = 0, length = this.data['dc-terms:isPartOf'].length; i < length; i++) {
+					var parent_obj = this.data['dc-terms:isPartOf'][i];
+					if (parent_obj.id.indexOf('/projects/') >= 0) {
+						// the parent item is a project
+						var uuid = this.getUUIDfrom_OC_URI(parent_obj.id);
+						output = parent_obj;
+						output['uuid'] = uuid;
+					}
+				}
+			}
+		}
+		return output;
+	}
 	this.getChildren = function(){
 		// gets a object for the item's immediate parent, if it exists
 		var output = false;
@@ -261,6 +279,39 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	};
+	this.getEditorialStatus = function(){
+		// get the project editorial status
+		var edit_status = false;
+		var output = false;
+		if (this.data != false) {
+			if (this.data['bibo:status'] !== undefined) {
+				for (var i = 0, length = this.data['bibo:status'].length; i < length; i++) {
+					var status_item = this.data['bibo:status'][i];
+					if (status_item.id.indexOf('http://opencontext.org') >= 0) {
+						// this is the Open Context namespace
+						var uri_ex = status_item.id.split('/');
+						var last_uri_part = uri_ex[uri_ex.length - 1];
+						var last_uri_part_ex = last_uri_part.split('-');
+						var edit_status = last_uri_part_ex[last_uri_part_ex.length - 1];
+						var output = status_item;
+						output['edit_status'] = edit_status;
+					}
+				}
+			}
+		}
+		return output;
+	}
+	this.getProjectHeros = function(){
+		// get the project editorial status
+		var edit_status = false;
+		var output = false;
+		if (this.data != false) {
+			if (this.data['foaf:depiction'] !== undefined) {
+				output = this.data['foaf:depiction'];
+			}
+		}
+		return output;
+	}
 	this.getCategoryLabel = function(category){
 		// gets an icon image src for a category, if it exists
 		var output = false;

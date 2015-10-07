@@ -24,15 +24,16 @@ class Project(models.Model):
     label = models.CharField(max_length=200)
     short_des = models.CharField(max_length=200)
     content = models.TextField()
-    
+
     def save(self, *args, **kwargs):
         """
         creates a short ID for the project if it does not yet
         exist
         """
-        p_short_id = ProjectShortID()
-        self.short_id = p_short_id.get_make_short_id(self.uuid,
-                                                     self.short_id)
+        if self.short_id is None:
+            p_short_id = ProjectShortID()
+            self.short_id = p_short_id.get_make_short_id(self.uuid,
+                                                         self.short_id)
         super(Project, self).save(*args, **kwargs)
 
     class Meta:
@@ -45,7 +46,7 @@ class ProjectShortID():
     """
     def __init__(self):
         pass
-    
+
     def get_make_short_id(self, uuid, short_id=False):
         """ gets the current short ID or makes one
         """
@@ -63,6 +64,7 @@ class ProjectShortID():
                                .aggregate(Max('short_id'))
                 short_id = sumps['short_id__max'] + 1
         return short_id
+
 
 class ProjectRels():
     """

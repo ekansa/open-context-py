@@ -189,6 +189,45 @@ def update_item_basics(request, uuid):
 @cache_control(no_cache=True)
 @transaction.atomic()
 @reversion.create_revision()
+def update_project_hero(request, uuid):
+    """ Handles POST requests to update a hero picture for an item """
+    item_edit = ItemBasicEdit(uuid, request)
+    if item_edit.manifest is not False:
+        if request.method == 'POST':
+            if item_edit.edit_permitted or request.user.is_superuser:
+                # some parameters in the request require super-user privelages
+                result = item_edit.update_project_hero(request.POST)
+                result['errors'] = item_edit.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                # version control metadata
+                rev_label = 'Project hero image updated'
+                reversion.set_user(request.user)
+                reversion.add_meta(VersionMetadata,
+                                   project_uuid=item_edit.manifest.project_uuid,
+                                   uuid=item_edit.manifest.uuid,
+                                   item_type=item_edit.manifest.item_type,
+                                   label=rev_label,
+                                   json_note=json_output)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
 def add_edit_item_assertion(request, uuid):
     """ Handles POST requests to add an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)
@@ -640,6 +679,9 @@ def create_item_into(request, project_uuid):
                     elif request.POST['item_type'] == 'types':
                         item_type_fail = False
                         result = item_create.create_type(request.POST)
+                    elif request.POST['item_type'] == 'media':
+                        item_type_fail = False
+                        result = item_create.create_media(request.POST)
                     else:
                         item_type_fail = True
                     result['errors'] = item_create.errors

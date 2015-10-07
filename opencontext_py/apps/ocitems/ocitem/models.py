@@ -80,6 +80,7 @@ class OCitem():
         self.table = False
         self.predicate = False
         self.octype = False
+        self.hero_images = False
         self.assertion_hashes = False
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
@@ -97,6 +98,7 @@ class OCitem():
             self.get_stable_ids()
             self.get_item_type_info()
             self.get_link_anotations()
+            self.get_project_hero_images()
             self.construct_json_ld()
         return self
 
@@ -285,6 +287,18 @@ class OCitem():
     def get_link_anotations(self):
         self.link_annotations = LinkAnnotation.objects.filter(subject=self.uuid)
 
+    def get_project_hero_images(self):
+        """ gets hero images if a project """
+        if self.item_type == 'projects':
+            self.hero_images = Mediafile.objects\
+                                        .filter(uuid=self.uuid,
+                                                file_type='oc-gen:hero')
+            if len(self.hero_images) < 1:
+                # check for hero images belonging to the parent project
+                self.hero_images = Mediafile.objects\
+                                            .filter(uuid=self.project_uuid,
+                                                    file_type='oc-gen:hero')
+
     def construct_json_ld(self):
         """
         creates JSON-LD documents for an item
@@ -360,10 +374,11 @@ class OCitem():
             json_ld = item_con.add_json_predicate_list_ocitem(json_ld,
                                                               self.PREDICATES_DCTERMS_ISPARTOF,
                                                               self.project_uuid, 'projects')
-        if(self.project is not False):
+        if self.project is not False:
             json_ld['description'] = self.project.short_des
             json_ld['dc-terms:abstract'] = self.project.content
             json_ld = item_con.add_editorial_status(json_ld, self.project.edit_status)
+            json_ld = item_con.add_project_hero_images(json_ld, self.hero_images)
         # add dublin-core descriptive metadata predicates
         for dc_meta in self.DC_META_PREDS:
             if dc_meta not in json_ld:
@@ -1243,6 +1258,8 @@ class ItemConstruction():
                 list_item['type'] = media_item.file_type
                 list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
                 list_item['dcat:size'] = float(media_item.filesize)
+                if self.assertion_hashes:
+                    list_item['hash_id'] = media_item.id
                 media_list.append(list_item)
             act_dict['oc-gen:has-files'] = media_list
         return act_dict
@@ -1253,6 +1270,25 @@ class ItemConstruction():
         """
         if(document is not False):
             act_dict['rdf:HTML'] = document.content
+        return act_dict
+
+    def add_project_hero_images(self, act_dict, hero_list):
+        """
+        adds hero pictures for a project,
+        uses the "foaf:depiction" predicate
+        """
+        if hero_list is not False:
+            media_list = []
+            for media_item in hero_list:
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = media_item.file_uri
+                list_item['type'] = media_item.file_type
+                list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+                list_item['dcat:size'] = float(media_item.filesize)
+                if self.assertion_hashes:
+                    list_item['hash_id'] = media_item.id
+                media_list.append(list_item)
+            act_dict['foaf:depiction'] = media_list
         return act_dict
 
     def get_entity_metadata(self, identifier):

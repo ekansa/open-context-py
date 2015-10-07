@@ -1,0 +1,55 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>About Open Context</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="margin-top: 10px;" src="{{ base_url }}/static/oc/images/about/oc-reduced-logo.png" alt="Open Context Logo" />
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context publishes and, with university digital repositories, archives research data in archaeology and other field sciences.</p>
+                                
+                                <p>Data can power new discoveries, new eductional opportunities, and enrich engagement with multiple publics.
+                                But to realize the full potential of data sharing, researchers need dedicated professional editorial and
+                                technical services.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">        
+        <div class="row">
+            <div class="col-sm-12">
+                
+                <!-- end of tab content -->
+            </div>
+        </div>
+        
+    </div>
+    
+{% endblock %} 

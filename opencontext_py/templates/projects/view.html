@@ -1,25 +1,53 @@
 {% extends 'item.html' %}
 
 {% block itemcontent %}
-<div id="item-content">
-     <div class="row">
+<style type="text/css">
+    div.bosom-none {
+        position: aboslute;
+        display: block;
+        margin-top: -19px;
+        margin-left: -30px;
+        margin-right: -60px;
+        width: auto;
+        padding: 0;
+        height: 350px;
+        {% if item.project_hero_uri != False %}
+        background-image: url('{{ item.project_hero_uri }}');
+        {% else %}
+        background-image: url('{{ base_url }}/static/oc/images/projects/project-default-hero.png');
+        {% endif %}
+        background-repeat: no-repeat;
+        background-size: 100% auto;
+    }
+</style>
+
+<div class="container-fluid bosom-none">
+    <!--
+    <img class="img-responsive center-block" src="http://www.placehold.it/960x350" alt="Project hero image"/>
+    -->
+</div>
+
+
+<div id="item-content" style="margin-top: -40px;">
+    <div class="row">
         <div class="col-sm-8">
-            <h3 style="margin-top:-8px;">Project</h3>
-            <h4>{{ item.label }}</h4>
+            <div class="well well-sm">
+                <h2 style="margin-top:-4px;">Project</h2>
+                <h3 style="margin-top:-8px;">{{ item.label }}</h3>
+                {% if item.content != False %}
+                {% if item.content.sum_text != False %}
+                <p>{{ item.content.sum_text }}</p>
+                {%endif%}
+                {%endif%}
+            </div>
+            </div>
         </div>
         <div class="col-sm-4" style="padding-bottom:2%;">
-            {% if item.content != False %}
-            {% if item.content.sum_text != False %}
-            <div style="margin-top:-16px;">
-               <h5 style="font-weight: bold;">About</h5>
-            {{ item.content.sum_text }}
-            </div>
-            {%endif%}
-            {%endif%}
+            
         </div>
-     </div>
-     <div class="row">
-         <div class="col-sm-8">
+    </div>
+    <div class="row">
+        <div class="col-sm-8">
             {% if item.content != False %}
             {% if item.content.main_text != False %}
             <div class="row">

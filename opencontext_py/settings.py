@@ -74,14 +74,13 @@ if len(added_host) > 1:
 # Application definition
 
 INSTALLED_APPS = (
-    'reversion',
     'django.contrib.admin',
     'django.contrib.auth',
-    # 'django.contrib.staticfiles',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.humanize',
+    'reversion',
     'opencontext_py.apps.edit.versioning',
     'opencontext_py.apps.edit.inputs.profiles',
     'opencontext_py.apps.edit.inputs.fieldgroups',
@@ -176,10 +175,7 @@ CACHES = {
 # -----------------------
 # EMAIL settings
 # -----------------------
-if get_secret('EMAIL_USE_TLS') == 1:
-    EMAIL_USE_TLS = True
-else:
-    EMAIL_USE_TLS = False
+EMAIL_USE_TLS = True
 EMAIL_HOST = get_secret('EMAIL_HOST')
 EMAIL_PORT = get_secret('EMAIL_PORT')
 EMAIL_HOST_USER = get_secret('EMAIL_HOST_USER')

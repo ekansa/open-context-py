@@ -12,6 +12,9 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
 from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
 from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugment
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 # Returns a search interface to browse projects
@@ -129,6 +132,8 @@ def index_json(request):
         return HttpResponse(template.render(context), status=503)
 
 
+@cache_control(no_cache=True)
+@never_cache
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid, True)

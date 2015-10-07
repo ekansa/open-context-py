@@ -109,6 +109,14 @@ def project_import_refine(request, project_uuid):
         else:
             return HttpResponseForbidden
 
+"""
+from opencontext_py.apps.imports.sources.create import ImportRefineSource
+refine_project = '2200545655556'
+project_uuid = '3885b0b6-2ba8-4d19-b597-7f445367c5c0'
+irs = ImportRefineSource()
+irs.import_refine_to_project(refine_project, project_uuid)
+"""
+
 
 @cache_control(no_cache=True)
 @never_cache

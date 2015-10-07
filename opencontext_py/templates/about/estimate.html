@@ -1,0 +1,530 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+        div.count_radio_outer {
+            margin-top: 2px;
+            margin-bottom: 20px;
+            margin-left: 20px;
+        }
+        div.lic_help_outer {
+            margin-top: 8px;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Publishing and Archiving Costs</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="height: 240px; margin-top:-15px;" src="{{ base_url }}/static/oc/images/about/finance-noun-176033.png" alt="Finance Icon" />
+                        </div>
+                        <div class="media-body">
+                            <p>Open Context provides researchers with the following services:</p>
+                            <ul>
+                                <li>Editing, annotation, peer-review and open access publishing for research data and media</li>
+                                <li>Data archiving with the University of California's Merritt digital repository
+                                (managed by the California Digital Library)</li>
+                            </ul>
+                            <p>While data published by Open Context are free to use, Open Context charges
+                            contributing researchers fees for publishing and archiving services.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">        
+        <div class="row">
+            <div class="col-sm-12">
+                <h3>Data Management Plan Cost Estimates for Publishing and Archiving</h3>
+                <p>The form provided below will help you prepare and budget for your grant "Data Management Plan". Once you successfully complete this form, you will receive an email with a budget estimate and language to add to your Data Management Plan. This language will include a description of interoperability, access, and archiving issues that help determine the research value of shared data. Please note, completing this form does not imply or constitute a binding agreement.</p>
+                <div class="well">
+                    <form action="{{ base_url }}/about/process-estimate" method="post" class="form-horizontal" >
+                        <!-- General project related fields -->
+                        <h5><strong>Project Contact Information</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="form-group">
+                                <label for="input-name" class="col-sm-3 control-label">Researcher Name</label>
+                                <div class="col-sm-8">
+                                    <input name="user_name"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-name"
+                                           placeholder="Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-email" class="col-sm-3 control-label">Email</label>
+                                <div class="col-sm-8">                          
+                                    <div class="input-group">
+                                    <span class="input-group-addon">@</span>
+                                    <input name="user_email"
+                                           type="email"
+                                           class="form-control"
+                                           id="input-email"
+                                           placeholder="Email" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!--
+                            <div class="form-group">
+                                <label for="input-phone" class="col-sm-3 control-label">Phone</label>
+                                <div class="col-sm-8">
+                                    <input name="user_phone"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-phone"
+                                           placeholder="Telephone Number (Optional)" />
+                                </div>
+                            </div>
+                            -->
+                            <div class="form-group">
+                                <label for="input-proj-name" class="col-sm-3 control-label">Project Name</label>
+                                <div class="col-sm-8">
+                                    <input name="project_name"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-proj-name"
+                                           placeholder="Project Name" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-diss-proj-yes" class="col-sm-3 control-label">Dissertation Project</label>
+                                <div class="col-sm-8">
+                                    <label class="radio-inline">
+                                        <input type="radio"
+                                               class="input-diss-proj"
+                                               name="is_grad_student"
+                                               id="input-diss-proj-yes"
+                                               aria-describedby="input-diss-proj-help"
+                                               value="1"/> Yes
+                                    </label>
+                                    <label class="radio-inline">
+                                        <input type="radio"
+                                               class="input-diss-proj"
+                                               name="is_grad_student"
+                                               id="input-diss-proj-no"
+                                               checked="checked"
+                                               value="0" /> No
+                                    </label>
+                                    <span id="input-diss-proj-help" class="help-block">Graduate student projects, including Data Management Plan costs for doctoral dissertation grants, receive a 25% discount</span>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <!-- General project complexity -->
+                        <h5><strong>Project Database Size and Complexity</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="form-group">
+                                <label for="input-proj-years" class="col-sm-4 control-label">Duration of Project (Years)</label>
+                                <div class="col-sm-2">
+                                    <input name="duration"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-proj-years"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-spec-datasets" class="col-sm-4 control-label">Number of specialist datasets</label>
+                                <div class="col-sm-2">    
+                                    <input name="count_spec_datasets"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-spec-datasets"
+                                           aria-describedby="input-spec-datasets-help"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4"> </div>
+                                <div class="col-sm-8" style="margin-top: -10px;">
+                                <span id="input-spec-datasets-help" class="help-block">The number of different specialists making datasets (zooarchaeology, lithic analysis, etc.)</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="input-count-tables" class="col-sm-4 control-label">Number of tables</label>
+                                <div class="col-sm-2">    
+                                    <input name="count_tables"
+                                           type="text"
+                                           class="form-control"
+                                           id="input-count-tables"
+                                           aria-describedby="input-count-tables-help"
+                                           placeholder="" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-4"> </div>
+                                <div class="col-sm-8" style="margin-top: -10px;">
+                                <span id="input-count-tables-help" class="help-block">Estimated number of tables in all of the project's relational databases and spreadsheets</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Media numbers -->
+                        <h5><strong>Project Media Size and Complexity</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Image Files</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-images"
+                                               name="count_images"
+                                               id="input-count-images-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-images"
+                                               name="count_images"
+                                               id="input-count-images-100"
+                                               value="100"
+                                               /> 1 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-images"
+                                               name="count_images"
+                                               id="input-count-images-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-images"
+                                               name="count_images"
+                                               id="input-count-images-10000"
+                                               value="1000"
+                                               /> 1000 - 10000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-images"
+                                               name="count_images"
+                                               id="input-count-images-100000"
+                                               value="10000"
+                                               /> more than 10000
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Documents (<em>HTML, text, PDF</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-docs"
+                                               name="count_docs"
+                                               id="input-count-docs-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-docs"
+                                               name="count_docs"
+                                               id="input-count-docs-10"
+                                               value="10"
+                                               /> 1 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-docs"
+                                               name="count_docs"
+                                               id="input-count-docs-100"
+                                               value="100"
+                                               /> 10 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-docs"
+                                               name="count_docs"
+                                               id="input-count-images-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-docs"
+                                               name="count_docs"
+                                               id="input-count-images-10000"
+                                               value="10000"
+                                               /> more than 1000
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of GIS "Layers" (<em>Point, line, polygon feature types and rasters</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-gis"
+                                               name="count_gis"
+                                               id="input-count-gis-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-gis"
+                                               name="count_gis"
+                                               id="input-count-gis-1"
+                                               value="1"
+                                               /> 1
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-gis"
+                                               name="count_gis"
+                                               id="input-count-gis-5"
+                                               value="100"
+                                               /> 1 - 5
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-gis"
+                                               name="count_gis"
+                                               id="input-count-gis-10"
+                                               value="10"
+                                               /> 5 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-gis"
+                                               name="count_gis"
+                                               id="input-count-gis-100"
+                                               value="100"
+                                               /> More than 10
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-4" style="text-align: right; padding-top: 10px;">
+                                    <label>Number of Other Media Files (<em>Videos, 3D models, VR, CAD, etc.</em>)</label>
+                                </div>
+                                <div class="col-sm-6 count_radio_outer">
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-other"
+                                               name="count_other"
+                                               id="input-count-other-0"
+                                               value="0"
+                                               checked="checked" /> None
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-other"
+                                               name="count_other"
+                                               id="input-count-other-10"
+                                               value="10"
+                                               /> 1 - 10
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-other"
+                                               name="count_other"
+                                               id="input-count-other-100"
+                                               value="100"
+                                               /> 10 - 100
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-other"
+                                               name="count_other"
+                                               id="input-count-other-1000"
+                                               value="1000"
+                                               /> 100 - 1000
+                                    </div>
+                                    <div class="radio">
+                                        <input type="radio"
+                                               class="input-count-other"
+                                               name="count_other"
+                                               id="input-count-other-10000"
+                                               value="10000"
+                                               /> more than 1000
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Comments and Submit -->
+                        <h5><strong>Comment and Copyright Licensing</strong></h5>
+                        <div class="well well-sm" style="padding-top: 3%;">
+                            <div class="form-group">
+                                <label for="input-name" class="col-sm-3 control-label">Comments</label>
+                                <div class="col-sm-8">
+                                    <textarea
+                                        class="form-control"
+                                        style="width: 100%;"
+                                        name="comment"
+                                        id="input-comment"
+                                        placeholder="Additional comments to help Open Context editors understand your project"
+                                        rows="4"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-sm-3" style="text-align: right; padding-top: 10px;">
+                                    <label>Copyright License</label>
+                                </div>
+                                <div class="col-sm-7 count_radio_outer">
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <div class="radio">
+                                                <input type="radio"
+                                                       class="input-license"
+                                                       name="license_uri"
+                                                       id="input-license-0"
+                                                       value="https://creativecommons.org/publicdomain/zero/1.0"
+                                                       aria-describedby="input-license-0-help"
+                                                       checked="checked" /> CC-Zero
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-10 small lic_help_outer">
+                                            <label>Creative Commons Zero (Public Domain)</label>
+                                            <span id="input-license-0-help" class="help-block">If I choose to publish with Open Context, I plan to waive all copyright and other intellectual property rights on my content and dedicate my content to the public domain by using the Creative Commons-Zero (public domain) declaration. Legal experts believe that this choice maximizes scientific interoperability and potential for reuse. While not legally required, citation is expected through norms of professional conduct.</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <div class="radio">
+                                                <input type="radio"
+                                                       class="input-license"
+                                                       name="license_uri"
+                                                       id="input-license-by"
+                                                       value="https://creativecommons.org/licenses/by/4.0"
+                                                       aria-describedby="input-license-by-help"
+                                                       /> CC-By
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-10 small lic_help_outer">
+                                            <label>Creative Commons Attribution License</label>
+                                            <span id="input-license-by-help" class="help-block">If I choose to publish with Open Context,
+                                            I plan to license my content under a Creative Commons-Attribution License.
+                                            This license allows others to:
+                                            <ul>
+                                                <li>to copy, distribute and transmit the work</li>
+                                                <li>to adapt the work</li>
+                                            </ul>
+                                            These permissions apply under the condition that others attribute your work in the
+                                            manner specified by Open Context (which is proper citation). The above permissions
+                                            help promote reuse and interoperability of your data, and give explicity permission
+                                            for digital archives to preserve content.</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-sm-2">
+                                            <div class="radio">
+                                                <input type="radio"
+                                                       class="input-license"
+                                                       name="license_uri"
+                                                       id="input-license-other"
+                                                       value="other"
+                                                       aria-describedby="input-license-other-help"
+                                                       /> Other
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-10 small lic_help_outer">
+                                            <label>Other Controls and Licenses</label>
+                                            <span id="input-license-other-help" class="help-block">Open Context is an open access
+                                            and open data publisher. While open and nonproprietary data can offer wide research,
+                                            instruction, and public benefits, open data is not universally appropriate.
+                                            Open Context is not a suitable venue for the management of content that requires
+                                            stricter security or intellectual property controls,
+                                            access restrictions, or other restrictions. You can work with
+                                            Open Context editors to develop sound strategies to mix open data publishing and curation
+                                            of more restricted information in other systems.</span>
+                                            <textarea
+                                                class="form-control"
+                                                style="width: 100%;"
+                                                name="license_note"
+                                                id="input-license-note"
+                                                placeholder="Brief explanation of areas where additional restrictions may be required"
+                                                rows="4"></textarea>
+                                        </div>
+                                        
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                    
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <button
+                                 onclick="estimator.submit();"
+                                 type="button"
+                                 class="btn btn-primary btn-lg btn-block">Submit</button>
+                            </div>
+                            <div class="col-sm-6">
+                                
+                            </div>
+                            <div class="col-sm-3">
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-sm-12" id="estimation-results">
+                                
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Finance icon by <a target="_blank" href="https://thenounproject.com/term/finance/176033/">Creative Stall</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+        var base_url = '{{ base_url }}';
+    </script>
+    <script type="text/javascript">
+            <!--
+            var estimator = false;
+            function start_estimator(){
+                estimator = new estimation();
+            }
+            -->
+    </script> 
+    <script src="{{ base_url }}/static/oc/js/about/estimation.js" onload="start_estimator();"></script>
+    
+{% endblock %} 

@@ -1,6 +1,7 @@
 import json
 import copy
 import datetime
+from random import randint
 from django.conf import settings
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.rootpath import RootPath
@@ -58,6 +59,7 @@ class TemplateItem():
         self.edit_permitted = False
         self.check_edit_permitted = False
         self.contents_top = False
+        self.project_hero_uri = False  # randomly selects an image for the project
         self.predicate_query_link = False # link for querying with a predicate
         self.predicate_query_json = False # link for querying json with a predicate
 
@@ -86,6 +88,7 @@ class TemplateItem():
         self.create_geo(json_ld)
         self.create_content(json_ld)
         self.create_query_links(json_ld)
+        self.create_project_hero(json_ld)
         self.check_contents_top()
 
     def create_person_data(self, json_ld):
@@ -381,6 +384,24 @@ class TemplateItem():
                 if self.project.slug is not False:
                     self.predicate_query_link += '&proj=' + self.project.slug
                     self.predicate_query_json += '&proj=' + self.project.slug
+
+    def create_project_hero(self, json_ld):
+        """ creates a link for displaying a hero image
+            by randomly selecting through hero images
+            associated with the project
+        """
+        if self.act_nav == 'projects':
+            if 'foaf:depiction' in json_ld:
+                # predicate for images
+                heros = json_ld['foaf:depiction']
+                len_heros = len(heros)
+                if len_heros > 0:
+                    if len_heros > 1:
+                        act_index = randint(0, (len_heros - 1))
+                    else:
+                        act_index = 0
+                    self.project_hero_uri = heros[act_index]['id']
+
 
 class ItemMetadata():
     """ Class has some methods to add metadata to items """

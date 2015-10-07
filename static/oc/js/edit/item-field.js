@@ -34,6 +34,7 @@ function edit_field(){
 	this.obs_num = false;
 	this.obs_node = false;
 	this.note = false;
+	this.note_below_pred = false;
 	this.validation = false;
 	this.after_validation_done = false;
 	this.value_num_validations = {};
@@ -49,15 +50,21 @@ function edit_field(){
 	this.value_sort_col_class = 'col-xs-1';
 	this.value_col_class = 'col-xs-6';
 	this.valid_col_class = 'col-xs-4';
+	this.simple_label_types = [
+		'projects',
+	    'persons',
+		'tables'
+	]; // item types that do NOT get elaborate label composition
 	this.label_pred_uuid = 'oc-gen:label';
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
 	this.html_validation = false;
 	this.values_dom_id = false;
-	this.single_value_preds = [this.label_pred_uuid,
-										this.class_pred_uuid,
-										this.context_pred_uuid];
+	this.single_value_preds = [
+		this.label_pred_uuid,
+		this.class_pred_uuid,
+		this.context_pred_uuid];
 	this.class_vocab_uri = 'http://opencontext.org/vocabularies/oc-general/';
 	this.add_new_data_row = true;
 	this.add_field_sort_buttons = true;
@@ -88,6 +95,51 @@ function edit_field(){
 		}
 		return html;
 	}
+	this.make_basic_edit_field_html = function(){
+		//special function to make html for an item label, in edit mode (not create)
+		this.initialize();
+		var dom_ids = this.make_field_val_domids(0);
+		var val_html = '';
+		if (this.predicate_uuid == this.label_pred_uuid) {
+			var val_html = this.make_label_val_html(0, {});
+		}
+		else if (this.predicate_uuid == this.class_pred_uuid) {
+			var val_html = this.make_category_val_html(0, {});
+		}
+		else if (this.predicate_uuid == this.context_pred_uuid) {
+			var val_html = this.make_context_val_html(0, {});
+		}
+		var note_html = '';
+		if (this.note != false) {
+			if (this.note.length > 0) {
+				var note_html = [
+					'<label>Note</label>',
+					'<p class="small">',
+						this.note,
+					'</p>'
+				].join("\n");
+			}
+		}
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-6">',
+					val_html,
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="' + dom_ids.submitcon + '" style="padding-top: 12px;">',
+					'</div>',
+					'<div id="' + dom_ids.respncon + '">',
+					'</div>',
+					'<div id="' + dom_ids.valid + '">',
+					'</div>',
+				'</div>',
+				'<div class="col-sm-3">',
+					note_html,
+				'</div>',
+			'</div>'
+		].join('\n');
+		return html;
+	}
 	this.make_field_edit_html = function(){
 		var vals_html = this.make_vals_html();
 		var note_html = '';
@@ -101,10 +153,18 @@ function edit_field(){
 				].join("\n");
 			}
 		}
+		if (this.note_below_pred) {
+			var after_pred_note = note_html;
+			note_html = '';
+		}
+		else{
+			var after_pred_note = '';
+		}
 
 		var html = [
 		'<td>',
 			this.make_pred_label_html(),
+			after_pred_note,
 		'</td>',
 		'<td>',
 			'<div id="'+ this.values_dom_id + '">',
@@ -147,6 +207,7 @@ function edit_field(){
 		this.activate_calendars();
 		this.activate_expand_collapse();
 		this.make_trees();
+		return true;
 	}
 	this.make_vals_html = function(){
 		this.initialize();
@@ -237,6 +298,8 @@ function edit_field(){
 											'</div>',
 											'<div id="' + dom_ids.submitcon + '">',
 											'</div>',
+											'<div id="' + dom_ids.respncon + '">',
+											'</div>',
 										'</div>',
 									'</div>',
 								'</div>',
@@ -285,6 +348,8 @@ function edit_field(){
 									'<div id="' + dom_ids.valid + '">',
 									'</div>',
 									'<div id="' + dom_ids.submitcon + '">',
+									'</div>',
+									'<div id="' + dom_ids.respncon + '">',
 									'</div>',
 								'</div>',
 							'</div>',
@@ -607,59 +672,71 @@ function edit_field(){
 		}
 		var id_part_placeholder = ' placeholder="ID number" ';
 		
+		if (this.simple_label_types.indexOf(this.item_type) >= 0) {
+			var display_label_compose_outer = ''
+			var display_label_compose = 'display:none;';
+		}
+		else{
+			var display_label_compose = '';
+			var display_label_compose_outer = '';
+		}
+		
 		var html = [
-		'<div class="form-group">',
-			'<label for="' + dom_ids.literal + '">' + this.label + '</label>',
-			'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
-			'type="text" value="' + display_label + '" ' + label_placeholder,
-			'onkeydown="' + this.name + '.validateLabel(' + value_num + ');" ',
-			'onkeyup="' + this.name + '.validateLabel(' + value_num + ');" ',
-			'/>',
-			'</div>',
-			'<div class="well well-sm small">',
-			'<form class="form-horizontal">',
 			'<div class="form-group">',
-				'<label for="' + dom_ids.id_part + '" class="col-sm-5 control-label">ID Part</label>',
-				'<div class="col-sm-5">',
-				'<input id="' + dom_ids.id_part + '" class="form-control input-sm" ',
-				'type="text" value="" ' + id_part_placeholder,
-				//'onkeydown="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
-				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
+				'<label for="' + dom_ids.literal + '">' + this.label + '</label>',
+				'<input id="' + dom_ids.literal + '" class="form-control input-sm" ',
+				'type="text" value="' + display_label + '" ' + label_placeholder,
+				'onkeydown="' + this.name + '.validateLabel(' + value_num + ');" ',
+				'onkeyup="' + this.name + '.validateLabel(' + value_num + ');" ',
 				'/>',
+			'</div>',
+			'<div style="' + display_label_compose_outer +'">',
+				'<div class="well well-sm small" style="' + display_label_compose + '">',
+					'<form class="form-horizontal">',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.id_part + '" class="col-sm-5 control-label">ID Part</label>',
+						'<div class="col-sm-5">',
+							'<input id="' + dom_ids.id_part + '" class="form-control input-sm" ',
+							'type="text" value="" ' + id_part_placeholder,
+							//'onkeydown="' + this.name + '.composeLabel(\'' + this.id + '\');" ',
+							'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
+							'/>',
+						'</div>',
+					'</div>',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.label_prefix + '" class="col-sm-5 control-label">Label Prefix</label>',
+						'<div class="col-sm-5">',
+							'<input id="' + dom_ids.label_prefix + '" class="form-control input-sm" ',
+							'type="text" value="' + this.label_prefix + '" ' + prefix_placeholder,
+							'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
+							'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
+							'/>',
+						'</div>',
+					'</div>',
+					'<div class="form-group">',
+						'<label for="' + dom_ids.id_len + '" class="col-sm-5 control-label">ID Digit Length</label>',
+						'<div class="col-sm-3">',
+							'<input id="' + dom_ids.id_len + '" class="form-control input-sm" ',
+							'type="text" value="' + digit_len_val + '" ',
+							'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
+							'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
+							'/>',
+						'</div>',
+					'</div>',
+					'</form>',
+					/*  Hidden, since we're not using this yet */
+					'<div class="form-group" style="display:none;">',
+						'<label>Label Unique within:</label><br/>',
+						'<label class="radio-inline">',
+						'<input type="radio" name="label-unique" ',
+						'class="label-unique" value="project" checked="checked" >',
+						'Entire project</label>',
+						'<label class="radio-inline">',
+						'<input type="radio" name="label-unique" ',
+						'class="label-unique" value="context" >',
+						'Immediate Context</label>',
+					'</div>',
 				'</div>',
-			'</div>',
-			'<div class="form-group">',
-				'<label for="' + dom_ids.label_prefix + '" class="col-sm-5 control-label">Label Prefix</label>',
-				'<div class="col-sm-5">',
-				'<input id="' + dom_ids.label_prefix + '" class="form-control input-sm" ',
-				'type="text" value="' + this.label_prefix + '" ' + prefix_placeholder,
-				'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
-				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
-				'/>',
-				'</div>',
-			'</div>',
-			'<div class="form-group">',
-				'<label for="' + dom_ids.id_len + '" class="col-sm-5 control-label">ID Digit Length</label>',
-				'<div class="col-sm-3">',
-				'<input id="' + dom_ids.id_len + '" class="form-control input-sm" ',
-				'type="text" value="' + digit_len_val + '" ',
-				'onkeydown="' + this.name + '.composeLabel(' + value_num + ');" ',
-				'onkeyup="' + this.name + '.composeLabel(' + value_num + ');" ',
-				'/>',
-				'</div>',
-			'</div>',
-			'</form>',
-			'<div class="form-group">',
-			'<label>Label Unique within:</label><br/>',
-			'<label class="radio-inline">',
-			'<input type="radio" name="label-unique" ',
-			'class="label-unique" value="project" checked="checked" >',
-			'Entire project</label>',
-			'<label class="radio-inline">',
-			'<input type="radio" name="label-unique" ',
-			'class="label-unique" value="context" >',
-			'Immediate Context</label>',
-			'</div>',
 			'</div>'
 		].join("\n");
 		return html;
@@ -825,17 +902,23 @@ function edit_field(){
 		return button_html;
 	}
 	this.make_val_delete_button_html = function(value_num){
-		var style = ' style="margin-top: 5px;" ';
-		var title = 'Delete this value';
-		var button_html = [
-			'<div ' + style + ' >',
-			'<button title="' + title + '" ',
-			'class="btn btn btn-danger btn-xs" ',
-			'onclick="' + this.name + '.deleteFieldValue(\'' + value_num + '\');">',
-			'<span class="glyphicon glyphicon-remove-sign"></span>',
-			'</button>',
-			'</div>',
-			].join('\n');
+		if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
+			// no delete button for single value predicates
+			var button_html = '';
+		}
+		else{
+			var style = ' style="margin-top: 5px;" ';
+			var title = 'Delete this value';
+			var button_html = [
+				'<div ' + style + ' >',
+				'<button title="' + title + '" ',
+				'class="btn btn btn-danger btn-xs" ',
+				'onclick="' + this.name + '.deleteFieldValue(\'' + value_num + '\');">',
+				'<span class="glyphicon glyphicon-remove-sign"></span>',
+				'</button>',
+				'</div>',
+				].join('\n');
+		}
 		return button_html;
 	}
 	this.make_val_sort_button_html = function(value_num, sort_change){
@@ -909,6 +992,7 @@ function edit_field(){
 			valid: (value_num + '-field-valid-' + this.id), //container ID for validation feedback
 			valid_val: (value_num + '-field-valid-val-' + this.id), //hidden input field for value validation results
 			submitcon: (value_num + '-field-sbcon-' + this.id), //container ID for submitt button
+			respncon: (value_num + '-field-respcon-' + this.id), //container ID for submission response
 			icon: (value_num + '-field-icon-' + this.id), //for calendar icon, used with date picker
 			datecon: (value_num + '-field-datecon-' + this.id), //containers for dates, needed to activate calender date picker
 			treebut: (value_num + '-field-tx-' + this.id), //button for making parents
@@ -1108,6 +1192,25 @@ function edit_field(){
 					this.postprocess();
 					this.active_value_num = false;
 				}
+			}
+			if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
+				//single value
+				var dom_ids = this.make_field_val_domids(0);
+				var html = [
+					'<div style="margin-top: 10px;">',
+						'<div class="alert alert-success small" role="alert">',
+							'<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>',
+							'<span class="sr-only">Success:</span>',
+							'Update done.',
+						'</div>',
+					'</div>'
+				].join('\n');
+				var act_dom = document.getElementById(dom_ids.respncon);
+				act_dom.innerHTML = html;
+				setTimeout(function() {
+					// display an OK message for a short time
+					act_dom.innerHTML = '';
+				}, 4500);
 			}
 		}
 		else{
@@ -1691,7 +1794,7 @@ function edit_field(){
 			].join('\n');
 			button_html = '';
 		}
-		if (edit_new == false) {
+		if (this.edit_new == false) {
 			// only add the button if edit_new is false
 			if (document.getElementById(dom_ids.submitcon)) {
 				document.getElementById(dom_ids.submitcon).innerHTML = button_html;

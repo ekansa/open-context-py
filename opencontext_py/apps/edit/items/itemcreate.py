@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.core.cache import cache
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
@@ -31,7 +32,7 @@ class ItemCreate():
         self.project_uuid = project_uuid
         self.oc_root_project = False
         self.request = request
-        self.errors = {'params': False}
+        self.errors = []
         self.response = {}
         self.created_uuid = False
         try:
@@ -97,8 +98,9 @@ class ItemCreate():
                 uuid = post_data['uuid'].strip()
                 uuid_exists = self.check_uuid_exists(uuid)
                 if uuid_exists:
-                    self.errors['uuid'] = 'Cannot create an item with UUID: ' + uuid
-                    self.errors['uuid'] += ', because it is already used.'
+                    error = 'Cannot create an item with UUID: ' + uuid
+                    error += ', because it is already used.'
+                    self.errors.append(error)
                     uuid = False
         return uuid
 
@@ -112,12 +114,37 @@ class ItemCreate():
             uuid_format_ok = True
         return uuid_format_ok
 
+    def validate_project_short_id(self, post_data):
+        """ validates a project's short ID
+            returns an integer if the short_id is an OK id
+            returns False if the short_id is not an OK id
+            returns None if no short ID was not specified
+        """
+        output = None
+        if 'short_id' in post_data:
+            if len(post_data['short_id']) > 0:
+                try:
+                    short_id = int(float(post_data['short_id']))
+                except:
+                    short_id = False
+                    output = False
+                    self.errors.append('Not a valid short_id: ' + str(post_data['short_id']))
+                if short_id is not False:
+                    projs = Project.objects\
+                                   .filter(short_id=short_id)[:1]
+                    if len(projs) == 0:
+                        output = short_id
+                    else:
+                        self.errors.append('Already used short_id: ' + str(short_id))
+                        output = False
+        return output
+
     def create_project(self, post_data):
         """ creates a project item into a project
         """
         ok = True
         required_params = ['source_id',
-                           'label',
+                           'label'
                            'short_des']
         for r_param in required_params:
             if r_param not in post_data:
@@ -125,14 +152,15 @@ class ItemCreate():
                 # don't create the item
                 ok = False
                 message = 'Missing paramater: ' + r_param + ''
-                if self.errors['params'] is False:
-                    self.errors['params'] = message
-                else:
-                    self.errors['params'] += '; ' + message
+                self.errors.append(message)
         uuid = self.create_or_validate_uuid(post_data)
         if uuid is False:
             ok = False
-            note = self.errors['uuid']
+            note = '; '.join(self.errors)
+        short_id = self.validate_project_short_id(post_data)
+        if short_id is False:
+            ok = False
+            note = '; '.join(self.errors)
         if ok:
             label = post_data['label']
             if self.oc_root_project:
@@ -146,6 +174,7 @@ class ItemCreate():
             new_proj.edit_status = 0
             new_proj.label = label
             new_proj.short_des = post_data['short_des']
+            new_proj.short_id = short_id
             new_proj.save()
             new_man = Manifest()
             new_man.uuid = uuid
@@ -190,14 +219,11 @@ class ItemCreate():
                 # don't create the item
                 ok = False
                 message = 'Missing paramater: ' + r_param + ''
-                if self.errors['params'] is False:
-                    self.errors['params'] = message
-                else:
-                    self.errors['params'] += '; ' + message
+                self.errors.append(message)
         uuid = self.create_or_validate_uuid(post_data)
         if uuid is False:
             ok = False
-            note = self.errors['uuid']
+            note = '; '.join(self.errors)
         if ok:
             label = post_data['combined_name']
             new_pers = Person()
@@ -259,15 +285,17 @@ class ItemCreate():
                 # the uuid is used for something that is not a string
                 # this messes stuff up, so note the error
                 ok = False
-                self.errors['content_uuid'] = 'Cannot use the UUID: ' + content_uuid
-                self.errors['content_uuid'] += ', because it is already used.'
+                message = 'Cannot use the UUID: ' + content_uuid
+                message += ', because it is already used.'
+                self.errors.append(message)
             elif string_uuid is not False and string_uuid != content_uuid:
                 # conflict beteween the user submitted content_uuid
                 # and the string_uuid for the same label
                 ok = False
-                self.errors['content_uuid'] = 'Cannot create a category called "' + label + '" '
-                self.errors['content_uuid'] += ', becuase the submitted content UUID: ' + content_uuid
-                self.errors['content_uuid'] += ' conflicts with the existing UUID: ' + string_uuid
+                message = 'Cannot create a category called "' + label + '" '
+                message += ', becuase the submitted content UUID: ' + content_uuid
+                message += ' conflicts with the existing UUID: ' + string_uuid
+                self.errors.append(message)
             else:
                 # now, one last check is to make sure the
                 # current combinaiton of predicate_uuid and content_uuid does not exist
@@ -275,14 +303,16 @@ class ItemCreate():
                                                                 content_uuid)
                 if type_exists:
                     ok = False
-                    self.errors['content_uuid'] = 'Cannot create a category called "' + label + '" '
-                    self.errors['content_uuid'] += ', becuase the submitted content UUID: ' + content_uuid
-                    self.errors['content_uuid'] += ' is already used with the Predicate UUID: ' + predicate_uuid
+                    message = 'Cannot create a category called "' + label + '" '
+                    message += ', becuase the submitted content UUID: ' + content_uuid
+                    message += ' is already used with the Predicate UUID: ' + predicate_uuid
+                    self.errors.append(message)
         else:
             ok = False
-            self.errors['content_uuid'] = 'Cannot create a category called "' + label + '"'
-            self.errors['content_uuid'] += ', becuase the submitted content UUID: ' + content_uuid
-            self.errors['content_uuid'] += ' is badly formed.'
+            message = 'Cannot create a category called "' + label + '"'
+            message += ', becuase the submitted content UUID: ' + content_uuid
+            message += ' is badly formed.'
+            self.errors.append(message)
         if ok:
             return content_uuid
         else:
@@ -315,10 +345,7 @@ class ItemCreate():
                 # don't create the item
                 ok = False
                 message = 'Missing paramater: ' + r_param + ''
-                if self.errors['params'] is False:
-                    self.errors['params'] = message
-                else:
-                    self.errors['params'] += '; ' + message
+                self.errors.append(message)
         # now prep the type management !
         tm = TypeManagement()
         tm.project_uuid = self.project_uuid
@@ -337,10 +364,11 @@ class ItemCreate():
                     uuid_exists = self.check_uuid_exists(uuid)
                     if uuid_exists:
                         ok = False
-                        self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
-                        self.errors['uuid'] += ', becuase the submitted UUID: ' + uuid
-                        self.errors['uuid'] += ' already exists.'
-                        note = self.errors['uuid']
+                        message = 'Cannot create a category called "' + label + '"'
+                        message += ', becuase the submitted UUID: ' + uuid
+                        message += ' already exists.'
+                        self.errors.append(message)
+                        note = '; '.join(self.errors)
                     else:
                         # ok! use this as the suggested UUID for making a new type
                         tm.suggested_uuid = uuid
@@ -348,16 +376,17 @@ class ItemCreate():
                                                                   post_data)
                         if content_uuid is False:
                             ok = False
-                            note = self.errors['content_uuid']
+                            note = '; '.join(self.errors)
                         else:
                             # ok! the content uuid is also OK to use
                             tm.suggested_content_uuid = content_uuid
                 else:
                     ok = False
-                    self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
-                    self.errors['uuid'] += ', becuase the submitted UUID: ' + uuid
-                    self.errors['uuid'] += ' is badly formed.'
-                    note = self.errors['uuid']
+                    mesaage = 'Cannot create a category called "' + label + '"'
+                    mesaage += ', becuase the submitted UUID: ' + uuid
+                    mesaage += ' is badly formed.'
+                    self.errors.append(message)
+                    note = '; '.join(self.errors)
             elif self.check_non_blank_param(post_data, 'uuid') \
                 and not self.check_non_blank_param(post_data,
                                                    'content_uuid'):
@@ -365,10 +394,11 @@ class ItemCreate():
                 # create the type however, since we're missing a content uuid
                 uuid = post_data['uuid'].strip()
                 ok = False
-                self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
-                self.errors['uuid'] += ', becuase the submitted UUID: ' + str(uuid)
-                self.errors['uuid'] += ' needs to have a valid Content UUID.'
-                note = self.errors['uuid']
+                mesaage = 'Cannot create a category called "' + label + '"'
+                mesaage += ', becuase the submitted UUID: ' + str(uuid)
+                mesaage += ' needs to have a valid Content UUID.'
+                self.errors.append(message)
+                note = '; '.join(self.errors)
             elif not self.check_non_blank_param(post_data, 'uuid') \
                 and self.check_non_blank_param(post_data,
                                                'content_uuid'):
@@ -377,7 +407,7 @@ class ItemCreate():
                                                           post_data)
                 if content_uuid is False:
                     ok = False
-                    note = self.errors['content_uuid']
+                    note = '; '.join(self.errors)
                 else:
                     # ok! the content uuid is also OK to use
                     tm.suggested_content_uuid = content_uuid
@@ -392,9 +422,10 @@ class ItemCreate():
                 # we already have this type!
                 ok = False
                 uuid = str(type_uuid)
-                self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
-                self.errors['uuid'] += ', becuase it already exists with UUID: ' + uuid
-                note = self.errors['uuid']
+                message = 'Cannot create a category called "' + label + '"'
+                message += ', becuase it already exists with UUID: ' + uuid
+                self.errors.append(message)
+                note = '; '.join(self.errors)
         if ok:
             tm.source_id = post_data['source_id'].strip()
             if content_uuid is False:
@@ -426,7 +457,7 @@ class ItemCreate():
         return self.response
 
     def create_predicate(self, post_data):
-        """ creates a type item into a project
+        """ creates a predicate item into a project
         """
         ok = True
         required_params = ['source_id',
@@ -441,14 +472,11 @@ class ItemCreate():
                 # don't create the item
                 ok = False
                 message = 'Missing paramater: ' + r_param + ''
-                if self.errors['params'] is False:
-                    self.errors['params'] = message
-                else:
-                    self.errors['params'] += '; ' + message
+                self.errors.append(message)
         uuid = self.create_or_validate_uuid(post_data)
         if uuid is False:
             ok = False
-            note = self.errors['uuid']
+            note = '; '.join(self.errors)
         if ok:
             # now check to see if this already exists
             note = ''
@@ -457,27 +485,30 @@ class ItemCreate():
             label = post_data['label'].strip()
             if len(label) < 1:
                 ok = False
-                self.errors['label'] = 'The label cannot be blank.'
-                note += self.errors['label'] + ' '
+                message = 'The label cannot be blank.'
+                self.errors.append(message)
+                note = '; '.join(self.errors)
             else:
                 exist_uuid = self.get_uuid_manifest_label(label,
                                                           item_type)
                 if exist_uuid is not False:
                     ok = False
-                    self.errors['uuid'] = 'Cannot create a category called "' + label + '"'
-                    self.errors['uuid'] += ', becuase it already exists with UUID: ' + uuid
+                    message = 'Cannot create a predicated called "' + label + '"'
+                    message += ', becuase it already exists with UUID: ' + uuid
                     note += self.errors['uuid'] + ' '
             pred_note = post_data['note'].strip()
             class_uri = post_data['class_uri'].strip()
             if class_uri not in Predicate.CLASS_TYPES:
                 ok = False
-                self.errors['class_uri'] = class_uri + ' is not a valid Predicate class.'
-                note += self.errors['class_uri'] + ' '
+                message = class_uri + ' is not a valid Predicate class.'
+                self.errors.append(message)
+                note = '; '.join(self.errors)
             data_type = post_data['data_type'].strip()
             if data_type not in Predicate.DATA_TYPES_HUMAN:
                 ok = False
-                self.errors['data_type'] = data_type + ' is not a valid Predicate data-type.'
-                note += self.errors['data_type'] + ' '
+                message = data_type + ' is not a valid Predicate data-type.'
+                self.errors.append(message)
+                note = '; '.join(self.errors)
         if ok:
             note = 'Predicate "' + label + '" created with UUID:' + uuid
             # everything checked out OK, so make the predicate
@@ -515,6 +546,109 @@ class ItemCreate():
                                     'label': label,
                                     'note': self.add_creation_note(ok)}}
         return self.response
+
+    def create_media(self, post_data):
+        """ creates a type item into a project
+        """
+        ok = True
+        required_params = ['source_id',
+                           'item_type',
+                           'label',
+                           'project_uuid',
+                           'source_id',
+                           'full_uri',
+                           'preview_uri',
+                           'thumbs_uri']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                self.errors.append(message)
+        uuid = self.create_or_validate_uuid(post_data)
+        if uuid is False:
+            ok = False
+            note = '; '.join(self.errors)
+        if ok:
+            # now check to see if this already exists
+            class_uri = ''
+            if 'class_uri' in post_data:
+                class_uri = post_data['class_uri'].strip()
+            note = ''
+            item_type = 'media'
+            source_id = post_data['source_id'].strip()
+            label = post_data['label'].strip()
+            if len(label) < 1:
+                ok = False
+                message = 'The label cannot be blank.'
+                self.errors.append(message)
+                note = '; '.join(self.errors)
+            else:
+                exist_uuid = self.get_uuid_manifest_label(label,
+                                                          item_type)
+                if exist_uuid is not False:
+                    ok = False
+                    message = 'Cannot create a media item called "' + label + '"'
+                    message += ', becuase it already exists with UUID: ' + uuid
+                    self.errors.append(message)
+                    note = '; '.join(self.errors)
+        if ok:
+            note = 'Media item "' + label + '" created with UUID:' + uuid
+            # now save to the manifest
+            new_man = Manifest()
+            new_man.uuid = uuid
+            new_man.project_uuid = self.project_uuid
+            new_man.source_id = source_id
+            new_man.item_type = 'media'
+            new_man.repo = ''
+            new_man.class_uri = ''
+            new_man.label = label
+            new_man.des_predicate_uuid = ''
+            new_man.views = 0
+            new_man.save()
+            self.created_uuid = uuid
+            self.save_media_file(uuid,
+                                 source_id,
+                                 'oc-gen:fullfile',
+                                 post_data['full_uri'])
+            self.save_media_file(uuid,
+                                 source_id,
+                                 'oc-gen:preview',
+                                 post_data['preview_uri'])
+            self.save_media_file(uuid,
+                                 source_id,
+                                 'oc-gen:thumbnail',
+                                 post_data['thumbs_uri'])
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
+        self.response = {'action': 'create-item-into',
+                         'ok': ok,
+                         'change': {'uuid': uuid,
+                                    'label': label,
+                                    'note': self.add_creation_note(ok)}}
+        return self.response
+
+    def save_media_file(self,
+                        uuid,
+                        source_id,
+                        file_type,
+                        file_uri):
+        """ saves a media file for a given UUID
+        """
+        if 'http://' in file_uri or 'https://' in file_uri:
+            ok = True
+            new_media = Mediafile()
+            new_media.uuid = uuid
+            new_media.project_uuid = self.project_uuid
+            new_media.source_id = source_id
+            new_media.file_type = file_type
+            new_media.file_uri = file_uri
+            new_media.save()
+        else:
+            ok = False
+            self.errors.append('Need a valid file_uri: ' + file_uri)
 
     def add_description_note(self,
                              uuid,

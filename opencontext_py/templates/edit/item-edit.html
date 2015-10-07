@@ -85,10 +85,16 @@
          
          <script type="text/javascript">
             <!--
+            {% if super_user %}
+                var super_user = true;
+            {% else %}
+                var super_user = false;
+            {% endif %}
             var edit_item = false;
             var edit_geoevents = false;
             function start_item_edit(){
                 edit_item = new itemEdit(item_type, uuid);
+                edit_item.super_user = super_user;
                 edit_geoevents = new geoChronoEdit(item_type, uuid);
                 edit_item.getItemJSON();
             }

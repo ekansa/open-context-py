@@ -25,6 +25,12 @@ function createItemInterface(type){
 		this.title += ' Create a New Project or Collection';
 		this.body = createProjectFields();
 	}
+	else if (type == 'media') {
+		//make a new persons interface
+		this.title = icons.media;
+		this.title += ' Create a New Media Resource (Image, Video, 3D, VR, etc.)';
+		this.body = createMediaFields();
+	}
 	else if (type == 'predicates') {
 		//make a new persons interface
 		this.title = icons.predicates;
@@ -46,6 +52,24 @@ function createItemInterface(type){
 }
 
 
+function make_error_html(data){
+	// makes HTML for errors
+	var html = '';
+	if (data.hasOwnProperty('errors')) {
+		if (data.errors.length > 0) {
+			html += '<div class="alert alert-warning" role="alert">';
+			html += '<ul>';
+			for (var i = 0, length = data.errors.length; i < length; i++) {
+				html += '<li>' + data.errors[i] + '</li>';
+			}
+			html += '</ul>';
+			html += '</div>';
+		}
+	}
+	return html;
+}
+
+
 function createTypeForPredicate(pred_label, pred_uuid){
 	 // function to open the create a type for
 	 // specifi predicate
@@ -62,7 +86,6 @@ function createTypeForPredicate(pred_label, pred_uuid){
  *  PERSON / ORGANIZATION CREATION
  *
  */
-
 function createPersonFields(){
 	var html = [
 	'<div>',
@@ -217,6 +240,7 @@ function createNewPersonDone(data){
 	'</div>',
 	'<div class="col-xs-8">',
 	data.change.note,
+	make_error_html(data),
 	'</div>'
 	].join('\n');
 	button_row.innerHTML = html;
@@ -258,25 +282,30 @@ function createProjectFields(){
 	'</div>',
 	'<div class="row" id="new-project-bottom-row" style="margin-top:20px;">',
 		'<div class="col-xs-4">',
-		'<div class="form-group">',
-		'<label for="new-item-uuid">UUID for New Project</label>',
-		'<input id="new-item-uuid" class="form-control input-sm" ',
-		'type="text" value="" placeholder="Leave blank to mint a new UUID" />',
-		'</div>',
-		'</div>',
-		'<div class="col-xs-4">',
-		'<div class="form-group">',
-		'<label for="new-item-project-uuid">Parent-Project UUID (0 for None)</label>',
-		'<input id="new-item-project-uuid" class="form-control input-sm" ',
-		'type="text" value="' + project_uuid + '" />',
-		'</div>',
+			'<div class="form-group">',
+			'<label for="new-item-uuid">UUID for New Project</label>',
+			'<input id="new-item-uuid" class="form-control input-sm" ',
+			'type="text" value="" placeholder="Leave blank to mint a new UUID" />',
+			'</div>',
+			'<div class="form-group">',
+			'<label for="new-item-short-id">Short-ID for New Project</label>',
+			'<input id="new-item-short-id" class="form-control input-sm" ',
+			'type="text" length="3" value="" placeholder="Leave blank to mint a new Short ID" />',
+			'</div>',
 		'</div>',
 		'<div class="col-xs-4">',
-		'<div class="form-group">',
-		'<label for="new-item-project-uuid">Source ID</label>',
-		'<input id="new-item-source-id" class="form-control input-sm" ',
-		'type="text" value="manual-web-form" />',
+			'<div class="form-group">',
+			'<label for="new-item-project-uuid">Parent-Project UUID (0 for None)</label>',
+			'<input id="new-item-project-uuid" class="form-control input-sm" ',
+			'type="text" value="' + project_uuid + '" />',
+			'</div>',
 		'</div>',
+		'<div class="col-xs-4">',
+			'<div class="form-group">',
+			'<label for="new-item-project-uuid">Source ID</label>',
+			'<input id="new-item-source-id" class="form-control input-sm" ',
+			'type="text" value="manual-web-form" />',
+			'</div>',
 		'</div>',
 	'</div>',
 	'</div>'
@@ -292,6 +321,7 @@ function createNewProject(){
 		new_item_uuid = false;
 	}
 	var new_project_uuid = document.getElementById("new-item-project-uuid").value;
+	var new_project_short_id = document.getElementById("new-item-short-id").value;
 	var new_source_id = document.getElementById("new-item-source-id").value;
 	var url = make_url("/edit/create-project/");
 	if (label.length > 0) {
@@ -302,6 +332,7 @@ function createNewProject(){
 			data: {
 				uuid: new_item_uuid,
 				project_uuid: new_project_uuid,
+				short_id: new_project_short_id,
 				item_type: 'projects',
 				source_id: new_source_id,
 				label: label,
@@ -329,7 +360,7 @@ function createNewProjectDone(data){
 	else{
 		var link_html = data.change.label;
 	}
-	button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>'; 
+	button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>' + make_error_html(data); 
 }
 
 
@@ -525,21 +556,21 @@ function validatePredicateCreateDone(data){
 }
 
 function createNewPredicate(){
-	 var label = document.getElementById('new-item-label').value;
-	 if (label.length > 1) {
-		  var note = document.getElementById('new-item-note').value;
-		  var p_classes = document.getElementsByClassName("new-pred-class");
-		  for (var i = 0, length = p_classes.length; i < length; i++) {
-			  if (p_classes[i].checked) {
-				  var pred_class = p_classes[i].value;
-			  }
-		  }
-		  var p_types = document.getElementsByClassName("new-pred-data-type");
-		  for (var i = 0, length = p_types.length; i < length; i++) {
-			  if (p_types[i].checked) {
-				  var data_type = p_types[i].value;
-			  }
-		  }
+	var label = document.getElementById('new-item-label').value;
+	if (label.length > 1) {
+		var note = document.getElementById('new-item-note').value;
+		var p_classes = document.getElementsByClassName("new-pred-class");
+		for (var i = 0, length = p_classes.length; i < length; i++) {
+			if (p_classes[i].checked) {
+				var pred_class = p_classes[i].value;
+			}
+		}
+		var p_types = document.getElementsByClassName("new-pred-data-type");
+		for (var i = 0, length = p_types.length; i < length; i++) {
+			if (p_types[i].checked) {
+				var data_type = p_types[i].value;
+			}
+		}
 		  var new_item_uuid = document.getElementById("new-item-uuid").value;
 		  if (new_item_uuid.length < 1) {
 				new_item_uuid = false;
@@ -1058,8 +1089,270 @@ function createNewProfileDone(data){
 	 else{
 		 var link_html = data.change.label;
 	 }
-	 button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>'; 
+	 button_con.innerHTML = '<p>' + link_html + '</p><p><small>' + data.change.note + '</small></p>' + make_error_html(data); 
 }
+
+
+
+
+
+
+
+
+/******************************************
+ *  New Media Resource Creation
+ *
+ ******************************************/
+function createMediaFields(){
+	var html = [
+	'<div>',
+		'<div class="form-group">',
+			'<label for="new-item-labe;">Label</label>',
+			'<input id="new-item-label" class="form-control input-sm" ',
+			'type="text" value="" onchange="media_label_check();" />',
+		'</div>',
+		'<div class="row">',
+			'<div class="col-sm-7">',
+				'<div class="form-group">',
+					'<label for="new-item-filename">Filename</label>',
+					'<input id="new-item-filename" class="form-control input-sm" ',
+					'type="text" value="" length="20" onchange="uri_comp();" />',
+				'</div>',
+			'</div>',
+			'<div class="col-sm-5">',
+				'<div class="form-group">',
+					'<label for="new-item-highlight">Project Highlight?</label>',
+					'<div class="checkbox" style="margin-left:25px;">',
+						'<input id="new-item-highlight" ', 
+						'type="checkbox" value="1" />',
+						'Check to highlight on the project page',
+					'</div>',
+				'</div>',
+			'</div>',
+		'</div>',
+		'<div class="form-group">',
+			'<label for="new-item-base-url">Base URL</label>',
+			'<input id="new-item-base-url" class="form-control input-sm" ',
+			'type="text" value="" onchange="uri_comp();" />',
+		'</div>',
+		'<div class="row">',
+			'<div class="col-xs-6">',
+				'<label>Media Type (of the main file)</label>',
+				'<div class="well well-sm">',
+					'<div class="radio">',
+						'<label>',
+						'<input type="radio" name="new-media-class" id="new-media-class-image" ',
+						'class="new-media-class" value="oc-gen:image" checked="checked" /> ',
+						'Image',
+						'</label>',
+					'</div>',
+					
+					'<div class="radio">',
+						'<label>',
+						'<input type="radio" name="new-media-class" id="new-media-class-video" ',
+						'class="new-media-class" value="oc-gen:video" /> ',
+						'Video',
+						'</label>',
+					'</div>',
+				'</div>',
+			'</div>',
+			'<div class="col-xs-6">',
+				'<br/>',
+				'<div class="well well-sm">',
+					'<div class="radio">',
+						'<label>',
+						'<input type="radio" name="new-media-class" id="new-media-class-doc" ',
+						'class="new-media-class" value="oc-gen:document-file" /> ',
+						'Document file (PDF, Word-processor file)',
+						'</label>',
+					'</div>',
+					'<div class="radio">',
+						'<label>',
+						'<input type="radio" name="new-media-class" id="new-media-class-other" ',
+						'class="new-media-class" value="" /> ',
+						'Other (Will be classified automatically or by data editors)',
+						'</label>',
+					'</div>',
+				'</div>',
+			'</div>',
+		'</div>',
+		'<div class="form-group">',
+			'<label for="new-item-full-uri">Full File URI</label>',
+			'<input id="new-item-full-uri" class="form-control input-sm" ',
+			'type="text" value="" />',
+		'</div>',
+		'<div class="form-group">',
+			'<label for="new-item-preview-uri">Preview File URI</label>',
+			'<input id="new-item-preview-uri" class="form-control input-sm" ',
+			'type="text" value="" />',
+		'</div>',
+		'<div class="form-group">',
+			'<label for="new-item-thumbnail-uri">Thumbnail File URI</label>',
+			'<input id="new-item-thumbnail-uri" class="form-control input-sm" ',
+			'type="text" value="" />',
+		'</div>',
+		'<div class="row">',
+			'<div class="col-xs-10" id="new-media-button-message">',
+			'</div>',
+			'<div class="col-xs-2" id="new-media-button-outer">',
+			'<label>Create</label><br/>',
+			'<button class="btn btn-default" onclick="createNewMedia();">',
+			'<span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
+			' Submit',
+			'</button>',
+			'</div>',
+		'</div>',
+		'<div class="row" id="new-media-bottom-row">',
+			'<div class="col-xs-4">',
+				'<div class="form-group">',
+				'<label for="new-item-uuid">UUID for New Media Item</label>',
+				'<input id="new-item-uuid" class="form-control input-sm" ',
+				'type="text" value="" placeholder="Mint new UUID" />',
+				'</div>',
+			'</div>',
+			'<div class="col-xs-4">',
+				'<div class="form-group">',
+				'<label for="new-item-project-uuid">Add Item to Project UUID</label>',
+				'<input id="new-item-project-uuid" class="form-control input-sm" ',
+				'type="text" value="' + project_uuid + '" />',
+				'</div>',
+			'</div>',
+			'<div class="col-xs-4">',
+				'<div class="form-group">',
+				'<label for="new-item-project-uuid">Source ID</label>',
+				'<input id="new-item-source-id" class="form-control input-sm" ',
+				'type="text" value="manual-web-form" />',
+				'</div>',
+			'</div>',
+		'</div>',
+	'</div>'
+	].join('\n');
+	return html;
+}
+
+function media_label_check(){
+	// checks the media label for duplicates
+	// for now this does nothing
+}
+
+
+function uri_comp(){
+	// make suggested uris for different files associated with the media item
+	var filename = document.getElementById('new-item-filename').value;
+	var base_url = document.getElementById('new-item-base-url').value;
+	if (base_url.slice(-1) == '/') {
+		var full_uri = base_url + 'full/' + filename;
+		var preview_uri = base_url + 'preview/' + filename;
+		var thumbs_uri = base_url + 'thumbs/' + filename;
+	}
+	else{
+		var full_uri = base_url + '/full/' + filename;
+		var preview_uri = base_url + '/preview/' + filename;
+		var thumbs_uri = base_url + '/thumbs/' + filename;
+	}
+	document.getElementById('new-item-full-uri').value = full_uri;
+	document.getElementById('new-item-preview-uri').value = preview_uri;
+	document.getElementById('new-item-thumbnail-uri').value = thumbs_uri;
+}
+
+
+function createNewMedia(){
+	var label = document.getElementById('new-item-label').value;
+	var full_uri = document.getElementById('new-item-full-uri').value;
+	var preview_uri = document.getElementById('new-item-preview-uri').value;
+	var thumbs_uri = document.getElementById('new-item-thumbnail-uri').value;
+	if (document.getElementById('new-item-highlight').checked) {
+		var highlight = 1;
+	}
+	else{
+		var highlight = 0;
+	}
+	var class_uri = '';
+	var m_classes = document.getElementsByClassName("new-media-class");
+	for (var i = 0, length = m_classes.length; i < length; i++) {
+		if (m_classes[i].checked) {
+			var class_uri = m_classes[i].value;
+		}
+	}
+	var new_item_uuid = document.getElementById("new-item-uuid").value;
+	if (new_item_uuid.length < 1) {
+		  new_item_uuid = false;
+	}
+	var new_project_uuid = document.getElementById("new-item-project-uuid").value;
+	var new_source_id = document.getElementById("new-item-source-id").value;
+	
+	var data = {
+		csrfmiddlewaretoken: csrftoken,
+		uuid: new_item_uuid,
+		project_uuid: new_project_uuid,
+		source_id: new_source_id,
+		item_type: 'media',
+		label: label,
+		class_uri: class_uri,
+		full_uri: full_uri,
+		preview_uri: preview_uri,
+		thumbs_uri: thumbs_uri,
+		highlight: highlight
+	}
+	
+	var url = make_url("/edit/create-item-into/") + encodeURIComponent(new_project_uuid);
+	if (label.length > 0) {
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: data,
+			success: createNewMediaDone,
+			error: function (request, status, error) {
+				alert('Media creation failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
+	else{
+		alert('Please provide a label for this media resource');
+	}
+}
+
+function createNewMediaDone(data) {
+	//process response to the create new media request
+	var act_dom = document.getElementById('new-media-button-message');
+	var error_html = make_error_html(data);
+	var message_html = '';
+	if (data.ok) {
+		var button_outer_dom = document.getElementById('new-media-button-outer');
+		button_outer_dom.innerHTML = ''; //remove the create button
+		var url = make_url('/edit/items/' + data.change.uuid);
+		var link_html = 'New Media Item: <a target="_blank" ';
+		link_html += 'href="' +  url + '">';
+		link_html += data.change.label + '</a>';
+		var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+		var alert_class = "alert alert-success";
+		var error_html = "";
+		message_html = [
+			'<div role="alert" class="' + alert_class + '">',
+			icon_html,
+			' ',
+			link_html,
+		    '</div>'
+		].join('\n');
+    }
+	else{
+		message_html = 'Item not created.';
+	}
+	act_dom.innerHTML = message_html + error_html;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 // this is useful to compose urls for the AJAX requests 
 function make_url(relative_url){
