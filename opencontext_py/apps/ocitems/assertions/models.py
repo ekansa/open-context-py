@@ -58,6 +58,8 @@ class Assertion(models.Model):
         self.hash_id = self.make_hash_id()
         if self.created is None:
             self.created = timezone.now()
+        if self.certainty is None:
+            self.certainty = 0
         super(Assertion, self).save(*args, **kwargs)
 
     def sort_save(self):
