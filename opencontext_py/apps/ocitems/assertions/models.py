@@ -31,6 +31,8 @@ class Assertion(models.Model):
     obs_num = models.IntegerField()
     sort = models.DecimalField(max_digits=8, decimal_places=3)
     visibility = models.IntegerField()
+    # estimated probability for an assertion (with 1 as 100% certain, .001 for very uncertain), 0 for not determined.
+    certainty = models.DecimalField(max_digits=4, decimal_places=3)
     predicate_uuid = models.CharField(max_length=50, db_index=True)
     object_uuid = models.CharField(max_length=50, db_index=True)
     object_type = models.CharField(max_length=50)
