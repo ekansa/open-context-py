@@ -1,12 +1,15 @@
 import os
+import re
 import json
 import codecs
 import datetime
+from unidecode import unidecode
 from dateutil.parser import parse
 from collections import OrderedDict
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
+from django.template.defaultfilters import slugify
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
@@ -26,8 +29,9 @@ gimp = GeoJSONimport()
 gimp.load_into_importer = True
 gimp.project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
 gimp.class_uri = 'oc-gen:cat-feature'
-gimp.process_features_in_file('OpenContext_GeoJSON', 'Interpreted_Architecture_KKT.geojson')
+gimp.process_features_in_file('giza-geo', 'Interpreted_Architecture_KKT.geojson')
 gimp.feature_count
+gimp.source_id
 gimp.property_data_types
 gimp.property_data_types['OBJECTID']
 gimp.property_data_types['FeatureNum']
@@ -39,6 +43,7 @@ gimp.property_data_types['EntryDate']
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
         self.project_uuid = False
+        self.label = False
         self.source_id = False
         self.class_uri = False
         self.load_into_importer = False
@@ -46,6 +51,7 @@ gimp.property_data_types['EntryDate']
         self.feature_count = False
         self.properties = False
         self.property_data_types = {}
+        self.fields = False
         self.props_config = [{'prop': 'FeatureNum',
                               'prefix': 'Feat. ',
                               'data_type': 'xsd:integer'}]
@@ -113,11 +119,75 @@ gimp.property_data_types['EntryDate']
                 if prop_key in main_types:
                     self.property_data_types[prop_key]['data_type'] = main_types[prop_key]
 
-    def load_feature_into_importer(self, feature):
-        """ Loads a feature into the importer with properties as different
-            'fields' in the import
+    def save_feature_as_import_records(self, feature):
+        """ Saves a feature into the importer with properties as different
+            'fields' in the importer
         """
         pass
+
+    def save_properties_as_import_fields(self):
+        """ saves the properties as import fields
+        """
+        imp_f_create = ImportFields()
+        imp_f_create.project_uuid = self.project_uuid
+        imp_f_create.source_id = self.source_id
+        col_index = 0
+        new_fields = []
+        self.fields = {}
+        for prop_key in self.properties:
+            col_index += 1
+            self.fields[prop_key] = col_index
+            imp_f = ImportField()
+            imp_f.project_uuid = self.project_uuid
+            imp_f.source_id = self.source_id
+            imp_f.field_num = col_index
+            imp_f.is_keycell = False
+            imp_f.obs_num = 1
+            imp_f.label = prop_key
+            imp_f.ref_name = prop_key
+            imp_f.ref_orig_name = prop_key
+            imp_f.unique_count = 0
+            # now add some field metadata based on other fields data in the project
+            imp_f = imp_f_create.check_for_updated_field(imp_f,
+                                                         prop_key,
+                                                         prop_key,
+                                                         True)
+            # now add a field_data_type based on the guess made on this GeoJSON property
+            if prop_key in self.property_data_types:
+                if 'data_type' in self.property_data_types[prop_key]:
+                    if self.property_data_types[prop_key]['data_type'] != 'other':
+                        imp_f.field_data_type = self.property_data_types[prop_key]['data_type']
+            new_fields.append(imp_f)
+        # now delete any old
+        ImportField.objects.filter(source_id=self.source_id).delete()
+        # now save the new import fields
+        for imp_f in new_fields:
+            print('Saving field: ' + str(unidecode(new_imp_f.label)))
+            imp_f.save()
+
+    def save_import_source(self):
+        """ saves the import source object """
+        output = False
+        if self.properties is not False:
+            if self.feature_count > 0 \
+               and len(self.properties) > 0:
+                # delete a previous record if it exists
+                ImportSource.objects\
+                            .filter(source_id=self.source_id,
+                                    project_uuid=self.project_uuid)\
+                            .delete()
+                irs = ImportRefineSource()
+                imp_s = ImportSource()
+                imp_s.source_id = self.source_id
+                imp_s.project_uuid = self.project_uuid
+                imp_s.label = self.label
+                imp_s.field_count = len(self.properties)
+                imp_s.row_count = self.feature_count
+                imp_s.source_type = 'geojson'
+                imp_s.is_current = True
+                imp_s.imp_status = irs.DEFAULT_LOADING_STATUS
+                imp_s.save()
+                output = True
 
     def add_feature_to_existing_items(self, feature):
         """ Process a feature to extract geospatial
@@ -199,8 +269,23 @@ gimp.property_data_types['EntryDate']
         json_obj = False
         dir_file = self.set_check_directory(act_dir) + filename
         if os.path.exists(dir_file):
-            self.source_id = filename
+            self.make_source_id(act_dir, filename)
             fp = open(dir_file, 'r')
             # keep keys in the same order as the original file
             json_obj = json.load(fp, object_pairs_hook=OrderedDict)
         return json_obj
+
+    def make_source_id(self, act_dir, filename):
+        """ makes a source_id by sluggifying the act_dir and filename """
+        dir_file = act_dir + ' ' + filename
+        dir_file = dir_file.replace('_', ' ')
+        self.label = dir_file
+        dir_file = dir_file.replace('.', '-')
+        raw_slug = slugify(unidecode(dir_file[:40]))
+        if raw_slug[0] == '-':
+            raw_slug = raw_slug[1:]  # slugs don't end with dashes
+        if raw_slug[-1:] == '-':
+            raw_slug = raw_slug[:-1]  # slugs don't end with dashes
+        raw_slug = re.sub(r'([-]){2,}', r'-', raw_slug)  # slugs can't have more than 1 dash characters
+        self.source_id = 'geojson:' + raw_slug
+        return self.source_id
