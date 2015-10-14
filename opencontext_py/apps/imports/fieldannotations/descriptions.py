@@ -359,6 +359,8 @@ class ProcessDescriptions():
                             if len(val_dist_rec['imp_cell_obj'].record) > 0:
                                 # found a non-blank type item
                                 cs = CandidateString()
+                                cs.source_id = self.source_id
+                                cs.project_uuid = self.project_uuid
                                 cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
                                 content_uuid = cs.uuid  # string content uuid
                                 if data_type == 'id':
@@ -379,6 +381,8 @@ class ProcessDescriptions():
                                         # no need to worry about individual rows
                                         predicate = recon_predicate['predicate']
                                         ct = CandidateType()
+                                        ct.source_id = self.source_id
+                                        ct.project_uuid = self.project_uuid
                                         ct.reconcile_type_cell(predicate.uuid,
                                                                content_uuid,
                                                                val_dist_rec['imp_cell_obj'],
@@ -738,7 +742,7 @@ class CandidateString():
             self.oc_string = sm.get_make_string(imp_cell.record)
             self.uuid = self.oc_string.uuid
             self.content = self.oc_string.content
-            self.source_id = self.oc_string.source_id
+            # self.source_id = self.oc_string.source_id
             if self.uuid != imp_cell.l_uuid:
                 # update the reconcilted UUID for import cells with same rec_hash
                 up_cells = ImportCell.objects\
@@ -779,7 +783,7 @@ class CandidateType():
             tm.source_id = imp_cell.source_id
             self.oc_type = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
                                                                    content_uuid)
-            self.source_id = self.oc_type.source_id
+            # self.source_id = self.oc_type.source_id
             if self.oc_type.uuid != imp_cell.fl_uuid \
                or self.oc_type.content_uuid != imp_cell.l_uuid:    # update the reconcilted UUID for import cells with same rec_hash
                 if row_num is False:
