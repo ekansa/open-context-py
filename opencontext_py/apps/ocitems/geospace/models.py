@@ -48,6 +48,9 @@ class Geospace(models.Model):
 class GeospaceGeneration():
     """ methods for managing geospatial classes
 
+       at the moment, this chiefly generates a centroid
+       for coordinates.
+
 from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.imports.records.models import ImportCell
 geo_rec = ImportCell.objects.get(rec_hash='dff753b2b2b6967ebcb3b6925aab1182e346b0ce')
@@ -79,7 +82,10 @@ gg.get_centroid_lonlat_coordinates(geo_row.coordinates, geo_row.ftype)
         """
         centroid = False
         geojson_geom = False
-        json_obj = json.loads(geojson_geometry_str)
+        try:
+            json_obj = json.loads(geojson_geometry_str)
+        except:
+            json_obj = False
         if isinstance(json_obj, list):
             geojson_geom = {'type': geom_type}
             geojson_geom['coordinates'] = json_obj

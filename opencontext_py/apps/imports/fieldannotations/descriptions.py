@@ -561,13 +561,19 @@ class CandidateDescription():
             if len(old_ass) > 0:
                 is_new = False
         elif data_date is not None:
-            old_ass = Assertion.objects\
-                               .filter(uuid=subject_uuid,
-                                       obs_num=obs_num,
-                                       predicate_uuid=predicate_uuid,
-                                       data_date=data_date)[:1]
-            if len(old_ass) > 0:
+            try:
+                old_ass = Assertion.objects\
+                                   .filter(uuid=subject_uuid,
+                                           obs_num=obs_num,
+                                           predicate_uuid=predicate_uuid,
+                                           data_date=data_date)[:1]
+            except:
+                old_ass = False
+            if old_ass is False:
                 is_new = False
+            else:
+                if len(old_ass) > 0:
+                    is_new = False
         else:
             is_new = None
         return is_new
