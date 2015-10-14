@@ -28,6 +28,7 @@ class ProcessSubjects():
         self.project_uuid = pg.project_uuid
         self.subjects_fields = False
         self.geospace_fields = {}  # subject field num is key, dict has valid lat + lon fields
+        self.geojson_rels = {}  # subject field_num is key, integer value is geojson field_num
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
@@ -145,6 +146,7 @@ class ProcessSubjects():
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
         self.get_geospace_fields()
+        self.get_geojson_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
         self.process_non_contain_subjects()
@@ -250,6 +252,9 @@ class ProcessSubjects():
                         cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                         cs.reconcile_item(dist_rec['imp_cell_obj'])
                         if cs.uuid is not False:
+                            self.process_geospace_item(field_num,
+                                                       cs.import_rows,
+                                                       cs.uuid)
                             self.reconciled_entities.append({'id': cs.uuid,
                                                              'label': cs.label})
                         else:
@@ -331,6 +336,20 @@ class ProcessSubjects():
                                 print('Did not like ' + str(row) + ' with ' + str(subject_uuid))
                                 quit()
 
+    def process_geojson_item(self,
+                             subject_field_num,
+                             subject_in_rows,
+                             subject_uuid):
+        """ adds geojson data if it exists for an item
+        """
+        if subject_field_num in self.geojson_rels:
+            geojson_field_num = self.geojson_rels[subject_field_num]
+            geojson_recs = ImportCell.objects\
+                                     .filter(source_id=self.source_id,
+                                             field_num=geojson_field_num,
+                                             row_num__in=subject_in_rows)\
+                                     .exclude(record='')
+
     def validate_geo_coordinate(self, coordinate, coord_type):
         """ validates a geo-spatial coordinate
             returns a float if valid, or false if not valid
@@ -402,6 +421,25 @@ class ProcessSubjects():
                     # making geospatial data
                     self.geospace_fields[subject_field_num] = {'lat': act_geo_lats_lons['lats'][0],
                                                                'lon': act_geo_lats_lons['lons'][0]}
+
+    def get_geojson_fields(self):
+        """ gets fields with geojson data """
+        geojson_fields = ImportField.objects\
+                                    .filter(source_id=self.source_id,
+                                            field_type='geojson')
+        geojson_field_nums = []
+        for geojson_field in geojson_fields:
+            geojson_field_nums.append(geojson_field.field_num)
+        sub_field_list = []
+        for sub_field_num, sub_field in self.subjects_fields.items():
+            sub_field_list.append(sub_field_num)
+        geo_des = ImportFieldAnnotation.objects\
+                                       .filter(source_id=self.source_id,
+                                               field_num__in=geojson_field_nums,
+                                               predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
+                                               object_field_num__in=sub_field_list)
+        for geo_anno in geo_des:
+            self.geojson_rels[geo_anno.object_field_num] = geo_anno.field_num
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy

@@ -317,7 +317,7 @@ class ImportRefineSource():
                         output = 'xsd:integer'
             else:
                 try:
-                    data_date = parse(record, fuzzy=True)
+                    data_date = parse(record)
                 except Exception as e:
                     data_date = False
                 if data_date is not False:

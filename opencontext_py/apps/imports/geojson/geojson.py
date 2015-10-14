@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import Q
 from django.conf import settings
 from django.template.defaultfilters import slugify
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
@@ -52,6 +53,10 @@ gimp.property_data_types['EntryDate']
         self.properties = False
         self.property_data_types = {}
         self.fields = False
+        self.imp_source_obj = False
+        self.import_batch_size = 250
+        self.geometry_field_name = 'geojson-geometry'
+        self.geometry_field_type = 'geojson'
         self.props_config = [{'prop': 'FeatureNum',
                               'prefix': 'Feat. ',
                               'data_type': 'xsd:integer'}]
@@ -91,26 +96,30 @@ gimp.property_data_types['EntryDate']
                 if 'properties' in feature:
                     if prop_key in feature['properties']:
                         val = feature['properties'][prop_key]
-                        val_data_type = irs.guess_record_data_type(val)
-                        if val_data_type is not False:
-                            if val_data_type in act_types:
-                                act_types[val_data_type] += 1
-                        else:
-                            act_types['other'] += 1
+                        if val is not None:
+                            val_data_type = irs.guess_record_data_type(val)
+                            if val_data_type is not False:
+                                if val_data_type in act_types:
+                                    act_types[val_data_type] += 1
+                            else:
+                                act_types['other'] += 1
             property_data_types[prop_key] = act_types
         # print(str(property_data_types))
         if self.feature_count > 0:
             main_types = {}
+            total_counts = {}
             for prop_key, act_prop_types in property_data_types.items():
                 max_value = 0
+                total_counts[prop_key] = 0
                 main_types['data_type'] = 'other'  # default data_type
                 for data_type, count in act_prop_types.items():
                     if isinstance(count, int):
+                        total_counts[prop_key] += count
                         if count > max_value:
                             max_value = count
                 for data_type, count in act_prop_types.items():
                     if isinstance(count, int):
-                        if count == max_value and (count / self.feature_count) > .95:
+                        if count == max_value and (count / total_counts[prop_key]) > .95:
                             # more than 95% of one type, so choose it
                             main_types[prop_key] = data_type
             for prop_key in self.properties:
@@ -119,51 +128,190 @@ gimp.property_data_types['EntryDate']
                 if prop_key in main_types:
                     self.property_data_types[prop_key]['data_type'] = main_types[prop_key]
 
-    def save_feature_as_import_records(self, feature):
+    def save_features_import_records(self, features):
+        """ Saves import records for a list of features, in batches of
+            so as to not screw up database transactions
+        """
+        output = False
+        if self.imp_source_obj is not False:
+            ImportCell.objects\
+                      .filter(source_id=self.source_id,
+                              project_uuid=self.project_uuid)\
+                      .delete()
+            row_num = 0
+            rec_list = []
+            for feature in features:
+                row_num += 1
+                new_recs = self.make_import_records_from_feature(row_num,
+                                                                 feature)
+                rec_list += new_recs
+                if len(rec_list) >= self.import_batch_size:
+                    print('About to save ' + str(len(rec_list)) + ' cells')
+                    ImportCell.objects.bulk_create(rec_list)
+                    rec_list = []
+            if len(rec_list) > 0:
+                print('Saving LAST ' + str(len(rec_list)) + ' cells')
+                ImportCell.objects.bulk_create(rec_list)
+            self.imp_source_obj.imp_status = ImportRefineSource.DEFAULT_LOADING_DONE_STATUS
+            self.imp_source_obj.save()
+            output = True
+        return output
+
+    def make_import_records_from_feature(self, row_num, feature):
         """ Saves a feature into the importer with properties as different
             'fields' in the importer
         """
-        pass
+        bulk_list = []
+        if 'geometry' in feature:
+            f_geo = feature['geometry']
+        else:
+            f_geo = False
+        if 'properties' in feature:
+            f_props = feature['properties']
+            for prop_key, col_index in self.fields.items():
+                record = None
+                if prop_key in f_props:
+                    record = f_props[prop_key]
+                    guessed_data_type = self.get_guessed_prop_data_type(prop_key)
+                    record = self.transform_validate_record(guessed_data_type,
+                                                            record)
+                elif prop_key == self.geometry_field_name:
+                    # we have a geojson field
+                    record = json.dumps(f_geo,
+                                        ensure_ascii=False,
+                                        indent=4)
+                if record is not None:
+                    imp_cell = ImportCell()
+                    imp_cell.source_id = self.source_id
+                    imp_cell.project_uuid = self.project_uuid
+                    imp_cell.row_num = row_num
+                    imp_cell.field_num = col_index
+                    imp_cell.rec_hash = ImportCell().make_rec_hash(self.project_uuid,
+                                                                   str(record))
+                    imp_cell.fl_uuid = False
+                    imp_cell.l_uuid = False
+                    imp_cell.cell_ok = True  # default to Import OK
+                    imp_cell.record = str(record)
+                    bulk_list.append(imp_cell)
+        return bulk_list
+
+    def transform_validate_record(self, data_type, record):
+        """ transforms a record so that it conforms
+            to a certain data_type,
+            also converts None (null) values to blank strings
+            finally, trims away blanks
+        """
+        original = record
+        if record is None:
+            record = ''
+        else:
+            if data_type == 'xsd:integer':
+                if not isinstance(record, int):
+                    try:
+                        num_rec = float(record)
+                    except:
+                        num_rec = False
+                    if num_rec is not False:
+                        int_rec = round(num_rec)
+                        if int_rec == num_rec:
+                            record = int(int_rec)
+            elif data_type == 'xsd:double':
+                if not isinstance(record, float):
+                    try:
+                        num_rec = float(record)
+                    except:
+                        num_rec = False
+                    if num_rec is not False:
+                        record = num_rec
+            elif data_type == 'xsd:boolean':
+                booleans = {
+                    'n': False,
+                    'no': False,
+                    'none': False,
+                    'absent': False,
+                    'a': False,
+                    'false': False,
+                    'f': False,
+                    '0': False,
+                    'y': True,
+                    'yes': True,
+                    'present': True,
+                    'p': True,
+                    'true': True,
+                    't': True}
+                lc_record = str(record).lower()
+                if lc_record in booleans:
+                    record = str(booleans[lc_record])
+            elif data_type == 'xsd:date':
+                try:
+                    data_date = parse(record)
+                except Exception as e:
+                    data_date = False
+                if data_date is not False:
+                    record = data_date.strftime('%Y-%m-%d')
+            else:
+                record = record.strip()
+        return record
 
     def save_properties_as_import_fields(self):
         """ saves the properties as import fields
         """
-        imp_f_create = ImportFields()
-        imp_f_create.project_uuid = self.project_uuid
-        imp_f_create.source_id = self.source_id
-        col_index = 0
-        new_fields = []
-        self.fields = {}
-        for prop_key in self.properties:
-            col_index += 1
-            self.fields[prop_key] = col_index
-            imp_f = ImportField()
-            imp_f.project_uuid = self.project_uuid
-            imp_f.source_id = self.source_id
-            imp_f.field_num = col_index
-            imp_f.is_keycell = False
-            imp_f.obs_num = 1
-            imp_f.label = prop_key
-            imp_f.ref_name = prop_key
-            imp_f.ref_orig_name = prop_key
-            imp_f.unique_count = 0
-            # now add some field metadata based on other fields data in the project
-            imp_f = imp_f_create.check_for_updated_field(imp_f,
-                                                         prop_key,
-                                                         prop_key,
-                                                         True)
-            # now add a field_data_type based on the guess made on this GeoJSON property
-            if prop_key in self.property_data_types:
+        output = False
+        if self.imp_source_obj is not False:
+            imp_f_create = ImportFields()
+            imp_f_create.project_uuid = self.project_uuid
+            imp_f_create.source_id = self.source_id
+            col_index = 0
+            new_fields = []
+            self.fields = LastUpdatedOrderedDict()
+            # add a field for the geometry. It's not a property, but we need
+            # a place to save the data
+            self.properties.append(self.geometry_field_name)
+            for prop_key in self.properties:
+                col_index += 1
+                self.fields[prop_key] = col_index
+                imp_f = ImportField()
+                imp_f.project_uuid = self.project_uuid
+                imp_f.source_id = self.source_id
+                imp_f.field_num = col_index
+                imp_f.is_keycell = False
+                imp_f.obs_num = 1
+                imp_f.label = prop_key
+                imp_f.ref_name = prop_key
+                imp_f.ref_orig_name = prop_key
+                imp_f.unique_count = 0
+                # now add some field metadata based on other fields data in the project
+                imp_f = imp_f_create.check_for_updated_field(imp_f,
+                                                             prop_key,
+                                                             prop_key,
+                                                             True)
+                # now add a field_data_type based on the guess made on this GeoJSON property
+                guessed_data_type = self.get_guessed_prop_data_type(prop_key)
+                if guessed_data_type is not False:
+                    imp_f.field_data_type = guessed_data_type
+                if prop_key == self.geometry_field_name:
+                    imp_f.field_data_type = 'xsd:string'
+                    imp_f.field_type = self.geometry_field_type
+                new_fields.append(imp_f)
+            # now delete any old
+            ImportField.objects.filter(source_id=self.source_id).delete()
+            # now save the new import fields
+            for imp_f in new_fields:
+                print('Saving field: ' + str(unidecode(imp_f.label)))
+                imp_f.save()
+            output = True
+        return output
+
+    def get_guessed_prop_data_type(self, prop_key):
+        """ gets the guessed property data type, if
+            determined to be boolean, integer, double, or data
+        """
+        output = False
+        if prop_key in self.property_data_types:
                 if 'data_type' in self.property_data_types[prop_key]:
                     if self.property_data_types[prop_key]['data_type'] != 'other':
-                        imp_f.field_data_type = self.property_data_types[prop_key]['data_type']
-            new_fields.append(imp_f)
-        # now delete any old
-        ImportField.objects.filter(source_id=self.source_id).delete()
-        # now save the new import fields
-        for imp_f in new_fields:
-            print('Saving field: ' + str(unidecode(new_imp_f.label)))
-            imp_f.save()
+                        output = self.property_data_types[prop_key]['data_type']
+        return output
 
     def save_import_source(self):
         """ saves the import source object """
@@ -181,13 +329,15 @@ gimp.property_data_types['EntryDate']
                 imp_s.source_id = self.source_id
                 imp_s.project_uuid = self.project_uuid
                 imp_s.label = self.label
-                imp_s.field_count = len(self.properties)
+                imp_s.field_count = len(self.properties) + 1  # the added 1 is for the geojson field
                 imp_s.row_count = self.feature_count
                 imp_s.source_type = 'geojson'
                 imp_s.is_current = True
                 imp_s.imp_status = irs.DEFAULT_LOADING_STATUS
                 imp_s.save()
+                self.imp_source_obj = imp_s
                 output = True
+        return output
 
     def add_feature_to_existing_items(self, feature):
         """ Process a feature to extract geospatial
@@ -226,21 +376,6 @@ gimp.property_data_types['EntryDate']
                         # found a uuid for this item!
                         print('Found: ' + prop_id + ' is ' + uuid)
 
-    def process_feature(self, feature):
-        """ Process a feature to extract geospatial
-            object. It will:
-            (1) Find the appropriate item in the manifest table
-            (2) Adds a record in the geospace table
-        """
-        if self.load_into_importer:
-            # the features contain data that need schema mapping
-            # use the importer
-            self.load_feature_into_importer(feature)
-        else:
-            # don't create new items (in the manifest)
-            # just try to match the feature to existing manifest items
-            self.add_feature_to_existing_items(feature)
-
     def process_features_in_file(self, act_dir, filename):
         """ Processes a file to extract geojson features
             for processing each feature
@@ -251,8 +386,12 @@ gimp.property_data_types['EntryDate']
                 if self.load_into_importer:
                     self.get_props_from_features(json_obj['features'])
                     self.guess_properties_data_types(json_obj['features'])
-                for feature in json_obj['features']:
-                    self.process_feature(feature)
+                    self.save_import_source()
+                    self.save_properties_as_import_fields()
+                    self.save_features_import_records(json_obj['features'])
+                else:
+                    for feature in json_obj['features']:
+                        self.add_feature_to_existing_items(feature)
 
     def set_check_directory(self, act_dir):
         """ Prepares a directory to find import GeoJSON files """

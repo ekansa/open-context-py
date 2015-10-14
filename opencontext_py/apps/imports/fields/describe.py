@@ -130,7 +130,8 @@ class ImportFieldDescribe():
             des_ok = self.check_field_type(field_num, ['description',
                                                        'variable'])
             geo_ok = self.check_field_type(field_num, ['lat',
-                                                       'lon'])
+                                                       'lon',
+                                                       'geojson'])
             if des_ok and entity_ok:
                 # only make the annotation if the subject is a value, object is a variable
                 ifa = ImportFieldAnnotation()
