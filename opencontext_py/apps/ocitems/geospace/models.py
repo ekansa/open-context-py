@@ -68,12 +68,12 @@ gg.get_centroid_lonlat_coordinates(geo_row.coordinates, geo_row.ftype)
         """ returns a list of the centroid lon / lat coordinates
             yes, in that GeoJSON coordinate order
         """
-        lonlat = False
+        lon_lat = False
         centroid = self.make_centroid(geojson_geometry_str, geom_type)
         if isinstance(centroid, dict):
             if 'coordinates' in centroid:
-                lonlat = centroid['coordinates']
-        return lonlat
+                lon_lat = centroid['coordinates']  # this is a tuple that's created
+        return lon_lat
 
     def make_centroid(self, geojson_geometry_str, geom_type='Polygon'):
         """ converts a geojson geojson_geometry_string
