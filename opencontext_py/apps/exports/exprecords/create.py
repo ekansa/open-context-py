@@ -47,6 +47,7 @@ class Create():
         self.context_fields = LastUpdatedOrderedDict()
         self.ld_fields = LastUpdatedOrderedDict()
         self.predicate_fields = LastUpdatedOrderedDict()
+        self.source_field_label_suffix = ' [Source]'
         self.multi_source_value_delim = '; '  # delimiter for multiple values in source data field
         self.obs_limits = []  # limits predicate exports to listed observation numbers, no limit if empty
         self.entities = {}
@@ -443,7 +444,7 @@ class Create():
             field_num = self.predicate_fields[predicate_uuid]
         else:
             field_num = len(self.fields) + 1
-            label = self.deref_entity_label(predicate_uuid) + ' [Source]'
+            label = self.deref_entity_label(predicate_uuid) + self.source_field_label_suffix
             rel_ids = [predicate_uuid]
             field = {'label': label,
                      'rel_ids': rel_ids,
