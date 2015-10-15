@@ -592,11 +592,14 @@ class CandidateDescription():
                     'false': 0,
                     'f': 0,
                     '0': 0,
+                    '0.0': 0,
                     'y': 1,
                     'yes': 1,
                     'present': 1,
                     'true': 1,
-                    't': 1}
+                    't': 1,
+                    '1': 1,
+                    '1.0': 1}
         if record in booleans:
             output = booleans[record]
         return output
