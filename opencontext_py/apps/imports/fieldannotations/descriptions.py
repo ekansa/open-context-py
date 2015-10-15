@@ -528,12 +528,9 @@ class CandidateDescription():
         """ validates a string to be a number
             returns None if not
         """
-        if record.isdigit():
-            try:
-                output = float(record)
-            except ValueError:
-                output = None
-        else:
+        try:
+            output = float(record)
+        except ValueError:
             output = None
         return output
 
