@@ -22,8 +22,10 @@
     <!-- END of item edit javascript includes -->
     
     <div class="row">
-        <div class="col-sm-12">
+        <div class="col-sm-11">
          {% include 'edit/context.html' %}
+        </div>
+        <div class="col-sm-1" id="edit-item-public-view">            
         </div>
     </div>
     <div class="row">
@@ -78,7 +80,7 @@
          <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
          <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
-         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit-alt.js"></script>
+         <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
          <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
 
@@ -102,7 +104,7 @@
         </script> 
          
          
-        <script src="../../static/oc/js/edit/item-edit-alt.js" onload="start_item_edit();"></script>
+        <script src="../../static/oc/js/edit/item-edit.js" onload="start_item_edit();"></script>
          
      </div>
 </div>
