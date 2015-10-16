@@ -20,6 +20,10 @@ from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
 exm.migrate_old_tables()
 
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+exm = ExpMigrate()
+exm.convert_all_old_oc_to_old_csv()
+
 
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
@@ -50,7 +54,24 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         self.get_migrate_old_oc_table_ids()
         for old_table_id in self.table_id_list:
             if isinstance(old_table_id, str):
-                self.migrate_old_oc_table(old_table_id)
+                try:
+                    exp_tab = ExpTable.objects.get(table_id=old_table_id)
+                except ExpTable.DoesNotExist:
+                    exp_tab = False
+                if exp_tab is not False:
+                    print('Skipping already imported: ' + old_table_id)
+                else:
+                    self.migrate_old_oc_table(old_table_id)
+
+    def convert_all_old_oc_to_old_csv(self):
+        """ converts all the old-oc JSON to CSV
+            this represents an old version
+            of the original CSV data
+        """
+        self.get_migrate_old_oc_table_ids()
+        for old_table_id in self.table_id_list:
+            if isinstance(old_table_id, str):
+                self.convert_old_oc_json_to_csv(old_table_id)
 
     def get_migrate_old_oc_table_ids(self):
         """ gets old table ids from the
@@ -139,6 +160,72 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
                     for uuid, rec in json_obj['records'].items():
                         uuids.append(uuid)
         return uuids
+
+    def convert_old_oc_json_to_csv(self, old_table_id):
+        """ gets a list of uuids from an old
+            open context JSON format file
+        """
+        field_mappings = {
+            'proj': 'Project',
+            'person': 'Linked Persons',
+            'def_context_0': 'Context (1)',
+            'def_context_1': 'Context (2)',
+            'def_context_2': 'Context (3)',
+            'def_context_3': 'Context (4)',
+            'def_context_4': 'Context (5)',
+            'def_context_5': 'Context (6)',
+            'pub_date': 'Publication Date',
+            'update': 'Last Updated',
+            'category': 'Category',
+            'label': 'Item name'
+        }
+        ok = False
+        print('Dir ' + str(self.old_oc_table_dir) + ' id: ' + old_table_id)
+        dir_file = self.set_check_directory(self.old_oc_table_dir) + old_table_id + '.json'
+        csv_file = self.set_check_directory(self.old_oc_table_dir) + old_table_id + '.csv'
+        if os.path.exists(dir_file):
+            fp = open(dir_file, 'r')
+            try:
+                # keep keys in the same order as the original file
+                json_obj = json.load(fp, object_pairs_hook=OrderedDict)
+            except:
+                print('CRAP! File not valid JSON' + dir_file)
+                json_obj = False
+            if json_obj is not False:
+                if 'records' in json_obj:
+                    i = 0
+                    rows = []
+                    fields = []
+                    for uuid, rec in json_obj['records'].items():
+                        row = []
+                        if i == 0:
+                            # first row is for column headings
+                            row.append('Open Context URL')
+                            for field, val in rec.items():
+                                fields.append(field)
+                                if field in field_mappings:
+                                    # change name to the field mappings
+                                    field = field_mappings[field]
+                                row.append(field)
+                        else:
+                            uri = 'http://opencontext.org/subjects/' + uuid
+                            row.append(uri)
+                            for field in fields:
+                                if field in rec:
+                                    value = str(rec[field])
+                                else:
+                                    value = ''
+                                row.append(value)
+                        rows.append(row)
+                        i += 1
+                    if len(rows) > 0:
+                        f = open(csv_file, 'w', newline='', encoding='utf-8')
+                        writer = csv.writer(f)
+                        for row in rows:
+                            writer.writerow(row)
+                        f.closed
+                        ok = True
+        return ok
 
     def check_table_files_exist(self):
         """ checks to see if table files exist """
