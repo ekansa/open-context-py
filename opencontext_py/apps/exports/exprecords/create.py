@@ -710,6 +710,11 @@ class Create():
         longitude = ''
         note = 'Best available location data'
         if geo_meta is not False:
+            # a hack since for some reason a single geospace object occationally gets returned
+            try:
+                geo_len = len(geo_meta)
+            except:
+                geo_meta = [geo_meta]
             for geo in geo_meta:
                 if geo.meta_type == 'oc-gen:discovey-location':
                     latitude = geo.latitude
@@ -770,7 +775,8 @@ class Create():
             all_authors = []
             for auth_id in all_author_ids:
                 author = self.deref_entity_label(auth_id)
-                all_authors.append(author)
+                if isinstance(author, str):
+                    all_authors.append(author)
             authors = '; '.join(all_authors)
         # save Authors
         cell = ExpCell()
