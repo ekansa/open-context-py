@@ -6,6 +6,7 @@ from time import sleep
 from collections import OrderedDict
 from django.db import models
 from django.conf import settings
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
@@ -22,7 +23,7 @@ exm.migrate_old_tables()
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
-exm.convert_all_old_oc_to_old_csv()
+exm.document_missing_old_oc_uuids()
 
 
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
@@ -45,6 +46,7 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         self.label = False
         self.created = False
         self.note = ''
+        self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
 
     def migrate_old_tables(self):
@@ -72,6 +74,39 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         for old_table_id in self.table_id_list:
             if isinstance(old_table_id, str):
                 self.convert_old_oc_json_to_csv(old_table_id)
+
+    def document_missing_old_oc_uuids(self):
+        """ checks to see that uuids
+            are missing, documents them in a JSON file
+        """
+        missing = LastUpdatedOrderedDict()
+        missing['total-missing'] = 0
+        self.get_migrate_old_oc_table_ids()
+        for old_table_id in self.table_id_list:
+            act_tab = LastUpdatedOrderedDict()
+            act_tab['label'] = self.label
+            act_tab['records'] = LastUpdatedOrderedDict()
+            if isinstance(old_table_id, str):
+                uuids = self.get_old_oc_record_uuids(old_table_id,
+                                                     True)
+                for uuid in uuids:
+                    u_ok = ExpCell.objects\
+                                  .filter(table_id=old_table_id,
+                                          uuid=uuid)[:1]
+                    if len(u_ok) < 1:
+                        missing['total-missing'] += 1
+                        print(str(missing['total-missing']) + ' uuid: ' + uuid)
+                        if self.act_table_obj is not False:
+                            if 'records' in self.act_table_obj:
+                                if uuid in self.act_table_obj['records']:
+                                    act_tab['records'][uuid] = self.act_table_obj['records'][uuid]
+            missing[old_table_id] = act_tab
+        missing_json = json.dumps(missing,
+                                  ensure_ascii=False, indent=4)
+        dir_file = self.set_check_directory(self.old_oc_table_dir) + 'missing-uuids.json'
+        f = open(dir_file, 'w', encoding='utf-8')
+        f.write(missing_json)
+        f.close()
 
     def get_migrate_old_oc_table_ids(self):
         """ gets old table ids from the
@@ -120,7 +155,7 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
                 exp_tab.abstract = self.note
                 exp_tab.save()
 
-    def get_old_oc_record_uuids(self, old_table_id):
+    def get_old_oc_record_uuids(self, old_table_id, cache_obj=False):
         """ gets a list of uuids from an old
             open context JSON format file
         """
@@ -135,6 +170,8 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
             except:
                 print('CRAP! File not valid JSON' + dir_file)
                 json_obj = False
+            if cache_obj:
+                self.act_table_obj = json_obj
             if json_obj is not False:
                 if 'meta' in json_obj:
                     note_list = []
@@ -212,7 +249,10 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
                             row.append(uri)
                             for field in fields:
                                 if field in rec:
-                                    value = str(rec[field])
+                                    if rec[field] is None:
+                                        value = ''
+                                    else:
+                                        value = str(rec[field])
                                 else:
                                     value = ''
                                 row.append(value)
