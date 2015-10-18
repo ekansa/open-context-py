@@ -37,6 +37,7 @@ urlpatterns = patterns('',
                        url(r'^about/technology', AboutViews.tech_view, name='about_technology'),
                        url(r'^about/recipes', AboutViews.recipes_view, name='about_recipes'),
                        url(r'^about/services', AboutViews.services_view, name='about_services'),
+                       url(r'^about/bibliography', AboutViews.bibliography_view, name='about_bibliography'),
                        url(r'^about/', AboutViews.index_view, name='about_index'),
                        # Contexts for JSON-LD
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),

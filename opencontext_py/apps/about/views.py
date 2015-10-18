@@ -207,3 +207,26 @@ def recipes_view(request):
         return HttpResponse(req_neg.error_message,
                             status=415)
 
+@cache_control(no_cache=True)
+@never_cache
+def bibliography_view(request):
+    """ Get the search context JSON-LD """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    req_neg = RequestNegotiation('text/html')
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if req_neg.supported:
+        # requester wanted a mimetype we DO support
+        template = loader.get_template('about/bibliography.html')
+        context = RequestContext(request,
+                                 {'base_url': base_url,
+                                  'page_title': 'Open Context: About - API Cookbook',
+                                  'act_nav': 'about',
+                                  'nav_items': settings.NAV_ITEMS})
+        return HttpResponse(template.render(context))
+    else:
+        # client wanted a mimetype we don't support
+        return HttpResponse(req_neg.error_message,
+                            status=415)
+
