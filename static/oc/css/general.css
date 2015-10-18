@@ -192,5 +192,8 @@ div.f-count {
 }
 .ref-list li {
 		width: 90%;
-		margin-bottom: 15px;
+		margin-bottom: 18px;
+}
+.sep-list li {
+		margin-bottom: 18px;
 }
