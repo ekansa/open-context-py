@@ -6,11 +6,11 @@ from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 
-"""
-Methods for making metadata templates for a table
-"""
 
 class ExpTableTemplating():
+    """
+    Methods for making metadata templates for a table
+    """
 
     def __init__(self, table_id):
         self.table_id = table_id
@@ -28,13 +28,19 @@ class ExpTableTemplating():
 
     def make_json_ld(self):
         """ makes a JSON-LD object for the table metadata
+
+            Need oc-table namespace
+            need to include the cc-rel namespace
+
+            need to add this name space
+            http://www.w3.org/2003/01/geo/ as geo:lat, geo:lon
         """
         json_ld = LastUpdatedOrderedDict()
         if self.exp_tab is not False:
-            json_ld['id'] =  URImanagement.make_oc_uri(self.table_id, 'subjects')
+            json_ld['id'] = URImanagement.make_oc_uri(self.table_id, 'tables')
             json_ld['label'] = self.exp_tab.label
-            json_ld['rows'] = self.exp_tab.row_count
             json_ld['fields'] = self.exp_tab.field_count
+            json_ld['rows'] = self.exp_tab.row_count
             for key, objects in self.exp_tab.meta_json.items():
                 json_ld[key] = objects
         return json_ld

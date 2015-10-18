@@ -14,6 +14,7 @@ from opencontext_py.apps.ocitems.persons import views as PersonViews
 from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
+from opencontext_py.apps.exports.exptables import views as OCtableViews
 from opencontext_py.apps.searcher.sets import views as SetsViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
@@ -83,6 +84,11 @@ urlpatterns = patterns('',
                        url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
                        # url(r'^types', OCtypeViews.index, name='types_index'),
                        url(r'^types', AboutViews.index_view, name='about_index'),
+                       # Table views for controlled downloadable tables
+                       url(r'^tables/(?P<table_id>\S+).json', OCtableViews.json_view, name='tables_json'),
+                       url(r'^tables/(?P<table_id>\S+)', OCtableViews.html_view, name='tables_html'),
+                       # url(r'^types', OCtypeViews.index, name='types_index'),
+                       url(r'^tables', AboutViews.index_view, name='about_index'),
                        # --------------------------
                        # IMPORTER INTERFACE PAGES
                        # --------------------------

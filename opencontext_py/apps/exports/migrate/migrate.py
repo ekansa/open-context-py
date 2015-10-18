@@ -25,10 +25,24 @@ from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
 exm.document_missing_old_oc_uuids()
 
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+exm = ExpMigrate()
+exm.migrate_old_oc_table('2edc4d5eeffe18944c973b242c555cbe')
 
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
 dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
+
+
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+exm = ExpMigrate()
+table_id = '09c85ef2dd6784a0569fdc283a7d550c'
+exm.get_csv_uuid_list(table_id)
+
+
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+exm = ExpMigrate()
+exm.migrate_csv_tables()
 
     """
 
@@ -48,6 +62,55 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         self.note = ''
         self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
+        self.tab_metadata = []
+
+    def migrate_csv_tables(self):
+        """ migrates data from csv tables """
+        tab_list = self.get_table_id_list()
+        for meta in tab_list:
+            try:
+                exp_tab = ExpTable.objects.get(table_id=meta['table_id'])
+            except ExpTable.DoesNotExist:
+                exp_tab = False
+            if exp_tab is not False:
+                print('Skipping already imported: ' + meta['table_id'])
+            else:
+                print('Checking: ' + meta['table_id'])
+                self.migrate_csv_table_data(meta)
+
+    def migrate_csv_table_data(self, meta):
+        """ migrates data from an old csv table
+            to the new export table models
+        """
+        uuids = self.get_csv_uuid_list(meta['table_id'])
+        if len(uuids) > 0:
+            print('Adding: ' + meta['table_id'] + ', ' + str(len(uuids)) + ' uuids')
+            ctab = Create()
+            ctab.table_id = meta['table_id']
+            ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
+            ctab.include_original_fields = True  # include fields from source data
+            ctab.source_field_label_suffix = ''  # blank suffix for source data field names
+            ctab.prep_default_fields()
+            ctab.uuidlist = uuids
+            ctab.process_uuid_list(uuids)
+            ctab.get_predicate_uuids()  # now prepare to do item descriptions
+            ctab.get_predicate_link_annotations()  # even if not showing linked data
+            ctab.process_ld_predicates_values()  # only if exporting linked data
+            ctab.save_ld_fields()  # only if exporting linked data
+            ctab.save_source_fields()  # save source data, possibly limited by observations
+            ctab.update_table_metadata()  # save a record of the table metadata
+            self.save_csv_table_metadata(meta)
+
+    def save_csv_table_metadata(self, meta):
+        """ saves csv table metadata """
+        try:
+            exp_tab = ExpTable.objects.get(table_id=meta['table_id'])
+        except ExpTable.DoesNotExist:
+            exp_tab = False
+        if exp_tab is not False:
+            exp_tab.label = meta['label']
+            exp_tab.created = meta['created']
+            exp_tab.save()
 
     def migrate_old_tables(self):
         """ migrates all the old JSON table data
@@ -285,6 +348,24 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         for table_id in self.table_id_list:
             self.get_save_legacy_csv(table_id)
 
+    def get_csv_uuid_list(self, table_id):
+        """ gets a uuid list for the more recent version
+            of open context data tables. the first
+            column is a field with uris
+        """
+        uuids = []
+        filename = table_id + '.csv'
+        tab_obj = self.load_csv_file(self.table_dir, filename)
+        if tab_obj is not False:
+            i = 0
+            for row in tab_obj:
+                if i > 0:
+                    uri = row[0]  # the 1st column is the uri
+                    uuid = uri.replace('http://opencontext.org/subjects/', '')
+                    uuids.append(uuid)
+                i += 1
+        return uuids
+
     def get_table_id_list(self):
         """ gets a list of tables from the tab-manifest.csv directory """
         tab_obj = self.load_csv_file(self.table_dir, self.table_manifest_csv)
@@ -294,10 +375,13 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
             i = 0
             for row in tab_obj:
                 if i > 0:
-                    table_id = row[0]  # first cell has the table ID field
-                    self.table_id_list.append(table_id)
+                    meta = {}
+                    meta['table_id'] = row[0]  # first cell has the table ID field
+                    meta['label'] = row[3]
+                    meta['created'] = row[4]
+                    self.tab_metadata.append(meta)
                 i += 1
-        return self.table_id_list
+        return self.tab_metadata
 
     def get_table_fields(self, tab_obj):
         """ gets list of table fields from the first row """
@@ -346,13 +430,15 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
         dir_file = self.set_check_directory(act_dir) + filename
         if os.path.exists(dir_file):
             with open(dir_file, encoding='utf-8') as csvfile:
-                dialect = csv.Sniffer().sniff(csvfile.read(1024))
-                csvfile.seek(0)
-                csv_obj = csv.reader(csvfile, dialect)
+                # dialect = csv.Sniffer().sniff(csvfile.read(1024))
+                # csvfile.seek(0)
+                csv_obj = csv.reader(csvfile)
                 tab_obj = []
                 for row in csv_obj:
                     row_list = []
                     for cell in row:
                         row_list.append(cell)
                     tab_obj.append(row_list)
+        else:
+            print('Cannot find: ' + dir_file)
         return tab_obj

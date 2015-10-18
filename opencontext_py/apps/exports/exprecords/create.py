@@ -63,51 +63,51 @@ class Create():
     def prep_default_fields(self):
         """ Prepares initial set of default fields for export tables """
         self.fields.append({'label': 'URI',
-                            'rel_ids': ['@id'],
+                            'rel_ids': {'rdfs:isDefinedBy': '@id'},
                             'field_num': 1})
         self.fields.append({'label': 'Label',
-                            'rel_ids': ['label'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'label'},
                             'field_num': 2})
         self.fields.append({'label': 'Project',
-                            'rel_ids': ['proj-label'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:proj-label'},
                             'field_num': 3})
         self.fields.append({'label': 'Project URI',
-                            'rel_ids': ['proj-uri'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:proj-uri'},
                             'field_num': 4})
         self.fields.append({'label': 'Item Category',
-                            'rel_ids': ['item-category'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'category'},
                             'field_num': 5})
         self.fields.append({'label': 'Last Updated',
-                            'rel_ids': ['last-updated'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'dc-terms:modified'},
                             'field_num': 6})
         self.fields.append({'label': 'Authorship',
-                            'rel_ids': ['authorship'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'cc:attributionName'},
                             'field_num': 7})
         self.fields.append({'label': 'Latitude (WGS-84)',
-                            'rel_ids': ['latitude'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'geo:lat'},
                             'field_num': 8})
         self.fields.append({'label': 'Longitude (WGS-84)',
-                            'rel_ids': ['longitude'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'geo:lon'},
                             'field_num': 9})
         self.fields.append({'label': 'Geospatial note',
-                            'rel_ids': ['geospatial-note'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:geo-note'},
                             'field_num': 10})
         if self.dates_bce_ce:
             self.fields.append({'label': 'Early Date (BCE/CE)',
-                                'rel_ids': ['early-bce-ce'],
+                                'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:early-bce-ce'},
                                 'field_num': 11})
             self.fields.append({'label': 'Late Date (BCE/CE)',
-                                'rel_ids': ['late-bce-ce'],
+                                'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:late-bce-ce'},
                                 'field_num': 12})
         else:
             self.fields.append({'label': 'Early Date (BP)',
-                                'rel_ids': ['early-bp'],
+                                'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:early-bp'},
                                 'field_num': 11})
             self.fields.append({'label': 'Late Date (BP)',
-                                'rel_ids': ['late-bp'],
+                                'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:late-bp'},
                                 'field_num': 12})
         self.fields.append({'label': 'Context URI',
-                            'rel_ids': ['context-uri'],
+                            'rel_ids': {'rdfs:isDefinedBy': 'oc-gen:contained-in'},
                             'field_num': 13})
         for field in self.fields:
             self.save_field(field)
@@ -118,7 +118,8 @@ class Create():
         exfield.table_id = self.table_id
         exfield.field_num = field['field_num']
         exfield.label = field['label']
-        exfield.rel_ids = json.dumps(field['rel_ids'], ensure_ascii=False)
+        # exfield.rel_ids = json.dumps(field['rel_ids'], ensure_ascii=False)
+        exfield.rel_ids = field['rel_ids']
         exfield.save()
 
     def check_reload_fields_from_db(self):
@@ -131,7 +132,8 @@ class Create():
                 field = {}
                 field['field_num'] = exfield.field_num
                 field['label'] = exfield.label
-                field['rel_ids'] = json.loads(exfield.rel_ids)
+                # field['rel_ids'] = json.loads(exfield.rel_ids)
+                field['rel_ids'] = exfield.rel_ids
                 self.fields.append(field)
 
     def prep_process_uuids_by_projects_class(self, project_uuids, class_uri):
@@ -445,7 +447,10 @@ class Create():
         else:
             field_num = len(self.fields) + 1
             label = self.deref_entity_label(predicate_uuid) + self.source_field_label_suffix
-            rel_ids = [predicate_uuid]
+            if ':' in predicate_uuid:
+                rel_ids = {'rdfs:isDefinedBy': predicate_uuid}
+            else:
+                rel_ids = {'rdfs:isDefinedBy': ('oc-pred:' + predicate_uuid)}
             field = {'label': label,
                      'rel_ids': rel_ids,
                      'field_num': field_num}
@@ -572,6 +577,21 @@ class Create():
                     cell.save()
                     cell = None
 
+    def make_ld_rel_id(self, field_type, equiv_uri):
+        """ makes a rel_id object, to add to a list
+        """
+        field_type_l = field_type.lower()
+        field_type_mappings = {'uri': 'oc-tab:equiv-uri',
+                               'label': 'oc-tab:equiv-label',
+                               'source': 'oc-tab:rel-source',
+                               'has': 'oc-tab:rel-ld'}
+        for type_key, mapped in field_type_mappings.items():
+            if type_key in field_type_l:
+                field_type = mapped
+        output = {}
+        output[field_type] = equiv_uri
+        return output
+
     def get_add_ld_field_number(self,
                                 field_type,
                                 pred_ld_equiv_uri,
@@ -596,9 +616,9 @@ class Create():
             label = self.deref_entity_label(pred_ld_equiv_uri)
             if label is False:
                 label = pred_ld_equiv_uri
-            rel_ids = [field_type, pred_ld_equiv_uri]
+            rel_ids = self.make_ld_rel_id(field_type, pred_ld_equiv_uri)
             if obj_ld_equiv_uri is not False:
-                rel_ids.append(obj_ld_equiv_uri)
+                rel_ids['oc-tab:obj-equiv'] = obj_ld_equiv_uri
                 obj_label = self.deref_entity_label(obj_ld_equiv_uri)
                 if obj_label is False:
                     obj_label = obj_ld_equiv_uri
@@ -660,7 +680,8 @@ class Create():
         else:
             field_num = len(self.fields) + 1
             field = {'label': 'Context (' + str(pindex) + ')',
-                     'rel_ids': ['context', pindex],
+                     'rel_ids': {'rdfs:isDefinedBy': 'oc-tab:context-label',
+                                 'oc-tab:context-index': pindex},
                      'field_num': field_num}
             self.fields.append(field)
             self.save_field(field)
