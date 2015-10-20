@@ -1,26 +1,51 @@
 import json
+from django.conf import settings
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.templating import ExpTableTemplating
 from django.template import RequestContext, loader
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
-# An octype item is a concept from a controlled vocabulary that originates from
-# an Open Context contributor
-# The main dependency for this app is for OCitems, which are used to generate
-# Every type of item in Open Context, including subjects
-def index(request):
-    return HttpResponse("Hello, world. You're at the types index.")
+# An table item caches a list of uuids, along with record values (as string literals)
+# of attributes for download as a CSV file. It does some violence to the more
+# elaborately structured aspects of Open Context's data model, but is convenient
+# for most researchers.
+@cache_control(no_cache=True)
+@never_cache
+def index_view(request):
+    """ Get the search context JSON-LD """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    req_neg = RequestNegotiation('text/html')
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if req_neg.supported:
+        # requester wanted a mimetype we DO support
+        template = loader.get_template('tables/index.html')
+        context = RequestContext(request,
+                                 {'base_url': base_url,
+                                  'page_title': 'Open Context: Tables',
+                                  'act_nav': 'tables',
+                                  'nav_items': settings.NAV_ITEMS})
+        return HttpResponse(template.render(context))
+    else:
+        # client wanted a mimetype we don't support
+        return HttpResponse(req_neg.error_message,
+                            status=415)
 
 
+@cache_control(no_cache=True)
+@never_cache
 def html_view(request, table_id):
     exp_tt = ExpTableTemplating(table_id)
     if exp_tt.exp_tab is not False:
         rp = RootPath()
         base_url = rp.get_baseurl()
-        template = loader.get_template('types/view.html')
+        template = loader.get_template('tables/temp.html')
         if temp_item.view_permitted:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
