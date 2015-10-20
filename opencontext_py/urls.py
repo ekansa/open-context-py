@@ -5,6 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 from opencontext_py.apps.index import views as HomeViews
+from opencontext_py.apps.ocitems.manifest import views as ManifestViews
 from opencontext_py.apps.about import views as AboutViews
 from opencontext_py.apps.contexts import views as ContextViews
 from opencontext_py.apps.ocitems.subjects import views as SubjectViews
@@ -28,6 +29,13 @@ urlpatterns = patterns('',
                        # Examples:
                        # url(r'^$', 'opencontext_py.views.home', name='home'),
                        # url(r'^blog/', include('blog.urls')),
+                       # legacy URL for getting atom feed of manifest
+                       url(r'^manifest/.atom', ManifestViews.index_atom, name='manifest_index_atom'),
+                       url(r'^manifest.atom', ManifestViews.index_atom, name='manifest_index_ns_atom'),
+                       # legacy URL for getting atom feed of manifest
+                       url(r'^all/.atom', ManifestViews.all_atom, name='manifest_all_atom'),
+                       url(r'^all.atom', ManifestViews.all_atom, name='manifest_all_ns_atom'),
+                       url(r'^manifest/', ManifestViews.index, name='manifest_index_view'),
                        # About pages
                        url(r'^about/uses', AboutViews.uses_view, name='about_uses'),
                        url(r'^about/publishing', AboutViews.pub_view, name='about_publishing'),
@@ -39,6 +47,7 @@ urlpatterns = patterns('',
                        url(r'^about/services', AboutViews.services_view, name='about_services'),
                        url(r'^about/bibliography', AboutViews.bibliography_view, name='about_bibliography'),
                        url(r'^about/intellectual-property', AboutViews.ip_view, name='about_ip'),
+                       url(r'^about/people', AboutViews.people_view, name='about_people'),
                        url(r'^about/', AboutViews.index_view, name='about_index'),
                        # Contexts for JSON-LD
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
@@ -90,7 +99,7 @@ urlpatterns = patterns('',
                        url(r'^tables/(?P<table_id>\S+).json', OCtableViews.json_view, name='tables_json'),
                        url(r'^tables/(?P<table_id>\S+)', OCtableViews.html_view, name='tables_html'),
                        # url(r'^types', OCtypeViews.index, name='types_index'),
-                       url(r'^tables', AboutViews.index_view, name='about_index'),
+                       url(r'^tables', OCtableViews.index_view, name='tables_index'),
                        # --------------------------
                        # IMPORTER INTERFACE PAGES
                        # --------------------------
