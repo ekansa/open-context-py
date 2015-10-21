@@ -1,3 +1,5 @@
+import csv
+import os
 import requests
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import SKOS, RDFS, OWL
@@ -23,6 +25,10 @@ from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
 mmf = MerrittMediaFiles()
 mmf.update_all_project_media()
 
+from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
+mmf = MerrittMediaFiles()
+mmf.process_merritt_dump('cdl', 'arks-files.csv')
+
     """
     BASE_MERRITT = 'http://merritt.cdlib.org/d/'
     ORE_NAMESPACE = 'http://www.openarchives.org/ore/terms#'
@@ -31,6 +37,8 @@ mmf.update_all_project_media()
                           'oc-gen:fullfile': '/full'}
 
     def __init__(self):
+        self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+        self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.updated_uuids = []
         self.updated_file_count = 0
 
@@ -220,3 +228,87 @@ mmf.update_all_project_media()
             print('Failed to get ' + url)
             turtle = False
         return turtle
+
+    def process_merritt_dump(self, act_dir, filename):
+        """ processes a merritt CSV dump listing
+            OC media files in the merritt repository
+            
+from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
+mmf = MerrittMediaFiles()
+mmf.process_merritt_dump('cdl', 'arks-files.csv')
+    
+        """
+        tab_obj = self.load_csv_file(act_dir, filename)
+        if tab_obj is not False:
+            print('Found records: ' + str(len(tab_obj)))
+            for row in tab_obj:
+                self.process_merritt_dump_row(row)
+    
+    def process_merritt_dump_row(self, row):
+        """ processes a merrit dump row
+            to update an item
+        """
+        raw_ark = row[0]
+        ark = raw_ark.replace('ark:/', '')
+        uri = row[1] # 2nd column
+        merritt_uri = row[2]  # 3rd column
+        uri_ex = uri.split('/')
+        uuid = uri_ex[-1]
+        ark_id_ok = StableIdentifer.objects\
+                                   .filter(stable_id=ark,
+                                           uuid=uuid)[:1]
+        if len(ark_id_ok) > 0:
+            # print('Identifers check: ' + ark + ' = ' + uuid)
+            old_files = Mediafile.objects.filter(uuid=uuid)
+            for old_file in old_files:
+                if self.BASE_MERRITT not in old_file.file_uri:
+                    # the file_uri is not in Merritt, so do update
+                    # processes
+                    print('Check: ' + uuid + ': ' + old_file.file_type)
+                    if old_file.file_type in self.FILE_TYPE_MAPPINGS:
+                        type_pattern = self.FILE_TYPE_MAPPINGS[old_file.file_type]
+                        print('Looking for ' + type_pattern + ' in ' + merritt_uri)
+                        if type_pattern in merritt_uri:
+                            # found a match
+                            if uuid not in self.updated_uuids:
+                                self.updated_uuids.append(uuid)
+                            self.updated_file_count += 1
+                            old_file.file_uri = merritt_uri
+                            old_file.save()
+                            output = '\n\n'
+                            output += 'Saved file: ' + str(self.updated_file_count)
+                            output += ' of uuid: ' + str(len(self.updated_uuids))
+                            output += '\n'
+                            output += merritt_uri
+                            print(output)
+    
+    def set_check_directory(self, act_dir):
+        """ Prepares a directory to find import GeoJSON files """
+        output = False
+        full_dir = self.root_import_dir + act_dir + '/'
+        if os.path.exists(full_dir):
+            output = full_dir
+        if output is False:
+            output = self.abs_path + act_dir + '\\'
+        return output
+
+    def load_csv_file(self, act_dir, filename):
+        """ Loads a file and parse a csv
+            file
+        """
+        tab_obj = False
+        dir_file = self.set_check_directory(act_dir) + filename
+        if os.path.exists(dir_file):
+            with open(dir_file, encoding='utf-8', errors='replace') as csvfile:
+                # dialect = csv.Sniffer().sniff(csvfile.read(1024))
+                # csvfile.seek(0)
+                csv_obj = csv.reader(csvfile)
+                tab_obj = []
+                for row in csv_obj:
+                    row_list = []
+                    for cell in row:
+                        row_list.append(cell)
+                    tab_obj.append(row_list)
+        else:
+            print('Cannot find: ' + dir_file)
+        return tab_obj
