@@ -48,6 +48,7 @@ urlpatterns = patterns('',
                        url(r'^about/bibliography', AboutViews.bibliography_view, name='about_bibliography'),
                        url(r'^about/intellectual-property', AboutViews.ip_view, name='about_ip'),
                        url(r'^about/people', AboutViews.people_view, name='about_people'),
+                       url(r'^about/sponsors', AboutViews.sponsors_view, name='about_sponsors'),
                        url(r'^about/', AboutViews.index_view, name='about_index'),
                        # Contexts for JSON-LD
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),

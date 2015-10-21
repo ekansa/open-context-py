@@ -1,0 +1,211 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Sponsors and Support</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/community-support-noun-6396.png" alt="Icon from Noun Project (#ID 6396)" />
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context is maintained and administered by a dedicated staff with <a href="http://www.alexandriaarchive.org/" target="_blank">The Alexandria Archive Institute</a>, a non-profit organization.The <a href="http://www.cdlib.org/" target="_blank">California Digital Library</a> at the University of California provides data archiving and preservation services. Open Context development has been funded by foundation grants and charitable donations.
+								</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+        
+		<h2>Financial Support for Open Context</h2>
+                
+		<p>The following organizations have provided financial support for Open Context's development and operations:</p>
+        <div class="row">
+            <div class="col-sm-12">
+				<ul class="media-list">	
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.neh.gov">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/neh-logo.png" alt="NEH Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.neh.gov/">The National Endowment for the Humanities</span>
+							</h4>
+						  Supporting research and development around linked open data and user experience
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.dainst.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/dai-logo.jpg" alt="DAI Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.dainst.org/">The German Archaeological Institute</span>
+							</h4> Mirror hosting and back-up for Open Context
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.jmkfund.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/kaplan-logo.png" alt="Kaplan Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.jmkfund.org/">The J.M. Kaplan Fund</span>
+							</h4> Research and development on the integration of excavation and conservation data
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.eol.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/eol-logo.jpg" alt="EOL Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.eol.org/">The Encyclopedia of Life</span>
+							</h4> A Computable Data Challenge award for the <em>Biogeography of Early Domestic Animals using Linked Open Data</em> project
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.nsf.gov/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/nsf-logo.png" alt="NSF Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.nsf.gov/">The National Science Foundation</span>
+							</h4> Support for the <em>Digital Index of North American Archaeology</em> project
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://acls.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/acls-logo.gif" alt="ACLS Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://acls.org/">The American Council of Learned Societies</span>
+							</h4> Support for research on data journals, data editing and publishing processes
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://sloan.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/sloan-logo.jpg" alt="Sloan Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+							<span typeof="foaf:Organization" resource="http://sloan.org/">The Alfred P. Sloan Foundation</span>
+							</h4> Support for data publishing workflows
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.imls.gov/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/imls-logo.jpg" alt="IMLS logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.imls.gov/">The Institute of Museum and Library Services</span>
+							</h4> Support for user experience research
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.hewlett.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/hewlett-logo.jpg" alt="Hewlett Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.hewlett.org/">The William and Flora Hewlett Foundation</span>
+							</h4> Key institutional support in the development of Open Context 
+						</div>
+					  </li>
+				
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://www.joukowsky.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/jff-logo.jpg" alt="Joukowsky Logo">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://www.joukowsky.org/">The Joukowsky Family Foundation</span>
+							</h4> Support for Open Context’s data publishing programs 
+						</div>
+					</li>
+				
+					<li class="media" rel="foaf:fundedBy">
+						<div class="media-left">
+							<a rel="foaf:homepage" href="http://leonlevyfoundation.org/">
+								<img class="media-object" src="{{ base_url }}/static/oc/images/about/llf-logo.jpg" alt="Leon Levy Foundation">
+							</a>
+						</div>
+						<div class="media-body">
+							<h4 class="media-heading">
+								<span typeof="foaf:Organization" resource="http://leonlevyfoundation.org/">The Leon Levy Foundation</span>
+							</h4> Support for Open Context’s data publishing programs 
+						</div>
+					</li>
+				
+				</ul>
+			
+						
+            </div> <!-- end  col-sm-12 -->
+        </div>
+        
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Community Garden icon by <a target="_blank" href="https://thenounproject.com/term/community+support/6396/">Iconathon</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        
+        
+        
+    </div>
+    
+{% endblock %} 
