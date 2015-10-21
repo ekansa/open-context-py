@@ -1,11 +1,12 @@
 import json
+import hashlib
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
 from unidecode import unidecode
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
-from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
@@ -28,6 +29,7 @@ class ProcessSubjects():
         self.project_uuid = pg.project_uuid
         self.subjects_fields = False
         self.geospace_fields = {}  # subject field num is key, dict has valid lat + lon fields
+        self.geojson_rels = {}  # subject field_num is key, integer value is geojson field_num
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
@@ -145,6 +147,7 @@ class ProcessSubjects():
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
         self.get_geospace_fields()
+        self.get_geojson_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
         self.process_non_contain_subjects()
@@ -198,6 +201,9 @@ class ProcessSubjects():
                     self.process_geospace_item(field_num,
                                                cs.import_rows,
                                                cs.uuid)
+                    self.process_geojson_item(field_num,
+                                              cs.import_rows,
+                                              cs.uuid)
                     if cs.is_new:
                         self.new_entities.append({'id': str(cs.uuid),
                                                   'label': cs.context})
@@ -250,6 +256,12 @@ class ProcessSubjects():
                         cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
                         cs.reconcile_item(dist_rec['imp_cell_obj'])
                         if cs.uuid is not False:
+                            self.process_geospace_item(field_num,
+                                                       cs.import_rows,
+                                                       cs.uuid)
+                            self.process_geojson_item(field_num,
+                                                      cs.import_rows,
+                                                      cs.uuid)
                             self.reconciled_entities.append({'id': cs.uuid,
                                                              'label': cs.label})
                         else:
@@ -331,6 +343,70 @@ class ProcessSubjects():
                                 print('Did not like ' + str(row) + ' with ' + str(subject_uuid))
                                 quit()
 
+    def process_geojson_item(self,
+                             subject_field_num,
+                             subject_in_rows,
+                             subject_uuid):
+        """ adds geojson data if it exists for an item
+        """
+        if subject_field_num in self.geojson_rels:
+            geojson_field_num = self.geojson_rels[subject_field_num]
+            geojson_recs = ImportCell.objects\
+                                     .filter(source_id=self.source_id,
+                                             field_num=geojson_field_num,
+                                             row_num__in=subject_in_rows)\
+                                     .exclude(record='')
+            # the rows object now has a list of all the rows, with validated coordinate
+            # data. Now we can add these to the database!
+            geo_keys_done = []
+            gg = GeospaceGeneration()
+            for geojson_rec in geojson_recs:
+                geo_key = geojson_rec.rec_hash
+                record = geojson_rec.record
+                if geo_key not in geo_keys_done:
+                    geo_keys_done.append(geo_key)
+                    try:
+                        json_obj = json.loads(record)
+                    except:
+                        json_obj = False
+                    if isinstance(json_obj, dict):
+                        if 'type' in json_obj \
+                           and 'coordinates' in json_obj:
+                            # OK we've got good data
+                            lon_lat = gg.get_centroid_lonlat_coordinates(record,
+                                                                         json_obj['type'])
+                            if isinstance(lon_lat, tuple):
+                                # print('Good centroid for ' + str(subject_uuid))
+                                # great! We have centroid lon_lat
+                                # this is another data validation passed
+                                coordinates = json_obj['coordinates']
+                                same_geos = Geospace.objects\
+                                                    .filter(uuid=subject_uuid,
+                                                            coordinates=coordinates)[:1]
+                                if len(same_geos) < 1:
+                                    # OK it is valid and does not exist for the item
+                                    # we can add it
+                                    geo = Geospace()
+                                    geo.uuid = str(subject_uuid)
+                                    geo.project_uuid = self.project_uuid
+                                    geo.source_id = self.source_id
+                                    geo.item_type = 'subjects'
+                                    geo.feature_id = len(geo_keys_done)
+                                    geo.meta_type = ImportFieldAnnotation.PRED_GEO_LOCATION
+                                    geo.ftype = json_obj['type']
+                                    geo.latitude = lon_lat[1]
+                                    geo.longitude = lon_lat[0]
+                                    geo.specificity = 0
+                                    # dump coordinates as json string
+                                    geo.coordinates = json.dumps(coordinates,
+                                                                 indent=4,
+                                                                 ensure_ascii=False)
+                                    try:
+                                        geo.save()
+                                    except:
+                                        print('Did not like ' + str(row) + ' with ' + str(subject_uuid))
+                                        quit()
+
     def validate_geo_coordinate(self, coordinate, coord_type):
         """ validates a geo-spatial coordinate
             returns a float if valid, or false if not valid
@@ -402,6 +478,25 @@ class ProcessSubjects():
                     # making geospatial data
                     self.geospace_fields[subject_field_num] = {'lat': act_geo_lats_lons['lats'][0],
                                                                'lon': act_geo_lats_lons['lons'][0]}
+
+    def get_geojson_fields(self):
+        """ gets fields with geojson data """
+        geojson_fields = ImportField.objects\
+                                    .filter(source_id=self.source_id,
+                                            field_type='geojson')
+        geojson_field_nums = []
+        for geojson_field in geojson_fields:
+            geojson_field_nums.append(geojson_field.field_num)
+        sub_field_list = []
+        for sub_field_num, sub_field in self.subjects_fields.items():
+            sub_field_list.append(sub_field_num)
+        geo_des = ImportFieldAnnotation.objects\
+                                       .filter(source_id=self.source_id,
+                                               field_num__in=geojson_field_nums,
+                                               predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
+                                               object_field_num__in=sub_field_list)
+        for geo_anno in geo_des:
+            self.geojson_rels[geo_anno.object_field_num] = geo_anno.field_num
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy

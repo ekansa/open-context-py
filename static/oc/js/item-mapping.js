@@ -17,16 +17,19 @@ function initmap() {
 	});
    
 	var mapboxTiles = L.tileLayer('http://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
 	});
    
 	var ESRISatelliteTiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-	    attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
+	    maxNativeZoom: 19,
+		attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
 	var gmapRoad = new L.Google('ROADMAP');
 	var gmapSat = new L.Google('SATELLITE');
+	gmapSat.maxNativeZoom= 18;
 	var gmapTer = new L.Google('TERRAIN');
+    gmapTer.maxNativeZoom= 19;
    
 	var baseMaps = {
 		"Google-Terrain": gmapTer,
@@ -38,7 +41,7 @@ function initmap() {
 	};
   
 	map.addLayer(gmapSat);
-	map._layersMaxZoom = 20;
+	map._layersMaxZoom = 30;
 	L.control.layers(baseMaps).addTo(map);
 	L.geoJson(geojson, {style: polyStyle}).addTo(map)
 }

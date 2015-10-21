@@ -8,6 +8,8 @@ from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 # These views display an HTML form for classifying import fields,
@@ -16,6 +18,8 @@ def index(request):
     return HttpResponse("Hello, world. You're at the entities index.")
 
 
+@cache_control(no_cache=True)
+@never_cache
 def hierarchy_children(request, identifier):
     """ Returns JSON data for an identifier in its hierarchy """
     et = EntityTemplate()
@@ -30,6 +34,8 @@ def hierarchy_children(request, identifier):
         raise Http404
 
 
+@cache_control(no_cache=True)
+@never_cache
 def look_up(request, item_type):
     """ Returns JSON data for entities
         limited by certain criteria
@@ -73,6 +79,8 @@ def look_up(request, item_type):
                         content_type='application/json; charset=utf8')
 
 
+@cache_control(no_cache=True)
+@never_cache
 def id_summary(request, identifier):
     """ Returns JSON data for entities
         limited by certain criteria
@@ -105,6 +113,8 @@ def id_summary(request, identifier):
         raise Http404
 
 
+@cache_control(no_cache=True)
+@never_cache
 def entity_annotations(request, subject):
     """ Returns JSON data with
         annotations on a given subject entity
@@ -195,6 +205,8 @@ def entity_annotations(request, subject):
         raise Http404
 
 
+@cache_control(no_cache=True)
+@never_cache
 def contain_children(request, identifier):
     """ Returns JSON data with
         spatial containment for a given
@@ -222,6 +234,8 @@ def contain_children(request, identifier):
         raise Http404
 
 
+@cache_control(no_cache=True)
+@never_cache
 def description_hierarchy(request, identifier):
     """ Returns JSON data with
         descriptive property and type hierarchies

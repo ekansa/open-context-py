@@ -27,7 +27,8 @@ class ImportProfile():
                                     'variable',
                                     'value',
                                     'lat',
-                                    'lon']
+                                    'lon',
+                                    'geojson']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',

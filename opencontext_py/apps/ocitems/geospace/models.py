@@ -1,5 +1,8 @@
+import json
 import hashlib
+from shapely.geometry import shape, mapping
 import reversion  # version control object
+from collections import OrderedDict
 from django.db import models
 
 
@@ -40,3 +43,63 @@ class Geospace(models.Model):
 
     class Meta:
         db_table = 'oc_geospace'
+
+
+class GeospaceGeneration():
+    """ methods for managing geospatial classes
+
+       at the moment, this chiefly generates a centroid
+       for coordinates.
+
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
+from opencontext_py.apps.imports.records.models import ImportCell
+geo_rec = ImportCell.objects.get(rec_hash='dff753b2b2b6967ebcb3b6925aab1182e346b0ce')
+gg = GeospaceGeneration()
+gg.make_centroid(geo_rec.record)
+geo_row = Geospace.objects.get(hash_id='ee51372c66a553195e8647cd0720e20e8a632f98')
+gg.get_centroid_lonlat_coordinates(geo_row.coordinates, geo_row.ftype)
+
+    """
+
+    def __init__(self):
+        pass
+
+    def get_centroid_lonlat_coordinates(self, geojson_geometry_str, geom_type='Polygon'):
+        """ returns a list of the centroid lon / lat coordinates
+            yes, in that GeoJSON coordinate order
+        """
+        lon_lat = False
+        centroid = self.make_centroid(geojson_geometry_str, geom_type)
+        if isinstance(centroid, dict):
+            if 'coordinates' in centroid:
+                lon_lat = centroid['coordinates']  # this is a tuple that's created
+        return lon_lat
+
+    def make_centroid(self, geojson_geometry_str, geom_type='Polygon'):
+        """ converts a geojson geojson_geometry_string
+            OR a coordinate string into
+            a centroid
+        """
+        centroid = False
+        geojson_geom = False
+        try:
+            json_obj = json.loads(geojson_geometry_str)
+        except:
+            json_obj = False
+        if isinstance(json_obj, list):
+            geojson_geom = {'type': geom_type}
+            geojson_geom['coordinates'] = json_obj
+        elif isinstance(json_obj, dict):
+            if 'type' in json_obj \
+               and 'coordinates' in json_obj:
+                geojson_geom = json_obj
+            elif 'coordinates' in json_obj:
+                geojson_geom = json_obj
+                geojson_geom['type'] = geom_type
+        else:
+            geojson_geom = False
+        if isinstance(geojson_geom, dict):
+            geom = shape(geojson_geom)
+            g_centroid = geom.centroid
+            centroid = mapping(g_centroid)
+        return centroid

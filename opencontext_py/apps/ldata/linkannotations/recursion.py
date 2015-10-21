@@ -13,6 +13,11 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 class LinkRecursion():
     """
     Does recursive look ups on link annotations, especially to find hierarchies
+
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+lr = LinkRecursion()
+lr.get_jsonldish_entity_parents('oc-gen:cat-site')
+
     """
     def __init__(self):
         self.parent_entities = []

@@ -1,6 +1,7 @@
 import datetime
 from django.db import models
 from django.db.models import Q, Max
+from django.core.cache import cache
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
@@ -23,6 +24,22 @@ class UnImport():
         self.source_id = source_id
         self.project_uuid = project_uuid
         self.delete_ok = self.check_unimport_ok()
+        # now clear the cache a change was made
+        cache.clear()
+
+    def detete_all(self):
+        """ deletes all from an import """
+        self.delete_containment_assertions()
+        self.delete_geospaces()
+        self.delete_describe_assertions()
+        self.delete_predicate_vars()
+        self.delete_links_assertions()
+        self.delete_predicate_links()
+        self.delete_subjects_entities()
+        self.delete_person_entities()
+        self.delete_media_entities()
+        self.delete_types_entities()
+        self.delete_strings()
 
     def delete_containment_assertions(self):
         """ Deletes containment assertions for an
@@ -160,7 +177,7 @@ class UnImport():
                                 .filter(source_id=self.source_id,
                                         project_uuid=self.project_uuid)\
                                 .delete()
-    
+
     def delete_media_entities(self):
         """ Deletes media entities
             import

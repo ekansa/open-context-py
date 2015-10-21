@@ -359,6 +359,8 @@ class ProcessDescriptions():
                             if len(val_dist_rec['imp_cell_obj'].record) > 0:
                                 # found a non-blank type item
                                 cs = CandidateString()
+                                cs.source_id = self.source_id
+                                cs.project_uuid = self.project_uuid
                                 cs.reconcile_string_cell(val_dist_rec['imp_cell_obj'])
                                 content_uuid = cs.uuid  # string content uuid
                                 if data_type == 'id':
@@ -379,6 +381,8 @@ class ProcessDescriptions():
                                         # no need to worry about individual rows
                                         predicate = recon_predicate['predicate']
                                         ct = CandidateType()
+                                        ct.source_id = self.source_id
+                                        ct.project_uuid = self.project_uuid
                                         ct.reconcile_type_cell(predicate.uuid,
                                                                content_uuid,
                                                                val_dist_rec['imp_cell_obj'],
@@ -524,12 +528,9 @@ class CandidateDescription():
         """ validates a string to be a number
             returns None if not
         """
-        if record.isdigit():
-            try:
-                output = float(record)
-            except ValueError:
-                output = None
-        else:
+        try:
+            output = float(record)
+        except ValueError:
             output = None
         return output
 
@@ -561,13 +562,19 @@ class CandidateDescription():
             if len(old_ass) > 0:
                 is_new = False
         elif data_date is not None:
-            old_ass = Assertion.objects\
-                               .filter(uuid=subject_uuid,
-                                       obs_num=obs_num,
-                                       predicate_uuid=predicate_uuid,
-                                       data_date=data_date)[:1]
-            if len(old_ass) > 0:
+            try:
+                old_ass = Assertion.objects\
+                                   .filter(uuid=subject_uuid,
+                                           obs_num=obs_num,
+                                           predicate_uuid=predicate_uuid,
+                                           data_date=data_date)[:1]
+            except:
+                old_ass = False
+            if old_ass is False:
                 is_new = False
+            else:
+                if len(old_ass) > 0:
+                    is_new = False
         else:
             is_new = None
         return is_new
@@ -585,11 +592,14 @@ class CandidateDescription():
                     'false': 0,
                     'f': 0,
                     '0': 0,
+                    '0.0': 0,
                     'y': 1,
                     'yes': 1,
                     'present': 1,
                     'true': 1,
-                    't': 1}
+                    't': 1,
+                    '1': 1,
+                    '1.0': 1}
         if record in booleans:
             output = booleans[record]
         return output
@@ -732,7 +742,7 @@ class CandidateString():
             self.oc_string = sm.get_make_string(imp_cell.record)
             self.uuid = self.oc_string.uuid
             self.content = self.oc_string.content
-            self.source_id = self.oc_string.source_id
+            # self.source_id = self.oc_string.source_id
             if self.uuid != imp_cell.l_uuid:
                 # update the reconcilted UUID for import cells with same rec_hash
                 up_cells = ImportCell.objects\
@@ -773,7 +783,7 @@ class CandidateType():
             tm.source_id = imp_cell.source_id
             self.oc_type = tm.get_make_type_pred_uuid_content_uuid(predicate_uuid,
                                                                    content_uuid)
-            self.source_id = self.oc_type.source_id
+            # self.source_id = self.oc_type.source_id
             if self.oc_type.uuid != imp_cell.fl_uuid \
                or self.oc_type.content_uuid != imp_cell.l_uuid:    # update the reconcilted UUID for import cells with same rec_hash
                 if row_num is False:

@@ -3,6 +3,7 @@ import json
 import geojson
 import copy
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
+from geojson import MultiPoint, MultiLineString, LineString
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
@@ -1135,6 +1136,9 @@ class ItemConstruction():
                         elif(geo.ftype == 'MultiPolygon'):
                             coord_obj = json.loads(geo.coordinates)
                             item_db = MultiPolygon(coord_obj)
+                        elif(geo.ftype == 'MultiLineString'):
+                            coord_obj = json.loads(geo.coordinates)
+                            item_db = MultiLineString(coord_obj)
                         item_f_db = Feature(geometry=item_db)
                         item_f_db.id = geo_node
                         item_f_db.geometry.id = geo_node_geom

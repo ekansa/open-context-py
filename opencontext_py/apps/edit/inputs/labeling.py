@@ -197,10 +197,17 @@ class InputLabeling():
                                            uuid__in=uuids)\
                                    .exclude(uuid=uuid_exclude)
         else:
-            man_list = Manifest.objects\
-                               .filter(project_uuid=self.project_uuid,
-                                       label=label)\
-                               .exclude(uuid=uuid_exclude)
+            if self.item_type is not False:
+                man_list = Manifest.objects\
+                                   .filter(project_uuid=self.project_uuid,
+                                           label=label,
+                                           item_type=self.item_type)\
+                                   .exclude(uuid=uuid_exclude)
+            else:
+                man_list = Manifest.objects\
+                                   .filter(project_uuid=self.project_uuid,
+                                           label=label)\
+                                   .exclude(uuid=uuid_exclude)
         if len(man_list) > 0:
             label_exists = man_list[0].uuid
         else:

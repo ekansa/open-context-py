@@ -224,7 +224,6 @@ class ProcessLinks():
                                         if cla.is_valid:
                                             self.count_new_assertions += 1
                                             print('Count OK: ' + str(self.count_new_assertions))
-    
 
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 

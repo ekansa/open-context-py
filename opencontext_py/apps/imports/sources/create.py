@@ -1,5 +1,6 @@
 import uuid as GenUUID
 import datetime
+from dateutil.parser import parse
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.sources.models import ImportSource
@@ -274,6 +275,54 @@ class ImportRefineSource():
                                     .filter(f_uuid=field_uuid)
             self.related_fields[field_num] = rel_fields
         return rel_fields
+
+    def guess_record_data_type(self, record):
+        """ Guesses the record data type based on
+            tests
+        """
+        output = False
+        record = str(record)
+        booleans = {'n': 0,
+                    'no': 0,
+                    'none': 0,
+                    'absent': 0,
+                    'a': 0,
+                    'false': 0,
+                    'f': 0,
+                    '0': 0,
+                    'y': 1,
+                    'yes': 1,
+                    'present': 1,
+                    'p': 1,
+                    'true': 1,
+                    't': 1}
+        lc_record = record.lower()
+        if record in booleans:
+            output = 'xsd:boolean'
+        else:
+            try:
+                num_rec = float(record)
+            except:
+                num_rec = False
+            if num_rec is not False:
+                output = 'xsd:double'
+                try:
+                    num_int = int(record)
+                except ValueError:
+                    num_int = False
+                if num_int is not False:
+                    output = 'xsd:integer'
+                else:
+                    if round(num_rec) == num_rec:
+                        output = 'xsd:integer'
+            else:
+                try:
+                    data_date = parse(record)
+                except Exception as e:
+                    data_date = False
+                if data_date is not False:
+                    output = 'xsd:date'
+        return output
 
     def get_literal_uuid(self, record):
         """ Gets a uuid for a literal in a project's import records """
