@@ -18,18 +18,32 @@ class MerrittMediaFiles():
     This class has useful methods for updating
     media files, particularly updating links
     to archived versions in the CDL Merrritt repository
+
+from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
+mmf = MerrittMediaFiles()
+mmf.update_all_project_media()
+
     """
     BASE_MERRITT = 'http://merritt.cdlib.org/d/'
     ORE_NAMESPACE = 'http://www.openarchives.org/ore/terms#'
     FILE_TYPE_MAPPINGS = {'oc-gen:thumbnail': '/thumb',
                           'oc-gen:preview': '/preview',
                           'oc-gen:fullfile': '/full'}
-    
+
     def __init__(self):
         self.updated_uuids = []
         self.updated_file_count = 0
-    
-    
+
+    def update_all_project_media(self):
+        """ updates media for all projects
+            to use archived files in the
+            Merritt repository
+        """
+        man_projs = Manifest.objects\
+                            .filter(item_type='projects')
+        for man_proj in man_projs:
+            self.update_project_media(man_proj.uuid)
+
     def update_project_media(self, project_uuid):
         """ updates media items for a project
             to use archived files in the California Digital
@@ -46,7 +60,7 @@ class MerrittMediaFiles():
                 ark_id = id_obj.stable_id
             self.update_item_media_files(ark_id,
                                          id_obj.uuid)
-    
+
     def update_item_media_files(self, ark_id, uuid):
         """ updates media files associated with an item
         """
@@ -115,10 +129,10 @@ class MerrittMediaFiles():
                     inconsistencies in Merritt's links to these files. To do so,
                     we need to extract the file name part of the URI and compose
                     a new URI that will be a long-term stable URL / URI.
-                    
+
                     If the Merritt link has a port number indicated, then it is NOT
                     stable and we need to make a stable link
-                    
+
                     A port is in the file object URL, so manually compose a better URL
                     """
                     file_splitters = [(urlquote(ark_id, safe='') + '/0/'),
