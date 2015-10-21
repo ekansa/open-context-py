@@ -291,7 +291,7 @@ class ManifestGeneration():
     def get_project_index(self, project_uuid):
         """ Gets the sort - index number for a project """
         act_proj_short_id = False
-        if(project_uuid != '0'):
+        if project_uuid != '0':
             if project_uuid in self.project_indices:
                 act_proj_short_id = self.project_indices[project_uuid]
             else:

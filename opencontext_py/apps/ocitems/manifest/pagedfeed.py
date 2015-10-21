@@ -20,6 +20,7 @@ class PagedFeedMaker(Atom1Feed):
     last_page = False
     limit_item_types = False
     base_url = ''
+
     
     def root_attributes(self):
         attrs = super(PagedFeedMaker, self).root_attributes()
