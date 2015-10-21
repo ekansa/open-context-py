@@ -64,6 +64,24 @@ exm.migrate_csv_tables()
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.tab_metadata = []
 
+    def clear_csv_tables(self):
+        """ clears, deletes prior migration of the
+            csv table imports
+        """
+        tab_list = self.get_table_id_list()
+        for meta in tab_list:
+            table_id = meta['table_id']
+            print('Deleting: ' + table_id)
+            ExpCell.objects\
+                   .filter(table_id=table_id)\
+                   .delete()
+            ExpField.objects\
+                    .filter(table_id=table_id)\
+                    .delete()
+            ExpTable.objects\
+                    .filter(table_id=table_id)\
+                    .delete()
+
     def migrate_csv_tables(self):
         """ migrates data from csv tables """
         tab_list = self.get_table_id_list()
@@ -89,6 +107,7 @@ exm.migrate_csv_tables()
             ctab.table_id = meta['table_id']
             ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
             ctab.include_original_fields = True  # include fields from source data
+            ctab.boolean_multiple_ld_fields = False  # single field for LD fields
             ctab.source_field_label_suffix = ''  # blank suffix for source data field names
             ctab.prep_default_fields()
             ctab.uuidlist = uuids
@@ -429,7 +448,7 @@ exm.migrate_csv_tables()
         tab_obj = False
         dir_file = self.set_check_directory(act_dir) + filename
         if os.path.exists(dir_file):
-            with open(dir_file, encoding='utf-8') as csvfile:
+            with open(dir_file, encoding='utf-8', errors='replace') as csvfile:
                 # dialect = csv.Sniffer().sniff(csvfile.read(1024))
                 # csvfile.seek(0)
                 csv_obj = csv.reader(csvfile)
