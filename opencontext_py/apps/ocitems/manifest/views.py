@@ -28,24 +28,28 @@ def index_atom(request):
     """ Get the search context JSON-LD """
     mf = ManifestFeed()
     xml_string = mf.make_feed(request.GET)
-    req_neg = RequestNegotiation('application/atom+xml')
-    req_neg.supported_types = ['application/atom+xml']
-    if 'HTTP_ACCEPT' in request.META:
-        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
-    if req_neg.supported:
-        if 'atom' in req_neg.use_response_type:
-            # content negotiation requested Atom
-            return HttpResponse(xml_string,
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+    if xml_string is not False:
+        req_neg = RequestNegotiation('application/atom+xml')
+        req_neg.supported_types = ['application/atom+xml']
+        if 'HTTP_ACCEPT' in request.META:
+            req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+        if req_neg.supported:
+            if 'atom' in req_neg.use_response_type:
+                # content negotiation requested Atom
+                return HttpResponse(xml_string,
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
+            else:
+                # give atom anyway
+                return HttpResponse(xml_string,
+                                    content_type='application/atom+xml' + "; charset=utf8")
         else:
-            # give atom anyway
-            return HttpResponse(xml_string,
-                                content_type='application/atom+xml' + "; charset=utf8")
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type='text/html' + "; charset=utf8",
+                                status=415)
     else:
-        # client wanted a mimetype we don't support
-        return HttpResponse(req_neg.error_message,
-                            content_type='text/html' + "; charset=utf8",
-                            status=415)
+        # no feed of this page or type
+        raise Http404
 
 
 @cache_control(no_cache=True)
