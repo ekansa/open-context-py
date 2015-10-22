@@ -141,7 +141,11 @@
                // for iPad safari
                var new_width = nav_width + 90;
                hero_dom.setAttribute("style",
-                                     "background-size: " + new_width.toString() + "px;");
+                                     "background-size: " + new_width.toString() + "px; margin-left: -30px; margin-right: -60px;");
+            }
+            else{
+               hero_dom.setAttribute("style",
+                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
             }
          }
          else{
