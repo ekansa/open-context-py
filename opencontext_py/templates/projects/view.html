@@ -126,16 +126,19 @@
          var nav_width = $(nav_dom).width();
          var nav_height = $(nav_dom).height();
          var w_height = $(window).height();
+         var w_width = $(window).width();
          if (nav_height < w_height * .25) {
-            if (hero_dom_w < nav_width) {
+            if (hero_dom_w < w_width) {
                // for iPad safari
-               var new_width = nav_width + 90;
-               hero_dom.setAttribute("style",
-                                     "background-size: " + new_width.toString() + "px; margin-left: -30px; margin-right: -60px;");
+               var new_width = w_width + 90;
+               hero_dom.setAttribute(
+                  "style",
+                  "background-size: " + new_width.toString() + "px; width: " + new_width.toString() + "px;  margin-left: -30px; margin-right: -60px;"
+                  );
             }
             else{
                hero_dom.setAttribute("style",
-                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
+                                     "background-size:100%; width: auto; margin-left: -30px; margin-right: -60px;");
             }
             if (hero_dom_w < 1500) {
                var hero_im_h = 350 * (hero_dom_w / 1500);
