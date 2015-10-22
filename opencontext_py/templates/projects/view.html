@@ -135,11 +135,16 @@
                                      "background-size:100%; margin-left: -30px; margin-right: -60px;");
                
             }
+            hero_dom.setAttribute("style",
+                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
          }
          else{
-            var nav_width = $(nav_dom).width();
+            var hero_im_h = 350 * (hero_dom_w / 1500);
+            var hero_dif = 350 - Math.round(hero_im_h, 0);
+            var m_top = 24 - hero_dif;
             content_dom.setAttribute("style",
-                                        "margin-top:10px;");
+                                     "margin-top:" + m_top.toString() + "px;");
+            var nav_width = $(nav_dom).width();
             hero_dom.setAttribute("style",
                                   "background-size:" + nav_width.toString() + "px; margin-left: 0px; margin-right: 0px;");
          }
