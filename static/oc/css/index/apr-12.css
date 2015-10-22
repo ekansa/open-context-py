@@ -11,7 +11,7 @@ div.dai {
 }
 .april-12 section.publish ul li{
     background-repeat: no-repeat;
-    padding-left: 70px;
+    padding-left: 85px;
     height:70px;
     margin-left:-70px;
     padding-top:15px;
@@ -33,7 +33,7 @@ div.dai {
 }
 .april-12 section.explore ul li{
     background-repeat: no-repeat;
-    padding-left: 70px;
+    padding-left: 85px;
     height:70px;
     margin-left:-70px;
     padding-top:15px;
@@ -83,4 +83,7 @@ ul.works-list li{
 }
 .april-12 ul li.cdl{
     background-image:url('../../images/noun-icons-small/cdl-logo.png')
+}
+ul.icon-list li{
+    text-align: left;
 }
