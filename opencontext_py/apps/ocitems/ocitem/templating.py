@@ -44,6 +44,7 @@ class TemplateItem():
         self.class_type_metadata = {}
         self.project = False
         self.citation = False
+        self.license = False
         self.geo = False
         self.linked_data = False
         self.content = False
@@ -89,6 +90,7 @@ class TemplateItem():
         self.create_content(json_ld)
         self.create_query_links(json_ld)
         self.create_project_hero(json_ld)
+        self.create_license(json_ld)
         self.check_contents_top()
 
     def create_person_data(self, json_ld):
@@ -401,6 +403,37 @@ class TemplateItem():
                     else:
                         act_index = 0
                     self.project_hero_uri = heros[act_index]['id']
+    
+    def create_license(self, json_ld):
+        """ creates a license link
+            and label
+            and type
+        """
+        if 'dc-terms:license' in json_ld:
+            # license information
+            self.license = json_ld['dc-terms:license'][0]
+            license_uri = self.license['id']
+            if license_uri[-1] != '/':
+                # add a last character to the string
+                # to keep a consistent pattern
+                license_uri += '/'
+            lic_ex = license_uri.split('/')
+            i = len(lic_ex)
+            loop = True
+            while loop:
+                i -= 1
+                part = lic_ex[i]
+                if len(part) > 0:
+                    try:
+                        n_p = float(part)
+                    except:
+                        n_p = False
+                    if n_p is False:
+                        # we have a string!
+                        self.license['type'] = part
+                        loop = False
+                if i < 2:
+                    loop = False
 
 
 class ItemMetadata():

@@ -50,6 +50,12 @@ class ItemAnnotation():
         note = ''
         ok_predicates = ['dc-terms:creator',
                          'dc-terms:contributor',
+                         'dc-terms:subject',
+                         'dc-terms:coverage',
+                         'dc-terms:temporal',
+                         'dc-terms:references',
+                         'dc-terms:isReferencedBy',
+                         'dc-terms:license',
                          'skos:closeMatch',
                          'skos:exactMatch',
                          'owl:sameAs',

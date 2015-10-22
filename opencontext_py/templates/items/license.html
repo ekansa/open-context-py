@@ -1,0 +1,66 @@
+{% block license %}
+    <div id="area-license" class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Copyright License</h3>
+        </div>
+        <div class="panel-body" id="license">
+        {% if item.license != False %}
+            
+            {% if item.license.type == 'zero' %}
+            <div class="row">
+                <div class="col-xs-3">
+                </div>
+                <div class="col-xs-6">
+                    <a href="{{ item.license.id }}" target="_blank">
+                        <img class="img-responsive"
+                             src="{{ base_url }}/static/oc/images/licenses/cc-zero.png"
+                             alt="CC-Zero icon" />
+                    </a>
+                </div>
+                <div class="col-xs-3">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12">
+                    <h5>
+                        <a href="{{ item.license.id }}" target="_blank">{{ item.license.label }}</a>
+                    </h5>
+                    <p class="small">While this content is in the public domain,
+                    please appropriately cite the contributors and Open Context
+                    </p>
+                </div>
+            </div>
+            {%else%}
+             <div class="row">
+                <div class="col-xs-3">
+                </div>
+                <div class="col-xs-6">
+                    <a href="{{ item.license.id }}" target="_blank">
+                        <img class="img-responsive"
+                             src="{{ base_url }}/static/oc/images/licenses/{{ item.license.type }}.png"
+                             alt="CC-{{ item.license.type }} icon" />
+                    </a>
+                </div>
+                <div class="col-xs-3">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xs-12">
+                    <h5>
+                        <a href="{{ item.license.id }}" target="_blank">{{ item.license.label }}</a>
+                    </h5>
+                    <p class="small">To the extent to which copyright applies, this content
+                    carries the above license. Follow the link to understand specific permissions
+                    and requirements.
+                    <br/>
+                    <em>Required Attribution</em>: Citation and reference of URIs (hyperlinks)
+                    </p>
+                </div>
+            </div>
+            {%endif%}
+        {%else%}
+            <p>This content is not yet licensed. Please check back again soon!</p>
+        {%endif%}
+        </div>
+    </div>
+{% endblock %}
