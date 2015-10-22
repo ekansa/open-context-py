@@ -127,16 +127,6 @@
          var nav_height = $(nav_dom).height();
          var w_height = $(window).height();
          if (nav_height < w_height * .25) {
-            if (hero_dom_w < 1500) {
-               var hero_im_h = 350 * (hero_dom_w / 1500);
-               var hero_dif = 350 - Math.round(hero_im_h, 0);
-               var m_top = -45 - hero_dif;
-               content_dom.setAttribute("style",
-                                        "margin-top:" + m_top.toString() + "px;");
-               hero_dom.setAttribute("style",
-                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
-               
-            }
             if (hero_dom_w < nav_width) {
                // for iPad safari
                var new_width = nav_width + 90;
@@ -146,6 +136,16 @@
             else{
                hero_dom.setAttribute("style",
                                      "background-size:100%; margin-left: -30px; margin-right: -60px;");
+            }
+            if (hero_dom_w < 1500) {
+               var hero_im_h = 350 * (hero_dom_w / 1500);
+               var hero_dif = 350 - Math.round(hero_im_h, 0);
+               var m_top = -45 - hero_dif;
+               content_dom.setAttribute("style",
+                                        "margin-top:" + m_top.toString() + "px;");
+               hero_dom.setAttribute("style",
+                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
+               
             }
          }
          else{
