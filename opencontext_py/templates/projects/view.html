@@ -28,7 +28,7 @@
     -->
 </div>
 
-<div id="item-content" style="margin-top: -90px;">
+<div id="item-content" style="margin-top: -45px;">
     <div class="row">
         <div class="col-sm-8">
             <div class="well well-sm">
@@ -138,6 +138,8 @@
          }
          else{
             var nav_width = $(nav_dom).width();
+            content_dom.setAttribute("style",
+                                        "margin-top:10px;");
             hero_dom.setAttribute("style",
                                   "background-size:" + nav_width.toString() + "px; margin-left: 0px; margin-right: 0px;");
          }
