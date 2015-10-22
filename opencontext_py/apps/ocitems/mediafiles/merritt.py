@@ -232,18 +232,18 @@ mmf.process_merritt_dump('cdl', 'arks-files.csv')
     def process_merritt_dump(self, act_dir, filename):
         """ processes a merritt CSV dump listing
             OC media files in the merritt repository
-            
+
 from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
 mmf = MerrittMediaFiles()
 mmf.process_merritt_dump('cdl', 'arks-files.csv')
-    
+
         """
         tab_obj = self.load_csv_file(act_dir, filename)
         if tab_obj is not False:
             print('Found records: ' + str(len(tab_obj)))
             for row in tab_obj:
                 self.process_merritt_dump_row(row)
-    
+
     def process_merritt_dump_row(self, row):
         """ processes a merrit dump row
             to update an item
@@ -281,7 +281,7 @@ mmf.process_merritt_dump('cdl', 'arks-files.csv')
                             output += '\n'
                             output += merritt_uri
                             print(output)
-    
+
     def set_check_directory(self, act_dir):
         """ Prepares a directory to find import GeoJSON files """
         output = False
