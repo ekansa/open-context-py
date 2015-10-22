@@ -1,11 +1,12 @@
 {% extends 'item.html' %}
 
 {% block itemcontent %}
+
 <style type="text/css">
-    div.bosom-none {
+   #hero-area {
         position: aboslute;
         display: block;
-        margin-top: -19px;
+        margin-top: -20px;
         margin-left: -30px;
         margin-right: -60px;
         width: auto;
@@ -17,18 +18,17 @@
         background-image: url('{{ base_url }}/static/oc/images/projects/project-default-hero.png');
         {% endif %}
         background-repeat: no-repeat;
-        background-size: 100% auto;
+        background-size: 100%;
     }
 </style>
 
-<div class="container-fluid bosom-none">
+<div id="hero-area">
     <!--
     <img class="img-responsive center-block" src="http://www.placehold.it/960x350" alt="Project hero image"/>
     -->
 </div>
 
-
-<div id="item-content" style="margin-top: -40px;">
+<div id="item-content" style="margin-top: -90px;">
     <div class="row">
         <div class="col-sm-8">
             <div class="well well-sm">
@@ -109,4 +109,43 @@
          </div>
      </div>
 </div>
+
+<script type="text/javascript">
+   <!--
+      hero_size();
+      $( window ).resize(function() {
+        hero_size();
+      });
+      function hero_size(){
+         // sets navigation bar style based on window size
+         var nav_dom = document.getElementById("oc-nav-bar");
+         var hero_dom = document.getElementById("hero-area");
+         var content_dom = document.getElementById("item-content");
+         var hero_dom_w = hero_dom.clientWidth;
+         var nav_height = $(nav_dom).height();
+         var w_height = $(window).height();
+         if (nav_height < w_height * .25) {
+            if (hero_dom_w < 1500) {
+               var hero_im_h = 350 * (hero_dom_w / 1500);
+               var hero_dif = 350 - Math.round(hero_im_h, 0);
+               var m_top = -45 - hero_dif;
+               content_dom.setAttribute("style",
+                                        "margin-top:" + m_top.toString() + "px;");
+               hero_dom.setAttribute("style",
+                                     "background-size:100%; margin-left: -30px; margin-right: -60px;");
+               
+            }
+         }
+         else{
+            var nav_width = $(nav_dom).width();
+            hero_dom.setAttribute("style",
+                                  "background-size:" + nav_width.toString() + "px; margin-left: 0px; margin-right: 0px;");
+         }
+      }
+    
+    -->
+</script>
+
+
+
 {% endblock %} 
