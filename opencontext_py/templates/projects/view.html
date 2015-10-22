@@ -139,8 +139,9 @@
             }
             if (hero_dom_w < nav_width) {
                // for iPad safari
+               var new_width = nav_width + 90;
                hero_dom.setAttribute("style",
-                                     "width: " + nav_width.toString() + "px;");
+                                     "width: " + new_width.toString() + "px; margin-left: -30px; margin-right: -60px;");
             }
          }
          else{
