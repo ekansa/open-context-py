@@ -234,6 +234,7 @@ class RecordProperties():
                                              file_type='oc-gen:thumbnail')[:1]
             else:
                 # do this for media items
+                muuid = uuid
                 thumb = Mediafile.objects\
                                  .filter(uuid=uuid,
                                          file_type='oc-gen:thumbnail')[:1]
