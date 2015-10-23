@@ -222,18 +222,25 @@ class RecordProperties():
         """ get media record and thumbnail, if it exists """
         if 'uuid' in solr_rec:
             uuid = solr_rec['uuid']
-            media_item = Assertion.objects\
-                                  .filter(uuid=uuid,
-                                          object_type='media')[:1]
-            if len(media_item) > 0:
-                muuid = media_item[0].object_uuid
+            thumb = []
+            if self.item_type != 'media':
+                media_item = Assertion.objects\
+                                      .filter(uuid=uuid,
+                                              object_type='media')[:1]
+                if len(media_item) > 0:
+                    muuid = media_item[0].object_uuid
+                    thumb = Mediafile.objects\
+                                     .filter(uuid=muuid,
+                                             file_type='oc-gen:thumbnail')[:1]
+            else:
+                # do this for media items
                 thumb = Mediafile.objects\
-                                 .filter(uuid=muuid,
+                                 .filter(uuid=uuid,
                                          file_type='oc-gen:thumbnail')[:1]
-                if len(thumb) > 0:
-                    self.thumbnail_href = self.base_url + '/media/' + muuid
-                    self.thumbnail_uri = settings.CANONICAL_HOST + '/media/' + muuid
-                    self.thumbnail_scr = thumb[0].file_uri
+            if len(thumb) > 0:
+                self.thumbnail_href = self.base_url + '/media/' + muuid
+                self.thumbnail_uri = settings.CANONICAL_HOST + '/media/' + muuid
+                self.thumbnail_scr = thumb[0].file_uri
 
     def get_category_hierarchy(self, solr_rec):
         """ gets the most specific category
