@@ -12,12 +12,16 @@ from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
 from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
 from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliation
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 def index(request, spatial_context=None):
     return HttpResponse("Hello, world. You're at the sets index.")
 
 
+# @cache_control(no_cache=True)
+# @never_cache
 def html_view(request, spatial_context=None):
     rp = RootPath()
     base_url = rp.get_baseurl()

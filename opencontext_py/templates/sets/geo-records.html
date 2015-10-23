@@ -1,18 +1,24 @@
 {% load humanize %}
 {% if st.geo_records|length > 0 %}
-    <div class="panel-group" id="acc-geo-recs">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                
-                <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#acc-facets" href="#panel-geo-recs">
-                        <span class="glyphicon glyphicon-resize-vertical"></span>
-                                Search Results
-                    </a>
-                </h4>
-            </div>
-             
-            <div id="panel-geo-recs" class="panel-collapse collapse in">
+    
+        <div class="panel panel-default" id="acc-geo-recs">
+            
+            <nav class="navbar navbar-default">
+                <div class="container-fluid">
+                    <div class="col-xs-8">
+                    <div class="navbar-header">
+                        <h3>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}
+                        </h3>
+                    </div>
+                    </div>
+                    <div class="col-xs-4 ">
+                    {% include 'sets/paging.html' %}
+                    </div>
+                </div>
+            </nav>
+            
+            
+            <div id="panel-geo-recs">
                 <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -51,7 +57,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    
 {%endif%}
 
 
