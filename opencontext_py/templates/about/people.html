@@ -1,0 +1,288 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Meet Our Team</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+                            <img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/team-noun-8283.png" alt="Icon from Noun Project (#ID 6396)" />
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context is maintained and administered by the <a href="http://www.alexandriaarchive.org/">Alexandria Archive Institute</a>, a not-for-profit organization. Our team includes information scientists, field researchers, librarians, and other academic professionals with domain expertise who work together to:
+								</p>
+								<ul>
+									<li>Edit, review, and publish open access digital content, in collaboration with data authors;
+									</li>
+									<li>Optionally, organize peer-review of data;</li>
+									<li>Integrate data with other Web-based research collections; and
+									</li>
+									<li>Preserve it with the <a href="http://www.cdlib.org/">California Digital Library.</a>
+									</li> 
+								</ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+		
+		<style type="text/css">
+			div.img-link {
+				padding-top: 4px;
+			}
+			div.img-link img {
+				
+			}
+			div.sp-cap {
+				
+			}
+		</style>
+		
+		
+		<h3>Editors in Chief</h3>
+        <div class="row">
+            
+            <div class="col-sm-6">
+				<div class="thumbnail">
+					<div class="img-link">
+					<a rel="foaf:homepage" href="http://alexandriaarchive.org/about/people">
+						<img class="img-responsive img-rounded" src="{{ base_url }}/static/oc/images/about/sarah-kansa.jpg" alt="Sarah Kansa"/>
+					</a>
+					</div>
+					<div class="caption" id="swk-cap">
+						<h3>
+							<span typeof="foaf:Person" resource="http://alexandriaarchive.org/about/people/">Sarah Whitcher Kansa, RPA</span>
+						</h3>
+						<p>I am Director of the Alexandria Archive Institute, the non-profit organization that supports Open Context. I have a Ph.D. in archaeology and have spent 20+ years conducting zooarchaeological research in the Old World. I am Vice-President of the International Council for Archaeozoology, and participate in the Publications Committees of the Society for American Archaeology and the American Schools of Oriental Research.</p>
+						<p>For Open Context, I provide overall project managment for publications, work on data editing and review, manage collaborations with other publishers, and organize peer-review. I also tweet for Open Context <a href="https://twitter.com/opencontext">@opencontext</a>.(<a href="mailto:skansa@alexandriaarchive.org">Contact me!</a>)
+						</p>
+					</div>
+				</div>
+			</div>
+				
+			<div class="col-sm-6">
+				<div class="thumbnail">
+					<div class="img-link">
+						<a rel="foaf:homepage" href="http://alexandriaarchive.org/about/people/">
+							<img class="img-responsive img-rounded" src="{{ base_url }}/static/oc/images/about/eric-kansa.jpg" alt="Eric Kansa"/>
+						</a>
+					</div>
+					<div class="caption" id="eck-cap">
+						<h3>
+							<span typeof="foaf:Person" resource="http://alexandriaarchive.org/about/people/">Eric Kansa</span>
+						</h3>
+						<p>I'm the Program Director for Open Context. I have a Ph.D. in Anthropology, and archeological field experience in the Near East, Egypt, Italy and North America. My research interests explore research data informatics, research data policy, ethics, and professional context of the digital humanities.</p>
+						<p>I run research and development for Open Context and manage the technical aspects of data publishing and archiving, including systems interoperability, data integration, and indexing. I blog at <a href="http://ux.opencontext.org/blog/">Heritage Bytes</a>, and am on Twitter <a href="https://twitter.com/ekansa">@ekansa</a>. (<a href="mailto:ekansa@alexandriaarchive.org">Contact me!</a>)
+						</p>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		
+		
+		
+		<h3>Editorial Board</h3>
+
+        <div class="row">
+            <div class="col-sm-1">
+				
+			</div>
+			<div class="col-sm-10">
+				<ul class="sep-list">
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/231886265">
+							<a rel="foaf:homepage" href="https://www.unlv.edu/people/levent-atici">Levent Atici</a>, Department of Anthropology, University of Nevada, Las Vegas
+						</span>
+					</li>		    
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/48492235">
+							<a rel="foaf:homepage" href="http://csanet.org/pers/nevita.html">Harrison Eiteljorg, II</a>, Center for the Study of Architecture, Bryn Mawr College
+						</span>
+					</li>
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="https://binghamton.academia.edu/KateEllenberger">
+							 <a rel="foaf:homepage" href="http://kateellenberger.com/">Kate Ellenberger</a>, Binghamton University, (Anthropology, Public Archaeolology, GIS)
+						</span>
+					</li>
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/260107204">
+							 <a rel="foaf:homepage" href="http://www.ameeri.org/foster/">Catherine P. Foster</a>, Ancient Middle East Education and Research Institute (AMEERI)
+						</span>
+					</li>
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/220831018">
+							 <a rel="foaf:homepage" href="http://sebastianheath.com/">Sebastian Heath</a>, American Numismatic Society and Institute for the Study of the Ancient World, New York University
+						</span>
+					</li>
+					<li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://web.library.emory.edu/lori-m-jahnke">
+							 <a rel="foaf:homepage" href="http://web.library.emory.edu/lori-m-jahnke">Lori Jahnke</a>, Robert W. Woodruff Library, Emory University
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/250678616">
+							 <a rel="foaf:homepage" href="http://las.depaul.edu/ant/People/Faculty/MoragKerselPhD.asp">Morag Kersel</a>, DePaul University
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/40915402">
+							 <a title="Publications" href="http://www.worldcat.org/identities/lccn-n88-12471">Sannie Osborn</a>, U.S. Army Corps of Engineers (retired)
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://berkeley.academia.edu/BenjaminPorter">
+							 <a rel="foaf:homepage" href="://vcresearch.berkeley.edu/faculty/benjamin-porter>Benjamin Porter">Benjamin Porter</a>, University of California, Berkeley
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/234244635">
+							 <a rel="foaf:homepage" href="http://www.utexas.edu/cola/depts/classics/faculty/atr253">Adam T. Rabinowitz</a>, University of Texas, Austin
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://viaf.org/viaf/4506705">
+							 <a rel="foaf:homepage" href="http://oi.uchicago.edu/research/is/scholars/rowan.html">Yorke Rowan</a>, University of Chicago
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://www.anth.uconn.edu/faculty/smith/">
+							 <a rel="foaf:homepage" href="http://www.anth.uconn.edu/faculty/smith/">Alexia Smith</a>, University of Connecticut
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://www.iusb.edu/~socanth/wells.shtml">
+							 <a rel="foaf:homepage" href="https://www.iusb.edu/sociology-anth/faculty/wells.php">Joshua Wells</a>, Indiana University, South Bend
+						</span>
+				   </li>
+				   <li rel="foaf:member">
+						<span typeof="bibo:editor" resource="http://archaeology.as.utk.edu/people/yerka.html">
+							 <a rel="foaf:homepage" href="http://archaeology.as.utk.edu/people/yerka.html">Stephen Yerka</a>, Archaeological Research Laboratory (ARL), University of Tennessee, Knoxville
+						</span>
+				   </li>
+				</ul>
+			</div>
+		</div> <!-- end row for editorial board -->
+        
+		
+		
+        <h3>Software and Design Team</h3>
+		
+        <div class="row">
+            <div class="col-sm-1">
+				
+			</div>
+			<div class="col-sm-10">
+				<ul class="sep-list">
+					<li rel="foaf:maker">
+						<span typeof="foaf:Person" resource="http://viaf.org/viaf/39051639">
+							 <a rel="foaf:homepage" href="http://alexandriaarchive.org/about/people#eck">Eric C. Kansa</a>, Project Director
+						</span>
+				   </li>
+				   <li rel="foaf:maker">
+						<span typeof="foaf:Person" resource="http://phoebefrance.net/">
+							 <a rel="foaf:homepage" href="http://alexandriaarchive.org/about/people#pf">Phoebe France</a>, Usability Specialist and Web Designer
+						</span>
+				   </li>
+				   <li rel="foaf:maker">
+						<span typeof="foaf:Person" resource="http://www.linkedin.com/profile/view?id=18440411">
+							 <a title="LinkedIn Profile" href="http://www.linkedin.com/profile/view?id=18440411">John Ward</a>, Consulting Developer, enterprise search
+						</span>
+				   </li>
+				</ul>
+			</div>
+		</div> <!-- end row for technical -->
+		
+		
+		<h3>Open Context Alumni</h3>
+		
+		<div class="row">
+            <div class="col-sm-1">
+				
+			</div>
+			<div class="col-sm-10">
+				<ul class="sep-list">
+					<li>Francis Deblauwe, Assistant Editor
+					</li>
+					<li>Jeremy Whitaker, Technology Consultant, New Product Development
+					</li>
+					<li>Sarah van Wart, Schema Mapping Developer, I-School MIMS student
+					</li>
+					<li>Mohit Gupta, Omeka plugin Developer, I-School MIMS student
+					</li>
+					<li>Noah Kersey, User-Experience, widgets Developer, I-School MIMS student
+					</li>
+					<li>Gopal Vaswani, Web-services, database Developer, I-School MIMS student
+					</li>
+				</ul>
+			</div>
+		</div>
+		
+		
+		
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Team icon by <a target="_blank" href="https://thenounproject.com/term/team/8283/">Colin Lawrence</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        
+    </div>
+
+<script type="text/javascript">
+   <!--
+    div_size();
+	$( window ).resize(function() {
+	  div_size();
+	});
+	
+	function match_heights(lead_id, follow_id, buffer){
+		
+		if (document.getElementById(lead_id)) {
+			var lead_dom = document.getElementById(lead_id);
+			var lead_h = $(lead_dom).height();
+			if (document.getElementById(follow_id)) {
+				var follow_dom = document.getElementById(follow_id);
+				var follow_h = $(follow_dom).height();
+				lead_h += buffer;
+				follow_dom.setAttribute("style",
+										    "min-height:" + lead_h.toString() + "px;");
+			}
+		}
+	}
+	
+    function div_size(){
+        // sets elements to have the same height
+		match_heights('swk-cap', 'eck-cap', 18); 
+    }
+    
+    -->
+</script>
+
+
+
+
+{% endblock %} 
