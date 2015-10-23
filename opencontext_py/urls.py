@@ -16,7 +16,7 @@ from opencontext_py.apps.ocitems.projects import views as ProjectViews
 from opencontext_py.apps.ocitems.predicates import views as PredicateViews
 from opencontext_py.apps.ocitems.octypes import views as OCtypeViews
 from opencontext_py.apps.exports.exptables import views as OCtableViews
-from opencontext_py.apps.searcher.sets import views as SetsViews
+from opencontext_py.apps.searcher.search import views as SearchViews
 from opencontext_py.apps.entities.entity import views as EntityViews
 from opencontext_py.apps.edit.items import views as EditItemViews
 from opencontext_py.apps.edit.projects import views as EditProjectsViews
@@ -54,25 +54,41 @@ urlpatterns = patterns('',
                        url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
                        url(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
                        url(r'^contexts', AboutViews.index_view, name='about_index'),
+                       # Sets views
+                       url(r'^sets/(?P<spatial_context>\S+)?.json', SearchViews.sets_view, name='sets_json'),
+                       url(r'^sets/(?P<spatial_context>\S+)?.atom', SearchViews.sets_view, name='sets_atom'),
+                       url(r'^sets/(?P<spatial_context>\S+)?', SearchViews.sets_view, name='sets_html'),
+                       # Lightbox views
+                       url(r'^lightbox/(?P<spatial_context>\S+)?.json', SearchViews.lightbox_view, name='lightbox_json'),
+                       url(r'^lightbox/(?P<spatial_context>\S+)?.atom', SearchViews.lightbox_view, name='lightbox_atom'),
+                       url(r'^lightbox/(?P<spatial_context>\S+)?', SearchViews.lightbox_view, name='lightbox_html'),
+                       # Search views
+                       url(r'^subjects-search.json?', SearchViews.subjects_json_view, name='subjects_search_json_d'),
+                       url(r'^subjects-search/(?P<spatial_context>\S+)?.json', SearchViews.subjects_json_view, name='subjects_search_json'),
+                       url(r'^subjects-search/(?P<spatial_context>\S+)?', SearchViews.subjects_html_view, name='subjects_search_html'),
+                       url(r'^media-search.json?', SearchViews.media_json_view, name='media_search_json_d'),
+                       url(r'^media-search/(?P<spatial_context>\S+)?.json', SearchViews.media_json_view, name='media_search_json'),
+                       url(r'^media-search/(?P<spatial_context>\S+)?', SearchViews.media_html_view, name='media_search_html'),
+                       url(r'^projects-search.json?', SearchViews.projects_json_view, name='projects_search_json_d'),
+                       url(r'^projects-search/(?P<spatial_context>\S+)?.json', SearchViews.projects_json_view, name='projects_search_json'),
+                       url(r'^projects-search/(?P<spatial_context>\S+)?', SearchViews.projects_html_view, name='projects_search_html'),
+                       url(r'^search.json?', SearchViews.json_view, name='search_json_d'),
+                       url(r'^search/(?P<spatial_context>\S+)?.json', SearchViews.json_view, name='search_json'),
+                       url(r'^search/(?P<spatial_context>\S+)?', SearchViews.html_view, name='search_html'),
                        # Subjects views for main records (subjects of observations)
                        url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
-                       # url(r'^subjects', SubjectViews.index, name='subjects_index'),
-                       url(r'^subjects', AboutViews.index_view, name='about_index'),
-                       # Sets views
-                       url(r'^sets/(?P<spatial_context>\S+)?.json', SetsViews.json_view, name='sets_json'),
-                       url(r'^sets/(?P<spatial_context>\S+)?', SetsViews.html_view, name='sets_html'),
+                       url(r'^subjects', SubjectViews.index, name='subjects_index_html_s'),
                        # Media views (media resources / metadata + binary files)
                        url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
                        url(r'^media/(?P<uuid>\S+)/full', MediaViews.html_full, name='media_full'),
                        url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
-                       # url(r'^media', MediaViews.index, name='media_index'),
-                       url(r'^media', AboutViews.index_view, name='about_index'),
+                       url(r'^media', MediaViews.index, name='media_index_html_s'),
                        # Document views for HTML document items
                        url(r'^documents/(?P<uuid>\S+).json', DocumentViews.json_view, name='documents_json'),
                        url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
                        # url(r'^documents', DocumentViews.index, name='documents_index'),
-                       url(r'^documents', AboutViews.index_view, name='about_index'),
+                       url(r'^documents', DocumentViews.index, name='documents_index'),
                        # Person views for Person / organization items
                        url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='persons_json'),
                        url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='persons_html'),
@@ -80,11 +96,11 @@ urlpatterns = patterns('',
                        url(r'^persons/(?P<uuid>\S+)', AboutViews.index_view, name='about_index'),
                        url(r'^persons', AboutViews.index_view, name='about_index'),
                        # Project views for projects
-                       url(r'^projects/.json', ProjectViews.index_json, name='projects_index_json'),
-                       url(r'^projects.json', ProjectViews.index_json, name='projects_index_json'),
+                       # url(r'^projects/.json', ProjectViews.index_json, name='projects_index_json'),
+                       # url(r'^projects.json', ProjectViews.index_json, name='projects_index_json'),
                        url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='projects_json'),
                        url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='projects_html'),
-                       url(r'^projects', ProjectViews.index, name='projects_index'),
+                       url(r'^projects', ProjectViews.index, name='projects_search_html_s'),
                        # url(r'^projects', AboutViews.index_view, name='about_index'),
                        # Predicates views for descriptive variables and linking relations from OC contributors
                        url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='predicates_json'),

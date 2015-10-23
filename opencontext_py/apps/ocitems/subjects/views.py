@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
+from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -13,7 +14,13 @@ from django.template import RequestContext, loader
 # The main dependency for this app is for OCitems, which are used to generate
 # Every type of item in Open Context, including subjects
 def index(request):
-    return HttpResponse("Hello, world. You're at the subjects index.")
+    """ redirects requests from the subjects index
+        to the subjects-search view
+    """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url =  base_url + '/subjects-search/'
+    return redirect(new_url, permanent=True)
 
 
 def html_view(request, uuid):

@@ -13,7 +13,17 @@
                         <div class="col-sm-1">
                         </div>
                         <div class="col-sm-4 text-right" id="map-title-num">
-                            <h3 class="panel-title">{{ st.total_count|intcomma }} records</h3>
+                            <h3 class="panel-title">{{ st.total_count|intcomma }} 
+                            {% if item_type == 'subjects' %}
+                        Data Records
+                        {%elif item_type == 'media' %}
+                        Media Resources
+                        {%elif item_type == 'projects' %}
+                        Projects
+                        {%else%}
+                        Records
+                        {%endif%}
+                            </h3>
                         </div>
                     </div>
                 </div>
@@ -23,14 +33,14 @@
             </div>  
         </div>
         <div class="col-sm-4">
-            {% include 'sets/filters.html' %}
-            {% include 'sets/text-search.html' %}
-            {% include 'sets/facets.html' %}
+            {% include 'search/text-search.html' %}
+            {% include 'search/filters.html' %}
+            {% include 'search/facets.html' %}
         </div>
     
     <div class="row">
         <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
-            {% include 'sets/geo-records.html' %}
+            {% include 'search/geo-records.html' %}
         </div>
     </div>
     
@@ -48,7 +58,8 @@
         var base_url = "{{ base_url }}";
         var hash = false;
         var base_id = false;
-        var search_map = new search_map("{{ json_url }}");
+        var base_search_link = "{{ base_search_link }}";
+        var search_map = new search_map("{{ json_url }}", base_search_link);
         var total_count = {{ st.total_count }};
         if (total_count > 0) {
             search_map.map.get_request_hash();

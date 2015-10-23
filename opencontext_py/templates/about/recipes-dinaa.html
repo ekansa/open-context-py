@@ -14,7 +14,7 @@
     
     <li>
         <p>In the expression field, write:</p>
-        <p><samp>"{{ base_url }}/sets/.json?response=uri-meta&trinomial=" + escape(value, "url")</samp></p>
+        <p><samp>"{{ base_url }}/subjects-search/.json?response=uri-meta&trinomial=" + escape(value, "url")</samp></p>
         <p>The above expression will get a list of possible DINAA identifiers that match your trinomial. The vast majority of cases will return only 1 DINAA identifier / trinomial (but not always, since state site records do not necessarily have a 1 to 1 relationship with trinomial identifiers). You can set the "throttle delay" to 500 milliseconds (this delay makes pauses between requests so you don't overwhelm Open Context's server). If you have a big dataset, 1/2 second delays add up.</p>
     </li>
     

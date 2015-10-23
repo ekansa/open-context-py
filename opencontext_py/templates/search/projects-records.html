@@ -11,7 +11,7 @@
                 </div>
                 </div>
                 <div class="col-xs-4 ">
-                {% include 'sets/paging.html' %}
+                {% include 'search/paging.html' %}
                 </div>
             </div>
         </nav>
@@ -38,7 +38,7 @@
                 <tbody>
             {% for proj_rec in p_aug.records %}
                 {% with proj_rec=proj_rec %}
-                {% include 'projects/index-record.html' %}
+                {% include 'search/projects-record.html' %}
                 {% endwith %}
             {% endfor %}
                 </tbody>

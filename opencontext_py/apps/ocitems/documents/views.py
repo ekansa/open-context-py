@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
+from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -11,7 +12,13 @@ from django.template import RequestContext, loader
 # item where the content is structured text, not a binary file
 # which would be a media resource item
 def index(request):
-    return HttpResponse("Hello, world. You're at the documnents index.")
+    """ redirects requests from the media index
+        to the media-search view
+    """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url =  base_url + '/search/?type=documents'
+    return redirect(new_url, permanent=True)
 
 
 def html_view(request, uuid):

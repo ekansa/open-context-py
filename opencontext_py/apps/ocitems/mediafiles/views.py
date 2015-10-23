@@ -1,5 +1,6 @@
 import json
 from django.http import HttpResponse, Http404
+from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -12,7 +13,13 @@ from django.template import RequestContext, loader
 # so that thumbnail, preview, and other versions can be discovered. However
 # these other versions are "part" of an abstract media resource
 def index(request):
-    return HttpResponse("Hello, world. You're at the media index.")
+    """ redirects requests from the media index
+        to the media-search view
+    """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url =  base_url + '/media-search/'
+    return redirect(new_url, permanent=True)
 
 
 def html_view(request, uuid):
