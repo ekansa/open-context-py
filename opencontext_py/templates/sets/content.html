@@ -27,20 +27,13 @@
             {% include 'sets/text-search.html' %}
             {% include 'sets/facets.html' %}
         </div>
-    <div class="row" style="margin-bottom: -15px;">
-        <div class="col-sm-8">
-            
-        </div>
-        <div class="col-sm-4" style="padding-right: 30px; text-align: right;">
-            {% include 'sets/paging.html' %}
-        </div>
-    </div>
-    <div class="row" style="padding-top: 0px;">
+    
+    <div class="row">
         <div class="col-sm-12" style="padding-left: 30px; padding-right: 30px;">
-            <h3>Search results {{ st.start_num }} to {{ st.end_num }} of {{ st.total_count|intcomma }}</h3>
             {% include 'sets/geo-records.html' %}
         </div>
     </div>
+    
     <style type="text/css">
         a.diabled-map-button {
             color: #CCCCCC;

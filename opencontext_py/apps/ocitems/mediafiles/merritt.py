@@ -30,6 +30,7 @@ mmf = MerrittMediaFiles()
 mmf.process_merritt_dump('cdl', 'arks-files.csv')
 
     """
+    BASE_MERRITT_S = 'https://merritt.cdlib.org/d/'
     BASE_MERRITT = 'http://merritt.cdlib.org/d/'
     ORE_NAMESPACE = 'http://www.openarchives.org/ore/terms#'
     FILE_TYPE_MAPPINGS = {'oc-gen:thumbnail': '/thumb',
@@ -261,26 +262,170 @@ mmf.process_merritt_dump('cdl', 'arks-files.csv')
             # print('Identifers check: ' + ark + ' = ' + uuid)
             old_files = Mediafile.objects.filter(uuid=uuid)
             for old_file in old_files:
-                if self.BASE_MERRITT not in old_file.file_uri:
+                if self.BASE_MERRITT not in old_file.file_uri \
+                   and self.BASE_MERRITT_S not in old_file.file_uri:
                     # the file_uri is not in Merritt, so do update
                     # processes
-                    print('Check: ' + uuid + ': ' + old_file.file_type)
+                    merritt_found = False
+                    # print('Check: ' + uuid + ': ' + old_file.file_type)
+                    # get parts of the old file so we can
+                    # look for them in the Merritt file
+                    old_file_ex = old_file.file_uri.split('/')
+                    check_ex = []
+                    loop = True
+                    i = len(old_file_ex)
+                    while loop:
+                        i -= 1
+                        part = old_file_ex[i]
+                        check_ex.append(part)
+                        if len(check_ex) >= 4:
+                            loop = False
+                        if i == 1:
+                            loop = False
                     if old_file.file_type in self.FILE_TYPE_MAPPINGS:
                         type_pattern = self.FILE_TYPE_MAPPINGS[old_file.file_type]
-                        print('Looking for ' + type_pattern + ' in ' + merritt_uri)
-                        if type_pattern in merritt_uri:
-                            # found a match
+                        if 'http://www.opencontext.org/database/oc_media/domuztepe/DT_thumbs/' in old_file.file_uri:
+                            print('Looking for ' + type_pattern + ' in ' + merritt_uri)
+                        patterns = [type_pattern]
+                        if type_pattern == '/thumb':
+                            patterns.append('%20thumbs')
+                            patterns.append('_thumbs')
+                            patterns.append('DT_thumbs')
+                            patterns.append('domuztepe/DT_thumbs')
+                            patterns.append('geissenklosterle_thumbs')
+                            patterns.append('hayonim_thumbs')
+                        elif type_pattern == '/preview':
+                            patterns.append('%20preview')
+                            patterns.append('Preview')
+                            patterns.append('geissenklosterle_preview')
+                            patterns.append('_previews')
+                        elif type_pattern == '/full':
+                            patterns.append('/docs')
+                            patterns.append('opencontext/Domuz/DT Images')
+                            patterns.append('opencontext/geissenklosterle/Geissenklosterle%20scans')
+                            patterns.append('opencontext/geissenklosterle/Geissenklosterle scans')
+                            patterns.append('opencontext/hayonim/Hayonim_photos')
+                        p_not_found = True
+                        for pattern in patterns:
+                            dt_true = False
+                            if (pattern in merritt_uri and p_not_found) \
+                               or dt_true:
+                                # found a match
+                                p_not_found = False
+                                if uuid not in self.updated_uuids:
+                                    self.updated_uuids.append(uuid)
+                                self.updated_file_count += 1
+                                old_file.file_uri = merritt_uri.replace(' ', '%20')
+                                old_file.save()
+                                output = '\n\n'
+                                output += 'Saved file: ' + str(self.updated_file_count)
+                                output += ' of uuid: ' + str(len(self.updated_uuids))
+                                output += '\n'
+                                output += merritt_uri
+                                print(output)
+                                merrit_found = True
+                    if merritt_found is False:
+                        # we didn't find match yet for the merritt file
+                        # so try this alternative method
+                        merritt_ok = True
+                        for part in check_ex:
+                            if part in merritt_uri or\
+                               urlquote(part, safe='') in merritt_uri:
+                                # found the part
+                                pass
+                            else:
+                                # can't find a match, so problem
+                                merritt_ok = False
+                        if merritt_ok:
+                            # OK we found a match, so save it
                             if uuid not in self.updated_uuids:
                                 self.updated_uuids.append(uuid)
                             self.updated_file_count += 1
-                            old_file.file_uri = merritt_uri
+                            old_file.file_uri = merritt_uri.replace(' ', '%20')
                             old_file.save()
                             output = '\n\n'
-                            output += 'Saved file: ' + str(self.updated_file_count)
+                            output += 'Method B; Saved file: ' + str(self.updated_file_count)
                             output += ' of uuid: ' + str(len(self.updated_uuids))
                             output += '\n'
                             output += merritt_uri
                             print(output)
+                            merrit_found = True
+
+    def add_from_merritt_dump(self, act_dir, filename):
+        """ adds missing media files that were
+            archived by Merritt
+
+from opencontext_py.apps.ocitems.mediafiles.merritt import MerrittMediaFiles
+mmf = MerrittMediaFiles()
+mmf.add_from_merritt_dump('cdl', 'arks-files.csv')
+
+        """
+        tab_obj = self.load_csv_file(act_dir, filename)
+        if tab_obj is not False:
+            print('Found records: ' + str(len(tab_obj)))
+            for row in tab_obj:
+                self.add_from_merritt_dump_row(row)
+
+    def add_from_merritt_dump_row(self, row):
+        """ processes a merrit dump row
+            to update an item
+        """
+        raw_ark = row[0]
+        ark = raw_ark.replace('ark:/', '')
+        uri = row[1] # 2nd column
+        merritt_uri = row[2]  # 3rd column
+        uri_ex = uri.split('/')
+        uuid = uri_ex[-1]
+        ark_id_ok = StableIdentifer.objects\
+                                   .filter(stable_id=ark,
+                                           uuid=uuid)[:1]
+        if len(ark_id_ok) > 0:
+            media_id_obj = ark_id_ok[0]
+            # print('Identifers check: ' + ark + ' = ' + uuid)
+            old_files = Mediafile.objects.filter(uuid=uuid)
+            if len(old_files) < 3:
+                print('Missing files for: ' + uuid)
+                all_patterns = {
+                    'oc-gen:thumbnail': ['/thumb',
+                                         '%20thumbs',
+                                         '_thumbs'],
+                    'oc-gen:preview': ['/preview',
+                                       '%20preview',
+                                       '_preview'],
+                    'oc-gen:fullfile': ['/full',
+                                        '/docs',
+                                        'opencontext/Domuz/DT Images',
+                                        'opencontext/geissenklosterle/Geissenklosterle%20scans',
+                                        'opencontext/geissenklosterle/Geissenklosterle_scans',
+                                        'opencontext/geissenklosterle/Geissenklosterle scans',
+                                        'opencontext/hayonim/Hayonim%20photos'
+                                        'opencontext/hayonim/Hayonim_photos'
+                                        'opencontext/hayonim/Hayonim photos']}
+                for ftype_key, patterns in all_patterns.items():
+                    p_not_found = True
+                    for pattern in patterns:
+                        if pattern in merritt_uri and p_not_found:
+                            # found a match
+                            p_not_found = False
+                            new_file = Mediafile()
+                            new_file.uuid = uuid
+                            new_file.project_uuid = media_id_obj.project_uuid
+                            new_file.source_id = 'Merritt-media-manifest'
+                            new_file.file_type = ftype_key
+                            new_file.file_uri = merritt_uri.replace(' ', '%20')
+                            try:
+                                new_file.save()
+                                if uuid not in self.updated_uuids:
+                                    self.updated_uuids.append(uuid)
+                                self.updated_file_count += 1
+                                output = '\n\n'
+                                output += 'Saved file: ' + str(self.updated_file_count)
+                                output += ' of uuid: ' + str(len(self.updated_uuids))
+                                output += '\n'
+                                output += merritt_uri
+                                print(output)
+                            except:
+                                pass
 
     def set_check_directory(self, act_dir):
         """ Prepares a directory to find import GeoJSON files """
