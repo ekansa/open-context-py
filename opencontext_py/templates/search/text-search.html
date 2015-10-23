@@ -15,6 +15,15 @@
                     <a data-toggle="collapse" data-parent="#acc-text-search" href="#panel-textsearch">
                         <span class="glyphicon glyphicon-resize-vertical"></span>
                         {{ st.text_search.0.label }}
+                        {% if item_type == 'subjects' %}
+                        (Data Records)
+                        {%elif item_type == 'media' %}
+                        (Media)
+                        {%elif item_type == 'projects' %}
+                        (Projects)
+                        {%else%}
+                        
+                        {%endif%}
                     </a>
                 </h4>
                 {%endif%}

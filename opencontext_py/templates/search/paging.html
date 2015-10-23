@@ -50,7 +50,7 @@
         </li>
         {%endif%}
     
-        {% if st.paging.last = False %}
+        {% if st.paging.last = False or st.paging.next = False %}
         <li class="disabled">
             <span>
             <span class="glyphicon glyphicon-step-forward"></span>

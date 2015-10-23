@@ -13,6 +13,26 @@
 
 <p>Open Context's approach of exposing metaddata as links that you can follow provides a uniform interface for otherwise very diverse data. This common method allows a client or user to discover metadata links common across multiple projects or links of attributes specific to a single project. The aim of this common method is to help to simplify accessing, querying, and analyzing a wide variety of data.</p>
 
+<br/>
+<h4>Overview of Search and Query Services</h4>
+
+<p>Open Context has a variety of query services for different types of content. These all use the same query syntax and, if desired, will return JSON using the same schema. The different query services are as follows:</p>
+<ul class="sep-list">
+    <li><strong>Data Records ('subjects')</strong>: For searching the subjects of observation and recording (the main 'data' in Open Context, start search requests with the following URL:<br/>
+        <samp><a href="{{ base_url}}/subjects-search/" target="_blank">{{ base_url}}/subjects-search/</a></samp>
+    </li>
+    <li><strong>Media Resources</strong>: For searching metadata about media (images, videos, and other binary media formats) in Open Context, start search requests with the following URL:<br/>
+        <samp><a href="{{ base_url}}/media-search/" target="_blank">{{ base_url}}/media-search/</a></samp>
+    </li>
+    <li><strong>Projects</strong>: For searching project metadata and abstracts in Open Context, start search requests with the following URL:<br/>
+        <samp><a href="{{ base_url}}/projects-search/" target="_blank">{{ base_url}}/projects-search/</a></samp>
+    </li>
+    <li><strong>Everything</strong>: For all inclusive searches of all content types in Open Context, start search requests with the following URL:<br/>
+        <samp><a href="{{ base_url}}/search/" target="_blank">{{ base_url}}/search/</a></samp>
+    </li>
+</ul>
+
+<br/>
 <h4>Caveats</h4>
 
 <p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, this current version of Open Context is only deployed at mirror and testing hosts. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp> where the old version of Open Context is still running. Many URIs will not resolve at the old version, so for now, it's best to substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.

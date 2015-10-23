@@ -2,7 +2,7 @@
  * Map an individual item with GeoJSON
  */
 
-function search_map(json_url) {
+function search_map(json_url, base_search_link) {
 	
 	var map_dom_id = 'map';
 	var geodeep = 6; // default geo-facet tile depth
@@ -10,6 +10,7 @@ function search_map(json_url) {
 	var tile_constrained = false;
 	var map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
 	
+	this.base_search_link = base_search_link;
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
 	var url_parts = getJsonFromUrl(json_url);
@@ -22,7 +23,7 @@ function search_map(json_url) {
 	else{
 		// use context depth to set geodeep
 		var check_url = this.json_url.replace('.json', '');
-		var url_last = check_url.replace((base_url + '/sets/'), '');
+		var url_last = check_url.replace((base_url + this.base_search_link), '');
 		if (url_last.length > 0) {
 			geodeep += 1;
 			var qindex = url_last.indexOf('?');
@@ -42,7 +43,7 @@ function search_map(json_url) {
 	if (url_parts['geodeep']) {
 		geodeep = url_parts['geodeep'];
 	}
-	
+	console.log(geodeep);
 	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
 	hash = new L.Hash(map);
 	// remove the geodeep parameter

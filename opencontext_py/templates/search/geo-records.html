@@ -12,7 +12,7 @@
                     </div>
                     </div>
                     <div class="col-xs-4 ">
-                    {% include 'sets/paging.html' %}
+                    {% include 'search/paging.html' %}
                     </div>
                 </div>
             </nav>
@@ -49,7 +49,7 @@
                     <tbody>
                 {% for geo_rec in st.geo_records %}
                     {% with geo_rec=geo_rec %}
-                    {% include 'sets/geo-record.html' %}
+                    {% include 'search/geo-record.html' %}
                     {% endwith %}
                 {% endfor %}
                     </tbody>

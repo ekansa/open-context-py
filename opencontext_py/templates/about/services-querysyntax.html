@@ -8,22 +8,22 @@
 
 <ol>
     <li><p>A descriptive property predicate by itself filters for all records that have that descriptive property. In the example below, the search returns all records described by the predicate "Has biological taxonomy" (with that predicate identified by a slug):</p>
-        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy">prop=biol-term-hastaxonomy</a></samp></p>
+        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy">prop=biol-term-hastaxonomy</a></samp></p>
     </li>
     <li><p>Instead of using slugs you can also use URL-escaped URIs to identify concepts to use in a query. The query API provides URIs that identify concepts with the <samp>rdfs:isDefinedBy</samp> key (<em>Caveat: concepts in the oc-api and oc-gen namespaces won't resolve yet, so don't reference them in this way for the time being</em>). Here is the same query as above using a URI rather than a slug to identify the predicate "Has biological taxonomy". </p>
-        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/sets/?prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy">prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy</a></samp></p>
+        <p><samp><a title="Query for records that have taxonomy descriptions" target="_blank" href="{{ base_url }}/subjects-search/?prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy">prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy</a></samp></p>
     </li>
     <li><p>To search for a specific value used with a given descriptive property, append a <samp>---</samp> delimiter after the slug for the descriptive property and follow with the slug (or URI) identifier for that value. In the example below, the search returns all records described by the predicate "Has biological taxonomy" and values identified with <samp>eol-p-1642</samp> for "Mammalia":</p>
-        <p><samp><a title="Query for records described as Mammals" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-1642">prop=biol-term-hastaxonomy---eol-p-1642</a></samp></p>
+        <p><samp><a title="Query for records described as Mammals" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1642">prop=biol-term-hastaxonomy---eol-p-1642</a></samp></p>
     </li>
     <li><p>In the example above, Open Context has the object value <samp>eol-p-1642</samp> for "Mammalia" in a hierarchy of classifications. It automatically returns results that include mammals and all subordinate (more specific) taxa. You can further restrict the scope of your query to more specific taxa by appending a <samp>---</samp> delimiter after the <samp>eol-p-1642</samp> and then adding a slug for a more specific type of mammal. In the example below, the search returns all records described by the predicate "Has biological taxonomy" and values identified with <samp>eol-p-1642</samp> for "Mammalia" and "Carivora" (<samp>eol-p-7662</samp>):</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662</a></samp></p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1642---eol-p-7662</a></samp></p>
     </li>
     <li><p>You don't need to know the position of a concept in a hierarchy in order to search for it. The following query returns identical results for Carnivores as the one above, but omits reference to Mammalia:</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-7662</a></samp></p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-7662">prop=biol-term-hastaxonomy---eol-p-7662</a></samp></p>
     </li>
     <li><p>Open Context uses double pipe characters ("<samp>||</samp>") for Boolean "OR" terms. The following example returns results described as either carnivore <samp>eol-p-7662</samp> or lagomorph (rabbits, hares) <samp>eol-p-7662</samp>:</p>
-        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/sets/?prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662</a></samp></p>
+        <p><samp><a title="Query for records described as Mammals, Carnivores" target="_blank" href="{{ base_url }}/subjects-search/?prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662">prop=biol-term-hastaxonomy---eol-p-1686||eol-p-7662</a></samp></p>
     </li>
 </ol>
 
@@ -47,10 +47,10 @@
                 <p>Bounding Box search examples include:</p>
                 <ol>
                     <li>
-                        Filtering for a region in the south-east of the United States: <samp><a title="Search a bounding box" target="_blank" href="{{ base_url }}/sets/?geodeep=11&disc-bbox=-87.19%2C21.29%2C-73.48%2C34.60">-87.19 Longitude, 21.29 Latitude (south-west corner) to -73.48 Longitude, 34.60 Latidude (north-east corner)</a></samp>
+                        Filtering for a region in the south-east of the United States: <samp><a title="Search a bounding box" target="_blank" href="{{ base_url }}/subjects-search/?geodeep=11&disc-bbox=-87.19%2C21.29%2C-73.48%2C34.60">-87.19 Longitude, 21.29 Latitude (south-west corner) to -73.48 Longitude, 34.60 Latidude (north-east corner)</a></samp>
                     </li>
                     <li>
-                        You can use the double pipe characters ("<samp>||</samp>") for Boolean "OR" searches of multiple regions, as in this example: <samp><a title="Search multiple bounding boxes" target="_blank" href="{{ base_url }}/sets/?geodeep=12&disc-bbox=31.37%2C34.31%2C35.42%2C35.96||31.86%2C35.89%2C34.53%2C36.97">31.37,C34.31,35.42,C35.96 (roughly Cyprus) OR 31.86,35.89,34.53,36.97 (roughly Cilicia in Turkey)</a></samp>
+                        You can use the double pipe characters ("<samp>||</samp>") for Boolean "OR" searches of multiple regions, as in this example: <samp><a title="Search multiple bounding boxes" target="_blank" href="{{ base_url }}/subjects-search/?geodeep=12&disc-bbox=31.37%2C34.31%2C35.42%2C35.96||31.86%2C35.89%2C34.53%2C36.97">31.37,C34.31,35.42,C35.96 (roughly Cyprus) OR 31.86,35.89,34.53,36.97 (roughly Cilicia in Turkey)</a></samp>
                     </li>
                 </ol>
             </td>
@@ -60,7 +60,7 @@
                 <samp>linked=dinaa-cross-ref</samp>
             </th>
             <td>
-                <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ base_url }}/sets/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
+                <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ base_url }}/subjects-search/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
             </td>
         </tr>
     </tbody>

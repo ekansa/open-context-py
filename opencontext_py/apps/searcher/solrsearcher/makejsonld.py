@@ -23,7 +23,7 @@ from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 class MakeJsonLd():
 
     def __init__(self, request_dict_json):
-        self.base_search_link = '/sets/'
+        self.base_search_link = '/search/'
         self.hierarchy_delim = '---'
         self.request_dict = json.loads(request_dict_json)
         self.request_dict_json = request_dict_json

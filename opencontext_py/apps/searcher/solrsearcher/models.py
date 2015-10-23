@@ -16,7 +16,6 @@ class SolrSearch():
 
     DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
                             SolrDocument.ROOT_PROJECT_SOLR,
-                            'item_type',
                             'image_media_count',
                             'other_binary_media_count',
                             'document_count']
@@ -34,7 +33,12 @@ class SolrSearch():
     ITEM_TYPE_FACETFIELDS = {'projects': ['dc_terms_subject___pred_id',
                                           'dc_terms_temporal___pred_id',
                                           'dc_terms_spatial___pred_id',
-                                          'dc_terms_coverage___pred_id']}
+                                          'dc_terms_coverage___pred_id'],
+                             'subjects': ['oc_gen_subjects___pred_id']}
+    
+    ITEM_CAT_FIELDS = ['oc_gen_subjects___pred_id',
+                       'oc_gen_media___pred_id',
+                       'oc_gen_persons___pred_id']
 
     def __init__(self):
         self.solr = False
@@ -223,6 +227,14 @@ class SolrSearch():
                     if add_facet_field not in query['facet.field']:
                         # add facet field for this type of item
                         query['facet.field'].append(add_facet_field)
+        else:
+            cat_field_found = False
+            for item_cat_field in self.ITEM_CAT_FIELDS:
+                for facet_field in query['facet.field']:
+                    if item_cat_field in facet_field:
+                        cat_field_found = True
+            if cat_field_found is False:
+                query['facet.field'].append('item_type')
         """ CHRONOLOGY Form Use Life (form)
             queries
         """
