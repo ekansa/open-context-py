@@ -201,7 +201,7 @@
                             {% if anno.objects|length == 1 %}
                                 <a href="{{ anno.objects.0.id }}" target="_blank">{{ anno.objects.0.label }}</a>
 				{% if anno.objects.0.query != False %}
-				<a title="Search Open Context for all items related to this concept" href="{{ base_url }}/sets/?{{ anno.objects.0.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
+				<a title="Search Open Context for all items related to this concept" href="{{ base_url }}/search/?{{ anno.objects.0.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
 				{%endif%}
                                 {% if anno.objects.0.id != anno.objects.0.vocab_uri %}
 				{% if anno.objects.0.vocabulary != False %}
@@ -215,7 +215,7 @@
                                 <li>
                                     <a href="{{ annoval.id }}" target="_blank">{{ annoval.label }}</a>
 				    {% if annoval.query != False %}
-				    <a title="Search Open Context for all items related to this concept" href="{{ base_url }}/sets/?{{ annoval.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
+				    <a title="Search Open Context for all items related to this concept" href="{{ base_url }}/search/?{{ annoval.query }}" target="_blank"><span class="glyphicon glyphicon-search" aria-hidden="true"></span></a>
 				    {%endif%}
                                     {% if annoval.id != annoval.vocab_uri %}
 				    <br/>
