@@ -20,8 +20,7 @@ class SolrSearch():
                             'other_binary_media_count',
                             'document_count']
     
-    PROJECT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
-                            SolrDocument.ROOT_PROJECT_SOLR]
+    PROJECT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR]
     
     # the number of rows to display by default for different item types
     ITEM_TYPE_ROWS = {'projects': 100}
@@ -412,7 +411,8 @@ class SolrSearch():
             if 'proj' in request_dict:
                 query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
             elif SolrDocument.ROOT_PROJECT_SOLR not in query['facet.field']:
-                query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
+                if self.item_type_limit != 'projects':
+                    query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
         return query
 
     def add_root_discovery_geo(self,

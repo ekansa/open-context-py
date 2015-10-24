@@ -1,0 +1,64 @@
+{% if item.proj_content != False %}
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">Browse Project</h3>
+    </div>
+    <div class="panel-body">
+        <ul class="nav nav-pills">
+        {% if item.proj_content.subjects != False %}
+            <li role="presentation" class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown"
+                   href="#"
+                   role="button" aria-haspopup="true"
+                   title="Browse and query project data"
+                   aria-expanded="false">Data Records
+                   <span class="caret"></span>
+                <!--
+                <a href="{{base_url}}{{ item.proj_content.subjects}}"
+                   title="Browse and query project data"
+                   target="_blank">Data Records</a>
+                -->
+                <ul class="dropdown-menu">
+                {% for subj in item.proj_content.subjects_list %}
+                    <li>
+                        <a href="{{base_url}}{{ subj.link }}"
+                           title="Browse and query project {{ subj.label }} data"
+                           target="_blank">Record type: {{ subj.label }}</a>
+                    </li>
+                {% endfor %}
+                    <li>
+                        <a href="{{base_url}}{{ item.proj_content.subjects}}"
+                           title="Browse and query project all data records"
+                           target="_blank"><strong>All Data Records</strong></a>
+                    </li>
+                </ul>
+            </li>
+        {%endif%}
+        
+        {% if item.proj_content.projects != False %}
+            <li role="presentation">
+                <a href="{{base_url}}{{ item.proj_content.projects}}"
+                   title="Browse and query sub projects"
+                   target="_blank">Sub-Projects</a>
+            </li>
+        {%endif%}
+        
+        {% if item.proj_content.media != False %}
+            <li role="presentation">
+                <a href="{{base_url}}{{ item.proj_content.media}}"
+                   title="Browse and query project media"
+                   target="_blank">Media</a>
+            </li>
+        {%endif%}
+        
+        {% if item.proj_content.documents != False %}
+            <li role="presentation">
+                <a href="{{base_url}}{{ item.proj_content.documents}}"
+                   title="Browse and query project documents"
+                   target="_blank">Documents</a>
+            </li>
+        {%endif%}
+        </ul>
+    </div>
+</div>
+{%endif%}

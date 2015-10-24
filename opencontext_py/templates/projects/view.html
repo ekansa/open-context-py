@@ -29,9 +29,12 @@
 </div>
 
 <div id="item-content" style="margin-top: -45px;">
+    
+    
     <div class="row">
         <div class="col-sm-8">
-            <div class="well well-sm">
+            
+            <div class="well well-sm" id="proj-label-well">
                 <h2 style="margin-top:-4px;">Project</h2>
                 <h3 style="margin-top:-8px;">{{ item.label }}</h3>
                 {% if item.content != False %}
@@ -40,14 +43,8 @@
                 {%endif%}
                 {%endif%}
             </div>
-            </div>
-        </div>
-        <div class="col-sm-4" style="padding-bottom:2%;">
             
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-8">
+            
             {% if item.content != False %}
             {% if item.content.main_text != False %}
             <div class="row">
@@ -103,6 +100,8 @@
          </div>
          <div class="col-sm-4">
          {% include 'items/citation.html' %}
+         {% include 'items/project-content-nav.html' %}
+         
          {% include 'items/project.html' %}
          {% include 'items/map.html' %}
          {% include 'items/license.html' %}
