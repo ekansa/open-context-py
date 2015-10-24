@@ -41,8 +41,14 @@ body {
 }
 
 #footer-upper {
+	/*
 	margin-top: 5%;
-	background-color: #666666;
+	background-color: #f5f5f5;
+    border: 1px solid #e3e3e3;
+    */
+	margin-top: 10%;
+	pading-top: 10px;
+	background-color: #141518;
 	margin-right:-45px;
 	margin-left:-45px;
 }
@@ -50,7 +56,7 @@ div.footer-cell {
 	display: table-cell;
 	vertical-align: middle;
 	text-align: center;
-	padding: 1%;
+	padding: 2%;
 }
 div.footer-cell img {
 	max-height: 75px;
@@ -58,12 +64,17 @@ div.footer-cell img {
 	margin-right: auto;
 }
 #footer-lower {
+	/*
 	background-color: #333333;
+	*/
+	background-color: #141518;
 	color: #fff;
 	text-align: center;
-	font-size: 75%;
+	font-size: 85%;
 	margin-right:-45px;
 	margin-left:-45px;
+	margin-top:-2px;
+	padding: 2%;
 }
 .project-edit-stars {
 	color: #EE7600;
