@@ -92,7 +92,6 @@ class TemplateItem():
         self.create_content(json_ld)
         self.create_query_links(json_ld)
         self.create_project_hero(json_ld)
-        self.create_project_content(json_ld)
         self.create_license(json_ld)
         self.check_contents_top()
 
@@ -405,18 +404,7 @@ class TemplateItem():
                         act_index = randint(0, (len_heros - 1))
                     else:
                         act_index = 0
-                    self.project_hero_uri = heros[act_index]['id']
-    
-    def create_project_content(self, json_ld):
-        """ creates a link for displaying a hero image
-            by randomly selecting through hero images
-            associated with the project
-        """
-        if self.act_nav == 'projects':
-            proj_cont = ProjectContent()
-            proj_cont.proj_slug = self.slug
-            proj_cont.get_project_content(self.uuid)
-            self.proj_content = proj_cont
+                    self.project_hero_uri = heros[act_index]['id']    
     
     def create_license(self, json_ld):
         """ creates a license link
@@ -960,15 +948,15 @@ class Citation():
     def make_citation(self, json_ld):
         """ Make citation from metadata in the JSON-LD dict """
         if isinstance(json_ld, dict):
-            if('dc-terms:contributor' in json_ld):
+            if 'dc-terms:contributor' in json_ld:
                 for p_item in json_ld['dc-terms:contributor']:
                     if p_item['label'] not in self.item_authors:
                         self.item_authors.append(p_item['label'])
-            if('dc-terms:creator' in json_ld):
+            if 'dc-terms:creator' in json_ld:
                 for p_item in json_ld['dc-terms:creator']:
                     if p_item['label'] not in self.item_editors:
                         self.item_editors.append(p_item['label'])
-            if('owl:sameAs' in json_ld):
+            if 'owl:sameAs' in json_ld:
                 for s_item in json_ld['owl:sameAs']:
                     if 'dx.doi.org' in s_item['id']:
                         self.raw_doi = s_item['id'].replace('http://dx.doi.org/', '')
@@ -1385,80 +1373,3 @@ class LinkedData():
             query = 'prop=' + predicate + '---' + obj
         return query    
 
-
-class ProjectContent():
-    
-    def __init__(self):
-        self.proj_slug = ''
-        self.subjects = False  # will be a list if there is content
-        self.media = False
-        self.projects = False
-        self.documents = False
-        self.subjects_list = []
-    
-    def get_project_content(self, uuid):
-        """ gets content for a project (and its subprojects)
-        """
-        project_uuids = self.get_sub_project_uuids(uuid)
-        if uuid not in project_uuids: 
-            project_uuids.append(uuid)
-        man_content = Manifest.objects\
-                              .filter(project_uuid__in=project_uuids)\
-                              .exclude(uuid=uuid)\
-                              .order_by('class_uri')\
-                              .values_list('item_type',
-                                           'class_uri')\
-                              .distinct()
-        if len(man_content) > 0:
-            for content in man_content:
-                item_type = content[0]
-                class_uri = content[1]
-                if item_type == 'subjects':
-                    self.subjects = '/subjects-search/' \
-                                   + '?proj=' + self.proj_slug
-                    if len(class_uri) > 0:
-                        ent = Entity()
-                        found = ent.dereference(class_uri)
-                        if found:
-                            obj = {}
-                            obj['label'] = ent.label
-                            obj['slug'] = ent.slug
-                            obj['link'] = self.subjects + '&prop=' + ent.slug
-                            self.subjects_list.append(obj)
-                elif item_type == 'media':
-                    self.media = '/media-search/' \
-                                 + '?proj=' + self.proj_slug
-                elif item_type == 'documents':
-                    self.documents = '/search/' \
-                                    + '?proj=' + self.proj_slug \
-                                    + '&type=documents'
-                elif item_type == 'projects':
-                    self.projects = '/projects-search/' \
-                                    + '?proj=' + self.proj_slug
-                else:
-                    pass
-        if len(project_uuids) < 2:
-            # don't show sub projects if there's only 1 project
-            self.projects = False
-    
-    def get_sub_project_uuids(self,
-                              uuid,
-                              sub_proj_uuids = [],
-                              recursive=True):
-        """ gets uuids for the current project
-            and any sub projects
-        """
-        sub_projs = ModProject.objects\
-                              .filter(project_uuid=uuid)\
-                              .exclude(uuid=uuid)
-        if len(sub_projs) > 0:
-            for sub_proj in sub_projs:
-                if sub_proj.uuid not in sub_proj_uuids:
-                    sub_proj_uuids.append(sub_proj.uuid)
-                    if recursive:
-                        sub_proj_uuids = self.get_sub_project_uuids(sub_proj.uuid,
-                                                                    sub_proj_uuids)
-        return sub_proj_uuids
-    
-    
-    
