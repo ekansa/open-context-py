@@ -5,6 +5,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
+from opencontext_py.apps.ocitems.projects.content import ProjectContent
 from django.template import RequestContext, loader
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
@@ -37,7 +38,11 @@ def html_view(request, uuid):
     if(ocitem.manifest is not False):
         rp = RootPath()
         base_url = rp.get_baseurl()
+        proj_content = ProjectContent(uuid,
+                                      ocitem.slug)
         temp_item = TemplateItem()
+        temp_item.proj_content = proj_content.get_project_content()
+        print(str(temp_item.proj_content))
         temp_item.read_jsonld_dict(ocitem.json_ld)
         template = loader.get_template('projects/view.html')
         req_neg = RequestNegotiation('text/html')
