@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
 from opencontext_py.apps.ldata.orcid.api import orcidAPI
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -63,6 +64,7 @@ class TemplateItem():
         self.project_hero_uri = False  # randomly selects an image for the project
         self.predicate_query_link = False # link for querying with a predicate
         self.predicate_query_json = False # link for querying json with a predicate
+        self.proj_content = False
 
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
@@ -90,6 +92,7 @@ class TemplateItem():
         self.create_content(json_ld)
         self.create_query_links(json_ld)
         self.create_project_hero(json_ld)
+        self.create_project_content(json_ld)
         self.create_license(json_ld)
         self.check_contents_top()
 
@@ -380,8 +383,8 @@ class TemplateItem():
         """ makes links for querying with the item
         """
         if self.act_nav == 'predicates':
-            self.predicate_query_link = '/sets/?prop=' + self.slug
-            self.predicate_query_json = '/sets/.json?prop=' + self.slug
+            self.predicate_query_link = '/search/?prop=' + self.slug
+            self.predicate_query_json = '/search/.json?prop=' + self.slug
             if self.project is not False:
                 if self.project.slug is not False:
                     self.predicate_query_link += '&proj=' + self.project.slug
@@ -403,6 +406,17 @@ class TemplateItem():
                     else:
                         act_index = 0
                     self.project_hero_uri = heros[act_index]['id']
+    
+    def create_project_content(self, json_ld):
+        """ creates a link for displaying a hero image
+            by randomly selecting through hero images
+            associated with the project
+        """
+        if self.act_nav == 'projects':
+            proj_cont = ProjectContent()
+            proj_cont.proj_slug = self.slug
+            proj_cont.get_project_content(self.uuid)
+            self.proj_content = proj_cont
     
     def create_license(self, json_ld):
         """ creates a license link
@@ -1370,3 +1384,78 @@ class LinkedData():
         else:
             query = 'prop=' + predicate + '---' + obj
         return query    
+
+
+class ProjectContent():
+    
+    def __init__(self):
+        self.proj_slug = ''
+        self.subjects = False  # will be a list if there is content
+        self.media = False
+        self.projects = False
+        self.documents = False
+        self.subjects_list = []
+    
+    def get_project_content(self, uuid):
+        """ gets content for a project (and its subprojects)
+        """
+        project_uuids = self.get_sub_project_uuids(uuid)
+        if uuid not in project_uuids: 
+            project_uuids.append(uuid)
+        man_content = Manifest.objects\
+                              .filter(project_uuid__in=project_uuids)\
+                              .exclude(uuid=uuid)\
+                              .order_by('class_uri')\
+                              .values_list('item_type',
+                                           'class_uri')\
+                              .distinct()
+        if len(man_content) > 0:
+            for content in man_content:
+                item_type = content[0]
+                class_uri = content[1]
+                if item_type == 'subjects':
+                    self.subjects = '/subjects-search/' \
+                                   + '?proj=' + self.proj_slug
+                    if len(class_uri) > 0:
+                        ent = Entity()
+                        found = ent.dereference(class_uri)
+                        if found:
+                            obj = {}
+                            obj['label'] = ent.label
+                            obj['slug'] = ent.slug
+                            obj['link'] = self.subjects + '&prop=' + ent.slug
+                            self.subjects_list.append(obj)
+                elif item_type == 'media':
+                    self.media = '/media-search/' \
+                                 + '?proj=' + self.proj_slug
+                elif item_type == 'documents':
+                    self.documents = '/search/' \
+                                    + '?proj=' + self.proj_slug \
+                                    + '&type=documents'
+                elif item_type == 'projects':
+                    self.projects = '/projects-search/' \
+                                    + '?proj=' + self.proj_slug
+                else:
+                    pass 
+    
+    def get_sub_project_uuids(self,
+                              uuid,
+                              sub_proj_uuids = [],
+                              recursive=True):
+        """ gets uuids for the current project
+            and any sub projects
+        """
+        sub_projs = ModProject.objects\
+                              .filter(project_uuid=uuid)\
+                              .exclude(uuid=uuid)
+        if len(sub_projs) > 0:
+            for sub_proj in sub_projs:
+                if sub_proj.uuid not in sub_proj_uuids:
+                    sub_proj_uuids.append(sub_proj.uuid)
+                    if recursive:
+                        sub_proj_uuids = self.get_sub_project_uuids(sub_proj.uuid,
+                                                                    sub_proj_uuids)
+        return sub_proj_uuids
+    
+    
+    
