@@ -22,8 +22,17 @@ function search_map(json_url, base_search_link) {
 	}
 	else{
 		// use context depth to set geodeep
-		var check_url = this.json_url.replace('.json', '');
+		var check_url = removeURLParameter(this.json_url, 'start');
+		check_url = removeURLParameter(check_url, 'rows');
+		check_url = check_url.replace('.json', '');
+		// now remove the last char if it is a '?'
+		var check_len = check_url.length;
+		var last_char = check_url.charAt(check_len - 1);
+		if (last_char == '?') {
+			check_url = check_url.replace('?', '');
+		} 
 		var url_last = check_url.replace((base_url + this.base_search_link), '');
+		url_last = url_last.trim();
 		if (url_last.length > 0) {
 			geodeep += 1;
 			var qindex = url_last.indexOf('?');
@@ -38,12 +47,14 @@ function search_map(json_url, base_search_link) {
 				}
 			}
 		}
+		else{
+			geodeep = 6;
+		}
 	}
 	//if geodeep is in the url, use it.
 	if (url_parts['geodeep']) {
 		geodeep = url_parts['geodeep'];
 	}
-	console.log(geodeep);
 	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
 	hash = new L.Hash(map);
 	// remove the geodeep parameter
