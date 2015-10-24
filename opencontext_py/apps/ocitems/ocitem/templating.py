@@ -1436,7 +1436,10 @@ class ProjectContent():
                     self.projects = '/projects-search/' \
                                     + '?proj=' + self.proj_slug
                 else:
-                    pass 
+                    pass
+        if len(project_uuids) < 2:
+            # don't show sub projects if there's only 1 project
+            self.projects = False
     
     def get_sub_project_uuids(self,
                               uuid,
