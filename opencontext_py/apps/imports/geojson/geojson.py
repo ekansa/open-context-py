@@ -29,14 +29,7 @@ from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
 gimp = GeoJSONimport()
 gimp.load_into_importer = True
 gimp.project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
-gimp.class_uri = 'oc-gen:cat-feature'
-gimp.process_features_in_file('giza-geo', 'Interpreted_Architecture_KKT.geojson')
-gimp.feature_count
-gimp.source_id
-gimp.property_data_types
-gimp.property_data_types['OBJECTID']
-gimp.property_data_types['FeatureNum']
-gimp.property_data_types['EntryDate']
+gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
 
 
     """
@@ -118,7 +111,7 @@ gimp.property_data_types['EntryDate']
                         if count > max_value:
                             max_value = count
                 for data_type, count in act_prop_types.items():
-                    if isinstance(count, int):
+                    if isinstance(count, int) and total_counts[prop_key] > 0:
                         if count == max_value and (count / total_counts[prop_key]) > .95:
                             # more than 95% of one type, so choose it
                             main_types[prop_key] = data_type
@@ -250,6 +243,7 @@ gimp.property_data_types['EntryDate']
                 if data_date is not False:
                     record = data_date.strftime('%Y-%m-%d')
             else:
+                record = str(record)
                 record = record.strip()
         return record
 

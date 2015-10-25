@@ -38,11 +38,10 @@ def html_view(request, uuid):
     if(ocitem.manifest is not False):
         rp = RootPath()
         base_url = rp.get_baseurl()
-        proj_content = ProjectContent(uuid,
-                                      ocitem.slug)
+        proj_content = ProjectContent(ocitem.manifest.uuid,
+                                      ocitem.manifest.slug)
         temp_item = TemplateItem()
         temp_item.proj_content = proj_content.get_project_content()
-        print(str(temp_item.proj_content))
         temp_item.read_jsonld_dict(ocitem.json_ld)
         template = loader.get_template('projects/view.html')
         req_neg = RequestNegotiation('text/html')
