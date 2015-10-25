@@ -16,7 +16,7 @@ from django.views.decorators.cache import never_cache
 # for most researchers.
 @cache_control(no_cache=True)
 @never_cache
-def index_view(request):
+def index_view(request, table_id=None):
     """ Get the search context JSON-LD """
     rp = RootPath()
     base_url = rp.get_baseurl()
