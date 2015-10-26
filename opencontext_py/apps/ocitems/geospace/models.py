@@ -1,6 +1,9 @@
 import json
 import hashlib
-from shapely.geometry import shape, mapping
+try:
+    from shapely.geometry import shape, mapping
+except:
+    pass  # just to get this in production
 import reversion  # version control object
 from collections import OrderedDict
 from django.db import models
