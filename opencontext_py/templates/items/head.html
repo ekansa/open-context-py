@@ -1,6 +1,18 @@
 <head>
     <title>View of {{ item.label }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- some linking information about this resource -->
+    <link rel="canonical" href="{{ item.id }}" />
+    
+    {% if item.href != False %}
+    <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.json" />
+    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.json" />
+    {% else %}
+    <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
+    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
+    {%endif%}
+    
     <!-- Start of Bibliographic Metadata -->    
     <link rel="schema.DC" href="http://purl.org/dc/terms/" />
     <meta name="gs_meta_revision" content="1.1" />

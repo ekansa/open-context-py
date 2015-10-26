@@ -32,11 +32,20 @@
     </li>
 </ul>
 
+
+{% if base_url != 'http://opencontext.org' %}
+
 <br/>
 <h4>Caveats</h4>
+<p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, you are currently using mirror instance of Open Context. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp>, where the cannonical version of Open Context is running. In order to derefernce these
+identifiers using this current host, substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.
+{% else %}
 
-<p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. Also, this current version of Open Context is only deployed at mirror and testing hosts. The JSON data will contain URIs to content at <samp>http://opencontext.org/</samp> where the old version of Open Context is still running. Many URIs will not resolve at the old version, so for now, it's best to substitute references to <samp>http://opencontext.org/</samp> with the current host <samp>{{ base_url }}/</samp>.
+<br/>
+<h4>Caveats</h4>
+<p>Currently, Open Context supports "read-only" APIs and does not allow methods for posting or otherwise modifying data. We plan on integrating Open Context directly with field data collection systems like <a href="http://www.fedarch.org/" target="_blank">FAIMS</a>.</p>
 
+{%endif%}
 
 
 <h5 style="margin-top: 120px;">Icon Credits</h5>
