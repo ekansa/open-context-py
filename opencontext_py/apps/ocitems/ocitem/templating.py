@@ -35,6 +35,7 @@ class TemplateItem():
         self.uuid = False
         self.project_uuid = False
         self.id = False
+        self.href = False
         self.slug = False
         self.item_category_label = False
         self.item_category_uri = False
@@ -70,12 +71,13 @@ class TemplateItem():
         """ Reads JSON-LD dict object to make a TemplateItem object
         """
         self.uuid = json_ld['uuid']
+        self.label = json_ld['label']
+        self.id = json_ld['id']
         ent = Entity()
         found = ent.dereference(self.uuid)
         if found:
             self.act_nav = ent.item_type
-        self.label = json_ld['label']
-        self.id = json_ld['id']
+            self.href = ent.item_type + '/' + self.uuid
         self.slug = json_ld['slug']
         self.store_class_type_metadata(json_ld)
         self.create_person_data(json_ld)
