@@ -45,7 +45,7 @@ class LinkAnnotation(models.Model):
         concat_string = str(self.subject) + " " + str(self.predicate_uri) + " " + str(self.object_uri)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
-    
+
     def clean_uris(self):
         """
         cleans URIs to keep them consistent and empty of 'cruft'
