@@ -23,6 +23,7 @@ sri.reindex()
 
     def __init__(self):
         self.uuids = []
+        self.list_size = 20
         self.iteration = 0
         self.recursive = True
         # maximum number of times to iterate and make requests
@@ -133,7 +134,7 @@ sri.reindex()
         """
         if isinstance(uuids, list):
             crawler = Crawler()
-            crawler.index_document_list(uuids)
+            crawler.index_document_list(uuids, self.list_size)
             return len(uuids)
         else:
             return False
