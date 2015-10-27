@@ -121,12 +121,17 @@ class Crawler():
                     try:
                         solrdocument = SolrDocument(uuid).fields
                         if crawlutil().is_valid_document(solrdocument):
-                            i += 1
-                            print('OK to index: ' + uuid)
-                            documents.append(solrdocument)
-                            manifest.indexed_save()  # saves the time this was indexed
+                            if solrdocument is not None:
+                                i += 1
+                                print('OK to index: ' + uuid)
+                                documents.append(solrdocument)
+                                manifest.indexed_save()  # saves the time this was indexed
+                            else:
+                                print('Something wrong with: ' + uuid)
+                                if stop_at_invalid:
+                                    break
                         else:
-                            print('Not valid: ' + uuid )
+                            print('Not valid: ' + uuid)
                             if stop_at_invalid:
                                 break
                     except Exception as error:
