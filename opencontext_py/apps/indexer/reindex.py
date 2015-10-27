@@ -124,7 +124,7 @@ sri.reindex()
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
                 crawler = Crawler()
-                crawler.index_document_list(uuids)
+                crawler.index_document_list(uuids, self.list_size)
                 self.reindex()
             else:
                 print('Problem with: ' + str(uuids))
