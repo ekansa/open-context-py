@@ -2,6 +2,7 @@ from django.db import models
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity, LinkEntityGeneration
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
 
@@ -189,3 +190,33 @@ class LinkEntityManage():
             if 'http://' in uri or 'https://' in uri:
                 if uri not in self.sensitive_ns:
                     self.sensitive_ns.append(uri)
+
+    def replace_uri(self, old_uri, new_uri, new_label, new_vocab_uri):
+        """ replaces an old URI and old Vocab URI
+            with a new URI and a new vocab URI,
+            changes both objects in the link_entity model
+            and the link_annotation model
+
+from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
+lem = LinkEntityManage()
+
+        """
+        try:
+            old_ent = LinkEntity.objects.get(uri=old_uri)
+        except LinkEntity.DoesNotExist:
+            old_ent = False
+        if old_ent is not False:
+            # now change to use the new information
+            new_ent = old_ent
+            old_ent.delete()
+            new_ent.uri = new_uri
+            new_ent.label = new_label
+            new_ent.vocab_uri = new_vocab_uri
+            new_ent.save()
+            la_manage = LinkAnnoManagement()
+            la_manage.replace_subject_uri(old_uri,
+                                          new_uri)
+            la_manage.replace_predicate_uri(old_uri,
+                                            new_uri)
+            la_manage.replace_object_uri(old_uri,
+                                         new_uri)

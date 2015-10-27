@@ -385,7 +385,7 @@ class SolrDocument:
                         meta['label'])
                     self.fields[fname].append(item)
                     self.process_object_uri(meta['id'])
-    
+
     def _process_dc_authorship(self):
         """
         Finds dublin-core authorship metadata about an item
@@ -767,8 +767,10 @@ class SolrDocument:
                 if allname not in self.fields:
                     self.fields[allname] = []
                 for entity in self.oc_item.json_ld[equiv_uri]:
-                    if 'http://' in entity['id'] \
-                       or 'https://' in entity['id']:
+                    if ('http://' in entity['id'] \
+                       or 'https://' in entity['id'])\
+                       and 'http://opencontext.org' not in entity['id']:
+                        # only do this if this is NOT an open context URI
                         self.fields['text'] += entity['label'] + '\n'
                         self.fields['text'] += entity['id'] + '\n'
                         item = self._concat_solr_string_value(
@@ -821,7 +823,7 @@ class SolrDocument:
                         entity['label'])
                     self.fields[fname].append(item)
                     self.fields[allname].append(item)
-    
+
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
             Useful to have a simple field that

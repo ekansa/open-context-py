@@ -13,6 +13,12 @@ from opencontext_py.apps.ocitems.assertions.containment import Containment
 class SolrReIndex():
     """ This class contains methods to make updates to
         the solr index especially after edits
+
+from opencontext_py.apps.indexer.reindex import SolrReIndex
+sri = SolrReIndex()
+sri.annotated_after = '2015-10-26'
+sri.reindex()
+
     """
 
     def __init__(self):

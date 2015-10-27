@@ -7,6 +7,7 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class LinkAnnoManagement():
@@ -51,23 +52,54 @@ class LinkAnnoManagement():
         else:
             print('Cannot find parent or child')
 
+    def replace_subject_uri(self,
+                            old_subject_uri,
+                            new_subject_uri):
+        """ replaces annotations using
+        a given old_object_uri with a new one
+        """
+        lequiv = LinkEquivalence()
+        old_subj_list = lequiv.get_identifier_list_variants(old_subject_uri)
+        la_subjs = LinkAnnotation.objects\
+                                 .filter(subject__in=old_subj_list)
+        print('Change subjects for annotations: ' + str(len(la_subjs)))
+        for la_subj in la_subjs:
+            old_hash = la_subj.hash_id
+            new_la = la_subj
+            new_la.subject = new_subject_uri
+            try:
+                new_la.save()
+                ok = True
+            except Exception as error:
+                ok = False
+                print("Error: " + str(error))
+            if ok:
+                LinkAnnotation.objects\
+                              .filter(hash_id=old_hash).delete()
+
     def replace_predicate_uri(self,
                               old_pred_uri,
                               new_pred_uri):
         """ replaces annotations using
         a given old_predicate with a new one
         """
-        alt_old_pred = self.make_alt_uri(old_pred_uri)
-        la_objs = LinkAnnotation.objects\
-                                .filter(Q(predicate_uri=old_pred_uri) |
-                                        Q(predicate_uri=alt_old_pred))
-        print('Change predicates for annotations: ' + str(len(la_objs)))
-        for la_obj in la_objs:
-            new_la = la_obj
+        lequiv = LinkEquivalence()
+        old_pred_list = lequiv.get_identifier_list_variants(old_pred_uri)
+        la_preds = LinkAnnotation.objects\
+                                 .filter(predicate_uri__in=old_pred_list)
+        print('Change predicates for annotations: ' + str(len(la_preds)))
+        for la_pred in la_preds:
+            old_hash = la_pred.hash_id
+            new_la = la_pred
             new_la.predicate_uri = new_pred_uri
-            LinkAnnotation.objects\
-                          .filter(hash_id=la_obj.hash_id).delete()
-            new_la.save()
+            try:
+                new_la.save()
+                ok = True
+            except Exception as error:
+                ok = False
+            if ok:
+                LinkAnnotation.objects\
+                              .filter(hash_id=old_hash).delete()
 
     def replace_predicate_uri_narrow(self,
                                      old_pred_uri,
@@ -118,20 +150,24 @@ class LinkAnnoManagement():
         """ replaces annotations using
         a given old_object_uri with a new one
         """
-        alt_old_obj = self.make_alt_uri(old_object_uri)
+        lequiv = LinkEquivalence()
+        old_obj_list = lequiv.get_identifier_list_variants(old_object_uri)
         la_objs = LinkAnnotation.objects\
-                                .filter(Q(object_uri=old_object_uri) |
-                                        Q(object_uri=alt_old_obj))
+                                .filter(object_uri__in=old_obj_list)
         print('Change object_uri for annotations: ' + str(len(la_objs)))
         for la_obj in la_objs:
+            old_hash = la_obj.hash_id
             new_la = la_obj
             new_la.object_uri = new_object_uri
-            LinkAnnotation.objects\
-                          .filter(hash_id=la_obj.hash_id).delete()
             try:
                 new_la.save()
+                ok = True
             except Exception as error:
+                ok = False
                 print("Error: " + str(error))
+            if ok:
+                LinkAnnotation.objects\
+                              .filter(hash_id=old_hash).delete()
 
     def make_alt_uri(self, uri):
         """ makes an alternative URI, changing a prefixed to a full
