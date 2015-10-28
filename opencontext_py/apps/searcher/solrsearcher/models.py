@@ -64,6 +64,13 @@ class SolrSearch():
             self.facet_fields = self.PROJECT_FACET_FIELDS
         request_dict = json.loads(request_dict_json)
         query = self.compose_query(request_dict)
+        if 'fq' in query:
+            if isinstance(query['fq'], list):
+                new_fq = []
+                for old_fq in query['fq']:
+                    if isinstance(old_fq, str):
+                        new_fq.append(old_fq.replace('(())', ' '))
+                query['fq'] = new_fq
         """
         try:
             response = self.solr.search(**query)
@@ -109,7 +116,8 @@ class SolrSearch():
                                          False)
         if s_param is not False:
             # add custom sorting
-            query['sort'] = s_param
+            # query['sort'] = s_param
+            pass
         # If the user does not provide a search term, search for everything
         query['q'] = '*:*'  # defaul search for all
         q_param = self.get_request_param(request_dict,
