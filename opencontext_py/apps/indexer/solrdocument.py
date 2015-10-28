@@ -64,7 +64,7 @@ class SolrDocument:
         self._process_associated_linkedata()
         self.process_equivalent_linked_data()
         self._process_interest_score()
-        self.ensure_text_escape()
+        # self.ensure_text_escape()
 
     def ensure_text_escape(self):
         """ makes sure the text is solr escaped """
