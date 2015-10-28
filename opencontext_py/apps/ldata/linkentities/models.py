@@ -85,6 +85,7 @@ class LinkEntityGeneration():
         """
         actual_uri = uri
         uri_prefixes = {'http://www.cidoc-crm.org/rdfs/cidoc-crm': 'crm-rdf',
+                        'http://erlangen-crm.org/current': 'cidoc-crm',
                         'http://collection.britishmuseum.org/description/thesauri': 'bm-thes',
                         'http://collection.britishmuseum.org/id/thesauri': 'bm-thes',
                         'http://concordia.atlantides.org': 'concordia',

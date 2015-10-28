@@ -147,6 +147,21 @@ sri.reindex()
         uuids = self.get_related_uuids(uuid)
         return self.reindex_uuids(uuids)
 
+    def reindex_related_uuid_list(self, rel_uuid_list):
+        """ Reindexes an item
+            and related items, from a list of uuids
+        """
+        uuids = []
+        if not isinstance(rel_uuid_list, list):
+            rel_uuid_list = [rel_uuid_list]
+        for rel_uuid in rel_uuid_list:
+            act_uuids = self.get_related_uuids(rel_uuid)
+            for act_uuid in act_uuids:
+                if act_uuid not in uuids:
+                    uuids.append(act_uuid)
+        print('Wokring on: ' + str(len(uuids)) + ' related to ' + str(len(rel_uuid_list)) + ' rel uuids...')
+        return self.reindex_uuids(uuids)
+
     def get_related_uuids(self, uuid, inclusive=True):
         """ gets a list of uuids related to a given uuid
             if inclusive, include the UUID passed in the
