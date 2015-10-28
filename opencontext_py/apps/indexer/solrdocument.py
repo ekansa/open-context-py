@@ -72,6 +72,7 @@ class SolrDocument:
                                          encoding='utf-8',
                                          strings_only=False,
                                          errors='surrogateescape')
+        self.fields['text'] = self.fields['text'].replace('"', '\'')
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
