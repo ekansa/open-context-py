@@ -64,46 +64,14 @@ class SolrDocument:
         self._process_associated_linkedata()
         self.process_equivalent_linked_data()
         self._process_interest_score()
-        # self.ensure_text_escape()
+        self.ensure_text_ok()
 
-    def ensure_text_escape(self):
+    def ensure_text_ok(self):
         """ makes sure the text is solr escaped """
-        self.fields['text'] = self.escape_solr_arg(self.fields['text'])
-
-    def escaped_seq(self, term):
-        """ Yield the next string based on the
-            next character (either this char
-            or escaped version """
-        escaperules = {'+': r'\+',
-                       '-': r'\-',
-                       '&': r'\&',
-                       '|': r'\|',
-                       '!': r'\!',
-                       '(': r'\(',
-                       ')': r'\)',
-                       '{': r'\{',
-                       '}': r'\}',
-                       '[': r'\[',
-                       ']': r'\]',
-                       '^': r'\^',
-                       '~': r'\~',
-                       '*': r'\*',
-                       '?': r'\?',
-                       ':': r'\:',
-                       '"': r'\"',
-                       ';': r'\;',
-                       ' ': r'\ '}
-        for char in term:
-            if char in escaperules.keys():
-                yield escaperules[char]
-            else:
-                yield char
-
-    def escape_solr_arg(self, term):
-        """ Apply escaping to the passed in query terms
-            escaping special characters like : , etc"""
-        term = term.replace('\\', r'\\')   # escape \ first
-        return "".join([next_str for next_str in self.escaped_seq(term)])
+        self.fields['text'] = self.fields['text']\
+                                  .encode('utf-8')\
+                                  .decode('utf-8', 'ignore')\
+                                  .encode("utf-8")
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
