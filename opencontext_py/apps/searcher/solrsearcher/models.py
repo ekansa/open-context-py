@@ -109,7 +109,8 @@ class SolrSearch():
                                          False)
         if s_param is not False:
             # add custom sorting
-            query['sort'] = s_param
+            # query['sort'] = s_param
+            pass
         # If the user does not provide a search term, search for everything
         query['q'] = '*:*'  # defaul search for all
         q_param = self.get_request_param(request_dict,
