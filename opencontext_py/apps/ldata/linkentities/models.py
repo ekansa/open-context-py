@@ -92,6 +92,7 @@ class LinkEntityGeneration():
                         'http://gawd.atlantides.org/terms': 'gawd',
                         'http://purl.org/dc/terms': 'dc-terms',
                         'http://dbpedia.org/resource': 'dbpedia',
+                        'http://www.wikidata.org/wiki': 'wikidata',
                         'http://eol.org/pages': 'eol-p',
                         'http://opencontext.org/vocabularies/dinaa': 'dinaa',
                         'http://opencontext.org/vocabularies/oc-general': 'oc-gen',
