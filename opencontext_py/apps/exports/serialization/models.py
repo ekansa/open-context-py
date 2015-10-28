@@ -94,15 +94,15 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                           .filter(updated__gte=after_date)\
                           .iterator()
         for proj in projects:
-            if len(proj.label) < 1:
-                man_proj = Manifest.objects\
-                                   .filter(item_type='projects',
-                                           uuid=proj.uuid)[:1]
-                if len(man_proj) > 0:
+            man_proj = Manifest.objects\
+                               .filter(item_type='projects',
+                                       uuid=proj.uuid)[:1]
+            if len(man_proj) > 0:
+                if len(proj.label) < 1:
                     proj.label = man_proj[0].label
                     proj.save()
-            print('Output: ' + str(proj.label) + ' (' + str(proj.uuid) + ')')
-            self.dump_serialized_data(proj.uuid)
+                print('Output: ' + str(man_proj[0].slug) + ' (' + str(proj.uuid) + ')')
+                self.dump_serialized_data(proj.uuid)
 
     def dump_serialized_data(self, project_uuid):
         """ dumps serialized data for a projproect """
