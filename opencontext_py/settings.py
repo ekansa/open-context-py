@@ -159,17 +159,30 @@ MANAGERS = (
     (get_secret('MANAGE_NAME'), get_secret('MANAGE_EMAIL'))
 )
 
-# CACHES, Makes things faster
-CACHES = {
-    'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'oc_cache_table',
-        'TIMEOUT': 360,
-        'OPTIONS': {
-            'MAX_ENTRIES': 5000
+if DEBUG:
+    # Short caching for debugging
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'oc_cache_table',
+            'TIMEOUT': 1,
+            'OPTIONS': {
+                'MAX_ENTRIES': 5
+            }
         }
     }
-}
+else:
+    # CACHES, Makes things faster
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'oc_cache_table',
+            'TIMEOUT': (1.5 * 24 * 60 * 60),  # 1.5 days for cache
+            'OPTIONS': {
+                'MAX_ENTRIES': 15000
+            }
+        }
+    }
 
 
 # -----------------------

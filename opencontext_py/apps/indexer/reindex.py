@@ -147,9 +147,28 @@ sri.reindex()
         uuids = self.get_related_uuids(uuid)
         return self.reindex_uuids(uuids)
 
+    def reindex_related_to_object_uris(self, object_uri_list):
+        """ reindexes based on associations to object_uris
+            in the link_annotations model
+        """
+        if not isinstance(object_uri_list, list):
+            object_uri_list = [object_uri_list]
+        # gets predicates related to these object uris
+        anno_list = LinkAnnotation.objects\
+                                  .filter(object_uri__in=object_uri_list,
+                                          subject_type='predicates')
+        rel_pred_uuid_list = []
+        for anno_obj in anno_list:
+            if anno_obj.subject not in rel_pred_uuid_list:
+                rel_pred_uuid_list.append(anno_obj.subject)
+        print('Got ' + str(len(rel_pred_uuid_list)) + ' now getting manifest items...')
+        # now get the uuids to process
+        self.reindex_related_uuid_list(rel_pred_uuid_list)
+
     def reindex_related_uuid_list(self, rel_uuid_list):
         """ Reindexes an item
             and related items, from a list of uuids
+
         """
         uuids = []
         if not isinstance(rel_uuid_list, list):
