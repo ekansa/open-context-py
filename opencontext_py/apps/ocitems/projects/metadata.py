@@ -94,6 +94,7 @@ class ProjectMeta():
                                     # of rectangular region with all project points
         self.event_ents = False
         self.geo_range = False  # dict object of min, max longitude, latitudes
+        self.print_progress = False
 
     def make_geo_meta(self, project_uuid):
         output = False
@@ -137,7 +138,8 @@ class ProjectMeta():
         geo_objs = []
         if len(clusts['boxes']) == 0:
             # no bounding box polygons, just a simple point to add
-            print(str(clusts))
+            if self.print_progress:
+                print(str(clusts))
             geo_obj = self.make_geo_obj(1,
                                         clusts['centroids'][0][0],
                                         clusts['centroids'][0][1]
@@ -231,10 +233,11 @@ class ProjectMeta():
                                                                       max_lon,
                                                                       max_lat)
                     if cluster_ok is False:
-                        print('Loop (' + str(number_clusters) + '), cluster '
-                                       + str(i)
-                                       + ' has too few members')
                         resonable_clusters = False
+                        if self.print_progress:
+                            print('Loop (' + str(number_clusters) + '), cluster '
+                                           + str(i)
+                                           + ' has too few members')
                 box = self.make_box(min_lon, min_lat, max_lon, max_lat)
                 boxes.append(box)
                 max_dist = self.get_point_distance(min_lon,
@@ -251,10 +254,11 @@ class ProjectMeta():
                                                      max_lat,
                                                      ch_box)
                         if overlap:
-                            print('Loop (' + str(number_clusters) + '), cluster '
-                                  + str(i)
-                                  + ' overlaps with ' + str(jj))
                             resonable_clusters = False
+                            if self.print_progress:
+                                print('Loop (' + str(number_clusters) + '), cluster '
+                                      + str(i)
+                                      + ' overlaps with ' + str(jj))
                     jj += 1
                 i += 1
                 for o_centroid in centroids:
@@ -267,9 +271,10 @@ class ProjectMeta():
                                                             cent_lon,
                                                             cent_lat)
                         if cent_dist < (self.MIN_CLUSTER_SIZE * self.max_geo_range):
-                            print('Loop (' + str(number_clusters) + ') cluster size: ' \
-                                  + str(cent_dist) + ' too small to ' + str(self.max_geo_range))
                             resonable_clusters = False
+                            if self.print_progress:
+                                print('Loop (' + str(number_clusters) + ') cluster size: ' \
+                                      + str(cent_dist) + ' too small to ' + str(self.max_geo_range))
             if resonable_clusters is False:
                 number_clusters = number_clusters - 1
             if number_clusters < 1:
@@ -340,7 +345,8 @@ class ProjectMeta():
         of project uuids. Accepts a list to get sub-projects
         """
         uuids = self.make_uuids_list(uuids)
-        print('Geo range for ' + str(uuids))
+        if self.print_progress:
+            print('Geo range for ' + str(uuids))
         proj_geo = Geospace.objects.filter(project_uuid__in=uuids)\
                            .exclude(latitude=0, longitude=0)\
                            .aggregate(Max('latitude'),
