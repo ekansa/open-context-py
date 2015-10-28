@@ -201,7 +201,7 @@ class Crawler():
             else:
                 print('Error: Unable to index ' + uuid + ' due to '
                       'a datatype mismatch.')
-        except TypeError:
-            print("Error: Unable to process document " + uuid + '.')
+        except TypeError as error:
+            print("Type Error {0}".format(error) + ": Unable to process document " + uuid + '.')
         except Exception as error:
             print("Error: {0}".format(error) + " -----> " + uuid)
