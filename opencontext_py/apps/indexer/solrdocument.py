@@ -1,6 +1,6 @@
 import datetime
 import json
-from unidecode import unidecode
+from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -68,10 +68,10 @@ class SolrDocument:
 
     def ensure_text_ok(self):
         """ makes sure the text is solr escaped """
-        self.fields['text'] = self.fields['text']\
-                                  .encode('utf-8')\
-                                  .decode('utf-8', 'ignore')\
-                                  .encode("utf-8")
+        self.fields['text'] = force_text(self.fields['text'],
+                                         encoding='utf-8',
+                                         strings_only=False,
+                                         errors='surrogateescape')
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
