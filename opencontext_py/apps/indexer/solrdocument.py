@@ -777,19 +777,20 @@ class SolrDocument:
                     self.fields[allname] = []
                 for entity in self.oc_item.json_ld[equiv_uri]:
                     if ('http://' in entity['id'] \
-                       or 'https://' in entity['id'])\
-                       and 'http://opencontext.org' not in entity['id']:
+                       or 'https://' in entity['id']):
                         # only do this if this is NOT an open context URI
-                        self.fields['text'] += entity['label'] + '\n'
+                        if 'label' in entity:
+                            self.fields['text'] += entity['label'] + '\n'
                         self.fields['text'] += entity['id'] + '\n'
-                        item = self._concat_solr_string_value(
-                            entity['slug'],
-                            'id',
-                            entity['id'],
-                            entity['label'])
-                        self.fields[fname].append(item)
-                        self.fields[allname].append(item)
-                        self.process_object_uri(entity['id'])
+                        if 'label' in entity and 'slug' in entity:
+                            item = self._concat_solr_string_value(
+                                entity['slug'],
+                                'id',
+                                entity['id'],
+                                entity['label'])
+                            self.fields[fname].append(item)
+                            self.fields[allname].append(item)
+                            self.process_object_uri(entity['id'])
         if 'skos:related' in self.oc_item.json_ld:
             fname = 'skos_related___pred_id'
             allname = 'obj_all___skos_related___pred_id'
