@@ -51,7 +51,7 @@
                         {% endwith %}
                         {% endwith %}
                         <div class="preview-image">
-                            <img src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
+                            <img class="img-responsive" src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
                         </div>
                         {% include 'items/plain-panel-end.html' %}
                     {%endif%}
