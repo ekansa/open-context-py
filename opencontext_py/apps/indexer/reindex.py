@@ -147,7 +147,9 @@ sri.reindex()
         uuids = self.get_related_uuids(uuid)
         return self.reindex_uuids(uuids)
 
-    def reindex_related_to_object_uris(self, object_uri_list):
+    def reindex_related_to_object_uris(self,
+                                       object_uri_list,
+                                       indexed_before=False):
         """ reindexes based on associations to object_uris
             in the link_annotations model
         """
@@ -163,7 +165,29 @@ sri.reindex()
                 rel_pred_uuid_list.append(anno_obj.subject)
         print('Got ' + str(len(rel_pred_uuid_list)) + ' now getting manifest items...')
         # now get the uuids to process
-        self.reindex_related_uuid_list(rel_pred_uuid_list)
+        uuids = []
+        if indexed_before is False:
+            obj_uuids = Assertion.objects\
+                                 .filter(predicate_uuid__in=rel_pred_uuid_list)\
+                                 .values_list('uuid', flat=True)\
+                                 .distinct('uuid')
+            for uuid in obj_uuids:
+                uuids.append(uuid)
+        else:
+            a_tab = 'oc_assertions'
+            m_tab = '"oc_manifest" AS "m_b"'
+            filters = 'oc_assertions.uuid=m_b.uuid \
+                      AND ( m_b.indexed < \'' + indexed_before + '\' \
+                      OR m_b.indexed is null)'
+            obj_uuids = Assertion.objects\
+                                 .filter(predicate_uuid__in=rel_pred_uuid_list)\
+                                 .extra(tables=[a_tab, m_tab], where=[filters])\
+                                 .values_list('uuid', flat=True)\
+                                 .distinct('uuid')
+            for uuid in obj_uuids:
+                uuids.append(uuid)
+        print('Found: ' + str(len(uuids)) + ' to index')
+        return self.reindex_uuids(uuids)
 
     def reindex_related_uuid_list(self, rel_uuid_list):
         """ Reindexes an item
@@ -178,7 +202,7 @@ sri.reindex()
             for act_uuid in act_uuids:
                 if act_uuid not in uuids:
                     uuids.append(act_uuid)
-        print('Wokring on: ' + str(len(uuids)) + ' related to ' + str(len(rel_uuid_list)) + ' rel uuids...')
+        print('Working on: ' + str(len(uuids)) + ' related to ' + str(len(rel_uuid_list)) + ' rel uuids...')
         return self.reindex_uuids(uuids)
 
     def get_related_uuids(self, uuid, inclusive=True):
