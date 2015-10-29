@@ -163,7 +163,15 @@ sri.reindex()
                 rel_pred_uuid_list.append(anno_obj.subject)
         print('Got ' + str(len(rel_pred_uuid_list)) + ' now getting manifest items...')
         # now get the uuids to process
-        self.reindex_related_uuid_list(rel_pred_uuid_list)
+        obj_uuids = Assertion.objects\
+                             .filter(predicate_uuid__in=rel_pred_uuid_list)\
+                             .values_list('uuid', flat=True)\
+                             .distinct('uuid')
+        uuids = []
+        for uuid in obj_uuids:
+            uuids.append(uuid)
+        print('Found: ' + str(len(uuids)) + ' to index')
+        return self.reindex_uuids(uuids)
 
     def reindex_related_uuid_list(self, rel_uuid_list):
         """ Reindexes an item
@@ -178,7 +186,7 @@ sri.reindex()
             for act_uuid in act_uuids:
                 if act_uuid not in uuids:
                     uuids.append(act_uuid)
-        print('Wokring on: ' + str(len(uuids)) + ' related to ' + str(len(rel_uuid_list)) + ' rel uuids...')
+        print('Working on: ' + str(len(uuids)) + ' related to ' + str(len(rel_uuid_list)) + ' rel uuids...')
         return self.reindex_uuids(uuids)
 
     def get_related_uuids(self, uuid, inclusive=True):
