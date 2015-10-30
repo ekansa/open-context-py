@@ -88,6 +88,10 @@ class MakeJsonLd():
            or 'nongeo-record' in self.act_responses:
             # now add the result information
             geojson_recs_obj = GeoJsonRecords(self.request_dict_json)
+            if len(self.act_responses) <= 2:
+                # get more complex geospatial data, if we're not asking
+                # for too many types of resonses
+                geojson_recs_obj.do_complex_geo = True
             geojson_recs_obj.entities = self.entities
             geojson_recs_obj.min_date = self.min_date
             geojson_recs_obj.max_date = self.max_date
