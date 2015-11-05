@@ -48,5 +48,25 @@
                 </ol>
             </td>
         </tr>
+        <tr>
+            <th>
+                Modifying Query URLs with JSONP
+            </th>
+            <td>
+                <p>Finally, while Open Context supports <a href="http://enable-cors.org/" title="Cross Origin Resource Sharing" target="_blank">CORS (Cross Origin Resource Sharing)</a>, in practice some clients may still have trouble accessing JSON data. For these clients, Open Context APIs support JSONP (<a href="https://en.wikipedia.org/wiki/JSONP" target="_blank">JSON with "padding"</a>) for URLs with a "<strong>.json</strong>" added as described above. To request JSONP, add a "callback" parameter to your request, as in the examples below:</p>
+                <ol>
+                    <li>
+                        <h5><em>Example (Search/Query Request):</em></h5>
+                        <p>The plain JSON(-LD) request URL <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json?callback=myFunction">{{ base_url}}/subjects-search/Turkey/Kenan+Tepe.json?<strong>callback=myFunction</strong></a></samp>
+                        </p>
+                    </li>
+                    <li>
+                        <h5><em>Example (Item Request):</em></h5>
+                        <p>The plain JSON(-LD) request URL <samp><a title="JSON for the Kenan Tepe project" target="_blank" href="{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json">{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E<strong>.json</strong></a></samp> can be made as a JSONP request like: <samp><a title="JSON query for Kenan Tepe" target="_blank" href="{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json?callback=oneDoesNotSimply">{{ base_url}}/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E.json?<strong>callback=oneDoesNotSimply</strong></a></samp>
+                        </p>
+                    </li>
+                </ol>
+            </td>
+        </tr>
     </tbody>
 </table>

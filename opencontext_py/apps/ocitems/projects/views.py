@@ -83,8 +83,13 @@ def json_view(request, uuid):
             json_output = json.dumps(ocitem.json_ld,
                                      indent=4,
                                      ensure_ascii=False)
-            return HttpResponse(json_output,
-                                content_type=req_neg.use_response_type + "; charset=utf8",)
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                return HttpResponse(funct + '(' + json_output + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json_output,
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,

@@ -5,7 +5,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class RequestDict():
-    
+
     def __init__(self):
         pass
 
@@ -27,5 +27,7 @@ class RequestDict():
             new_request['path'] = False
         if request is not False:
             for key, key_val in request.GET.items():  # "for key in request.GET" works too.
-                new_request[key] = request.GET.getlist(key)
-        return new_request 
+                if key != 'callback':
+                    # so JSON-P callbacks not in the request
+                    new_request[key] = request.GET.getlist(key)
+        return new_request
