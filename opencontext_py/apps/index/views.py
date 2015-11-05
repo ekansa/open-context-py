@@ -6,15 +6,12 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 
 def index(request):
-    """ Get the search context JSON-LD """
+    """ Get home page """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
     old_view = False
     template = loader.get_template('index/view.html')
-    if 'test' in request.GET:
-        template = loader.get_template('index/view-initial-minimal.html')
-        old_view = True
     context = RequestContext(request,
                              {'base_url': base_url,
                               'old_view': old_view,

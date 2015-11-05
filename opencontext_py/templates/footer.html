@@ -1,26 +1,53 @@
 {% block footer %}
-<div id="footer-upper" class="row">
-    <div class="col-xs-1">
+    {% if act_nav = 'home' %}
+    <div id="footer-upper" class="row">
+        <div class="col-xs-1">
+        </div>
+        <div class="col-xs-3 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/neh-logo-black.jpg" alt="National Endowment for the Humanities (NEH) Logo" />
+        </div>
+        <div class="col-xs-2 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/nsf.gif" alt="National Science Foundation (NSF) Logo" />
+        </div>
+        <div class="col-sm-2 footer-cell">
+            <img style="margin-top:5px;" class="img-responsive" src="{{ base_url }}/static/oc/images/footer/hewlett-logo.png" alt="Hewlett Foundation Logo" />
+        </div>
+        <div class="col-xs-3 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/imls-logo-black.jpg" alt="Institute for Museum and Library Services (IMLS) Logo" />
+        </div>
+        <div class="col-xs-1">
+        </div>
     </div>
-    <div class="col-xs-3 footer-cell">
-        <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/neh-logo.png" alt="National Endowment for the Humanities (NEH) Logo" />
+    <div id="footer-lower" class="row">
+        <div class="col-md-12">
+            Open Context is a publishing service maintained by the <a href="http://alexandriaarchive.org/" title="AAI- Open Context Host">Alexandria Archive Institute</a>,
+            a 501(c)3 nonprofit organization. Open Context data is archived by the <a href="http://www.cdlib.org/" title="CDL- Repository used by Open Context">California Digital Library</a>.
+        </div>
     </div>
-    <div class="col-xs-2 footer-cell">
-        <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/nsf.gif" alt="National Science Foundation (NSF) Logo" />
+    {% else %}
+    <div id="footer-upper" class="row">
+        <div class="col-xs-1">
+        </div>
+        <div class="col-xs-3 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/neh-logo.png" alt="National Endowment for the Humanities (NEH) Logo" />
+        </div>
+        <div class="col-xs-2 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/nsf.gif" alt="National Science Foundation (NSF) Logo" />
+        </div>
+        <div class="col-sm-2 footer-cell">
+            <img style="margin-top:5px;" class="img-responsive" src="{{ base_url }}/static/oc/images/footer/hewlett-logo.png" alt="Hewlett Foundation Logo" />
+        </div>
+        <div class="col-xs-3 footer-cell">
+            <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/imls-logo.png" alt="Institute for Museum and Library Services (IMLS) Logo" />
+        </div>
+        <div class="col-xs-1">
+        </div>
     </div>
-    <div class="col-sm-2 footer-cell">
-        <img style="margin-top:5px;" class="img-responsive" src="{{ base_url }}/static/oc/images/footer/hewlett-logo.png" alt="Hewlett Foundation Logo" />
+    <div id="footer-lower" class="row">
+        <div class="col-md-12">
+            Open Context is a publishing service maintained by the <a href="http://alexandriaarchive.org/" title="AAI- Open Context Host">Alexandria Archive Institute</a>,
+            a 501(c)3 nonprofit organization. Open Context data is archived by the <a href="http://www.cdlib.org/" title="CDL- Repository used by Open Context">California Digital Library</a>.
+        </div>
     </div>
-    <div class="col-xs-3 footer-cell">
-        <img class="img-responsive" src="{{ base_url }}/static/oc/images/footer/imls-logo.png" alt="Institute for Museum and Library Services (IMLS) Logo" />
-    </div>
-    <div class="col-xs-1">
-    </div>
-</div>
-<div id="footer-lower" class="row">
-    <div class="col-md-12">
-        Open Context is a publishing service maintained by the <a href="http://alexandriaarchive.org/" title="AAI- Open Context Host">Alexandria Archive Institute</a>,
-        a 501(c)3 nonprofit organization. Open Context data is archived by the <a href="http://www.cdlib.org/" title="CDL- Repository used by Open Context">California Digital Library</a>.
-    </div>
-</div>
+    {%endif%}
 {% endblock %}
