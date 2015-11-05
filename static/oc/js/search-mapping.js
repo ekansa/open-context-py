@@ -1,11 +1,11 @@
 /*
- * Map an individual item with GeoJSON
+ * Map search results (currently only geo-facets)
+ * from the GeoJSON API service
  */
 
 function search_map(json_url, base_search_link) {
 	
 	var map_dom_id = 'map';
-	var geodeep = 6; // default geo-facet tile depth
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
 	var map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
@@ -13,59 +13,80 @@ function search_map(json_url, base_search_link) {
 	this.base_search_link = base_search_link;
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
-	var url_parts = getJsonFromUrl(json_url);
-	var context_path_geodeep = false;
-	if (url_parts['disc-geotile']) {
-		//geodeep = url_parts['disc-geotile'].length + 4;
-		geodeep = 4;
-		tile_constrained = true;
-	}
-	else{
-		// use context depth to set geodeep
-		var check_url = removeURLParameter(this.json_url, 'start');
-		check_url = removeURLParameter(check_url, 'rows');
-		check_url = check_url.replace('.json', '');
-		// now remove the last char if it is a '?'
-		var check_len = check_url.length;
-		var last_char = check_url.charAt(check_len - 1);
-		if (last_char == '?') {
-			check_url = check_url.replace('?', '');
-		} 
-		var url_last = check_url.replace((base_url + this.base_search_link), '');
-		url_last = url_last.trim();
-		if (url_last.length > 0) {
-			geodeep += 1;
-			var qindex = url_last.indexOf('?');
-			if (qindex > 0) {
-				url_last = url_last.substr(0, qindex);
-			}
-			if (url_last.length > 0) {
-				geodeep += 1;
-				var slash_count = (url_last.match(/\//g) || []).length;
-				if (slash_count > 0) {
-					geodeep += slash_count + 2;
-				}
-			}
+	this.geodeep = 6; // geo-tile zoom level beyond current zoom level
+	
+	this.set_geodeep = function() {
+		/* We need to set a reasonable size for the geospatial facet
+		 * tiles that we will request. 'geodeep' is the level of 
+		 * tile depth below the current map zoom that is requested
+		 * 
+		 */
+		var geodeep = this.geodeep;
+		var url_parts = getJsonFromUrl(this.json_url);
+		var context_path_geodeep = false;
+		if (url_parts['disc-geotile']) {
+			// if a geotile is used as a search filter, as for
+			// 4 zoom levels deeper to show geo-tile facets constrained
+			// by this filter
+			geodeep = 4;
+			tile_constrained = true;
 		}
 		else{
-			geodeep = 6;
+			// no explicit geotile filter, but there maybe other filters
+			// that would make different geodeep zooms more appropriate
+			
+			// first remove start, rows params, since these aren't filters
+			var check_url = removeURLParameter(this.json_url, 'start');
+			check_url = removeURLParameter(check_url, 'rows');
+			check_url = check_url.replace('.json', '');
+			// now remove the last char if it is a '?'
+			var check_len = check_url.length;
+			var last_char = check_url.charAt(check_len - 1);
+			if (last_char == '?') {
+				check_url = check_url.replace('?', '');
+			} 
+			var url_last = check_url.replace((base_url + this.base_search_link), '');
+			url_last = url_last.trim();
+			if (url_last.length > 0) {
+				geodeep += 1;
+				var qindex = url_last.indexOf('?');
+				if (qindex > 0) {
+					url_last = url_last.substr(0, qindex);
+				}
+				if (url_last.length > 0) {
+					geodeep += 1;
+					var slash_count = (url_last.match(/\//g) || []).length;
+					if (slash_count > 0) {
+						// we've got a context path, so ask for
+						// more tile depth
+						geodeep += slash_count + 2;
+					}
+				}
+			}
+			else{
+				// use the default tile depth, since there's no
+				// search filter in the request URL
+				geodeep = 6;
+			}
 		}
+		//if geodeep is in the url, use it.
+		if (url_parts['geodeep']) {
+			geodeep = url_parts['geodeep'];
+		}
+		return geodeep;
 	}
-	//if geodeep is in the url, use it.
-	if (url_parts['geodeep']) {
-		geodeep = url_parts['geodeep'];
-	}
+	
 	map = L.map(map_dom_id).setView([45, 0], 2); //map the map
 	hash = new L.Hash(map);
-	// remove the geodeep parameter
-	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	map.map_title_dom_id = 'map-title';
 	map.map_title_suffix_dom_id = 'map-title-suffix';
 	map.map_menu_dom_id = 'map-menu';
-	map.json_url = this.json_url
-	map.geodeep = geodeep;
-	map.rows = rows;
+	map.json_url = this.json_url;
+	map.geodeep = this.set_geodeep();
+	// remove the geodeep parameter
+	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	//map.fit_bounds exists to set an inital attractive view
+	map.rows = rows;
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
 	map.default_overlay_layer = 'any';
@@ -139,9 +160,12 @@ function search_map(json_url, base_search_link) {
 	// now add the active base map
 	map.addLayer(map.act_base_map);
 	
-	/*
+	
+	
+	
+	/**************************************************************
 	 * Check for hashes in the URL that may indicate map parameters
-	 */
+	 *************************************************************/
 	map.req_hash = window.location.hash;
 	map.req_hash_layer = false;
 	map.get_request_hash = function(){
@@ -177,29 +201,13 @@ function search_map(json_url, base_search_link) {
 		}
 	}
 	
-	map.show_title_menu = function(map_type, geodeep){
-		/*
-		* Show current layer type
-		*/
-		if (document.getElementById(map.map_title_dom_id)) {
-			//if the map title element exits
-			var act_dom_id = map.map_title_dom_id;
-			var title = document.getElementById(act_dom_id);
-			var act_dom_id = map.map_title_suffix_dom_id;
-			var title_suf = document.getElementById(act_dom_id);
-			title_suf.innerHTML = "";
-			var act_dom_id = map.map_menu_dom_id;
-			var menu = document.getElementById(act_dom_id);
-			
-			/*
-			* Handle geo-regions (facets)
-			*/
-			if (map_type == 'geo-facet') {
-				title.innerHTML = "Map of Counts by Region";
-			}
-		}
-	}
 	
+	/**************************************************
+	 * Functions for change tile resolution, or
+	 * changing between rectable and circle markers for
+	 * geofacets
+	 **************************************************
+	 */
 	var region_controls = false;
 	map.add_region_controls = function(){
 		/*
@@ -288,7 +296,6 @@ function search_map(json_url, base_search_link) {
 		}
 	}
 	
-	
 	map.view_region_layer_by_zoom = function(geodeep){
 		/*
 		 * get a layer by zoom level
@@ -315,6 +322,12 @@ function search_map(json_url, base_search_link) {
 		}
 	}
 	
+	
+	/**************************************************
+	 * Functions for displaying geo-facets as rectangle
+	 * polygon regions
+	 **************************************************
+	 */
 	var tile_region_layer = false;
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
@@ -427,27 +440,12 @@ function search_map(json_url, base_search_link) {
 	}
 	
 	
-	function on_each_circle_feature(feature, layer){
-		
-		if (feature.properties) {
-			
-			var popupContent = "<div> This discovery region has " + feature.count;
-			popupContent += " items. ";
-			if(feature.properties.href){
-				var use_href = removeURLParameter(feature.properties.href, 'response');
-				use_href = removeURLParameter(use_href, 'geodeep');
-				var next_deep = 5;
-				if (next_deep > 20) {
-					next_deep = 20;
-				}
-				use_href += "&geodeep=" + next_deep;
-				popupContent += "<a href='" + use_href + "'>Click here</a> to filter by this region."
-			}
-			popupContent += "</div>";
-			layer.bindPopup(popupContent);
-		}
-	}
 	
+	/**************************************************
+	 * Functions for displaying geo-facets as circle
+	 * markers
+	 **************************************************
+	 */
 	var circle_region_layer = false;
 	map.circle_regions = function (){
 		// does the work of rendering a region facet layer
@@ -577,30 +575,40 @@ function search_map(json_url, base_search_link) {
 			if (region_controls) {
 				map.toggle_tile_controls();
 			}
-			// delete map.geojson_facets[map.geodeep];
-			// map.geojson_facets[map.geodeep] = original_geojson;
 		}
 		map.button_ready = true;
 	}
 	
-	map.show_region_loading = function (){
-		if (document.getElementById(map.map_title_dom_id)) {
-			// show the loading script
-			map.button_ready = false;
-			var act_dom_id = map.map_title_dom_id;
-			var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
-			loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
-			loading += " Loading Regions...";
-			document.getElementById(act_dom_id).innerHTML = loading;
-			var act_dom_id = map.map_title_suffix_dom_id;
-			document.getElementById(act_dom_id).innerHTML = "";
+	function on_each_circle_feature(feature, layer){
+		
+		if (feature.properties) {
+			
+			var popupContent = "<div> This discovery region has " + feature.count;
+			popupContent += " items. ";
+			if(feature.properties.href){
+				var use_href = removeURLParameter(feature.properties.href, 'response');
+				use_href = removeURLParameter(use_href, 'geodeep');
+				var next_deep = 5;
+				if (next_deep > 20) {
+					next_deep = 20;
+				}
+				use_href += "&geodeep=" + next_deep;
+				popupContent += "<a href='" + use_href + "'>Click here</a> to filter by this region."
+			}
+			popupContent += "</div>";
+			layer.bindPopup(popupContent);
 		}
 	}
+	
+	
+	
+	/**************************************************
+	 * AJAX Request to get new map data
+	 * 
+	 *************************************************
+	*/
 	map.get_geojson_regions = function (){
-		/*
-		* Show current layer type
-		*/
-		map.show_region_loading();
+		map.show_region_loading(); // show loading gif
 		//do the ajax request
 		$.ajax({
 			type: "GET",
@@ -655,6 +663,48 @@ function search_map(json_url, base_search_link) {
 				}
 			}
 		})
+	}
+	
+	
+	/**************************************************
+	 * Functions for HTML changes for loading maps
+	 * and displaying map titles
+	 *************************************************
+	 */
+	map.show_region_loading = function (){
+		if (document.getElementById(map.map_title_dom_id)) {
+			// show the loading script
+			map.button_ready = false;
+			var act_dom_id = map.map_title_dom_id;
+			var loading = "<img style=\"margin-top:-4px;\" height=\"16\"  src=\"";
+			loading += base_url + "/static/oc/images/ui/waiting.gif\" alt=\"Loading icon...\" />";
+			loading += " Loading Regions...";
+			document.getElementById(act_dom_id).innerHTML = loading;
+			var act_dom_id = map.map_title_suffix_dom_id;
+			document.getElementById(act_dom_id).innerHTML = "";
+		}
+	}
+	map.show_title_menu = function(map_type, geodeep){
+		/*
+		* Show current layer type
+		*/
+		if (document.getElementById(map.map_title_dom_id)) {
+			//if the map title element exits
+			var act_dom_id = map.map_title_dom_id;
+			var title = document.getElementById(act_dom_id);
+			var act_dom_id = map.map_title_suffix_dom_id;
+			var title_suf = document.getElementById(act_dom_id);
+			title_suf.innerHTML = "";
+			var act_dom_id = map.map_menu_dom_id;
+			var menu = document.getElementById(act_dom_id);
+			
+			/*
+			* Handle geo-regions (facets)
+			*/
+			if (map_type == 'geo-facet') {
+				title.innerHTML = "Map of Counts by Region";
+			}
+		}
 	}
 	
 	this.map = map;
