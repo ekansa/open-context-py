@@ -21,10 +21,11 @@ from django.views.decorators.cache import never_cache
 def index(request, spatial_context=None):
     return HttpResponse("Hello, world. You're at the search index.")
 
+
 def sets_view(request, spatial_context=''):
     """ redirects requests from the legacy site 'sets'
         to the subjects-search view
-        
+
         We can add URL parameter mappings to this later
         so that old url parameters can be mapped to the
         current parameters
@@ -41,7 +42,7 @@ def sets_view(request, spatial_context=''):
 def lightbox_view(request, spatial_context=''):
     """ redirects requests from the legacy site 'lightbox'
         to the media-search view
-        
+
         We can add URL parameter mappings to this later
         so that old url parameters can be mapped to the
         current parameters
@@ -53,6 +54,7 @@ def lightbox_view(request, spatial_context=''):
         url_ex = url.split('?')
         param_suffix = '?' + url_ex[1]
     return redirect(new_url, permanent=True)
+
 
 # @cache_control(no_cache=True)
 # @never_cache
@@ -143,9 +145,17 @@ def json_view(request, spatial_context=None):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
             # requester wanted a mimetype we DO support
-            return HttpResponse(json.dumps(json_ld,
-                                ensure_ascii=False, indent=4),
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                json_str = json.dumps(json_ld,
+                                      ensure_ascii=False,
+                                      indent=4)
+                return HttpResponse(funct + '(' + json_str + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json.dumps(json_ld,
+                                    ensure_ascii=False, indent=4),
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
@@ -248,9 +258,17 @@ def subjects_json_view(request, spatial_context=None):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
             # requester wanted a mimetype we DO support
-            return HttpResponse(json.dumps(json_ld,
-                                ensure_ascii=False, indent=4),
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                json_str = json.dumps(json_ld,
+                                      ensure_ascii=False,
+                                      indent=4)
+                return HttpResponse(funct + '(' + json_str + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json.dumps(json_ld,
+                                    ensure_ascii=False, indent=4),
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
@@ -355,9 +373,17 @@ def media_json_view(request, spatial_context=None):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
             # requester wanted a mimetype we DO support
-            return HttpResponse(json.dumps(json_ld,
-                                ensure_ascii=False, indent=4),
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                json_str = json.dumps(json_ld,
+                                      ensure_ascii=False,
+                                      indent=4)
+                return HttpResponse(funct + '(' + json_str + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json.dumps(json_ld,
+                                    ensure_ascii=False, indent=4),
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
@@ -462,9 +488,17 @@ def projects_json_view(request, spatial_context=None):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
             # requester wanted a mimetype we DO support
-            return HttpResponse(json.dumps(json_ld,
-                                ensure_ascii=False, indent=4),
-                                content_type=req_neg.use_response_type + "; charset=utf8")
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                json_str = json.dumps(json_ld,
+                                      ensure_ascii=False,
+                                      indent=4)
+                return HttpResponse(funct + '(' + json_str + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json.dumps(json_ld,
+                                    ensure_ascii=False, indent=4),
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,

@@ -8,6 +8,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
+from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 class GeoJsonRecords():
@@ -39,6 +40,7 @@ class GeoJsonRecords():
         self.flatten_rec_attributes = False
         # A list of (non-standard) attributes to include in a record
         self.rec_attributes = []
+        self.do_complex_geo = False  # get complex (Polygons, etc.) geospatial data from database
 
     def make_records_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -67,6 +69,8 @@ class GeoJsonRecords():
         """ processes the solr_json to
              make GeoJSON records
         """
+        # check database for complex geo objects for all of these records
+        db_geo = self.get_recs_complex_geo_features(solr_recs)
         i = self.rec_start
         for solr_rec in solr_recs:
             i += 1
@@ -89,11 +93,16 @@ class GeoJsonRecords():
                 record['rdfs:isDefinedBy'] = rec_props_obj.uri
             if rec_props_obj.latitude is not False \
                and rec_props_obj.longitude is not False:
-                geometry = LastUpdatedOrderedDict()
-                geometry['id'] = '#geo-rec-geom-' + str(i) + '-of-' + str(self.total_found)
-                geometry['type'] = 'Point'
-                geometry['coordinates'] = [rec_props_obj.longitude,
-                                           rec_props_obj.latitude]
+                # check to see if there are complex geo objects for this item
+                geometry = self.get_item_complex_geo_feature(i,
+                                                             solr_rec['uuid'],
+                                                             db_geo)
+                if geometry is False:
+                    geometry = LastUpdatedOrderedDict()
+                    geometry['id'] = '#geo-rec-geom-' + str(i) + '-of-' + str(self.total_found)
+                    geometry['type'] = 'Point'
+                    geometry['coordinates'] = [rec_props_obj.longitude,
+                                               rec_props_obj.latitude]
                 record['type'] = 'Feature'
                 record['category'] = 'oc-api:geo-record'
                 record['geometry'] = geometry
@@ -145,3 +154,42 @@ class GeoJsonRecords():
                 # case when the record is not GeoSpatial in nature
                 item = SolrUUIDs().make_item_dict_from_rec_props_obj(rec_props_obj, False)
                 self.non_geo_recs.append(item)
+
+    def get_item_complex_geo_feature(self, i, uuid, db_geo):
+        """ gets complex geo-features """
+        geometry = False
+        if self.do_complex_geo and isinstance(db_geo, dict):
+            # print('Looking for geo on: ' + uuid)
+            if uuid in db_geo:
+                # print('yeah!')
+                try:
+                    geometry = LastUpdatedOrderedDict()
+                    geometry['id'] = '#geo-rec-geom-' + str(i) + '-of-' + str(self.total_found)
+                    geometry['type'] = db_geo[uuid].ftype
+                    geometry['coordinates'] = json.loads(db_geo[uuid].coordinates)
+                except:
+                    geometry = False
+        return geometry
+
+    def get_recs_complex_geo_features(self, solr_recs):
+        """ gets complex solr features for
+            all the UUIDs in the solr records
+            cuts down on the number of queries to get
+            them all at once
+        """
+        db_geo = {}
+        if self.do_complex_geo:
+            uuids = []
+            for solr_rec in solr_recs:
+                uuids.append(solr_rec['uuid'])
+            geo_data = Geospace.objects\
+                               .filter(uuid__in=uuids)\
+                               .exclude(ftype__in=['Point',
+                                                   'point'])
+            for geo in geo_data:
+                if len(geo.coordinates) > 0:
+                    if geo.uuid not in db_geo:
+                        db_geo[geo.uuid] = geo
+        # print('Number complex: ' + str(len(db_geo)))
+        return db_geo
+
