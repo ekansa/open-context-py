@@ -213,10 +213,14 @@ class ItemBasicEdit():
                 note = '; '.join(errors)
             if ok:
                 # delete the old hero picture
-                Mediafile.objects\
-                         .filter(uuid=self.manifest.uuid,
-                                 file_type='oc-gen:hero')\
-                         .delete()
+                # doing this in a complicated way
+                # to trace why project hero files disappear!
+                med_check = Mediafile.object\
+                                     .filter(uuid=self.manifest.uuid,
+                                             file_type='oc-gen:hero')
+                if len(med_check) > 0:
+                    for med_old in med_check:
+                        med_old.delete()
                 new_hero = Mediafile()
                 new_hero.uuid = self.manifest.uuid
                 new_hero.project_uuid = self.manifest.project_uuid
