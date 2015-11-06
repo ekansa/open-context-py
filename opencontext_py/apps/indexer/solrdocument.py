@@ -763,18 +763,6 @@ class SolrDocument:
                 # for now, default to a close match
                 fname = 'skos_closematch___pred_id'
                 allname = 'obj_all___skos_closematch___pred_id'
-                if fname not in self.fields:
-                    self.fields[fname] = []
-                    if self.ROOT_LINK_DATA_SOLR not in self.fields:
-                        self.fields[self.ROOT_LINK_DATA_SOLR] = []
-                    item = self._concat_solr_string_value(
-                        'skos-closematch',
-                        'id',
-                        'http://www.w3.org/2004/02/skos/core#closeMatch',
-                        'Close Match')
-                    self.fields[self.ROOT_LINK_DATA_SOLR].append(item)
-                if allname not in self.fields:
-                    self.fields[allname] = []
                 for entity in self.oc_item.json_ld[equiv_uri]:
                     if ('http://' in entity['id'] \
                        or 'https://' in entity['id']):
@@ -783,6 +771,20 @@ class SolrDocument:
                             self.fields['text'] += entity['label'] + '\n'
                         self.fields['text'] += entity['id'] + '\n'
                         if 'label' in entity and 'slug' in entity:
+                            # first, add the fields if needed
+                            if fname not in self.fields:
+                                self.fields[fname] = []
+                            if self.ROOT_LINK_DATA_SOLR not in self.fields:
+                                self.fields[self.ROOT_LINK_DATA_SOLR] = []
+                                field_item = self._concat_solr_string_value(
+                                    'skos-closematch',
+                                    'id',
+                                    'http://www.w3.org/2004/02/skos/core#closeMatch',
+                                    'Close Match')
+                                self.fields[self.ROOT_LINK_DATA_SOLR].append(field_item)
+                            if allname not in self.fields:
+                                self.fields[allname] = []
+                            # now add the object item for that field
                             item = self._concat_solr_string_value(
                                 entity['slug'],
                                 'id',
@@ -791,6 +793,7 @@ class SolrDocument:
                             self.fields[fname].append(item)
                             self.fields[allname].append(item)
                             self.process_object_uri(entity['id'])
+
         if 'skos:related' in self.oc_item.json_ld:
             fname = 'skos_related___pred_id'
             allname = 'obj_all___skos_related___pred_id'
