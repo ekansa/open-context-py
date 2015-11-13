@@ -1,4 +1,10 @@
 ﻿User-agent: *
+Allow: /subjects-search/$
+Allow: /media-search/$
+Allow: /search/$
+Allow: /subjects-search/?start=$
+Allow: /media-search/?start=$
+Allow: /search/?start=$
 Disallow: /*?prop=*
 Disallow: /*?proj=*
 Disallow: /*?type=*
@@ -8,7 +14,4 @@ Disallow: /*?documents=*
 Disallow: /subjects-search/*
 Disallow: /media-search/*
 Disallow: /search/*
-Allow: /subjects-search/$
-Allow: /media-search/$
-Allow: /search/$
 Crawl-delay: 10
