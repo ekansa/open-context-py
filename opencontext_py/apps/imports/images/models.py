@@ -13,8 +13,8 @@ class ImageImport():
 
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
-ii.project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
-ii.make_image_versions('OB_Illustrations')
+ii.project_uuid = '8859aa10-c0c4-42ad-993b-cc9d79800d8e'
+ii.make_image_versions('abydos')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -47,14 +47,17 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                                            dirpath[1+len(src_dir):])
                     os.mkdir(act_dir)
                     for filename in filenames:
-                        src_file = os.path.join(dirpath, filename)
-                        new_file = os.path.join(act_dir, filename)
                         if new_dir == self.full_dir:
+                            src_file = os.path.join(dirpath, filename)
+                            new_file = os.path.join(act_dir, filename)
                             # its the full size file, just copy it without modification
                             print('Copy full: ' + new_file)
                             shutil.copy2(src_file, new_file)
                         else:
                             # we need to modify the image
+                            file_no_ext = os.path.splitext(filename)[0]
+                            filename_jpg = file_no_ext + '.jpg'
+                            new_file = os.path.join(act_dir, filename_jpg)
                             try:
                                 im = Image.open(src_file)
                             except:
