@@ -1,3 +1,14 @@
 ﻿User-agent: *
-Disallow: 
+Disallow: /*?prop=*
+Disallow: /*?proj=*
+Disallow: /*?type=*
+Disallow: /*?images=*
+Disallow: /*?other-media=*
+Disallow: /*?documents=*
+Disallow: /subjects-search/*
+Disallow: /media-search/*
+Disallow: /search/*
+Allow: /subjects-search/$
+Allow: /media-search/$
+Allow: /search/$
 Crawl-delay: 10
