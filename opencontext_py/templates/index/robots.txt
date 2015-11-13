@@ -11,7 +11,7 @@ Disallow: /search/*
 Allow: /subjects-search/$
 Allow: /media-search/$
 Allow: /search/$
-Allow: /subjects-search/?start=$
-Allow: /media-search/?start=$
-Allow: /search/?start=$
+Allow: /subjects-search/?start=*
+Allow: /media-search/?start=*
+Allow: /search/?start=*
 Crawl-delay: 10
