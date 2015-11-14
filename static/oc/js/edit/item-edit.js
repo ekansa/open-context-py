@@ -84,6 +84,10 @@ function itemEdit(item_type, item_uuid){
 					// prep geospatial interface if interface object exists
 					edit_geoevents.show_existing_data()
 				}
+				if (this.item_type == 'media') {
+					// display person specifics
+					this.display_media_edits();
+				}
 				if (this.item_type == 'projects') {
 					// display project specifics
 					this.display_project_edits();
@@ -619,6 +623,170 @@ function itemEdit(item_type, item_uuid){
 	}
 	this.ajax_get_active_idDone = function(data){
 		this.active_search_entity = data;
+	}
+	
+	/**************************************************************
+	 * MEDIA RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_media_edits = function(){
+		//displays project edit fields
+		var file_list = this.item_json_ld_obj.getMediaFiles();
+		this.display_media_files(file_list, false);
+	}
+	this.display_media_files = function(file_list, list_note){
+		var empty_obj = {'id': '',
+						 'type': false,
+		                 'dcat:size': 0,
+						 'dc-terms:hasFormat': ''};
+		var thumb_obj = empty_obj;
+		thumb_obj['type'] = 'oc-gen:thumbnail';
+		var preview_obj = empty_obj;
+		preview_obj['type'] = 'oc-gen:preview';
+		var full_obj = empty_obj;
+		full_obj['type'] = 'oc-gen:fullfile';
+		if (file_list != false) {
+			// found media files, update the empty objects
+			// with data about the appropriate file of a given type
+			for (var i = 0, length = file_list.length; i < length; i++) {
+				var f_obj = file_list[i];
+				if (f_obj['type'] == 'oc-gen:thumbnail') {
+					thumb_obj = f_obj;
+				}
+				if (f_obj['type'] == 'oc-gen:preview') {
+					preview_obj = f_obj;
+				}
+				if (f_obj['type'] == 'oc-gen:fullfile') {
+					full_obj = f_obj;
+				}
+			}
+		}
+		// now we've got file data and or empty
+		// data for each file type
+		var display_files = [thumb_obj,
+							 preview_obj,
+							 full_obj];
+		var html_list = [
+			'<table class="table table-bordered">',
+				'<thead>',
+					'<tr>',
+						'<th class="col-xs-2">',
+							'File Type',
+						'</th>',
+						'<th class="col-xs-6">',
+							'File URI',
+						'</th>',
+						'<th class="col-xs-2">',
+							'Size',
+						'</th>',
+						'<th class="col-xs-2">',
+							'Update',
+						'</th>',
+					'</tr>',
+				'</thead>',
+				'<tbody>',
+		];
+		for (var i = 0, length = display_files.length; i < length; i++) {
+			var f_obj = display_files[i];
+			var button_html = [
+				'<button type="button" ',
+				'class="btn btn-primary" ',
+				'onclick="' + this.obj_name + '.updateMediaFile(' + i + ', \'' + f_obj['type'] + '\');">',
+				'Update',
+				'</button>'
+			].join('\n');
+			if (f_obj['id'] == '') {
+				var placeholder = ' placeholder="Web URI / URL to the file" ';
+			}
+			else{
+				var placeholder = '';
+			}
+			if (f_obj['dcat:size'] < 1) {
+				var size_class = 'warning';
+				var size_html = [
+					'<span class="glyphicon glyphicon-alert" aria-hidden="true"></span>',
+					'Bad Link',
+				].join('\n');
+			}
+			else{
+				var size_class = 'success';
+				var size_html = f_obj['dcat:size'];
+			}
+			var row =[
+				'<tr>',
+					'<td>',
+						f_obj['type'],
+					'</td>',
+					'<td>',
+						'<input id="media-file-uri-' + i + '" ',
+						'class="form-control input-sm" type="text" ',
+						'value="' + f_obj['id'] + '" ' + placeholder,
+						' />',
+					'</td>',
+					'<td class="small ' + size_class + '">',
+						size_html,
+					'</td>',
+					'<td>',
+						'<div id="media-file-uri-submitcon-' + i + '">',
+						button_html,
+						'</div>',
+					'</td>',
+				'</tr>'
+			].join('\n');
+			html_list.push(row);
+		}// end loop through display files
+		
+		html_list.push('</tbody>');
+		html_list.push('</table>');
+		if (list_note == false) {
+			var note = '<div class="well well-sm">';
+			note += '<label>Note</label>';
+			note += '<p class="small">Provide a Web link to the file of the appropriate type ';
+			note += '(thumbnail, preview, full) for this media item.';
+			note += '</p>';
+			note += '</div>';
+		}
+		else{
+			var note = '<div class="alert alert-warning" role="alert">';
+			note += '<label>Note</label>';
+			note += list_note;
+			note += '</div>';
+		}
+		html_list.push(note);
+		var html = html_list.join('\n');
+		document.getElementById("edit-media-files").innerHTML = html;
+	}
+	this.updateMediaFile = function(i, file_type){
+		var act_domID = "media-file-uri-" + i;
+		var file_uri = document.getElementById(act_domID).value;
+		var but_cont_domID = "media-file-uri-submitcon-" + i;
+		document.getElementById(but_cont_domID).innerHTML = 'Updating...';
+		var url = this.make_url("/edit/update-media-file/") + encodeURIComponent(this.item_uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				file_type: file_type,
+				file_uri: file_uri,
+				source_id: 'web-form',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateMediaFileDone,
+			error: function (request, status, error) {
+				alert('Problem updating the media file: ' + status);
+			}
+		});
+	}
+	this.updateMediaFileDone = function(data){
+		// handle respones to updating media files.
+		if (data.ok) {
+			var list_note = false;
+		}
+		else{
+			var list_note = data['change']['note'];
+		}
+		this.display_media_files(data.file_list, list_note);
 	}
 	
 	/**************************************************************

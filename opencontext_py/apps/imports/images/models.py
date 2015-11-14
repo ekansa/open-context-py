@@ -14,7 +14,7 @@ class ImageImport():
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.project_uuid = '8859aa10-c0c4-42ad-993b-cc9d79800d8e'
-ii.make_image_versions('abydos')
+ii.make_image_versions('masson')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """

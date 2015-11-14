@@ -302,12 +302,22 @@ function item_object(item_type, uuid){
 		return output;
 	}
 	this.getProjectHeros = function(){
-		// get the project editorial status
+		// get the project hero images
 		var edit_status = false;
 		var output = false;
 		if (this.data != false) {
 			if (this.data['foaf:depiction'] !== undefined) {
 				output = this.data['foaf:depiction'];
+			}
+		}
+		return output;
+	}
+	this.getMediaFiles = function(){
+		// get the media item media files
+		var output = false;
+		if (this.data != false) {
+			if (this.data['oc-gen:has-files'] !== undefined) {
+				output = this.data['oc-gen:has-files'];
 			}
 		}
 		return output;

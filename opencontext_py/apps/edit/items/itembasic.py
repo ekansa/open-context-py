@@ -215,7 +215,7 @@ class ItemBasicEdit():
                 # delete the old hero picture
                 # doing this in a complicated way
                 # to trace why project hero files disappear!
-                med_check = Mediafile.object\
+                med_check = Mediafile.objects\
                                      .filter(uuid=self.manifest.uuid,
                                              file_type='oc-gen:hero')
                 if len(med_check) > 0:
@@ -234,6 +234,73 @@ class ItemBasicEdit():
             cache.clear()
         self.response = {'action': 'update-project-hero',
                          'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+
+    def update_media_file(self, post_data):
+        """ Updates a file associated with a media item """
+        ok = True
+        errors = []
+        note = ''
+        file_list = []
+        required_params = ['source_id',
+                           'file_type',
+                           'file_uri']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                errors.append(message)
+                note = '; '.join(errors)
+        if self.manifest.item_type != 'media':
+            ok = False
+            message = 'Item type must be a media item'
+            errors.append(message)
+            note = '; '.join(errors)
+        if ok:
+            file_type = post_data['file_type'].strip()
+            file_uri = post_data['file_uri'].strip()
+            source_id = post_data['source_id'].strip()
+            if 'http://' in file_uri or 'https://' in file_uri:
+                ok = True
+            else:
+                ok = False
+                message = 'Need "http://" or "https://" in file_uri: ' + file_uri
+                errors.append(message)
+                note = '; '.join(errors)
+            if ok:
+                # delete the file of the same type for this media item
+                med_check = Mediafile.objects\
+                                     .filter(uuid=self.manifest.uuid,
+                                             file_type=file_type)
+                if len(med_check) > 0:
+                    for med_old in med_check:
+                        med_old.delete()
+                new_file = Mediafile()
+                new_file.uuid = self.manifest.uuid
+                new_file.project_uuid = self.manifest.project_uuid
+                new_file.source_id = source_id
+                new_file.file_type = file_type
+                new_file.file_uri = file_uri
+                new_file.save()
+                note = 'Updated file for this media item'
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
+        # now return the full list of media files for this item
+        media_files = Mediafile.objects\
+                               .filter(uuid=self.manifest.uuid)
+        for media_file in media_files:
+            file_obj = {'id': media_file.file_uri,
+                        'type': media_file.file_type,
+                        'dcat:size': str(media_file.filesize),
+                        'dc-terms:hasFormat': media_file.mime_type_uri}
+            file_list.append(file_obj)
+        self.response = {'action': 'update-media-file',
+                         'ok': ok,
+                         'file_list': file_list,
                          'change': {'note': note}}
         return self.response
 
