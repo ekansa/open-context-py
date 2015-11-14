@@ -47,8 +47,8 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                                            dirpath[1+len(src_dir):])
                     os.mkdir(act_dir)
                     for filename in filenames:
+                        src_file = os.path.join(dirpath, filename)
                         if new_dir == self.full_dir:
-                            src_file = os.path.join(dirpath, filename)
                             new_file = os.path.join(act_dir, filename)
                             # its the full size file, just copy it without modification
                             print('Copy full: ' + new_file)
@@ -81,6 +81,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         output = False
         if src_file != new_file:
             if os.path.exists(src_file):
+                # print('Getting: ' + src_file)
                 try:
                     im = Image.open(src_file)
                 except:
@@ -101,6 +102,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         output = new_file
                     except:
                         print('cannot save the preview file: ' + new_file)
+                    del im
         return output
 
     def make_thumbnail_file(self, src_file, new_file):
@@ -111,6 +113,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         output = False
         if src_file != new_file:
             if os.path.exists(src_file):
+                # print('Getting: ' + src_file)
                 try:
                     im = Image.open(src_file)
                 except:
@@ -125,6 +128,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         output = new_file
                     except:
                         print('cannot save the thumbnail file: ' + new_file)
+                    del im
         return output
 
     def copy_dir_not_files(self, src, dst):

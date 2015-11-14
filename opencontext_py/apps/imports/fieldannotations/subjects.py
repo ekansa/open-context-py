@@ -435,68 +435,70 @@ class ProcessSubjects():
             subjects fields.
         """
         # first make a list of subject field numbers
-        sub_field_list = []
-        for sub_field_num, sub_field in self.subjects_fields.items():
-            sub_field_list.append(sub_field_num)
-        geo_des = ImportFieldAnnotation.objects\
+        if self.subjects_fields is not False:
+            sub_field_list = []
+            for sub_field_num, sub_field in self.subjects_fields.items():
+                sub_field_list.append(sub_field_num)
+            geo_des = ImportFieldAnnotation.objects\
+                                           .filter(source_id=self.source_id,
+                                                   predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
+                                                   object_field_num__in=sub_field_list)
+            if len(geo_des) >= 2:
+                # print('Found ' + str(len(geo_des)) + ' lat lon fields')
+                # we have geospatial coordinate data describing our subjects
+                # now get the lat fields, and the lon fields
+                lats = {}
+                lons = {}
+                lats_lons = ImportField.objects\
                                        .filter(source_id=self.source_id,
-                                               predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
-                                               object_field_num__in=sub_field_list)
-        if len(geo_des) >= 2:
-            # print('Found ' + str(len(geo_des)) + ' lat lon fields')
-            # we have geospatial coordinate data describing our subjects
-            # now get the lat fields, and the lon fields
-            lats = {}
-            lons = {}
-            lats_lons = ImportField.objects\
-                                   .filter(source_id=self.source_id,
-                                           field_type__in=['lat', 'lon'])
-            for act_f in lats_lons:
-                if act_f.field_type == 'lat':
-                    lats[act_f.field_num] = act_f
-                else:
-                    lons[act_f.field_num] = act_f
-            # now make an object that checks to see if
-            # the subject (location/object field), which is the
-            # object of the ImportFieldAnnotations, has exactly 1
-            # lat field and 1 lon field
-            geo_lats_lons = {}
-            for geo_anno in geo_des:
-                if geo_anno.object_field_num not in geo_lats_lons:
-                    geo_lats_lons[geo_anno.object_field_num] = {'lats': [],
-                                                                'lons': []}
-                if geo_anno.field_num in lats:
-                    # it's a lat field
-                    geo_lats_lons[geo_anno.object_field_num]['lats'].append(geo_anno.field_num)
-                elif geo_anno.field_num in lons:
-                    geo_lats_lons[geo_anno.object_field_num]['lons'].append(geo_anno.field_num)
-            # print('geo_lat_lons: ' + str(geo_lats_lons))
-            for subject_field_num, act_geo_lats_lons in geo_lats_lons.items():
-                if len(act_geo_lats_lons['lats']) == 1 \
-                   and len(act_geo_lats_lons['lons']) == 1:
-                    # case where the subject_field_num has exactly 1 lat and 1 lon field. OK for
-                    # making geospatial data
-                    self.geospace_fields[subject_field_num] = {'lat': act_geo_lats_lons['lats'][0],
-                                                               'lon': act_geo_lats_lons['lons'][0]}
+                                               field_type__in=['lat', 'lon'])
+                for act_f in lats_lons:
+                    if act_f.field_type == 'lat':
+                        lats[act_f.field_num] = act_f
+                    else:
+                        lons[act_f.field_num] = act_f
+                # now make an object that checks to see if
+                # the subject (location/object field), which is the
+                # object of the ImportFieldAnnotations, has exactly 1
+                # lat field and 1 lon field
+                geo_lats_lons = {}
+                for geo_anno in geo_des:
+                    if geo_anno.object_field_num not in geo_lats_lons:
+                        geo_lats_lons[geo_anno.object_field_num] = {'lats': [],
+                                                                    'lons': []}
+                    if geo_anno.field_num in lats:
+                        # it's a lat field
+                        geo_lats_lons[geo_anno.object_field_num]['lats'].append(geo_anno.field_num)
+                    elif geo_anno.field_num in lons:
+                        geo_lats_lons[geo_anno.object_field_num]['lons'].append(geo_anno.field_num)
+                # print('geo_lat_lons: ' + str(geo_lats_lons))
+                for subject_field_num, act_geo_lats_lons in geo_lats_lons.items():
+                    if len(act_geo_lats_lons['lats']) == 1 \
+                       and len(act_geo_lats_lons['lons']) == 1:
+                        # case where the subject_field_num has exactly 1 lat and 1 lon field. OK for
+                        # making geospatial data
+                        self.geospace_fields[subject_field_num] = {'lat': act_geo_lats_lons['lats'][0],
+                                                                   'lon': act_geo_lats_lons['lons'][0]}
 
     def get_geojson_fields(self):
         """ gets fields with geojson data """
-        geojson_fields = ImportField.objects\
-                                    .filter(source_id=self.source_id,
-                                            field_type='geojson')
-        geojson_field_nums = []
-        for geojson_field in geojson_fields:
-            geojson_field_nums.append(geojson_field.field_num)
-        sub_field_list = []
-        for sub_field_num, sub_field in self.subjects_fields.items():
-            sub_field_list.append(sub_field_num)
-        geo_des = ImportFieldAnnotation.objects\
-                                       .filter(source_id=self.source_id,
-                                               field_num__in=geojson_field_nums,
-                                               predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
-                                               object_field_num__in=sub_field_list)
-        for geo_anno in geo_des:
-            self.geojson_rels[geo_anno.object_field_num] = geo_anno.field_num
+        if self.subjects_fields is not False:
+            geojson_fields = ImportField.objects\
+                                        .filter(source_id=self.source_id,
+                                                field_type='geojson')
+            geojson_field_nums = []
+            for geojson_field in geojson_fields:
+                geojson_field_nums.append(geojson_field.field_num)
+            sub_field_list = []
+            for sub_field_num, sub_field in self.subjects_fields.items():
+                sub_field_list.append(sub_field_num)
+            geo_des = ImportFieldAnnotation.objects\
+                                           .filter(source_id=self.source_id,
+                                                   field_num__in=geojson_field_nums,
+                                                   predicate=ImportFieldAnnotation.PRED_GEO_LOCATION,
+                                                   object_field_num__in=sub_field_list)
+            for geo_anno in geo_des:
+                self.geojson_rels[geo_anno.object_field_num] = geo_anno.field_num
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy

@@ -48,13 +48,16 @@ class ProcessPersons():
         """
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
-        if len(self.persons_fields) > 1:
+        self.get_persons_fields()
+        if len(self.persons_fields) > 0:
+            print('Number of Person Fields: ' + str(len(self.persons_fields)))
             for field_obj in self.persons_fields:
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 distinct_records = pc.get_field_records(field_obj.field_num,
                                                         False)
                 if distinct_records is not False:
+                    print('Distinct person recs: ' + str(len(distinct_records)))
                     for rec_hash, dist_rec in distinct_records.items():
                         cp = CandidatePerson()
                         cp.project_uuid = self.project_uuid
@@ -64,15 +67,15 @@ class ProcessPersons():
                         cp.reconcile_item(dist_rec['imp_cell_obj'])
                         if cp.uuid is not False:
                             if cp.new_entity:
-                                self.new_entities.append({'id': cp.uuid,
+                                self.new_entities.append({'id': str(cp.uuid),
                                                           'label': cp.label})
                             else:
-                                self.reconciled_entities.append({'id': cp.uuid,
+                                self.reconciled_entities.append({'id': str(cp.uuid),
                                                                  'label': cp.label})
                         else:
                             bad_id = str(dist_rec['imp_cell_obj'].field_num)
                             bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
-                            self.not_reconciled_entities.append({'id': bad_id,
+                            self.not_reconciled_entities.append({'id': str(bad_id),
                                                                  'label': dist_rec['imp_cell_obj'].record})
 
     def get_persons_fields(self):

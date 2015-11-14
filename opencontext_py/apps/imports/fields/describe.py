@@ -97,6 +97,7 @@ class ImportFieldDescribe():
         # delete cases where the object_field_num is contained by another field
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
+                                                 field_num=field_num,
                                                  predicate=Assertion.PREDICATES_LINK,
                                                  object_field_num=object_field_num)\
                                          .delete()
@@ -200,7 +201,7 @@ class ImportFieldDescribe():
         ifa.object_field_num = 0
         ifa.object_uuid = object_uuid
         ifa.save()
-    
+
     def update_field_media_part_of_entity(self, field_num, object_field_num):
         """ Updates a field annotation to make entities in a field_num (subject)
         a media part of entities in an object_ield_num
