@@ -73,6 +73,7 @@ sri.reindex()
                 and self.annotated_after is False \
                 and self.skip_indexed_after is False:
                 # now validate to make sure we're asking for uuids
+                print('Getting uuids for: ' + str(len(self.project_uuids)) + ' projects')
                 uuids = []
                 raw_uuids = Manifest.objects\
                                     .filter(project_uuid__in=self.project_uuids)\
