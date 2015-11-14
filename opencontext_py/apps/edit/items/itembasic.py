@@ -295,7 +295,7 @@ class ItemBasicEdit():
         for media_file in media_files:
             file_obj = {'id': media_file.file_uri,
                         'type': media_file.file_type,
-                        'dcat:size': str(media_file.filesize),
+                        'dcat:size': float(media_file.filesize),
                         'dc-terms:hasFormat': media_file.mime_type_uri}
             file_list.append(file_obj)
         self.response = {'action': 'update-media-file',
