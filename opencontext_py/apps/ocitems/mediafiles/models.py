@@ -78,6 +78,19 @@ class ManageMediafiles():
                 output = True
         return output
 
+    def update_missing_filesize_by_project(self, project_uuid):
+        """ updates filesize zero media files by project """
+        miss_media = Mediafile.objects\
+                              .filter(filesize=0,
+                                      project_uuid=project_uuid)
+        total_len = len(miss_media)
+        i = 0
+        for mfile in miss_media:
+            i += 1
+            print(str(i) + ' of ' + str(total_len) + ', file: ' + mfile.file_uri)
+            mfile.save()  # should automatically request filesize
+            sleep(self.delay)  # short delay so as to not overwhelm servers
+
     def update_missing_mimetypes(self):
         """ Gets media files without mimetypes, updates them """
         miss_media = Mediafile.objects\
