@@ -45,14 +45,23 @@ class ProcessMedia():
         """
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
+        single_media_field = self.process_single_media_label_field()
+        if single_media_field is False:
+            # only do this if the single media field is False
+            self.process_multiple_media_fields()
+
+    def process_multiple_media_fields(self):
+        """ processes multiple media fields, if they exist """
         self.get_media_fields()
         if len(self.media_fields) > 0:
+            print('yes we have media')
             for field_obj in self.media_fields:
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 distinct_records = pc.get_field_records(field_obj.field_num,
                                                         False)
                 if distinct_records is not False:
+                    print('Found Media Records: ' + str(len(distinct_records)))
                     for rec_hash, dist_rec in distinct_records.items():
                         # print('Checking on: ' + dist_rec['imp_cell_obj'].record)
                         cm = CandidateMedia()
@@ -93,6 +102,40 @@ class ProcessMedia():
                             self.not_reconciled_entities.append({'id': bad_id,
                                                                  'label': dist_rec['imp_cell_obj'].record})
 
+    def process_single_media_label_field(self):
+        """Processes only media field, it does not
+           create new media, only reconciles existing already imported
+           media
+        """
+        single_media_field = False
+        media_fields = ImportField.objects\
+                                  .filter(source_id=self.source_id,
+                                          field_type='media')
+        if len(media_fields) == 1:
+            # only for the 1 media field in an import source
+            single_media_field = True
+            print('yes we have 1 media field')
+            field_obj = media_fields[0]
+            pc = ProcessCells(self.source_id,
+                              self.start_row)
+            distinct_records = pc.get_field_records(field_obj.field_num,
+                                                    False)
+            if distinct_records is not False:
+                print('Found Media Records: ' + str(len(distinct_records)))
+                for rec_hash, dist_rec in distinct_records.items():
+                    # print('Checking on: ' + dist_rec['imp_cell_obj'].record)
+                    cm = CandidateMedia()
+                    cm.mint_new_entity_ok = False  # DO NOT create new entities!
+                    cm.project_uuid = self.project_uuid
+                    cm.source_id = self.source_id
+                    cm.class_uri = field_obj.field_value_cat
+                    cm.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                    cm.reconcile_manifest_item(dist_rec['imp_cell_obj'])
+                    if cm.uuid is not False:
+                        self.reconciled_entities.append({'id': str(cm.uuid),
+                                                         'label': cm.label})
+        return single_media_field
+
     def get_media_fields(self):
         """ Makes a list of media fields that have media parts
         """
@@ -129,6 +172,7 @@ class CandidateMedia():
         self.imp_cell_obj = False  # ImportCell object
         self.import_rows = False
         self.new_entity = False
+        self.mint_new_entity_ok = True
 
     def reconcile_manifest_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the manifest """
@@ -141,9 +185,10 @@ class CandidateMedia():
                 # create new subject, manifest objects. Need new UUID, since we can't assume
                 # the fl_uuid for the ImportCell reflects unique entities in a field, since
                 # uniqueness depends on context (values in other cells)
-                self.new_entity = True
-                self.uuid = GenUUID.uuid4()
-                self.create_media_item()
+                if self.mint_new_entity_ok:
+                    self.new_entity = True
+                    self.uuid = GenUUID.uuid4()
+                    self.create_media_item()
         self.update_import_cell_uuid()
 
     def create_media_item(self):
