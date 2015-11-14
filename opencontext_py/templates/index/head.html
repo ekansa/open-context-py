@@ -1,15 +1,16 @@
 <head>
+    {% if base_url == 'http://opencontext.dainst.org' %}
+    <title>Open Context: Web-based research data publishing (DAI Mirror)</title>
+    {%else%}
     <title>Open Context: Web-based research data publishing</title>
+    <meta name="google-site-verification" content="V6hX6IsBz-pt440G9XZh4kib7PXPZ1euL-OJo9P3DvM" />
+    {%endif%}
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" href="{{ base_url }}/static/oc/images/oc-favicon.ico">
 
     <link rel="stylesheet" href="{{ base_url }}/static/bootstrap/3.3.4/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ base_url }}/static/angularjs/abn_tree.css">
-    {% if old_view %}
-    <link rel="stylesheet" href="{{ base_url }}/static/oc/css/general.css">
-    {%else%}
     <link rel="stylesheet" href="{{ base_url }}/static/oc/css/index/apr-12.css">
-    {%endif%}
     <script src="{{ base_url }}/static/jquery/jquery-1.11.1.min.js"></script>
     <script src="{{ base_url }}/static/jquery/jquery.cookie.js"></script>
     <script src="{{ base_url }}/static/jquery/ui/jquery-ui.min.js"></script>
