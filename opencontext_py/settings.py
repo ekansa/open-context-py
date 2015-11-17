@@ -119,9 +119,12 @@ INSTALLED_APPS = (
     'opencontext_py.apps.exports.exptables',
     'opencontext_py.apps.indexer',
     'opencontext_py.apps.searcher.search',
+    'django.contrib.staticfiles',
+    'debug_toolbar',
 )
 
 MIDDLEWARE_CLASSES = (
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -148,7 +151,8 @@ DATABASES = {
         'NAME': get_secret('DATABASES_NAME'),
         'USER': get_secret('DATABASES_USER'),
         'PASSWORD': get_secret('DATABASES_PASSWORD'),
-        'HOST': get_secret('DATABASES_HOST')
+        'HOST': get_secret('DATABASES_HOST'),
+        'CONN_MAX_AGE': 600,
     }
 }
 
@@ -223,13 +227,16 @@ IMPORT_BATCH_SIZE = 500  # number of records to import in 1 batch
 if DEBUG:
     ADMIN_MEDIA_PREFIX = '/static/admin/'
     STATIC_URL = '/static/'
-    STATIC_ROOT = BASE_DIR + '/static/'
+    # STATIC_ROOT = BASE_DIR + '/static/'
+    STATIC_ROOT = BASE_DIR
     STATICFILES_DIRS = (
         os.path.join(BASE_DIR, 'static'),
-        '/static/',
+        # '/static/',
     )
-    STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
-    STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
+    # STATIC_EXPORTS_ROOT = STATIC_ROOT + '/exports/'
+    # STATIC_IMPORTS_ROOT = STATIC_ROOT + '/imports/'
+    STATIC_EXPORTS_ROOT = STATIC_ROOT + '/static/exports/'
+    STATIC_IMPORTS_ROOT = STATIC_ROOT + '/static/imports/'
 else:
     ADMIN_MEDIA_PREFIX = '/static/admin/'
     STATIC_URL = '/static/'

@@ -108,6 +108,7 @@ class LinkEntityManage():
                 le.alt_label = alt_label
                 le.ent_type = ent_type
                 le.vocab_uri = vocab_uri
+                # print('ENT TYPE!!!! ' + str(len(uri)))
                 le.save()
                 uri = le.uri  # in case the URI changed because of validation changes
             else:
