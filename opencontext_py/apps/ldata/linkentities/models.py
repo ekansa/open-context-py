@@ -39,6 +39,11 @@ class LinkEntity(models.Model):
         """
         self.uri = self.clean_uri(self.uri)
         self.slug = self.make_slug()
+        self.sort = self.sort[:60]
+        # print('Type: ' + self.ent_type + ' ' + str(len(self.ent_type)))
+        # print('URI: ' + self.uri + ' ' + str(len(self.uri)))
+        # print('Slug: ' + self.slug + ' ' + str(len(self.slug)))
+        # print('Sort: ' + self.sort + ' ' + str(len(self.sort)))
         super(LinkEntity, self).save(*args, **kwargs)
 
     class Meta:
@@ -122,6 +127,8 @@ class LinkEntityGeneration():
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
             uri = uri.replace(uri_root, uri_prefix)
+        uri = uri.replace('https://www.', '')
+        uri = uri.replace('http://www.', '')
         uri = uri.replace('https://', '')
         uri = uri.replace('http://', '')
         uri = uri.replace('/', '-')
