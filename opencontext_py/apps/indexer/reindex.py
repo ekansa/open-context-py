@@ -246,6 +246,14 @@ sri.reindex()
                     for rel_item in rel_objs:
                         if rel_item.uuid not in uuids:
                             uuids.append(rel_item.uuid)
+                elif m_obj.item_type == 'types':
+                    # reindex all of the items described by a given predicate
+                    # this can take a while!
+                    rel_objs = Assertion.objects\
+                                        .filter(object_uuid=m_obj.uuid)
+                    for rel_item in rel_objs:
+                        if rel_item.uuid not in uuids:
+                            uuids.append(rel_item.uuid)
                 rel_objs = Assertion.objects\
                                     .filter(uuid=m_obj.uuid,
                                             object_type__in=link_item_types)
