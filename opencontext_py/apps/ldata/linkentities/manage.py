@@ -214,10 +214,11 @@ lem = LinkEntityManage()
             new_ent.label = new_label
             new_ent.vocab_uri = new_vocab_uri
             new_ent.save()
-            la_manage = LinkAnnoManagement()
-            la_manage.replace_subject_uri(old_uri,
-                                          new_uri)
-            la_manage.replace_predicate_uri(old_uri,
-                                            new_uri)
-            la_manage.replace_object_uri(old_uri,
-                                         new_uri)
+        # do this even if the old item does not exist
+        la_manage = LinkAnnoManagement()
+        la_manage.replace_subject_uri(old_uri,
+                                      new_uri)
+        la_manage.replace_predicate_uri(old_uri,
+                                        new_uri)
+        la_manage.replace_object_uri(old_uri,
+                                     new_uri)
