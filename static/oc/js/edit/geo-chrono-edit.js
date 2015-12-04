@@ -117,6 +117,13 @@ function geoChronoEdit(item_type, item_uuid){
 			}
 		}
 		
+		var feature_id = 1;
+		if (editfeat.properties.hasOwnProperty('feature_id')) {
+			if (editfeat.properties.feature_id != false) {
+				feature_id = editfeat.properties.feature_id;
+			}
+		}
+		
 		//now check to see if this geospatial data is specific to this
 		//item or is inherited through spatial containment relations
 		var inherited = true;
@@ -203,6 +210,12 @@ function geoChronoEdit(item_type, item_uuid){
 									'to create GeoJSON formatted geospatial data for ',
 									'pasting in the text area above.',
 								'</div>',
+								'<input type="hidden" ',
+								'id="' + dom_ids.hash_id + '" ',
+								'value="' + hash_id + '" />',
+								'<input type="hidden" ',
+								'id="' + dom_ids.feature_id + '" ',
+								'value="' + feature_id + '" />',
 							'</div>',
 						'</div>',
 					'</div>',
@@ -242,6 +255,8 @@ function geoChronoEdit(item_type, item_uuid){
 		//edit feature index (edit_i) and the
 		//when_list index (when_i)
 		var dom_ids = {
+			hash_id: 'geo-hash-id-' + edit_i,
+			feature_id: 'geo-feature-id-' + edit_i,
 			geojson: 'geo-geojson-' + edit_i,
 			lat: 'geo-lat-' + edit_i,
 			lon: 'geo-lon-' + edit_i,
@@ -293,11 +308,13 @@ function geoChronoEdit(item_type, item_uuid){
 				'</div>'
 			].join('\n');
 			var new_button_html = this.make_date_range_submit_html(edit_i, when_i, false);
+			var new_note_html = '';
 		}
 		else{
 			var hash_id = '';
 			var del_button_html = '';
-			var new_button_html = '<p class="small">If needing a new date range, add valid integer start and end years</p>';
+			var new_button_html = this.make_date_range_submit_html(edit_i, when_i, true);
+			var new_note_html = '<p class="small">If needing a new date range, add valid integer start and end years</p>';
 		}
 		
 		var html = [
@@ -327,10 +344,12 @@ function geoChronoEdit(item_type, item_uuid){
 				'</td>',
 				'<td class="col-xs-5">',
 					'<div style="min-height: ' + button_height_offset + '" ',
-					'id="' + dom_ids.valid + '">',
-					'</div>',
-					'<div id="' + dom_ids.new_outer + '">',
+					'id="' + dom_ids.new_outer + '">',
 					new_button_html,	
+					'</div>',
+					'<div ',
+					'id="' + dom_ids.valid + '">',
+					new_note_html,
 					'</div>',
 				'</td>',
 			'</tr>'
@@ -379,9 +398,47 @@ function geoChronoEdit(item_type, item_uuid){
 		var is_valid = this.validate_year_range(edit_i, when_i);
 		if (is_valid) {
 			//submit the date range data
+			var geo_dom_ids = this.make_feature_dom_ids(edit_i);
+			var dom_ids = this.make_when_dom_ids(edit_i, when_i);
+			var hash_id = document.getElementById(dom_ids.hash_id).value;
+			var start_year = document.getElementById(dom_ids.start).value;
+			var stop_year = document.getElementById(dom_ids.stop).value;
+			var meta_type = 'oc-gen:formation-use-life';
+			var when_type = 'Interval';
+			var feature_id = document.getElementById(geo_dom_ids.feature_id).value;
+			var url = this.make_url("/edit/add-update-date-range/") + encodeURIComponent(this.item_uuid);
+			var req = $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				data: {
+					hash_id: hash_id,
+					earliest: start_year,
+					start: start_year,
+					stop: stop_year,
+					latest: stop_year,
+					meta_type: meta_type,
+					when_type: when_type,
+					feature_id: feature_id,
+					source_id: 'web-form',
+					csrfmiddlewaretoken: csrftoken},
+				context: this,
+				success: this.submitDateRangeDone,
+				error: function (request, status, error) {
+					alert('Problem updating / adding the date range: ' + status);
+				}
+			});
+			return req;
+		}
+		else{
+			alert('not valid');
+			return false;
 		}
 	}
-	
+	this.submitDateRangeDone = function(data){
+		// too many things to change, so reload the whole page
+		location.reload(true);
+	}
 	
 	/*
 	 * Validation related functions
@@ -408,7 +465,7 @@ function geoChronoEdit(item_type, item_uuid){
 			this.make_validation_html('Make sure your start and end years are integer values',
 											  false,
 											  dom_ids.valid);
-			button_parent_dom.innerHTML = '';
+			// button_parent_dom.innerHTML = '';
 		}
 		else{
 			var is_valid = true;
@@ -416,8 +473,8 @@ function geoChronoEdit(item_type, item_uuid){
 											  true,
 											  dom_ids.valid);
 			button_parent_dom.innerHTML = this.make_date_range_submit_html(edit_i,
-																								when_i,
-																								new_range);
+																		   when_i,
+																		   new_range);
 		}
 		return is_valid;
 	}

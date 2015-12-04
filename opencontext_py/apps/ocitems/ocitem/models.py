@@ -1108,6 +1108,7 @@ class ItemConstruction():
                     geo_props['reference-type'] = 'specified'
                     if self.assertion_hashes:
                         geo_props['hash_id'] = geo.hash_id
+                        geo_props['feature_id'] = geo.feature_id
                 if(geo.specificity < 0):
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))

@@ -208,6 +208,8 @@ urlpatterns = patterns('',
                            name='create_project'),
                        url(r'^edit/add-update-ld-entity', EditItemViews.add_update_ld_entity,
                            name='add_update_ld_entity'),
+                       url(r'^edit/add-update-date-range/(?P<uuid>\S+)', EditItemViews.add_update_date_range,
+                           name='add_update_date_range'),
                        url(r'^edit/projects/(?P<project_uuid>\S+)', EditProjectsViews.status,
                            name='edit_projects_status'),
                        # --------------------------
