@@ -8,6 +8,7 @@ from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.items.itemassertion import ItemAssertion
 from opencontext_py.apps.edit.items.itemannotation import ItemAnnotation
 from opencontext_py.apps.edit.items.itemcreate import ItemCreate
+from opencontext_py.apps.edit.items.itemgeotime import ItemGeoTime
 from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
 from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
 from django.db import transaction
@@ -386,6 +387,82 @@ def delete_item_assertion(request, uuid):
                     drev.user_id = request.user.id
                     drev.assertion_keys.append(item_ass.hash_id)
                     drev.save_delete_revision(rev_label, json_output)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
+def add_update_date_range(request, uuid):
+    """ Handles POST requests to update an date ranges for an item """
+    item_geotime = ItemGeoTime(uuid, request)
+    if item_geotime.manifest is not False:
+        if request.method == 'POST':
+            if item_geotime.edit_permitted or request.user.is_superuser:
+                item_geotime.creator_uuid = str(request.user.id)
+                result = item_geotime.add_update_date_range(request.POST)
+                result['errors'] = item_geotime.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                # version control metadata
+                reversion.set_user(request.user)
+                reversion.add_meta(VersionMetadata,
+                                   project_uuid=item_geotime.manifest.project_uuid,
+                                   uuid=item_geotime.manifest.uuid,
+                                   item_type=item_geotime.manifest.item_type,
+                                   label=item_geotime.manifest.label,
+                                   json_note=json_output)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
+def delete_date_range(request, uuid):
+    """ Handles POST requests to delete an date ranges for an item """
+    item_geotime = ItemGeoTime(uuid, request)
+    if item_geotime.manifest is not False:
+        if request.method == 'POST':
+            if item_geotime.edit_permitted or request.user.is_superuser:
+                item_geotime.creator_uuid = str(request.user.id)
+                result = item_geotime.delete_date_range(request.POST)
+                result['errors'] = item_geotime.errors
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                # version control metadata
+                reversion.set_user(request.user)
+                reversion.add_meta(VersionMetadata,
+                                   project_uuid=item_geotime.manifest.project_uuid,
+                                   uuid=item_geotime.manifest.uuid,
+                                   item_type=item_geotime.manifest.item_type,
+                                   label=item_geotime.manifest.label,
+                                   json_note=json_output)
                 return HttpResponse(json_output,
                                     content_type='application/json; charset=utf8')
             else:

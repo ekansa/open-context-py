@@ -78,6 +78,14 @@ function item_object(item_type, uuid){
 					output.push(cat_item);
 				}	
 			}
+			if (output.length < 1) {
+				var cat_item = {
+					id: '',
+					label: '',
+					icon: ''
+				};
+				output.push(cat_item);
+			}
 		}
 		return output;
 	}

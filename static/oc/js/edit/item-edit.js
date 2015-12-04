@@ -638,13 +638,24 @@ function itemEdit(item_type, item_uuid){
 		var empty_obj = {'id': '',
 						 'type': false,
 		                 'dcat:size': 0,
+						 'type': false,
 						 'dc-terms:hasFormat': ''};
-		var thumb_obj = empty_obj;
-		thumb_obj['type'] = 'oc-gen:thumbnail';
-		var preview_obj = empty_obj;
-		preview_obj['type'] = 'oc-gen:preview';
-		var full_obj = empty_obj;
-		full_obj['type'] = 'oc-gen:fullfile';
+		var thumb_obj = {'id': '',
+						 'type': false,
+		                 'dcat:size': 0,
+						 'type': 'oc-gen:thumbnail',
+						 'dc-terms:hasFormat': ''};
+		var preview_obj = {'id': '',
+						 'type': false,
+		                 'dcat:size': 0,
+						 'type': 'oc-gen:preview',
+						 'dc-terms:hasFormat': ''};
+		var full_obj = {'id': '',
+						 'type': false,
+		                 'dcat:size': 0,
+						 'type': 'oc-gen:fullfile',
+						 'dc-terms:hasFormat': ''};
+		
 		if (file_list != false) {
 			// found media files, update the empty objects
 			// with data about the appropriate file of a given type

@@ -853,9 +853,28 @@ class ItemConstruction():
                     # no duplicate IDs
                     proj_creators_ids.append(ent.uri)
                     proj_creators.append(new_object_item)
+        proj_contribs = []
+        proj_contribs_ids = []
+        for proj_contrib in auth.contributors:
+            new_object_item = LastUpdatedOrderedDict()
+            ent = self.get_entity_metadata(proj_contrib)
+            if ent is not False:
+                new_object_item['id'] = ent.uri
+                new_object_item['slug'] = ent.slug
+                new_object_item['label'] = ent.label
+                if ent.class_uri is not False:
+                    new_object_item['type'] = ent.class_uri
+                if ent.uri not in proj_contribs_ids:
+                    # no duplicate IDs
+                    proj_contribs_ids.append(ent.uri)
+                    proj_contribs.append(new_object_item)
         if(len(self.dc_contrib_preds) > 0 or len(self.dc_creator_preds) > 0):
             contribs = self.get_dc_authorship(act_dict, self.dc_contrib_preds)
             creators = self.get_dc_authorship(act_dict, self.dc_creator_preds)
+        if creators is False and contribs is False:
+            # missing both item creators and contributors
+            if len(proj_contribs) > 0:
+                contribs = proj_contribs
         if creators is False:
             creators = proj_creators
         else:
@@ -869,13 +888,13 @@ class ItemConstruction():
                     # no duplicate IDs
                     proj_creators_ids.append(uri)
                     creators.append(proj_creator)
-        if(contribs is not False):
+        if contribs is not False:
             if('dc-terms:contributor' in act_dict):
                 act_dict['dc-terms:contributor'] = self.add_unique_entity_lists(act_dict['dc-terms:contributor'],
                                                                                 contribs)
             else:
                 act_dict['dc-terms:contributor'] = contribs
-        if(creators is not False):
+        if creators is not False:
             if('dc-terms:creator' in act_dict):
                 act_dict['dc-terms:creator'] = self.add_unique_entity_lists(act_dict['dc-terms:creator'],
                                                                             creators)
@@ -1089,6 +1108,7 @@ class ItemConstruction():
                     geo_props['reference-type'] = 'specified'
                     if self.assertion_hashes:
                         geo_props['hash_id'] = geo.hash_id
+                        geo_props['feature_id'] = geo.feature_id
                 if(geo.specificity < 0):
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))

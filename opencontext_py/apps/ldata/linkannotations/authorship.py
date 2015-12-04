@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
@@ -60,8 +61,9 @@ class Authorship():
                     self.contributors.append(contrib.object_uuid)  # add to contrib if not a creator
         if len(self.contributors) > 0 or len(self.creators) > 0:
             output = True
-        elif project_uuid is not False:
-            output = self.get_project_authors(project_uuid)
+        else:
+            if project_uuid is not False:
+                output = self.get_project_authors(project_uuid)
         return output
 
     def get_project_authors(self, project_uuid):
@@ -71,12 +73,23 @@ class Authorship():
                                       .filter(Q(subject=project_uuid),
                                               Q(predicate_uri=self.URI_DC_CREATE)
                                               | Q(predicate_uri=self.PRF_DC_CREATE))
-        for creator in creator_links:
-            pid = URImanagement.get_uuid_from_oc_uri(creator.object_uri)
-            if pid is False:
-                pid = creator.object_uri
-            if pid not in self.creators:
-                self.creators.append(pid)
+        if len(creator_links) < 1:
+            # look for creators from the parent project
+            par_proj = Project.objects\
+                              .filter(uuid=project_uuid)\
+                              .exclude(project_uuid=project_uuid)[:1]
+            if len(par_proj) > 0:
+                creator_links = LinkAnnotation.objects\
+                                              .filter(Q(subject=par_proj[0].project_uuid),
+                                                      Q(predicate_uri=self.URI_DC_CREATE)
+                                                      | Q(predicate_uri=self.PRF_DC_CREATE))
+        if len(creator_links) > 0:
+            for creator in creator_links:
+                pid = URImanagement.get_uuid_from_oc_uri(creator.object_uri)
+                if pid is False:
+                    pid = creator.object_uri
+                if pid not in self.creators:
+                    self.creators.append(pid)
         contrib_links = LinkAnnotation.objects\
                                       .filter(Q(subject=project_uuid),
                                               Q(predicate_uri=self.URI_DC_CONTRIB)
