@@ -343,7 +343,7 @@ function geoChronoEdit(item_type, item_uuid){
 					'</div>',
 				'</td>',
 				'<td class="col-xs-5">',
-					'<div style="min-height: ' + button_height_offset + '" ',
+					'<div style="margin-top: ' + button_height_offset + '" ',
 					'id="' + dom_ids.new_outer + '">',
 					new_button_html,	
 					'</div>',
@@ -439,6 +439,31 @@ function geoChronoEdit(item_type, item_uuid){
 		// too many things to change, so reload the whole page
 		location.reload(true);
 	}
+	this.deleteDateRange = function(edit_i, when_i){
+		var dom_ids = this.make_when_dom_ids(edit_i, when_i);
+		var hash_id = document.getElementById(dom_ids.hash_id).value;
+		var url = this.make_url("/edit/delete-date-range/") + encodeURIComponent(this.item_uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				hash_id: hash_id,
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.deleteDateRangeDone,
+			error: function (request, status, error) {
+				alert('Problem deleteing date range: ' + status);
+			}
+		});
+		return req;
+	}
+	this.deleteDateRangeDone = function(data){
+		// too many things to change, so reload the whole page
+		location.reload(true);
+	}
+	
+	
 	
 	/*
 	 * Validation related functions

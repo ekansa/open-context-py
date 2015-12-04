@@ -50,7 +50,6 @@ class ItemGeoTime():
         ok = True
         errors = []
         note = ''
-        file_list = []
         required_params = ['source_id',
                            'hash_id',
                            'earliest',
@@ -132,11 +131,53 @@ class ItemGeoTime():
                     act_event.stop = stop
                     act_event.latest = latest
                     act_event.save()
-                    note = 'Updated file for this media item'
+                    note = 'Updated date range event for ' + self.manifest.uuid
         if ok:
             # now clear the cache a change was made
             cache.clear()
         self.response = {'action': 'add-update-date-range',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+
+    def delete_date_range(self, post_data):
+        """ Updates a file associated with a media item """
+        ok = True
+        errors = []
+        note = ''
+        required_params = ['hash_id']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                errors.append(message)
+                note = '; '.join(errors)
+        if ok:
+            hash_id = post_data['hash_id'].strip()
+            if len(hash_id) < 1:
+                ok = False
+                message = 'Blank hash_id'
+                errors.append(message)
+                note = '; '.join(errors)
+            if ok:
+                try:
+                    act_event = Event.objects.get(hash_id=hash_id)
+                except Event.DoesNotExist:
+                    act_event = False
+                    ok = False
+                    message = 'Cannot find event for hash_id: ' + str(hash_id)
+                    errors.append(message)
+                    note = '; '.join(errors)
+                if act_event is not False:
+                    # get rid of the old event
+                    act_event.delete()
+                    note = 'Delete event: ' + hash_id + ' for item: ' + self.manifest.uuid
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
+        self.response = {'action': 'delete-date-range',
                          'ok': ok,
                          'change': {'note': note}}
         return self.response
