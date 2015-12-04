@@ -39,7 +39,8 @@ def html_view(request, uuid):
         rp = RootPath()
         base_url = rp.get_baseurl()
         proj_content = ProjectContent(ocitem.manifest.uuid,
-                                      ocitem.manifest.slug)
+                                      ocitem.manifest.slug,
+                                      ocitem.json_ld)
         temp_item = TemplateItem()
         temp_item.proj_content = proj_content.get_project_content()
         temp_item.read_jsonld_dict(ocitem.json_ld)

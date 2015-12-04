@@ -63,8 +63,8 @@ class TemplateItem():
         self.check_edit_permitted = False
         self.contents_top = False
         self.project_hero_uri = False  # randomly selects an image for the project
-        self.predicate_query_link = False # link for querying with a predicate
-        self.predicate_query_json = False # link for querying json with a predicate
+        self.predicate_query_link = False  # link for querying with a predicate
+        self.predicate_query_json = False  # link for querying json with a predicate
         self.proj_content = False
 
     def read_jsonld_dict(self, json_ld):
@@ -407,7 +407,7 @@ class TemplateItem():
                     else:
                         act_index = 0
                     self.project_hero_uri = heros[act_index]['id']    
-    
+
     def create_license(self, json_ld):
         """ creates a license link
             and label
