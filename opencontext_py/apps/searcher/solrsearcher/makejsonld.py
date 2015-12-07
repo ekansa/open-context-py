@@ -10,6 +10,7 @@ from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.searcher.solrsearcher.responsetypes import SolrResponseTypes
+from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filters import ActiveFilters
@@ -64,6 +65,7 @@ class MakeJsonLd():
             self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
             self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
             self.add_paging_json(solr_json)
+            self.add_sorting_json()
             self.add_filters_json()
             self.add_text_fields()
         # now process numeric + date fields, facets will
@@ -238,6 +240,16 @@ class MakeJsonLd():
         new_rparams = fl.add_to_request('rows',
                                         rows)
         return fl.make_request_urls(new_rparams)
+
+    def add_sorting_json(self):
+        """ adds JSON to describe result sorting """
+        sort_opts = SortingOptions()
+        sort_opts.base_search_link = self.base_search_link
+        sort_opts.spatial_context = self.spatial_context
+        sort_opts.make_current_sorting_list(self.request_dict)
+        self.json_ld['oc-api:active-sorting'] = sort_opts.current_sorting
+        sort_opts.make_sort_links_list(self.request_dict)
+        self.json_ld['oc-api:has-sorting'] = sort_opts.sort_links
 
     def add_filters_json(self):
         """ adds JSON describing search filters """

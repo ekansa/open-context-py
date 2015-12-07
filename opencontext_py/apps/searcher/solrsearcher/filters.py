@@ -26,7 +26,7 @@ class ActiveFilters():
 
     def __init__(self):
         self.entities = {}  # entities already dereferenced
-        self.base_search_link = '/sets/'
+        self.base_search_link = '/search/'
         self.hierarchy_delim = '---'
 
     def add_filters_json(self, request_dict):
