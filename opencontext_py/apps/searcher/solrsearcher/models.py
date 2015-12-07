@@ -5,6 +5,7 @@ from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.specialized import SpecialSearches
 from opencontext_py.apps.searcher.solrsearcher.statsquery import StatsQuery
@@ -19,22 +20,22 @@ class SolrSearch():
                             'image_media_count',
                             'other_binary_media_count',
                             'document_count']
-    
+
     PROJECT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR]
-    
+
     # the number of rows to display by default for different item types
     ITEM_TYPE_ROWS = {'projects': 100}
-    
+
     # the miniumum number of facets to display for different item types
     ITEM_TYPE_FACET_MIN = {'projects': 2}
-    
+
     #facet fields for different item_types
     ITEM_TYPE_FACETFIELDS = {'projects': ['dc_terms_subject___pred_id',
                                           'dc_terms_temporal___pred_id',
                                           'dc_terms_spatial___pred_id',
                                           'dc_terms_coverage___pred_id'],
                              'subjects': ['oc_gen_subjects___pred_id']}
-    
+
     ITEM_CAT_FIELDS = ['oc_gen_subjects___pred_id',
                        'oc_gen_media___pred_id',
                        'oc_gen_persons___pred_id']
@@ -109,15 +110,15 @@ class SolrSearch():
         query['facet.range'] = []
         query['stats'] = 'true'
         query['stats.field'] = ['updated', 'published']
-        query['sort'] = 'interest_score desc'
+        query['sort'] = SortingOptions.DEFAULT_SOLR_SORT
         s_param = self.get_request_param(request_dict,
                                          'sort',
                                          False,
                                          False)
         if s_param is not False:
             # add custom sorting
-            # query['sort'] = s_param
-            pass
+            sort_opts = SortingOptions()
+            query['sort'] = sort_opts.make_solr_sort_param(s_param)
         # If the user does not provide a search term, search for everything
         query['q'] = '*:*'  # defaul search for all
         q_param = self.get_request_param(request_dict,

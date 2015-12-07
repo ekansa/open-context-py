@@ -1,9 +1,12 @@
 import datetime
 from django.utils.html import strip_tags
+from urllib.parse import urlparse, parse_qs, urlunparse
+from django.http import QueryDict
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
+from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 
 
 class SearchTemplate():
@@ -29,11 +32,14 @@ class SearchTemplate():
         self.facets = []
         self.geo_records = []
         self.text_search = []
+        self.active_sort = {}
+        self.sort_options = []
         self.nav_items = settings.NAV_ITEMS
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
+            self.set_sorting()  # sorting in the templating
             self.set_paging()  # adds to the paging dict
             self.set_text_search()  # adds text search fields
             if 'totalResults' in self.json_ld:
@@ -75,6 +81,29 @@ class SearchTemplate():
                     rr = ResultRecord()
                     rr.parse_json_record(json_rec)
                     self.geo_records.append(rr)
+
+    def set_sorting(self):
+        """ set links for sorting records """
+        if 'oc-api:active-sorting' in self.json_ld:
+            act_sorts = self.json_ld['oc-api:active-sorting']
+            if len(act_sorts) > 0:
+                self.active_sort['label'] = act_sorts[0]['label']
+                self.active_sort['order'] = act_sorts[0]['oc-api:sort-order']
+        if 'oc-api:has-sorting' in self.json_ld:
+            for sort_opt in self.json_ld['oc-api:has-sorting']:
+                # do this so we can use the template without a prefix
+                sort_opt['order'] = sort_opt['oc-api:sort-order']
+                self.sort_options.append(sort_opt)
+
+    def replace_query_param(self, url, attr, val):
+        """ replace a query parameter in a url """
+        (scheme, netloc, path, params, query, fragment) = urlparse(url)
+        query_dict = QueryDict(query).copy()
+        query_dict[attr] = val
+        if val is False:
+            query_dict.pop(attr)
+        query = query_dict.urlencode()
+        return urlunparse((scheme, netloc, path, params, query, fragment))
 
     def set_paging(self):
         """ sets the paging for these results """
@@ -157,6 +186,7 @@ class TextSearch():
                     self.term = json_rec['oc-api:search-term']
             if 'oc-api:template' in json_rec:
                 self.href = json_rec['oc-api:template']
+
 
 class ResultRecord():
     """ Object for a result record

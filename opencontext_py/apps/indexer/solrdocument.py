@@ -45,6 +45,7 @@ class SolrDocument:
         '''
         # First get core data structures
         self.oc_item = OCitem().get_item(uuid)
+        self.manifest = self.oc_item.manifest
         self.context_path = self._get_context_path()
         # Store values here
         self.fields = {}
@@ -298,7 +299,7 @@ class SolrDocument:
         self.fields['other_binary_media_count'] = 0
         # default, can add as doc links discovered
         self.fields['document_count'] = 0
-        self.fields['sort_score'] = 0  # fix
+        self.fields['sort_score'] = self.manifest.sort
         #default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.item_type
