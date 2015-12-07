@@ -28,6 +28,16 @@ class SortingOptions():
          'label': 'Interest score'}
     ]
 
+    SORT_SOLR_MAPPINGS = {
+        'item': 'slug_type_uri_label',
+        # 'item': 'sort_score',
+        'updated': 'updated',
+        'published': 'published',
+        'interest': 'interest_score'
+    }
+
+    DEFAULT_SOLR_SORT = 'interest_score desc'
+
     def __init__(self):
         self.base_search_link = '/search/'
         self.spatial_context = None
@@ -36,6 +46,52 @@ class SortingOptions():
         self.order_sep = '--'
         self.field_sep = '---'
         self.sort_links = []
+
+    def make_solr_sort_param(self, s_param):
+        """ makes a solr sort paramater
+            based on the current request's sort parameter
+        """
+        if s_param is False:
+            # no sort indicated in the request, so use the default
+            solr_sort = self.DEFAULT_SOLR_SORT
+        else:
+            item_sort = False
+            sole_sort_list = []
+            if self.field_sep in s_param:
+                current_sorts = s_param.split(self.field_sep)
+            else:
+                current_sorts = [s_param]
+            for cur_field_raw in current_sorts:
+                order = 'asc'  # the default sort order
+                if self.order_sep in cur_field_raw:
+                    cur_field_ex = cur_field_raw.split(self.order_sep)
+                    cur_field = cur_field_ex[0]
+                    if len(cur_field_ex) == 2:
+                        if 'desc' == cur_field_ex[1]:
+                            order = 'desc'
+                else:
+                    cur_field = cur_field_raw
+                if cur_field in self.SORT_SOLR_MAPPINGS:
+                    # the current field is in the solr mappings, so
+                    # it is a valid sort field
+                    act_solr_sort = self.SORT_SOLR_MAPPINGS[cur_field]
+                    if cur_field == 'item':
+                        item_sort = True
+                    act_solr_sort += ' ' + order
+                    sole_sort_list.append(act_solr_sort)
+            if len(sole_sort_list) > 0:
+                # we have valid sort fields, so make the solr sort
+                if item_sort:
+                    # add this so the sorting
+                    sole_sort_list.append(self.DEFAULT_SOLR_SORT)
+                else:
+                    # only append this if we're not already sorting by items
+                    sole_sort_list.append('slug_type_uri_label asc')
+                solr_sort = ', '.join(sole_sort_list)
+            else:
+                # we didn't find valid sort fields, so use the default
+                solr_sort = self.DEFAULT_SOLR_SORT
+        return solr_sort
 
     def make_current_sorting_list(self, request_dict):
         """ makes a list indicating the current
