@@ -86,6 +86,7 @@ class SortingOptions():
                     sole_sort_list.append(self.DEFAULT_SOLR_SORT)
                 else:
                     # only append this if we're not already sorting by items
+                    sole_sort_list.append('sort_score asc')
                     sole_sort_list.append('slug_type_uri_label asc')
                 solr_sort = ', '.join(sole_sort_list)
             else:
