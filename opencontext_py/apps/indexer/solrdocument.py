@@ -299,7 +299,7 @@ class SolrDocument:
         self.fields['other_binary_media_count'] = 0
         # default, can add as doc links discovered
         self.fields['document_count'] = 0
-        self.fields['sort_score'] = self.manifest.sort
+        self.fields['sort_score'] = float('.' + self.manifest.sort.replace('-', ''))
         #default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.item_type
