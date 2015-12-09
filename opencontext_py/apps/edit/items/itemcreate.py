@@ -144,7 +144,7 @@ class ItemCreate():
         """
         ok = True
         required_params = ['source_id',
-                           'label'
+                           'label',
                            'short_des']
         for r_param in required_params:
             if r_param not in post_data:

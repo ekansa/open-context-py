@@ -31,7 +31,7 @@ class EOLmanage():
             eol_uri = eol_la.object_uri
             leg = LinkEntityGeneration()
             le_gen = LinkEntityGeneration()
-            eol_uri = le_gen.make_clean_uri(eol_uri) # strip off any cruft in the URI
+            eol_uri = le_gen.make_clean_uri(eol_uri)  # strip off any cruft in the URI
             if eol_uri != eol_la.object_uri:
                 print('Has cruft: ' + str(eol_la.object_uri))
                 LinkAnnotation.objects\
@@ -66,6 +66,3 @@ class EOLmanage():
                         le.ent_type = 'class'
                         le.vocab_uri = self.EOL_VOCAB_URI
                         le.save()
-                
-            
-                
