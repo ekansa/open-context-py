@@ -126,7 +126,7 @@ class ActiveFilters():
                         label_dict = self.make_filter_label_dict(all_vals[-1])
                         if len(label_dict['label']) > 0:
                             act_filter['label'] = label_dict['label']
-                        elif 'tdar' in all_vals[-1]:
+                        if 'tdar' == all_vals[-1] or 'tdar*' == all_vals[-1]:
                             act_filter['label'] = 'tDAR defined metadata record(s)'
                         if len(label_dict['entities']) == 1:
                             act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri

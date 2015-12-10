@@ -28,7 +28,7 @@ class SpecialSearches():
         query['facet.pivot'].append(proj_field + ',discovery_geotile')
         query['facet.pivot'].append(proj_field + ',form_use_life_chrono_tile')
         return query
-    
+
     def process_linked_dinaa(self, query):
         """ processes a request for DINAA sites that
             are cross referenced with tDAR or other
