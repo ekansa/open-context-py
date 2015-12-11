@@ -46,10 +46,11 @@ class ProcessTypes():
                                 self.project_uuid)
             # to do, figure out the unimport
 
-    def make_type_ld_annotations(self, sub_type_pred_uuid,
-                                       sub_type_f_num,
-                                       rel_pred,
-                                       obj_le_f_num):
+    def make_type_ld_annotations(self,
+                                 sub_type_pred_uuid,
+                                 sub_type_f_num,
+                                 rel_pred,
+                                 obj_le_f_num):
         """ Makes linked data annotations
             for a type in an import
         """

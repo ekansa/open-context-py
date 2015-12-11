@@ -18,17 +18,19 @@ class eolAPI():
         self.json_base_url = self.JSON_BASE_URL
         self.delay_before_request = self.SLEEP_TIME
         self.json_data = False
+        self.request_url = False
 
     def get_basic_json_for_eol_uri(self, eol_uri):
         """
         gets json daa from the EOL
         """
         le_gen = LinkEntityGeneration()
-        eol_uri = le_gen.make_clean_uri(eol_uri) # strip off any cruft in the URI
+        eol_uri = le_gen.make_clean_uri(eol_uri)  # strip off any cruft in the URI
         eol_ex = eol_uri.split('/')
-        eol_id = eol_uri[-1]
+        eol_id = eol_ex[-1]
         url = self.json_base_url + str(eol_id)
         url += '.json'
+        self.request_url = url
         if self.delay_before_request > 0:
             # default to sleep BEFORE a request is sent, to
             # give the remote service a break.

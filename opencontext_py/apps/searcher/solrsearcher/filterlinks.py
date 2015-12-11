@@ -21,7 +21,7 @@ class FilterLinks():
     def __init__(self, request_dict=False):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.base_search_link = '/sets/'
+        self.base_search_link = '/search/'
         self.base_request = request_dict
         self.base_request_json = False
         self.base_r_full_path = False
