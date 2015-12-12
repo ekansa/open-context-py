@@ -51,9 +51,14 @@ class ProcessDescriptions():
         """
         if self.start_row <= 1:
             # will clear an import of descriptions
+            print('Clearing old description assertions...')
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
-            unimport.delete_describe_assertions()
+            ok = unimport.delete_describe_assertions()
+            if ok:
+                print('Assertions deleted...')
+            else:
+                print('Something horrible happened!')
             unimport.delete_predicate_vars()
             unimport.delete_types_entities()
             unimport.delete_strings()
@@ -165,11 +170,12 @@ class ProcessDescriptions():
                 # get records for the subject of the description
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
-                distinct_records = pc.get_field_records(subj_field_num,
-                                                        False)
+                distinct_records = pc.get_field_records_by_fl_uuid(subj_field_num,
+                                                                   False)
                 if distinct_records is not False:
                     pg = ProcessGeneral(self.source_id)
                     distinct_records = pg.order_distinct_records(distinct_records)
+                    # print(str(distinct_records))
                     for row_key, dist_rec in distinct_records.items():
                         if dist_rec['imp_cell_obj'].cell_ok:
                             subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
@@ -397,7 +403,7 @@ class ProcessDescriptions():
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 cells = pc.get_field_row_records(valueof_field,
-                                                            in_rows)
+                                                 in_rows)
                 for cell in cells:
                     object_imp_cell_objs.append(cell)
         return object_imp_cell_objs
