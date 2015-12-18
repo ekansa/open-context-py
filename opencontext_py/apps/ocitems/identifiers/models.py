@@ -53,6 +53,10 @@ class StableIdentifer(models.Model):
                 # the user supplied a URI version of the stable ID
                 self.stable_type = id_type
                 self.stable_id = self.stable_id.replace(id_prefix, '')
+            abrv_prefix = id_type + ':'
+            if abrv_prefix in self.stable_id:
+                self.stable_type = id_type
+                self.stable_id = self.stable_id.replace(abrv_prefix, '')
 
     def save(self, *args, **kwargs):
         """

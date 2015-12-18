@@ -304,7 +304,7 @@ class ItemAnnotation():
             drev.uuid = self.manifest.uuid
             drev.item_type = self.manifest.item_type
             drev.user_id = self.creator_uuid
-            rev_label = 'Updated ' + item_man.label
+            rev_label = 'Updated ' + self.manifest.label
             rev_label += ', removed stable ID: ' + stable_id
             del_ids = StableIdentifer.objects\
                                      .filter(uuid=self.manifest.uuid,
