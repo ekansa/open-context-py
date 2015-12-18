@@ -68,11 +68,16 @@ class UnImport():
         """ Deletes an import of description assertions
         """
         if self.delete_ok:
+            object_types = ImportProfile.DEFAULT_DESCRIBE_OBJECT_TYPES
+            if 'xsd:string' not in object_types:
+                object_types.append('xsd:string')
             rem_assertions = Assertion.objects\
                                       .filter(source_id=self.source_id,
                                               project_uuid=self.project_uuid,
-                                              object_type__in=ImportProfile.DEFAULT_DESCRIBE_OBJECT_TYPES)\
+                                              object_type__in=object_types)\
+                                      .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)\
                                       .delete()
+        return self.delete_ok
 
     def delete_predicate_vars(self):
         """ Deletes predicates that are variables

@@ -681,6 +681,7 @@ class CandidateSubject():
             else:
                 # update all the import cells in the list of rows
                 # to have the relevant uuid
+                # print('Saving import cell uuid for: ' + self.label + ', ' + self.uuid)
                 self.imp_cell_obj.fl_uuid = self.uuid
                 self.imp_cell_obj.save()
                 up_cells = ImportCell.objects\

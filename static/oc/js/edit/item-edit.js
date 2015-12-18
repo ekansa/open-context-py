@@ -624,6 +624,13 @@ function itemEdit(item_type, item_uuid){
 	this.ajax_get_active_idDone = function(data){
 		this.active_search_entity = data;
 	}
+	/**************************************************************
+	 * LINKED DATA - ANNOTATIONS RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	
+	
+	
 	
 	/**************************************************************
 	 * MEDIA RELATED FUNCTIONS

@@ -32,6 +32,28 @@ class ProcessCells():
                 distinct_records[cell.rec_hash]['rows'].append(cell.row_num)
         return distinct_records
 
+    def get_field_records_by_fl_uuid(self,
+                                     field_num,
+                                     in_rows=False):
+        """ gets a dict object of unique field records, as
+           determined by the fl_uuid. This is useful
+           for subjects entities that have been reconciled in
+           hierarchy relationships
+        """
+        distinct_records = False
+        field_cells = self.get_field_row_records(field_num,
+                                                 in_rows)
+        if len(field_cells) > 0:
+            distinct_records = {}
+            for cell in field_cells:
+                # iterate through cells to get list of row_nums for each distinct value
+                if cell.fl_uuid not in distinct_records:
+                    distinct_records[cell.fl_uuid] = {}
+                    distinct_records[cell.fl_uuid]['rows'] = []
+                    distinct_records[cell.fl_uuid]['imp_cell_obj'] = cell
+                distinct_records[cell.fl_uuid]['rows'].append(cell.row_num)
+        return distinct_records
+
     def get_field_row_records(self,
                               field_num,
                               in_rows=False):

@@ -49,7 +49,7 @@ class DeletionRevision():
             vm.uuid = self.uuid
             vm.item_type = self.item_type
             vm.label = label
-            vm.user_id = user_id
+            vm.user_id = self.user_id
             vm.deleted_ids = keys_json
             vm.json_note = json_note
             vm.save()
