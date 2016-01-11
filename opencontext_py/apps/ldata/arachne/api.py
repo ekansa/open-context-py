@@ -71,7 +71,7 @@ class ArachneAPI():
         """
         payload = {'q': keyword}
         if self.filter_by_images:
-            payload['fq'] = 'facet_image:ja'
+            payload['fq'] = 'facet_image:"ja"'
         url = self.DEFAULT_API_BASE_URL
         try:
             gapi = GeneralAPI()
