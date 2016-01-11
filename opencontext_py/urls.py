@@ -24,6 +24,7 @@ from opencontext_py.apps.edit.inputs import views as InputProfileViews
 from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
+from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 
 urlpatterns = patterns('',
                        # Examples:
@@ -116,8 +117,9 @@ urlpatterns = patterns('',
                        url(r'^tables/(?P<table_id>\S+).json', OCtableViews.index_view, name='tables_json'),
                        url(r'^tables/(?P<table_id>\S+).csv', OCtableViews.index_view, name='tables_csv'),
                        url(r'^tables/(?P<table_id>\S+)', OCtableViews.index_view, name='tables_html'),
-                       # url(r'^types', OCtypeViews.index, name='types_index'),
-                       url(r'^tables', OCtableViews.index_view, name='tables_index'),
+                       # Vocabulary views for viewing controlled vocab + ontology entities
+                       url(r'^vocabularies/(?P<identifier>\S+)', vocabViews.html_view, name='vocabularies_html'),
+                       url(r'^vocabularies', vocabViews.index_view, name='vocabularies_index'),
                        # --------------------------
                        # IMPORTER INTERFACE PAGES
                        # --------------------------
