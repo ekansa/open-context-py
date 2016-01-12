@@ -44,7 +44,7 @@ class ProjectContent():
                 class_uri = content[1]
                 if item_type == 'subjects':
                     self.subjects = '/subjects-search/' \
-                                   + '?proj=' + self.proj_slug
+                                    + '?proj=' + self.make_proj_query_term()
                     if len(class_uri) > 0:
                         ent = Entity()
                         found = ent.dereference(class_uri)
