@@ -11,6 +11,7 @@ static/exports/
 static/bootstrap/
 static/jquery/
 static/angularjs/
+static/viewerjs/
 static/leaflet/
 static/fontawesome/
 static/fonts/
