@@ -310,5 +310,5 @@ def proxy(request, target_url):
                             content_type=mimetype)
     else:
         return HttpResponse('Fail with HTTP status: ' + str(content),
-                            status=200,
+                            status=status_code,
                             content_type='text/plain')
