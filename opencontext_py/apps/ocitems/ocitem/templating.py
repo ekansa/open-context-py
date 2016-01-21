@@ -297,9 +297,10 @@ class TemplateItem():
                         if 'application/pdf' in file_item['dc-terms:hasFormat']:
                             # this is a pdf that can be previewed
                             rp = RootPath()
-                            self.full_doc_file = rp.get_baseurl()\
-                                                 + '/entities/proxy/' \
-                                                 + urlquote(file_item['id'])
+                            target_url = file_item['id']
+                            if 'https://' in target_url:
+                                target_url = target_url.replace('https://', 'http://')
+                            self.full_doc_file = rp.get_baseurl() + '/proxy/' + urlquote(target_url)
                             self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = file_item['id']
