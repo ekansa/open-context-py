@@ -277,6 +277,8 @@ urlpatterns = patterns('',
                            name='entity_contain_children'),
                        url(r'^entities/description-children/(?P<identifier>\S+)', EntityViews.description_hierarchy,
                            name='entity_description_hierarchy'),
+                       url(r'^entities/proxy/(?P<target_url>\S+)', EntityViews.proxy,
+                           name='entity_proxy'),
                        #----------------------------
                        # BELOW ARE INDEX REQUESTS
                        #----------------------------

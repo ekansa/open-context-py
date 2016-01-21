@@ -30,9 +30,16 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
+                        {% if item.full_doc_file != False %}
+                        <div class="preview-image">
+                              <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"
+                                     width="90%" height="800" allowfullscreen webkitallowfullscreen></iframe>
+                        </div>
+                        {%else%}
                         <div class="preview-image">
                             <img class="img-responsive" src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
                         </div>
+                        {%endif%}
                         {% include 'items/accordion-group-panel-end.html' %}
                     {%else%}
                         {% with top_panel_num=0 %}
@@ -52,9 +59,16 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
+                        {% if item.full_doc_file != False %}
+                        <div class="preview-image">
+                             <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"
+                                     width="90%" height="800" allowfullscreen webkitallowfullscreen></iframe>
+                        </div>
+                        {%else%}
                         <div class="preview-image">
                             <img class="img-responsive" src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
                         </div>
+                        {%endif%}
                         {% include 'items/plain-panel-end.html' %}
                     {%endif%}
                 </div>

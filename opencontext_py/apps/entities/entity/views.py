@@ -1,8 +1,11 @@
 import json
+import mimetypes
+import requests
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
@@ -273,3 +276,31 @@ def description_hierarchy(request, identifier):
                             content_type='application/json; charset=utf8')
     else:
         raise Http404
+
+
+def proxy(request, target_url):
+    """ Proxy request so as to get around CORS
+        issues for displaying PDFs with javascript
+        and other needs
+    """
+    if 'https://' in target_url:
+        target_url = target_url.replace('https://', 'http://')
+    ok = True
+    try:
+        r = requests.get(target_url,
+                         timeout=240)
+        r.raise_for_status()
+        status_code = r.status_code
+        mimetype = r.headers['Content-Type']
+        content = r.content
+    except:
+        ok = False
+        status_code = r.status_code
+    if ok:
+        return HttpResponse(content,
+                            status=status_code,
+                            content_type=mimetype)
+    else:
+        return HttpResponse('Fail with HTTP status: ' + str(status_code),
+                            status=status_code,
+                            content_type='text/plain')

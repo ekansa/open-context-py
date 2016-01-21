@@ -51,6 +51,7 @@ class TemplateItem():
         self.linked_data = False
         self.content = False
         self.fullimage = False
+        self.full_doc_file = False  # a pdf, word, or other file for Javascript preview
         self.fulldownload = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
@@ -293,6 +294,13 @@ class TemplateItem():
                                 # the file is an image type that displays in a browser
                                 self.fullimage = True
                                 break
+                        if 'application/pdf' in file_item['dc-terms:hasFormat']:
+                            # this is a pdf that can be previewed
+                            rp = RootPath()
+                            self.full_doc_file = rp.get_baseurl()\
+                                                 + '/entities/proxy/' \
+                                                 + urlquote(file_item['id'])
+                            # self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = file_item['id']
                 elif file_item['type'] == 'oc-gen:thumbnail':
