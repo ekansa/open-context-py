@@ -296,6 +296,7 @@ def proxy(request, target_url):
     print('Try to see: ' + target_url)
     try:
         r = requests.get(target_url,
+                         timeout=240,
                          headers=gapi.client_headers)
         status_code = r.status_code
         r.raise_for_status()
