@@ -279,8 +279,6 @@ def description_hierarchy(request, identifier):
         raise Http404
 
 
-@cache_control(no_cache=True)
-@never_cache
 def proxy(request, target_url):
     """ Proxy request so as to get around CORS
         issues for displaying PDFs with javascript
