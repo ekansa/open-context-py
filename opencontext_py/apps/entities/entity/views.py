@@ -287,8 +287,8 @@ def proxy(request, target_url):
         and other needs
     """
     gapi = GeneralAPI()
-    if 'https://' in target_url:
-        target_url = target_url.replace('https://', 'http://')
+    if 'https:' in target_url:
+        target_url = target_url.replace('https:', 'http:')
     ok = True
     status_code = 404
     print('Try to see: ' + target_url)
