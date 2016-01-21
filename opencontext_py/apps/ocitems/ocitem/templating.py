@@ -298,8 +298,8 @@ class TemplateItem():
                             # this is a pdf that can be previewed
                             rp = RootPath()
                             target_url = file_item['id']
-                            if 'https://' in target_url:
-                                target_url = target_url.replace('https://', 'http://')
+                            if 'https:' in target_url:
+                                target_url = target_url.replace('https:', 'http:')
                             self.full_doc_file = rp.get_baseurl() + '/proxy/' + urlquote(target_url)
                             self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':
