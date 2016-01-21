@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import requests
+import logging
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
@@ -286,21 +287,22 @@ def proxy(request, target_url):
     if 'https://' in target_url:
         target_url = target_url.replace('https://', 'http://')
     ok = True
+    status_code = 404
     try:
         r = requests.get(target_url,
                          timeout=240)
         r.raise_for_status()
+    except requests.exceptions.ConnectionError as e:
+        ok = False
+        content = target_url + ' ' + str(e)
+    if ok:
         status_code = r.status_code
         mimetype = r.headers['Content-Type']
         content = r.content
-    except:
-        ok = False
-        status_code = r.status_code
-    if ok:
         return HttpResponse(content,
                             status=status_code,
                             content_type=mimetype)
     else:
-        return HttpResponse('Fail with HTTP status: ' + str(status_code),
-                            status=status_code,
+        return HttpResponse('Fail with HTTP status: ' + str(content),
+                            status=200,
                             content_type='text/plain')
