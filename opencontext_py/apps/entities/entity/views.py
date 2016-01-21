@@ -279,22 +279,27 @@ def description_hierarchy(request, identifier):
         raise Http404
 
 
+@cache_control(no_cache=True)
+@never_cache
 def proxy(request, target_url):
     """ Proxy request so as to get around CORS
         issues for displaying PDFs with javascript
         and other needs
     """
+    gapi = GeneralAPI()
     if 'https://' in target_url:
         target_url = target_url.replace('https://', 'http://')
     ok = True
     status_code = 404
+    print('Try to see: ' + target_url)
     try:
         r = requests.get(target_url,
-                         timeout=240)
+                         headers=gapi.client_headers)
+        status_code = r.status_code
         r.raise_for_status()
-    except requests.exceptions.ConnectionError as e:
+    except:
         ok = False
-        content = target_url + ' ' + str(e)
+        content = target_url + ' ' + str(status_code)
     if ok:
         status_code = r.status_code
         mimetype = r.headers['Content-Type']
