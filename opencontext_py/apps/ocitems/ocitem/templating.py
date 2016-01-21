@@ -296,6 +296,7 @@ class TemplateItem():
                                 break
                         if 'application/pdf' in file_item['dc-terms:hasFormat']:
                             # this is a pdf that can be previewed
+                            self.item_category_label = 'Acrobat PDF File'
                             rp = RootPath()
                             target_url = file_item['id']
                             if 'https:' in target_url:
