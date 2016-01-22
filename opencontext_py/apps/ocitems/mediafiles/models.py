@@ -12,6 +12,7 @@ class Mediafile(models.Model):
                   'oc-gen:thumbnail',
                   'oc-gen:hero']
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
+    PDF_DEFAULT_THUMBNAIL = 'http://opencontext.org/static/oc/images/icons/pdf-noun-89522.png'
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)

@@ -1276,16 +1276,28 @@ class ItemConstruction():
         """
         adds media files
         """
-        if(media is not False):
+        if media is not False:
             media_list = []
+            thumb_missing = True
+            pdf_doc = False
             for media_item in media:
                 list_item = LastUpdatedOrderedDict()
                 list_item['id'] = media_item.file_uri
                 list_item['type'] = media_item.file_type
+                if media_item.file_type == 'oc-gen:thumbnail':
+                    thumb_missing = False
                 list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+                if 'application/pdf' in media_item.mime_type_uri:
+                    pdf_doc = True
                 list_item['dcat:size'] = float(media_item.filesize)
                 if self.assertion_hashes:
                     list_item['hash_id'] = media_item.id
+                media_list.append(list_item)
+            if thumb_missing and pdf_doc:
+                # we have a PDF with a default thumbnail
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = Mediafile.PDF_DEFAULT_THUMBNAIL
+                list_item['type'] = 'oc-gen:thumbnail'
                 media_list.append(list_item)
             act_dict['oc-gen:has-files'] = media_list
         return act_dict
