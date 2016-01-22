@@ -244,13 +244,20 @@ class CandidateMediaFile():
 
     def reconcile_media_file(self, file_uri):
         """ Checks to see if the item exists in the manifest """
-        media_list = Mediafile.objects\
-                              .filter(file_uri=file_uri)[:1]
+        if self.file_type == 'oc-gen:thumbnail':
+            # allow thumbnails to repeat
+            media_list = Mediafile.objects\
+                                  .filter(file_uri=file_uri,
+                                          uuid=self.uuid)[:1]
+        else:
+            # only allow a file uri to be used 1 time
+            media_list = Mediafile.objects\
+                                  .filter(file_uri=file_uri)[:1]
         if len(media_list) < 1:
             self.file_uri = file_uri
             if self.validate_media_file():
                 self.new_entity = True
-                self.create_media_file()           
+                self.create_media_file()
 
     def validate_media_file(self):
         """ validates data for creating a media file """
@@ -271,4 +278,15 @@ class CandidateMediaFile():
         mf.file_uri = self.file_uri
         mf.filesize = 0
         mf.mime_type_ur = ''
+        ok = True
         mf.save()
+        """
+        try:
+            mf.save()
+        except:
+            ok = False
+        if ok is False:
+            max_id = Mediafile.objects.all().order_by("-id")[0]
+            mf.id = max_id[0].id + 1
+            mf.save()
+        """
