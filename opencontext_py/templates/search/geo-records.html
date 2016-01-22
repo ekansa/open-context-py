@@ -57,7 +57,10 @@
                 </div>
             </div>
         </div>
-    
+        
+        {% if csv_downloader %}
+                {% include 'search/search-modal.html' %}
+        {%endif%}        
 {%endif%}
 
 

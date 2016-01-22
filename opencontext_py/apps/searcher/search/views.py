@@ -182,6 +182,9 @@ def json_view(request, spatial_context=None):
 def subjects_html_view(request, spatial_context=None):
     """ returns HTML representation of subjects search
     """
+    csv_downloader = False  # provide CSV downloader interface
+    if request.GET.get('csv') is not None:
+        csv_downloader = True
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -232,6 +235,7 @@ def subjects_html_view(request, spatial_context=None):
                 template = loader.get_template('search/view.html')
                 context = RequestContext(request,
                                          {'st': st,
+                                          'csv_downloader': csv_downloader,
                                           'item_type': 'subjects',
                                           'base_search_link': m_json_ld.base_search_link,
                                           'url': url,
