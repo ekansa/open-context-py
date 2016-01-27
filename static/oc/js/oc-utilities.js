@@ -50,7 +50,7 @@ function removeURLParameter(url, parameter) {
     }
 }
 
-function getJsonFromUrl() {
+function parseUrl() {
 	// parse a URL
 	var query = location.search.substr(1);
 	var result = {};
