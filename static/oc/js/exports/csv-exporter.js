@@ -350,8 +350,8 @@ function CSVexporter(json_url, total_results){
 				else{
 					var url = replaceURLparameter(this.json_url, 'response', 'geo-record');	
 				}
-				url = removeURLParameter(url, 'start');
-				url = url.replace('amp;', ''); // base url for geo-json requests
+				url = replaceURLparameter(url, 'start', start_index);	
+				url = url.replace('&amp&', '&'); // base url for geo-json requests
 				
 				var data = {
 					start: start_index,
