@@ -33,8 +33,10 @@ class QueryMaker():
                  'predicates': 'oc-gen:predicates'}
 
     def __init__(self):
+        self.mem_obj = False  # memory object
         self.error = False
         self.entities = {}  # keep looked up entities to save future database lookups
+        self.entity_dtypes = {}  # keep to avoid database lookups
         self.histogram_groups = 10
 
     def _get_context_paths(self, spatial_context):
@@ -294,10 +296,11 @@ class QueryMaker():
                 pred_prop_entity = False
                 require_id_field = False
                 if act_field_data_type == 'id':
-                    entity = Entity()
-                    found = entity.dereference(prop_slug)
-                    if found is False:
-                        found = entity.dereference(prop_slug, prop_slug)
+                    entity = self.get_entity(prop_slug)
+                    if entity is False:
+                        found = False
+                    else:
+                        found = True
                     if found:
                         self.entities[prop_slug] = entity  # store entitty for later use
                         last_field_label = entity.label
@@ -374,8 +377,14 @@ class QueryMaker():
                         # a different data-type (for linked-data)
                         if i >= (path_list_len - 2) \
                            and l_prop_entity:
-                            lequiv = LinkEquivalence()
-                            dtypes = lequiv.get_data_types_from_object(entity.uri)
+                            if entity.uri in self.entity_dtypes:
+                                # alreay found the data types
+                                dtypes = self.entity_dtypes[entity.uri]
+                            else:
+                                # lookup and save the data types
+                                lequiv = LinkEquivalence()
+                                dtypes = lequiv.get_data_types_from_object(entity.uri)
+                                self.entity_dtypes[entity.uri] = dtypes
                             if isinstance(dtypes, list):
                                 # set te data type and the act-field
                                 if prop_slug in self.entities:
@@ -915,3 +924,21 @@ class QueryMaker():
             escaping special characters like : , etc"""
         term = term.replace('\\', r'\\')   # escape \ first
         return "".join([next_str for next_str in self.escaped_seq(term)])
+
+    def get_entity(self, identifier):
+        """ looks up an entity """
+        output = False
+        if identifier in self.entities:
+            # best case scenario, the entity is already looked up
+            output = self.entities[identifier]
+        else:
+            found = False
+            entity = Entity()
+            found = entity.dereference(identifier)
+            if found is False:
+                # case of linked data slugs
+                found = entity.dereference(identifier, identifier)
+            if found:
+                self.entities[identifier] = entity
+                output = entity
+        return output
