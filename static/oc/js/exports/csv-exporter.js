@@ -350,6 +350,9 @@ function CSVexporter(json_url, total_results){
 				else{
 					var url = replaceURLparameter(this.json_url, 'response', 'geo-record');	
 				}
+				url = removeURLParameter(url, 'start');
+				url = url.replace('amp;', ''); // base url for geo-json requests
+				
 				var data = {
 					start: start_index,
 					rows: this.records_per_page,
@@ -781,7 +784,15 @@ function CSVexporter(json_url, total_results){
 		//add a slug to the added attributes list
 		this.added_field_slug_list.push(slug);
 		// now update all of the attributes
-		this.show_attributes_html();
+		var dom_id = 'add-field-slug-' + slug;
+		if (document.getElementById(dom_id)) {
+			// just remove the add button for this field.
+			var act_dom = document.getElementById(dom_id);
+			act_dom.innerHTML = '';
+		}
+		else{
+			this.show_attributes_html();	
+		}
 	}
 	this.makes_attribute_choices_html = function(){
 		var html = '';
@@ -933,7 +944,9 @@ function CSVexporter(json_url, total_results){
 						'</div>',
 						'<div id="' + b_id +'" class="' + b_class + '" ',
 						'role="tabpanel" aria-labelledby="' + h_id + '">',
+							'<div>',
 							'<samp>' + act_atts_html + '</samp>',
+							'</div>',
 						'</div>',
 					'</div>',
 					].join('\n');
@@ -966,6 +979,7 @@ function CSVexporter(json_url, total_results){
 			}
 			
 			var attrib_html = [
+			'<div id="add-field-slug-' + attrib['slug'] + '">',
 				'<button type="button" class="btn btn-primary btn-xs" style="margin-bottom: 2px; "',
 					'title="Add to export field: ' + full_label + '" ',
 					'onclick="' + this.obj_name + '.addAttribute(\'' + attrib['slug'] + '\');">',
@@ -973,6 +987,7 @@ function CSVexporter(json_url, total_results){
 					'<span style="margin-left: 5px;" ',
 					'class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
 				'</button>',
+			'</div>',
 			].join('');
 			
 			if (percent >= 75 && this.default_add_common_fields) {
