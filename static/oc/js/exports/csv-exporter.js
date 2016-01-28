@@ -3,7 +3,7 @@
  */
 function CSVexporter(json_url, total_results){
 	this.obj_name = 'CSVexporter';
-	this.json_url = json_url.replace('amp;', ''); // base url for geo-json requests
+	this.json_url = json_url; // base url for geo-json requests
 	this.meta_facets_url = false; 
 	this.modal_id = 'searchModal';
 	this.total_results = total_results;
@@ -350,8 +350,10 @@ function CSVexporter(json_url, total_results){
 				else{
 					var url = replaceURLparameter(this.json_url, 'response', 'geo-record');	
 				}
-				url = replaceURLparameter(url, 'start', start_index);	
-				url = url.replace('&amp&', '&'); // base url for geo-json requests
+				url = replaceURLparameter(url, 'start', start_index);
+				url = url.replace(/&amp;prop=/g, '&prop=');
+				url = url.replace(/&amp&prop=/g, '&prop=');
+				url = url.replace(/&amp&/g, '&');
 				
 				var data = {
 					start: start_index,
@@ -1125,6 +1127,9 @@ function CSVexporter(json_url, total_results){
 		}
 		
 		this.meta_facets_url = replaceURLparameter(this.json_url, 'response', 'metadata,facet');
+		this.meta_facets_url = this.meta_facets_url.replace(/&amp;prop=/g, '&prop=');
+		this.meta_facets_url = this.meta_facets_url.replace(/&amp&prop=/g, '&prop=');
+		this.meta_facets_url = this.meta_facets_url.replace(/&amp&/g, '&');
 		return $.ajax({
 			type: "GET",
 			url: this.meta_facets_url,
