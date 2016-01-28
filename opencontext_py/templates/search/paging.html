@@ -1,7 +1,9 @@
     <ul class="pagination navbar-nav navbar-right" >
+        <!--
         <li class="disabled">
             <span>Pages</span>
         </li>
+        -->
         {% if st.paging.first = False %}
         <li class="disabled">
             <span>
@@ -87,4 +89,13 @@
                     </li>
                 </ul>
         </li>
+        {% if csv_downloader %}
+        <li title="Export a data table or GIS file">
+            <span>
+            <a href="javascript:CSVexporter.show_interface();">
+                <span class="glyphicon glyphicon-cloud-download"></span>
+            </a>
+            </span>
+        </li>        
+        {%endif%} 
     </ul>
