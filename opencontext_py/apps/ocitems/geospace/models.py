@@ -20,7 +20,7 @@ class Geospace(models.Model):
     item_type = models.CharField(max_length=50, db_index=True)
     feature_id = models.IntegerField()
     meta_type = models.CharField(max_length=50)
-    ftype = models.CharField(max_length=200)
+    ftype = models.CharField(max_length=200, db_index=True)
     latitude = models.DecimalField(max_digits=24, decimal_places=21)
     longitude = models.DecimalField(max_digits=24, decimal_places=21)
     specificity = models.IntegerField()
