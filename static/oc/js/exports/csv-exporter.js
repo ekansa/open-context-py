@@ -979,7 +979,7 @@ function CSVexporter(json_url, total_results){
 			}
 			
 			var attrib_html = [
-			'<div id="add-field-slug-' + attrib['slug'] + '">',
+			'<span id="add-field-slug-' + attrib['slug'] + '">',
 				'<button type="button" class="btn btn-primary btn-xs" style="margin-bottom: 2px; "',
 					'title="Add to export field: ' + full_label + '" ',
 					'onclick="' + this.obj_name + '.addAttribute(\'' + attrib['slug'] + '\');">',
@@ -987,7 +987,7 @@ function CSVexporter(json_url, total_results){
 					'<span style="margin-left: 5px;" ',
 					'class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
 				'</button>',
-			'</div>',
+			'</span>',
 			].join('');
 			
 			if (percent >= 75 && this.default_add_common_fields) {
