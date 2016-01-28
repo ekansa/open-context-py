@@ -50,7 +50,24 @@ function removeURLParameter(url, parameter) {
     }
 }
 
-function getJsonFromUrl() {
+function getURLParameter(url, param) {
+    //prefer to use l.search if you have a location/link object
+    var vars = {};
+	url.replace( 
+		/[?&]+([^=&]+)=?([^&]*)?/gi, // regexp
+		function( m, key, value ) { // callback
+			key = key.replace('amp;', '');
+			vars[key] = value !== undefined ? value : '';
+		}
+	);
+
+	if ( param ) {
+		return vars[param] ? vars[param] : null;	
+	}
+	return vars;
+}
+
+function parseUrl() {
 	// parse a URL
 	var query = location.search.substr(1);
 	var result = {};
@@ -60,6 +77,8 @@ function getJsonFromUrl() {
 	});
 	return result;
 }
+
+
 
 var getCentroid = function (arr) {
 	// get the centroid of a polygon

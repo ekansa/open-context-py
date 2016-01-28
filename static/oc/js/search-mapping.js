@@ -22,7 +22,7 @@ function search_map(json_url, base_search_link) {
 		 * 
 		 */
 		var geodeep = this.geodeep;
-		var url_parts = getJsonFromUrl(this.json_url);
+		var url_parts = parseUrl(this.json_url);
 		var context_path_geodeep = false;
 		if (url_parts['disc-geotile']) {
 			// if a geotile is used as a search filter, as for
