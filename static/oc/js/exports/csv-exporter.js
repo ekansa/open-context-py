@@ -783,16 +783,29 @@ function CSVexporter(json_url, total_results){
 	this.addAttribute = function(slug){
 		//add a slug to the added attributes list
 		this.added_field_slug_list.push(slug);
-		// now update all of the attributes
-		var dom_id = 'add-field-slug-' + slug;
+		// now update all of the shown attributes
+		if (document.getElementById('added-attributes')) {
+			// found the dom that takes added attributes, so refresh it
+			// update for the shown and not shown attributes
+			var attribute_choices_html = this.makes_attribute_choices_html();
+			var added_fields_html = this.make_added_fields_html();
+			var act_dom = document.getElementById('added-attributes');
+			act_dom.innerHTML = added_fields_html;
+		}
+		else{
+			// couldn't find the right dom, 
+			// ok just refresh the whole thing
+			this.show_attributes_html();	
+		}
+		
+		// now hide the button we just used
+		var dom_id = 'add-fieldslug-' + slug;
 		if (document.getElementById(dom_id)) {
 			// just remove the add button for this field.
 			var act_dom = document.getElementById(dom_id);
-			act_dom.innerHTML = '';
+			act_dom.style.display = 'none';
 		}
-		else{
-			this.show_attributes_html();	
-		}
+		
 	}
 	this.makes_attribute_choices_html = function(){
 		var html = '';
@@ -979,15 +992,14 @@ function CSVexporter(json_url, total_results){
 			}
 			
 			var attrib_html = [
-			'<span id="add-field-slug-' + attrib['slug'] + '">',
-				'<button type="button" class="btn btn-primary btn-xs" style="margin-bottom: 2px; "',
+				'<button type="button" class="btn btn-primary btn-xs" style="margin-bottom: 2px;" ',
+				    'id="add-fieldslug-' + attrib['slug'] + '" ',
 					'title="Add to export field: ' + full_label + '" ',
 					'onclick="' + this.obj_name + '.addAttribute(\'' + attrib['slug'] + '\');">',
 					label,
 					'<span style="margin-left: 5px;" ',
 					'class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span>',
 				'</button>',
-			'</span>',
 			].join('');
 			
 			if (percent >= 75 && this.default_add_common_fields) {
