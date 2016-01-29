@@ -238,7 +238,7 @@ This particular configuration seems to work on 2 different machines so far. So i
 uwsgi --http-socket :8080 --ini /path/your-virtual-env/web/oc.ini
 ```
 
-The above starts a unix socket for servers (Nginx in our case) to use in passing HTTP requests from the outside world to the Open Context Django application. Note that the socket opperates on port 8080 in this case. Choose something that won't interfere with port 80 for outside Web requests. If all goes well, you will not see an error in the log (see the path in the "daemonize" parameter above). Use the log to help debug further, since problems with the Django app sometimes appear there. If you get uWSGI to work without error, congrats! That seems to be the hardest part.
+The above starts a unix socket for servers (Nginx in our case) to use in passing HTTP requests from the outside world to the Open Context Django application. Note that the socket operates on port 8080 in this case. Choose something that won't interfere with port 80 for outside Web requests. If all goes well, you will not see an error in the log (see the path in the "daemonize" parameter above). Use the log to help debug further, since problems with the Django app sometimes appear there. If you get uWSGI to work without error, congrats! That seems to be the hardest part.
 
 
 (2.5) Activating Nginx with a Sample Configuration File:
@@ -273,7 +273,7 @@ server {
 }
 ```
 
-You can save that file as something like "oc-nginx.conf" and leave it conveniently located in the "/path/your-virtual-env/web" directory with the other Web related configurations. Next you need to make a symbolic link so Nginx can find it and use it:
+You can save that file as something like "oc_nginx.conf" and leave it conveniently located in the "/path/your-virtual-env/web" directory with the other Web related configurations. Next you need to make a symbolic link so Nginx can find it and use it:
 
     sudo ln -s /path/your-virtual-env/web/oc_nginx.conf /etc/nginx/sites-enabled/oc_nginx.conf
 
