@@ -150,7 +150,6 @@ class AssertionSorting():
         from the assertions table where the predicates have objects
         of types that get sorted by the manifest
         """
-
         act_preds = Assertion.objects\
                              .values_list('predicate_uuid', flat=True)\
                              .filter(project_uuid=project_uuid,

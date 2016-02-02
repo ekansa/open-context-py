@@ -12,7 +12,7 @@ class LinkEquivalence():
     Does lookups on LinkAnnotations to find eqivalences
     """
     def __init__(self):
-        pass
+        self.predicates = {}
 
     def get_from_object(self, object_uri):
         """
@@ -61,14 +61,24 @@ class LinkEquivalence():
         output = False
         if len(dtypes) > 0:
             output = []
+            predicate_uuids = []
+            for uuid in dtypes:
+                if uuid not in self.predicates:
+                    # only query for un-retrieved predicates
+                    predicate_uuids.append(uuid)
+            # get unretrieved predicates from the database
+            pred_list = Predicate.objects\
+                                 .filter(uuid__in=predicate_uuids)
+            for pred_obj in pred_list:
+                uuid = pred_obj.uuid
+                self.predicates[uuid] = pred_obj
             for uuid in dtypes:
                 pred_obj = False
-                try:
-                    pred_obj = Predicate.objects.get(uuid=uuid)
-                except Predicate.DoesNotExist:
-                    pred_obj = False
-                if pred_obj.data_type not in output:
-                    output.append(pred_obj.data_type)
+                if uuid in self.predicates:
+                    pred_obj = self.predicates[uuid]
+                if pred_obj is not False:
+                    if pred_obj.data_type not in output:
+                        output.append(pred_obj.data_type)
         return output
 
     def get_identifier_list_variants(self, id_list):

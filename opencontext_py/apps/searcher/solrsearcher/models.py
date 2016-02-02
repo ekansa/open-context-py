@@ -3,6 +3,7 @@ import json
 from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions
@@ -45,6 +46,7 @@ class SolrSearch():
         self.solr_connect()
         self.solr_response = False
         self.json_ld = False
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.entities = {}  # entities involved in a search request
         self.facet_fields = self.DEFAULT_FACET_FIELDS
         self.rows = 20
@@ -98,6 +100,7 @@ class SolrSearch():
     def compose_query(self, request_dict):
         """ composes the search query based on the request_dict """
         qm = QueryMaker()
+        qm.mem_cache_obj = self.mem_cache_obj
         child_context_join = False # do a JOIN to include children in results
         query = {}
         query['facet'] = 'true'
@@ -390,7 +393,7 @@ class SolrSearch():
             statsq.stats_fields = self.prequery_stats
             query = statsq.add_stats_ranges_from_solr(query)
         # Now set aside entities used as search filters
-        self.gather_entities(qm.entities)
+        self.mem_cache_obj = qm.mem_cache_obj
         if child_context_join:
             all_fq = False
             for fq in query['fq']:

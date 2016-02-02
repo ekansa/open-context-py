@@ -3,6 +3,7 @@ import datetime
 import itertools
 import django.utils.http as http
 from django.http import Http404
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -33,11 +34,9 @@ class QueryMaker():
                  'predicates': 'oc-gen:predicates'}
 
     def __init__(self):
-        self.mem_obj = False  # memory object
         self.error = False
-        self.entities = {}  # keep looked up entities to save future database lookups
-        self.entity_dtypes = {}  # keep to avoid database lookups
         self.histogram_groups = 10
+        self.mem_cache_obj = MemoryCache()  # memory caching object
 
     def _get_context_paths(self, spatial_context):
         '''
@@ -78,13 +77,14 @@ class QueryMaker():
         valid_context_slugs = []
         context_list = list(contexts)
         for context in context_list:
-            # Remove the '+' characters to match values in the database
-            context = http.urlunquote_plus(context)
             # Verify that the contexts are valid
-            found = entity.context_dereference(context)
+            # find and save the enity to memory
+            found = self.mem_cache_obj.check_entity_found(context,
+                                                          True)
             if found:
+                entity = self.mem_cache_obj.get_entity(context,
+                                                       True)
                 valid_context_slugs.append(entity.slug)
-                self.entities[context] = entity  # store entitty for later use
         return valid_context_slugs
 
     def _get_parent_slug(self, slug):
@@ -162,13 +162,12 @@ class QueryMaker():
             fq_field = SolrDocument.ROOT_PROJECT_SOLR
             fq_path_terms = []
             for proj_slug in proj_path_list:
-                entity = Entity()
-                found = entity.dereference(proj_slug)
+                found = self.mem_cache_obj.check_entity_found(proj_slug)
                 if found:
+                    entity = self.mem_cache_obj.get_entity(proj_slug)
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
-                    self.entities[proj_slug] = entity
                     proj_slug = entity.slug
                     fq_path_term = fq_field + ':' + proj_slug + '*'
                 else:
@@ -199,13 +198,10 @@ class QueryMaker():
                 or_objects = [raw_obj]
             fq_or_terms = []
             for obj in or_objects:
-                entity = Entity()
-                found = entity.dereference(obj)
-                if found is False:
-                    # ok, now check it this is a slug
-                    found = entity.dereference(obj, obj)
+                # find and save the entity to memory
+                found = self.mem_cache_obj.check_entity_found(obj)
                 if found:
-                    self.entities[obj] = entity  # store entitty for later use
+                    entity = self.mem_cache_obj.get_entity(obj)
                     fq_term = 'object_uri:' + self.escape_solr_arg(entity.uri)
                     fq_term += ' OR text:"' + self.escape_solr_arg(entity.uri) + '"'
                 else:
@@ -238,13 +234,13 @@ class QueryMaker():
                 for dc_term in use_dc_terms:
                     if len(dc_term) > 0:
                         add_to_fq = True
-                        entity = Entity()
-                        found = entity.dereference(dc_term)
+                        # check if entity exists, and or store in memory
+                        found = self.mem_cache_obj.check_entity_found(dc_term)
                         if found:
                             # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                             # the below is a bit of a hack. We should have a query field
                             # as with ___pred_ to query just the slug. But this works for now
-                            self.entities[entity.slug] = entity
+                            entity = self.mem_cache_obj.get_entity(dc_term)
                             fq_path_term = fq_field + '_fq:' + entity.slug
                             if dc_param == 'dc-temporal' \
                                and entity.entity_type == 'vocabulary' \
@@ -296,13 +292,10 @@ class QueryMaker():
                 pred_prop_entity = False
                 require_id_field = False
                 if act_field_data_type == 'id':
-                    entity = self.get_entity(prop_slug)
-                    if entity is False:
-                        found = False
-                    else:
-                        found = True
+                    # check entity exists, and save to memory
+                    found = self.mem_cache_obj.check_entity_found(prop_slug)
                     if found:
-                        self.entities[prop_slug] = entity  # store entitty for later use
+                        entity = self.mem_cache_obj.get_entity(prop_slug)
                         last_field_label = entity.label
                         prop_slug = entity.slug
                         if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
@@ -310,9 +303,8 @@ class QueryMaker():
                                 pred_prop_entity = True
                                 predicate_solr_slug = prop_slug.replace('-', '_')
                                 l_prop_entity = True
-                                lr = LinkRecursion()
-                                lr.get_entity_children(entity.uri)
-                                if len(lr.child_entities) > 1:
+                                children = self.mem_cache_obj.get_entity_children(entity.uri)
+                                if len(children) > 1:
                                     # ok, this field has children. require it
                                     # to be treated as an ID field
                                     require_id_field = True
@@ -338,8 +330,7 @@ class QueryMaker():
                                 act_field_fq = SolrDocument.ROOT_LINK_DATA_SOLR
                             elif entity.item_type == 'predicates':
                                 temp_field_fq = self.get_parent_item_type_facet_field(entity.uri)
-                                lr = LinkRecursion()
-                                parents = lr.get_jsonldish_entity_parents(entity.uri)
+                                parents = self.mem_cache_obj.get_jsonldish_entity_parents(entity.uri)
                                 if len(parents) > 1:
                                     p_slug = parents[-2]['slug']
                                     temp_field_fq = p_slug.replace('-', '_') + '___pred_id'
@@ -377,19 +368,12 @@ class QueryMaker():
                         # a different data-type (for linked-data)
                         if i >= (path_list_len - 2) \
                            and l_prop_entity:
-                            if entity.uri in self.entity_dtypes:
-                                # alreay found the data types
-                                dtypes = self.entity_dtypes[entity.uri]
-                            else:
-                                # lookup and save the data types
-                                lequiv = LinkEquivalence()
-                                dtypes = lequiv.get_data_types_from_object(entity.uri)
-                                self.entity_dtypes[entity.uri] = dtypes
+                            dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
                             if isinstance(dtypes, list):
                                 # set te data type and the act-field
-                                if prop_slug in self.entities:
-                                    # pass
-                                    self.entities[prop_slug].data_type = dtypes[0]  # store entitty for later use
+                                found = self.mem_cache_obj.check_entity_found(prop_slug)
+                                if found:
+                                    self.mem_cache_obj.entities[prop_slug].data_type = dtypes[0]  # store for later use
                                 act_field_data_type = self.get_solr_field_type(dtypes[0])
                         if predicate_solr_slug is False or pred_prop_entity:
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']
@@ -924,21 +908,3 @@ class QueryMaker():
             escaping special characters like : , etc"""
         term = term.replace('\\', r'\\')   # escape \ first
         return "".join([next_str for next_str in self.escaped_seq(term)])
-
-    def get_entity(self, identifier):
-        """ looks up an entity """
-        output = False
-        if identifier in self.entities:
-            # best case scenario, the entity is already looked up
-            output = self.entities[identifier]
-        else:
-            found = False
-            entity = Entity()
-            found = entity.dereference(identifier)
-            if found is False:
-                # case of linked data slugs
-                found = entity.dereference(identifier, identifier)
-            if found:
-                self.entities[identifier] = entity
-                output = entity
-        return output

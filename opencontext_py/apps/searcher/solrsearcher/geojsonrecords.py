@@ -2,13 +2,19 @@ import json
 import geojson
 import django.utils.http as http
 from django.conf import settings
+from django.db import connection
+from django.db import models
+from django.db.models import Q
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
 from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 
 
 class GeoJsonRecords():
@@ -24,7 +30,7 @@ class GeoJsonRecords():
     def __init__(self, response_dict_json):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.entities = {}
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.response_dict_json = response_dict_json
         self.response_dict = json.loads(response_dict_json)
         self.highlighting = False
@@ -71,19 +77,20 @@ class GeoJsonRecords():
         """
         # check database for complex geo objects for all of these records
         db_geo = self.get_recs_complex_geo_features(solr_recs)
+        thumbnail_data = self.get_media_thumbs(solr_recs)
         i = self.rec_start
         for solr_rec in solr_recs:
             i += 1
             record = LastUpdatedOrderedDict()
             rec_props_obj = RecordProperties(self.response_dict_json)
-            rec_props_obj.entities = self.entities
+            rec_props_obj.mem_cache_obj = self.mem_cache_obj
             rec_props_obj.min_date = self.min_date
             rec_props_obj.max_date = self.max_date
             rec_props_obj.highlighting = self.highlighting
             rec_props_obj.flatten_rec_attributes = self.flatten_rec_attributes
             rec_props_obj.rec_attributes = self.rec_attributes
+            rec_props_obj.thumbnail_data = thumbnail_data
             rec_props_obj.parse_solr_record(solr_rec)
-            self.entities = rec_props_obj.entities  # add to existing list of entities, reduce lookups
             record['id'] = '#record-' + str(i) + '-of-' + str(self.total_found)
             if rec_props_obj.label is False:
                 record['label'] = 'Record ' + str(i) + ' of ' + str(self.total_found)
@@ -193,3 +200,70 @@ class GeoJsonRecords():
         # print('Number complex: ' + str(len(db_geo)))
         return db_geo
 
+    def get_media_thumbs(self, solr_recs):
+        """ gets media thumbnail items """
+        thumb_results = {}
+        not_media_uuids = []
+        media_uuids = []
+        rec_props_obj = RecordProperties(self.response_dict_json)
+        for solr_rec in solr_recs:
+            item = rec_props_obj.get_solr_record_uuid_type(solr_rec)
+            if item is not False:
+                uuid = item['uuid']
+                if item['item_type'] != 'media':
+                    not_media_uuids.append(uuid)
+                else:
+                    media_uuids.append(uuid)
+                thumb_results[uuid] = False
+        if len(not_media_uuids) > 0:
+            rows = self.get_thumbs_for_non_media(not_media_uuids)
+            for row in rows:
+                uuid = row['uuid']
+                thumb_obj = {}
+                thumb_obj['href'] = self.base_url + '/media/' + row['media_uuid']
+                thumb_obj['uri'] = settings.CANONICAL_HOST + '/media/' + row['media_uuid']
+                thumb_obj['scr'] = row['file_uri']
+                if thumb_results[uuid] is False:
+                    thumb_results[uuid] = thumb_obj
+        if len(media_uuids) > 0:
+            thumbs = Mediafile.objects\
+                              .filter(uuid__in=media_uuids,
+                                      file_type='oc-gen:thumbnail')
+            for thumb in thumbs:
+                uuid = thumb.uuid
+                thumb_obj = {}
+                thumb_obj['href'] = self.base_url + '/media/' + thumb.uuid
+                thumb_obj['uri'] = settings.CANONICAL_HOST + '/media/' + thumb.uuid
+                thumb_obj['scr'] = thumb.file_uri
+                thumb_results[uuid] = thumb_obj
+        return thumb_results
+
+    def get_thumbs_for_non_media(self, uuid_list):
+        q_uuids = self.make_quey_uuids(uuid_list)
+        query = ('SELECT ass.uuid AS uuid, m.file_uri AS file_uri, '
+                 'm.uuid AS media_uuid '
+                 'FROM oc_assertions AS ass '
+                 'JOIN oc_mediafiles AS m ON ass.object_uuid = m.uuid '
+                 'AND m.file_type=\'oc-gen:thumbnail\'  '
+                 'WHERE ass.uuid IN (' + q_uuids + ') '
+                 'GROUP BY ass.uuid,  m.file_uri, m.uuid; ')
+        cursor = connection.cursor()
+        cursor.execute(query)
+        rows = self.dictfetchall(cursor)
+        return rows
+
+    def make_quey_uuids(self, uuid_list):
+        """ makes a string for uuid list query """
+        uuid_q = []
+        for uuid in uuid_list:
+            uuid = '\'' + uuid + '\''
+            uuid_q.append(uuid)
+        return ', '.join(uuid_q)
+
+    def dictfetchall(self, cursor):
+        """ Return all rows from a cursor as a dict """
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]

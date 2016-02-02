@@ -4,6 +4,7 @@ from django.conf import settings
 import django.utils.http as http
 from django.utils.html import strip_tags
 from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -57,7 +58,7 @@ class RecordProperties():
         self.base_url = settings.CANONICAL_HOST
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.entities = {}
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.request_dict_json = request_dict_json
         if request_dict_json is not False:
             self.request_dict = json.loads(request_dict_json)
@@ -67,6 +68,7 @@ class RecordProperties():
         self.recursive_count = 0
         self.min_date = False
         self.max_date = False
+        self.thumbnail_data = {}
 
     def parse_solr_record(self, solr_rec):
         """ Parses a solr rec object """
@@ -219,6 +221,19 @@ class RecordProperties():
         return [min_date, max_date]
 
     def get_thumbnail(self, solr_rec):
+        """ get media record and thumbnai if it exists """
+        if 'uuid' in solr_rec:
+            uuid = solr_rec['uuid']
+            if uuid in self.thumbnail_data:
+                if self.thumbnail_data[uuid] is not False:
+                    self.thumbnail_href = self.thumbnail_data[uuid]['href']
+                    self.thumbnail_uri = self.thumbnail_data[uuid]['uri']
+                    self.thumbnail_scr = self.thumbnail_data[uuid]['scr']
+            else:
+                # did not precache thumbnail data, get an indivitual record
+                self.get_thumbnail_from_database(solr_rec)
+
+    def get_thumbnail_from_database(self, solr_rec):
         """ get media record and thumbnail, if it exists """
         if 'uuid' in solr_rec:
             uuid = solr_rec['uuid']
@@ -270,19 +285,16 @@ class RecordProperties():
         qm = QueryMaker()
         solr_field_entities = {}
         for attribute in self.rec_attributes:
-            entity = self.get_entity(attribute)
+            entity = self.mem_cache_obj.get_entity(attribute)
             if entity is not False:
                 prop_slug = entity.slug
                 # check to make sure we have the entity data type for linked fields
                 if entity.data_type is False and entity.item_type == 'uri':
-                    lequiv = LinkEquivalence()
-                    dtypes = lequiv.get_data_types_from_object(entity.uri)
+                    dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
                     if isinstance(dtypes, list):
                         # set te data type and the act-field
                         # print('Found for ' + prop_slug + ' ' + dtypes[0])
                         entity.data_type = dtypes[0]
-                        if prop_slug in self.entities:
-                            self.entities[prop_slug] = entity  # store entitty for later use
                 field_parts = qm.make_prop_solr_field_parts(entity)
                 solr_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
                 # extract children of the solr_field so we know if
@@ -293,7 +305,7 @@ class RecordProperties():
         if isinstance(self.attribute_hierarchies, dict):
             self.other_attributes = []
             for field_slug_key, values in self.attribute_hierarchies.items():
-                entity = self.get_entity(field_slug_key)
+                entity = self.mem_cache_obj.get_entity(field_slug_key)
                 if entity is not False:
                     attribute_dict = LastUpdatedOrderedDict()
                     attribute_dict['property'] = entity.label
@@ -560,6 +572,24 @@ class RecordProperties():
             output = solr_value
         return output
 
+    def get_solr_record_uuid_type(self, solr_rec):
+        """ get item uuid, label, and type from a solr_rec """
+        output = False
+        if isinstance(solr_rec, dict):
+            output = {'uuid': False,
+                      'label': False,
+                      'item_type': False}
+            if 'uuid' in solr_rec:
+                output['uuid'] = solr_rec['uuid']
+            if 'slug_type_uri_label' in solr_rec:
+                id_parts = self.parse_solr_value_parts(solr_rec['slug_type_uri_label'])
+                if id_parts is not False:
+                    uri = self.make_url_from_val_string(id_parts['uri'], True)
+                    item_type_output = URImanagement.get_uuid_from_oc_uri(uri, True)
+                    output['item_type'] = item_type_output['item_type']
+                    output['label'] = id_parts['label']
+        return output
+
     def get_key_val(self, key, dict_obj):
         """ returns the value associated
             with a key, if the key exists
@@ -569,27 +599,5 @@ class RecordProperties():
         if isinstance(dict_obj, dict):
             if key in dict_obj:
                 output = dict_obj[key]
-        return output
-
-    def get_entity(self, identifier, is_path=False):
-        """ looks up an entity """
-        output = False
-        identifier = http.urlunquote_plus(identifier)
-        if identifier in self.entities:
-            # best case scenario, the entity is already looked up
-            output = self.entities[identifier]
-        else:
-            found = False
-            entity = Entity()
-            if is_path:
-                found = entity.context_dereference(identifier)
-            else:
-                found = entity.dereference(identifier)
-                if found is False:
-                    # case of linked data slugs
-                    found = entity.dereference(identifier, identifier)
-            if found:
-                self.entities[identifier] = entity
-                output = entity
         return output
 

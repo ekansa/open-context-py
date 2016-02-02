@@ -23,6 +23,8 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
         self.parent_entities = []
         self.child_entities = LastUpdatedOrderedDict()
         self.loop_count = 0
+        self.mem_cache_parents = {}
+        self.mem_cache_entities = {}
 
     def get_jsonldish_entity_parents(self, identifier, add_original=True):
         """
@@ -34,29 +36,35 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
         that's the childmost item, at the bottom of the hierarchy
         """
         output = False
-        raw_parents = self.get_entity_parents(identifier)
-        if(add_original):
-            # add the original identifer to the list of parents, at lowest rank
-            raw_parents.insert(0, identifier)
-        if(len(raw_parents) > 0):
-            output = []
-            # reverse the order of the list, to make top most concept
-            # first
-            parents = raw_parents[::-1]
-            for par_id in parents:
-                ent = Entity()
-                found = ent.dereference(par_id)
-                if(found):
-                    p_item = LastUpdatedOrderedDict()
-                    p_item['id'] = ent.uri
-                    p_item['slug'] = ent.slug
-                    p_item['label'] = ent.label
-                    if(ent.data_type is not False):
-                        p_item['type'] = ent.data_type
+        if identifier in self.mem_cache_parents and add_original:
+            output = self.mem_cache_parents[identifier]
+        else:
+            raw_parents = self.get_entity_parents(identifier)
+            if add_original:
+                # add the original identifer to the list of parents, at lowest rank
+                raw_parents.insert(0, identifier)
+            if len(raw_parents) > 0:
+                output = []
+                # reverse the order of the list, to make top most concept
+                # first
+                parents = raw_parents[::-1]
+                for par_id in parents:
+                    if par_id in self.mem_cache_parents:
+                        output = self.mem_cache_parents[par_id]
                     else:
-                        p_item['type'] = '@id'
-                    p_item['ld_object_ok'] = ent.ld_object_ok
-                    output.append(p_item)
+                        ent = self.get_entity(par_id)
+                        if ent is not False:
+                            p_item = LastUpdatedOrderedDict()
+                            p_item['id'] = ent.uri
+                            p_item['slug'] = ent.slug
+                            p_item['label'] = ent.label
+                            if(ent.data_type is not False):
+                                p_item['type'] = ent.data_type
+                            else:
+                                p_item['type'] = '@id'
+                            p_item['ld_object_ok'] = ent.ld_object_ok
+                            output.append(p_item)
+                            self.mem_cache_parents[par_id] = output
         return output
 
     def get_entity_parents(self, identifier):
@@ -189,3 +197,16 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
                         id_list.append(type_pars[0]['id'])
                         types.append(type_pars[0])
         return types
+
+    def get_entity(self, identifier):
+        """ gets entities, but checkes first if they are in memory """
+        output = False
+        if identifier in self.mem_cache_entities:
+            output = self.mem_cache_entities[identifier]
+        else:
+            ent = Entity()
+            found = ent.dereference(identifier)
+            if found:
+                output = ent
+                self.mem_cache_entities[identifier] = ent
+        return output
