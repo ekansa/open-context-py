@@ -2,6 +2,7 @@ import json
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from django.conf import settings
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.entity.models import Entity
@@ -30,6 +31,7 @@ class FilterLinks():
         self.hierarchy_delim = '---'
         self.partial_param_val_match = False
         self.remove_start_param = True
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.SOLR_FIELD_PARAM_MAPPINGS = self.BASE_SOLR_FIELD_PARAM_MAPPINGS
         for param_key, solr_field in DCterms.DC_META_FIELDS.items():
             self.SOLR_FIELD_PARAM_MAPPINGS[solr_field] = param_key

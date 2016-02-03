@@ -33,11 +33,7 @@ class EntityTemplate():
         if found:
             self.children = []
             lr = LinkRecursion()
-            lr.get_entity_children(identifier)
-            item_children = self.add_child_entity(identifier,
-                                                  lr.child_entities)
-            if item_children is not False:
-                self.children.append(item_children)
+            self.children = lr.get_entity_children(identifier)
         return self.children
 
     def add_child_entity(self, child_id, children_dict):
@@ -213,7 +209,7 @@ class EntityTemplate():
             tree = self.make_containment_item(entity_obj)
             tree['children'] = []
             child_list = lr.get_entity_children(entity_obj.uuid, False)
-            if isinstance(child_list, list):
+            if len(child_list) > 0:
                 for child_uuid in child_list:
                     child_ent = Entity()
                     found = child_ent.dereference(child_uuid)
@@ -256,11 +252,11 @@ class EntityTemplate():
         elif entity_obj.item_type == 'types':
             tree = self.make_containment_item(entity_obj)
             tree['children'] = []
-            lr.get_entity_children(entity_obj.uuid, False)
-            for id_key, item in lr.child_entities.items():
-                if id_key != entity_obj.uuid:
+            act_children = lr.get_entity_children(entity_obj.uuid, False)
+            for child_uuid in act_children:
+                if child_uuid != entity_obj.uuid:
                     child_ent = Entity()
-                    found = child_ent.dereference(id_key)
+                    found = child_ent.dereference(child_uuid)
                     if found:
                         if depth > 1:
                             child = self.get_description_tree(child_ent,

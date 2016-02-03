@@ -6,6 +6,7 @@ from django.conf import settings
 from geojson import Feature, Point, Polygon, GeometryCollection, FeatureCollection
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -25,13 +26,14 @@ class ActiveFilters():
                      'start']
 
     def __init__(self):
-        self.entities = {}  # entities already dereferenced
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.base_search_link = '/search/'
         self.hierarchy_delim = '---'
 
     def add_filters_json(self, request_dict):
         """ adds JSON describing search filters """
         fl = FilterLinks()
+        fl.mem_cache_obj = self.mem_cache_obj
         fl.base_search_link = self.base_search_link
         filters = []
         string_fields = []  # so we have an interface for string searches
@@ -40,7 +42,7 @@ class ActiveFilters():
             if param_key == 'path':
                 if param_vals is not False and param_vals is not None:
                     i += 1
-                    f_entity = self.get_entity(param_vals, True)
+                    f_entity = self.mem_cache_obj.get_entity(param_vals, True)
                     label = http.urlunquote_plus(param_vals)
                     act_filter = LastUpdatedOrderedDict()
                     act_filter['id'] = '#filter-' + str(i)
@@ -260,7 +262,7 @@ class ActiveFilters():
         else:
             vals = [act_val]
         for val in vals:
-            f_entity = self.get_entity(val)
+            f_entity = self.mem_cache_obj.get_entity(val)
             if f_entity is not False:
                 qm = QueryMaker()
                 # get the solr field data type
@@ -274,25 +276,4 @@ class ActiveFilters():
                 labels.append(val)
         output['label'] = ' OR '.join(labels)
         output['slug'] = '-or-'.join(vals)
-        return output
-
-    def get_entity(self, identifier, is_path=False):
-        """ looks up an entity """
-        output = False
-        identifier = http.urlunquote_plus(identifier)
-        if identifier in self.entities:
-            # best case scenario, the entity is already looked up
-            output = self.entities[identifier]
-        else:
-            found = False
-            entity = Entity()
-            if is_path:
-                found = entity.context_dereference(identifier)
-            else:
-                found = entity.dereference(identifier)
-                if found is False:
-                    # case of linked data slugs
-                    found = entity.dereference(identifier, identifier)
-            if found:
-                output = entity
         return output

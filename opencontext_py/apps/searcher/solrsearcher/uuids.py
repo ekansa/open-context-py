@@ -1,6 +1,7 @@
 import json
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
 
 
@@ -14,7 +15,7 @@ class SolrUUIDs():
     def __init__(self, response_dict_json=False):
         self.uuids = []
         self.uris = []
-        self.entities = {}
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.response_dict_json = response_dict_json
         self.highlighting = False
         # make values to these fields "flat" not a list
@@ -47,7 +48,7 @@ class SolrUUIDs():
         if isinstance(solr_recs, list):
             for solr_rec in solr_recs:
                 rec_props_obj = RecordProperties(self.response_dict_json)
-                rec_props_obj.entities = self.entities
+                rec_props_obj.mem_cache_obj = self.mem_cache_obj
                 rec_props_obj.min_date = self.min_date
                 rec_props_obj.max_date = self.max_date
                 rec_props_obj.highlighting = self.highlighting

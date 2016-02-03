@@ -3,6 +3,7 @@ import json
 import django.utils.http as http
 from datetime import datetime
 from django.conf import settings
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.entities.entity.models import Entity
@@ -24,6 +25,7 @@ from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 class MakeJsonLd():
 
     def __init__(self, request_dict_json):
+        self.mem_cache_obj = MemoryCache()  # memory caching object
         self.base_search_link = '/search/'
         self.hierarchy_delim = '---'
         self.request_dict = json.loads(request_dict_json)
@@ -37,7 +39,6 @@ class MakeJsonLd():
         # ---------------
         self.act_responses = SolrResponseTypes(self.request_dict).responses
         self.id = False
-        self.entities = {}
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
         self.rel_media_facet = False
@@ -94,12 +95,13 @@ class MakeJsonLd():
                 # get more complex geospatial data, if we're not asking
                 # for too many types of resonses
                 geojson_recs_obj.do_complex_geo = True
-            geojson_recs_obj.entities = self.entities
+            geojson_recs_obj.mem_cache_obj = self.mem_cache_obj
             geojson_recs_obj.min_date = self.min_date
             geojson_recs_obj.max_date = self.max_date
             geojson_recs_obj.flatten_rec_attributes = self.flatten_rec_attributes
             geojson_recs_obj.rec_attributes = self.rec_attributes
             geojson_recs_obj.make_records_from_solr(solr_json)
+            self.mem_cache_obj = geojson_recs_obj.mem_cache_obj
             if len(geojson_recs_obj.geojson_recs) > 0 \
                and 'geo-record' in self.act_responses:
                 self.json_ld['type'] = 'FeatureCollection'
@@ -131,13 +133,14 @@ class MakeJsonLd():
                 ok_show_debug = False
         elif 'uri-meta' in self.act_responses:
             solr_uuids = SolrUUIDs(self.request_dict_json)
+            solr_uuids.mem_cache_obj = self.mem_cache_obj
             solr_uuids.min_date = self.min_date
             solr_uuids.max_date = self.max_date
-            solr_uuids.entities = self.entities
             solr_uuids.flatten_rec_attributes = self.flatten_rec_attributes
             solr_uuids.rec_attributes = self.rec_attributes
             uris = solr_uuids.make_uris_from_solr(solr_json,
                                                   False)
+            self.mem_cache_obj = solr_uuids.mem_cache_obj
             if len(self.act_responses) > 1:
                 # return a list inside a key
                 self.json_ld['oc-api:has-results'] = uris
@@ -227,6 +230,7 @@ class MakeJsonLd():
         start = str(start)
         rows = str(rows)
         fl = FilterLinks()
+        fl.mem_cache_obj = self.mem_cache_obj
         fl.base_search_link = self.base_search_link
         fl.base_request_json = ini_request_dict_json
         fl.spatial_context = self.spatial_context
@@ -239,7 +243,9 @@ class MakeJsonLd():
         fl.base_request_json = start_rparams_json
         new_rparams = fl.add_to_request('rows',
                                         rows)
-        return fl.make_request_urls(new_rparams)
+        urls = fl.make_request_urls(new_rparams)
+        self.mem_cache_obj = fl.mem_cache_obj
+        return urls
 
     def add_sorting_json(self):
         """ adds JSON to describe result sorting """
@@ -254,10 +260,11 @@ class MakeJsonLd():
     def add_filters_json(self):
         """ adds JSON describing search filters """
         a_filters = ActiveFilters()
+        a_filters.mem_cache_obj = self.mem_cache_obj
         a_filters.base_search_link = self.base_search_link
-        a_filters.entities = self.entities
         a_filters.hierarchy_delim = self.hierarchy_delim
         filters = a_filters.add_filters_json(self.request_dict)
+        self.mem_cache_obj = a_filters.mem_cache_obj
         if len(filters) > 0:
             self.json_ld['oc-api:active-filters'] = filters
 
@@ -267,27 +274,6 @@ class MakeJsonLd():
             searchs)
         """
         return ActiveFilters().make_filter_label_dict(act_val)
-
-    def get_entity(self, identifier, is_path=False):
-        """ looks up an entity """
-        output = False
-        identifier = http.urlunquote_plus(identifier)
-        if identifier in self.entities:
-            # best case scenario, the entity is already looked up
-            output = self.entities[identifier]
-        else:
-            found = False
-            entity = Entity()
-            if is_path:
-                found = entity.context_dereference(identifier)
-            else:
-                found = entity.dereference(identifier)
-                if found is False:
-                    # case of linked data slugs
-                    found = entity.dereference(identifier, identifier)
-            if found:
-                output = entity
-        return output
 
     def make_id(self):
         """ makes the ID for the document """
@@ -330,6 +316,7 @@ class MakeJsonLd():
         text_fields = []
         # first add a general key-word search option
         fl = FilterLinks()
+        fl.mem_cache_obj = self.mem_cache_obj
         fl.base_search_link = self.base_search_link
         fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
@@ -360,6 +347,8 @@ class MakeJsonLd():
             field['oc-api:template'] = fl.make_request_url(rem_request)
             field['oc-api:template-json'] = fl.make_request_url(rem_request, '.json')
         text_fields.append(field)
+        # save entities in memory
+        self.mem_cache_obj = fl.mem_cache_obj
         # now add an option looking in properties
         if 'prop' in self.request_dict:
             param_vals = self.request_dict['prop']
@@ -377,6 +366,7 @@ class MakeJsonLd():
                 check_dict = self.make_filter_label_dict(check_field)
                 if check_dict['data-type'] == 'string':
                     fl = FilterLinks()
+                    fl.mem_cache_obj = self.mem_cache_obj
                     fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
@@ -402,6 +392,8 @@ class MakeJsonLd():
                         field['oc-api:template'] = fl.make_request_url(rem_request)
                         field['oc-api:template-json'] = fl.make_request_url(rem_request, '.json')
                     text_fields.append(field)
+                    # save entities in memory
+                    self.mem_cache_obj = fl.mem_cache_obj
         if len(text_fields) > 0:
             self.json_ld['oc-api:has-text-search'] = text_fields
 
@@ -434,8 +426,9 @@ class MakeJsonLd():
                 # check to see if the field is a linkded data field
                 # if so, it needs some help with making Filter Links
                 linked_field = False
-                field_entity = self.get_entity(slug)
-                if field_entity is not False:
+                found = self.mem_cache_obj.check_entity_found(slug)
+                if found:
+                    field_entity = self.mem_cache_obj.get_entity(slug)
                     self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
@@ -450,6 +443,7 @@ class MakeJsonLd():
                     i += 2
                     solr_count = ranges['counts'][i]
                     fl = FilterLinks()
+                    fl.mem_cache_obj = self.mem_cache_obj
                     fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
@@ -469,6 +463,8 @@ class MakeJsonLd():
                     range_dict['oc-api:min'] = range_start
                     range_dict['oc-api:max'] = range_end
                     field['oc-api:has-range-options'].append(range_dict)
+                    # save entities in memory
+                    self.mem_cache_obj = fl.mem_cache_obj
                 num_fields.append(field)
         if len(num_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-numeric-facets'] = num_fields
@@ -484,8 +480,9 @@ class MakeJsonLd():
                 # check to see if the field is a linkded data field
                 # if so, it needs some help with making Filter Links
                 linked_field = False
-                field_entity = self.get_entity(slug)
-                if field_entity is not False:
+                found = self.mem_cache_obj.check_entity_found(slug)
+                if found:
+                    field_entity = self.mem_cache_obj.get_entity(slug)
                     self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
@@ -500,6 +497,7 @@ class MakeJsonLd():
                     i += 2
                     solr_count = ranges['counts'][i]
                     fl = FilterLinks()
+                    fl.mem_cache_obj = self.mem_cache_obj
                     fl.base_search_link = self.base_search_link
                     fl.base_request_json = self.request_dict_json
                     fl.base_r_full_path = self.request_full_path
@@ -519,6 +517,8 @@ class MakeJsonLd():
                     range_dict['oc-api:min-date'] = range_min_key
                     range_dict['oc-api:max-date'] = range_end
                     field['oc-api:has-range-options'].append(range_dict)
+                    # save entities in memory
+                    self.mem_cache_obj = fl.mem_cache_obj
                 date_fields.append(field)
         if len(date_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-date-facets'] = date_fields
@@ -632,6 +632,7 @@ class MakeJsonLd():
         """ makes a facet option for related media """
         if rel_media_count > 0:
             fl = FilterLinks()
+            fl.mem_cache_obj = self.mem_cache_obj
             fl.base_search_link = self.base_search_link
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
@@ -649,6 +650,8 @@ class MakeJsonLd():
                 option['label'] = 'Linked with documents'
             option['count'] = rel_media_count
             rel_media_options.append(option)
+            # save entities in memory
+            self.mem_cache_obj = fl.mem_cache_obj
         return rel_media_options
 
     def get_rel_media_counts(self, solr_facet_fields, solr_media_field):
@@ -745,6 +748,7 @@ class MakeJsonLd():
             raw_plist = self.request_dict['prop']
             plist = raw_plist[::-1]  # reverse the list, so last props first
             qm = QueryMaker()
+            qm.mem_cache_obj = self.mem_cache_obj
             for param_val in plist:
                 param_paths = qm.expand_hierarchy_options(param_val)
                 for id_key, facet in pre_sort_facets.items():
@@ -756,6 +760,7 @@ class MakeJsonLd():
                             # so add to the ordered list of facets
                             json_ld_facets.append(facet)
                             used_keys.append(id_key)
+            self.mem_cache_obj = qm.mem_cache_obj
         # now add facet for context
         for id_key, facet in pre_sort_facets.items():
             if '#facet-context' in id_key \
@@ -863,8 +868,9 @@ class MakeJsonLd():
             facet_key_list = solr_facet_key.split('___')
             fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
-            entity = self.get_entity(slug)
-            if entity is not False:
+            found = self.mem_cache_obj.check_entity_found(slug)
+            if found:
+                entity = self.mem_cache_obj.get_entity(slug)
                 if facet_key_list[-1] != facet_key_list[1]:
                     # there's a predicate slug as the second
                     # item in te facet_key_list
@@ -898,6 +904,7 @@ class MakeJsonLd():
             else:
                 is_linked_data = False
             fl = FilterLinks()
+            fl.mem_cache_obj = self.mem_cache_obj
             fl.base_search_link = self.base_search_link
             fl.base_request_json = self.request_dict_json
             fl.base_r_full_path = self.request_full_path
@@ -917,6 +924,8 @@ class MakeJsonLd():
             output['count'] = solr_facet_count
             output['slug'] = slug
             output['data-type'] = data_type
+            # store the cached entities
+            self.mem_cache_obj = fl.mem_cache_obj
         else:
             # ----------------------------
             # Sepcilized cases of non-encoded facet values
@@ -932,6 +941,7 @@ class MakeJsonLd():
                                          solr_facet_count):
         """ makes a facet_value obj for specialzied solr faccets """
         fl = FilterLinks()
+        fl.mem_cache_obj = self.mem_cache_obj
         fl.base_search_link = self.base_search_link
         fl.base_request_json = self.request_dict_json
         fl.base_r_full_path = self.request_full_path
@@ -945,12 +955,15 @@ class MakeJsonLd():
         if solr_facet_key == 'item_type':
             if solr_facet_value_key in QueryMaker.TYPE_URIS:
                 output['rdfs:isDefinedBy'] = QueryMaker.TYPE_URIS[solr_facet_value_key]
-                entity = self.get_entity(output['rdfs:isDefinedBy'])
-                if entity is not False:
+                found = self.mem_cache_obj.check_entity_found(output['rdfs:isDefinedBy'])
+                if found:
+                    entity = self.mem_cache_obj.get_entity(output['rdfs:isDefinedBy'])
                     output['label'] = entity.label
         output['count'] = solr_facet_count
         output['slug'] = solr_facet_value_key
         output['data-type'] = 'id'
+        # store the cached entities
+        self.mem_cache_obj = fl.mem_cache_obj
         return output
 
     def add_active_facet_field(self, facet_slug, facet_type=False):
