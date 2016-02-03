@@ -60,7 +60,7 @@ class SolrUUIDs():
                         item = rec_props_obj.uri
                     else:
                         rec_props_obj.parse_solr_record(solr_rec)
-                        self.entities = rec_props_obj.entities  # add to existing list of entities, reduce lookups
+                        self.mem_cache_obj = rec_props_obj.mem_cache_obj  # add to existing list of entities, reduce lookups
                         item = self.make_item_dict_from_rec_props_obj(rec_props_obj)
                     self.uris.append(item)
         return self.uris
