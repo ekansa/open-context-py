@@ -304,7 +304,7 @@ class QueryMaker():
                                 predicate_solr_slug = prop_slug.replace('-', '_')
                                 l_prop_entity = True
                                 children = self.mem_cache_obj.get_entity_children(entity.uri)
-                                if len(children) > 1:
+                                if len(children) > 0:
                                     # ok, this field has children. require it
                                     # to be treated as an ID field
                                     require_id_field = True
@@ -312,9 +312,8 @@ class QueryMaker():
                             if entity.item_type == 'predicates':
                                 pred_prop_entity = True
                                 predicate_solr_slug = prop_slug.replace('-', '_')
-                                lr = LinkRecursion()
-                                lr.get_entity_children(entity.uri)
-                                if len(lr.child_entities) > 1:
+                                children = self.mem_cache_obj.get_entity_children(entity.uri)
+                                if len(children) > 0:
                                     # ok, this field has children. require it
                                     # to be treated as an ID field
                                     require_id_field = True

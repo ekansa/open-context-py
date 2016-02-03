@@ -291,9 +291,11 @@ def subjects_json_view(request, spatial_context=None):
             m_json_ld.request_full_path = request.get_full_path()
             m_json_ld.spatial_context = spatial_context
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
+            mem_cache_obj = m_json_ld.mem_cache_obj
             req_neg = RequestNegotiation('application/json')
             req_neg.supported_types = ['application/ld+json']
             recon_obj = Reconciliation()
+            recon_obj.mem_cache_obj = mem_cache_obj
             json_ld = recon_obj.process(request.GET,
                                         json_ld)
             if 'HTTP_ACCEPT' in request.META:

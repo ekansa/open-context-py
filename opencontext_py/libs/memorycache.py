@@ -86,9 +86,11 @@ class MemoryCache():
             children = self.entity_children[entity_uri]
         else:
             lr = LinkRecursion()
-            lr.get_entity_children(entity_uri)
-            self.entity_children[entity_uri] = lr.child_entities
-            children = lr.child_entities
+            lr.mem_cache_entities = self.entities
+            lr.child_entities = self.entity_children
+            children = lr.get_entity_children(entity_uri)
+            self.entities = lr.mem_cache_entities
+            self.entity_children = lr.child_entities
         return children
 
     def get_jsonldish_entity_parents(self, entity_uri):

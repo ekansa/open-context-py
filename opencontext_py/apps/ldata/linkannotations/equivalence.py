@@ -13,6 +13,7 @@ class LinkEquivalence():
     """
     def __init__(self):
         self.predicates = {}
+        self.mem_cache_entities = {}
 
     def get_from_object(self, object_uri):
         """
@@ -102,8 +103,14 @@ class LinkEquivalence():
                 output_list.append(full_uri)
             else:
                 # probably an open context uuid or a slug
-                ent = Entity()
-                found = ent.dereference(identifier)
+                if identifier in self.mem_cache_entities:
+                    ent = self.mem_cache_entities[identifier]
+                    found = True
+                else:
+                    ent = Entity()
+                    found = ent.dereference(identifier)
+                    if found:
+                        self.mem_cache_entities[identifier] = ent
                 if found:
                     full_uri = ent.uri
                     output_list.append(full_uri)

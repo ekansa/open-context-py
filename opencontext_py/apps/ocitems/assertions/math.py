@@ -54,8 +54,8 @@ class MathAssertions():
         for predicate_uuid in predicate_uuids:
             all_preds.append(predicate_uuid)
             lr = LinkRecursion()
-            lr.get_entity_children(predicate_uuid)
-            for child_uuid_key, val in lr.child_entities.items():
+            children = lr.get_entity_children(predicate_uuid)
+            for child_uuid_key in children:
                 if child_uuid_key not in all_preds:
                     all_preds.append(child_uuid_key)
         # now get the summary, but don't allow recursive looking at children

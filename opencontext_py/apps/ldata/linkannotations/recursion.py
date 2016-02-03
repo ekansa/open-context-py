@@ -25,6 +25,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
         self.loop_count = 0
         self.mem_cache_parents = {}
         self.mem_cache_entities = {}
+        self.mem_cache_children = {}
 
     def get_jsonldish_entity_parents(self, identifier, add_original=True):
         """
@@ -120,58 +121,67 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
                 self.parent_entities = self.get_entity_parents(parent_id)
         return self.parent_entities
 
-    def get_entity_children(self, identifier, recurive=True):
+    def get_entity_children(self, identifier, recursive=True):
         """
         Gets child concepts for a given URI or UUID identified entity
         """
-        act_children = []
-        p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
-        p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
-        lequiv = LinkEquivalence()
-        identifiers = lequiv.get_identifier_list_variants(identifier)
-        try:
-            # look for child items in the objects of the assertion
-            subobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
-                                                         predicate_uri__in=p_for_subobjs)
-            if(len(subobjs_anno) < 1):
-                subobjs_anno = False
-        except LinkAnnotation.DoesNotExist:
-            subobjs_anno = False
-        if subobjs_anno is not False:
-            for sub_obj in subobjs_anno:
-                child_id = sub_obj.object_uri
-                act_children.append(child_id)
-        try:
-            """
-            Now look for subordinate entities in the subject, not the object
-            """
-            subsubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
-                                                         predicate_uri__in=p_for_superobjs)
-            if len(subsubj_anno) < 1:
-                subsubj_anno = False
-        except LinkAnnotation.DoesNotExist:
-            subsubj_anno = False
-        if subsubj_anno is not False:
-            for sub_sub in subsubj_anno:
-                child_id = sub_sub.subject
-                act_children.append(child_id)
-        if len(act_children) > 0:
-            identifier_children = []
-            for child_id in act_children:
-                if child_id.count('/') > 1:
-                    oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
-                    if oc_uuid is not False:
-                        child_id = oc_uuid
-                identifier_children.append(child_id)
-                # recursively get the children of the child
-                self.get_entity_children(child_id, recurive)
-            # same the list of children of the current identified item
-            if identifier not in self.child_entities:
-                self.child_entities[identifier] = identifier_children
+        if identifier in self.child_entities and recursive:
+            output = self.child_entities[identifier]
         else:
-            # save a False for the current identified item. it has no children
-            if identifier not in self.child_entities:
-                self.child_entities[identifier] = False
+            act_children = []
+            p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
+            p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
+            lequiv = LinkEquivalence()
+            lequiv.mem_cache_entities = self.mem_cache_entities
+            identifiers = lequiv.get_identifier_list_variants(identifier)
+            # print(str(identifiers))
+            self.mem_cache_entities = lequiv.mem_cache_entities
+            try:
+                # look for child items in the objects of the assertion
+                subobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
+                                                             predicate_uri__in=p_for_subobjs)
+                if(len(subobjs_anno) < 1):
+                    subobjs_anno = False
+            except LinkAnnotation.DoesNotExist:
+                subobjs_anno = False
+            if subobjs_anno is not False:
+                for sub_obj in subobjs_anno:
+                    child_id = sub_obj.object_uri
+                    act_children.append(child_id)
+            try:
+                """
+                Now look for subordinate entities in the subject, not the object
+                """
+                subsubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
+                                                             predicate_uri__in=p_for_superobjs)
+                if len(subsubj_anno) < 1:
+                    subsubj_anno = False
+            except LinkAnnotation.DoesNotExist:
+                subsubj_anno = False
+            if subsubj_anno is not False:
+                for sub_sub in subsubj_anno:
+                    child_id = sub_sub.subject
+                    act_children.append(child_id)
+            if len(act_children) > 0:
+                identifier_children = []
+                for child_id in act_children:
+                    if child_id.count('/') > 1:
+                        oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
+                        if oc_uuid is not False:
+                            child_id = oc_uuid
+                    identifier_children.append(child_id)
+                    # recursively get the children of the child
+                    if recursive:
+                        self.get_entity_children(child_id, recursive)
+                # same the list of children of the current identified item
+                if identifier not in self.child_entities:
+                    self.child_entities[identifier] = identifier_children
+            else:
+                # save a False for the current identified item. it has no children
+                if identifier not in self.child_entities:
+                    self.child_entities[identifier] = []
+            output = self.child_entities[identifier]
+        return output
 
     def get_pred_top_rank_types(self, predicate_uuid):
         """ gets the top ranked (not a subordinate) of any other
@@ -183,6 +193,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
         except Predicate.DoesNotExist:
             pred_obj = False
         if pred_obj is not False:
+            print('found: ' + predicate_uuid)
             if pred_obj.data_type == 'id':
                 types = []
                 id_list = []
