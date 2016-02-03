@@ -59,7 +59,7 @@
         var hash = false;
         var base_id = false;
         var base_search_link = "{{ base_search_link }}";
-        var search_map = new search_map("{{ json_url }}", base_search_link);
+        var search_map = new search_map("{{ json_url|safe }}", base_search_link);
         var total_count = {{ st.total_count }};
         if (total_count > 0) {
             search_map.map.get_request_hash();
