@@ -257,7 +257,7 @@
         <script type="text/javascript">
         <!--
             var base_url = "{{ base_url }}";
-            var project_map = new project_map("home-map", "{{ json_url }}" + "/subjects-search/.json");
+            var project_map = new project_map("home-map", "{{ json_url|safe }}" + "/subjects-search/.json");
             project_map.map.color_list = ['#0088CC',
                                           '#6E5FCC',
                                           '#002A66'];
