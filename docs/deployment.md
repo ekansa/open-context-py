@@ -163,8 +163,13 @@ Open Context uses Django's caching system to also temporarily store some databas
      sudo aptitude install build-essential
      sudo make
 
-Once you have Redis installed, be sure to turn it on with:
-     /etc/redis/src/redis-server
+Once you have Redis installed, you can restart it (as a daeomonized process) as follows:
+
+     /etc/redis/src/redis-cli shutdown
+     /etc/redis/src/redis-server --daemonize yes
+     /etc/redis/src/redis-cli ping 'Redis ping response OK!'
+
+If all goes well, Redis will respond to the ping request.
 
 (1.22) Open Context via a Python Shell
 
