@@ -150,7 +150,28 @@ Open Context uses Django's caching system to temporarily store views of differen
      python manage.py createcachetable
 
 
-(1.21) Open Context via a Python Shell
+(1.21) Install Redis (In-memory Caching):
+
+Open Context uses Django's caching system to also temporarily store some database query results and other objects. Caching reduces the number of database transactions, especially for looking up metadata about certain entities in the search / browse features. Open Context is configured to use Redis (http://redis.io/) for in-memory caching. To install Redis, see: http://redis.io/download
+
+     wget http://download.redis.io/releases/redis-3.0.7.tar.gz
+     tar xzf redis-3.0.7.tar.gz
+     sudo mv redis-3.0.7 /etc/redis
+     cd /etc/redis
+     sudo apt-get install make
+     sudo apt-get install gcc
+     sudo aptitude install build-essential
+     sudo make
+
+Once you have Redis installed, you can restart it (as a daeomonized process) as follows:
+
+     /etc/redis/src/redis-cli shutdown
+     /etc/redis/src/redis-server --daemonize yes
+     /etc/redis/src/redis-cli ping 'Redis ping response OK!'
+
+If all goes well, Redis will respond to the ping request.
+
+(1.22) Open Context via a Python Shell
 
 You can check on things and interact with the Open Context Django application directly through the Python shell. To do so, (assuming you've already activated your virtual environment), navigate into the directory with 'manage.py' and type:
 

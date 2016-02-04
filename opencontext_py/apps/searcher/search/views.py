@@ -61,6 +61,7 @@ def lightbox_view(request, spatial_context=''):
 # @never_cache
 def html_view(request, spatial_context=None):
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -135,6 +136,7 @@ def html_view(request, spatial_context=None):
 def json_view(request, spatial_context=None):
     """ API for searching Open Context """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
@@ -191,6 +193,7 @@ def subjects_html_view(request, spatial_context=None):
     """ returns HTML representation of subjects search
     """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     csv_downloader = False  # provide CSV downloader interface
     if request.GET.get('csv') is not None:
         csv_downloader = True
@@ -269,6 +272,7 @@ def subjects_html_view(request, spatial_context=None):
 def subjects_json_view(request, spatial_context=None):
     """ API for searching Open Context, subjects only """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
@@ -330,6 +334,7 @@ def media_html_view(request, spatial_context=None):
     """ returns HTML representation of media search
     """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -404,6 +409,7 @@ def media_html_view(request, spatial_context=None):
 def media_json_view(request, spatial_context=None):
     """ API for searching Open Context, media only """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
@@ -461,6 +467,7 @@ def projects_html_view(request, spatial_context=None):
     """ returns HTML representation of projects search
     """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -539,6 +546,7 @@ def projects_html_view(request, spatial_context=None):
 def projects_json_view(request, spatial_context=None):
     """ API for searching Open Context, media only """
     mem_cache_obj = MemoryCache()
+    mem_cache_obj.ping_redis_server()
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)

@@ -1,4 +1,4 @@
-Django==1.8.3
+Django==1.8.4
 PyYAML==3.11
 Unidecode==0.04.16
 anyjson==0.3.3
@@ -24,3 +24,5 @@ jsonfield==1.0.3
 django-reversion==1.9.3
 pillow==2.9.0
 shapely==1.5.13
+redis==2.1.5
+django-redis-cache==1.6.5
