@@ -280,19 +280,3 @@ class MemoryCache():
         else:
             ok = False
         return ok
-
-    def get_cache_object_old(self, key):
-        """ gets a cached reddis object """
-        cache = caches['redis']
-        if r.exists(key):
-            ob = pickle.loads(r.get(key))
-        else:
-            unpacked_object = None
-        return unpacked_object
-
-    def save_cache_object_old(self, key, obj):
-        """ saves a cached reddis object """
-        r = self.memcache
-        pickled_object = pickle.dumps(obj)
-        ok = r.set(key, pickled_object)
-        return ok
