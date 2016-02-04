@@ -372,7 +372,9 @@ class QueryMaker():
                                 # set te data type and the act-field
                                 found = self.mem_cache_obj.check_entity_found(prop_slug)
                                 if found:
-                                    self.mem_cache_obj.entities[prop_slug].data_type = dtypes[0]  # store for later use
+                                    entity = self.mem_cache_obj.get_entity(prop_slug)
+                                    entity.date_type = dtypes[0]  # store for later use
+                                    self.mem_cache_obj.entities[prop_slug] = entity  # store for later use
                                 act_field_data_type = self.get_solr_field_type(dtypes[0])
                         if predicate_solr_slug is False or pred_prop_entity:
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']

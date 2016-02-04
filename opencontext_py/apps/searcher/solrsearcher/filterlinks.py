@@ -137,11 +137,10 @@ class FilterLinks():
             # remove paging information when composing a new link
             new_rparams.pop('start', None)
         if param == 'path':
-            entity = Entity()
-            entity.get_context = True
-            found = entity.dereference(new_value)
+            found = self.mem_cache_obj.check_con_entity_found(new_value)
             if found:
                 # convert the (slug) value into a context path
+                entity = self.mem_cache_obj.get_con_entity(new_value)
                 new_value = entity.context
         if param not in new_rparams:
             if param == 'path':
