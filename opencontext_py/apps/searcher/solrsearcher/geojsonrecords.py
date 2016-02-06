@@ -47,6 +47,7 @@ class GeoJsonRecords():
         # A list of (non-standard) attributes to include in a record
         self.rec_attributes = []
         self.do_complex_geo = False  # get complex (Polygons, etc.) geospatial data from database
+        self.do_media_thumbs = True  # get thumbnails for records
 
     def make_records_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -216,15 +217,17 @@ class GeoJsonRecords():
                     media_uuids.append(uuid)
                 thumb_results[uuid] = False
         if len(not_media_uuids) > 0:
-            rows = self.get_thumbs_for_non_media(not_media_uuids)
-            for row in rows:
-                uuid = row['uuid']
-                thumb_obj = {}
-                thumb_obj['href'] = self.base_url + '/media/' + row['media_uuid']
-                thumb_obj['uri'] = settings.CANONICAL_HOST + '/media/' + row['media_uuid']
-                thumb_obj['scr'] = row['file_uri']
-                if thumb_results[uuid] is False:
-                    thumb_results[uuid] = thumb_obj
+            if self.do_media_thumbs:
+                # only get media_thumbnails if needed
+                rows = self.get_thumbs_for_non_media(not_media_uuids)
+                for row in rows:
+                    uuid = row['uuid']
+                    thumb_obj = {}
+                    thumb_obj['href'] = self.base_url + '/media/' + row['media_uuid']
+                    thumb_obj['uri'] = settings.CANONICAL_HOST + '/media/' + row['media_uuid']
+                    thumb_obj['scr'] = row['file_uri']
+                    if thumb_results[uuid] is False:
+                        thumb_results[uuid] = thumb_obj
         if len(media_uuids) > 0:
             thumbs = Mediafile.objects\
                               .filter(uuid__in=media_uuids,

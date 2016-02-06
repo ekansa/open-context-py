@@ -1,6 +1,6 @@
 import os, sys, shutil
 import codecs
-from PIL import Image
+from PIL import Image, ImageFile
 from django.db import models
 from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -29,6 +29,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.full_dir = 'full'
         self.preview_dir = 'preview'
         self.thumbs_dir = 'thumbs'
+        self.errors = []
 
     def make_image_versions(self, src):
         """ Copies a directory structure
@@ -43,8 +44,15 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
             dst_dir = new_root_dir + new_dir
             if not os.path.exists(dst_dir):
                 for dirpath, dirnames, filenames in os.walk(src_dir):
+                    trim_dirpath = dirpath[len(src_dir):]
+                    if len(trim_dirpath) > 1:
+                        if trim_dirpath[0] == '/' or trim_dirpath[0] == '\\':
+                            trim_dirpath = dirpath[1+len(src_dir):]
+                    """
                     act_dir = os.path.join(dst_dir,
                                            dirpath[1+len(src_dir):])
+                    """
+                    act_dir = os.path.join(dst_dir, trim_dirpath)
                     os.mkdir(act_dir)
                     for filename in filenames:
                         src_file = os.path.join(dirpath, filename)
@@ -82,8 +90,10 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
+                ImageFile.LOAD_TRUNCATED_IMAGES = True
                 try:
                     im = Image.open(src_file)
+                    im.LOAD_TRUNCATED_IMAGES = True
                 except:
                     print('Cannot use as image: ' + src_file)
                     im = False
@@ -96,12 +106,21 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         new_width = im.width
                     new_neight = int(round((im.height * ratio), 0))
                     size = (new_width, new_neight)
-                    im.thumbnail(size, Image.ANTIALIAS)
+                    rescale_ok = False
                     try:
-                        im.save(new_file, "JPEG", quality=100)
-                        output = new_file
-                    except:
-                        print('cannot save the preview file: ' + new_file)
+                        im.load()
+                        rescale_ok = True
+                    except IOError:
+                        rescale_ok = False
+                        print('Problem rescaling image for: ' + new_file)
+                        self.errors.append(new_file)
+                    if rescale_ok:
+                        im.thumbnail(size, Image.ANTIALIAS)
+                        try:
+                            im.save(new_file, "JPEG", quality=100)
+                            output = new_file
+                        except:
+                            print('cannot save the preview file: ' + new_file)
                     del im
         return output
 
@@ -114,20 +133,32 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
+                ImageFile.LOAD_TRUNCATED_IMAGES = True
                 try:
                     im = Image.open(src_file)
+                    im.LOAD_TRUNCATED_IMAGES = True
                 except:
                     print('Cannot use as image: ' + src_file)
                     im = False
                 if im is not False:
                     size = (self.thumbnail_width_height,
                             self.thumbnail_width_height)
-                    im.thumbnail(size, Image.ANTIALIAS)
+                    rescale_ok = False
                     try:
-                        im.save(new_file, "JPEG", quality=100)
-                        output = new_file
-                    except:
-                        print('cannot save the thumbnail file: ' + new_file)
+                        im.load()
+                        rescale_ok = True
+                    except IOError:
+                        rescale_ok = False
+                        print('Problem rescaling image for: ' + new_file)
+                        self.errors.append(new_file)
+                    if rescale_ok:
+                        im.thumbnail(size, Image.ANTIALIAS)
+                        try:
+                            im.save(new_file, "JPEG", quality=100)
+                            output = new_file
+                        except:
+                            print('Cannot save the rescaled file: ' + new_file)
+                            self.errors.append(new_file)
                     del im
         return output
 
