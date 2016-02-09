@@ -113,6 +113,7 @@ class MakeJsonLd():
                 self.json_ld['oc-api:has-results'] = geojson_recs_obj.non_geo_recs
         if 'uuid' in self.act_responses:
             solr_uuids = SolrUUIDs(self.request_dict_json)
+            solr_uuids.do_media_thumbs = False
             uuids = solr_uuids.make_uuids_from_solr(solr_json)
             if len(self.act_responses) > 1:
                 # return a list inside a key
@@ -138,6 +139,7 @@ class MakeJsonLd():
             solr_uuids.max_date = self.max_date
             solr_uuids.flatten_rec_attributes = self.flatten_rec_attributes
             solr_uuids.rec_attributes = self.rec_attributes
+            solr_uuids.do_media_thumbs = self.check_do_media_thumbs(solr_json)
             uris = solr_uuids.make_uris_from_solr(solr_json,
                                                   False)
             self.mem_cache_obj = solr_uuids.mem_cache_obj
@@ -624,6 +626,24 @@ class MakeJsonLd():
                 self.rel_media_facet['id'] = '#related-media'
                 self.rel_media_facet['label'] = 'Has Related Media'
                 self.rel_media_facet['oc-api:has-rel-media-options'] = rel_media_options
+
+    def check_do_media_thumbs(self, solr_json):
+        """ checks to see if media thumbnails should be in records """
+        output = False
+        total_found = self.get_path_in_dict(['response',
+                                            'numFound'],
+                                            solr_json)
+        solr_facet_fields = self.get_path_in_dict(['facet_counts',
+                                                  'facet_fields'],
+                                                  solr_json)
+        if solr_facet_fields is not False \
+           and total_found is not False:
+            total_found = int(float(total_found))
+            rel_image_count = self.get_rel_media_counts(solr_facet_fields,
+                                                        'image_media_count')
+            if rel_image_count >= (total_found * .33):
+                output = True
+        return output
 
     def make_rel_media_option(self,
                               rel_media_count,
