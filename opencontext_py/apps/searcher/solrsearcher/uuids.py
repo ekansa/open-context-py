@@ -2,6 +2,7 @@ import json
 from django.conf import settings
 from django.db import connection
 from django.db import models
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
@@ -17,6 +18,8 @@ class SolrUUIDs():
     """
 
     def __init__(self, response_dict_json=False):
+        rp = RootPath()
+        self.base_url = rp.get_baseurl()
         self.uuids = []
         self.uris = []
         self.mem_cache_obj = MemoryCache()  # memory caching object
