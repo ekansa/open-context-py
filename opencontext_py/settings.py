@@ -272,6 +272,7 @@ try:
 except:
     HOSTNAME = 'localhost'
 
+ADMIN_EMAIL = get_secret('ADMIN_EMAIL')
 # assumes DEPLOYED_HOST starts with 'http://' or 'https://'
 DEPLOYED_HOST = get_secret('DEPLOYED_HOST')
 if 'http://' not in DEPLOYED_HOST and 'https://' not in DEPLOYED_HOST:
