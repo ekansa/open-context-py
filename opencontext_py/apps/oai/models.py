@@ -16,6 +16,16 @@ class OAIpmh():
     OAI_PMH_NS = 'http://www.openarchives.org/OAI/2.0/'
     XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
     SL_NS = 'http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
+    METADATA_FORMATS = [
+        {'prefix': 'oai_dc',
+         'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd',
+         'ns': 'http://www.openarchives.org/OAI/2.0/oai_dc/',
+         'label': 'OAI Dublin Core'},
+        {'prefix': 'oai_datacite',
+         'schema': 'http://schema.datacite.org/oai/oai-1.0/oai.xsd',
+         'ns': 'http://schema.datacite.org/oai/oai-1.0/',
+         'label': 'OAI DataCite'}
+    ]
 
     def __init__(self, id_href=True):
         rp = RootPath()
@@ -45,6 +55,8 @@ class OAIpmh():
             self.verb = request.GET['verb']
             if self.verb == 'Identify':
                 self.valid_verb = True
+            elif self.verb == 'ListMetadataFormats':
+                self.valid_verb = True
         return self.valid_verb
 
     def process_verb(self):
@@ -53,6 +65,22 @@ class OAIpmh():
             # only do this with valid verbs!
             if self.verb == 'Identify':
                 self.make_identify_xml()
+            elif self.verb == 'ListMetadataFormats':
+                self.make_list_metadata_formats_xml()
+
+    def make_list_metadata_formats_xml(self):
+        """ Makes the XML for the ListMetadataFormats
+            verb
+        """
+        l_m_f = etree.SubElement(self.root, 'ListMetadataFormats')
+        for meta_f in self.METADATA_FORMATS:
+            meta_xml = etree.SubElement(l_m_f, 'metadataFormat')
+            prefix = etree.SubElement(meta_xml, 'metadataPrefix')
+            prefix.text = meta_f['prefix']
+            schema = etree.SubElement(meta_xml, 'schema')
+            schema.text = meta_f['schema']
+            meta_ns = etree.SubElement(meta_xml, 'metadataNamespace')
+            meta_ns.text = meta_f['ns']
 
     def make_identify_xml(self):
         """ Makes the XML for the
