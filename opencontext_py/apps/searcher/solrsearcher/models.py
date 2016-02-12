@@ -284,6 +284,22 @@ class SolrSearch():
                                                           form_use_life_date,
                                                           'stop')
             query['fq'] += form_stop_query['fq']
+        """ Updated and Published Times
+        """
+        updated = self.get_request_param(request_dict,
+                                         'updated',
+                                         False,
+                                         False)
+        if updated is not False:
+            # query for when the resource was updated
+            query['fq'].append('updated:' + updated)
+        published = self.get_request_param(request_dict,
+                                           'published',
+                                           False,
+                                           False)
+        if published is not False:
+            # query for when the resource was published
+            query['fq'].append('published:' + published)
         """ Linked media (images, documents, other)
             queries
         """
