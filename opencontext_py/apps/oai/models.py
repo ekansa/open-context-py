@@ -31,23 +31,30 @@ class OAIpmh():
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.http_resp_code = 200
-        self.verb = False
-        self.valid_verb = False
+        self.verb = None
+        self.valid_verb = None
+        self.metadata_prefix = None
+        self.metadata_prefix_valid = None
         self.errors = []
-        self.root = False
+        self.root = None
+        self.request_xml = None
         self.metadata_facets = None
+        self.cursor = 0
+        self.rows = 100
 
     def process_request(self, request):
         """ processes a request verb,
             determines the correct
             responses and http response codes
         """
-        ok = self.check_validate_verb(request)
+        self.check_validate_verb(request)
+        self.check_metadata_prefix(request)
         self.make_xml_root()
         self.make_general_xml()
         self.make_request_xml()
         self.process_verb()
-        return ok
+        self.make_error_xml()
+        return True
 
     def check_validate_verb(self, request):
         """ Checks and validates the verb in the request """
@@ -57,7 +64,23 @@ class OAIpmh():
                 self.valid_verb = True
             elif self.verb == 'ListMetadataFormats':
                 self.valid_verb = True
+        if self.valid_verb is not True:
+            self.errors.append('badVerb')
         return self.valid_verb
+
+    def check_metadata_prefix(self, request):
+        """ Checks to see if a metadata prefix is in a request """
+        if self.metadata_prefix is None and \
+           'metadataPrefix' in request.GET:
+            self.metadata_prefix = request.GET['metadataPrefix']
+            self.metadata_prefix_valid = False
+            for meta_f in self.METADATA_FORMATS:
+                if meta_f['prefix'] == self.metadata_prefix:
+                    self.metadata_prefix_valid = True
+                    break
+            if self.metadata_prefix_valid is False:
+                self.errors.append('cannotDisseminateFormat')
+        return self.metadata_prefix_valid
 
     def process_verb(self):
         """ processes the request for a verb """
@@ -79,8 +102,6 @@ class OAIpmh():
             prefix.text = meta_f['prefix']
             schema = etree.SubElement(meta_xml, 'schema')
             schema.text = meta_f['schema']
-            meta_ns = etree.SubElement(meta_xml, 'metadataNamespace')
-            meta_ns.text = meta_f['ns']
 
     def make_identify_xml(self):
         """ Makes the XML for the
@@ -111,7 +132,7 @@ class OAIpmh():
 
     def make_xml_root(self):
         """ makes the Root XML with namespaces for the document """
-        if self.root is False:
+        if self.root is None:
             self.root = etree.Element('{' + self.OAI_PMH_NS + '}OAI-PMH',
                                       nsmap={None: self.OAI_PMH_NS, 'xsi': self.XSI_NS},
                                       attrib={'{' + self.XSI_NS + '}schemaLocation': self.SL_NS})
@@ -124,17 +145,35 @@ class OAIpmh():
     def make_request_xml(self):
         """ makes the XML for a verb request """
         if self.valid_verb:
-            request = etree.SubElement(self.root, 'request', verb=self.verb)
+            self.request = etree.SubElement(self.root, 'request', verb=self.verb)
         else:
-            request = etree.SubElement(self.root, 'request')
-            self.make_error_xml('badVerb')
-        request.text = self.base_url + '/oai'
+            self.request = etree.SubElement(self.root, 'request')
+        if self.metadata_prefix is not None:
+            self.request.attrib['metadataPredix'] = self.metadata_prefix
+        self.request.text = self.base_url + '/oai'
 
-    def make_error_xml(self, code):
+    def make_error_xml(self):
+        """ makes an error message for each error noted """
+        if len(self.errors) > 0:
+            for error in self.errors:
+                self.make_error_item_xml(error)
+
+    def make_error_item_xml(self, code):
         """ makes an XML error message """
         if code == 'badVerb':
             error = etree.SubElement(self.root, 'error', code=code)
             error.text = 'Illegal OAI verb'
+        elif code == 'cannotDisseminateFormat':
+            error = etree.SubElement(self.root, 'error', code=code)
+
+    def make_resumption_token(self, api_json_obj):
+        """ makes a flow controll resumption token """
+        # TODO: make an ordered json-dict, then make it a
+        # string with published date ranges,
+        # startIndex (cursor), and rows
+        # including published date range links in the token will
+        # allow consistent pagination, even if new material gets published
+        pass
 
     def output_xml_string(self):
         """ outputs the string of the XML """
@@ -165,4 +204,4 @@ class OAIpmh():
                 error.text = 'Internal Server Error: Failed to get collection metadata summary'
                 self.http_resp_code = 500
         return self.metadata_facets
- 
+
