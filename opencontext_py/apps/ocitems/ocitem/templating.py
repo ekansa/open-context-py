@@ -616,7 +616,12 @@ class Observation():
                 act_val.uri = URImanagement.convert_prefix_to_full_uri(rel_item['id'])
                 act_val.id = URImanagement.convert_prefix_to_full_uri(rel_item['id'])
                 act_val.uuid = False
-                act_val.val = rel_item['label']
+                if 'label' in rel_item:
+                    act_val.val = rel_item['label']
+                else:
+                    act_val.val = ''
+                    if act_val.vartype == 'xsd:boolean':
+                        act_val.val = 'Boolean (True/False) Values'
                 range_values.append(act_val)
             if self.properties is False:
                 self.properties = []
@@ -895,6 +900,11 @@ class PropValue():
         else:
             if self.vartype == 'xsd:integer':
                 self.val = str(int(float(val_item)))
+            elif self.vartype == 'xsd:boolean':
+                if val_item == 1:
+                    self.val = 'True'
+                else:
+                    self.val = 'False'
             else:
                 self.val = val_item
 
