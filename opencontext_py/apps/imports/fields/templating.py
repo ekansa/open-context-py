@@ -28,7 +28,9 @@ class ImportProfile():
                                     'value',
                                     'lat',
                                     'lon',
-                                    'geojson']
+                                    'geojson',
+                                    'early',
+                                    'late']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -55,6 +57,7 @@ class ImportProfile():
         self.PRED_VALUE_OF = ImportFieldAnnotation.PRED_VALUE_OF
         self.PRED_MEDIA_PART_OF = ImportFieldAnnotation.PRED_MEDIA_PART_OF
         self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
+        self.PRED_DATE_EVENT = ImportFieldAnnotation.PRED_DATE_EVENT
         self.nav = False
 
     def get_fields(self, field_num_list=False):

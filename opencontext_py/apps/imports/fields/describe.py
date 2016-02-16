@@ -118,7 +118,8 @@ class ImportFieldDescribe():
         self.get_field_num_list(field_num)
         # delete cases where the field_num is already used
         del_preds = [ImportFieldAnnotation.PRED_DESCRIBES,
-                     ImportFieldAnnotation.PRED_GEO_LOCATION]
+                     ImportFieldAnnotation.PRED_GEO_LOCATION,
+                     ImportFieldAnnotation.PRED_DATE_EVENT]
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
                                                  predicate__in=del_preds,
@@ -126,13 +127,15 @@ class ImportFieldDescribe():
                                          .delete()
         entity_ok = self.check_field_type(object_field_num, ImportProfile.DEFAULT_SUBJECT_TYPE_FIELDS)
         # now check to see if this is OK for making a geolocation
-        geo_object_ok = self.check_field_type(object_field_num, ['subjects'])
+        geo_date_object_ok = self.check_field_type(object_field_num, ['subjects'])
         for field_num in self.field_num_list:
             des_ok = self.check_field_type(field_num, ['description',
                                                        'variable'])
             geo_ok = self.check_field_type(field_num, ['lat',
                                                        'lon',
                                                        'geojson'])
+            date_ok = self.check_field_type(field_num, ['early',
+                                                        'late'])
             if des_ok and entity_ok:
                 # only make the annotation if the subject is a value, object is a variable
                 ifa = ImportFieldAnnotation()
@@ -144,13 +147,24 @@ class ImportFieldDescribe():
                 ifa.object_field_num = object_field_num
                 ifa.object_uuid = ''
                 ifa.save()
-            elif geo_ok and geo_object_ok:
-                # we have a geospatial annotation
+            elif geo_ok and geo_date_object_ok:
+                # we have a geospatial annotations
                 ifa = ImportFieldAnnotation()
                 ifa.source_id = self.source_id
                 ifa.project_uuid = self.project_uuid
                 ifa.field_num = field_num
                 ifa.predicate = ImportFieldAnnotation.PRED_GEO_LOCATION
+                ifa.predicate_field_num = 0
+                ifa.object_field_num = object_field_num
+                ifa.object_uuid = ''
+                ifa.save()
+            elif date_ok and geo_date_object_ok:
+                # we have a date annotations
+                ifa = ImportFieldAnnotation()
+                ifa.source_id = self.source_id
+                ifa.project_uuid = self.project_uuid
+                ifa.field_num = field_num
+                ifa.predicate = ImportFieldAnnotation.PRED_DATE_EVENT
                 ifa.predicate_field_num = 0
                 ifa.object_field_num = object_field_num
                 ifa.object_uuid = ''

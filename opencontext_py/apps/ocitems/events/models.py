@@ -11,6 +11,7 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 class Event(models.Model):
     DEFAULT_METATYPE = 'oc-gen:formation-use-life'
     DEFAULT_WHENTYPE = 'Interval'
+    INSTANT_WHENTYPE = 'Instant'
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     item_type = models.CharField(max_length=50, db_index=True)
