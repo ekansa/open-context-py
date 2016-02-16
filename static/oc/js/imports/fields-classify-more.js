@@ -59,95 +59,36 @@ function assignFieldValuePrefixDone(data){
 	}
 }
 
+var act_field_type = false;
+var tree_dom_id = 'hierarchy-tree';
 function getTypeHierarchy(field_num) {
 	/* Gets the hiearchy of child types for a general field type 
 	*/
 	var ft_domID = "field-type-" + field_num;
 	var field_type = document.getElementById(ft_domID).innerHTML;
 	field_type = 'oc-gen:' + field_type
-	if (act_tree_root != field_type) {
-		act_tree_root = field_type;
-		url = "../../entities/hierarchy-children/" + encodeURIComponent(field_type);
-		var act_domID = "tree-sel-label";
-		var act_dom = document.getElementById(act_domID);
-		act_dom.innerHTML = "... loading entity type categories ...";
-		var act_domID = "tree-sel-id";
-		var act_dom = document.getElementById(act_domID);
-		act_dom.innerHTML = "";
-		var act_domID = "tree-sel-icon";
-		var act_dom = document.getElementById(act_domID);
-		act_dom.innerHTML = "";
-		var req = $.ajax({
-			type: "GET",
-			url: url,
-			dataType: "json",
-			success: getTypeHierarchyDone
-		});
+	if (act_field_type != field_type) {
+		act_field_type = field_type;
+		var tree = new hierarchy(field_type, tree_dom_id);
+		tree.root_node = true;  //root node of this tree
+		tree.collapse_root = true;
+		tree.object_prefix = 'tree-1';
+		tree.exec_primary_onclick = 'assign_category';
+		tree.exec_primary_title = 'Click to select this category';
+		tree.do_entity_hierarchy_tree();
+		tree.get_data();
+		var tree_key = tree.object_prefix; 
+		hierarchy_objs[tree_key] = tree;
 	}
 }
 
-var start_data = [{label: 'Type Hierarchy'}];
-var tree_app;
-var tree_service;
-var act_tree_root = false;
-(function() {
-	/* Sets up the Tree view for browsing hierarchies of entity categories */
-	var app;
-	var deps;
-	deps = ['angularBootstrapNavTree'];
-	if (angular.version.full.indexOf("1.2") >= 0) {
-	  deps.push('ngAnimate');
-	}
-	app = angular.module('TreeApp', deps);
-	tree_app = app.controller('TreeController', function($scope, $timeout) {
-		$scope.my_tree_handler = function(branch) {
-			if (branch.id != null) {	
-				var act_domID = "tree-sel-label";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = branch.label;
-				var act_domID = "tree-sel-id";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = branch.id;
-				if (branch.icon != false) {
-					var act_domID = "tree-sel-icon";
-					var act_dom = document.getElementById(act_domID);
-					act_dom.innerHTML = "<img src=\"" + branch.icon + "\" alt=\"Icon\"/>";
-				}
-			}
-			else{
-				var act_domID = "tree-sel-label";
-				var act_dom = document.getElementById(act_domID);
-				act_dom.innerHTML = "Select a field first.";
-			}
-		};
-		$scope.tree_data = start_data;
-		$scope.tree_service = function(data) {
-			$scope.tree_data = [];
-			$scope.doing_async = true;
-			return $timeout(function() {
-			  $scope.tree_data = data;
-			  $scope.doing_async = false;
-			}, 1000);
-		};
-		tree_service = $scope.tree_service;
-	});
-	
-}).call(this);
 
-function getTypeHierarchyDone(data){
-	/* Updates the Hierarchy tree with new JSON data */
-	tree_service(data)
-	var act_domID = "tree-sel-label";
-	var act_dom = document.getElementById(act_domID);
-	act_dom.innerHTML = "";
-}
 
-function assignEntityCategory() {
+
+function assign_category(field_value_cat, label, skip, do_nothing) {
 	/* Assigns a an entity category for values of cells that are to be
 	 * reconciled in an import
 	*/
-	var scat_domID = "tree-sel-id";
-	var field_value_cat = document.getElementById(scat_domID).innerHTML;
 	if (field_value_cat.length > 0) {
 		url = "../../imports/field-meta-update/" + encodeURIComponent(source_id);
 		var selected_fields = getSelectedFieldNumbers();

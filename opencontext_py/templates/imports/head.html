@@ -13,6 +13,7 @@
     <script src="../../static/angularjs/angular-animate.js"></script>
     <script src="../../static/angularjs/abn_tree_directive.js"></script>
     <script src="../../static/bootstrap/3.3.4/js/bootstrap.js"></script>
+    <script src="../../static/oc/js/entities/hierarchy-tree.js"></script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
         {% if ip %}
@@ -22,6 +23,7 @@
         {% if proj %}
         var project_uuid = '{{ proj.uuid }}';
         {% endif %}
+        var base_url = '{{ base_url }}';
     </script>
     <style type="text/css">
         #fieldtabfields .ui-selecting { background: #FFFF99; }

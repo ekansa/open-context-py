@@ -27,7 +27,7 @@ def index(request):
 def hierarchy_children(request, identifier):
     """ Returns JSON data for an identifier in its hierarchy """
     et = EntityTemplate()
-    children = et.get_children(identifier)
+    children = et.get_described_children(identifier)
     if children is not False:
         json_output = json.dumps(children,
                                  indent=4,
