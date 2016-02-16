@@ -65,6 +65,7 @@ class MakeJsonLd():
             self.json_ld['label'] = self.label
             self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
             self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
+            self.json_ld['oai-pmh:earliestDatestamp'] = self.get_earliest_created_datetime(solr_json)
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()
@@ -312,6 +313,19 @@ class MakeJsonLd():
         if created is False:
             created = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
         return created
+
+    def get_earliest_created_datetime(self, solr_json):
+        """ Makes the last modified time in ISO 8601 format
+            Solr already defaults to that format
+        """
+        earliest_created = self.get_path_in_dict(['stats',
+                                                  'stats_fields',
+                                                  'published',
+                                                  'min'],
+                                                 solr_json)
+        if earliest_created is False:
+            earliest_created = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
+        return earliest_created
 
     def add_text_fields(self):
         """ adds text fields with query options """

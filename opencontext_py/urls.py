@@ -25,6 +25,7 @@ from opencontext_py.apps.imports.sources import views as Imp_sources
 from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
+from opencontext_py.apps.oai import views as OAIviews
 
 urlpatterns = patterns('',
                        # Examples:
@@ -210,6 +211,8 @@ urlpatterns = patterns('',
                            name='create_project'),
                        url(r'^edit/add-update-ld-entity', EditItemViews.add_update_ld_entity,
                            name='add_update_ld_entity'),
+                       url(r'^edit/add-update-geo-data/(?P<uuid>\S+)', EditItemViews.add_update_geo_data,
+                           name='add_update_geo_data'),
                        url(r'^edit/add-update-date-range/(?P<uuid>\S+)', EditItemViews.add_update_date_range,
                            name='add_update_date_range'),
                        url(r'^edit/delete-date-range/(?P<uuid>\S+)', EditItemViews.delete_date_range,
@@ -279,6 +282,10 @@ urlpatterns = patterns('',
                            name='entity_description_hierarchy'),
                        url(r'^entities/proxy/(?P<target_url>\S+)', EntityViews.proxy,
                            name='entity_proxy'),
+                       #----------------------------
+                       # BELOW ARE OAI REQUESTS (OAIviews)
+                       #----------------------------
+                       url(r'^oai/', OAIviews.index, name='oai_index'),
                        #----------------------------
                        # BELOW ARE INDEX REQUESTS
                        #----------------------------

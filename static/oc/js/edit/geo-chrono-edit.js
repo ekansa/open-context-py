@@ -133,6 +133,7 @@ function geoChronoEdit(item_type, item_uuid){
 			}
 		}
 		
+		
 		//a blank when object to create a new record
 		var new_when_obj = {
 			start: false,
@@ -168,11 +169,27 @@ function geoChronoEdit(item_type, item_uuid){
 			var lat = '';
 		}
 		
+		var hide_feature_html = inherited;
 		if (inherited) {
+			if (this.edit_features.length == 1) {
+				// only 1 feature, and it's inherited so make an interface for editing
+				hide_feature_html = false;
+				hash_id = '';
+				lat = '';
+				lon = '';
+				plain_geojson_str = '';
+			}
+		}
+		
+		
+		if (hide_feature_html) {
 			// HTML for location information that is inherited via spatial context
 			// note, location data cannot be edited here, only reviewed
 		}
 		else{
+			//make the submit button
+			var submit_html = this.make_geo_submit_html(edit_i);
+			
 			// HTML for location information specific to the item iself
 			var html = [
 				'<div class="row">',
@@ -216,6 +233,15 @@ function geoChronoEdit(item_type, item_uuid){
 								'<input type="hidden" ',
 								'id="' + dom_ids.feature_id + '" ',
 								'value="' + feature_id + '" />',
+							'</div>',
+						'</div>',
+						'<div class="row">',
+							'<div class="col-xs-1">',
+							'</div>',
+							'<div class="col-xs-10">',
+								submit_html,	
+							'</div>',
+							'<div class="col-xs-1">',
 							'</div>',
 						'</div>',
 					'</div>',
@@ -264,6 +290,26 @@ function geoChronoEdit(item_type, item_uuid){
 			valid: 'geo-valid-' + edit_i
 		};
 		return dom_ids;
+	}
+	this.make_geo_submit_html = function(edit_i){
+		var new_feature = false;
+		if (new_feature) {
+			var new_button_label = 'Submit New';
+			var new_button_icon = 'glyphicon glyphicon-plus';
+		}
+		else{
+			var new_button_label = 'Submit Geospatial';
+			var new_button_icon = 'glyphicon glyphicon-edit';
+		}
+		var new_button_html = [
+			'<button title="Submit Geospatial Feature" ',
+			'class="btn btn-primary btn-xs btn-block" ',
+			'onclick="' + this.name + '.submitGeoFeature(' + edit_i + ');">',
+			'<span class="' + new_button_icon + '"></span>' ,
+			new_button_label,
+			'</button>',
+		].join('\n');
+		return new_button_html;
 	}
 	this.make_when_html = function(edit_i, when_i, when_obj){
 		if (when_obj['reference-type'] == 'specified') {
@@ -390,6 +436,52 @@ function geoChronoEdit(item_type, item_uuid){
 		return dom_ids;
 	}
 	
+	/*
+	 * AJAX functions for editing geodata
+	 */
+	this.submitGeoFeature = function(edit_i){
+		var geo_dom_ids = this.make_feature_dom_ids(edit_i);
+		var hash_id = document.getElementById(geo_dom_ids.hash_id).value;
+		var lat = document.getElementById(geo_dom_ids.lat).value;
+		var lon = document.getElementById(geo_dom_ids.lon).value;
+		var feature_id = document.getElementById(geo_dom_ids.feature_id).value;
+		var geojson = document.getElementById(geo_dom_ids.geojson).value;
+		var meta_type = 'oc-gen:discovey-location';
+		var specificity = 0;
+		if (geojson.length < 2) {
+			var feature_type = 'Point';
+		}
+		else{
+			var feature_type = 'Polygon';
+		}
+		var url = this.make_url("/edit/add-update-geo-data/") + encodeURIComponent(this.item_uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				hash_id: hash_id,
+				latitude: lat,
+				longitude: lon,
+				geojson: geojson,
+				specificity: specificity,
+				meta_type: meta_type,
+				ftype: feature_type,
+				feature_id: feature_id,
+				source_id: 'web-form',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.submitGeoFeatureDone,
+			error: function (request, status, error) {
+				alert('Problem updating / adding geo-data: ' + status);
+			}
+		});
+		return req;
+	}
+	this.submitGeoFeatureDone = function(data){
+		// too many things to change, so reload the whole page
+		location.reload(true);
+	}
 	
 	/*
 	 * AJAX functions for editing date ranges

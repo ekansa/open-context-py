@@ -33,8 +33,23 @@ class EntityTemplate():
         if found:
             self.children = []
             lr = LinkRecursion()
-            self.children = lr.get_entity_children(identifier)
+            lr.get_entity_children(identifier)
+            self.children = lr.child_entities
         return self.children
+
+    def get_described_children(self, identifier):
+        """ Gets SKOS or OWL children for an entity
+        """
+        ent = Entity()
+        found = ent.dereference(identifier)
+        if found:
+            self.children = []
+            lr = LinkRecursion()
+            lr.get_entity_children(identifier)
+            self.children = lr.child_entities
+            described_children = self.add_child_entity(identifier,
+                                                       self.children)
+        return [described_children]
 
     def add_child_entity(self, child_id, children_dict):
         """ creates a child entity dictionary object if found

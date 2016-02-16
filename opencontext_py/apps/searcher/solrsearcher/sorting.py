@@ -19,13 +19,20 @@ class SortingOptions():
     SORT_OPTIONS = [
         {'type': 'oc-api:sort-item',
          'value': 'item',
-         'label': 'Item (type, provenance, label)'},
+         'label': 'Item (type, provenance, label)',
+         'opt': True},
         {'type': 'oc-api:sort-updated',
          'value': 'updated',
-         'label': 'Updated'},
+         'label': 'Updated',
+         'opt': True},
+        {'type': 'oc-api:sort-published',
+         'value': 'published',
+         'label': 'Published',
+         'opt': False},  # don't make a sorting option available in the interface (hide this)
         {'type': 'oc-api:sort-interest',
          'value': None,
-         'label': 'Interest score'}
+         'label': 'Interest score',
+         'opt': True}
     ]
 
     SORT_SOLR_MAPPINGS = {
@@ -154,48 +161,50 @@ class SortingOptions():
              'order': 'descending'}
         ]
         for act_sort in self.SORT_OPTIONS:
-            if act_sort['value'] is not None:
-                for order_opt in order_opts:
-                    act_sort_val = act_sort['value'] + self.order_sep + order_opt['key']
-                    fl = FilterLinks()
-                    fl.base_search_link = self.base_search_link
-                    fl.base_request_json = json.dumps(request_dict,
-                                                      ensure_ascii=False,
-                                                      indent=4)
-                    fl.spatial_context = self.spatial_context
-                    sort_rparams = fl.add_to_request('sort',
-                                                     act_sort_val)
-                    links = fl.make_request_urls(sort_rparams)
-                    current_sort_obj = LastUpdatedOrderedDict()
-                    current_sort_obj['id'] = links['html']
-                    current_sort_obj['json'] = links['json']
-                    current_sort_obj['type'] = act_sort['type']
-                    current_sort_obj['label'] = act_sort['label']
-                    current_sort_obj['oc-api:sort-order'] = order_opt['order']
-                    in_active_list = False
-                    for cur_act_sort in self.current_sorting:
-                        if act_sort['type'] == cur_act_sort['type'] \
-                           and order_opt['order'] == cur_act_sort['oc-api:sort-order']:
-                            # the current sort option is ALREADY in use
-                            in_active_list = True
-                    if in_active_list is False:
-                        # only add the sort option if it's not already in use
+            if act_sort['opt']:
+                # only make sort_options if the 'opt' key is true
+                if act_sort['value'] is not None:
+                    for order_opt in order_opts:
+                        act_sort_val = act_sort['value'] + self.order_sep + order_opt['key']
+                        fl = FilterLinks()
+                        fl.base_search_link = self.base_search_link
+                        fl.base_request_json = json.dumps(request_dict,
+                                                          ensure_ascii=False,
+                                                          indent=4)
+                        fl.spatial_context = self.spatial_context
+                        sort_rparams = fl.add_to_request('sort',
+                                                         act_sort_val)
+                        links = fl.make_request_urls(sort_rparams)
+                        current_sort_obj = LastUpdatedOrderedDict()
+                        current_sort_obj['id'] = links['html']
+                        current_sort_obj['json'] = links['json']
+                        current_sort_obj['type'] = act_sort['type']
+                        current_sort_obj['label'] = act_sort['label']
+                        current_sort_obj['oc-api:sort-order'] = order_opt['order']
+                        in_active_list = False
+                        for cur_act_sort in self.current_sorting:
+                            if act_sort['type'] == cur_act_sort['type'] \
+                               and order_opt['order'] == cur_act_sort['oc-api:sort-order']:
+                                # the current sort option is ALREADY in use
+                                in_active_list = True
+                        if in_active_list is False:
+                            # only add the sort option if it's not already in use
+                            self.sort_links.append(current_sort_obj)
+                else:
+                    if self.using_default_sorting is False:
+                        # only add a link to the default sorting if
+                        # we are not currently using it
+                        fl = FilterLinks()
+                        fl.base_search_link = self.base_search_link
+                        fl.base_request_json = json.dumps(request_dict,
+                                                          ensure_ascii=False,
+                                                          indent=4)
+                        fl.spatial_context = self.spatial_context
+                        links = fl.make_request_urls(request_dict)
+                        current_sort_obj = LastUpdatedOrderedDict()
+                        current_sort_obj['id'] = links['html']
+                        current_sort_obj['json'] = links['json']
+                        current_sort_obj['type'] = act_sort['type']
+                        current_sort_obj['label'] = act_sort['label']
+                        current_sort_obj['oc-api:sort-order'] = 'descending'
                         self.sort_links.append(current_sort_obj)
-            else:
-                if self.using_default_sorting is False:
-                    # only add a link to the default sorting if
-                    # we are not currently using it
-                    fl = FilterLinks()
-                    fl.base_search_link = self.base_search_link
-                    fl.base_request_json = json.dumps(request_dict,
-                                                      ensure_ascii=False,
-                                                      indent=4)
-                    fl.spatial_context = self.spatial_context
-                    links = fl.make_request_urls(request_dict)
-                    current_sort_obj = LastUpdatedOrderedDict()
-                    current_sort_obj['id'] = links['html']
-                    current_sort_obj['json'] = links['json']
-                    current_sort_obj['type'] = act_sort['type']
-                    current_sort_obj['label'] = act_sort['label']
-                    current_sort_obj['oc-api:sort-order'] = 'descending'
-                    self.sort_links.append(current_sort_obj)
