@@ -61,6 +61,12 @@ imp_sj.data_dirs = [
 imp_sj.load_data_in_directories()
 imp_sj.load_data_in_directory('64-oracle-bone-test')
 
+from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
+imp_sj = ImportSerizializedJSON()
+imp_sj.act_import_dir = '/home/dainst_ekansa'
+imp_sj.load_data_in_directory('85-traces')
+
+
     """
 
     def __init__(self):

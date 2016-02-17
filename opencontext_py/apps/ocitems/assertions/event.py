@@ -9,6 +9,13 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 class EventAssertions():
     """
     This class manages event (chronology) data based on assertion data
+
+from opencontext_py.apps.ocitems.assertions.event import EventAssertions
+eva = EventAssertions()
+project_uuid = 'd1c85af4-c870-488a-865b-b3cf784cfc60'
+eva.process_unused_type_events(project_uuid)
+
+
     """
 
     def assign_events_from_type(self, type_uuid,
@@ -42,7 +49,9 @@ class EventAssertions():
             newr.save()
         return len(rel_subjects)
 
-    def process_unused_type_events(self, delete_old_source=False,
+    def process_unused_type_events(self,
+                                   project_uuid=False,
+                                   delete_old_source=False,
                                    feature_id=1,
                                    meta_type=Event.DEFAULT_METATYPE):
         """
@@ -51,7 +60,12 @@ class EventAssertions():
         but are not yet used as source_ids for events
         """
         output = {}
-        type_events = Event.objects.filter(item_type='types')
+        if project_uuid is False:
+            type_events = Event.objects.filter(item_type='types')
+        else:
+            type_events = Event.objects\
+                               .filter(item_type='types',
+                                       project_uuid=project_uuid)
         for tevent in type_events:
             type_uuid = tevent.uuid
             tused_count = Event.objects.filter(source_id=type_uuid).count()

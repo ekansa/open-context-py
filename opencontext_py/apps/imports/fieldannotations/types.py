@@ -24,13 +24,28 @@ class ProcessTypes():
     to describe it
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
-source_id = 'ref:1964907920493'
-pred_uuid = '3fad5cf1-2e4e-4be2-b55e-0b577a583c16'
-type_f = 11
+source_id = 'ref:1648061969591'
+pred_uuid = '4b566f98-231b-4450-9c86-4a4a7b75f435'
+type_f = 4
 rel_pred = 'skos:closeMatch'
-le_f = 12
+le_f = 5
 pt = ProcessTypes(source_id)
 pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
+
+from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
+source_id = 'ref:1699742791864'
+pred_uuid = '636239c2-b90c-4b62-9720-2221e4a56742'
+pt = ProcessTypes(source_id)
+type_f = 1
+start_f = 2
+stop_f = 3
+pt.make_type_event_from_type_label_records(pred_uuid, type_f, start_f, stop_f)
+
+from opencontext_py.apps.ocitems.assertions.event import EventAssertions
+eva = EventAssertions()
+project_uuid = 'd1c85af4-c870-488a-865b-b3cf784cfc60'
+eva.process_unused_type_events(project_uuid)
+
 
     """
 

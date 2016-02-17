@@ -608,7 +608,7 @@ def delete_annotation(request, entity_id):
                                          indent=4,
                                          ensure_ascii=False)
                 # version control metadata
-                if item_ass.hash_id is not False:
+                if item_anno.hash_id is not False:
                     rev_label = 'Delete item annotation in ' + item_anno.manifest.label
                     drev = DeletionRevision()
                     drev.project_uuid = item_anno.manifest.project_uuid
