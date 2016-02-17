@@ -29,6 +29,7 @@ class ProcessSubjects():
         self.project_uuid = pg.project_uuid
         self.subjects_fields = False
         self.geospace_fields = {}  # subject field num is key, dict has valid lat + lon fields
+        self.date_fields = {}  # subject field num is key, dict has early late fields
         self.geojson_rels = {}  # subject field_num is key, integer value is geojson field_num
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
@@ -54,6 +55,7 @@ class ProcessSubjects():
                                 self.project_uuid)
             unimport.delete_containment_assertions()
             unimport.delete_geospaces()
+            unimport.delete_events()
             unimport.delete_subjects_entities()
 
     def get_contained_examples(self):
@@ -148,6 +150,7 @@ class ProcessSubjects():
         self.get_subject_fields()
         self.get_geospace_fields()
         self.get_geojson_fields()
+        self.get_date_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
         self.process_non_contain_subjects()
@@ -204,6 +207,9 @@ class ProcessSubjects():
                     self.process_geojson_item(field_num,
                                               cs.import_rows,
                                               cs.uuid)
+                    self.process_date_item(field_num,
+                                           cs.import_rows,
+                                           cs.uuid)
                     if cs.is_new:
                         self.new_entities.append({'id': str(cs.uuid),
                                                   'label': cs.context})
@@ -262,6 +268,9 @@ class ProcessSubjects():
                             self.process_geojson_item(field_num,
                                                       cs.import_rows,
                                                       cs.uuid)
+                            self.process_date_item(field_num,
+                                                   cs.import_rows,
+                                                   cs.uuid)
                             self.reconciled_entities.append({'id': cs.uuid,
                                                              'label': cs.label})
                         else:
@@ -499,6 +508,134 @@ class ProcessSubjects():
                                                    object_field_num__in=sub_field_list)
             for geo_anno in geo_des:
                 self.geojson_rels[geo_anno.object_field_num] = geo_anno.field_num
+
+    def process_date_item(self,
+                          subject_field_num,
+                          subject_in_rows,
+                          subject_uuid):
+        """ adds early late data if it exists for an item
+        """
+        if subject_field_num in self.date_fields:
+            # this subject field has associated early - late data
+            # now make a list where of rows that have non-blank lat data
+            act_date_fields = self.date_fields[subject_field_num]
+            validated_rows = {}
+            date_fields_list = [act_date_fields['early'],
+                                act_date_fields['late']]
+            early_late_recs = ImportCell.objects\
+                                        .filter(source_id=self.source_id,
+                                                field_num__in=date_fields_list,
+                                                row_num__in=subject_in_rows)
+            for date_rec in early_late_recs:
+                act_row = date_rec.row_num
+                act_date = self.validate_date_value(date_rec.record)
+                if act_row not in validated_rows:
+                    validated_rows[act_row] = []
+                if isinstance(act_date, float):
+                    validated_rows[act_row].append(act_date)
+            # the validated_rows dict now has rows (key), with validated dates
+            # data. Now we can add these to the database!
+            geo_feature = 1
+            date_keys_done = []
+            for row_key, date_list in validated_rows.items():
+                if len(date_list) > 0:
+                    early = min(date_list)
+                    late = max(date_list)
+                    if early == late:
+                        when_type = Event.DEFAULT_WHENTYPE
+                    else:
+                        when_type = Event.DEFAULT_WHENTYPE
+                    date_key = str(early) + ',' + str(late)
+                    if date_key not in date_keys_done:
+                        # we havent checked this set of dates yet
+                        date_keys_done.append(date_key)
+                        # now check to make sure we don't already have these coordinates
+                        # on this item
+                        same_dates = Event.objects\
+                                          .filter(uuid=subject_uuid,
+                                                  start=early,
+                                                  stop=late)[:1]
+                        if len(same_dates) < 1:
+                            # it is a new date, ok to add
+                            event = Event()
+                            event.uuid = str(subject_uuid)
+                            event.project_uuid = self.project_uuid
+                            event.source_id = self.source_id
+                            event.item_type = 'subjects'
+                            event.feature_id = geo_feature
+                            event.meta_type = ImportFieldAnnotation.PRED_DATE_EVENT
+                            event.when_type = when_type
+                            event.earliest = early
+                            event.start = early
+                            event.stop = late
+                            event.latest = late
+                            try:
+                                event.save()
+                            except:
+                                print('Did not like ' + str(row) + ' with ' + str(subject_uuid))
+                                quit()
+
+    def get_date_fields(self):
+        """ finds date (early + late) fields that may describe
+            subjects fields.
+        """
+        # first make a list of subject field numbers
+        if self.subjects_fields is not False:
+            sub_field_list = []
+            for sub_field_num, sub_field in self.subjects_fields.items():
+                sub_field_list.append(sub_field_num)
+            date_fields = ImportFieldAnnotation.objects\
+                                               .filter(source_id=self.source_id,
+                                                       predicate=ImportFieldAnnotation.PRED_DATE_EVENT,
+                                                       object_field_num__in=sub_field_list)
+            if len(date_fields) >= 2:
+                # print('Found ' + str(len(date_fields)) + ' date fields')
+                # we have date data describing our subjects
+                # now get the early fields, and the late fields
+                earlys = {}
+                lates = {}
+                early_lates = ImportField.objects\
+                                         .filter(source_id=self.source_id,
+                                                 field_type__in=['early', 'late'])
+                for act_f in early_lates:
+                    if act_f.field_type == 'early':
+                        earlys[act_f.field_num] = act_f
+                    else:
+                        lates[act_f.field_num] = act_f
+                # now make an object that checks to see if
+                # the subject (location/object field), which is the
+                # object of the ImportFieldAnnotations, has exactly 1
+                # early field and 1 late field
+                date_earlys_lates = {}
+                for date_anno in date_fields:
+                    if date_anno.object_field_num not in date_earlys_lates:
+                        date_earlys_lates[date_anno.object_field_num] = {'earlys': [],
+                                                                         'lates': []}
+                    if date_anno.field_num in earlys:
+                        # it's an early field
+                        date_earlys_lates[date_anno.object_field_num]['earlys'].append(date_anno.field_num)
+                    elif date_anno.field_num in lates:
+                        date_earlys_lates[date_anno.object_field_num]['lates'].append(date_anno.field_num)
+                # print('date_earlys_lates: ' + str(date_earlys_lates))
+                for subject_field_num, act_earlies_lates in date_earlys_lates.items():
+                    if len(act_earlies_lates['earlys']) == 1 \
+                       and len(act_earlies_lates['lates']) == 1:
+                        # case where the subject_field_num has exactly 1 early and 1 late field. OK for
+                        # making date data
+                        self.date_fields[subject_field_num] = {'early': act_earlies_lates['earlys'][0],
+                                                               'late': act_earlies_lates['lates'][0]}
+
+    def validate_date_value(self, date_str):
+        """ validates a date value as a float value """
+        output = False
+        if len(date_str) > 0:
+            try:
+                num_date = float(date_str)
+            except ValueError:
+                num_date = False
+            if num_date is not False:
+                output = num_date
+        return output
 
     def get_subject_fields(self):
         """ Gets subject fields, puts them into a containment hierarchy

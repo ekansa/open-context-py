@@ -4,6 +4,7 @@ from django.db.models import Q
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -13,6 +14,12 @@ from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalenc
 class LinkAnnoManagement():
     """
         Some useful methods for changing linked data annoations.
+
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+lam = LinkAnnoManagement()
+project_uuid = 'd1c85af4-c870-488a-865b-b3cf784cfc60'
+lam.make_von_den_driesch_equiv(project_uuid)
+
     """
 
     PRED_SBJ_IS_SUB_OF_OBJ = 'skos:broader'  # default predicate for subject item is subordinate to object item
@@ -168,6 +175,40 @@ class LinkAnnoManagement():
             if ok:
                 LinkAnnotation.objects\
                               .filter(hash_id=old_hash).delete()
+
+    def make_von_den_driesch_equiv(self,
+                                   project_uuid,
+                                   equiv_pred='skos:closeMatch'):
+        """ makes a skos:closeMatch equivalence relation
+            between entities in the zooarch measurement
+            ontology and predicates in a project
+        """
+        preds = Predicate.objects\
+                         .filter(project_uuid=project_uuid,
+                                 data_type='xsd:double')
+        for pred in preds:
+            man_obj = False
+            try:
+                # try to find the manifest item
+                man_obj = Manifest.objects.get(uuid=pred.uuid)
+            except Manifest.DoesNotExist:
+                man_obj = False
+            if man_obj is not False:
+                l_ents = LinkEntity.objects\
+                                   .filter(label=man_obj.label,
+                                           vocab_uri='http://opencontext.org/vocabularies/open-context-zooarch/')[:1]
+                if len(l_ents) > 0:
+                    # a Match! Now let's make a close match assertion
+                    uri = l_ents[0].uri
+                    print(str(man_obj.label) + ' matches ' + uri)
+                    la = LinkAnnotation()
+                    la.subject = man_obj.uuid  # the subordinate is the subject
+                    la.subject_type = man_obj.item_type
+                    la.project_uuid = man_obj.project_uuid
+                    la.source_id = 'label-match'
+                    la.predicate_uri = equiv_pred
+                    la.object_uri = uri
+                    la.save()
 
     def make_alt_uri(self, uri):
         """ makes an alternative URI, changing a prefixed to a full

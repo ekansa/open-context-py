@@ -189,6 +189,7 @@ function generate_field_describesHTML(field){
 	for (var i = 0, length = field.annotations.length; i < length; i++) {
 		if (field.annotations[i].predicate.id == PRED_DESCRIBES ||
 			 field.annotations[i].predicate.id == PRED_GEO_LOCATION ||
+			 field.annotations[i].predicate.id == PRED_DATE_EVENT ||
 			 field.annotations[i].predicate.id == PRED_VALUE_OF) {
 			outputHTML = "<button type=\"button\" class=\"btn btn-warning btn-xs\" ";
 			outputHTML += "onclick=\"javascript:removeDescriptionAnno(" + field.annotations[i].id + ");\" >";

@@ -257,6 +257,10 @@ class Entity():
                                         .filter(Q(uuid__icontains=qstring)\
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring))[:15]
+            if len(manifest_list) < 1:
+                # now just search for a uuid, since we may have a search just for UUIDs
+                manifest_list = Manifest.objects\
+                                        .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
         elif item_type is False and project_uuid is not False:
             project_uuid = self.make_id_list(project_uuid)
             manifest_list = Manifest.objects\
@@ -264,6 +268,10 @@ class Entity():
                                     .filter(Q(uuid__icontains=qstring)\
                                             | Q(slug__icontains=qstring)\
                                             | Q(label__icontains=qstring))[:10]
+            if len(manifest_list) < 1:
+                # now just search for a uuid, since we may have a search just for UUIDs
+                manifest_list = Manifest.objects\
+                                        .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
         self.ids_meta = {}
         output = []
         for link_entity in entity_list:

@@ -12,12 +12,14 @@ from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.indexer.reindex import SolrReIndex
+from opencontext_py.apps.edit.moddata import DeleteMerge
 
 
 # Help organize the code, with a class to make editing items easier
@@ -388,6 +390,28 @@ class ItemBasicEdit():
                                     'old': '[Old content]',
                                     'note': note}}
         return self.response
+
+    def merge_same_contexts_by_project(self,
+                                       del_project_uuid,
+                                       merge_into_project_uuid):
+        """ merge same contexts, deleting contexts from a given
+            project and keeping contexts from a given project
+        """
+        check_subjs = Subject.objects\
+                             .filter(project_uuid=del_project_uuid)
+        for check_sub in check_subjs:
+            delete_uuid = check_sub.uuid
+            context = check_sub.context
+            old_subs = Subject.objects\
+                              .filter(project_uuid=merge_into_project_uuid,
+                                      context=context)[:1]
+            if len(old_subs) > 0:
+                # OK, so there's an old context with the identical path
+                # delete the delete version, merge it into the version
+                # from the keep project
+                merge_into_uuid = old_subs[0].uuid
+                dm = DeleteMerge()
+                dm.merge_by_uuid(delete_uuid, merge_into_uuid)
 
     def valid_as_html(self, check_str):
         """ checks to see if a string is OK as HTML """

@@ -18,6 +18,21 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 
 # Processes to generate subjects items for an import
 class ProcessTypes():
+    """
+    Methods for importing type data as data
+    so linked data can be added
+    to describe it
+
+from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
+source_id = 'ref:1964907920493'
+pred_uuid = '3fad5cf1-2e4e-4be2-b55e-0b577a583c16'
+type_f = 11
+rel_pred = 'skos:closeMatch'
+le_f = 12
+pt = ProcessTypes(source_id)
+pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
+
+    """
 
     # default predicate for subject item is subordinate to object item
     PRED_SBJ_IS_SUB_OF_OBJ = 'skos:broader'
@@ -240,12 +255,12 @@ class ProcessTypes():
         """
         start_field_list = ImportField.objects\
                                       .filter(source_id=self.source_id,
-                                              field_type='start-date')[:1]
+                                              field_type='early')[:1]
         if len(start_field_list) > 0:
             self.start_field = start_field_list[0]
         stop_field_list = ImportField.objects\
                                      .filter(source_id=self.source_id,
-                                             field_type='stop-date')[:1]
+                                             field_type='late')[:1]
         if len(stop_field_list) > 0:
             self.stop_field = stop_field_list[0]
 

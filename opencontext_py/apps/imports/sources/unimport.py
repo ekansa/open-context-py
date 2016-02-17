@@ -31,6 +31,7 @@ class UnImport():
         """ deletes all from an import """
         self.delete_containment_assertions()
         self.delete_geospaces()
+        self.delete_events()
         self.delete_describe_assertions()
         self.delete_predicate_vars()
         self.delete_links_assertions()
@@ -63,6 +64,16 @@ class UnImport():
                               .filter(source_id=self.source_id,
                                       project_uuid=self.project_uuid)\
                               .delete()
+
+    def delete_events(self):
+        """ Deletes date / event data for an
+            import
+        """
+        if self.delete_ok:
+            rem_event = Event.objects\
+                             .filter(source_id=self.source_id,
+                                     project_uuid=self.project_uuid)\
+                             .delete()
 
     def delete_describe_assertions(self):
         """ Deletes an import of description assertions
