@@ -443,6 +443,9 @@ function itemEdit(item_type, item_uuid){
 			].join('\n');
 		return button_html;
 	}
+	this.moreOptions = function(field_id){
+		return field_id;
+	}
 	this.prepare_basics = function(){
 		// prepare the label field
 		var field = new edit_field();

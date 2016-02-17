@@ -591,6 +591,7 @@ function edit_field(){
 														 vocab_uri: false};
 				var val_mes = 'Valid category selected.';
 				this.validation_id_response(true, this.value_num);
+				// this.make_submit_button(true, this.value_num);
 			};
 			entSearchObj.afterSelectDone = afterSelectDone;
 			this.sobjs.push(entSearchObj);
@@ -1044,6 +1045,7 @@ function edit_field(){
 			value_num: value_num,
 			id: this.id,
 			name: this.name,
+			edit_new: this.edit_new,
 			make_field_val_domids: this.make_field_val_domids,
 			make_validation_html: this.make_validation_html,
 			make_submit_button: this.make_submit_button,
@@ -1440,6 +1442,21 @@ function edit_field(){
 		}
 		return is_valid;
 	}
+	this.validateButtonID = function(value_num){
+        // validates and leaves a submit button to use
+		var is_valid = this.check_cached_id_valid(value_num);
+
+		if (is_valid) {
+			this.validation_id_response(is_valid, value_num);
+		}
+		else{
+			// the item is not yet known to be valid (either null or false)
+			// so make an AJAX request to check
+			this.ajax_validate_id(value_num);
+		}
+		this.make_submit_button(is_valid, value_num);
+		return is_valid;
+	}
 	this.check_cached_id_valid = function(value_num){
 		var is_valid = null; //not cached
 		var dom_ids = this.make_field_val_domids(value_num);
@@ -1755,6 +1772,7 @@ function edit_field(){
 		return alert_html;
 	}
 	this.make_submit_button = function(is_valid, value_num){
+		console.log('Making that button, again for ' + value_num);
 		var dom_ids = this.make_field_val_domids(value_num);
 		
 		if (is_valid) {
