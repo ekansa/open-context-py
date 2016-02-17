@@ -32,6 +32,15 @@ le_f = 12
 pt = ProcessTypes(source_id)
 pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
 
+from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
+source_id = 'ref:1699742791864'
+pred_uuid = '636239c2-b90c-4b62-9720-2221e4a56742'
+pt = ProcessTypes(source_id)
+type_f = 1
+start_f = 2
+stop_f = 3
+pt.make_type_event_from_type_label_records(pred_uuid, type_f, start_f, stop_f)
+
     """
 
     # default predicate for subject item is subordinate to object item
