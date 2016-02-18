@@ -141,19 +141,30 @@ class ProcessMedia():
         """
         part_of = ImportFieldAnnotation.PRED_MEDIA_PART_OF
         media_fields = []
+        fields_used_as_parts_of = []
         raw_media_fields = ImportField.objects\
                                       .filter(source_id=self.source_id,
                                               field_type='media')
         for media_field_obj in raw_media_fields:
-            part_of_field = ImportFieldAnnotation.objects\
-                                                 .filter(predicate=part_of,
-                                                         object_field_num=media_field_obj.field_num)\
-                                                 .values_list('field_num')
-            if len(part_of_field) > 0:
+            part_of_fields = ImportFieldAnnotation.objects\
+                                                  .filter(source_id=self.source_id,
+                                                          predicate=part_of,
+                                                          object_field_num=media_field_obj.field_num)\
+                                                  .values_list('field_num', flat=True)
+            media_field_obj.part_list = part_of_fields
+            if len(part_of_fields) > 0:
+                # media field has part of fields
+                for part_of_field in part_of_fields:
+                    if part_of_field not in fields_used_as_parts_of:
+                        fields_used_as_parts_of.append(part_of_field)
+        for media_field_obj in raw_media_fields:
+            if media_field_obj.field_num not in fields_used_as_parts_of:
+                # current media item is not used as part of another
+                # it's a field to use for making a manifest item (as a label)
                 part_fields = ImportField.objects\
                                          .filter(source_id=self.source_id,
                                                  field_type='media',
-                                                 field_num__in=part_of_field)
+                                                 field_num__in=media_field_obj.part_list)
                 media_field_obj.parts = part_fields
                 media_fields.append(media_field_obj)
         if len(media_fields) > 0:
