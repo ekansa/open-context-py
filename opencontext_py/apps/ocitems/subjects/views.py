@@ -26,7 +26,7 @@ def index(request):
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
         # check to see if there's related data via API calls. Add if so.
         subj_s = SubjectSupplement(ocitem.json_ld)
         ocitem.json_ld = subj_s.get_catal_related()
@@ -72,7 +72,7 @@ def json_view(request, uuid):
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
         req_neg = RequestNegotiation('application/json')
         req_neg.supported_types = ['application/ld+json']
         if 'HTTP_ACCEPT' in request.META:

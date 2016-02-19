@@ -2,12 +2,14 @@ import time
 import json
 import geojson
 import copy
+import hashlib
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
 from collections import OrderedDict
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.core.cache import caches
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -85,6 +87,7 @@ class OCitem():
         self.assertion_hashes = False
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
+        self.cache_entities = True
 
     def get_item(self, act_identifier, try_slug=False):
         """
@@ -308,6 +311,7 @@ class OCitem():
         item_con = ItemConstruction()
         item_con.uuid = self.uuid
         item_con.project_uuid = self.project_uuid
+        item_con.cache_entities = self.cache_entities
         if self.assertion_hashes:
             # case to show hashs of observation values, useful for editing
             item_con.assertion_hashes = self.assertion_hashes
@@ -447,6 +451,7 @@ class ItemConstruction():
         self.entity_metadata = {}
         self.thumbnails = {}
         self.parent_list = list()
+        self.cache_entities = False
 
     def __del__(self):
         self.var_list = list()
@@ -1334,16 +1339,22 @@ class ItemConstruction():
         gets metadata about an item from a look-up to the entity class
         """
         entity_item = False
-        if(identifier in self.entity_metadata):
+        if identifier in self.entity_metadata:
             # check first to see if the manifest item is already in memory
             entity_item = self.entity_metadata[identifier]
         else:
-            ent = Entity()
-            ent.get_thumbnail = True
-            found = ent.dereference(identifier)
-            if(found):
-                entity_item = ent
-                self.entity_metadata[identifier] = entity_item
+            if self.cache_entities:
+                icc = itemConstructionCache()
+                entity_item = icc.get_entity_w_thumbnail(identifier)
+                if entity_item is not False:
+                    self.entity_metadata[identifier] = entity_item
+            else:
+                ent = Entity()
+                ent.get_thumbnail = True
+                found = ent.dereference(identifier)
+                if found:
+                    entity_item = ent
+                    self.entity_metadata[identifier] = entity_item
         return entity_item
 
     def make_dict_template_safe(self, node):
@@ -1369,3 +1380,65 @@ class ItemConstruction():
             else:
                 template_safe_dict[safe_key] = item
         return template_safe_dict
+
+
+class itemConstructionCache():
+    """
+    methods for using the Reddis cache to
+    streamline making item JSON-LD
+    """
+
+    def __init__(self):
+        self.redis_ok = True
+
+    def get_entity_w_thumbnail(self, identifier):
+        """ gets an entity with thumbnail (useful for item json) """
+        cache_id = self.make_memory_cache_key('entities-thumb', identifier)
+        item = self.get_cache_object(cache_id)
+        if item is not None:
+            output = item
+            # print('YEAH found entity: ' + cache_id)
+        else:
+            entity = Entity()
+            entity.get_thumbnail = True
+            found = entity.dereference(identifier)
+            if found:
+                output = entity
+                self.save_cache_object(cache_id, entity)
+            else:
+                output = False
+        return output
+
+    def make_memory_cache_key(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        hash_obj = hashlib.sha1()
+        concat_string = str(prefix) + " " + str(identifier)
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def get_cache_object(self, key):
+        """ gets a cached reddis object """
+        if self.redis_ok:
+            try:
+                cache = caches['redis']
+                obj = cache.get(key)
+            except:
+                obj = None
+                self.redis_ok = False
+        else:
+            obj = None
+        return obj
+
+    def save_cache_object(self, key, obj):
+        """ saves a cached reddis object """
+        if self.redis_ok:
+            try:
+                cache = caches['redis']
+                cache.set(key, obj)
+                ok = True
+            except:
+                self.redis_ok = False
+                ok = False
+        else:
+            ok = False
+        return ok
