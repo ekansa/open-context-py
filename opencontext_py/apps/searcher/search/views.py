@@ -96,7 +96,8 @@ def html_view(request, spatial_context=None):
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
@@ -159,7 +160,8 @@ def json_view(request, spatial_context=None):
             m_json_ld.spatial_context = spatial_context
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('application/json')
-            req_neg.supported_types = ['application/ld+json']
+            req_neg.supported_types = ['application/ld+json',
+                                       'application/vnd.geo+json']
             recon_obj = Reconciliation()
             json_ld = recon_obj.process(request.GET,
                                         json_ld)
@@ -231,7 +233,8 @@ def subjects_html_view(request, spatial_context=None):
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
@@ -297,7 +300,8 @@ def subjects_json_view(request, spatial_context=None):
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             mem_cache_obj = m_json_ld.mem_cache_obj
             req_neg = RequestNegotiation('application/json')
-            req_neg.supported_types = ['application/ld+json']
+            req_neg.supported_types = ['application/ld+json',
+                                       'application/vnd.geo+json']
             recon_obj = Reconciliation()
             recon_obj.mem_cache_obj = mem_cache_obj
             json_ld = recon_obj.process(request.GET,
@@ -369,7 +373,8 @@ def media_html_view(request, spatial_context=None):
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
@@ -433,7 +438,8 @@ def media_json_view(request, spatial_context=None):
             m_json_ld.spatial_context = spatial_context
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('application/json')
-            req_neg.supported_types = ['application/ld+json']
+            req_neg.supported_types = ['application/ld+json',
+                                       'application/vnd.geo+json']
             recon_obj = Reconciliation()
             json_ld = recon_obj.process(request.GET,
                                         json_ld)
@@ -503,7 +509,8 @@ def projects_html_view(request, spatial_context=None):
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
@@ -569,7 +576,8 @@ def projects_json_view(request, spatial_context=None):
             m_json_ld.spatial_context = spatial_context
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
             req_neg = RequestNegotiation('application/json')
-            req_neg.supported_types = ['application/ld+json']
+            req_neg.supported_types = ['application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
