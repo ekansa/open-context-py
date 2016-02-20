@@ -98,6 +98,25 @@ class OAIpmh():
          'schemaLocation': 'http://schema.datacite.org/oai/oai-1.0/ http://schema.datacite.org/oai/oai-1.0/oai.xsd',
          'label': 'OAI DataCite'}
     ]
+    DC_FORMATS = {'subjects': ['text/html',
+                               'application/json',
+                               'application/vnd.geo+json',
+                               'application/ld+json'],
+                  'media': ['text/html',
+                            'application/json',
+                            'application/vnd.geo+json',
+                            'application/ld+json'],
+                  'projects': ['text/html',
+                               'application/json',
+                               'application/vnd.geo+json',
+                               'application/ld+json'],
+                  'documents': ['text/html',
+                                'application/json',
+                                'application/vnd.geo+json',
+                                'application/ld+json'],
+                  'other': ['text/html',
+                            'application/json',
+                            'application/ld+json']}
 
     def __init__(self, id_href=True):
         rp = RootPath()
@@ -240,13 +259,63 @@ class OAIpmh():
         """ makes metadata in the dublin core format """
         act_format = self.get_metadata_format_attributes('oai_dc')
         if act_format is not False:
-            ns = {'dc': 'http://purl.org/dc/elements/1.1/',
+            tcheck = URImanagement.get_uuid_from_oc_uri(json_ld['id'], True)
+            if tcheck is False:
+                item_type = False
+            else:
+                item_type = tcheck['item_type']
+            dc = 'http://purl.org/dc/elements/1.1/'
+            ns = {'dc': dc,
                   'oai_dc': act_format['ns'],
                   'xsi': self.XSI_NS}
             format_xml = etree.SubElement(parent_node,
                                           '{' + act_format['ns'] + '}dc',
                                           nsmap=ns,
                                           attrib={'{' + self.XSI_NS + '}schemaLocation': act_format['schemaLocation']})
+            title_xml = etree.SubElement(format_xml, '{' + dc + '}title')
+            if 'dc-terms:title' in json_ld:
+                title_xml.text = json_ld['dc-terms:title']
+            elif 'label' in json_ld:
+                title_xml.text = json_ld['label']
+            if 'dc-terms:issued' in json_ld:
+                dt_date = json_ld['dc-terms:issued']
+                date_xml = etree.SubElement(format_xml, '{' + dc + '}date')
+                date_xml.text = dt_date
+            if 'dc-terms:creator' in json_ld:
+                if isinstance(json_ld['dc-terms:creator'], list):
+                    for ld_item in json_ld['dc-terms:creator']:
+                        act_xml = etree.SubElement(format_xml, '{' + dc + '}creator')
+                        if 'label' in ld_item:
+                            act_xml.text = ld_item['label']
+            if 'dc-terms:contributor' in json_ld:
+                if isinstance(json_ld['dc-terms:contributor'], list):
+                    for ld_item in json_ld['dc-terms:contributor']:
+                        act_xml = etree.SubElement(format_xml, '{' + dc + '}contributor')
+                        if 'label' in ld_item:
+                            act_xml.text = ld_item['label']
+            if 'owl:sameAs' in json_ld:
+                if isinstance(json_ld['owl:sameAs'], list):
+                    for ld_item in json_ld['owl:sameAs']:
+                        act_xml = etree.SubElement(format_xml, '{' + dc + '}identifier')
+                        act_xml.text = ld_item['id']
+            publisher = etree.SubElement(format_xml, '{' + dc + '}publisher')
+            publisher.text = settings.DEPLOYED_SITE_NAME
+            if item_type in self.DC_FORMATS:
+                format_list = self.DC_FORMATS[item_type]
+                if item_type == 'media':
+                    if 'oc-gen:has-files' in json_ld:
+                        if isinstance(json_ld['oc-gen:has-files'], list):
+                            for act_f in json_ld['oc-gen:has-files']:
+                                if 'type' in act_f and 'dc-terms:hasFormat' in act_f:
+                                    if act_f['type'] == 'oc-gen:fullfile':
+                                        mime_uri = act_f['dc-terms:hasFormat']
+                                        format_list.append(mime_uri.replace('http://purl.org/NET/mediatypes/',
+                                                                            ''))
+            else:
+                format_list = self.DC_FORMATS['other']
+            for mime in format_list:
+                act_xml = etree.SubElement(format_xml, '{' + dc + '}format')
+                act_xml.text = mime
 
     def make_datacite_metadata_xml(self, parent_node, json_ld):
         """ makes metadata in the datacite specification """
