@@ -299,16 +299,24 @@ class CandidateMediaFile():
             if '.' in self.file_uri:
                 f_ex = self.file_uri.split('.')
                 f_extension = '.' + f_ex[-1]
-                f_ext_upper = '.' + f_extension.upper()
-                f_ext_lower = '.' + f_extension.lower()
-                if f_extension != f_ext_upper:
-                    # try an upper case extension
-                    self.file_uri = self.file_uri.replace(f_extension,
-                                                          f_ext_upper)
-                else:
-                    # try a lower case extension
-                    self.file_uri = self.file_uri.replace(f_extension,
-                                                          f_ext_lower)
-                mf.file_uri = self.file_uri
-                mf.save()
-
+                f_ext_upper = f_extension.upper()
+                f_ext_lower = f_extension.lower()
+                f_alt_exts = []
+                f_alt_exts.append(self.file_uri.replace(f_extension,
+                                                        f_ext_upper))
+                f_alt_exts.append(self.file_uri.replace(f_extension,
+                                                        f_ext_lower))
+                check_extension = True
+                for f_alt_ext in f_alt_exts:
+                    # do a loop, since sometimes the user provided data with totally
+                    # wrong extention capitalizations
+                    if check_extension:
+                        self.file_uri = f_alt_ext
+                        mf.file_uri = self.file_uri
+                        mf.save()
+                        if mf.filesize > 0:
+                            print('Corrected extension capitalization: ' + str(self.file_uri))
+                            check_extension = False
+                            # yeah! We found the correct extention
+                            # capitalization
+                            break

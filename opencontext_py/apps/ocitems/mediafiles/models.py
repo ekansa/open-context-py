@@ -30,7 +30,7 @@ class Mediafile(models.Model):
             ok = mm.get_head_info(self.file_uri)
             if ok:
                 self.mime_type_uri = mm.mime_type_uri
-                self.filesize = mm.filesize
+                self.filesize = int(float(mm.filesize))
 
     def save(self, *args, **kwargs):
         """
