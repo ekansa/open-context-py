@@ -291,13 +291,24 @@ class CandidateMediaFile():
         mf.mime_type_ur = ''
         ok = True
         mf.save()
-        """
-        try:
-            mf.save()
-        except:
-            ok = False
-        if ok is False:
-            max_id = Mediafile.objects.all().order_by("-id")[0]
-            mf.id = max_id[0].id + 1
-            mf.save()
-        """
+        if mf.filesize == 0:
+            # filesize is still zero, meaning URI didn't
+            # give an OK response to a HEAD request.
+            # try again with a different capitalization
+            # of the file extension (.JPG vs .jpg)
+            if '.' in self.file_uri:
+                f_ex = self.file_uri.split(.)
+                f_extension = '.' + f_ex[-1]
+                f_ext_upper = '.' + f_extension.upper()
+                f_ext_lower = '.' + f_extension.lower()
+                if f_extension != f_ext_upper:
+                    # try an upper case extension
+                    self.file_uri = self.file_uri.replace(f_extension,
+                                                          f_ext_upper)
+                else:
+                    # try a lower case extension
+                    self.file_uri = self.file_uri.replace(f_extension,
+                                                          f_ext_lower)
+                mf.file_uri = self.file_uri
+                mf.save()
+
