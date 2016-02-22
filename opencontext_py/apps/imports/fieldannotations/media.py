@@ -297,7 +297,7 @@ class CandidateMediaFile():
             # try again with a different capitalization
             # of the file extension (.JPG vs .jpg)
             if '.' in self.file_uri:
-                f_ex = self.file_uri.split(.)
+                f_ex = self.file_uri.split('.')
                 f_extension = '.' + f_ex[-1]
                 f_ext_upper = '.' + f_extension.upper()
                 f_ext_lower = '.' + f_extension.lower()
