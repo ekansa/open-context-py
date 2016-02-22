@@ -1,3 +1,4 @@
+from time import sleep
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
@@ -245,6 +246,8 @@ class CandidateMedia():
 
 class CandidateMediaFile():
 
+    SLEEP_TIME = .5
+
     def __init__(self, uuid):
         self.uuid = uuid
         self.project_uuid = False
@@ -311,6 +314,8 @@ class CandidateMediaFile():
                     # do a loop, since sometimes the user provided data with totally
                     # wrong extention capitalizations
                     if check_extension:
+                        print('Pause before checking extension capitalization...')
+                        sleep(self.SLEEP_TIME)
                         self.file_uri = f_alt_ext
                         mf.file_uri = self.file_uri
                         mf.save()
