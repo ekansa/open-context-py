@@ -88,6 +88,7 @@ class ProcessMedia():
                                     for rec_hash, part_dist_rec in part_dist_records.items():
                                         # distinct records for the media file parts of a media item
                                         cmf = CandidateMediaFile(cm.uuid)
+                                        cmf.imp_cell_obj = part_dist_rec['imp_cell_obj']
                                         cmf.project_uuid = self.project_uuid
                                         cmf.source_id = self.source_id
                                         # file type is in the field_value_cat
@@ -255,6 +256,7 @@ class CandidateMediaFile():
         self.file_type = False
         self.file_uri = False  
         self.new_entity = False
+        self.imp_cell_obj = False  # ImportCell object
 
     def reconcile_media_file(self, file_uri):
         """ Checks to see if the item exists in the manifest """
@@ -284,6 +286,8 @@ class CandidateMediaFile():
 
     def create_media_file(self):
         """ Create and save a new media file object"""
+        sleep(.1)
+        ok = True
         mf = Mediafile()
         mf.uuid = self.uuid
         mf.project_uuid = self.project_uuid
@@ -293,8 +297,12 @@ class CandidateMediaFile():
         mf.filesize = 0
         mf.mime_type_ur = ''
         ok = True
-        mf.save()
-        if mf.filesize == 0:
+        try:
+            mf.save()
+        except:
+            self.new_entity = False
+            ok = False
+        if ok and mf.filesize == 0:
             # filesize is still zero, meaning URI didn't
             # give an OK response to a HEAD request.
             # try again with a different capitalization
@@ -324,4 +332,10 @@ class CandidateMediaFile():
                             check_extension = False
                             # yeah! We found the correct extention
                             # capitalization
+                            # Now, save the corrected file_uri import cell record
+                            # So if we have to re-run the import, we don't have to do
+                            # multiple checks for capitalization
+                            self.imp_cell_obj.record = self.file_uri
+                            self.imp_cell_obj.save()
+                            print('Saved corrected extension import cell record')
                             break
