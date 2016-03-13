@@ -14,75 +14,10 @@ class OAIpmh():
     Open Archives Initiative, Protocol for Metadata
     Harvesting Methods
 
-    Supports OAI-DC and OAI-Datacite
-
-    OAI-DC example
-    <oai_dc:dc xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
-    <dc:title>Implementation of Axiomatic Language </dc:title>
-    <dc:creator>Wilson, Walter W.</dc:creator>
-    <dc:publisher>Schloss Dagstuhl - Leibniz-Zentrum fuer Informatik GmbH, Wadern/Saarbruecken, Germany</dc:publisher>
-    <dc:date>2011</dc:date>
-    <dc:identifier>doi:10.4230/LIPIcs.ICLP.2011.290</dc:identifier>
-    <dc:subject>Computer Science</dc:subject>
-    <dc:subject>000 Computer science, knowledge, general works</dc:subject>
-    <dc:description>Other</dc:description>
-    <dc:description>
-        This report summarizes a PhD research effort to implement a type of logic programming language called "axiomatic language". Axiomatic language is intended as a specification language, so its implementation involves the transformation of specifications to efficient algorithms. The language is described and the implementation task is discussed.
-        </dc:description>
-    <dc:contributor>Herbstritt, Marc</dc:contributor>
-    <dc:language>eng</dc:language>
-    <dc:type>Text</dc:type>
-    <dc:type>ConferencePaper</dc:type>
-    <dc:format>6 pages</dc:format>
-    <dc:format>application/pdf</dc:format>
-    <dc:rights>Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported license (CC-BY-NC-ND)</dc:rights>
-    </oai_dc:dc>
-
-    Datacite example
-    <oai_datacite xmlns="http://schema.datacite.org/oai/oai-1.0/" xsi:schemaLocation="http://schema.datacite.org/oai/oai-1.0/ http://schema.datacite.org/oai/oai-1.0/oai.xsd">
-<isReferenceQuality>false</isReferenceQuality>
-<schemaVersion>2.1</schemaVersion>
-<datacentreSymbol>TIB.DAGST</datacentreSymbol>
-<payload>
-<resource xmlns="http://datacite.org/schema/kernel-2.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://datacite.org/schema/kernel-2.1 http://schema.datacite.org/meta/kernel-2.1/metadata.xsd">
-<identifier identifierType="DOI">10.4230/LIPIcs.ICLP.2011.290</identifier>
-<creators>
-<creator>
-<creatorName>Wilson, Walter W.</creatorName>
-</creator>
-</creators>
-<titles>
-<title>Implementation of Axiomatic Language </title>
-</titles>
-<publisher>Schloss Dagstuhl - Leibniz-Zentrum fuer Informatik GmbH, Wadern/Saarbruecken, Germany</publisher>
-<publicationYear>2011</publicationYear>
-<subjects>
-<subject>Computer Science</subject>
-<subject subjectScheme="DDC">000 Computer science, knowledge, general works</subject>
-</subjects>
-<contributors>
-<contributor contributorType="Editor">
-<contributorName>Herbstritt, Marc</contributorName>
-</contributor>
-</contributors>
-<dates>
-<date dateType="Available">2011-06-27</date>
-</dates>
-<language>eng</language>
-<resourceType resourceTypeGeneral="Text">ConferencePaper</resourceType>
-<sizes>
-<size>6 pages</size>
-</sizes>
-<formats>…</formats>
-<version>1.0</version>
-<rights>Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported license (CC-BY-NC-ND)</rights>
-<descriptions>…</descriptions>
-</resource>
-</payload>
-</oai_datacite>
-
+    Supports OAI-DC and OAI-Datacite and Datacite
 
     """
+
     OAI_PMH_NS = 'http://www.openarchives.org/OAI/2.0/'
     XSI_NS = 'http://www.w3.org/2001/XMLSchema-instance'
     SL_NS = 'http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd'
@@ -96,7 +31,12 @@ class OAIpmh():
          'schema': 'http://schema.datacite.org/oai/oai-1.0/oai.xsd',
          'ns': 'http://schema.datacite.org/oai/oai-1.0/',
          'schemaLocation': 'http://schema.datacite.org/oai/oai-1.0/ http://schema.datacite.org/oai/oai-1.0/oai.xsd',
-         'label': 'OAI DataCite'}
+         'label': 'OAI DataCite'},
+        {'prefix': 'datacite',
+         'schema': 'http://schema.datacite.org/meta/nonexistant/nonexistant.xsd',
+         'ns': 'http://datacite.org/schema/nonexistant',
+         'schemaLocation': 'http://datacite.org/schema/kernel-2.1 http://schema.datacite.org/meta/kernel-2.1/metadata.xsd',
+         'label': 'DataCite'}
     ]
     DATACITE_RESOURCE = {
         'ns': 'http://datacite.org/schema/kernel-2.1',
@@ -140,6 +80,21 @@ class OAIpmh():
                   'oc': 'Resource'}
     }
 
+    BASE_SETS = {
+        'subjects': {'params': {'type': 'subjects'},
+                     'label': 'Data Records'},
+        'media': {'params': {'type': 'media'},
+                  'label': 'Media resources'},
+        'documents': {'params': {'type': 'documents'},
+                      'label': 'Documents, Diaries, and Notes'},
+        'projects':  {'params': {'type': 'projects'},
+                      'label': 'Data Publication Projects'},
+        'types': {'params': {'type': 'types'},
+                  'label': 'Vocabulary Categories and Concepts'},
+        'predicates': {'params': {'type': 'predicates'},
+                       'label': 'Predicates, Properties and Relations'},
+    }
+
     def __init__(self, id_href=True):
         rp = RootPath()
         self.publisher_name = 'Open Context'
@@ -157,6 +112,8 @@ class OAIpmh():
         self.resumption_token = None
         self.rows = 100
         self.default_sort = 'published--desc'  # default sort of items (Publication date, descending)
+        self.requested_set = None
+        self.requested_set_valid = None
 
     def process_request(self, request):
         """ processes a request verb,
@@ -166,6 +123,7 @@ class OAIpmh():
         self.check_validate_verb(request)
         self.check_metadata_prefix(request)
         self.check_resumption_token(request)
+        self.check_validate_set(request)
         self.make_xml_root()
         self.make_general_xml()
         self.make_request_xml()
@@ -201,6 +159,17 @@ class OAIpmh():
             if self.metadata_prefix_valid is False:
                 self.errors.append('cannotDisseminateFormat')
         return self.metadata_prefix_valid
+
+    def check_validate_set(self, request):
+        if self.requested_set is None and \
+           'set' in request.GET:
+            self.requested_set = request.GET['set']
+            if self.requested_set in self.BASE_SETS:
+                self.requested_set_valid = True
+            else:
+                self.requested_set_valid = False
+                self.errors.append('noRecordsMatch')
+        return self.requested_set_valid
 
     def check_resumption_token(self, request):
         """ Checks to see if a resumption token is in
@@ -247,6 +216,8 @@ class OAIpmh():
             elif self.verb == 'ListRecords':
                 self.rows = 20
                 self.make_list_records_xml()
+            elif self.verb == 'ListSets':
+                self.make_list_sets_xml()
 
     def make_list_records_xml(self):
         """ Makes the XML for the ListIdentifiers
@@ -276,6 +247,8 @@ class OAIpmh():
             if self.metadata_prefix == 'oai_dc':
                 self.make_dc_metadata_xml(metadata_xml, json_ld)
             elif self.metadata_prefix == 'oai_datacite':
+                self.make_oai_datacite_metadata_xml(metadata_xml, json_ld)
+            elif self.metadata_prefix == 'datacite':
                 self.make_datacite_metadata_xml(metadata_xml, json_ld)
 
     def make_dc_metadata_xml(self, parent_node, json_ld):
@@ -355,13 +328,8 @@ class OAIpmh():
                     act_xml = etree.SubElement(format_xml, '{' + dc + '}subject')
                     act_xml.text = subject
 
-    def make_datacite_metadata_xml(self, parent_node, json_ld):
-        """ makes metadata in the datacite specification """
-        tcheck = URImanagement.get_uuid_from_oc_uri(json_ld['id'], True)
-        if tcheck is False:
-            item_type = False
-        else:
-            item_type = tcheck['item_type']
+    def make_oai_datacite_metadata_xml(self, parent_node, json_ld):
+        """ makes metadata in the OAI-datacite specification """
         act_format = self.get_metadata_format_attributes('oai_datacite')
         if act_format is not False:
             format_xml = etree.SubElement(parent_node,
@@ -369,102 +337,142 @@ class OAIpmh():
                                           nsmap={None: act_format['ns']},
                                           attrib={'{' + self.XSI_NS + '}schemaLocation': act_format['schemaLocation']})
             payload_xml = etree.SubElement(format_xml, 'payload')
-            resource_xml = etree.SubElement(payload_xml,
-                                            'resoure',
-                                            nsmap={None: self.DATACITE_RESOURCE['ns']},
-                                            attrib={'{' + self.XSI_NS + '}schemaLocation': self.DATACITE_RESOURCE['schemaLocation']})
-            act_node = etree.SubElement(resource_xml, 'titles')
-            if 'dc-terms:title' in json_ld:
-                act_xml = etree.SubElement(act_node, 'title')
-                act_xml.text = json_ld['dc-terms:title']
-            if 'label' in json_ld:
+            # now the rest is just the datacite specification
+            self.make_datacite_metadata_xml(payload_xml, json_ld)
+
+    def make_datacite_metadata_xml(self, parent_node, json_ld):
+        """ makes metadata for the datacite specification, which
+            is also used in the oai_datacite specification
+        """
+        tcheck = URImanagement.get_uuid_from_oc_uri(json_ld['id'], True)
+        if tcheck is False:
+            item_type = False
+        else:
+            item_type = tcheck['item_type']
+        resource_xml = etree.SubElement(parent_node,
+                                        'resoure',
+                                        nsmap={None: self.DATACITE_RESOURCE['ns']},
+                                        attrib={'{' + self.XSI_NS + '}schemaLocation': self.DATACITE_RESOURCE['schemaLocation']})
+        identifiers = {}
+        if 'id' in json_ld:
+            identifiers['URL'] = json_ld['id']
+        if 'owl:sameAs' in json_ld:
+            if isinstance(json_ld['owl:sameAs'], list):
+                for ld_item in json_ld['owl:sameAs']:
+                    if 'doi' in ld_item['id']:
+                        identifiers['DOI'] = ld_item['id'].replace('http://dx.doi.org/', '')
+                    if 'ark' in ld_item['id']:
+                        identifiers['ARK'] = ld_item['id'].replace('http://n2t.net/', '')
+        if 'DOI' in identifiers:
+            act_xml = etree.SubElement(resource_xml,
+                                       'identifier',
+                                       attrib={'identifierType': 'DOI'})
+            act_xml.text = identifiers['DOI']
+        elif 'ARK' in identifiers:
+            act_xml = etree.SubElement(resource_xml,
+                                       'identifier',
+                                       attrib={'identifierType': 'ARK'})
+            act_xml.text = identifiers['ARK']
+        elif 'URL' in identifiers:
+            act_xml = etree.SubElement(resource_xml,
+                                       'identifier',
+                                       attrib={'identifierType': 'URL'})
+            act_xml.text = identifiers['URL']
+        act_node = etree.SubElement(resource_xml, 'titles')
+        dc_title = None
+        if 'dc-terms:title' in json_ld:
+            act_xml = etree.SubElement(act_node, 'title')
+            act_xml.text = json_ld['dc-terms:title']
+            dc_title = json_ld['dc-terms:title']
+        if 'label' in json_ld:
+            if dc_title != json_ld['label']:
                 act_xml = etree.SubElement(act_node, 'title')
                 act_xml.text = json_ld['label']
-            if 'dc-terms:creator' in json_ld:
-                if isinstance(json_ld['dc-terms:creator'], list):
-                    act_node = etree.SubElement(resource_xml, 'creators')
-                    for ld_item in json_ld['dc-terms:creator']:
-                        act_xml = etree.SubElement(act_node, 'creator')
-                        if 'label' in ld_item:
-                            act_xml.text = ld_item['label']
-            if 'dc-terms:contributor' in json_ld:
-                if isinstance(json_ld['dc-terms:contributor'], list):
-                    act_node = etree.SubElement(resource_xml, 'contributors')
-                    for ld_item in json_ld['dc-terms:contributor']:
-                        act_xml = etree.SubElement(act_node, 'contributor')
-                        if 'label' in ld_item:
-                            act_xml.text = ld_item['label']
-            act_node = etree.SubElement(resource_xml, 'dates')
-            create_date = time.strftime('%Y-%m-%d')
-            if 'dc-terms:issued' in json_ld:
-                create_date = json_ld['dc-terms:issued']
-                date_xml = etree.SubElement(act_node,
-                                            'date',
-                                            attrib={'dateType': 'Available'})
-                date_xml.text = create_date
-            if 'dc-terms:modified' in json_ld:
-                mod_date = json_ld['dc-terms:issued']
-                date_xml = etree.SubElement(act_node,
-                                            'date',
-                                            attrib={'dateType': 'Updated'})
-                date_xml.text = mod_date
-            act_node = etree.SubElement(resource_xml, 'publisher')
-            act_node.text = self.publisher_name
-            act_node = etree.SubElement(resource_xml, 'publicationYear')
-            act_node.text = create_date[:4]  # the year, first 4 characters
-            # now add the Datacite resource type
-            if item_type in self.DATACITE_RESOURCE_TYPES:
-                act_rt = self.DATACITE_RESOURCE_TYPES[item_type]
-            else:
-                act_rt = self.DATACITE_RESOURCE_TYPES['other']
-            rt_xml = etree.SubElement(resource_xml,
-                                      'resourceType',
-                                      attrib={'resourceTypeGeneral': act_rt['ResourceTypeGeneral']})
-            rt_xml.text = act_rt['oc']
-            # now add relevant mime-types
-            if item_type in self.DC_FORMATS:
-                format_list = self.DC_FORMATS[item_type]
-                if item_type == 'media':
-                    if 'oc-gen:has-files' in json_ld:
-                        if isinstance(json_ld['oc-gen:has-files'], list):
-                            for act_f in json_ld['oc-gen:has-files']:
-                                if 'type' in act_f and 'dc-terms:hasFormat' in act_f:
-                                    if act_f['type'] == 'oc-gen:fullfile':
-                                        mime_uri = act_f['dc-terms:hasFormat']
-                                        format_list.append(mime_uri.replace('http://purl.org/NET/mediatypes/',
-                                                                            ''))
-            else:
-                format_list = self.DC_FORMATS['other']
-            act_node = etree.SubElement(resource_xml, 'formats')
-            for mime in format_list:
-                act_xml = etree.SubElement(act_node, 'format')
-                act_xml.text = mime
-            subjects_list = []
-            if 'category' in json_ld:
-                cat = json_ld['category'][0]
-                cat_label = self.get_category_label(cat, json_ld)
-                if cat_label is not False:
-                    subjects_list.append(cat_label)
-            if 'dc-terms:subject' in json_ld:
-                if isinstance(json_ld['dc-terms:subject'], list):
-                    for subj in json_ld['dc-terms:subject']:
-                        if 'label' in subj:
-                            subjects_list.append(subj['label'])
-            if len(subjects_list) > 0:
-                act_node = etree.SubElement(resource_xml, 'subjects')
-                for subject in subjects_list:
-                    act_xml = etree.SubElement(act_node, 'subject')
-                    act_xml.text = subject
-            if 'dc-terms:isPartOf' in json_ld:
-                if isinstance(json_ld['dc-terms:isPartOf'], list):
-                    for rel in json_ld['dc-terms:isPartOf']:
-                        if 'id' in rel:
-                            related = rel['id']
-                            act_xml = etree.SubElement(resource_xml,
-                                                       'RelatedIdentifier',
-                                                       attrib={'relatedIdentifierType': 'URL',
-                                                               'relationType': 'IsPartOf'})
-                            act_xml.text = related
+        if 'dc-terms:creator' in json_ld:
+            if isinstance(json_ld['dc-terms:creator'], list):
+                act_node = etree.SubElement(resource_xml, 'creators')
+                for ld_item in json_ld['dc-terms:creator']:
+                    act_xml = etree.SubElement(act_node, 'creator')
+                    if 'label' in ld_item:
+                        act_xml.text = ld_item['label']
+        if 'dc-terms:contributor' in json_ld:
+            if isinstance(json_ld['dc-terms:contributor'], list):
+                act_node = etree.SubElement(resource_xml, 'contributors')
+                for ld_item in json_ld['dc-terms:contributor']:
+                    act_xml = etree.SubElement(act_node, 'contributor')
+                    if 'label' in ld_item:
+                        act_xml.text = ld_item['label']
+        act_node = etree.SubElement(resource_xml, 'dates')
+        create_date = time.strftime('%Y-%m-%d')
+        if 'dc-terms:issued' in json_ld:
+            create_date = json_ld['dc-terms:issued']
+            date_xml = etree.SubElement(act_node,
+                                        'date',
+                                        attrib={'dateType': 'Available'})
+            date_xml.text = create_date
+        if 'dc-terms:modified' in json_ld:
+            mod_date = json_ld['dc-terms:issued']
+            date_xml = etree.SubElement(act_node,
+                                        'date',
+                                        attrib={'dateType': 'Updated'})
+            date_xml.text = mod_date
+        act_node = etree.SubElement(resource_xml, 'publisher')
+        act_node.text = self.publisher_name
+        act_node = etree.SubElement(resource_xml, 'publicationYear')
+        act_node.text = create_date[:4]  # the year, first 4 characters
+        # now add the Datacite resource type
+        if item_type in self.DATACITE_RESOURCE_TYPES:
+            act_rt = self.DATACITE_RESOURCE_TYPES[item_type]
+        else:
+            act_rt = self.DATACITE_RESOURCE_TYPES['other']
+        rt_xml = etree.SubElement(resource_xml,
+                                  'resourceType',
+                                  attrib={'resourceTypeGeneral': act_rt['ResourceTypeGeneral']})
+        rt_xml.text = act_rt['oc']
+        # now add relevant mime-types
+        if item_type in self.DC_FORMATS:
+            format_list = self.DC_FORMATS[item_type]
+            if item_type == 'media':
+                if 'oc-gen:has-files' in json_ld:
+                    if isinstance(json_ld['oc-gen:has-files'], list):
+                        for act_f in json_ld['oc-gen:has-files']:
+                            if 'type' in act_f and 'dc-terms:hasFormat' in act_f:
+                                if act_f['type'] == 'oc-gen:fullfile':
+                                    mime_uri = act_f['dc-terms:hasFormat']
+                                    format_list.append(mime_uri.replace('http://purl.org/NET/mediatypes/',
+                                                                        ''))
+        else:
+            format_list = self.DC_FORMATS['other']
+        act_node = etree.SubElement(resource_xml, 'formats')
+        for mime in format_list:
+            act_xml = etree.SubElement(act_node, 'format')
+            act_xml.text = mime
+        subjects_list = []
+        if 'category' in json_ld:
+            cat = json_ld['category'][0]
+            cat_label = self.get_category_label(cat, json_ld)
+            if cat_label is not False:
+                subjects_list.append(cat_label)
+        if 'dc-terms:subject' in json_ld:
+            if isinstance(json_ld['dc-terms:subject'], list):
+                for subj in json_ld['dc-terms:subject']:
+                    if 'label' in subj:
+                        subjects_list.append(subj['label'])
+        if len(subjects_list) > 0:
+            act_node = etree.SubElement(resource_xml, 'subjects')
+            for subject in subjects_list:
+                act_xml = etree.SubElement(act_node, 'subject')
+                act_xml.text = subject
+        if 'dc-terms:isPartOf' in json_ld:
+            if isinstance(json_ld['dc-terms:isPartOf'], list):
+                for rel in json_ld['dc-terms:isPartOf']:
+                    if 'id' in rel:
+                        related = rel['id']
+                        act_xml = etree.SubElement(resource_xml,
+                                                   'RelatedIdentifier',
+                                                   attrib={'relatedIdentifierType': 'URL',
+                                                           'relationType': 'IsPartOf'})
+                        act_xml.text = related
 
     def make_list_identifiers_xml(self):
         """ Makes the XML for the ListIdentifiers
@@ -493,6 +501,12 @@ class OAIpmh():
         date_stamp = etree.SubElement(header, 'datestamp')
         if 'uri' in item:
             identifier.text = item['uri']
+            for item_type, item_set_description in self.BASE_SETS.items():
+                if item_type in item['uri']:
+                    # found the item type, which defines its set
+                    set_xml = etree.SubElement(header, 'setSpec')
+                    set_xml.text = item_type
+                    break
         if 'published' in item:
             date_stamp.text = item['published']
 
@@ -527,6 +541,24 @@ class OAIpmh():
                                                 cursor=str(start_index))
             resumption_token.text = new_resumption_token_text
 
+    def make_list_sets_xml(self):
+        """ Makes the XML for hte ListSets
+            verb
+        """
+        self.get_general_summary_facets()
+        if isinstance(self.metadata_facets, dict):
+            list_sets_xml = etree.SubElement(self.root, 'ListSets')
+            for item_type, item_set_des in self.BASE_SETS.items():
+                set_xml = etree.SubElement(list_sets_xml, 'set')
+                set_spec = etree.SubElement(set_xml, 'setSpec')
+                set_spec.text = item_type
+                set_name = etree.SubElement(set_xml, 'setName')
+                set_name.text = item_set_des['label']
+        else:
+            error = etree.SubElement(self.root, 'error')
+            error.text = 'Internal Server Error: Failed to get index of needed to generate sets'
+            self.http_resp_code = 500
+
     def make_list_metadata_formats_xml(self):
         """ Makes the XML for the ListMetadataFormats
             verb
@@ -538,6 +570,8 @@ class OAIpmh():
             prefix.text = meta_f['prefix']
             schema = etree.SubElement(meta_xml, 'schema')
             schema.text = meta_f['schema']
+            meta_ns = etree.SubElement(meta_xml, 'metadataNamespace')
+            meta_ns.text = meta_f['ns']
 
     def make_identify_xml(self):
         """ Makes the XML for the
@@ -596,14 +630,16 @@ class OAIpmh():
 
     def make_error_item_xml(self, code):
         """ makes an XML error message """
+        error = etree.SubElement(self.root, 'error', code=code)
         if code == 'badVerb':
-            error = etree.SubElement(self.root, 'error', code=code)
             error.text = 'Illegal OAI verb'
         elif code == 'cannotDisseminateFormat':
-            error = etree.SubElement(self.root, 'error', code=code)
+            pass
         elif code == 'badResumptionToken':
-            error = etree.SubElement(self.root, 'error', code=code)
             error.text = 'The value of the resumptionToken argument is invalid or expired'
+        elif code == 'noRecordsMatch':
+            error.text = 'The combination of the values of the from, until, \
+                         set, and metadataPrefix arguments results in an empty list.'
 
     def make_update_resumption_object(self,
                                       api_json_obj=None,
@@ -661,7 +697,8 @@ class OAIpmh():
         """
         if self.metadata_facets is None:
             oc_url = self.base_url + '/search/'
-            payload = {'response': 'metadata,facets'}
+            payload = {'response': 'metadata,facet'}
+            payload = self.add_set_params_to_payload(payload)
             header = {'Accept': 'application/json'}
             try:
                 r = requests.get(oc_url,
@@ -692,6 +729,7 @@ class OAIpmh():
             payload = resumption_obj
             payload['response'] = 'metadata,uri-meta'
             payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
+            payload = self.add_set_params_to_payload(payload)
             header = {'Accept': 'application/json'}
             try:
                 r = requests.get(oc_url,
@@ -706,6 +744,49 @@ class OAIpmh():
                 error.text = 'Internal Server Error: Failed to get collection metadata summary'
                 self.http_resp_code = 500
         return self.metadata_uris
+
+    def add_set_params_to_payload(self, payload):
+        """ adds extra query parameters to the request
+            payload that are needed to filter by
+            OAI "set"
+        """
+        set_params = {}
+        if self.requested_set_valid:
+            # limit to a valid requested set, using the query
+            # params defined for the set
+            set_params = self.BASE_SETS[self.requested_set]['params']
+        else:
+            # request all avalable sets, since there
+            # is no requested limit on the set
+            item_types = list(self.BASE_SETS.keys())
+            set_params['type'] = '||'.join(item_types)
+        # now add the set_params to the payload
+        for param_key, param_value in set_params.items():
+            payload[param_key] = param_value
+        return payload
+
+        def get_item_json_ld(self, item):
+            """ gets metadata and uris
+            """
+            output = False
+            if 'uri' in item:
+                tcheck = URImanagement.get_uuid_from_oc_uri(item['uri'], True)
+                if tcheck is False:
+                    item_type = False
+                else:
+                    uuid = tcheck['uuid']
+                    item_type = tcheck['item_type']
+                    url = self.base_url + '/' + item_type + '/' + uuid
+                    header = {'Accept': 'application/json'}
+                    try:
+                        r = requests.get(url,
+                                         headers=header,
+                                         timeout=60)
+                        r.raise_for_status()
+                        output = r.json()
+                    except:
+                        output = False
+            return output
 
     def get_item_json_ld(self, item):
         """ gets metadata and uris
