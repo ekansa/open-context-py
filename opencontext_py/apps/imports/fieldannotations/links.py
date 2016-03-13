@@ -167,7 +167,9 @@ class ProcessLinks():
                         subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
                         subject_type = sub_field_obj.field_type
                         subject_ok = dist_rec['imp_cell_obj'].cell_ok
-                        if subject_uuid is False:
+                        subject_record = dist_rec['imp_cell_obj'].record
+                        if subject_uuid is False or\
+                           len(subject_record) < 1:
                             subject_ok = False
                         sort = 0
                         in_rows = dist_rec['rows']
@@ -207,6 +209,10 @@ class ProcessLinks():
                                     object_uuid = obj_rec['imp_cell_obj'].fl_uuid
                                     object_type = obj_field_obj.field_type
                                     object_ok = obj_rec['imp_cell_obj'].cell_ok
+                                    object_record = obj_rec['imp_cell_obj'].record
+                                    if len(object_record) < 1:
+                                        # blank record, don't make a link
+                                        object_ok = False
                                     cla = CandidateLinkAssertion()
                                     cla.project_uuid = self.project_uuid
                                     cla.source_id = self.source_id
@@ -223,7 +229,7 @@ class ProcessLinks():
                                         cla.create_link()
                                         if cla.is_valid:
                                             self.count_new_assertions += 1
-                                            print('Count OK: ' + str(self.count_new_assertions))
+                                            print('Link Count OK: ' + str(self.count_new_assertions))
 
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 

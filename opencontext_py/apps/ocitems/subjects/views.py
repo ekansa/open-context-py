@@ -26,7 +26,7 @@ def index(request):
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
         # check to see if there's related data via API calls. Add if so.
         subj_s = SubjectSupplement(ocitem.json_ld)
         ocitem.json_ld = subj_s.get_catal_related()
@@ -38,7 +38,8 @@ def html_view(request, uuid):
         if temp_item.view_permitted:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'application/vnd.geo+json']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
@@ -72,9 +73,10 @@ def json_view(request, uuid):
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
         req_neg = RequestNegotiation('application/json')
-        req_neg.supported_types = ['application/ld+json']
+        req_neg.supported_types = ['application/ld+json',
+                                   'application/vnd.geo+json']
         if 'HTTP_ACCEPT' in request.META:
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:

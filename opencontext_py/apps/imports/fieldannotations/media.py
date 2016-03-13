@@ -1,3 +1,4 @@
+from time import sleep
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
@@ -87,6 +88,7 @@ class ProcessMedia():
                                     for rec_hash, part_dist_rec in part_dist_records.items():
                                         # distinct records for the media file parts of a media item
                                         cmf = CandidateMediaFile(cm.uuid)
+                                        cmf.imp_cell_obj = part_dist_rec['imp_cell_obj']
                                         cmf.project_uuid = self.project_uuid
                                         cmf.source_id = self.source_id
                                         # file type is in the field_value_cat
@@ -141,19 +143,30 @@ class ProcessMedia():
         """
         part_of = ImportFieldAnnotation.PRED_MEDIA_PART_OF
         media_fields = []
+        fields_used_as_parts_of = []
         raw_media_fields = ImportField.objects\
                                       .filter(source_id=self.source_id,
                                               field_type='media')
         for media_field_obj in raw_media_fields:
-            part_of_field = ImportFieldAnnotation.objects\
-                                                 .filter(predicate=part_of,
-                                                         object_field_num=media_field_obj.field_num)\
-                                                 .values_list('field_num')
-            if len(part_of_field) > 0:
+            part_of_fields = ImportFieldAnnotation.objects\
+                                                  .filter(source_id=self.source_id,
+                                                          predicate=part_of,
+                                                          object_field_num=media_field_obj.field_num)\
+                                                  .values_list('field_num', flat=True)
+            media_field_obj.part_list = part_of_fields
+            if len(part_of_fields) > 0:
+                # media field has part of fields
+                for part_of_field in part_of_fields:
+                    if part_of_field not in fields_used_as_parts_of:
+                        fields_used_as_parts_of.append(part_of_field)
+        for media_field_obj in raw_media_fields:
+            if media_field_obj.field_num not in fields_used_as_parts_of:
+                # current media item is not used as part of another
+                # it's a field to use for making a manifest item (as a label)
                 part_fields = ImportField.objects\
                                          .filter(source_id=self.source_id,
                                                  field_type='media',
-                                                 field_num__in=part_of_field)
+                                                 field_num__in=media_field_obj.part_list)
                 media_field_obj.parts = part_fields
                 media_fields.append(media_field_obj)
         if len(media_fields) > 0:
@@ -234,6 +247,8 @@ class CandidateMedia():
 
 class CandidateMediaFile():
 
+    SLEEP_TIME = .5
+
     def __init__(self, uuid):
         self.uuid = uuid
         self.project_uuid = False
@@ -241,6 +256,7 @@ class CandidateMediaFile():
         self.file_type = False
         self.file_uri = False  
         self.new_entity = False
+        self.imp_cell_obj = False  # ImportCell object
 
     def reconcile_media_file(self, file_uri):
         """ Checks to see if the item exists in the manifest """
@@ -270,6 +286,8 @@ class CandidateMediaFile():
 
     def create_media_file(self):
         """ Create and save a new media file object"""
+        sleep(.1)
+        ok = True
         mf = Mediafile()
         mf.uuid = self.uuid
         mf.project_uuid = self.project_uuid
@@ -279,14 +297,45 @@ class CandidateMediaFile():
         mf.filesize = 0
         mf.mime_type_ur = ''
         ok = True
-        mf.save()
-        """
         try:
             mf.save()
         except:
+            self.new_entity = False
             ok = False
-        if ok is False:
-            max_id = Mediafile.objects.all().order_by("-id")[0]
-            mf.id = max_id[0].id + 1
-            mf.save()
-        """
+        if ok and mf.filesize == 0:
+            # filesize is still zero, meaning URI didn't
+            # give an OK response to a HEAD request.
+            # try again with a different capitalization
+            # of the file extension (.JPG vs .jpg)
+            if '.' in self.file_uri:
+                f_ex = self.file_uri.split('.')
+                f_extension = '.' + f_ex[-1]
+                f_ext_upper = f_extension.upper()
+                f_ext_lower = f_extension.lower()
+                f_alt_exts = []
+                f_alt_exts.append(self.file_uri.replace(f_extension,
+                                                        f_ext_upper))
+                f_alt_exts.append(self.file_uri.replace(f_extension,
+                                                        f_ext_lower))
+                check_extension = True
+                for f_alt_ext in f_alt_exts:
+                    # do a loop, since sometimes the user provided data with totally
+                    # wrong extention capitalizations
+                    if check_extension:
+                        print('Pause before checking extension capitalization...')
+                        sleep(self.SLEEP_TIME)
+                        self.file_uri = f_alt_ext
+                        mf.file_uri = self.file_uri
+                        mf.save()
+                        if mf.filesize > 0:
+                            print('Corrected extension capitalization: ' + str(self.file_uri))
+                            check_extension = False
+                            # yeah! We found the correct extention
+                            # capitalization
+                            # Now, save the corrected file_uri import cell record
+                            # So if we have to re-run the import, we don't have to do
+                            # multiple checks for capitalization
+                            self.imp_cell_obj.record = self.file_uri
+                            self.imp_cell_obj.save()
+                            print('Saved corrected extension import cell record')
+                            break

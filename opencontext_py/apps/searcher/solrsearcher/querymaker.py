@@ -677,6 +677,24 @@ class QueryMaker():
         query_dict['fq'].append(fq_final)
         return query_dict
 
+    def process_id(self, identifier):
+        # check for identifier
+        query_dict = {'fq': [],
+                      'facet.field': []}
+        fq_terms = []
+        escape_id = self.escape_solr_arg(identifier)
+        fq_terms.append('persistent_uri:' + escape_id)
+        fq_terms.append('uuid:' + escape_id)
+        tcheck = URImanagement.get_uuid_from_oc_uri(identifier, True)
+        if tcheck is not False:
+            uuid = tcheck['uuid']
+            fq_terms.append('uuid:' + uuid)
+        fq_final = ' OR '.join(fq_terms)
+        fq_final = '(' + fq_final + ')'
+        query_dict['fq'].append(fq_final)
+        # print(fq_final)
+        return query_dict
+
     def process_form_use_life_chrono(self, raw_form_use_life_chrono):
         # creates facet query for form-use-life chronological tiles
         # supports or {'||') queries in the path also

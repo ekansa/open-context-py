@@ -300,6 +300,23 @@ class SolrSearch():
         if published is not False:
             # query for when the resource was published
             query['fq'].append('published:' + published)
+        """
+            query by uuid
+            uri, or other identifier
+        """
+        uuid = self.get_request_param(request_dict,
+                                      'uuid',
+                                      False,
+                                      False)
+        if uuid is not False:
+            query['fq'].append('uuid:' + uuid)
+        identifier = self.get_request_param(request_dict,
+                                            'id',
+                                            False,
+                                            False)
+        if identifier is not False:
+            id_query = qm.process_id(identifier)
+            query['fq'] += id_query['fq']
         """ Linked media (images, documents, other)
             queries
         """
