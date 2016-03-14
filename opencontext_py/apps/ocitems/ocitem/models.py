@@ -274,8 +274,17 @@ class OCitem():
             rel_predicate['owl:sameAs'] = uri
             rel_predicate['slug'] = False
             rel_predicate['label'] = False
-            ent = Entity()
-            found = ent.dereference(self.octype.predicate_uuid)
+            if self.cache_entities:
+                icc = itemConstructionCache()
+                entity_item = icc.get_entity_w_thumbnail(self.octype.predicate_uuid)
+                if entity_item is not False:
+                    found = True
+                    ent = entity_item
+                else:
+                    found = False
+            else:
+                ent = Entity()
+                found = ent.dereference(self.octype.predicate_uuid)
             if found:
                 rel_predicate['id'] = 'oc-pred:' + str(ent.slug)
                 rel_predicate['slug'] = ent.slug
@@ -816,7 +825,7 @@ class ItemConstruction():
         """
         graph_list = []
         # add linked data annotations for predicates
-        for (predicate_uuid, slug) in self.predicates.items():
+        for predicate_uuid, slug in self.predicates.items():
             g_start = len(graph_list)
             graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
             g_next = len(graph_list)
@@ -1015,12 +1024,23 @@ class ItemConstruction():
         adds linked data annotations to a given subject_uuid
         """
         la_count = 0
-        try:
-            link_annotations = LinkAnnotation.objects.filter(subject=subject_uuid)
-            la_count = len(link_annotations)
-        except LinkAnnotation.DoesNotExist:
-            la_count = 0
-        if(la_count > 0):
+        link_annotations = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('linkanno-', subject_uuid)
+        if self.cache_entities:
+            link_annotations = icc.get_cache_object(cache_key)
+            if link_annotations is not None:
+                la_count = len(link_annotations)
+        if link_annotations is None:
+            try:
+                link_annotations = LinkAnnotation.objects.filter(subject=subject_uuid)
+                la_count = len(link_annotations)
+            except LinkAnnotation.DoesNotExist:
+                la_count = 0
+                link_annotations = []
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, link_annotations)
+        if la_count > 0:
             added_annotation_count = 0
             act_annotation = LastUpdatedOrderedDict()
             if(prefix_slug is not False):
@@ -1057,13 +1077,26 @@ class ItemConstruction():
         """
         la_count = 0
         alt_identifier = URImanagement.convert_prefix_to_full_uri(class_uri)
-        try:
-            link_annotations = LinkAnnotation.objects.filter(Q(subject=class_uri) |
-                                                             Q(subject=alt_identifier))
-            la_count = len(link_annotations)
-        except LinkAnnotation.DoesNotExist:
-            la_count = 0
-        if(la_count > 0):
+        link_annotations = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('linkanno-', (str(class_uri) \
+                                                            + ' ' \
+                                                            + str(alt_identifier)))
+        if self.cache_entities:
+            link_annotations = icc.get_cache_object(cache_key)
+            if link_annotations is not None:
+                la_count = len(link_annotations)
+        if link_annotations is None:
+            try:
+                link_annotations = LinkAnnotation.objects.filter(Q(subject=class_uri) |
+                                                                 Q(subject=alt_identifier))
+                la_count = len(link_annotations)
+            except LinkAnnotation.DoesNotExist:
+                la_count = 0
+                link_annotations = []
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, link_annotations)
+        if la_count > 0:
             act_annotation = LastUpdatedOrderedDict()
             act_annotation['@id'] = class_uri
             ent = self.get_entity_metadata(class_uri)
