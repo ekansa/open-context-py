@@ -240,7 +240,7 @@ icc.get_cache_object(cache_id)
             elif self.verb == 'ListIdentifiers':
                 self.make_list_identifiers_xml()
             elif self.verb == 'ListRecords':
-                self.rows = 20
+                # self.rows = 20
                 self.make_list_records_xml()
             elif self.verb == 'ListSets':
                 self.make_list_sets_xml()
