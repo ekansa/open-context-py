@@ -140,13 +140,13 @@ class SolrSearch():
                                        False,
                                        False)
         if start is not False:
-            query['start'] = re.sub(r'[^\d]', r'', start)
+            query['start'] = re.sub(r'[^\d]', r'', str(start))
         rows = self.get_request_param(request_dict,
                                       'rows',
                                       False,
                                       False)
         if rows is not False:
-            rows = re.sub(r'[^\d]', r'', rows)
+            rows = re.sub(r'[^\d]', r'', str(rows))
             rows = int(float(rows))
             if rows > self.max_rows:
                 rows = self.max_rows

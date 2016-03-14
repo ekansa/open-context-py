@@ -1,6 +1,5 @@
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.oai.models import OAIpmh
 
 
 class ItemContext():
@@ -94,7 +93,7 @@ class SearchContext():
         context['startIndex'] = {'@id': 'opensearch:startIndex', '@type': 'xsd:integer'}
         context['itemsPerPage'] = {'@id': 'opensearch:itemsPerPage', '@type': 'xsd:integer'}
         context['oc-api'] = 'http://opencontext.org/vocabularies/oc-api/'
-        context['oai-pmh'] = OAIpmh.OAI_PMH_NS
+        context['oai-pmh'] = 'http://www.openarchives.org/OAI/2.0/'
         context['rdfs:isDefinedBy'] = {'@type': '@id'}
         context['first'] = {'@id': 'oc-api:first', '@type': '@id'}
         context['previous'] = {'@id': 'oc-api:previous', '@type': '@id'}
