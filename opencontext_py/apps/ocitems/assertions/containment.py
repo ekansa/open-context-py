@@ -1,6 +1,7 @@
 import hashlib
 from django.conf import settings
 from django.db import models
+from django.core.cache import caches
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
@@ -18,10 +19,12 @@ class Containment():
         self.contexts_list = []
         self.recurse_count = 0
         self.related_subjects = False  # subject items related to an item
+        self.use_cache = True
+        self.redis_ok = True
 
     def get_project_top_level_contexts(self, project_uuid, visible_only=True):
         """
-        Gets a list the top level contexts in a project hierarchy,
+        Gets (from DB) a list the top level contexts in a project hierarchy,
         Assumes a project is hierarchy is contained in a more general
         containment hierarchy owned by other projects
         """
@@ -68,7 +71,34 @@ class Containment():
 
     def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
         """
-        creates a list of parent uuids from the containment predicate, is defaults to a recursive function
+        Gets a list the top level contexts in a project hierarchy,
+        Assumes a project is hierarchy is contained in a more general
+        containment hierarchy owned by other projects
+        """
+        if self.use_cache:
+            key = self.make_memory_cache_key('par-',
+                                             child_uuid,
+                                             {'r': recursive,
+                                              'v': visibile_only})
+            cache_contexts = self.get_cache_object(key)
+            if cache_contexts is None:
+                self.contexts = self.get_parents_by_child_uuid_db(child_uuid,
+                                                                  recursive,
+                                                                  visibile_only)
+                self.save_cache_object(key,
+                                       self.contexts)
+            else:
+                self.contexts = cache_contexts
+        else:
+            self.contexts = self.get_parents_by_child_uuid_db(child_uuid,
+                                                              recursive,
+                                                              visibile_only)
+        return self.contexts
+
+    def get_parents_by_child_uuid_db(self, child_uuid, recursive=True, visibile_only=True):
+        """
+        creates a list of parent uuids from the containment predicate,
+        via DB queries. Defaults to a recursive function
         to get all parent uuids
         """
         parent_uuid = False
@@ -171,12 +201,12 @@ class Containment():
             # print(" Sad, an empty list! \n")
             return metadata_items
         else:
-            if(do_parents):
+            if do_parents:
                 self.contexts = {}
                 self.contexts_list = []
             for search_uuid in subject_list:
                 # print(" trying: " + search_uuid + "\n")
-                if(metadata_type == 'geo'):
+                if metadata_type == 'geo':
                     metadata_items = Geospace.objects.filter(uuid=search_uuid)
                     if len(metadata_items) >= 1:
                         break
@@ -204,7 +234,7 @@ class Containment():
                 if isinstance(metadata_items, list):
                     if len(metadata_items) < 1:
                         metadata_items = False
-                if(do_parents and metadata_items is False):
+                if do_parents and metadata_items is False:
                     self.recurse_count = 0
                     self.get_parents_by_child_uuid(search_uuid)
             if(metadata_items is False and do_parents):
@@ -292,3 +322,37 @@ class Containment():
         else:
             output = prev_context_depth
         return output
+
+    def make_memory_cache_key(self, prefix, identifier, params=''):
+        """ makes a valid OK cache key """
+        hash_obj = hashlib.sha1()
+        concat_string = str(prefix) + ' ' + str(identifier) + ' ' + str(params)
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def get_cache_object(self, key):
+        """ gets a cached reddis object """
+        if self.redis_ok:
+            try:
+                cache = caches['redis']
+                obj = cache.get(key)
+            except:
+                obj = None
+                self.redis_ok = False
+        else:
+            obj = None
+        return obj
+
+    def save_cache_object(self, key, obj):
+        """ saves a cached reddis object """
+        if self.redis_ok:
+            try:
+                cache = caches['redis']
+                cache.set(key, obj)
+                ok = True
+            except:
+                self.redis_ok = False
+                ok = False
+        else:
+            ok = False
+        return ok
