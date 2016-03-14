@@ -702,14 +702,10 @@ class OAIpmh():
             oc_url = self.base_url + '/search/'
             payload = {'response': 'metadata,facet'}
             payload = self.add_set_params_to_payload(payload)
-            header = {'Accept': 'application/json'}
+            cq = CompleteQuery()
+            cq.request = payload
             try:
-                r = requests.get(oc_url,
-                                 params=payload,
-                                 headers=header,
-                                 timeout=60)
-                r.raise_for_status()
-                self.metadata_facets = r.json()
+                self.metadata_facets = cq.get_json_query()
             except:
                 self.metadata_facets = False
                 error = etree.SubElement(self.root, 'error')
@@ -733,16 +729,6 @@ class OAIpmh():
             payload['response'] = 'metadata,uri-meta'
             payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
             payload = self.add_set_params_to_payload(payload)
-            """
-            header = {'Accept': 'application/json'}
-            try:
-                r = requests.get(oc_url,
-                                 params=payload,
-                                 headers=header,
-                                 timeout=60)
-                r.raise_for_status()
-                self.metadata_uris = r.json()
-            """
             cq = CompleteQuery()
             cq.request = payload
             try:
@@ -807,19 +793,7 @@ class OAIpmh():
                 item_type = False
             else:
                 uuid = tcheck['uuid']
-                """
                 item_type = tcheck['item_type']
-                url = self.base_url + '/' + item_type + '/' + uuid
-                header = {'Accept': 'application/json'}
-                try:
-                    r = requests.get(url,
-                                     headers=header,
-                                     timeout=60)
-                    r.raise_for_status()
-                    output = r.json()
-                except:
-                    output = False
-                """
                 ocitem = OCitem()
                 ocitem.get_item(uuid)
                 if ocitem.manifest is not False:
