@@ -18,6 +18,13 @@ class OAIpmh():
 
     Supports OAI-DC and OAI-Datacite and Datacite
 
+from opencontext_py.apps.ocitems.ocitem.models import OCitem, itemConstructionCache
+icc = itemConstructionCache()
+identifier = 'oc-3'
+cache_id = icc.make_memory_cache_key('entities-thumb', identifier)
+icc.get_entity_w_thumbnail(identifier)
+icc.get_cache_object(cache_id)
+
     """
 
     OAI_PMH_NS = 'http://www.openarchives.org/OAI/2.0/'

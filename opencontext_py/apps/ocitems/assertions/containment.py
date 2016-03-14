@@ -338,7 +338,6 @@ class Containment():
                 obj = cache.get(key)
             except:
                 obj = None
-                self.redis_ok = False
         else:
             obj = None
         return obj
