@@ -123,7 +123,7 @@ class OAIpmh():
         """
         self.check_validate_verb(request)
         self.check_metadata_prefix(request)
-        self.check_resumption_token(request)
+        self.resumption_token = self.check_resumption_token(request)
         self.check_validate_set(request)
         self.make_xml_root()
         self.make_general_xml()
@@ -177,8 +177,8 @@ class OAIpmh():
             the request, and if it is, validate it
             as a JSON object with the correct keys
         """
-        if self.resumption_token is None and \
-           'resumptionToken' in request.GET:
+        r_token = None
+        if 'resumptionToken' in request.GET:
             valid_token = True
             token_str = request.GET['resumptionToken']
             try:
@@ -197,12 +197,13 @@ class OAIpmh():
                         valid_token = False
                         break
             else:
-                valid_token = False
+                r_token = False
             if valid_token:
-                self.resumption_token = resumption_token
+                r_token = resumption_token
             else:
-                self.resumption_token = False
+                r_token = False
                 self.errors.append('badResumptionToken')
+        return r_token
 
     def process_verb(self):
         """ processes the request for a verb """
