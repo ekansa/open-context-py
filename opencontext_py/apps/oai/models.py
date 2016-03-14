@@ -132,10 +132,25 @@ class OAIpmh():
         self.make_error_xml()
         return True
 
+    def check_request_param(self, param, request):
+        """ Checks to see if a given
+            parameter is in the request
+            GET or POST
+        """
+        output = None
+        if request.method == 'GET':
+            if param in request.GET:
+                output = request.GET[param]
+        elif request.method == 'POST':
+            if param in request.POST:
+                output = request.POST[param]
+        return output
+
     def check_validate_verb(self, request):
         """ Checks and validates the verb in the request """
-        if 'verb' in request.GET:
-            self.verb = request.GET['verb']
+        self.verb = self.check_request_param('verb',
+                                             request)
+        if self.verb is not None:
             valid_verbs = ['Identify',
                            'ListMetadataFormats',
                            'ListIdentifiers',
@@ -149,9 +164,9 @@ class OAIpmh():
 
     def check_metadata_prefix(self, request):
         """ Checks to see if a metadata prefix is in a request """
-        if self.metadata_prefix is None and \
-           'metadataPrefix' in request.GET:
-            self.metadata_prefix = request.GET['metadataPrefix']
+        self.metadata_prefix = self.check_request_param('metadataPrefix',
+                                                        request)
+        if self.metadata_prefix is not None:
             self.metadata_prefix_valid = False
             for meta_f in self.METADATA_FORMATS:
                 if meta_f['prefix'] == self.metadata_prefix:
@@ -162,9 +177,9 @@ class OAIpmh():
         return self.metadata_prefix_valid
 
     def check_validate_set(self, request):
-        if self.requested_set is None and \
-           'set' in request.GET:
-            self.requested_set = request.GET['set']
+        self.requested_set = self.check_request_param('set',
+                                                      request)
+        if self.requested_set is not None:
             if self.requested_set in self.BASE_SETS:
                 self.requested_set_valid = True
             else:
@@ -178,9 +193,10 @@ class OAIpmh():
             as a JSON object with the correct keys
         """
         r_token = None
-        if 'resumptionToken' in request.GET:
+        token_str = self.check_request_param('resumptionToken',
+                                             request)
+        if token_str is not None:
             valid_token = True
-            token_str = request.GET['resumptionToken']
             try:
                 resumption_token = json.loads(token_str)
             except:
