@@ -7,6 +7,8 @@ from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.searcher.solrsearcher.complete import CompleteQuery
 
 
 class OAIpmh():
@@ -97,6 +99,7 @@ class OAIpmh():
 
     def __init__(self, id_href=True):
         rp = RootPath()
+        self.blank_oc_item = None
         self.publisher_name = 'Open Context'
         self.base_url = rp.get_baseurl()
         self.http_resp_code = 200
@@ -411,7 +414,7 @@ class OAIpmh():
                                         attrib={'dateType': 'Available'})
             date_xml.text = create_date
         if 'dc-terms:modified' in json_ld:
-            mod_date = json_ld['dc-terms:issued']
+            mod_date = json_ld['dc-terms:modified']
             date_xml = etree.SubElement(act_node,
                                         'date',
                                         attrib={'dateType': 'Updated'})
@@ -730,6 +733,7 @@ class OAIpmh():
             payload['response'] = 'metadata,uri-meta'
             payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
             payload = self.add_set_params_to_payload(payload)
+            """
             header = {'Accept': 'application/json'}
             try:
                 r = requests.get(oc_url,
@@ -738,6 +742,11 @@ class OAIpmh():
                                  timeout=60)
                 r.raise_for_status()
                 self.metadata_uris = r.json()
+            """
+            cq = CompleteQuery()
+            cq.request = payload
+            try:
+                self.metadata_uris = cq.get_json_query()
             except:
                 self.metadata_uris = False
                 error = etree.SubElement(self.root, 'error')
@@ -798,6 +807,7 @@ class OAIpmh():
                 item_type = False
             else:
                 uuid = tcheck['uuid']
+                """
                 item_type = tcheck['item_type']
                 url = self.base_url + '/' + item_type + '/' + uuid
                 header = {'Accept': 'application/json'}
@@ -808,6 +818,13 @@ class OAIpmh():
                     r.raise_for_status()
                     output = r.json()
                 except:
+                    output = False
+                """
+                ocitem = OCitem()
+                ocitem.get_item(uuid)
+                if ocitem.manifest is not False:
+                    output = ocitem.json_ld
+                else:
                     output = False
         return output
 
