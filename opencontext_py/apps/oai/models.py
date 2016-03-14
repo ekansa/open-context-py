@@ -110,8 +110,6 @@ class OAIpmh():
         self.errors = []
         self.root = None
         self.request_xml = None
-        self.metadata_facets = None  # object for general metadata for the Identify verb
-        self.metadata_uris = None  # object for general metadata and identifiers
         self.resumption_token = None
         self.rows = 100
         self.default_sort = 'published--desc'  # default sort of items (Publication date, descending)
@@ -228,19 +226,19 @@ class OAIpmh():
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
-            self.get_metadata_uris()
-            if isinstance(self.metadata_uris, dict):
+            metadata_uris = self.get_metadata_uris()
+            if isinstance(metadata_uris, dict):
                 list_recs_xml = etree.SubElement(self.root, 'ListRecords')
-                if 'oc-api:has-results' in self.metadata_uris:
-                    if isinstance(self.metadata_uris['oc-api:has-results'], list):
-                        for item in self.metadata_uris['oc-api:has-results']:
+                if 'oc-api:has-results' in metadata_uris:
+                    if isinstance(metadata_uris['oc-api:has-results'], list):
+                        for item in metadata_uris['oc-api:has-results']:
                             # make an item header XML
                             rec_xml = etree.SubElement(list_recs_xml, 'record')
                             self.make_item_identifier_xml(rec_xml, item)
                             self.make_record_metatata_xml(rec_xml, item)
                 # now add the new sumption token
                 self.make_resumption_token_xml(list_recs_xml,
-                                               self.metadata_uris)
+                                               metadata_uris)
 
     def make_record_metatata_xml(self, parent_node, item):
         """ makes metadata about a record """
@@ -297,6 +295,15 @@ class OAIpmh():
                     for ld_item in json_ld['owl:sameAs']:
                         act_xml = etree.SubElement(format_xml, '{' + dc + '}identifier')
                         act_xml.text = ld_item['id']
+            if 'id' in json_ld:
+                act_xml = etree.SubElement(format_xml, '{' + dc + '}identifier')
+                act_xml.text = json_ld['id']
+            if item_type in self.DATACITE_RESOURCE_TYPES:
+                act_rt = self.DATACITE_RESOURCE_TYPES[item_type]
+            else:
+                act_rt = self.DATACITE_RESOURCE_TYPES['other']
+            rt_xml = etree.SubElement(format_xml, '{' + dc + '}type')
+            rt_xml.text = act_rt['ResourceTypeGeneral']
             publisher = etree.SubElement(format_xml, '{' + dc + '}publisher')
             publisher.text = self.publisher_name
             if item_type in self.DC_FORMATS:
@@ -483,17 +490,17 @@ class OAIpmh():
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
-            self.get_metadata_uris()
-            if isinstance(self.metadata_uris, dict):
+            metadata_uris = self.get_metadata_uris()
+            if isinstance(metadata_uris, dict):
                 list_ids_xml = etree.SubElement(self.root, 'ListIdentifiers')
-                if 'oc-api:has-results' in self.metadata_uris:
-                    if isinstance(self.metadata_uris['oc-api:has-results'], list):
-                        for item in self.metadata_uris['oc-api:has-results']:
+                if 'oc-api:has-results' in metadata_uris:
+                    if isinstance(metadata_uris['oc-api:has-results'], list):
+                        for item in metadata_uris['oc-api:has-results']:
                             # make an item header XML
                             self.make_item_identifier_xml(list_ids_xml, item)
                 # now add the new sumption token
                 self.make_resumption_token_xml(list_ids_xml,
-                                               self.metadata_uris)
+                                               metadata_uris)
 
     def make_item_identifier_xml(self, parent_node, item):
         """ Makes XML for an item, in with the "header" element
@@ -548,8 +555,8 @@ class OAIpmh():
         """ Makes the XML for hte ListSets
             verb
         """
-        self.get_general_summary_facets()
-        if isinstance(self.metadata_facets, dict):
+        metadata_facets = self.get_general_summary_facets()
+        if isinstance(metadata_facets, dict):
             list_sets_xml = etree.SubElement(self.root, 'ListSets')
             for item_type, item_set_des in self.BASE_SETS.items():
                 set_xml = etree.SubElement(list_sets_xml, 'set')
@@ -580,7 +587,7 @@ class OAIpmh():
         """ Makes the XML for the
             Identify verb
         """
-        self.get_general_summary_facets()
+        metadata_facets = self.get_general_summary_facets()
         identify = etree.SubElement(self.root, 'Identify')
         name = etree.SubElement(identify, 'repositoryName')
         name.text = settings.DEPLOYED_SITE_NAME
@@ -590,10 +597,10 @@ class OAIpmh():
         p_v.text = '2.0'
         admin_email = etree.SubElement(identify, 'adminEmail')
         admin_email.text = settings.ADMIN_EMAIL
-        if isinstance(self.metadata_facets, dict):
-            if 'oai-pmh:earliestDatestamp' in self.metadata_facets:
+        if isinstance(metadata_facets, dict):
+            if 'oai-pmh:earliestDatestamp' in metadata_facets:
                 e_d_t = etree.SubElement(identify, 'earliestDatestamp')
-                e_d_t.text = self.metadata_facets['oai-pmh:earliestDatestamp']
+                e_d_t.text = metadata_facets['oai-pmh:earliestDatestamp']
             else:
                 error = etree.SubElement(self.root, 'error')
                 error.text = 'Internal Server Error: Failed to get earliest time-stamp'
@@ -646,7 +653,7 @@ class OAIpmh():
 
     def make_update_resumption_object(self,
                                       api_json_obj=None,
-                                      resumption_obj=LastUpdatedOrderedDict()):
+                                      resumption_obj={}):
         """ makes or update a flow control resumption object
             This is a dict object that
             includes query parameters to pass to an API request.
@@ -698,47 +705,45 @@ class OAIpmh():
         """ gets summary information about
             the facets, metadata
         """
-        if self.metadata_facets is None:
-            oc_url = self.base_url + '/search/'
-            payload = {'response': 'metadata,facet'}
-            payload = self.add_set_params_to_payload(payload)
-            cq = CompleteQuery()
-            cq.request = payload
-            try:
-                self.metadata_facets = cq.get_json_query()
-            except:
-                self.metadata_facets = False
-                error = etree.SubElement(self.root, 'error')
-                error.text = 'Internal Server Error: Failed to get collection metadata summary'
-                self.http_resp_code = 500
-        return self.metadata_facets
+        oc_url = self.base_url + '/search/'
+        payload = {'response': 'metadata,facet'}
+        payload = self.add_set_params_to_payload(payload)
+        cq = CompleteQuery()
+        cq.request = payload
+        try:
+            metadata_facets = cq.get_json_query()
+        except:
+            metadata_facets = False
+            error = etree.SubElement(self.root, 'error')
+            error.text = 'Internal Server Error: Failed to get collection metadata summary'
+            self.http_resp_code = 500
+        return metadata_facets
 
     def get_metadata_uris(self):
         """ gets metadata and uris
         """
-        if self.metadata_uris is None:
-            oc_url = self.base_url + '/search/'
-            if isinstance(self.resumption_token, dict):
-                # pass the validated resumption token provided in request
-                resumption_obj = self.resumption_token
-            else:
-                # first request, so we're not passing a resumption object
-                # but need to make one
-                resumption_obj = self.make_update_resumption_object()
-            payload = resumption_obj
-            payload['response'] = 'metadata,uri-meta'
-            payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
-            payload = self.add_set_params_to_payload(payload)
-            cq = CompleteQuery()
-            cq.request = payload
-            try:
-                self.metadata_uris = cq.get_json_query()
-            except:
-                self.metadata_uris = False
-                error = etree.SubElement(self.root, 'error')
-                error.text = 'Internal Server Error: Failed to get collection metadata summary'
-                self.http_resp_code = 500
-        return self.metadata_uris
+        oc_url = self.base_url + '/search/'
+        if isinstance(self.resumption_token, dict):
+            # pass the validated resumption token provided in request
+            resumption_obj = self.resumption_token
+        else:
+            # first request, so we're not passing a resumption object
+            # but need to make one
+            resumption_obj = self.make_update_resumption_object()
+        payload = resumption_obj
+        payload['response'] = 'metadata,uri-meta'
+        payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
+        payload = self.add_set_params_to_payload(payload)
+        cq = CompleteQuery()
+        cq.request = payload
+        try:
+            metadata_uris = cq.get_json_query()
+        except:
+            metadata_uris = False
+            error = etree.SubElement(self.root, 'error')
+            error.text = 'Internal Server Error: Failed to get collection metadata summary'
+            self.http_resp_code = 500
+        return metadata_uris
 
     def add_set_params_to_payload(self, payload):
         """ adds extra query parameters to the request
