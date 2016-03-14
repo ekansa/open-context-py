@@ -255,27 +255,20 @@ class MemoryCache():
 
     def get_cache_object(self, key):
         """ gets a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                obj = cache.get(key)
-            except:
-                obj = None
-                self.redis_ok = False
-        else:
+        try:
+            cache = caches['redis']
+            obj = cache.get(key)
+        except:
             obj = None
         return obj
 
     def save_cache_object(self, key, obj):
         """ saves a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                cache.set(key, obj)
-                ok = True
-            except:
-                self.redis_ok = False
-                ok = False
-        else:
+        try:
+            cache = caches['redis']
+            cache.set(key, obj)
+            ok = True
+        except:
+            self.redis_ok = False
             ok = False
         return ok
