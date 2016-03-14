@@ -297,6 +297,15 @@ class OAIpmh():
                     for ld_item in json_ld['owl:sameAs']:
                         act_xml = etree.SubElement(format_xml, '{' + dc + '}identifier')
                         act_xml.text = ld_item['id']
+            if 'id' in json_ld:
+                act_xml = etree.SubElement(format_xml, '{' + dc + '}identifier')
+                act_xml.text = json_ld['id']
+            if item_type in self.DATACITE_RESOURCE_TYPES:
+                act_rt = self.DATACITE_RESOURCE_TYPES[item_type]
+            else:
+                act_rt = self.DATACITE_RESOURCE_TYPES['other']
+            rt_xml = etree.SubElement(format_xml, '{' + dc + '}type')
+            rt_xml.text = act_rt['ResourceTypeGeneral']
             publisher = etree.SubElement(format_xml, '{' + dc + '}publisher')
             publisher.text = self.publisher_name
             if item_type in self.DC_FORMATS:
