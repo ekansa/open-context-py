@@ -123,7 +123,7 @@ class OAIpmh():
         """
         self.check_validate_verb(request)
         self.check_metadata_prefix(request)
-        self.resumption_token = self.check_resumption_token(request)
+        self.check_resumption_token(request)
         self.check_validate_set(request)
         self.make_xml_root()
         self.make_general_xml()
@@ -203,6 +203,7 @@ class OAIpmh():
             else:
                 r_token = False
                 self.errors.append('badResumptionToken')
+        self.resumption_token = r_token
         return r_token
 
     def process_verb(self):
@@ -238,7 +239,8 @@ class OAIpmh():
                             self.make_item_identifier_xml(rec_xml, item)
                             self.make_record_metatata_xml(rec_xml, item)
                 # now add the new sumption token
-                self.make_resumption_token_xml(list_recs_xml,
+                self.make_resumption_token_xml(self.resumption_token,
+                                               list_recs_xml,
                                                metadata_uris)
 
     def make_record_metatata_xml(self, parent_node, item):
@@ -500,7 +502,8 @@ class OAIpmh():
                             # make an item header XML
                             self.make_item_identifier_xml(list_ids_xml, item)
                 # now add the new sumption token
-                self.make_resumption_token_xml(list_ids_xml,
+                self.make_resumption_token_xml(self.resumption_token,
+                                               list_ids_xml,
                                                metadata_uris)
 
     def make_item_identifier_xml(self, parent_node, item):
@@ -521,7 +524,10 @@ class OAIpmh():
         if 'published' in item:
             date_stamp.text = item['published']
 
-    def make_resumption_token_xml(self, parent_node_xml, api_json_obj):
+    def make_resumption_token_xml(self,
+                                  r_token,
+                                  parent_node_xml,
+                                  api_json_obj):
         """ makes the XML for a resumption token """
         if isinstance(api_json_obj, dict):
             now_dt = datetime.datetime.now()
@@ -535,11 +541,12 @@ class OAIpmh():
                 complete_list_size = api_json_obj['totalResults']
             else:
                 complete_list_size = 0
-            if isinstance(self.resumption_token, dict):
+            if isinstance(r_token, dict):
                 new_resumption_obj = self.make_update_resumption_object(api_json_obj,
-                                                                        self.resumption_token)
+                                                                        r_token)
             else:
-                new_resumption_obj = self.make_update_resumption_object(api_json_obj)
+                new_resumption_obj = self.make_update_resumption_object(api_json_obj,
+                                                                        {})
             if 'response' in new_resumption_obj:
                 # reduce clutter in these tokens, remove uneeded keys
                 new_resumption_obj.pop('response', None)
@@ -710,9 +717,8 @@ class OAIpmh():
         payload = {'response': 'metadata,facet'}
         payload = self.add_set_params_to_payload(payload)
         cq = CompleteQuery()
-        cq.request = payload
         try:
-            metadata_facets = cq.get_json_query()
+            metadata_facets = cq.get_json_query(payload)
         except:
             metadata_facets = False
             error = etree.SubElement(self.root, 'error')
@@ -727,18 +733,21 @@ class OAIpmh():
         if isinstance(self.resumption_token, dict):
             # pass the validated resumption token provided in request
             resumption_obj = self.resumption_token
+            print('Found r_token: ' + str(resumption_obj))
         else:
             # first request, so we're not passing a resumption object
             # but need to make one
-            resumption_obj = self.make_update_resumption_object()
+            resumption_obj = self.make_update_resumption_object(None,
+                                                                {})
+            print('Autogen r_token: ' + str(resumption_obj))
         payload = resumption_obj
         payload['response'] = 'metadata,uri-meta'
         payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
         payload = self.add_set_params_to_payload(payload)
+        print('Payload: ' + str(payload))
         cq = CompleteQuery()
-        cq.request = payload
         try:
-            metadata_uris = cq.get_json_query()
+            metadata_uris = cq.get_json_query(payload)
         except:
             metadata_uris = False
             error = etree.SubElement(self.root, 'error')
