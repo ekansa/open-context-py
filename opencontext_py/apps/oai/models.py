@@ -297,16 +297,16 @@ icc.get_cache_object(cache_id)
         if dt_from is not None or dt_until is not None:
             dt_earliest = self.get_cache_earliest_date()
             if dt_from is not None and dt_until is not None:
-                if dt_from >= dt_until or dt_until <= dt_earliest:
+                if dt_from > dt_until:
                     # from date is greater than or equal to the until date
                     # or the from date is greater than the earliet date
                     # in the manifest
                     self.errors.append('badArgument')
-            elif dt_from is None and dt_until is not None:
-                if dt_until <= dt_earliest:
+            if dt_until is not None:
+                if dt_until < dt_earliest:
                     # until date is less than the earliest publication date
                     # in the manifest
-                    self.errors.append('badArgument')
+                    self.errors.append('noRecordsMatch')
 
     def make_solr_date(self, date_str):
         """ Converts a date into a valid date for Solr """
@@ -376,6 +376,9 @@ icc.get_cache_object(cache_id)
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
+            if self.metadata_prefix is None:
+                self.metadata_prefix = 'oai_dc'
+                self.metadata_prefix_valid = True
             if self.metadata_prefix is not None:
                 metadata_uris = self.get_metadata_uris()
                 if isinstance(metadata_uris, dict):
