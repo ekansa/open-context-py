@@ -4,9 +4,12 @@ import json
 import requests
 from lxml import etree
 from django.conf import settings
+from django.db.models import Max, Min, Count, Avg
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.searcher.solrsearcher.complete import CompleteQuery
 
@@ -124,6 +127,10 @@ icc.get_cache_object(cache_id)
         self.requested_set = None
         self.requested_set_valid = None
         self.identifier = None
+        self.from_date = None
+        self.until_date = None
+        self.from_date_solr = None
+        self.until_date_solr = None
 
     def process_request(self, request):
         """ processes a request verb,
@@ -135,6 +142,9 @@ icc.get_cache_object(cache_id)
         self.check_resumption_token(request)
         self.check_validate_set(request)
         self.check_identifier(request)
+        self.check_from_date(request)
+        self.check_until_date(request)
+        self.validate_from_until_dates()  # makes sure dates have same granularity
         self.make_xml_root()
         self.make_general_xml()
         self.make_request_xml()
@@ -239,6 +249,84 @@ icc.get_cache_object(cache_id)
                                                    request)
         return self.identifier
 
+    def check_from_date(self, request):
+        """ Checks the for a 'from' (date) parameter
+        """
+        from_date = self.check_request_param('from',
+                                             request)
+        if from_date is not None:
+            from_solr = self.make_solr_date(from_date)
+            if from_solr is not False:
+                self.from_date = from_date
+                self.from_date_solr = from_solr
+            else:
+                self.from_date = False
+                self.errors.append('badArgument')
+
+    def check_until_date(self, request):
+        """ Checks the for a 'until' (date) parameter
+        """
+        until_date = self.check_request_param('until',
+                                              request)
+        if until_date is not None:
+            until_solr = self.make_solr_date(until_date)
+            if until_solr is not False:
+                self.until_date = until_date
+                self.until_date_solr = until_solr
+            else:
+                self.until_date = False
+                self.errors.append('badArgument')
+
+    def validate_from_until_dates(self):
+        """ Checks to make sure the 'from' and
+            'until' dates (if they are both requested)
+             have the same length (granularity)
+        """
+        if self.from_date is not None \
+           and self.until_date is not None:
+            if len(self.from_date) != len(self.until_date):
+                self.errors.append('badArgument')
+        dt_from = None
+        dt_until = None
+        if self.from_date_solr is not None:
+            from_solr = self.from_date_solr[:19]
+            dt_from = datetime.datetime.strptime(from_solr, '%Y-%m-%dT%H:%M:%S')
+        if self.until_date_solr is not None:
+            until_solr = self.until_date_solr[:19]
+            dt_until = datetime.datetime.strptime(until_solr, '%Y-%m-%dT%H:%M:%S')
+        if dt_from is not None or dt_until is not None:
+            dt_earliest = self.get_cache_earliest_date()
+            if dt_from is not None and dt_until is not None:
+                if dt_from >= dt_until or dt_until <= dt_earliest:
+                    # from date is greater than or equal to the until date
+                    # or the from date is greater than the earliet date
+                    # in the manifest
+                    self.errors.append('badArgument')
+            elif dt_from is None and dt_until is not None:
+                if dt_until <= dt_earliest:
+                    # until date is less than the earliest publication date
+                    # in the manifest
+                    self.errors.append('badArgument')
+
+    def make_solr_date(self, date_str):
+        """ Converts a date into a valid date for Solr """
+        output = False
+        if len(date_str) >= 19:
+            date_str = date_str[:19]
+            try:
+                dt = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
+                output = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+            except:
+                output = False
+        else:
+            date_str = date_str[:10]
+            try:
+                dt = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+                output = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+            except:
+                output = False
+        return output
+
     def process_verb(self):
         """ processes the request for a verb """
         if self.valid_verb:
@@ -262,10 +350,8 @@ icc.get_cache_object(cache_id)
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
-            if self.identifier is not None:
-                if self.metadata_prefix is None:
-                    self.metadata_prefix = 'oai_dc'
-                    self.metadata_prefix_valid = True
+            if self.identifier is not None\
+               and self.metadata_prefix is not None:
                 metadata_uris = self.get_metadata_uris()
                 if isinstance(metadata_uris, dict):
                     if 'oc-api:has-results' in metadata_uris:
@@ -290,23 +376,23 @@ icc.get_cache_object(cache_id)
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
-            if self.metadata_prefix is None:
-                self.metadata_prefix = 'oai_dc'
-                self.metadata_prefix_valid = True
-            metadata_uris = self.get_metadata_uris()
-            if isinstance(metadata_uris, dict):
-                list_recs_xml = etree.SubElement(self.root, 'ListRecords')
-                if 'oc-api:has-results' in metadata_uris:
-                    if isinstance(metadata_uris['oc-api:has-results'], list):
-                        for item in metadata_uris['oc-api:has-results']:
-                            # make an item header XML
-                            rec_xml = etree.SubElement(list_recs_xml, 'record')
-                            self.make_item_identifier_xml(rec_xml, item)
-                            self.make_record_metatata_xml(rec_xml, item)
-                # now add the new sumption token
-                self.make_resumption_token_xml(self.resumption_token,
-                                               list_recs_xml,
-                                               metadata_uris)
+            if self.metadata_prefix is not None:
+                metadata_uris = self.get_metadata_uris()
+                if isinstance(metadata_uris, dict):
+                    list_recs_xml = etree.SubElement(self.root, 'ListRecords')
+                    if 'oc-api:has-results' in metadata_uris:
+                        if isinstance(metadata_uris['oc-api:has-results'], list):
+                            for item in metadata_uris['oc-api:has-results']:
+                                # make an item header XML
+                                rec_xml = etree.SubElement(list_recs_xml, 'record')
+                                self.make_item_identifier_xml(rec_xml, item)
+                                self.make_record_metatata_xml(rec_xml, item)
+                    # now add the new sumption token
+                    self.make_resumption_token_xml(self.resumption_token,
+                                                   list_recs_xml,
+                                                   metadata_uris)
+            else:
+                self.errors.append('badArgument')
 
     def make_record_metatata_xml(self, parent_node, item):
         """ makes metadata about a record """
@@ -587,7 +673,7 @@ icc.get_cache_object(cache_id)
                     set_xml.text = item_type
                     break
         if 'published' in item:
-            date_stamp.text = item['published']
+            date_stamp.text = item['published'][:10]
 
     def make_resumption_token_xml(self,
                                   r_token,
@@ -757,10 +843,32 @@ icc.get_cache_object(cache_id)
             if 'published' not in resumption_obj:
                 if 'oai-pmh:earliestDatestamp' in api_json_obj and \
                    'dcmi:created' in api_json_obj:
-                    resumption_obj['published'] = '[' + api_json_obj['oai-pmh:earliestDatestamp']
-                    resumption_obj['published'] += ' TO '
-                    resumption_obj['published'] += api_json_obj['dcmi:created'] + ']'
+                    resumption_obj['published'] = self.add_from_until_date_limits(api_json_obj['oai-pmh:earliestDatestamp'],
+                                                                                  api_json_obj['dcmi:created'])
+        else:
+            # Add date limits if these are requested
+            if self.from_date_solr is not None or \
+               self.until_date_solr is not None:
+                resumption_obj['published'] = self.add_from_until_date_limits(self.from_date_solr,
+                                                                              self.until_date_solr)
         return resumption_obj
+
+    def add_from_until_date_limits(self, api_earliest, api_latest):
+        """ Adds dates limits request by the client
+            in the 'from' and 'until' parameters
+        """
+        use_earliest = api_earliest
+        use_latest = api_latest
+        if self.from_date_solr is not None:
+            use_earliest = self.from_date_solr
+        if self.until_date_solr is not None:
+            use_latest = self.until_date_solr
+        if use_earliest is None:
+            use_earliest = '*'
+        if use_latest is None:
+            use_latest = '*'
+        output = '[' + use_earliest + ' TO ' + use_latest + ']'
+        return output
 
     def get_metadata_format_attributes(self, metadata_prefix):
         """ gets attributes about a given metadata format """
@@ -904,3 +1012,18 @@ icc.get_cache_object(cache_id)
                         output = act_item['label']
                         break
         return output
+
+    def get_cache_earliest_date(self):
+        """ Gets and caches the earliest date
+            as a date_time object!
+        """
+        mc = MemoryCache()
+        cache_key = mc.make_memory_cache_key('early_date', 'manifest')
+        early_date = mc.get_cache_object(cache_key)
+        if early_date is None:
+            sum_man = Manifest.objects\
+                              .filter(published__gt='2001-01-01')\
+                              .aggregate(Min('published'))
+            early_date = sum_man['published__min']
+            mc.save_cache_object(cache_key, early_date)
+        return early_date
