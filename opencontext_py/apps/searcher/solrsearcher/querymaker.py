@@ -684,6 +684,15 @@ class QueryMaker():
         fq_terms = []
         escape_id = self.escape_solr_arg(identifier)
         fq_terms.append('persistent_uri:' + escape_id)
+        # now make a DOI URI in case this is just a naked DOI
+        doi_uri = self.escape_solr_arg('http://dx.doi.org/' + identifier)
+        fq_terms.append('persistent_uri:' + doi_uri)
+        # now make an ARK URI in case this is just a naked ARK
+        ark_uri = self.escape_solr_arg('http://n2t.net/' + identifier)
+        fq_terms.append('persistent_uri:' + ark_uri)
+        # now make an ORCID URI in case this is just a naked ORCID
+        orcid_uri = self.escape_solr_arg('http://orcid.org/' + identifier)
+        fq_terms.append('persistent_uri:' + orcid_uri)
         fq_terms.append('uuid:' + escape_id)
         tcheck = URImanagement.get_uuid_from_oc_uri(identifier, True)
         if tcheck is not False:

@@ -20,6 +20,7 @@ class OAIpmh():
 
 from opencontext_py.apps.ocitems.ocitem.models import OCitem, itemConstructionCache
 icc = itemConstructionCache()
+icc.print_caching = True
 identifier = 'oc-3'
 cache_id = icc.make_memory_cache_key('entities-thumb', identifier)
 icc.get_entity_w_thumbnail(identifier)
@@ -122,6 +123,7 @@ icc.get_cache_object(cache_id)
         self.default_sort = 'published--desc'  # default sort of items (Publication date, descending)
         self.requested_set = None
         self.requested_set_valid = None
+        self.identifier = None
 
     def process_request(self, request):
         """ processes a request verb,
@@ -132,6 +134,7 @@ icc.get_cache_object(cache_id)
         self.check_metadata_prefix(request)
         self.check_resumption_token(request)
         self.check_validate_set(request)
+        self.check_identifier(request)
         self.make_xml_root()
         self.make_general_xml()
         self.make_request_xml()
@@ -162,7 +165,8 @@ icc.get_cache_object(cache_id)
                            'ListMetadataFormats',
                            'ListIdentifiers',
                            'ListRecords',
-                           'ListSets']
+                           'ListSets',
+                           'GetRecord']
             if self.verb in valid_verbs:
                 self.valid_verb = True
         if self.valid_verb is not True:
@@ -181,6 +185,9 @@ icc.get_cache_object(cache_id)
                     break
             if self.metadata_prefix_valid is False:
                 self.errors.append('cannotDisseminateFormat')
+        else:
+            self.metadata_prefix = 'oai_dc'
+            self.metadata_prefix_valid = True
         return self.metadata_prefix_valid
 
     def check_validate_set(self, request):
@@ -229,6 +236,12 @@ icc.get_cache_object(cache_id)
         self.resumption_token = r_token
         return r_token
 
+    def check_identifier(self, request):
+        """ Checks and validates the verb in the request """
+        self.identifier = self.check_request_param('identifier',
+                                                   request)
+        return self.identifier
+
     def process_verb(self):
         """ processes the request for a verb """
         if self.valid_verb:
@@ -240,10 +253,36 @@ icc.get_cache_object(cache_id)
             elif self.verb == 'ListIdentifiers':
                 self.make_list_identifiers_xml()
             elif self.verb == 'ListRecords':
-                # self.rows = 20
                 self.make_list_records_xml()
             elif self.verb == 'ListSets':
                 self.make_list_sets_xml()
+            elif self.verb == 'GetRecord':
+                self.make_get_record_xml()
+
+    def make_get_record_xml(self):
+        """ Makes the XML for the GetRecord
+            verb
+        """
+        if len(self.errors) < 1:
+            # only bother doing this if we don't have any errors
+            if self.identifier is not None:
+                metadata_uris = self.get_metadata_uris()
+                if isinstance(metadata_uris, dict):
+                    if 'oc-api:has-results' in metadata_uris:
+                        if isinstance(metadata_uris['oc-api:has-results'], list):
+                            if len(metadata_uris['oc-api:has-results']) > 0:
+                                list_recs_xml = etree.SubElement(self.root, 'GetRecord')
+                                item = metadata_uris['oc-api:has-results'][0]
+                                rec_xml = etree.SubElement(list_recs_xml, 'record')
+                                self.make_item_identifier_xml(rec_xml, item)
+                                self.make_record_metatata_xml(rec_xml, item)
+                            else:
+                                if self.requested_set is None:
+                                    self.errors.append('idDoesNotExist')
+                                else:
+                                    self.errors.append('noRecordsMatch')
+            else:
+                self.errors.append('badArgument')
 
     def make_list_records_xml(self):
         """ Makes the XML for the ListIdentifiers
@@ -681,6 +720,11 @@ icc.get_cache_object(cache_id)
         elif code == 'noRecordsMatch':
             error.text = 'The combination of the values of the from, until, \
                          set, and metadataPrefix arguments results in an empty list.'
+        elif code == 'idDoesNotExist':
+            error.text = '"' + str(self.identifier) + '" is unknown or illegal in Open Context.'
+        elif code == 'badArgument':
+            error.text = 'The request includes illegal arguments, missing required argument(s), \
+                          repeated argument(s), or values for arguments have an illegal syntax.'
 
     def make_update_resumption_object(self,
                                       api_json_obj=None,
@@ -756,18 +800,17 @@ icc.get_cache_object(cache_id)
         if isinstance(self.resumption_token, dict):
             # pass the validated resumption token provided in request
             resumption_obj = self.resumption_token
-            print('Found r_token: ' + str(resumption_obj))
         else:
             # first request, so we're not passing a resumption object
             # but need to make one
             resumption_obj = self.make_update_resumption_object(None,
                                                                 {})
-            print('Autogen r_token: ' + str(resumption_obj))
         payload = resumption_obj
         payload['response'] = 'metadata,uri-meta'
         payload['attributes'] = 'dc-terms-creator,dc-terms-contributor'
         payload = self.add_set_params_to_payload(payload)
-        print('Payload: ' + str(payload))
+        if self.identifier is not None:
+            payload['id'] = str(self.identifier)
         cq = CompleteQuery()
         try:
             metadata_uris = cq.get_json_query(payload)
