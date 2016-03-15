@@ -1,6 +1,6 @@
 <h3>API Introduction</h3>
 
-<p>Open Context has two primary APIs. One returns data on individual records, and the other returns data from searches. Both APIs share data in the JSON-LD format. JSON-LD means you can treat the information as simple JSON data, or you can parse it as RDF for Linked Data applications.</p>
+<p>Open Context has two primary APIs. One returns data on individual records, and the other returns data from searches. Both APIs share data in the JSON-LD format. JSON-LD means you can treat the information as simple JSON data, or you can parse it as RDF for Linked Data applications. Open Context supplements these primary JSON APIs with secondary APIs (<a href="#oai-pmh">see below</a>) oriented around XML-data.</p>
 
 <p>The general goal of the search/query/faceted-browse API is to provide clients with links described with useful information to:</p>
 
@@ -32,6 +32,55 @@
     </li>
 </ul>
 
+
+<div id="oai-pmh">
+    <div style="padding-top: 50px;">
+        <h4>Other Web Services and APIs</h4>
+        <div class="row">
+            <div class="col-sm-10">
+                <div class="media">
+                    <div class="media-left media-top">
+                        <img style="" src="{{ base_url }}/static/oc/images/about/open-archives-logo.gif" alt="Open Archives Initiative Logo" />
+                    </div>
+                    <div class="media-body">
+                        <p>Open Context provides an Open Archives Initiative Protocol for Metadata Harvesting
+                           (OAI-PMH) endpoint. Many digital library systems, repositories and aggregators
+                           of scholarly content support this type of service.
+                        </p>
+                        <p>Open Context's OAI-PMH service endpoint is located here:
+                            <samp><a href="{{ base_url }}/oai/" target="_blank">{{ base_url }}/oai/</a></samp>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="atom-manifest">
+    <div style="padding-top: 60px; padding-bottom:20px;">
+        <div class="row">
+            <div class="col-sm-10">
+                <div class="media">
+                    <div class="media-left media-top">
+                        <img style="width: 100px;" src="{{ base_url }}/static/oc/images/about/feed-noun-89519.png" alt="Feed Icon" />
+                    </div>
+                    <div class="media-body">
+                        <p>Open Context provides a feed using the <a href="https://tools.ietf.org/html/rfc4287" target="_blank">Atom Syndication Format</a>.
+                           This paged feed provides a list (manifest) of URI-identified content published by Open Context
+                           and metadata describing these content.
+                           The feed lists these resources ordered by most recently updated records first.
+                           Digital libraries and other systems can crawl this
+                           feed to accession content from Open Context.
+                        </p>
+                        <p>Open Context's manifest feed is located here:
+                            <samp><a href="{{ base_url }}/manifest/.atom" target="_blank">{{ base_url }}/manifest/.atom</a></samp>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% if base_url != 'http://opencontext.org' %}
 
