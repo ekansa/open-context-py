@@ -302,6 +302,9 @@ icc.get_cache_object(cache_id)
                     # or the from date is greater than the earliet date
                     # in the manifest
                     self.errors.append('badArgument')
+                if dt_from == dt_until:
+                    dt_until = dt_from + datetime.timedelta(days=1)
+                    self.until_date_solr = dt_until.strftime('%Y-%m-%dT%H:%M:%SZ')
             if dt_until is not None:
                 if dt_until < dt_earliest:
                     # until date is less than the earliest publication date
@@ -376,7 +379,10 @@ icc.get_cache_object(cache_id)
         """
         if len(self.errors) < 1:
             # only bother doing this if we don't have any errors
-            if self.metadata_prefix is None:
+            if self.metadata_prefix is None \
+               and self.resumption_token is not None:
+                # default to oai_dc if there's a resumption token but
+                # not a metadata_prefix in the request
                 self.metadata_prefix = 'oai_dc'
                 self.metadata_prefix_valid = True
             if self.metadata_prefix is not None:
