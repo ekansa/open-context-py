@@ -662,7 +662,7 @@ icc.get_cache_object(cache_id)
         name = etree.SubElement(identify, 'repositoryName')
         name.text = settings.DEPLOYED_SITE_NAME
         base_url = etree.SubElement(identify, 'baseURL')
-        base_url.text = self.base_url + '/oai'
+        base_url.text = self.base_url + '/oai/'
         p_v = etree.SubElement(identify, 'protocolVersion')
         p_v.text = '2.0'
         admin_email = etree.SubElement(identify, 'adminEmail')
@@ -670,7 +670,7 @@ icc.get_cache_object(cache_id)
         if isinstance(metadata_facets, dict):
             if 'oai-pmh:earliestDatestamp' in metadata_facets:
                 e_d_t = etree.SubElement(identify, 'earliestDatestamp')
-                e_d_t.text = metadata_facets['oai-pmh:earliestDatestamp']
+                e_d_t.text = metadata_facets['oai-pmh:earliestDatestamp'][:10]
             else:
                 error = etree.SubElement(self.root, 'error')
                 error.text = 'Internal Server Error: Failed to get earliest time-stamp'
