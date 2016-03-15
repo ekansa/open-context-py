@@ -850,8 +850,16 @@ class ItemConstruction():
         """
         contribs = False
         creators = False
-        auth = Authorship()
-        auth.get_project_authors(self.project_uuid)
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('proj-auth-', str(self.project_uuid))
+        auth = None
+        if self.cache_entities:
+            auth = icc.get_cache_object(cache_key)
+        if auth is None:
+            auth = Authorship()
+            auth.get_project_authors(self.project_uuid)
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, auth)
         proj_creators = []
         proj_creators_ids = []
         for proj_creator in auth.creators:
@@ -918,9 +926,18 @@ class ItemConstruction():
 
     def add_license(self, act_dict):
         """ Adds license information """
-        lic = Licensing()
-        item_license = lic.get_license(self.uuid,
-                                       self.project_uuid)
+        item_license = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('proj-lic-',
+                                              str(self.uuid) + ' ' + str(self.project_uuid))
+        if self.cache_entities:
+            item_license = icc.get_cache_object(cache_key)
+        if item_license is None:
+            lic = Licensing()
+            item_license = lic.get_license(self.uuid,
+                                           self.project_uuid)
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, item_license)
         if item_license is not False:
             new_object_item = LastUpdatedOrderedDict()
             new_object_item['id'] = item_license
@@ -1423,6 +1440,7 @@ class itemConstructionCache():
 
     def __init__(self):
         self.redis_ok = True
+        self.print_caching = False
 
     def get_entity_w_thumbnail(self, identifier):
         """ gets an entity with thumbnail (useful for item json) """
@@ -1451,26 +1469,28 @@ class itemConstructionCache():
 
     def get_cache_object(self, key):
         """ gets a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                obj = cache.get(key)
-            except:
-                obj = None
-        else:
+        try:
+            cache = caches['redis']
+            obj = cache.get(key)
+            if self.print_caching:
+                print('Cache checked: ' + key)
+        except:
             obj = None
+            if self.print_caching:
+                print('Cache Fail checked: ' + key)
         return obj
 
     def save_cache_object(self, key, obj):
         """ saves a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                cache.set(key, obj)
-                ok = True
-            except:
-                self.redis_ok = False
-                ok = False
-        else:
+        try:
+            cache = caches['redis']
+            cache.set(key, obj)
+            ok = True
+            if self.print_caching:
+                print('Cache Saved: ' + key)
+        except:
+            self.redis_ok = False
             ok = False
+            if self.print_caching:
+                print('Failed to cache: ' + key)
         return ok
