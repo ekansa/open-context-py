@@ -382,18 +382,21 @@ icc.get_cache_object(cache_id)
             if self.metadata_prefix is not None:
                 metadata_uris = self.get_metadata_uris()
                 if isinstance(metadata_uris, dict):
-                    list_recs_xml = etree.SubElement(self.root, 'ListRecords')
                     if 'oc-api:has-results' in metadata_uris:
                         if isinstance(metadata_uris['oc-api:has-results'], list):
-                            for item in metadata_uris['oc-api:has-results']:
-                                # make an item header XML
-                                rec_xml = etree.SubElement(list_recs_xml, 'record')
-                                self.make_item_identifier_xml(rec_xml, item)
-                                self.make_record_metatata_xml(rec_xml, item)
-                    # now add the new sumption token
-                    self.make_resumption_token_xml(self.resumption_token,
-                                                   list_recs_xml,
-                                                   metadata_uris)
+                            if len(metadata_uris['oc-api:has-results']) > 0:
+                                list_recs_xml = etree.SubElement(self.root, 'ListRecords')
+                                for item in metadata_uris['oc-api:has-results']:
+                                    # make an item header XML
+                                    rec_xml = etree.SubElement(list_recs_xml, 'record')
+                                    self.make_item_identifier_xml(rec_xml, item)
+                                    self.make_record_metatata_xml(rec_xml, item)
+                                # now add the new sumption token
+                                self.make_resumption_token_xml(self.resumption_token,
+                                                               list_recs_xml,
+                                                               metadata_uris)
+                            else:
+                                self.errors.append('noRecordsMatch')
             else:
                 self.errors.append('badArgument')
 
@@ -649,16 +652,19 @@ icc.get_cache_object(cache_id)
             # only bother doing this if we don't have any errors
             metadata_uris = self.get_metadata_uris()
             if isinstance(metadata_uris, dict):
-                list_ids_xml = etree.SubElement(self.root, 'ListIdentifiers')
                 if 'oc-api:has-results' in metadata_uris:
                     if isinstance(metadata_uris['oc-api:has-results'], list):
-                        for item in metadata_uris['oc-api:has-results']:
-                            # make an item header XML
-                            self.make_item_identifier_xml(list_ids_xml, item)
-                # now add the new sumption token
-                self.make_resumption_token_xml(self.resumption_token,
-                                               list_ids_xml,
-                                               metadata_uris)
+                        if len(metadata_uris['oc-api:has-results']) > 0:
+                            list_ids_xml = etree.SubElement(self.root, 'ListIdentifiers')
+                            for item in metadata_uris['oc-api:has-results']:
+                                # make an item header XML
+                                self.make_item_identifier_xml(list_ids_xml, item)
+                            # now add the new sumption token
+                            self.make_resumption_token_xml(self.resumption_token,
+                                                           list_ids_xml,
+                                                           metadata_uris)
+                        else:
+                            self.errors.append('noRecordsMatch')
 
     def make_item_identifier_xml(self, parent_node, item):
         """ Makes XML for an item, in with the "header" element
