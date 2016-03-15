@@ -789,7 +789,7 @@ icc.get_cache_object(cache_id)
             self.request = etree.SubElement(self.root, 'request')
         if self.metadata_prefix is not None:
             self.request.attrib['metadataPrefix'] = self.metadata_prefix
-        self.request.text = self.base_url + '/oai'
+        self.request.text = self.base_url + '/oai/'
 
     def make_error_xml(self):
         """ makes an error message for each error noted """
