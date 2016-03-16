@@ -79,8 +79,10 @@ class QueryMaker():
         for context in context_list:
             # Verify that the contexts are valid
             # find and save the enity to memory
+            # print('check: ' + context)
             found = self.mem_cache_obj.check_entity_found(context,
                                                           True)
+            # print('found: ' + str(found))
             if found:
                 entity = self.mem_cache_obj.get_entity(context,
                                                        True)
@@ -92,7 +94,13 @@ class QueryMaker():
         Takes a slug and returns the slug of its parent. Returns 'root' if
         a slug has no parent.
         '''
-        parent_slug = Containment().get_parent_slug_by_slug(slug)
+        cache_key = self.mem_cache_obj.make_memory_cache_key('par-slug', slug)
+        parent_slug = self.mem_cache_obj.get_cache_object(cache_key)
+        if parent_slug is None:
+            contain_obj = Containment()
+            contain_obj.use_cache = False  # because it seems to introduce memory errors
+            parent_slug = contain_obj.get_parent_slug_by_slug(slug)
+            self.mem_cache_obj.save_cache_object(cache_key, parent_slug)
         if parent_slug:
             return parent_slug
         else:
@@ -162,9 +170,9 @@ class QueryMaker():
             fq_field = SolrDocument.ROOT_PROJECT_SOLR
             fq_path_terms = []
             for proj_slug in proj_path_list:
-                found = self.mem_cache_obj.check_entity_found(proj_slug)
+                found = self.mem_cache_obj.check_entity_found(proj_slug, False)
                 if found:
-                    entity = self.mem_cache_obj.get_entity(proj_slug)
+                    entity = self.mem_cache_obj.get_entity(proj_slug, False)
                     # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
@@ -199,9 +207,9 @@ class QueryMaker():
             fq_or_terms = []
             for obj in or_objects:
                 # find and save the entity to memory
-                found = self.mem_cache_obj.check_entity_found(obj)
+                found = self.mem_cache_obj.check_entity_found(obj, False)
                 if found:
-                    entity = self.mem_cache_obj.get_entity(obj)
+                    entity = self.mem_cache_obj.get_entity(obj, False)
                     fq_term = 'object_uri:' + self.escape_solr_arg(entity.uri)
                     fq_term += ' OR text:"' + self.escape_solr_arg(entity.uri) + '"'
                 else:
@@ -235,12 +243,12 @@ class QueryMaker():
                     if len(dc_term) > 0:
                         add_to_fq = True
                         # check if entity exists, and or store in memory
-                        found = self.mem_cache_obj.check_entity_found(dc_term)
+                        found = self.mem_cache_obj.check_entity_found(dc_term, False)
                         if found:
                             # fq_path_term = fq_field + ':' + self.make_solr_value_from_entity(entity)
                             # the below is a bit of a hack. We should have a query field
                             # as with ___pred_ to query just the slug. But this works for now
-                            entity = self.mem_cache_obj.get_entity(dc_term)
+                            entity = self.mem_cache_obj.get_entity(dc_term, False)
                             fq_path_term = fq_field + '_fq:' + entity.slug
                             if dc_param == 'dc-temporal' \
                                and entity.entity_type == 'vocabulary' \
@@ -293,9 +301,9 @@ class QueryMaker():
                 require_id_field = False
                 if act_field_data_type == 'id':
                     # check entity exists, and save to memory
-                    found = self.mem_cache_obj.check_entity_found(prop_slug)
+                    found = self.mem_cache_obj.check_entity_found(prop_slug, False)
                     if found:
-                        entity = self.mem_cache_obj.get_entity(prop_slug)
+                        entity = self.mem_cache_obj.get_entity(prop_slug, False)
                         last_field_label = entity.label
                         prop_slug = entity.slug
                         if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
@@ -370,9 +378,9 @@ class QueryMaker():
                             dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
                             if isinstance(dtypes, list):
                                 # set te data type and the act-field
-                                found = self.mem_cache_obj.check_entity_found(prop_slug)
+                                found = self.mem_cache_obj.check_entity_found(prop_slug, False)
                                 if found:
-                                    entity = self.mem_cache_obj.get_entity(prop_slug)
+                                    entity = self.mem_cache_obj.get_entity(prop_slug, False)
                                     entity.date_type = dtypes[0]  # store for later use
                                     self.mem_cache_obj.entities[prop_slug] = entity  # store for later use
                                 act_field_data_type = self.get_solr_field_type(dtypes[0])
@@ -854,6 +862,7 @@ class QueryMaker():
         if spatial_context:
             context_paths = self._get_context_paths(spatial_context)
             context_slugs = self._get_valid_context_slugs(context_paths)
+            # print('Context slugs: ' + str(context_slugs))
             # If we cannot find a valid context, raise a 404
             if not context_slugs:
                 raise Http404

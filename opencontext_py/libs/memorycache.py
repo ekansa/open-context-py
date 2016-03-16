@@ -34,7 +34,8 @@ class MemoryCache():
         # self.redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
         # self.redis_server.flushall()
         # self.redis_ok = self.redis_server.ping()
-        print('Redis status: ' + str(self.redis_ok))
+        # print('Redis status: ' + str(self.redis_ok))
+        pass
 
     def check_entity_found(self, identifier, is_path=False):
         """ true or false if an entity is found """

@@ -442,9 +442,9 @@ class MakeJsonLd():
                 # check to see if the field is a linkded data field
                 # if so, it needs some help with making Filter Links
                 linked_field = False
-                found = self.mem_cache_obj.check_entity_found(slug)
+                found = self.mem_cache_obj.check_entity_found(slug, False)
                 if found:
-                    field_entity = self.mem_cache_obj.get_entity(slug)
+                    field_entity = self.mem_cache_obj.get_entity(slug, False)
                     self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
@@ -496,9 +496,9 @@ class MakeJsonLd():
                 # check to see if the field is a linkded data field
                 # if so, it needs some help with making Filter Links
                 linked_field = False
-                found = self.mem_cache_obj.check_entity_found(slug)
+                found = self.mem_cache_obj.check_entity_found(slug, False)
                 if found:
-                    field_entity = self.mem_cache_obj.get_entity(slug)
+                    field_entity = self.mem_cache_obj.get_entity(slug, False)
                     self.add_active_facet_field(slug)
                     if field_entity.item_type == 'uri':
                         linked_field = True
@@ -902,9 +902,9 @@ class MakeJsonLd():
             facet_key_list = solr_facet_key.split('___')
             fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
-            found = self.mem_cache_obj.check_entity_found(slug)
+            found = self.mem_cache_obj.check_entity_found(slug, False)
             if found:
-                entity = self.mem_cache_obj.get_entity(slug)
+                entity = self.mem_cache_obj.get_entity(slug, False)
                 if facet_key_list[-1] != facet_key_list[1]:
                     # there's a predicate slug as the second
                     # item in te facet_key_list
@@ -989,9 +989,9 @@ class MakeJsonLd():
         if solr_facet_key == 'item_type':
             if solr_facet_value_key in QueryMaker.TYPE_URIS:
                 output['rdfs:isDefinedBy'] = QueryMaker.TYPE_URIS[solr_facet_value_key]
-                found = self.mem_cache_obj.check_entity_found(output['rdfs:isDefinedBy'])
+                found = self.mem_cache_obj.check_entity_found(output['rdfs:isDefinedBy'], False)
                 if found:
-                    entity = self.mem_cache_obj.get_entity(output['rdfs:isDefinedBy'])
+                    entity = self.mem_cache_obj.get_entity(output['rdfs:isDefinedBy'], False)
                     output['label'] = entity.label
         output['count'] = solr_facet_count
         output['slug'] = solr_facet_value_key
