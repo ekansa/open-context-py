@@ -75,7 +75,10 @@ class Containment():
         Assumes a project is hierarchy is contained in a more general
         containment hierarchy owned by other projects
         """
-        if self.use_cache:
+        if self.use_cache and self.recurse_count < 1:
+            # only use cache if we're at a higher level parent
+            # otherwise, we get strange errors where the first parent
+            # gets forgotten
             key = self.make_memory_cache_key('par-',
                                              child_uuid,
                                              {'r': recursive,
