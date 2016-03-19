@@ -69,56 +69,44 @@ class Containment():
                     top.append(uuid)
         return top
 
+    def get_immediate_parents(self, child_uuid, obs_num=1):
+        """ uses the cache or database get the immediate parents of a child """
+        parents = None
+        if self.use_cache:
+            key = self.make_memory_cache_key('par-up-',
+                                             child_uuid,
+                                             {'obs_num': obs_num})
+            parents = self.get_cache_object(key)
+        if parents is None:
+            parents = Assertion.objects.filter(object_uuid=child_uuid,
+                                               obs_num=1,
+                                               predicate_uuid=Assertion.PREDICATES_CONTAINS)
+            if self.use_cache:
+                self.save_cache_object(key,
+                                       parents)
+        return parents
+
     def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
         """
-        Gets a list the top level contexts in a project hierarchy,
-        Assumes a project is hierarchy is contained in a more general
-        containment hierarchy owned by other projects
-        """
-        if self.use_cache and self.recurse_count < 1:
-            # only use cache if we're at a higher level parent
-            # otherwise, we get strange errors where the first parent
-            # gets forgotten
-            key = self.make_memory_cache_key('par-',
-                                             child_uuid,
-                                             {'r': recursive,
-                                              'v': visibile_only})
-            cache_contexts = self.get_cache_object(key)
-            if cache_contexts is None:
-                self.contexts = self.get_parents_by_child_uuid_db(child_uuid,
-                                                                  recursive,
-                                                                  visibile_only)
-                self.save_cache_object(key,
-                                       self.contexts)
-            else:
-                self.contexts = cache_contexts
-        else:
-            self.contexts = self.get_parents_by_child_uuid_db(child_uuid,
-                                                              recursive,
-                                                              visibile_only)
-        return self.contexts
-
-    def get_parents_by_child_uuid_db(self, child_uuid, recursive=True, visibile_only=True):
-        """
         creates a list of parent uuids from the containment predicate,
-        via DB queries. Defaults to a recursive function
+        via the cache or DB queries. Defaults to a recursive function
         to get all parent uuids
         """
         parent_uuid = False
         try:
-            parents = Assertion.objects.filter(object_uuid=child_uuid,
-                                               obs_num=1,
-                                               predicate_uuid=Assertion.PREDICATES_CONTAINS)
+            parents = self.get_immediate_parents(child_uuid, 1)
             for parent in parents:
-                if(parent.obs_node not in self.contexts):
+                if parent.obs_node not in self.contexts:
                     self.contexts[parent.obs_node] = []
             for parent in parents:
                 parent_uuid = parent.uuid
-                if(parent_uuid not in self.contexts_list):
+                if parent_uuid not in self.contexts_list:
                     self.contexts_list.append(parent_uuid)
                 self.contexts[parent.obs_node].append(parent_uuid)
-                if(recursive and (self.recurse_count < 20)):
-                    self.contexts = self.get_parents_by_child_uuid(parent_uuid, recursive, visibile_only)
+                if recursive and (self.recurse_count < 20):
+                    self.contexts = self.get_parents_by_child_uuid(parent_uuid,
+                                                                   recursive,
+                                                                   visibile_only)
             self.recurse_count += 1
         except Assertion.DoesNotExist:
             parent_uuid = False
