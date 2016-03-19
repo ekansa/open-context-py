@@ -89,7 +89,7 @@ function orcidObj() {
 			    'biography',
 			    'value'];
 		var output = this.get_data_path(path, data);
-		if (format && output != false) {
+		if (format && output != false && output != null) {
 			// format result
 			output = this.format_html_value('Biography:', output);
 		}
