@@ -4,7 +4,7 @@ from lxml import etree
 import lxml.html
 from django.db import models
 from django.db.models import Q
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -105,7 +105,7 @@ class ItemBasicEdit():
         sri.reindex_related(self.manifest.uuid)
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',
@@ -179,7 +179,7 @@ class ItemBasicEdit():
                 note += ' Edit status must be an integer between 0 and 5 inclusively.'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': action,
                          'ok': ok,
                          'change': {'note': note}}
@@ -235,7 +235,7 @@ class ItemBasicEdit():
                 note = 'Updated hero image for project'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-project-hero',
                          'ok': ok,
                          'change': {'note': note}}
@@ -292,7 +292,7 @@ class ItemBasicEdit():
                 note = 'Updated file for this media item'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         # now return the full list of media files for this item
         media_files = Mediafile.objects\
                                .filter(uuid=self.manifest.uuid)
@@ -339,7 +339,7 @@ class ItemBasicEdit():
             ok = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-class-uri',
                          'ok': ok,
                          'change': {'prop': 'class_uri',
@@ -434,7 +434,7 @@ class ItemBasicEdit():
                 ok = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-string-content',
                          'ok': ok,
                          'change': {'prop': content_type,
@@ -487,3 +487,10 @@ class ItemBasicEdit():
         if param in request:
             output = output[param]
         return output
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
