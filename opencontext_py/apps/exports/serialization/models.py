@@ -38,6 +38,11 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.after_date = '2016-02-28'
+sj.dump_serialized_data('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+sj = SerizializeJSON()
 sj.act_export_dir = '/home/dainst_ekansa'
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
