@@ -61,7 +61,8 @@ class ItemAnnotation():
                          'owl:sameAs',
                          'skos:broader',
                          'skos:related',
-                         'rdfs:isDefinedBy']
+                         'rdfs:isDefinedBy',
+                         'http://www.w3.org/2000/01/rdf-schema#range']
         ok = True
         predicate_uri = self.request_param_val(post_data,
                                                'predicate_uri')
@@ -96,9 +97,9 @@ class ItemAnnotation():
                                                               'manual-web-form',
                                                               False)
                     new_la.sort = self.request_param_val(post_data,
-                                                        'sort',
-                                                        0,
-                                                        False)
+                                                         'sort',
+                                                         0,
+                                                         False)
                     new_la.predicate_uri = predicate_uri
                     new_la.object_uri = object_uri
                     new_la.creator_uuid = self.creator_uuid
