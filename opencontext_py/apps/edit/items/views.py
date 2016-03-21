@@ -322,6 +322,63 @@ def add_edit_item_assertion(request, uuid):
 @cache_control(no_cache=True)
 @transaction.atomic()
 @reversion.create_revision()
+def add_edit_item_containment(request, uuid):
+    """ Handles POST requests to add a containment assertion for an item """
+    item_edit = ItemBasicEdit(uuid, request)
+    if item_edit.manifest is not False:
+        if request.method == 'POST':
+            if item_edit.edit_permitted or request.user.is_superuser:
+                field_data = False
+                if 'field_data' in request.POST:
+                    field_data_json = request.POST['field_data']
+                    try:
+                        field_data = json.loads(field_data_json)
+                    except:
+                        field_data = False
+                if field_data is False:
+                    json_output = json.dumps({'error': 'Need to POST "field_data" with JSON encoded text.'},
+                                             indent=4,
+                                             ensure_ascii=False)
+                    return HttpResponse(json_output,
+                                        content_type='application/json; charset=utf8',
+                                        status=400)
+                else:
+                    item_ass = ItemAssertion()
+                    item_ass.uuid = uuid
+                    item_ass.project_uuid = item_edit.manifest.project_uuid
+                    result = item_ass.add_edit_containment(field_data,
+                                                           item_edit.manifest)
+                    result['errors'] = item_edit.errors
+                    json_output = json.dumps(result,
+                                             indent=4,
+                                             ensure_ascii=False)
+                    # version control metadata
+                    rev_label = 'Update containment for ' + item_edit.manifest.label
+                    reversion.set_user(request.user)
+                    reversion.add_meta(VersionMetadata,
+                                       project_uuid=item_edit.manifest.project_uuid,
+                                       uuid=item_edit.manifest.uuid,
+                                       item_type=item_edit.manifest.item_type,
+                                       label=rev_label,
+                                       json_note=json_output)
+                    return HttpResponse(json_output,
+                                        content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
 def sort_item_assertion(request, uuid):
     """ Handles POST requests to DELETE an assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)

@@ -7,7 +7,7 @@ import lxml.html
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -17,6 +17,7 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
@@ -151,7 +152,7 @@ class ItemAssertion():
                     new_data[field_key] = new_field_data
         if self.ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'add-edit-item-assertions',
                          'ok': self.ok,
                          'additions': additions,
@@ -160,6 +161,122 @@ class ItemAssertion():
                                     'label': label,
                                     'note': note}}
         return self.response
+
+    def add_edit_containment(self, field_data, item_man=False):
+        """ adds or edits containment data """
+        pred_uuid = Assertion.PREDICATES_CONTAINS
+        self.ok = True
+        note = ''
+        if item_man is False:
+            item_man = self.get_manifest_item(self.uuid)
+        if item_man is False:
+            self.ok = False
+            label = 'Item not found'
+            self.errors['uuid'] = 'Cannot find the item for editing assertions: ' + str(self.uuid)
+            note = self.errors['uuid']
+        else:
+            label = item_man.label
+            self.uuid = item_man.uuid
+            if item_man.item_type != 'subjects':
+                self.ok = False
+                self.errors['uuid'] = 'Can only add containment to "subjects" items: ' + str(self.uuid)
+            else:
+                for field_key, field in field_data.items():
+                    new_field_data = []
+                    if 'id' in field:
+                        field_id = field['id']
+                    else:
+                        field_id = field_key
+                    if 'predicate_uuid' not in field:
+                        self.ok = False
+                        self.errors[field_key] = 'Missing a predicate_uuid for the field'
+                    elif field['predicate_uuid'] != 'oc-gen:contained-in':
+                        self.ok = False
+                        self.errors[field_key] = 'Must have predicate_uuid with "oc-gen:contained-in".'
+                    else:
+                        parent_uuid = False
+                        if 'label' not in field:
+                            field['label'] = 'Containment'
+                        if 'sort' not in field:
+                            field['sort'] = 1
+                        if 'values' in field:
+                            for field_value_dict in field['values']:
+                                if 'id' in field_value_dict:
+                                    parent_uuid = field_value_dict['id']
+                                    parent = self.get_manifest_item(parent_uuid)
+                                    if parent is not False:
+                                        if parent.item_type != 'subjects':
+                                            parent_uuid = False
+                                            self.ok = False
+                                            self.errors[field_key] = 'Parent must be a "subjects" item.'
+                                        else:
+                                            self.ok = True
+                                    else:
+                                        parent_uuid = False
+                                    if parent_uuid is False:
+                                        self.ok = False
+                                        note = 'Could not find parent'
+                                        self.errors[field_key] = 'Missing the parent_uuid in manifest'
+                                else:
+                                    self.errors[field_key] = 'Missing a "id" for parent_uuid'
+                        if self.ok and parent_uuid is not False:
+                            # first delete the old containment relationship
+                            drev = DeletionRevision()
+                            drev.project_uuid = item_man.project_uuid
+                            drev.uuid = item_man.uuid
+                            drev.item_type = item_man.item_type
+                            drev.user_id = self.user_id
+                            rev_label = 'Updated ' + item_man.label
+                            rev_label += ', field: ' + field['label']
+                            # delete prior containment relationship
+                            del_objs = Assertion.objects\
+                                                .filter(object_uuid=item_man.uuid,
+                                                        predicate_uuid=pred_uuid)
+                            for del_obj in del_objs:
+                                drev.assertion_keys.append(del_obj.hash_id)
+                                del_obj.delete()
+                            drev.save_delete_revision(rev_label, '')
+                            # now add the new containment relationship
+                            new_ass = Assertion()
+                            new_ass.uuid = parent_uuid
+                            new_ass.subject_type = 'subjects'
+                            new_ass.project_uuid = item_man.project_uuid
+                            new_ass.source_id = 'web-form'
+                            new_ass.obs_node = '#contents-' + str(1)
+                            new_ass.obs_num = 1
+                            new_ass.sort = 1
+                            new_ass.visibility = 1
+                            new_ass.predicate_uuid = pred_uuid
+                            new_ass.object_type = item_man.item_type
+                            new_ass.object_uuid = item_man.uuid
+                            try:
+                                new_ass.save()
+                            except:
+                                self.ok = False
+                                self.errors[error_key] = 'Same containment assertion '
+                                self.errors[error_key] += 'already exists.'
+                            if self.ok:
+                                # now change the path information for the Subjects
+                                sg = SubjectGeneration()
+                                sg.generate_save_context_path_from_uuid(item_man.uuid,
+                                                                        True)
+        if self.ok:
+            # now clear the cache a change was made
+            self.clear_caches()
+        self.response = {'action': 'add-edit-item-containment',
+                         'ok': self.ok,
+                         'data': {'parent_uuid': parent_uuid},
+                         'change': {'uuid': self.uuid,
+                                    'label': label,
+                                    'note': note}}
+        return self.response
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
 
     def add_assertion(self, post_data):
         """ adds an assertion to an item
@@ -271,7 +388,7 @@ class ItemAssertion():
                 new_data[post_data['id']] = new_field_data
         if self.ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'rank-item-assertion-value',
                          'ok': self.ok,
                          'data': new_data,
@@ -320,7 +437,7 @@ class ItemAssertion():
                 new_data[post_data['id']] = new_field_data
         if self.ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'delete-item-assertion',
                          'ok': self.ok,
                          'data': new_data,
@@ -588,7 +705,7 @@ class ItemAssertion():
             new_ass.object_uuid = str_obj.uuid
             new_ass.save()
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
 
     def create_note_entity(self):
         """ creates a note predicate entity if it does not yet
