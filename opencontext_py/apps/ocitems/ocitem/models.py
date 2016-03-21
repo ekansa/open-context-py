@@ -259,6 +259,9 @@ class OCitem():
             elif self.predicate.data_type == 'xsd:date':
                 p_range['label'] = 'Calendar / date values'
             json_ld['rdfs:range'] = [p_range]
+            if self.assertion_hashes:
+                # add a default sort order, for edit view JSON
+                json_ld['oc-gen:default-sort-order'] = float(self.predicate.sort)
         return json_ld
 
     def add_related_predicate(self,

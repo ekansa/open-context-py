@@ -183,6 +183,8 @@ urlpatterns = patterns('',
                        # --------------------------
                        url(r'^edit/update-item-basics/(?P<uuid>\S+)', EditItemViews.update_item_basics,
                            name='edit_item_basics'),
+                       url(r'^edit/update-predicate-sort-order/(?P<uuid>\S+)', EditItemViews.update_predicate_sort_order,
+                           name='update_predicate_sort_order'),
                        url(r'^edit/update-project-hero/(?P<uuid>\S+)', EditItemViews.update_project_hero,
                            name='edit_update_project_hero'),
                        url(r'^edit/update-media-file/(?P<uuid>\S+)', EditItemViews.update_media_file,

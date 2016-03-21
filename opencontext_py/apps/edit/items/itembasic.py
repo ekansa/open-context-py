@@ -16,6 +16,7 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.geospace.models import Geospace
@@ -441,6 +442,69 @@ class ItemBasicEdit():
                                     'new': content,
                                     'old': '[Old content]',
                                     'note': note}}
+        return self.response
+
+    def update_predicate_sort_order(self, post_data):
+        """ updates the general sort order of assertions using a given predicate """
+        ok = True
+        label = self.manifest.label
+        note = ''
+        if self.manifest.item_type != 'predicates':
+            ok = False
+            self.errors['uuid'] = self.manifest.uuid + ' not a predicates item'
+        else:
+            # check to make sure we have the predicate!
+            try:
+                act_pred = Predicate.objects.get(uuid=self.manifest.uuid)
+            except Predicate.DoesNotExist:
+                act_pred = False
+                ok = False
+        if ok:
+            if 'sort_value' in post_data:
+                try:
+                    sort_value = float(post_data['sort_value'])
+                except:
+                    sort_value = 0
+                    ok = False
+                    note += 'Error, sort_value needs to be an decimal value. '
+            else:
+                ok = False
+                note += 'Error, need an decimal "sort_value" param. '
+            if ok:
+                # first update the database to add a sort value to the predicate
+                act_pred.sort = sort_value
+                act_pred.save()
+                # now get a list of all the subjects using this predicate
+                assertions_changed = 0
+                predicate_uuid = self.manifest.uuid
+                dist_subjs = Assertion.objects\
+                                      .values_list('uuid', flat=True)\
+                                      .filter(predicate_uuid=predicate_uuid)\
+                                      .distinct('uuid')\
+                                      .iterator()
+                for uuid in dist_subjs:
+                    # now, get a list of all the assertions for this subject
+                    # and predicate
+                    act_assertions = Assertion.objects\
+                                              .filter(uuid=uuid,
+                                                      predicate_uuid=predicate_uuid)\
+                                              .order_by('sort')
+                    i = 0
+                    for act_ass in act_assertions:
+                        # this preserves the sort order for multiple assertions of the same
+                        # subject uuid
+                        new_sort = float(sort_value) + (i / 1000)
+                        act_ass.sort = new_sort
+                        act_ass.save()
+                        i += 1
+                        assertions_changed += 1
+                note += 'Total number of assertions changed: ' + str(assertions_changed)
+        if ok:
+            # now clear the cache a change was made
+            self.clear_caches()
+        self.response = {'action': 'Change predicate sort',
+                         'ok': ok,
+                         'change': {'note': note}}
         return self.response
 
     def merge_same_contexts_by_project(self,
