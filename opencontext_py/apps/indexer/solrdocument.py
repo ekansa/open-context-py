@@ -584,7 +584,8 @@ class SolrDocument:
                            'description',
                            'dc-terms:abstract',
                            'rdfs:comment',
-                           'rdf:HTML']
+                           'rdf:HTML',
+                           'skos:note']
         for pred in text_predicates:
             if pred in self.oc_item.json_ld:
                 self.fields['text'] += self.oc_item.json_ld[pred] + '\n'

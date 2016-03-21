@@ -16,6 +16,8 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
+from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.indexer.reindex import SolrReIndex
@@ -368,8 +370,7 @@ class ItemBasicEdit():
                 except Project.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                     ok = False
-            elif self.manifest.item_type == 'documents' \
-                  and content_type == 'content':
+            elif self.manifest.item_type == 'documents' and content_type == 'content':
                 try:
                     cobj = OCdocument.objects.get(uuid=self.manifest.uuid)
                     cobj.content = content
@@ -378,6 +379,57 @@ class ItemBasicEdit():
                 except OCdocument.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in documents'
                     ok = False
+            elif self.manifest.item_type == 'predicates' or self.manifest.item_type == 'types':
+                # make a skos not to document a predicate or type
+                ok = True
+                string_uuid = None
+                old_notes = Assertion.objects\
+                                     .filter(uuid=self.manifest.uuid,
+                                             predicate_uuid='skos:note')
+                for old_note in old_notes:
+                    string_uuid = old_note.object_uuid
+                    old_note.delete()
+                if string_uuid is not None:
+                    string_used = Assertion.objects\
+                                           .filter(project_uuid=self.manifest.project_uuid,
+                                                   object_uuid=string_uuid)[:1]
+                    if len(string_used) > 0:
+                        # the string is used elsewhere, so we can't just use that
+                        # string uuid
+                        string_uuid = None
+                    else:
+                        # put the new content int the string that is not in use
+                        act_string = False
+                        try:
+                            act_string = OCstring.objects.get(uuid=string_uuid)
+                        except OCstring.DoesNotExist:
+                            act_string = False
+                            string_uuid = None
+                        if act_string is not False:
+                            # save the content in the string to overwrite it
+                            act_string.content = content
+                            act_string.save()
+                if string_uuid is None:
+                    # we don't have a string_uuid to overwrite
+                    str_man = StringManagement()
+                    str_man.project_uuid = self.manifest.project_uuid
+                    str_man.source_id = 'web-form'
+                    str_obj = str_man.get_make_string(str(content))
+                    string_uuid = str_obj.uuid
+                # now make the assertion
+                new_ass = Assertion()
+                new_ass.uuid = uuid = self.manifest.uuid
+                new_ass.subject_type = self.manifest.item_type
+                new_ass.project_uuid = self.manifest.project_uuid
+                new_ass.source_id = 'web-form'
+                new_ass.obs_node = '#obs-1'
+                new_ass.obs_num = 1
+                new_ass.sort = 1
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = 'skos:note'
+                new_ass.object_type = 'xsd:string'
+                new_ass.object_uuid = string_uuid
+                new_ass.save()
             else:
                 ok = False
         if ok:

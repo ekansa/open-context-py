@@ -84,6 +84,14 @@ function itemEdit(item_type, item_uuid){
 					// prep geospatial interface if interface object exists
 					edit_geoevents.show_existing_data()
 				}
+				if (this.item_type == 'predicates') {
+					// display person specifics
+					this.display_predicate_edits();
+				}
+				if (this.item_type == 'types') {
+					// display person specifics
+					this.display_type_edits();
+				}
 				if (this.item_type == 'media') {
 					// display person specifics
 					this.display_media_edits();
@@ -633,6 +641,130 @@ function itemEdit(item_type, item_uuid){
 	 *************************************************************/
 	
 	
+	
+	/**************************************************************
+	 * PREDICATE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_predicate_edits = function(){
+		this.display_skos_note();	
+	}
+	
+	
+	
+	/**************************************************************
+	 * TYPE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_type_edits = function(){
+		this.display_skos_note();	
+	}
+	
+	/**************************************************************
+	 * SKOS-NOTE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_skos_note = function(){
+		// inferface for editing short project description
+		if (this.item_json_ld_obj.data.hasOwnProperty('skos:note')) {
+			var skos_note = this.item_json_ld_obj.data['skos:note'];
+		}
+		else{
+			var skos_note = '';
+		}
+		if (skos_note.length > 0) {
+			var placeholder = '';
+		}
+		else{
+			var placeholder = 'placeholder="A note defining this concept."';
+		}
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updateSkosNote();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-9">',
+					'<div class="form-group">',
+                        '<label for="proj-abstract">Definition Note (skos:note)</label>',
+                        '<textarea id="skos-note" ',
+						'class="form-control" rows="24" ',
+						placeholder + '>',
+						skos_note,
+						'</textarea>',
+                    '</div>', 
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="skos-note-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="skos-note-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="skos-note-valid">',
+					'</div>',
+					'<div>',
+						'<label>Note</label>',
+						'<p class="small">',
+						'An note should use HMTL tags for formatting, including images, ',
+						'hyperlinks, and may even include some javascript for dynamic ',
+						'interactions. The content of the note should include ',
+						'information needed to understand and reuse this concept. ',
+						'</p>',
+						'<p class="small">',
+						'The note should validate as HTML. Upon submission or update, Open ',
+						'Context will check and validate the HTML. It will accept bad HTML, but bad ',
+						'HTML may cause severe formatting or other problems. Please use the W3C ',
+						'HTML <a href="https://validator.w3.org/" targer="_blank">validation services</a> ',
+						'to help debug your HTML.',
+						'</p>',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-skos-note").innerHTML = html;
+		
+	}
+	this.updateSkosNote = function() {
+		/* updates the skos-note for the item
+		*/
+		var act_domID = "skos-note";
+		var content = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById('skos-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('skos-note-valid');
+		act_note.innerHTML = 'Uploading and validating...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				content: content,
+				content_type: 'content',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateSkosNoteDone,
+			error: function (request, status, error) {
+				alert('Problem updating the skos-note: ' + status);
+			}
+		});
+	}
+	this.updateSkosNoteDone = function(data){
+		// handles successful result of short description updates
+		var act_icon = document.getElementById('skos-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('skos-note-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('skos-note-respncon');
+		}
+		this.make_html_valid_note_html(data, 'skos-note-valid');
+	}
 	
 	
 	/**************************************************************
