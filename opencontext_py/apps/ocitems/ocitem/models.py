@@ -371,6 +371,7 @@ class OCitem():
                                                                            child_uuid, 'subjects')
             json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
         # add predicate - object (descriptions) to the item
+        json_ld = item_con.add_direct_assertions(json_ld)
         json_ld = item_con.add_descriptive_assertions(json_ld, self.assertions)
         json_ld = item_con.add_spacetime_metadata(json_ld,
                                                   self.uuid,
@@ -438,6 +439,11 @@ class ItemConstruction():
     General purpose functions for building Open Context items
     """
 
+    # predicates not for use in observations
+    NO_OBS_ASSERTION_PREDS = [
+        'skos:note'
+    ]
+
     def __init__(self):
         self.uuid = False
         self.project_uuid = False
@@ -447,6 +453,7 @@ class ItemConstruction():
         self.add_media_thumnails = True
         self.add_subject_class = True
         self.cannonical_uris = True
+        self.direct_assertions = list()  # assertions not in an observation
         self.obs_list = list()
         self.predicates = {}
         self.var_list = list()
@@ -482,14 +489,19 @@ class ItemConstruction():
         raw_pred_list = list()
         pred_types = {}
         for assertion in assertions:
-            if assertion.obs_num not in self.obs_list:
-                self.obs_list.append(assertion.obs_num)
-            if assertion.predicate_uuid not in raw_pred_list:
-                raw_pred_list.append(assertion.predicate_uuid)
-                if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
-                    pred_types[assertion.predicate_uuid] = '@id'
-                else:
-                    pred_types[assertion.predicate_uuid] = assertion.object_type
+            if assertion.predicate_uuid in self.NO_OBS_ASSERTION_PREDS:
+                # these predicates describe the item, but not in an observation
+                self.direct_assertions.append(assertion)
+            else:
+                # these predicates are used inside observations
+                if assertion.obs_num not in self.obs_list:
+                    self.obs_list.append(assertion.obs_num)
+                if assertion.predicate_uuid not in raw_pred_list:
+                    raw_pred_list.append(assertion.predicate_uuid)
+                    if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+                        pred_types[assertion.predicate_uuid] = '@id'
+                    else:
+                        pred_types[assertion.predicate_uuid] = assertion.object_type
         # prepares dictionary objects for each predicate
         for pred_uuid in raw_pred_list:
             pmeta = self.get_entity_metadata(pred_uuid)
@@ -539,10 +551,35 @@ class ItemConstruction():
         json_ld['@context'] = context
         return json_ld
 
+    def add_direct_assertions(self, act_dict):
+        """
+        adds assertions that describe the item, but are not
+        part of an observation
+        """
+        for assertion in self.direct_assertions:
+            content = None
+            if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+                entity = self.get_entity_metadata(self.object_uuid)
+                if entity is not False:
+                    content = entity.uri
+            else:
+                if assertion.object_type == 'xsd:string':
+                    try:
+                        string_item = OCstring.objects.get(uuid=assertion.object_uuid)
+                        content = string_item.content
+                    except OCstring.DoesNotExist:
+                        content = 'string content missing'
+                elif (assertion.object_type == 'xsd:date'):
+                    content = assertion.data_date.date().isoformat()
+                else:
+                    content = assertion.data_num
+            act_dict[assertion.predicate_uuid] = content
+        return act_dict
+
     def add_descriptive_assertions(self, act_dict, assertions):
         """
         adds descriptive assertions (descriptive properties, non spatial containment links)
-        to items
+        to items, as parts of Observations
         """
         observations = list()
         for act_obs_num in self.obs_list:

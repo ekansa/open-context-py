@@ -17,7 +17,7 @@ class LinkAnnoManagement():
 
 from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 lam = LinkAnnoManagement()
-project_uuid = 'd1c85af4-c870-488a-865b-b3cf784cfc60'
+project_uuid = 'A5DDBEA2-B3C8-43F9-8151-33343CBDC857'
 lam.make_von_den_driesch_equiv(project_uuid)
 
     """
@@ -208,6 +208,15 @@ lam.make_von_den_driesch_equiv(project_uuid)
                     la.source_id = 'label-match'
                     la.predicate_uri = equiv_pred
                     la.object_uri = uri
+                    la.save()
+                    # save also that the unit of measurement is in MM
+                    la = LinkAnnotation()
+                    la.subject = man_obj.uuid  # the subordinate is the subject
+                    la.subject_type = man_obj.item_type
+                    la.project_uuid = man_obj.project_uuid
+                    la.source_id = 'label-match'
+                    la.predicate_uri = 'http://www.w3.org/2000/01/rdf-schema#range'
+                    la.object_uri = 'http://www.wikidata.org/wiki/Q174789'
                     la.save()
 
     def make_alt_uri(self, uri):

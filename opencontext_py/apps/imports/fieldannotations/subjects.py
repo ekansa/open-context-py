@@ -842,13 +842,32 @@ class CandidateSubject():
         if subject_match is not False:
             match_found = True
             self.uuid = subject_match.uuid
+        else:
+            match_found = self.match_against_oc_subjects(context)
+        return match_found
+
+    def match_against_oc_subjects(self, context):
+        """ matches against subjects that are in project_uuid '0'
+            the open context general project
+        """
+        match_found = False
+        levels = context.split('/')
+        if len(levels) < 2:
+            # only do this if we're pretty far up a hierarchy,
+            # otherwise a waste of time.
+            subject_match = Subject.objects\
+                                   .filter(project_uuid__in=[self.project_uuid, '0'],
+                                           context=context)[:1]
+            if len(subject_match) > 0:
+                match_found = True
+                self.uuid = subject_match[0].uuid
         return match_found
 
     def match_against_manifest(self, label, class_uri):
         """ Checks to see if the item exists in the manifest """
         match_found = False
         manifest_match = Manifest.objects\
-                                 .filter(project_uuid=self.project_uuid,
+                                 .filter(project_uuid__in=[self.project_uuid, '0'],
                                          label=label,
                                          class_uri=class_uri)[:1]
         if len(manifest_match) > 0:

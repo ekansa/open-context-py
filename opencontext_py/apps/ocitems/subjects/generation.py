@@ -8,6 +8,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.entities.entity.models import Entity
+from django.core.cache import caches
 
 
 # Some functions for processing subject items
@@ -62,6 +63,7 @@ class SubjectGeneration():
         """
         path = False
         act_contain = Containment()
+        act_contain.redis_ok = False
         contexts = []
         r_contexts = act_contain.get_parents_by_child_uuid(uuid)
         for tree_node, r_parents in r_contexts.items():
@@ -83,6 +85,8 @@ class SubjectGeneration():
 
     def generate_save_context_path_from_uuid(self, uuid, do_children=True):
         """ Generates and saves a context path for a subject item by uuid """
+        cache = caches['redis']
+        cache.clear()
         output = False
         try:
             man_obj = Manifest.objects.get(uuid=uuid,
@@ -94,6 +98,7 @@ class SubjectGeneration():
                 output = self.generate_save_context_path_from_manifest_obj(man_obj)
                 if do_children:
                     act_contain = Containment()
+                    act_contain.redis_ok = False
                     # get the contents recusivelhy
                     contents = act_contain.get_children_by_parent_uuid(uuid, True)
                     if isinstance(contents, dict):
@@ -111,6 +116,7 @@ class SubjectGeneration():
         new_context = True
         act_context = self.generate_context_path(man_obj.uuid)
         if act_context is not False:
+            print('Saving Path (' + str(man_obj.uuid) + '): ' + act_context)
             try:
                 sub_obj = Subject.objects.get(uuid=man_obj.uuid)
                 if sub_obj.context == act_context:
