@@ -1092,7 +1092,8 @@ class LinkedData():
     ITEM_REL_PREDICATES = ['skos:closeMatch',
                            'owl:sameAs',
                            'skos:related',
-                           'skos:broader']
+                           'skos:broader',
+                           'dc-terms:references']
 
     def __init__(self):
         self.linked_predicates = False
