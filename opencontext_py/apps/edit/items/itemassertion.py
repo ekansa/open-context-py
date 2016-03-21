@@ -271,13 +271,6 @@ class ItemAssertion():
                                     'note': note}}
         return self.response
 
-    def clear_caches(self):
-        """ clears all the caches """
-        cache = caches['redis']
-        cache.clear()
-        cache = caches['default']
-        cache.clear()
-
     def add_assertion(self, post_data):
         """ adds an assertion to an item
             based on posted data
@@ -713,3 +706,10 @@ class ItemAssertion():
         """
         leg = LinkEntityGeneration()
         leg.check_add_note_pred()
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
