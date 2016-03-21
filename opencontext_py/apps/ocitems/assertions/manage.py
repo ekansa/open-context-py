@@ -10,6 +10,16 @@ from opencontext_py.apps.ocitems.assertions.containment import Containment
 class ManageAssertions():
     """
     This class has useful functions for creating and updating assertion data
+
+from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
+ma = ManageAssertions()
+parent_uuid = '9949c6b6-e1b0-42fd-8d8c-a096bb1f97bb' # Henan
+child_uuid = '2fedc14c-4d86-4cdc-b067-a13dda1c3d56' # Anyang--Xiaomintun
+ma.add_containment_assertion(paren_uuid, child_uuid)
+parent_uuid = '9949c6b6-e1b0-42fd-8d8c-a096bb1f97bb' # Henan
+child_uuid = 'f4a9473b-49cc-4d96-ab52-ffe563004f84' # Anyang--Xiaotun Nanlu
+ma.add_containment_assertion(paren_uuid, child_uuid)
+
     """
     def __init__(self):
         self.source_id = 'manual'
