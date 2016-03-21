@@ -105,7 +105,7 @@ class ItemAnnotation():
                     new_la.creator_uuid = self.creator_uuid
                     new_la.save()
                     # now clear the cache a change was made
-                    cache.clear()
+                    self.clear_caches()
                 else:
                     ok = False
                     note = 'This annotation already exists.'
