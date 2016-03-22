@@ -84,6 +84,14 @@ function itemEdit(item_type, item_uuid){
 					// prep geospatial interface if interface object exists
 					edit_geoevents.show_existing_data()
 				}
+				if (this.item_type == 'predicates') {
+					// display person specifics
+					this.display_predicate_edits();
+				}
+				if (this.item_type == 'types') {
+					// display person specifics
+					this.display_type_edits();
+				}
 				if (this.item_type == 'media') {
 					// display person specifics
 					this.display_media_edits();
@@ -633,6 +641,223 @@ function itemEdit(item_type, item_uuid){
 	 *************************************************************/
 	
 	
+	
+	/**************************************************************
+	 * PREDICATE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_predicate_edits = function(){
+		this.display_predicate_sort();
+		this.display_skos_note();	
+	}
+	this.display_predicate_sort = function(){
+		// interface for changing the sort order of a predicate
+		// globally for an entire project
+		
+		if (this.item_json_ld_obj.data.hasOwnProperty('oc-gen:default-sort-order')) {
+			var sort_value = this.item_json_ld_obj.data['oc-gen:default-sort-order'];
+		}
+		else{
+			var sort_value = '';
+		}
+		if (sort_value != '') {
+			var placeholder = '';
+		}
+		else{
+			var placeholder = 'placeholder="Sort order for whole project"';
+		}
+		
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updatePredicateSort();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-9">',
+					'<div class="form-group">',
+                        '<label for="pred-sort">Sort Value (Integer)</label>',
+                        '<input id="pred-sort" ',
+						'class="form-control input-sm" type="text" ',
+						'value="' + sort_value + '" ',
+						placeholder,
+						' />',
+                    '</div>', 
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="pred-sort-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="pred-sort-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="pred-sort-valid">',
+					'</div>',
+					'<div>',
+						'<label>Note</label>',
+						'<p class="small">',
+						'Changing the sort value changes the order this predicate will ',
+						'be displayed when used to describe items. Changes here apply to the entire ',
+						'project. If you want to change sort orders for just a single item, ',
+						'please edit that item instead. ',
+						'</p>',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-pred-sort").innerHTML = html;
+	}
+	this.updatePredicateSort = function() {
+		/* updates the skos-note for the item
+		*/
+		var act_domID = "pred-sort";
+		var sort_value = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-predicate-sort-order/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById('pred-sort');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('pred-sort');
+		act_note.innerHTML = 'Uploading and validating...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				sort_value: sort_value,
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updatePredicateSortDone,
+			error: function (request, status, error) {
+				alert('Problem updating predicate sort: ' + status);
+			}
+		});
+	}
+	this.updatePredicateSortDone = function(data){
+		// handles response of predicate sorting update
+		var act_icon = document.getElementById('pred-sort-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('pred-sort-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('pred-sort-respncon');
+		}
+	}
+	
+	/**************************************************************
+	 * TYPE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_type_edits = function(){
+		this.display_skos_note();	
+	}
+	
+	/**************************************************************
+	 * SKOS-NOTE RELATED FUNCTIONS
+	 *
+	 *************************************************************/
+	this.display_skos_note = function(){
+		// inferface for editing skos notes for predicates and types
+		if (this.item_json_ld_obj.data.hasOwnProperty('skos:note')) {
+			var skos_note = this.item_json_ld_obj.data['skos:note'];
+		}
+		else{
+			var skos_note = '';
+		}
+		if (skos_note.length > 0) {
+			var placeholder = '';
+		}
+		else{
+			var placeholder = 'placeholder="A note defining this concept."';
+		}
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updateSkosNote();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-9">',
+					'<div class="form-group">',
+                        '<label for="skos-note">Definition Note (skos:note)</label>',
+                        '<textarea id="skos-note" ',
+						'class="form-control" rows="24" ',
+						placeholder + '>',
+						skos_note,
+						'</textarea>',
+                    '</div>', 
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="skos-note-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="skos-note-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="skos-note-valid">',
+					'</div>',
+					'<div>',
+						'<label>Note</label>',
+						'<p class="small">',
+						'An note should use HMTL tags for formatting, including images, ',
+						'hyperlinks, and may even include some javascript for dynamic ',
+						'interactions. The content of the note should include ',
+						'information needed to understand and reuse this concept. ',
+						'</p>',
+						'<p class="small">',
+						'The note should validate as HTML. Upon submission or update, Open ',
+						'Context will check and validate the HTML. It will accept bad HTML, but bad ',
+						'HTML may cause severe formatting or other problems. Please use the W3C ',
+						'HTML <a href="https://validator.w3.org/" targer="_blank">validation services</a> ',
+						'to help debug your HTML.',
+						'</p>',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-skos-note").innerHTML = html;
+		
+	}
+	this.updateSkosNote = function() {
+		/* updates the skos-note for the item
+		*/
+		var act_domID = "skos-note";
+		var content = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById('skos-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('skos-note-valid');
+		act_note.innerHTML = 'Uploading and validating...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				content: content,
+				content_type: 'content',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateSkosNoteDone,
+			error: function (request, status, error) {
+				alert('Problem updating the skos-note: ' + status);
+			}
+		});
+	}
+	this.updateSkosNoteDone = function(data){
+		// handles successful result of skos-note updates
+		var act_icon = document.getElementById('skos-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('skos-note-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('skos-note-respncon');
+		}
+		this.make_html_valid_note_html(data, 'skos-note-valid');
+	}
 	
 	
 	/**************************************************************

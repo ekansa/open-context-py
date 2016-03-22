@@ -38,9 +38,20 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.after_date = '2016-02-28'
+sj.dump_serialized_data('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+sj = SerizializeJSON()
 sj.act_export_dir = '/home/dainst_ekansa'
 sj.dump_serialize_recent_projects("2015-06-01")
 sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
+
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+sj = SerizializeJSON()
+sj.after_date = '2016-02-28'
+sj.limit_item_types = ['persons']
+sj.dump_serialized_data('5A6DDB94-70BE-43B4-2D5D-35D983B21515')
 
 projects = Project.objects.filter(updated__gte="2015-06-01")
 
@@ -51,6 +62,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.after_date = False
         self.chunk_size = 5000
         self.act_export_dir = False
+        self.limit_item_types = False
         self.all_models = ['link_entities']
         self.project_models = ['oc_assertions',
                                'oc_documents',
@@ -165,6 +177,11 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                 else:
                     # oc_manifest is different
                     args['record_updated__gte'] = self.after_date
+            if self.limit_item_types is not False:
+                if table_name == 'oc_manifest':
+                    args['item_type__in'] = self.limit_item_types
+                if table_name == 'oc_assertions':
+                    args['subject_type__in'] = self.limit_item_types
             if table_name == 'oc_assertions':
                 query_set = Assertion.objects\
                                      .filter(**args)

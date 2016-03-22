@@ -8,6 +8,11 @@ from opencontext_py.apps.entities.entity.models import Entity
 class ProjectPermissions():
     """
     Checks on project relationships with subprojects
+
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+pp = ProjectPermissions()
+pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+
     """
 
     def __init__(self, project_uuid=False):
@@ -98,3 +103,21 @@ class ProjectPermissions():
         for proj in projs:
             output.append(self.create_proj_object_perm_groups(proj))
         return output
+
+    def set_project_view_edit_groups(self,
+                                     project_uuid,
+                                     view_group_id,
+                                     edit_group_id):
+        """ sets view and edit group ids for a project """
+        proj = False
+        try:
+            proj = Project.objects.get(uuid=project_uuid)
+        except Project.DoesNotExist:
+            proj = False
+        if proj is not False:
+            proj.view_group_id = view_group_id
+            proj.edit_group_id = edit_group_id
+            proj.save()
+            return True
+        else:
+            return False

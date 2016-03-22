@@ -319,6 +319,10 @@ Crawl-delay: 25
 
 
 
+User-agent: turnitinbot
+Disallow: /oai/*
+
+
 
 User-agent: *
 Disallow: /*?prop=*
@@ -347,3 +351,4 @@ Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
 Crawl-delay: 25
+

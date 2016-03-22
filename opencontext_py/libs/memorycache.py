@@ -8,7 +8,6 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -35,7 +34,8 @@ class MemoryCache():
         # self.redis_server = redis.StrictRedis(host='localhost', port=6379, db=0)
         # self.redis_server.flushall()
         # self.redis_ok = self.redis_server.ping()
-        print('Redis status: ' + str(self.redis_ok))
+        # print('Redis status: ' + str(self.redis_ok))
+        pass
 
     def check_entity_found(self, identifier, is_path=False):
         """ true or false if an entity is found """
@@ -256,27 +256,20 @@ class MemoryCache():
 
     def get_cache_object(self, key):
         """ gets a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                obj = cache.get(key)
-            except:
-                obj = None
-                self.redis_ok = False
-        else:
+        try:
+            cache = caches['redis']
+            obj = cache.get(key)
+        except:
             obj = None
         return obj
 
     def save_cache_object(self, key, obj):
         """ saves a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                cache.set(key, obj)
-                ok = True
-            except:
-                self.redis_ok = False
-                ok = False
-        else:
+        try:
+            cache = caches['redis']
+            cache.set(key, obj)
+            ok = True
+        except:
+            self.redis_ok = False
             ok = False
         return ok

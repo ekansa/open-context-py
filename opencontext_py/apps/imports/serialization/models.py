@@ -66,6 +66,10 @@ imp_sj = ImportSerizializedJSON()
 imp_sj.act_import_dir = '/home/dainst_ekansa'
 imp_sj.load_data_in_directory('85-traces')
 
+from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
+imp_sj = ImportSerizializedJSON()
+imp_sj.act_import_dir = '/home/dainst_ekansa'
+imp_sj.load_data_in_directory('86-oracle-bones')
 
     """
 

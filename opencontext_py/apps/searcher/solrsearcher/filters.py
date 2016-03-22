@@ -262,7 +262,7 @@ class ActiveFilters():
         else:
             vals = [act_val]
         for val in vals:
-            f_entity = self.mem_cache_obj.get_entity(val)
+            f_entity = self.mem_cache_obj.get_entity(val, False)
             if f_entity is not False:
                 qm = QueryMaker()
                 # get the solr field data type

@@ -1161,15 +1161,24 @@ function edit_field(){
 		field_data[field_key] = act_field;
 		data['field_data'] = JSON.stringify(field_data, null, 2);
 		if (this.profile_uuid == false) {
-			var url = this.make_url("/edit/add-edit-item-assertion/");
-			url += encodeURIComponent(this.edit_uuid);
+			if (this.predicate_uuid == this.context_pred_uuid) {
+				//changing a containment relationship
+				var url = this.make_url("/edit/add-edit-item-containment/");
+				url += encodeURIComponent(this.edit_uuid);	
+			}
+			else{
+				var url = this.make_url("/edit/add-edit-item-assertion/");
+				url += encodeURIComponent(this.edit_uuid);	
+			}
 		}
 		else{
 			var url = this.make_url("/edit/inputs/create-update-profile-item/");
 			url += encodeURIComponent(this.profile_uuid);
 			url += '/' + encodeURIComponent(this.edit_uuid);
 		}
-		return $.ajax({
+		if (this.predicate_uuid != this.context_pred_uuid) {
+			// updates that do not reload the whole item
+			return $.ajax({
 				type: "POST",
 				url: url,
 				dataType: "json",
@@ -1180,6 +1189,26 @@ function edit_field(){
 					alert('Data submission failed, sadly. Status: ' + request.status);
 				} 
 			});
+		}
+		else{
+			// updates that DO reload the whole item
+			return $.ajax({
+					type: "POST",
+					url: url,
+					dataType: "json",
+					context: this,
+					data: data,
+					success: this.ajax_add_update_values_reloadDone,
+					error: function (request, status, error) {
+						alert('Data submission failed, sadly. Status: ' + request.status);
+					} 
+				});
+		}
+	}
+	this.ajax_add_update_values_reloadDone = function(data){
+		console.log(data);
+		// too many things to change, so reload the whole page
+		location.reload(true);
 	}
 	this.ajax_add_update_valuesDone = function(data){
 		console.log(data);

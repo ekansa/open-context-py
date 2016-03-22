@@ -2,7 +2,7 @@ import time
 import uuid as GenUUID
 from django.db import models
 from django.db.models import Q
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
@@ -61,7 +61,8 @@ class ItemAnnotation():
                          'owl:sameAs',
                          'skos:broader',
                          'skos:related',
-                         'rdfs:isDefinedBy']
+                         'rdfs:isDefinedBy',
+                         'http://www.w3.org/2000/01/rdf-schema#range']
         ok = True
         predicate_uri = self.request_param_val(post_data,
                                                'predicate_uri')
@@ -96,15 +97,15 @@ class ItemAnnotation():
                                                               'manual-web-form',
                                                               False)
                     new_la.sort = self.request_param_val(post_data,
-                                                        'sort',
-                                                        0,
-                                                        False)
+                                                         'sort',
+                                                         0,
+                                                         False)
                     new_la.predicate_uri = predicate_uri
                     new_la.object_uri = object_uri
                     new_la.creator_uuid = self.creator_uuid
                     new_la.save()
                     # now clear the cache a change was made
-                    cache.clear()
+                    self.clear_caches()
                 else:
                     ok = False
                     note = 'This annotation already exists.'
@@ -132,7 +133,7 @@ class ItemAnnotation():
             ok = True
             note = 'annotation deleteted'
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         else:
             ok = False
             note = 'Missing a annotation hash-id.'
@@ -279,7 +280,7 @@ class ItemAnnotation():
             note = 'Problems with the ID request'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'add-item-stable-id',
                          'ok': ok,
                          'change': {'note': note}}
@@ -318,7 +319,7 @@ class ItemAnnotation():
             note = 'Need to indicate what stable_id to delete'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'delete-item-stable-id',
                          'ok': ok,
                          'change': {'note': note}}
@@ -345,3 +346,10 @@ class ItemAnnotation():
         else:
             output = default
         return output
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()

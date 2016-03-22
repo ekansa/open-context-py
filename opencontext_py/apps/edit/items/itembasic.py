@@ -4,7 +4,7 @@ from lxml import etree
 import lxml.html
 from django.db import models
 from django.db.models import Q
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -16,6 +16,9 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
+from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.indexer.reindex import SolrReIndex
@@ -103,7 +106,7 @@ class ItemBasicEdit():
         sri.reindex_related(self.manifest.uuid)
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',
@@ -177,7 +180,7 @@ class ItemBasicEdit():
                 note += ' Edit status must be an integer between 0 and 5 inclusively.'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': action,
                          'ok': ok,
                          'change': {'note': note}}
@@ -233,7 +236,7 @@ class ItemBasicEdit():
                 note = 'Updated hero image for project'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-project-hero',
                          'ok': ok,
                          'change': {'note': note}}
@@ -290,7 +293,7 @@ class ItemBasicEdit():
                 note = 'Updated file for this media item'
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         # now return the full list of media files for this item
         media_files = Mediafile.objects\
                                .filter(uuid=self.manifest.uuid)
@@ -337,7 +340,7 @@ class ItemBasicEdit():
             ok = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-class-uri',
                          'ok': ok,
                          'change': {'prop': 'class_uri',
@@ -368,8 +371,7 @@ class ItemBasicEdit():
                 except Project.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                     ok = False
-            elif self.manifest.item_type == 'documents' \
-                  and content_type == 'content':
+            elif self.manifest.item_type == 'documents' and content_type == 'content':
                 try:
                     cobj = OCdocument.objects.get(uuid=self.manifest.uuid)
                     cobj.content = content
@@ -378,17 +380,131 @@ class ItemBasicEdit():
                 except OCdocument.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in documents'
                     ok = False
+            elif self.manifest.item_type == 'predicates' or self.manifest.item_type == 'types':
+                # make a skos not to document a predicate or type
+                ok = True
+                string_uuid = None
+                old_notes = Assertion.objects\
+                                     .filter(uuid=self.manifest.uuid,
+                                             predicate_uuid='skos:note')
+                for old_note in old_notes:
+                    string_uuid = old_note.object_uuid
+                    old_note.delete()
+                if string_uuid is not None:
+                    string_used = Assertion.objects\
+                                           .filter(project_uuid=self.manifest.project_uuid,
+                                                   object_uuid=string_uuid)[:1]
+                    if len(string_used) > 0:
+                        # the string is used elsewhere, so we can't just use that
+                        # string uuid
+                        string_uuid = None
+                    else:
+                        # put the new content int the string that is not in use
+                        act_string = False
+                        try:
+                            act_string = OCstring.objects.get(uuid=string_uuid)
+                        except OCstring.DoesNotExist:
+                            act_string = False
+                            string_uuid = None
+                        if act_string is not False:
+                            # save the content in the string to overwrite it
+                            act_string.content = content
+                            act_string.save()
+                if string_uuid is None:
+                    # we don't have a string_uuid to overwrite
+                    str_man = StringManagement()
+                    str_man.project_uuid = self.manifest.project_uuid
+                    str_man.source_id = 'web-form'
+                    str_obj = str_man.get_make_string(str(content))
+                    string_uuid = str_obj.uuid
+                # now make the assertion
+                new_ass = Assertion()
+                new_ass.uuid = uuid = self.manifest.uuid
+                new_ass.subject_type = self.manifest.item_type
+                new_ass.project_uuid = self.manifest.project_uuid
+                new_ass.source_id = 'web-form'
+                new_ass.obs_node = '#obs-1'
+                new_ass.obs_num = 1
+                new_ass.sort = 1
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = 'skos:note'
+                new_ass.object_type = 'xsd:string'
+                new_ass.object_uuid = string_uuid
+                new_ass.save()
             else:
                 ok = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'update-string-content',
                          'ok': ok,
                          'change': {'prop': content_type,
                                     'new': content,
                                     'old': '[Old content]',
                                     'note': note}}
+        return self.response
+
+    def update_predicate_sort_order(self, post_data):
+        """ updates the general sort order of assertions using a given predicate """
+        ok = True
+        label = self.manifest.label
+        note = ''
+        if self.manifest.item_type != 'predicates':
+            ok = False
+            self.errors['uuid'] = self.manifest.uuid + ' not a predicates item'
+        else:
+            # check to make sure we have the predicate!
+            try:
+                act_pred = Predicate.objects.get(uuid=self.manifest.uuid)
+            except Predicate.DoesNotExist:
+                act_pred = False
+                ok = False
+        if ok:
+            if 'sort_value' in post_data:
+                try:
+                    sort_value = float(post_data['sort_value'])
+                except:
+                    sort_value = 0
+                    ok = False
+                    note += 'Error, sort_value needs to be an decimal value. '
+            else:
+                ok = False
+                note += 'Error, need an decimal "sort_value" param. '
+            if ok:
+                # first update the database to add a sort value to the predicate
+                act_pred.sort = sort_value
+                act_pred.save()
+                # now get a list of all the subjects using this predicate
+                assertions_changed = 0
+                predicate_uuid = self.manifest.uuid
+                dist_subjs = Assertion.objects\
+                                      .values_list('uuid', flat=True)\
+                                      .filter(predicate_uuid=predicate_uuid)\
+                                      .distinct('uuid')\
+                                      .iterator()
+                for uuid in dist_subjs:
+                    # now, get a list of all the assertions for this subject
+                    # and predicate
+                    act_assertions = Assertion.objects\
+                                              .filter(uuid=uuid,
+                                                      predicate_uuid=predicate_uuid)\
+                                              .order_by('sort')
+                    i = 0
+                    for act_ass in act_assertions:
+                        # this preserves the sort order for multiple assertions of the same
+                        # subject uuid
+                        new_sort = float(sort_value) + (i / 1000)
+                        act_ass.sort = new_sort
+                        act_ass.save()
+                        i += 1
+                        assertions_changed += 1
+                note += 'Total number of assertions changed: ' + str(assertions_changed)
+        if ok:
+            # now clear the cache a change was made
+            self.clear_caches()
+        self.response = {'action': 'Change predicate sort',
+                         'ok': ok,
+                         'change': {'note': note}}
         return self.response
 
     def merge_same_contexts_by_project(self,
@@ -435,3 +551,10 @@ class ItemBasicEdit():
         if param in request:
             output = output[param]
         return output
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()

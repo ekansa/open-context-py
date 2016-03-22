@@ -285,7 +285,7 @@ class RecordProperties():
         qm = QueryMaker()
         solr_field_entities = {}
         for attribute in self.rec_attributes:
-            entity = self.mem_cache_obj.get_entity(attribute)
+            entity = self.mem_cache_obj.get_entity(attribute, False)
             if entity is not False:
                 prop_slug = entity.slug
                 # check to make sure we have the entity data type for linked fields
@@ -305,7 +305,7 @@ class RecordProperties():
         if isinstance(self.attribute_hierarchies, dict):
             self.other_attributes = []
             for field_slug_key, values in self.attribute_hierarchies.items():
-                entity = self.mem_cache_obj.get_entity(field_slug_key)
+                entity = self.mem_cache_obj.get_entity(field_slug_key, False)
                 if entity is not False:
                     attribute_dict = LastUpdatedOrderedDict()
                     attribute_dict['property'] = entity.label

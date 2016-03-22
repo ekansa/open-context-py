@@ -1,3 +1,4 @@
+from time import sleep
 import requests
 import reversion  # version control object
 from time import sleep
@@ -63,20 +64,28 @@ class ManageMediafiles():
         self.filesize = False
         self.delay = .33
 
-    def get_head_info(self, file_uri, redirect_ok=False):
+    def get_head_info(self, file_uri, redirect_ok=False, retry=True):
         output = False
-        r = requests.head(file_uri)
-        if r.status_code == requests.codes.ok:
-            if 'Content-Length' in r.headers:
-                self.filesize = r.headers['Content-Length']
-            if 'Content-Type' in r.headers:
-                self.raw_mime_type = r.headers['Content-Type']
-                self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
-                self.genfile_type = self.mime_to_general_file_type(self.genfile_type)
-                output = True
-        elif redirect_ok:
-            if r.status_code >= 300 and r.status_code <= 310:
-                output = True
+        try:
+            r = requests.head(file_uri)
+            if r.status_code == requests.codes.ok:
+                if 'Content-Length' in r.headers:
+                    self.filesize = r.headers['Content-Length']
+                if 'Content-Type' in r.headers:
+                    self.raw_mime_type = r.headers['Content-Type']
+                    self.mime_type_uri = self.raw_to_mimetype_uri(self.raw_mime_type)
+                    self.genfile_type = self.mime_to_general_file_type(self.genfile_type)
+                    output = True
+            elif redirect_ok:
+                if r.status_code >= 300 and r.status_code <= 310:
+                    output = True
+        except:
+            if retry:
+                # try again after a break
+                sleep(.3)
+                output = self.get_head_info(file_uri,
+                                            redirect_ok,
+                                            False)
         return output
 
     def update_missing_filesize_by_project(self, project_uuid):

@@ -607,6 +607,19 @@ class Observation():
         self.obs_status = 'active'
         self.obs_type = 'contributor'
         self.label = 'Description of this Property / Relation'
+        if 'skos:note' in json_ld:
+            act_val = PropValue()
+            act_val.vartype = 'xsd:string'
+            act_val.val = json_ld['skos:note']
+            act_prop = Property()
+            act_prop.varlabel = 'Definition or note'
+            act_prop.varuri = False
+            act_prop.varslug = False
+            act_prop.vartype = 'xsd:string'
+            act_prop.values = [act_val]
+            if self.properties is False:
+                self.properties = []
+            self.properties.append(act_prop)
         if 'rdfs:range' in json_ld:
             range_values = []
             for rel_item in json_ld['rdfs:range']:
@@ -643,6 +656,19 @@ class Observation():
         self.obs_status = 'active'
         self.obs_type = 'contributor'
         self.label = 'Description of this Category / Type'
+        if 'skos:note' in json_ld:
+            act_val = PropValue()
+            act_val.vartype = 'xsd:string'
+            act_val.val = json_ld['skos:note']
+            act_prop = Property()
+            act_prop.varlabel = 'Definition or note'
+            act_prop.varuri = False
+            act_prop.varslug = False
+            act_prop.vartype = 'xsd:string'
+            act_prop.values = [act_val]
+            if self.properties is False:
+                self.properties = []
+            self.properties.append(act_prop)
         if 'skos:related' in json_ld:
             for rel_item in json_ld['skos:related']:
                 if 'oc-pred:' in rel_item['id']:
@@ -1066,7 +1092,8 @@ class LinkedData():
     ITEM_REL_PREDICATES = ['skos:closeMatch',
                            'owl:sameAs',
                            'skos:related',
-                           'skos:broader']
+                           'skos:broader',
+                           'dc-terms:references']
 
     def __init__(self):
         self.linked_predicates = False

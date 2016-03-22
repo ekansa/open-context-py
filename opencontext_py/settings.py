@@ -177,9 +177,9 @@ if DEBUG:
         'redis': {
             'BACKEND': 'redis_cache.RedisCache',
             'LOCATION': 'redis://127.0.0.1:6379/1',
-            'TIMEOUT': (60 * 2),  # 2 minute for cache
+            'TIMEOUT': (60 * 5),  # 2 minute for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 100
+                'MAX_ENTRIES': 1000
             }
         }
     }
@@ -195,11 +195,11 @@ else:
             }
         },
         'redis': {
-            'BACKEND': 'django_redis.cache.RedisCache',
+            'BACKEND': 'redis_cache.RedisCache',
             'LOCATION': 'redis://127.0.0.1:6379/1',
             'TIMEOUT': (60 * 60),  # 1 hour for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 5000,
+                'MAX_ENTRIES': 10000,
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient'
             }
         }

@@ -86,7 +86,7 @@ class ManifestFeed():
         """ gets the item's JSON-LD """
         ocitem = OCitem().get_item(uuid)
         return ocitem.json_ld
-    
+
     def get_item_tile(self, json_ld):
         """ returns the title, if not, the label """
         if 'dc-terms:title' in json_ld:
@@ -94,7 +94,7 @@ class ManifestFeed():
         else:
             output = json_ld['label']
         return output
-    
+
     def make_item_description(self, json_ld, item_type):
         """ makes an item description """
         item_type_rec_type = {'subjects': 'Subject of Observation Record',
@@ -112,7 +112,7 @@ class ManifestFeed():
             record = ''
         item_project = self.get_project(json_ld)
         if item_project is not False \
-            and item_type != 'projects':
+           and item_type != 'projects':
                 des = ' '.join([
                     record,
                     'from the project: '
@@ -122,7 +122,7 @@ class ManifestFeed():
         else:
             des = self.get_item_tile(json_ld)
         return des
-   
+
     def get_item_id(self, json_ld, url):
         """ returns the title, if not, the label """
         if 'id' in json_ld:
@@ -158,7 +158,7 @@ class ManifestFeed():
                                 'label': dc_obj['label']}
                         authors.append(item)
         return authors
-    
+
     def get_stable_ids(self, json_ld):
         """ gets stable identifiers """
         output = []
@@ -173,14 +173,14 @@ class ManifestFeed():
                         if id_part in id_str:
                             output.append(id_str)
         return output
-    
+
     def get_media_files(self, json_ld):
         """ gets media file references """
         output = []
         if 'oc-gen:has-files' in json_ld:
             output = json_ld['oc-gen:has-files']
         return output
-    
+
     def get_project(self, json_ld):
         """gets the project for an item """
         output = False
@@ -194,7 +194,7 @@ class ManifestFeed():
                                   'label': p_item['label']}
                         break
         return output
-    
+
     def get_json_ld_node_id(self, json_ld_node):
         """gets the ID string value from a JSON-LD node
         """
@@ -205,7 +205,7 @@ class ManifestFeed():
         else:
             output = False
         return output
-    
+
     def make_feed_subtitle(self):
         """ makes a string of the feed's subtitle """
         start_index = (self.page - 1) * self.entries_per_page + 1
@@ -238,7 +238,7 @@ class ManifestFeed():
             if proj.view_group_id is not None:
                 if proj.view_group_id <= 0:
                     self.projects_list.append(proj.uuid)
-    
+
     def set_request_paging(self, get_data):
         """ sets the current page number """
         if 'page' in get_data:
@@ -260,19 +260,19 @@ class ManifestFeed():
         """ gets the count of manifest items """
         if len(self.limit_item_types) < 1:
             self.count = Manifest.objects\
-                               .filter(indexed__isnull=False,
-                                       project_uuid__in=self.projects_list)\
-                               .count()
+                                 .filter(indexed__isnull=False,
+                                         project_uuid__in=self.projects_list)\
+                                 .count()
             man_list = Manifest.objects\
                                .filter(indexed__isnull=False,
                                        project_uuid__in=self.projects_list)\
                                .order_by('-revised')[:1]
         else:
             self.count = Manifest.objects\
-                               .filter(indexed__isnull=False,
-                                       project_uuid__in=self.projects_list,
-                                       item_type__in=self.limit_item_types)\
-                               .count()
+                                 .filter(indexed__isnull=False,
+                                         project_uuid__in=self.projects_list,
+                                         item_type__in=self.limit_item_types)\
+                                 .count()
             man_list = Manifest.objects\
                                .filter(indexed__isnull=False,
                                        project_uuid__in=self.projects_list,
@@ -300,7 +300,7 @@ class ManifestFeed():
         except:
             page_list = False
         return page_list
-    
+
     def set_last_page(self):
         """ sets the last page """
         last = self.count / self.entries_per_page
@@ -308,7 +308,7 @@ class ManifestFeed():
             self.last_page = int(round(last))
         else:
             self.last_page = int(round(last)) + 1
-    
+
     def return_integer_value(self, raw_value):
         """ returns an integer value or false
         """
@@ -317,7 +317,7 @@ class ManifestFeed():
         except:
             value = False
         return value
-    
+
     def date_convert(self, date_val):
         """ converts to a python datetime if not already so """
         if isinstance(date_val, str):
@@ -328,4 +328,3 @@ class ManifestFeed():
             # print('Non-string date is: ' + str(date_val))
             dt = date_val
         return dt
-    

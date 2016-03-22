@@ -10,15 +10,15 @@
      <div class="row">
          <div class="col-sm-8">
             {% if item.content != False %}
-            {% if item.content.preview != False %}
+            {% if item.content.skos_note != False %}
             <div class="row">
                 <div class="col-sm-12">
                     {% if item.use_accordions %}
                         {% with top_panel_num=0 %}
-                        {% with idprefix='preview' %}
+                        {% with idprefix='skos' %}
                         {% with idnum=1 %}
-                        {% with idsuffix='file' %}
-                        {% with panel_label='Media Preview' %}
+                        {% with idsuffix='note' %}
+                        {% with panel_label='Definition or Note' %}
                         {% with panel_label_suffix=False %}
                         {% include 'items/accordion-group-panel-start.html' %}
                         {% endwith %}
@@ -27,18 +27,16 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
-                        <div class="preview-image">
-                            <img src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
-                        </div>
+                        {{ item.content.skos_note }}
                         {% include 'items/accordion-group-panel-end.html' %}
                     {%else%}
                         {% with top_panel_num=0 %}
                         {% with show_header=True %}
-                        {% with panel_label='Media Preview' %}
+                        {% with panel_label='Definition or Note' %}
                         {% with panel_label_suffix=False %}
-                        {% with prefix_node_id='preview-' %}
+                        {% with prefix_node_id='skos-' %}
                         {% with node_id=1 %}
-                        {% with suffix_node_id='-file' %}
+                        {% with suffix_node_id='-note' %}
                         {% include 'items/plain-panel-start.html' %}
                         {% endwith %}
                         {% endwith %}
@@ -47,9 +45,7 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
-                        <div class="preview-image">
-                            <img src="{{ item.content.preview }}" alt="Preview of {{ item.label }}" />
-                        </div>
+                        {{ item.content.skos_note }}
                         {% include 'items/plain-panel-end.html' %}
                     {%endif%}
                 </div>

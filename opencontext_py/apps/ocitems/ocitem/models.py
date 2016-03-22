@@ -259,6 +259,9 @@ class OCitem():
             elif self.predicate.data_type == 'xsd:date':
                 p_range['label'] = 'Calendar / date values'
             json_ld['rdfs:range'] = [p_range]
+            if self.assertion_hashes:
+                # add a default sort order, for edit view JSON
+                json_ld['oc-gen:default-sort-order'] = float(self.predicate.sort)
         return json_ld
 
     def add_related_predicate(self,
@@ -274,8 +277,17 @@ class OCitem():
             rel_predicate['owl:sameAs'] = uri
             rel_predicate['slug'] = False
             rel_predicate['label'] = False
-            ent = Entity()
-            found = ent.dereference(self.octype.predicate_uuid)
+            if self.cache_entities:
+                icc = itemConstructionCache()
+                entity_item = icc.get_entity_w_thumbnail(self.octype.predicate_uuid)
+                if entity_item is not False:
+                    found = True
+                    ent = entity_item
+                else:
+                    found = False
+            else:
+                ent = Entity()
+                found = ent.dereference(self.octype.predicate_uuid)
             if found:
                 rel_predicate['id'] = 'oc-pred:' + str(ent.slug)
                 rel_predicate['slug'] = ent.slug
@@ -362,6 +374,7 @@ class OCitem():
                                                                            child_uuid, 'subjects')
             json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
         # add predicate - object (descriptions) to the item
+        json_ld = item_con.add_direct_assertions(json_ld)
         json_ld = item_con.add_descriptive_assertions(json_ld, self.assertions)
         json_ld = item_con.add_spacetime_metadata(json_ld,
                                                   self.uuid,
@@ -429,6 +442,11 @@ class ItemConstruction():
     General purpose functions for building Open Context items
     """
 
+    # predicates not for use in observations
+    NO_OBS_ASSERTION_PREDS = [
+        'skos:note'
+    ]
+
     def __init__(self):
         self.uuid = False
         self.project_uuid = False
@@ -438,6 +456,7 @@ class ItemConstruction():
         self.add_media_thumnails = True
         self.add_subject_class = True
         self.cannonical_uris = True
+        self.direct_assertions = list()  # assertions not in an observation
         self.obs_list = list()
         self.predicates = {}
         self.var_list = list()
@@ -473,14 +492,19 @@ class ItemConstruction():
         raw_pred_list = list()
         pred_types = {}
         for assertion in assertions:
-            if assertion.obs_num not in self.obs_list:
-                self.obs_list.append(assertion.obs_num)
-            if assertion.predicate_uuid not in raw_pred_list:
-                raw_pred_list.append(assertion.predicate_uuid)
-                if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
-                    pred_types[assertion.predicate_uuid] = '@id'
-                else:
-                    pred_types[assertion.predicate_uuid] = assertion.object_type
+            if assertion.predicate_uuid in self.NO_OBS_ASSERTION_PREDS:
+                # these predicates describe the item, but not in an observation
+                self.direct_assertions.append(assertion)
+            else:
+                # these predicates are used inside observations
+                if assertion.obs_num not in self.obs_list:
+                    self.obs_list.append(assertion.obs_num)
+                if assertion.predicate_uuid not in raw_pred_list:
+                    raw_pred_list.append(assertion.predicate_uuid)
+                    if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+                        pred_types[assertion.predicate_uuid] = '@id'
+                    else:
+                        pred_types[assertion.predicate_uuid] = assertion.object_type
         # prepares dictionary objects for each predicate
         for pred_uuid in raw_pred_list:
             pmeta = self.get_entity_metadata(pred_uuid)
@@ -530,10 +554,35 @@ class ItemConstruction():
         json_ld['@context'] = context
         return json_ld
 
+    def add_direct_assertions(self, act_dict):
+        """
+        adds assertions that describe the item, but are not
+        part of an observation
+        """
+        for assertion in self.direct_assertions:
+            content = None
+            if any(assertion.object_type in item_type for item_type in settings.ITEM_TYPES):
+                entity = self.get_entity_metadata(self.object_uuid)
+                if entity is not False:
+                    content = entity.uri
+            else:
+                if assertion.object_type == 'xsd:string':
+                    try:
+                        string_item = OCstring.objects.get(uuid=assertion.object_uuid)
+                        content = string_item.content
+                    except OCstring.DoesNotExist:
+                        content = 'string content missing'
+                elif (assertion.object_type == 'xsd:date'):
+                    content = assertion.data_date.date().isoformat()
+                else:
+                    content = assertion.data_num
+            act_dict[assertion.predicate_uuid] = content
+        return act_dict
+
     def add_descriptive_assertions(self, act_dict, assertions):
         """
         adds descriptive assertions (descriptive properties, non spatial containment links)
-        to items
+        to items, as parts of Observations
         """
         observations = list()
         for act_obs_num in self.obs_list:
@@ -816,7 +865,7 @@ class ItemConstruction():
         """
         graph_list = []
         # add linked data annotations for predicates
-        for (predicate_uuid, slug) in self.predicates.items():
+        for predicate_uuid, slug in self.predicates.items():
             g_start = len(graph_list)
             graph_list = self.get_annotations_for_ocitem(graph_list, predicate_uuid, 'predicates', slug)
             g_next = len(graph_list)
@@ -841,8 +890,16 @@ class ItemConstruction():
         """
         contribs = False
         creators = False
-        auth = Authorship()
-        auth.get_project_authors(self.project_uuid)
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('proj-auth-', str(self.project_uuid))
+        auth = None
+        if self.cache_entities:
+            auth = icc.get_cache_object(cache_key)
+        if auth is None:
+            auth = Authorship()
+            auth.get_project_authors(self.project_uuid)
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, auth)
         proj_creators = []
         proj_creators_ids = []
         for proj_creator in auth.creators:
@@ -909,9 +966,18 @@ class ItemConstruction():
 
     def add_license(self, act_dict):
         """ Adds license information """
-        lic = Licensing()
-        item_license = lic.get_license(self.uuid,
-                                       self.project_uuid)
+        item_license = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('proj-lic-',
+                                              str(self.uuid) + ' ' + str(self.project_uuid))
+        if self.cache_entities:
+            item_license = icc.get_cache_object(cache_key)
+        if item_license is None:
+            lic = Licensing()
+            item_license = lic.get_license(self.uuid,
+                                           self.project_uuid)
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, item_license)
         if item_license is not False:
             new_object_item = LastUpdatedOrderedDict()
             new_object_item['id'] = item_license
@@ -1015,12 +1081,23 @@ class ItemConstruction():
         adds linked data annotations to a given subject_uuid
         """
         la_count = 0
-        try:
-            link_annotations = LinkAnnotation.objects.filter(subject=subject_uuid)
-            la_count = len(link_annotations)
-        except LinkAnnotation.DoesNotExist:
-            la_count = 0
-        if(la_count > 0):
+        link_annotations = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('linkanno-', subject_uuid)
+        if self.cache_entities:
+            link_annotations = icc.get_cache_object(cache_key)
+            if link_annotations is not None:
+                la_count = len(link_annotations)
+        if link_annotations is None:
+            try:
+                link_annotations = LinkAnnotation.objects.filter(subject=subject_uuid)
+                la_count = len(link_annotations)
+            except LinkAnnotation.DoesNotExist:
+                la_count = 0
+                link_annotations = []
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, link_annotations)
+        if la_count > 0:
             added_annotation_count = 0
             act_annotation = LastUpdatedOrderedDict()
             if(prefix_slug is not False):
@@ -1057,13 +1134,26 @@ class ItemConstruction():
         """
         la_count = 0
         alt_identifier = URImanagement.convert_prefix_to_full_uri(class_uri)
-        try:
-            link_annotations = LinkAnnotation.objects.filter(Q(subject=class_uri) |
-                                                             Q(subject=alt_identifier))
-            la_count = len(link_annotations)
-        except LinkAnnotation.DoesNotExist:
-            la_count = 0
-        if(la_count > 0):
+        link_annotations = None
+        icc = itemConstructionCache()
+        cache_key = icc.make_memory_cache_key('linkanno-', (str(class_uri) \
+                                                            + ' ' \
+                                                            + str(alt_identifier)))
+        if self.cache_entities:
+            link_annotations = icc.get_cache_object(cache_key)
+            if link_annotations is not None:
+                la_count = len(link_annotations)
+        if link_annotations is None:
+            try:
+                link_annotations = LinkAnnotation.objects.filter(Q(subject=class_uri) |
+                                                                 Q(subject=alt_identifier))
+                la_count = len(link_annotations)
+            except LinkAnnotation.DoesNotExist:
+                la_count = 0
+                link_annotations = []
+            if self.cache_entities:
+                icc.save_cache_object(cache_key, link_annotations)
+        if la_count > 0:
             act_annotation = LastUpdatedOrderedDict()
             act_annotation['@id'] = class_uri
             ent = self.get_entity_metadata(class_uri)
@@ -1390,6 +1480,7 @@ class itemConstructionCache():
 
     def __init__(self):
         self.redis_ok = True
+        self.print_caching = False
 
     def get_entity_w_thumbnail(self, identifier):
         """ gets an entity with thumbnail (useful for item json) """
@@ -1418,27 +1509,28 @@ class itemConstructionCache():
 
     def get_cache_object(self, key):
         """ gets a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                obj = cache.get(key)
-            except:
-                obj = None
-                self.redis_ok = False
-        else:
+        try:
+            cache = caches['redis']
+            obj = cache.get(key)
+            if self.print_caching:
+                print('Cache checked: ' + key)
+        except:
             obj = None
+            if self.print_caching:
+                print('Cache Fail checked: ' + key)
         return obj
 
     def save_cache_object(self, key, obj):
         """ saves a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                cache.set(key, obj)
-                ok = True
-            except:
-                self.redis_ok = False
-                ok = False
-        else:
+        try:
+            cache = caches['redis']
+            cache.set(key, obj)
+            ok = True
+            if self.print_caching:
+                print('Cache Saved: ' + key)
+        except:
+            self.redis_ok = False
             ok = False
+            if self.print_caching:
+                print('Failed to cache: ' + key)
         return ok

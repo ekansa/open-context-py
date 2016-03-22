@@ -8,10 +8,12 @@ from opencontext_py.apps.oai.models import OAIpmh
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 
 
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
+@csrf_exempt  # allow random post requests (doesn't change OC, so OK)
 def index(request):
     """ Get the item context JSON-LD """
     oai_obj = OAIpmh()
