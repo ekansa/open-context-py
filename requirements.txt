@@ -4,7 +4,7 @@ Unidecode==0.04.16
 anyjson==0.3.3
 coverage==3.7.1
 coveralls==0.4.2
-django-debug-toolbar==1.4.1
+django-debug-toolbar==1.4
 docopt==0.6.1
 geojson==1.0.7
 mysolr==0.8.3
@@ -24,5 +24,5 @@ jsonfield==1.0.3
 django-reversion==1.9.3
 pillow==2.9.0
 shapely==1.5.13
-redis==2.1.5
+redis==2.10.5
 django-redis-cache==1.6.5
