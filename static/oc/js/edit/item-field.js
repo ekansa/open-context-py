@@ -1125,6 +1125,12 @@ function edit_field(){
 			if (is_valid) {
 				values_list.push(field_val);
 			}
+			else{
+				if (this.data_type == 'xsd:string') {
+					// submit string data anyway
+					values_list.push(field_val);
+				}
+			}
 		}
 		if (values_list.length > 0) {
 			var dom_ids = this.make_field_val_domids(value_num);
