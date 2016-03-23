@@ -205,7 +205,7 @@ class ItemAnnotation():
                             ok = True
                             note += 'Annotation successfully resorted. '
                             # now clear the cache a change was made
-                            cache.clear()
+                            self.clear_caches()
                         else:
                             ok = False
                             note += 'Cannot change sorting, as at limit of the list of objects.'
