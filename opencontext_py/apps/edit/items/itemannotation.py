@@ -206,6 +206,18 @@ class ItemAnnotation():
                             note += 'Annotation successfully resorted. '
                             # now clear the cache a change was made
                             self.clear_caches()
+                            # now fix it so we will always have unique sorts.
+                            used_sorts = []
+                            rel_annos = LinkAnnotation.objects\
+                                                      .filter(subject__in=subject_list,
+                                                              predicate_uri__in=pred_list)
+                            for act_anno in rel_annos:
+                                if act_anno.sort not in used_sorts:
+                                    used_sorts.append(act_anno.sort)
+                                else:
+                                    act_anno.sort += 1
+                                    used_sorts.append(act_anno.sort)
+                                    act_anno.save()
                         else:
                             ok = False
                             note += 'Cannot change sorting, as at limit of the list of objects.'
