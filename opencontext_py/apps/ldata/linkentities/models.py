@@ -39,6 +39,8 @@ class LinkEntity(models.Model):
         """
         self.uri = self.clean_uri(self.uri)
         self.slug = self.make_slug()
+        if self.sort is None:
+            self.sort = ''
         self.sort = self.sort[:60]
         # print('Type: ' + self.ent_type + ' ' + str(len(self.ent_type)))
         # print('URI: ' + self.uri + ' ' + str(len(self.uri)))
