@@ -568,11 +568,13 @@ class ItemAssertion():
             self.errors[error_key] += '(' + field['predicate_uuid'] + ') is not found.'
         else:
             # predicate_uuid exists
+            str_obj = None
             if data_type == 'xsd:string':
                 str_man = StringManagement()
                 str_man.project_uuid = item_man.project_uuid
                 str_man.source_id = item_man.source_id
-                object_uuid = str_man.get_make_string(str(literal_val))
+                str_obj = str_man.get_make_string(str(literal_val))
+                object_uuid = str_obj.uuid
             elif data_type == 'id':
                 # first check is to see if the field_value exists in the manifest
                 val_man = self.get_manifest_item(id_val)
