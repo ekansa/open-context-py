@@ -1,6 +1,6 @@
 <h3>Query API: Response Options, Metadata, and Paging</h3>
 
-<p>By default the Open Context API returns a wide variety information in response to a query request. The responses include, metadata, a variety of search facets, geo-spatial data (in the form of regionl facets and result records) and some non-geospatial results. You can limit the types of responses you get from Open Context searches by adding the <samp>response</samp> parameter and a comma seperated list of response types to a request URL. For example, the <samp><a target="_blank" title="Metadata request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata">{{ base_url }}/subjects-search/United+States.json?response=metadata</a></samp> request only gets metadata about a search result, while <samp><a target="_blank" title="Metadata and URI request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata,uri">{{ base_url }}/subjects-search/United+States.json?response=metadata,uri</a></samp> gets metadata and URIs of result records. Allowed response types are:</p>
+<p>By default the Open Context API returns a wide variety information in response to a query request. The responses include, metadata, a variety of search facets, geo-spatial data (in the form of regional facets and result records) and some non-geospatial results. You can limit the types of responses you get from Open Context searches by adding the <samp>response</samp> parameter and a comma separated list of response types to a request URL. For example, the <samp><a target="_blank" title="Metadata request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata">{{ base_url }}/subjects-search/United+States.json?response=metadata</a></samp> request only gets metadata about a search result, while <samp><a target="_blank" title="Metadata and URI request" href="{{ base_url }}/subjects-search/United+States.json?response=metadata,uri">{{ base_url }}/subjects-search/United+States.json?response=metadata,uri</a></samp> gets metadata and URIs of result records. Allowed response types are:</p>
 
 <ul>
     <li><samp>metadata</samp>: metadata about a search, includes paging information, number of records found, etc.</li>
@@ -10,7 +10,7 @@
     <li><samp>geo-record</samp>: result records as GeoJSON features (see the GeoJSON discussion)</li>
     <li><samp>uri-meta</samp>: result records as a simple list of URIs and some attributes</li>
     <li><samp>uri</samp>: result records as a simple list of URIs</li>
-    <li><samp>solr</samp>: raw and unprocessed Solr query response (these will be very difficult to process given the high-level of abstration in Open Context's Solr schema)</li>
+    <li><samp>solr</samp>: raw and unprocessed Solr query response (these will be very difficult to process given the high-level of abstraction in Open Context's Solr schema)</li>
 </ul>
 
 <br/>
@@ -42,7 +42,7 @@
                     <li><samp>next</samp>, next page</li>
                     <li><samp>last</samp>, last page</li>
                 </ol>
-                <p>In addition to paging, the Query API provides details about the start of the index number of the current page's search results. <samp>"startIndex": 0</samp> is the begining of the list of results. As one pages through the search results, the <samp>startIndex</samp> increases. You can change the number of results returned per page with the <samp>rows</samp> parameter. Open Context defaults to 20 records per page and this can be increased to 1000 with <samp>rows=1000</samp>.</p>
+                <p>In addition to paging, the Query API provides details about the start of the index number of the current page's search results. <samp>"startIndex": 0</samp> is the beginning of the list of results. As one pages through the search results, the <samp>startIndex</samp> increases. You can change the number of results returned per page with the <samp>rows</samp> parameter. Open Context defaults to 20 records per page and this can be increased to 1000 with <samp>rows=1000</samp>.</p>
             </td>
         </tr>
         <tr>

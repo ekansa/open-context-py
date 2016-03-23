@@ -22,7 +22,7 @@
                 <samp>oc-api:has-form-use-life-ranges</samp>
             </th>
             <td>
-                <p>These are hierarchically organized time-spans for dates in the past. Since the algorithm (<a target="_blank" href="http://www.slideshare.net/dinaa_proj/kansa-saa2014poster">described here</a>) used to compute these facets needs a fixed reference point, the latest possible date in these time-spans is 1950. The <samp>start</samp> and <samp>stop</samp> attribute keys describe dates in years BCE / CE, with BCE dates as negative values. In way that's similar to the geo-region facets desceribed above, you can control the level of chronological aggregation to your requests by adding the <samp>chronodeep</samp> query parameter to request URLs.</p>
+                <p>These are hierarchically organized time-spans for dates in the past. Since the algorithm (<a target="_blank" href="http://www.slideshare.net/dinaa_proj/kansa-saa2014poster">described here</a>) used to compute these facets needs a fixed reference point, the latest possible date in these time-spans is 1950. The <samp>start</samp> and <samp>stop</samp> attribute keys describe dates in years BCE / CE, with BCE dates as negative values. In way that's similar to the geo-region facets described above, you can control the level of chronological aggregation to your requests by adding the <samp>chronodeep</samp> query parameter to request URLs.</p>
                 <ol>
                     <li>More aggregated (coarse) chronology data at <samp>chronodeep=16</samp>, the default level, as <a target="_blank" title="Level 16 aggregation" href="{{ base_url }}/subjects-search/.json?chronodeep=16">JSON-LD</a></li>
                     <li>Less aggregated (fine-grain) chronology data at <samp>chronodeep=32</samp>, the maximum precision, as <a target="_blank" title="Level 32 aggregation" href="{{ base_url }}/subjects-search/.json?chronodeep=32">JSON-LD</a></li>
@@ -51,7 +51,7 @@
                 <samp>oc-api:has-numeric-facets</samp>
             </th>
             <td>
-                <p>These facets summarize the current set of search results according to a given numeric property. The mimimum value (<samp>oc-api:min</samp>) and the maximum value (<samp>oc-api:max</samp>) give the total range of values for the records defined by the current search filters. In addition, the <samp>oc-api:has-range-options</samp> list quantifies the number of records in differnt numeric ranges. These can be visualized to make histograms of summarizing all of the records for a search according to this numeric property. The example below describes two numeric range options:</p>
+                <p>These facets summarize the current set of search results according to a given numeric property. The minimum value (<samp>oc-api:min</samp>) and the maximum value (<samp>oc-api:max</samp>) give the total range of values for the records defined by the current search filters. In addition, the <samp>oc-api:has-range-options</samp> list quantifies the number of records in different numeric ranges. These can be visualized to make histograms of summarizing all of the records for a search according to this numeric property. The example below describes two numeric range options:</p>
                 
                 <ul class="code-samp">
                     <li><samp>"oc-api:has-range-options": [</samp></li>
