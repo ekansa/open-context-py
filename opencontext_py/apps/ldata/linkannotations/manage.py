@@ -20,6 +20,12 @@ lam = LinkAnnoManagement()
 project_uuid = 'A5DDBEA2-B3C8-43F9-8151-33343CBDC857'
 lam.make_von_den_driesch_equiv(project_uuid)
 
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+lam = LinkAnnoManagement()
+parent_uri = 'http://eol.org/pages/2195' # molluscs
+child_uri = 'http://eol.org/pages/448836' # cuttlefish
+lam.add_skos_hierarachy(parent_uri, child_uri)
+
     """
 
     PRED_SBJ_IS_SUB_OF_OBJ = 'skos:broader'  # default predicate for subject item is subordinate to object item
