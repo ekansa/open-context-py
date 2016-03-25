@@ -10,6 +10,7 @@ class eolAPI():
     """ Interacts with the Encyclopeidia of Life
         (EOL) to get useful data about biological taxa
     """
+    VOCAB_URI = 'http://eol.org/'
     JSON_BASE_URL = 'http://eol.org/api/pages/1.0/'
     SLEEP_TIME = .5
 
@@ -19,6 +20,17 @@ class eolAPI():
         self.delay_before_request = self.SLEEP_TIME
         self.json_data = False
         self.request_url = False
+
+    def get_labels_for_uri(self, eol_uri):
+        """ just returns the label, if found """
+        output = False
+        json_data = self.get_basic_json_for_eol_uri(eol_uri)
+        if isinstance(json_data, dict):
+            output = {}
+            if 'scientificName' in json_data:
+                output['label'] = json_data['scientificName']
+                output['alt_label'] = json_data['scientificName']
+        return output
 
     def get_basic_json_for_eol_uri(self, eol_uri):
         """

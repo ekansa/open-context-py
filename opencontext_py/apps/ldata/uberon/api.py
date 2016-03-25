@@ -18,6 +18,7 @@ u_api.get_uri_label_from_graph('http://purl.obolibrary.org/obo/UBERON_0011674')
 u_api.get_uri_graph('http://purl.obolibrary.org/obo/UBERON_0011674')
 
     """
+    VOCAB_URI = 'http://uberon.org/'
     DIRECT_BASE_URL = 'http://www.ontobee.org/ontology/UBERON?iri='
     SLEEP_TIME = .5
 

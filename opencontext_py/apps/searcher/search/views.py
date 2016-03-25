@@ -250,6 +250,11 @@ def subjects_html_view(request, spatial_context=None):
                 st = SearchTemplate(json_ld)
                 st.process_json_ld()
                 template = loader.get_template('search/view.html')
+                if 'prop' in request.GET:
+                    props = request.GET.getlist('prop')
+                    if len(props) > 1:
+                        # allow downloads, multiple props selected
+                        csv_downloader = True
                 context = RequestContext(request,
                                          {'st': st,
                                           'csv_downloader': csv_downloader,
