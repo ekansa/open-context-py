@@ -31,8 +31,23 @@ class RequestDict():
                     # so JSON-P callbacks not in the request
                     self.security_check(request, key)  # check for SQL injections
                     new_request[key] = request.GET.getlist(key)
+                    new_request = self.dinaa_period_kludge(key, new_request)
                 if self.security_ok is False:
                     break
+        return new_request
+
+    def dinaa_period_kludge(self, key, new_request):
+        """ makes sure we dive a bit into the period hiearchy for
+            requests to a DINAA period
+        """
+        if key == 'prop':
+            new_prop_list = []
+            for prop_list_item in new_request[key]:
+                if 'dinaa-00001' in prop_list_item \
+                   and 'dinaa-00001---dinaa-00002' not in prop_list_item:
+                    prop_list_item = prop_list_item.replace('dinaa-00001', 'dinaa-00001---dinaa-00002')
+                new_prop_list.append(prop_list_item)
+            new_request[key] = new_prop_list
         return new_request
 
     def security_check(self, request, key):
