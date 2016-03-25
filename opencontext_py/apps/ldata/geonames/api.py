@@ -9,6 +9,7 @@ from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 class GeonamesAPI():
     """ Interacts with Periodo """
     JSON_BASE_URL = 'http://www.geonames.org/getJSON?id='
+    VOCAB_URI = 'http://www.geonames.org'
     SLEEP_TIME = .5
 
     def __init__(self):
@@ -17,9 +18,24 @@ class GeonamesAPI():
         self.delay_before_request = self.SLEEP_TIME
         self.json_data = False
 
+    def get_labels_for_uri(self, geonames_uri):
+        """
+        gets the label for the URI referenced entity
+        """
+        output = False
+        json_data = self.get_json_for_geonames_uri(geonames_uri)
+        if isinstance(json_data, dict):
+            # success at getting the data!
+            output = {}
+            if 'name' in json_data:
+                output['label'] = json_data['name']
+            if 'toponymName' in json_data:
+                output['alt_label'] = json_data['toponymName']
+        return output
+
     def get_json_for_geonames_uri(self, geonames_uri):
         """
-        gets json daa from a geonames_uri
+        gets json data from a geonames_uri
         """
         le_gen = LinkEntityGeneration()
         geonames_uri = le_gen.make_clean_uri(geonames_uri) # strip off any cruft in the URI

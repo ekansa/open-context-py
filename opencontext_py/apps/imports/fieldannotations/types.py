@@ -1,6 +1,7 @@
 import uuid as GenUUID
 from django.conf import settings
 from django.db import models
+from django.utils.http import urlunquote
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.entities.entity.models import Entity
@@ -11,9 +12,13 @@ from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
+from opencontext_py.apps.ldata.uberon.api import uberonAPI
+from opencontext_py.apps.ldata.eol.api import eolAPI
 
 
 # Processes to generate subjects items for an import
@@ -24,11 +29,11 @@ class ProcessTypes():
     to describe it
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
-source_id = 'ref:1648061969591'
-pred_uuid = '4b566f98-231b-4450-9c86-4a4a7b75f435'
-type_f = 4
+source_id = 'ref:2194665153707'
+pred_uuid = '64eaaa74-a4df-449c-8857-2ef7aaf76384'
+type_f = 2
 rel_pred = 'skos:closeMatch'
-le_f = 5
+le_f = 3
 pt = ProcessTypes(source_id)
 pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
 
@@ -45,6 +50,18 @@ from opencontext_py.apps.ocitems.assertions.event import EventAssertions
 eva = EventAssertions()
 project_uuid = 'd1c85af4-c870-488a-865b-b3cf784cfc60'
 eva.process_unused_type_events(project_uuid)
+
+
+from opencontext_py.apps.ldata.eol.api import eolAPI
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+eol_api = eolAPI()
+bad_ents = LinkEntity.objects.filter(label='Apororhynchida', vocab_uri='http://eol.org/')
+for bad_ent in bad_ents:
+    labels = eol_api.get_labels_for_uri(bad_ent.uri)
+    if isinstance(labels, dict):
+        bad_ent.label = labels['label']
+        bad_ent.alt_label = labels['alt_label']
+        bad_ent.save()
 
 
     """
@@ -132,6 +149,7 @@ eva.process_unused_type_events(project_uuid)
                 new_la.object_uri = rel['object_uri']
                 new_la.creator_uuid = ''
                 new_la.save()
+                self.reconcile_link_entities(rel['object_uri'])
 
     def make_type_relations(self, sub_type_pred_uuid,
                                   sub_type_f_num,
@@ -278,6 +296,59 @@ eva.process_unused_type_events(project_uuid)
                                              field_type='late')[:1]
         if len(stop_field_list) > 0:
             self.stop_field = stop_field_list[0]
+
+    def reconcile_link_entities(self, uri):
+        """ checkes to see if an entity exists, if not, it adds
+            it if we recognize the URI to be part of a
+            known vocabulary
+        """
+        try:
+            act_ent = LinkEntity.objects.get(uri=uri)
+        except LinkEntity.DoesNotExist:
+            act_ent = False
+        if act_ent is False:
+            label = False
+            alt_label = False
+            ent_type = 'class'
+            vocab_uri = False
+            if '.geonames.org' in uri:
+                geo_api = GeonamesAPI()
+                vocab_uri = GeonamesAPI().VOCAB_URI
+                labels = geo_api.get_labels_for_uri(uri)
+                if isinstance(labels, dict):
+                    # got the label!
+                    label = labels['label']
+                    alt_label = labels['alt_label']
+            elif 'UBERON' in uri:
+                uber_api = uberonAPI()
+                vocab_uri = uberonAPI().VOCAB_URI
+                label = uber_api.get_uri_label_from_graph(uri)
+                if label is not False:
+                    alt_label = label
+            elif 'eol.org' in uri:
+                eol_api = eolAPI()
+                vocab_uri = eolAPI().VOCAB_URI
+                labels = eol_api.get_labels_for_uri(uri)
+                if isinstance(labels, dict):
+                    # got the label!
+                    label = labels['label']
+                    alt_label = labels['alt_label']
+            elif 'wikipedia.org' in uri:
+                # page name in the URI of the article
+                link_ex = uri.split('/')
+                label = urlunquote(link_ex[-1])
+                label = label.replace('_', ' ')  # underscores in Wikipedia titles
+                alt_label = label
+                vocab_uri = 'http://www.wikipedia.org/'
+            if label is not False and vocab_uri is not False:
+                # ok to make an entity then!
+                ent = LinkEntity()
+                ent.uri = uri
+                ent.label = label
+                ent.alt_label = alt_label
+                ent.vocab_uri = vocab_uri
+                ent.ent_type = ent_type
+                ent.save()
 
 
 class TimeEventType():
