@@ -12,6 +12,7 @@ from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.create import Create
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 class ExpMigrate():
@@ -41,8 +42,38 @@ exm.get_csv_uuid_list(table_id)
 
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-exm = ExpMigrate()
-exm.migrate_csv_tables()
+
+tabs = [
+'barcin', 
+'catalhoyuk-areaTP-main-secure', 
+'catalhoyuk-areaTP-main', 
+'catalhoyuk-areaTP-metrics-secure', 
+'catalhoyuk-areaTP-metrics', 
+'catalhoyuk-areaTP-toothwear-secure', 
+'catalhoyuk-areaTP-toothwear', 
+'catalhoyuk-main-1', 
+'catalhoyuk-main-2', 
+'catalhoyuk-main-3', 
+'catalhoyuk-metrics', 
+'catalhoyuk-toothwear', 
+'cukurici', 
+'domuztepe', 
+'EOL-primary-v2-1', 
+'EOL-primary-v2-2', 
+'EOL-primary-v2-3', 
+'EOL-primary-v2-4', 
+'erbaba-suberde', 
+'ilipinar', 
+'karain-b', 
+'kosk', 
+'mentese', 
+'okuzini', 
+'pinarbasi', 
+'ulucak']
+for tab in tabs:
+    exm = ExpMigrate()
+    exm.table_dir = 'eol-tabs'
+    x = exm.check_csv_by_manifest(tab)
 
     """
 
@@ -63,6 +94,40 @@ exm.migrate_csv_tables()
         self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.tab_metadata = []
+
+    def check_csv_by_manifest(self, old_table):
+        """ checks for missing CSV data in an old table, saves list of missing data """
+        missing_tab = False
+        uuids = self.get_csv_uuid_first_fields(old_table)
+        if isinstance(uuids, list):
+            missing_tab = []
+            i = 0
+            for row in uuids:
+                if i == 0:
+                    # field headings
+                    missing_tab.append(row)
+                else:
+                    uuid = row[0]
+                    try:
+                        ok_man = Manifest.objects.get(uuid=uuid)
+                    except Manifest.DoesNotExist:
+                        ok_man = False
+                    if ok_man is False:
+                        print('Missing!! ' + str(uuid))
+                        missing_tab.append(row)
+                    else:
+                        #print('OK: ' + uuid)
+                        pass
+                i += 1
+            if len(missing_tab) > 1:
+                # has missing uuid
+                missing_file = self.set_check_directory(self.table_dir) + 'missing-' + old_table + '.csv'
+                f = open(missing_file, 'w', newline='', encoding='utf-8')
+                writer = csv.writer(f)
+                for missing_row in missing_tab:
+                    writer.writerow(missing_row)  # write the field labels in first row
+                f.closed
+            return missing_tab
 
     def clear_csv_tables(self):
         """ clears, deletes prior migration of the
@@ -382,6 +447,30 @@ exm.migrate_csv_tables()
                     uri = row[0]  # the 1st column is the uri
                     uuid = uri.replace('http://opencontext.org/subjects/', '')
                     uuids.append(uuid)
+                i += 1
+        return uuids
+
+    def get_csv_uuid_first_fields(self, table_id):
+        """ gets a uuid list for the more recent version
+            of open context data tables. the first
+            column is a field with uris
+        """
+        uuids = []
+        filename = table_id + '.csv'
+        tab_obj = self.load_csv_file(self.table_dir, filename)
+        if tab_obj is not False:
+            i = 0
+            for row in tab_obj:
+                if i == 0:
+                    first_row = ['uuid', 'source-table']
+                    first_row += row
+                    uuids.append(first_row)
+                else :
+                    uri = row[0]  # the 1st column is the uri
+                    uuid = uri.replace('http://opencontext.org/subjects/', '')
+                    new_row = [uuid, table_id]
+                    new_row += row
+                    uuids.append(new_row)
                 i += 1
         return uuids
 
