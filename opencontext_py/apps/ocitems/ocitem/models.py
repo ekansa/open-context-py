@@ -1073,7 +1073,7 @@ class ItemConstruction():
                         if pred_key in author_predicates:
                             # the current predicate is a used for authorship
                             authors = self.add_unique_entity_lists(authors, obs[pred_key])
-                            print('Author pred: ' + pred_key + ': ' + str(authors))
+                            # print('Author pred: ' + pred_key + ': ' + str(authors))
             if(len(authors) < 1):
                 authors = False
         return authors
