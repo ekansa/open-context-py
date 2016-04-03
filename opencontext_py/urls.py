@@ -115,9 +115,10 @@ urlpatterns = patterns('',
                        # url(r'^types', OCtypeViews.index, name='types_index'),
                        url(r'^types', AboutViews.index_view, name='about_index'),
                        # Table views for controlled downloadable tables
-                       url(r'^tables/(?P<table_id>\S+).json', OCtableViews.index_view, name='tables_json'),
-                       url(r'^tables/(?P<table_id>\S+).csv', OCtableViews.index_view, name='tables_csv'),
-                       url(r'^tables/(?P<table_id>\S+)', OCtableViews.index_view, name='tables_html'),
+                       url(r'^tables/(?P<table_id>\S+).json', OCtableViews.json_view, name='tables_json'),
+                       url(r'^tables/(?P<table_id>\S+).csv', OCtableViews.csv_view, name='tables_csv'),
+                       url(r'^tables/(?P<table_id>\S+)', OCtableViews.html_view, name='tables_html'),
+                       url(r'^tables', OCtableViews.index_view, name='tables_index'),
                        # Vocabulary views for viewing controlled vocab + ontology entities
                        url(r'^vocabularies/(?P<identifier>\S+)', vocabViews.html_view, name='vocabularies_html'),
                        url(r'^vocabularies', vocabViews.index_view, name='vocabularies_index'),

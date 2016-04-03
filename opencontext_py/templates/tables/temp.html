@@ -17,7 +17,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                    <h1>Coming Soon</h1>
+                    <h1>Open Context Tables</h1>
                 </div>
             </div>
             <div class="row">
@@ -28,8 +28,17 @@
                 
                 </div>    
                 <div class="col-sm-8">
-                    <h2>Temporary Holding Page</h2>
-                    <p>We are still working on this part of Open Context's upgrade.</p>
+                    <h2>{{ item.exp_tab.label }}</h2>
+                    {% if item.csv_url != False %}
+                    <a role="botton" class="btn btn-primary btn-lg" href=" {{ item.csv_url }}" target="_blank">
+                    <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                    Click to Download CSV File ({{ item.csv_size_human }})
+                    </a>
+                    {%endif%}
+                    <br/>
+                    <br/>
+                    <p class="small">The Open Context upgrade is still in progress. In the near future, we will provide a faceted search function for browsing downloadable data tables and we will provide rich metadata and version controll information about these tables.</p>
+                    <p class="small">Until these features are ready, please use the API to get machine-readable data from Open Context. <a href="{{ base_url }}/about/services">Click here</a> to review the API documentation.</p>
                 </div>
             </div>
         </div>

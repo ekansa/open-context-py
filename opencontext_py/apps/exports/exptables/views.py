@@ -1,5 +1,6 @@
 import json
 from django.conf import settings
+from django.shortcuts import redirect
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
@@ -42,14 +43,16 @@ def index_view(request, table_id=None):
 @never_cache
 def html_view(request, table_id):
     exp_tt = ExpTableTemplating(table_id)
+    rp = RootPath()
+    base_url = rp.get_baseurl()
     if exp_tt.exp_tab is not False:
-        rp = RootPath()
-        base_url = rp.get_baseurl()
+        exp_tt.prep_html()
         template = loader.get_template('tables/temp.html')
-        if temp_item.view_permitted:
+        if exp_tt.view_permitted:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
-                                       'application/ld+json']
+                                       'application/ld+json',
+                                       'text/csv']
             if 'HTTP_ACCEPT' in request.META:
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
@@ -58,9 +61,11 @@ def html_view(request, table_id):
                     return HttpResponse(json.dumps(ocitem.json_ld,
                                         ensure_ascii=False, indent=4),
                                         content_type=req_neg.use_response_type + "; charset=utf8")
+                elif 'csv' in req_neg.use_response_type:
+                    return redirect(exp_tt.csv_url, permanent=False)
                 else:
                     context = RequestContext(request,
-                                             {'item': temp_item,
+                                             {'item': exp_tt,
                                               'base_url': base_url})
                     return HttpResponse(template.render(context))
             else:
@@ -75,7 +80,14 @@ def html_view(request, table_id):
                                       'base_url': base_url})
             return HttpResponse(template.render(context), status=401)
     else:
-        raise Http404
+        # raise Http404
+        template = loader.get_template('tables/index.html')
+        context = RequestContext(request,
+                                 {'base_url': base_url,
+                                  'page_title': 'Open Context: Tables',
+                                  'act_nav': 'tables',
+                                  'nav_items': settings.NAV_ITEMS})
+        return HttpResponse(template.render(context))
 
 
 def json_view(request, table_id):
@@ -92,6 +104,24 @@ def json_view(request, table_id):
                                      ensure_ascii=False)
             return HttpResponse(json_output,
                                 content_type=req_neg.use_response_type + "; charset=utf8")
+        else:
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
+    else:
+        raise Http404
+
+
+def csv_view(request, table_id):
+    exp_tt = ExpTableTemplating(table_id)
+    if exp_tt.exp_tab is not False:
+        exp_tt.prep_csv()
+        req_neg = RequestNegotiation('text/csv')
+        if 'HTTP_ACCEPT' in request.META:
+            req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+        if req_neg.supported:
+            return redirect(exp_tt.csv_url, permanent=False)
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
