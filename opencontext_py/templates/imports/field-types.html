@@ -14,37 +14,46 @@
      </div>
      <div class="row">
         <div class="col-sm-9">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Fields to Classify</h4>
-                </div>
-                <div class="panel-body">
-                    <table id="fieldstabhead" class="table table-condensed table-hover">
-                        <thead>
-                            <th class="col-sm-1">Number</th>
-                            <th class="col-sm-3">Label</th>
-                            <th class="col-sm-3">Source Label</th>
-                            <th class="col-sm-3">Type</th>
-                            <th class="col-sm-2">Data Type</th>
-                        </thead>
-                    </table>
-                    <div style="overflow-y:auto; max-height:500px;">    
-                    <table id="fieldstab" class="table table-condensed table-hover">
-                        <tbody id="fieldtabfields">
-                        {% for field in ip.fields %}
-                            <tr id="field-num-{{ field.field_num }}">
-                                <td class="col-sm-1">{{ field.field_num }}</td>
-                                <td class="col-sm-3"><input id="field-label-{{ field.field_num }}" value="{{ field.label }}" type="text" onchange="javascript:assignFieldLabel({{ field.field_num }});"/></td>
-                                <td class="col-sm-3">{{ field.ref_name }}</td>
-                                <td id="field-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_type }}</td>
-                                <td id="field-data-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_data_type }}</td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
+               <div class="panel panel-default">
+                    <div class="panel-heading">
+                         <h4 class="panel-title">Fields to Classify</h4>
                     </div>
-                </div>
-            </div>
+                    <div class="panel-body">
+                         <table id="fieldstabhead" class="table table-condensed table-hover">
+                              <thead>
+                                  <th class="col-sm-1">Number</th>
+                                  <th class="col-sm-3">Label</th>
+                                  <th class="col-sm-3">Source Label</th>
+                                  <th class="col-sm-3">Type</th>
+                                  <th class="col-sm-2">Data Type</th>
+                              </thead>
+                         </table>
+                         <div style="overflow-y:auto; max-height:500px;">    
+                              <table id="fieldstab" class="table table-condensed table-hover">
+                                   <tbody id="fieldtabfields">
+                                   {% for field in ip.fields %}
+                                        <tr id="field-num-{{ field.field_num }}">
+                                             <td class="col-sm-1">{{ field.field_num }}</td>
+                                             <td class="col-sm-3"><input id="field-label-{{ field.field_num }}" value="{{ field.label }}" type="text" onchange="javascript:assignFieldLabel({{ field.field_num }});"/></td>
+                                             <td class="col-sm-3">{{ field.ref_name }}</td>
+                                             <td id="field-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_type }}</td>
+                                             <td id="field-data-type-{{ field.field_num }}" class="col-sm-2">{{ field.field_data_type }}</td>
+                                        </tr>
+                                   {% endfor %}
+                                   </tbody>
+                              </table>
+                         </div>
+                         <div class="row" style="margin-top:40px;">
+                              <div class="col-sm-4">
+                                   <button onclick="matchAll();" type="button" class="btn btn-primary btn-lg btn-block"><span class="glyphicon glyphicon-flash" aria-hidden="true"></span> Match ALL</button>
+                              </div>
+                              <div class="col-sm-8">
+                                   <strong>Note:</strong><br/>
+                                   <small>Match all field lables to existing, previously classified predicates</small>
+                              </div>
+                         </div>
+                   </div>
+               </div>
         </div>
         <div class="col-sm-3">
             <div class="panel panel-default">

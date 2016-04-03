@@ -7,6 +7,9 @@ from jsonfield import JSONField
 
 # Stores metadata about export tables
 class ExpTable(models.Model):
+
+    PREDICATE_DUMP = 'void:dataDump'
+
     table_id = models.CharField(max_length=50, primary_key=True)
     label = models.CharField(max_length=200, db_index=True)
     field_count = models.IntegerField()

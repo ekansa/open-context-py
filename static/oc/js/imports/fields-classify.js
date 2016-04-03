@@ -106,3 +106,25 @@ function assignFieldLabelDone(data){
 		ft_dom.value = data[i].label
 	}
 }
+
+function matchAll() {
+	/* Composes request to add a field_data_type to a selected list of rows 
+	*/
+	var selected_fields = getSelectedFieldNumbers();
+	url = "../../imports/field-classify/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			match_all_unclasified: true,
+			csrfmiddlewaretoken: csrftoken},
+		success: matchAllDone
+	});	
+}
+
+function matchAllDone(data){
+	/* Shows updates to fields */
+	assignTypeDone(data);
+	assignDataTypeDone(data);
+}

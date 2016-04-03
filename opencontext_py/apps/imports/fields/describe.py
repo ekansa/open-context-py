@@ -3,8 +3,11 @@ from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
+from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.imports.fieldannotations.links import CandidateLinkPredicate
+from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
 # Methods to describe import fields and their annotations
@@ -32,6 +35,43 @@ class ImportFieldDescribe():
                    .filter(source_id=self.source_id,
                            field_num__in=self.field_num_list)\
                    .update(field_data_type=field_data_type)
+
+    def match_all_unclassified(self):
+        """ matches all unclassified fields against already imported predicates """
+        imp_fields = ImportField.objects\
+                                .filter(source_id=self.source_id)
+        for imp_field in imp_fields:
+            labels_list = [imp_field.label]
+            # print('See: ' + str(labels_list) + ' ft:' + str(imp_field.field_type))
+            if imp_field.field_type is None \
+               or imp_field.field_type == '' \
+               or imp_field.field_type == ImportField.DEFAULT_FIELD_TYPE:
+                # print('Checking: ' + str(labels_list))
+                man_pred = Manifest.objects\
+                                   .filter(project_uuid=self.project_uuid,
+                                           item_type='predicates',
+                                           label__in=labels_list)[:1]
+                if len(man_pred) > 0:
+                    imp_field.field_type = 'description'
+                    try:
+                        pred = Predicate.objects.get(uuid=man_pred[0].uuid)
+                    except Predicate.DoesNotExist:
+                        pred = False
+                    if pred is not False \
+                       and (imp_field.field_data_type is None \
+                            or imp_field.field_data_type == '' \
+                            or imp_field.field_data_type == ImportField.DEFAULT_DATA_TYPE):
+                        imp_field.field_data_type = pred.data_type
+                    imp_field.save()
+                # now check to blank out empty fields and set as ignore
+                non_blank_cells = ImportCell.objects\
+                                            .filter(source_id=self.source_id,
+                                                    field_num=imp_field.field_num)\
+                                            .exclude(record='')
+                if len(non_blank_cells) < 1:
+                    imp_field.field_type = 'ignore'
+                    imp_field.field_data_type == ImportField.DEFAULT_DATA_TYPE
+                    imp_field.save()
 
     def update_field_label(self, label, field_num):
         """ Updates field_data_type for a comma-seperated list of field_nums """
