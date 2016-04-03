@@ -1445,6 +1445,9 @@ class ItemConstruction():
                 if found:
                     entity_item = ent
                     self.entity_metadata[identifier] = entity_item
+        if entity_item is not False:
+            if entity_item.slug == 'oc-gen-has-note':
+                entity_item.class_uri = 'variable'
         return entity_item
 
     def make_dict_template_safe(self, node):

@@ -12,6 +12,9 @@ from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.create import Create
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
 
 
 class ExpMigrate():
@@ -41,8 +44,50 @@ exm.get_csv_uuid_list(table_id)
 
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-exm = ExpMigrate()
-exm.migrate_csv_tables()
+tabs = [
+'barcin', 
+'catalhoyuk-areaTP-main-secure', 
+'catalhoyuk-areaTP-main', 
+'catalhoyuk-areaTP-metrics-secure', 
+'catalhoyuk-areaTP-metrics', 
+'catalhoyuk-areaTP-toothwear-secure', 
+'catalhoyuk-areaTP-toothwear', 
+'catalhoyuk-main-1', 
+'catalhoyuk-main-2', 
+'catalhoyuk-main-3', 
+'catalhoyuk-metrics', 
+'catalhoyuk-toothwear', 
+'cukurici', 
+'domuztepe', 
+'EOL-primary-v2-1', 
+'EOL-primary-v2-2', 
+'EOL-primary-v2-3', 
+'EOL-primary-v2-4', 
+'erbaba-suberde', 
+'ilipinar', 
+'karain-b', 
+'kosk', 
+'mentese', 
+'okuzini', 
+'pinarbasi', 
+'ulucak']
+for tab in tabs:
+    exm = ExpMigrate()
+    exm.table_dir = 'eol-tabs'
+    x = exm.check_csv_by_manifest(tab)
+
+
+
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+tabs = [
+'missing-barcin',
+'missing-domuztepe',
+'missing-erbaba-suberde',
+'missing-mentese']
+for tab in tabs:
+    exm = ExpMigrate()
+    exm.table_dir = 'add-eol'
+    x = exm.add_subjects_from_table('eol', tab)
 
     """
 
@@ -63,6 +108,100 @@ exm.migrate_csv_tables()
         self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.tab_metadata = []
+
+    def add_subjects_from_table(self, source_id, old_table):
+        """ adds subjects from a table """
+        filename = old_table + '.csv'
+        tab_obj = self.load_csv_file(self.table_dir, filename)
+        missing_parents = {}
+        if tab_obj is not False:
+            i = -1
+            context_cell_index = False
+            parent_label_index = False
+            for row in tab_obj:
+                i += 1
+                if i == 0:
+                    cc = 0
+                    for cell in row:
+                        if 'Context URI' == cell:
+                            context_cell_index = cc
+                            parent_label_index = cc - 1
+                            break
+                        cc += 1
+                elif i > 0 and context_cell_index is not False:
+                    # OK to generate a new item
+                    uuid = row[0]
+                    label = row[3]
+                    tab_source = row[1]
+                    project_uuid = self.get_uuid_from_uri(row[4])
+                    parent_label = self.get_uuid_from_uri(row[parent_label_index])
+                    parent_uuid = self.get_uuid_from_uri(row[context_cell_index])
+                    # print('Migrate: ' + uuid + ' ' + label + ' child of: ' + parent_uuid + ' in proj: ' + project_uuid)
+                    try:
+                        parent_ok = Manifest.objects.get(uuid=parent_uuid)
+                    except Manifest.DoesNotExist:
+                        parent_ok = False
+                    if parent_ok is not False:
+                        # we have a parent, so make the bone
+                        man = Manifest()
+                        m_ass = ManageAssertions()
+                        m_ass.source_id = source_id
+                        su_gen = SubjectGeneration()
+                        man.uuid = uuid
+                        man.label = label
+                        man.source_id = source_id
+                        man.item_type = 'subjects'
+                        man.class_uri = 'oc-gen:cat-animal-bone'
+                        man.project_uuid = project_uuid
+                        man.save()
+                        m_ass.add_containment_assertion(parent_uuid, man.uuid)
+                        su_gen.generate_save_context_path_from_manifest_obj(man)
+                        print('Added: ' + uuid + ' from ' + tab_source)
+                    else:
+                        missing_parents[parent_uuid] = {'label': parent_label, 'tab': tab_source}
+                else:
+                    if i > 0:
+                        print('Strange problems...')
+            print('Missing parents: ' + str(missing_parents))
+
+    def get_uuid_from_uri(self, uri):
+        """ gets a uuid from a uri, assumes this is an open context URI"""
+        uri_ex = uri.split('/')
+        return uri_ex[-1]
+
+    def check_csv_by_manifest(self, old_table):
+        """ checks for missing CSV data in an old table, saves list of missing data """
+        missing_tab = False
+        uuids = self.get_csv_uuid_first_fields(old_table)
+        if isinstance(uuids, list):
+            missing_tab = []
+            i = 0
+            for row in uuids:
+                if i == 0:
+                    # field headings
+                    missing_tab.append(row)
+                else:
+                    uuid = row[0]
+                    try:
+                        ok_man = Manifest.objects.get(uuid=uuid)
+                    except Manifest.DoesNotExist:
+                        ok_man = False
+                    if ok_man is False:
+                        print('Missing!! ' + str(uuid))
+                        missing_tab.append(row)
+                    else:
+                        #print('OK: ' + uuid)
+                        pass
+                i += 1
+            if len(missing_tab) > 1:
+                # has missing uuid
+                missing_file = self.set_check_directory(self.table_dir) + 'missing-' + old_table + '.csv'
+                f = open(missing_file, 'w', newline='', encoding='utf-8')
+                writer = csv.writer(f)
+                for missing_row in missing_tab:
+                    writer.writerow(missing_row)  # write the field labels in first row
+                f.closed
+            return missing_tab
 
     def clear_csv_tables(self):
         """ clears, deletes prior migration of the
@@ -382,6 +521,30 @@ exm.migrate_csv_tables()
                     uri = row[0]  # the 1st column is the uri
                     uuid = uri.replace('http://opencontext.org/subjects/', '')
                     uuids.append(uuid)
+                i += 1
+        return uuids
+
+    def get_csv_uuid_first_fields(self, table_id):
+        """ gets a uuid list for the more recent version
+            of open context data tables. the first
+            column is a field with uris
+        """
+        uuids = []
+        filename = table_id + '.csv'
+        tab_obj = self.load_csv_file(self.table_dir, filename)
+        if tab_obj is not False:
+            i = 0
+            for row in tab_obj:
+                if i == 0:
+                    first_row = ['uuid', 'source-table']
+                    first_row += row
+                    uuids.append(first_row)
+                else :
+                    uri = row[0]  # the 1st column is the uri
+                    uuid = uri.replace('http://opencontext.org/subjects/', '')
+                    new_row = [uuid, table_id]
+                    new_row += row
+                    uuids.append(new_row)
                 i += 1
         return uuids
 

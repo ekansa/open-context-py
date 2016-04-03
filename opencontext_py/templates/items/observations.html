@@ -88,7 +88,7 @@
                         {% if prop.values != False %}
                             {% if prop.values|length == 1 %}
                                 {% if prop.values.0.uri != False %}
-				    {% if prop.values.0.item_type == 'predicates' %}
+				    {% if prop.values.0.item_type == 'predicates' and prop.values.0.uuid  %}
 				    <a href="{% url 'predicates_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
 				    {% elif prop.values.0.item_type == 'types'  %}
 <a href="{% url 'types_html' prop.values.0.uuid %}">{{ prop.values.0.val }}</a>
@@ -103,7 +103,7 @@
                                 {% for propval in prop.values %}
                                 <li>
                                     {% if propval.uri != False %}
-					{% if propval.item_type == 'predicates' %}
+					{% if propval.item_type == 'predicates' and prop.values.0.uuid %}
 					<a href="{% url 'predicates_html' propval.uuid %}">{{ propval.val }}</a>
 					{% elif propval.item_type == 'types'  %}
 					<a href="{% url 'types_html' propval.uuid %}">{{ propval.val }}</a>

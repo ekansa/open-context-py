@@ -2,6 +2,7 @@ import hashlib
 from django.db import IntegrityError
 from django.db import models
 from django.db.models import Avg, Max, Min
+from unidecode import unidecode
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.ocitem.models import OCitem as OCitem
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
@@ -116,7 +117,7 @@ class SubjectGeneration():
         new_context = True
         act_context = self.generate_context_path(man_obj.uuid)
         if act_context is not False:
-            print('Saving Path (' + str(man_obj.uuid) + '): ' + act_context)
+            print('Saving Path (' + str(man_obj.uuid) + '): ' + str(unidecode(act_context)))
             try:
                 sub_obj = Subject.objects.get(uuid=man_obj.uuid)
                 if sub_obj.context == act_context:
