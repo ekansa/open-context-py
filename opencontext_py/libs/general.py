@@ -31,7 +31,7 @@ class DCterms():
                       'dc-coverage': 'dc_terms_coverage___pred_id',
                       'dc-temporal': 'dc_terms_temporal___pred_id',
                       'dc-isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
-    
+
     DC_SLUG_TO_FIELDS = {'dc-terms-subject': 'dc-subject',
                          'dc-terms-spatial': 'dc-spatial',
                          'dc-terms-coverage': 'dc-coverage',
@@ -50,20 +50,20 @@ class DCterms():
         for dc_term_key, dc_solr_key in self.DC_META_PREDICATES.items():
             dc_terms.append(dc_term_key)
         return dc_terms
-    
+
     def get_dc_authors_list(self):
         """ returns a list of dc-terms author predicates """
         for dc_term_key, dc_solr_key in self.DC_AUTHOR_PREDICATES.items():
             dc_terms.append(dc_term_key)
         return dc_terms
-    
+
     def get_dc_params_list(self):
         """ returns a list of dc-params (for searches) """
         dc_params = []
         for dc_param_key, dc_solr_key in self.DC_META_FIELDS.items():
             dc_params.append(dc_param_key)
         return dc_params
-    
+
     def get_dc_authors_params_list(self):
         """ returns a list of dc-params (for author searches) """
         dc_params = []
