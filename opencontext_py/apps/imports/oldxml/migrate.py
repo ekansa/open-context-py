@@ -174,7 +174,7 @@ oldxml.add_properties_from_xml_file('mentese', '00AA33E0-E4FD-414E-E889-CFC21B73
             # print(' '.join([str(string_uuid), str(type_uuid), val_str]))
             self.add_predicate(predicate_uuid, predicate_label, data_type)
             if val_str is not None:
-                save_ass = True
+                save_ass = False
                 new_ass = self.prepare_new_assertion(obs_num, assert_sort)
                 new_ass.predicate_uuid = predicate_uuid
                 new_ass.object_type = object_type
@@ -186,17 +186,22 @@ oldxml.add_properties_from_xml_file('mentese', '00AA33E0-E4FD-414E-E889-CFC21B73
                                              string_uuid,
                                              val_str)
                     new_ass.object_uuid = type_obj.uuid
+                    save_ass = True
                 elif string_uuid is not None and object_type == 'xsd:string':
                     str_obj = self.get_make_string_w_suggested_uuid(val_str, string_uuid)
                     new_ass.object_uuid = str_obj.uuid
+                    save_ass = True
                 elif val_number is not None:
                     new_ass.data_num = float(val_number)
+                    save_ass = True
                 elif object_type == 'xsd:boolean':
                     new_ass.data_num = self.validate_convert_boolean(val_str)
+                    save_ass = True
                 elif object_type == 'xsd:date':
                     try:
                         date_obj = parse(val_str)
                         new_ass.data_date = date_obj
+                        save_ass = True
                     except:
                         new_ass.data_date = None
                 if save_ass:
