@@ -13,6 +13,8 @@ from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.create import Create
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
 
 
 class ExpMigrate():
@@ -42,7 +44,6 @@ exm.get_csv_uuid_list(table_id)
 
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-
 tabs = [
 'barcin', 
 'catalhoyuk-areaTP-main-secure', 
@@ -75,6 +76,19 @@ for tab in tabs:
     exm.table_dir = 'eol-tabs'
     x = exm.check_csv_by_manifest(tab)
 
+
+
+from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
+tabs = [
+'missing-barcin',
+'missing-domuztepe',
+'missing-erbaba-suberde',
+'missing-mentese']
+for tab in tabs:
+    exm = ExpMigrate()
+    exm.table_dir = 'add-eol'
+    x = exm.add_subjects_from_table('eol', tab)
+
     """
 
     LEGACY_TAB_BASE_URI = 'http://opencontext.org/exports/'
@@ -94,6 +108,66 @@ for tab in tabs:
         self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.tab_metadata = []
+
+    def add_subjects_from_table(self, source_id, old_table):
+        """ adds subjects from a table """
+        filename = old_table + '.csv'
+        tab_obj = self.load_csv_file(self.table_dir, filename)
+        missing_parents = {}
+        if tab_obj is not False:
+            i = -1
+            context_cell_index = False
+            parent_label_index = False
+            for row in tab_obj:
+                i += 1
+                if i == 0:
+                    cc = 0
+                    for cell in row:
+                        if 'Context URI' == cell:
+                            context_cell_index = cc
+                            parent_label_index = cc - 1
+                            break
+                        cc += 1
+                elif i > 0 and context_cell_index is not False:
+                    # OK to generate a new item
+                    uuid = row[0]
+                    label = row[3]
+                    tab_source = row[1]
+                    project_uuid = self.get_uuid_from_uri(row[4])
+                    parent_label = self.get_uuid_from_uri(row[parent_label_index])
+                    parent_uuid = self.get_uuid_from_uri(row[context_cell_index])
+                    # print('Migrate: ' + uuid + ' ' + label + ' child of: ' + parent_uuid + ' in proj: ' + project_uuid)
+                    try:
+                        parent_ok = Manifest.objects.get(uuid=parent_uuid)
+                    except Manifest.DoesNotExist:
+                        parent_ok = False
+                    if parent_ok is not False:
+                        # we have a parent, so make the bone
+                        man = Manifest()
+                        m_ass = ManageAssertions()
+                        m_ass.source_id = source_id
+                        su_gen = SubjectGeneration()
+                        man.uuid = uuid
+                        man.label = label
+                        man.source_id = source_id
+                        man.item_type = 'subjects'
+                        man.class_uri = 'oc-gen:cat-animal-bone'
+                        man.project_uuid = project_uuid
+                        man.save()
+                        m_ass.add_containment_assertion(parent_uuid, man.uuid)
+                        su_gen.generate_save_context_path_from_manifest_obj(man)
+                        print('Added: ' + uuid + ' from ' + tab_source)
+                    else:
+                        missing_parents[parent_uuid] = {'label': parent_label, 'tab': tab_source}
+                else:
+                    if i > 0:
+                        print('Strange problems...')
+            print('Missing parents: ' + str(missing_parents))
+
+    def get_uuid_from_uri(self, uri):
+        """ gets a uuid from a uri, assumes this is an open context URI"""
+        uri_ex = uri.split('/')
+        return uri_ex[-1]
 
     def check_csv_by_manifest(self, old_table):
         """ checks for missing CSV data in an old table, saves list of missing data """
