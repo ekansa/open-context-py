@@ -1069,9 +1069,11 @@ class ItemConstruction():
             if(OCitem.PREDICATES_OCGEN_HASOBS in act_dict):
                 observations = act_dict[OCitem.PREDICATES_OCGEN_HASOBS]
                 for obs in observations:
-                    for author_pred in author_predicates:
-                        if(author_pred in obs):
-                            authors = self.add_unique_entity_lists(authors, obs[author_pred])
+                    for pred_key, pred_objs in obs.items():
+                        if pred_key in author_predicates:
+                            # the current predicate is a used for authorship
+                            authors = self.add_unique_entity_lists(authors, obs[pred_key])
+                            print('Author pred: ' + pred_key + ': ' + str(authors))
             if(len(authors) < 1):
                 authors = False
         return authors
