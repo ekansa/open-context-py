@@ -115,7 +115,21 @@ class Manifest(models.Model):
         Updates with the last indexed time
         """
         self.indexed = timezone.now()
-        super(Manifest, self).save(update_fields=['indexed'])
+        if self.published is None or self.published == '':
+            self.published = timezone.now()
+            super(Manifest, self).save(update_fields=['indexed', 'published'])
+        else:
+            super(Manifest, self).save(update_fields=['indexed'])
+
+    def published_save(self, published_datetime_obj=None):
+        """
+        Updates with the last indexed time
+        """
+        if published_datetime_obj is not None:
+            self.published = published_datetime_obj
+        if self.published is None or self.published == '':
+            self.published = timezone.now()
+        super(Manifest, self).save(update_fields=['published'])
 
     def archived_save(self):
         """
