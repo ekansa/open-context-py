@@ -1,3 +1,4 @@
+import datetime
 from django.contrib.auth.models import User, Group
 from django.db import models
 from django.db.models import Q
@@ -13,6 +14,14 @@ class ProjectPermissions():
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 pp = ProjectPermissions()
 pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+pp = ProjectPermissions()
+pp.publish_project('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+pp = ProjectPermissions()
+pp.publish_project('d1c85af4-c870-488a-865b-b3cf784cfc60', '2016-03-01')
 
     """
 
@@ -124,10 +133,16 @@ pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
         else:
             return False
 
-    def publish_project(self, project_uuid):
+    def publish_project(self, project_uuid, pub_date=None):
         """ publishes a project by making its view group 0
             and by updating the published date in the manifest
         """
+        pub_date_obj = None
+        if pub_date is not None:
+            try:
+                pub_date_obj = self.date_convert(pub_date)
+            except:
+                raise ValueError('Cannot understand the date value')
         public = self.set_project_view_edit_groups(project_uuid, 0)
         if public:
             man_list = Manifest.objects\
@@ -135,7 +150,19 @@ pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
                                .iterator()
             for man_obj in man_list:
                 # save the current publication time
-                man_obj.published_save()
+                man_obj.published_save(pub_date_obj)
             return True
         else:
             return False
+
+    def date_convert(self, date_val):
+        """ converts to a python datetime if not already so """
+        if isinstance(date_val, str):
+            date_val = date_val.replace('Z', '')
+            if len(date_val) > 10:
+                dt = datetime.datetime.strptime(date_val, '%Y-%m-%dT%H:%M:%S')
+            else:
+                dt = datetime.datetime.strptime(date_val, '%Y-%m-%d')
+        else:
+            dt = date_val
+        return dt
