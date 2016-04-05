@@ -2,6 +2,7 @@ from django.contrib.auth.models import User, Group
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.entities.entity.models import Entity
 
 
@@ -107,7 +108,7 @@ pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
     def set_project_view_edit_groups(self,
                                      project_uuid,
                                      view_group_id,
-                                     edit_group_id):
+                                     edit_group_id=False):
         """ sets view and edit group ids for a project """
         proj = False
         try:
@@ -116,8 +117,25 @@ pp.create_perm_groups_by_uuid('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
             proj = False
         if proj is not False:
             proj.view_group_id = view_group_id
-            proj.edit_group_id = edit_group_id
+            if isinstance(edit_group_id, int):
+                proj.edit_group_id = edit_group_id
             proj.save()
+            return True
+        else:
+            return False
+
+    def publish_project(self, project_uuid):
+        """ publishes a project by making its view group 0
+            and by updating the published date in the manifest
+        """
+        public = self.set_project_view_edit_groups(project_uuid, 0)
+        if public:
+            man_list = Manifest.objects\
+                               .filter(project_uuid=project_uuid)\
+                               .iterator()
+            for man_obj in man_list:
+                # save the current publication time
+                man_obj.published_save()
             return True
         else:
             return False
