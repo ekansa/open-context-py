@@ -48,6 +48,7 @@ class GeoJsonRecords():
         self.rec_attributes = []
         self.do_complex_geo = False  # get complex (Polygons, etc.) geospatial data from database
         self.do_media_thumbs = True  # get thumbnails for records
+        self.get_all_media = False  # get links to all media files for an item
 
     def make_records_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -78,7 +79,10 @@ class GeoJsonRecords():
         """
         # check database for complex geo objects for all of these records
         db_geo = self.get_recs_complex_geo_features(solr_recs)
+        if self.get_all_media:
+            self.do_media_thumbs = False
         thumbnail_data = self.get_media_thumbs(solr_recs)
+        media_file_data = self.get_all_media_files(solr_recs)
         i = self.rec_start
         for solr_rec in solr_recs:
             i += 1
@@ -91,6 +95,7 @@ class GeoJsonRecords():
             rec_props_obj.flatten_rec_attributes = self.flatten_rec_attributes
             rec_props_obj.rec_attributes = self.rec_attributes
             rec_props_obj.thumbnail_data = thumbnail_data
+            rec_props_obj.media_file_data = media_file_data
             rec_props_obj.parse_solr_record(solr_rec)
             record['id'] = '#record-' + str(i) + '-of-' + str(self.total_found)
             if rec_props_obj.label is False:
@@ -143,6 +148,10 @@ class GeoJsonRecords():
             if rec_props_obj.snippet is not False:
                 properties['snippet'] = rec_props_obj.snippet
             properties['thumbnail'] = rec_props_obj.thumbnail_scr
+            if rec_props_obj.preview_scr is not False:
+                properties['preview'] = rec_props_obj.preview_scr
+            if rec_props_obj.fullfile_scr is not False:
+                properties['primary-file'] = rec_props_obj.fullfile_scr
             properties['published'] = rec_props_obj.published
             properties['updated'] = rec_props_obj.updated
             if isinstance(rec_props_obj.other_attributes, list):
@@ -203,7 +212,20 @@ class GeoJsonRecords():
 
     def get_media_thumbs(self, solr_recs):
         """ gets media thumbnail items using the SolrUUIDs object"""
-        solr_uuids = SolrUUIDs(self.response_dict_json)
-        solr_uuids.do_media_thumbs = self.do_media_thumbs
-        return solr_uuids.get_media_thumbs(solr_recs)
- 
+        if self.do_media_thumbs:
+            solr_uuids = SolrUUIDs(self.response_dict_json)
+            solr_uuids.do_media_thumbs = self.do_media_thumbs
+            solr_uuids.get_all_media = self.get_all_media
+            return solr_uuids.get_media_thumbs(solr_recs)
+        else:
+            return {}
+    
+    def get_all_media_files(self, solr_recs):
+        """ gets all media files for items using the SolrUUIDs object"""
+        if self.get_all_media:
+            solr_uuids = SolrUUIDs(self.response_dict_json)
+            solr_uuids.do_media_thumbs = self.do_media_thumbs
+            solr_uuids.get_all_media = self.get_all_media
+            return solr_uuids.get_all_media_files(solr_recs)
+        else:
+            return {}
