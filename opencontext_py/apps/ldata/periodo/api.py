@@ -84,6 +84,9 @@ class PeriodoAPI():
         period_meta = {'id': p_id_key,
                        'uri': self.URI_PREFIX + p_id_key,
                        'label': False,
+                       'alt_label': False,
+                       'all_labels': [],
+                       'coverage': [],
                        'start': self.get_period_numeric_year(period, 'start'),
                        'stop': self.get_period_numeric_year(period, 'stop'),
                        'range': self.make_date_range(period),
@@ -91,6 +94,8 @@ class PeriodoAPI():
                        }
         if 'label' in period:
             period_meta['label'] = period['label']
+            period_meta['alt_label'] = period['label']
+            period_meta['all_labels'].append(period['label']) 
             t_number = re.sub('[^0-9]', '', period['label'])
             if t_number is None:
                 add_range = True
@@ -105,6 +110,22 @@ class PeriodoAPI():
                                              + ' (' + period_meta['range'] + ')'
             else:
                 period_meta['label-range'] = period['label']
+        if 'localizedLabels' in period:
+            for lang_key, label_obj in period['localizedLabels'].items():
+                if isinstance(label_obj, str):
+                    if lang_key == 'eng-latn':
+                        period_meta['alt_label'] =label_obj
+                    if label_obj not in period_meta['all_labels']:
+                        period_meta['all_labels'].append(label_obj)
+                elif isinstance(label_obj, list):
+                    if lang_key == 'eng-latn':
+                        period_meta['alt_label'] =label_obj[0]
+                    for label in label_obj:
+                        if label not in period_meta['all_labels']:
+                            period_meta['all_labels'].append(label)
+        if 'spatialCoverage' in period:
+            for cov_item in period['spatialCoverage']:
+                period_meta['coverage'].append(cov_item['label'])
         return period_meta
     
     def make_date_range(self, period):
@@ -148,13 +169,16 @@ class PeriodoAPI():
                 period_collections = self.periodo_data['periodCollections']
         return period_collections
     
-    def get_period_collections(self):
+    def get_period_collection(self, collection_ark):
         """ gets period collections from the periodo data """
-        period_collections = False
-        if isinstance(self.periodo_data, dict):
-            if 'periodCollections' in self.periodo_data:
-                period_collections = self.periodo_data['periodCollections']
-        return period_collections
+        if self.URI_PREFIX in collection_ark:
+            collection_ark = collection_ark.replace(self.URI_PREFIX, '')
+        period_collection = False
+        period_collections = self.get_period_collections()
+        if isinstance(period_collections, dict):
+            if collection_ark in period_collections:
+                period_collection = period_collections[collection_ark]
+        return period_collection
 
     def get_periodo_data(self):
         """

@@ -36,6 +36,7 @@ class SolrUUIDs():
         # A list of (non-standard) attributes to include in a record
         self.rec_attributes = []
         self.do_media_thumbs = True  # get thumbnails for records
+        self.get_all_media = False # get links to all media files for an item
 
     def make_uuids_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -56,7 +57,10 @@ class SolrUUIDs():
         if isinstance(solr_recs, list):
             if uris_only:
                 self.do_media_thumbs = False
+            if self.get_all_media:
+                self.do_media_thumbs = False
             thumbnail_data = self.get_media_thumbs(solr_recs)
+            media_file_data = self.get_all_media_files(solr_recs)
             for solr_rec in solr_recs:
                 rec_props_obj = RecordProperties(self.response_dict_json)
                 rec_props_obj.mem_cache_obj = self.mem_cache_obj
@@ -66,6 +70,7 @@ class SolrUUIDs():
                 rec_props_obj.flatten_rec_attributes = self.flatten_rec_attributes
                 rec_props_obj.rec_attributes = self.rec_attributes
                 rec_props_obj.thumbnail_data = thumbnail_data
+                rec_props_obj.media_file_data = media_file_data
                 item_ok = rec_props_obj.get_item_basics(solr_rec)
                 if item_ok:
                     if uris_only:
@@ -102,6 +107,12 @@ class SolrUUIDs():
         item['item category'] = rec_props_obj.category
         if rec_props_obj.snippet is not False:
             item['snippet'] = rec_props_obj.snippet
+        if rec_props_obj.thumbnail_scr is not False:
+            item['thumbnail'] = rec_props_obj.thumbnail_scr
+        if rec_props_obj.preview_scr is not False:
+            item['preview'] = rec_props_obj.preview_scr
+        if rec_props_obj.fullfile_scr is not False:
+            item['primary-file'] = rec_props_obj.fullfile_scr
         item['published'] = rec_props_obj.published
         item['updated'] = rec_props_obj.updated
         if isinstance(rec_props_obj.other_attributes, list):
@@ -178,6 +189,32 @@ class SolrUUIDs():
                 thumb_obj['scr'] = thumb.file_uri
                 thumb_results[uuid] = thumb_obj
         return thumb_results
+
+    def get_all_media_files(self, solr_recs):
+        """ gets media thumbnail items """
+        media_file_results = {}
+        if self.get_all_media:
+            media_uuids = []
+            rec_props_obj = RecordProperties(self.response_dict_json)
+            for solr_rec in solr_recs:
+                item = rec_props_obj.get_solr_record_uuid_type(solr_rec)
+                if item is not False:
+                    uuid = item['uuid']
+                    if item['item_type'] == 'media':
+                        media_uuids.append(uuid)
+                    media_file_results[uuid] = False
+            if len(media_uuids) > 0:
+                media_files = Mediafile.objects\
+                                       .filter(uuid__in=media_uuids)
+                for media_file in media_files:
+                    uuid = media_file.uuid
+                    if uuid not in media_file_results:
+                        media_file_results[uuid] = {}
+                    else:
+                        if media_file_results[uuid] is False:
+                            media_file_results[uuid] = {}
+                    media_file_results[uuid][media_file.file_type] = media_file.file_uri
+        return media_file_results
 
     def get_thumbs_for_non_media(self, uuid_list):
         q_uuids = self.make_quey_uuids(uuid_list)

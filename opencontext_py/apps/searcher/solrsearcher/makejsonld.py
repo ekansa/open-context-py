@@ -42,6 +42,7 @@ class MakeJsonLd():
         self.label = settings.CANONICAL_SITENAME + ' API'
         self.json_ld = LastUpdatedOrderedDict()
         self.rel_media_facet = False
+        self.get_all_media = False  # get links to all media files for an item
         # flatten list of an attribute values to single value
         self.flatten_rec_attributes = False
         # A list of (non-standard) attributes to include in a record
@@ -101,6 +102,7 @@ class MakeJsonLd():
             geojson_recs_obj.max_date = self.max_date
             geojson_recs_obj.flatten_rec_attributes = self.flatten_rec_attributes
             geojson_recs_obj.rec_attributes = self.rec_attributes
+            geojson_recs_obj.get_all_media = self.get_all_media
             geojson_recs_obj.make_records_from_solr(solr_json)
             self.mem_cache_obj = geojson_recs_obj.mem_cache_obj
             if len(geojson_recs_obj.geojson_recs) > 0 \
@@ -141,6 +143,7 @@ class MakeJsonLd():
             solr_uuids.flatten_rec_attributes = self.flatten_rec_attributes
             solr_uuids.rec_attributes = self.rec_attributes
             solr_uuids.do_media_thumbs = self.check_do_media_thumbs(solr_json)
+            solr_uuids.get_all_media = self.get_all_media
             uris = solr_uuids.make_uris_from_solr(solr_json,
                                                   False)
             self.mem_cache_obj = solr_uuids.mem_cache_obj

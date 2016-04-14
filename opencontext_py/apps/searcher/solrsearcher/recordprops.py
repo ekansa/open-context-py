@@ -47,6 +47,8 @@ class RecordProperties():
         self.thumbnail_href = False
         self.thumbnail_uri = False
         self.thumbnail_scr = False
+        self.preview_scr = False
+        self.fullfile_scr = False
         self.snippet = False
         self.cite_uri = False  # stable identifier as an HTTP uri
         self.other_attributes = False  # other attributes to the record
@@ -69,6 +71,7 @@ class RecordProperties():
         self.min_date = False
         self.max_date = False
         self.thumbnail_data = {}
+        self.media_file_data = {}
 
     def parse_solr_record(self, solr_rec):
         """ Parses a solr rec object """
@@ -81,6 +84,7 @@ class RecordProperties():
             self.get_context(solr_rec)
             self.get_time(solr_rec)  # get time information, limiting date ranges to query constaints
             self.get_thumbnail(solr_rec)
+            self.get_media_files(solr_rec)
             self.get_snippet(solr_rec)  # get snippet of highlighted text
             self.get_attributes(solr_rec) # get non-standard attributes
 
@@ -232,6 +236,20 @@ class RecordProperties():
             else:
                 # did not precache thumbnail data, get an indivitual record
                 self.get_thumbnail_from_database(solr_rec)
+    
+    def get_media_files(self, solr_rec):
+        """ get media record and thumbnai if it exists """
+        if 'uuid' in solr_rec:
+            uuid = solr_rec['uuid']
+            if uuid in self.media_file_data:
+                if self.media_file_data[uuid] is not False:
+                    for file_type, file_uri in self.media_file_data[uuid].items():
+                        if file_type == 'oc-gen:thumbnail':
+                            self.thumbnail_scr = file_uri
+                        elif file_type == 'oc-gen:preview':
+                            self.preview_scr = file_uri
+                        elif file_type == 'oc-gen:fullfile':
+                            self.fullfile_scr = file_uri
 
     def get_thumbnail_from_database(self, solr_rec):
         """ get media record and thumbnail, if it exists """
