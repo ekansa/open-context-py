@@ -272,12 +272,43 @@ class QueryMaker():
                 query_dict['fq'].append(fq_final)
         return query_dict
 
+    def get_related_slug_field_prefix(self, slug):
+        """ gets the field prefix for a related property
+            if it is present in the slug, 
+            then return the solr_field prefix otherwise
+            return a '' string
+        """
+        field_prefix = SolrDocument.RELATED_SOLR_FIELD_PREFIX
+        prefix_len = len(field_prefix)
+        slug_start = slug[:prefix_len]
+        if slug_start == field_prefix:
+            return field_prefix
+        else:
+            return ''
+
+    def clean_related_slug(self, slug):
+        """ removes the field_prefix for related slugs """
+        field_prefix = SolrDocument.RELATED_SOLR_FIELD_PREFIX
+        prefix_len = len(field_prefix)
+        slug_start = slug[:prefix_len]
+        if slug_start == field_prefix:
+            slug = slug[prefix_len:]
+        return slug
+
+    def correct_solr_prefix_for_fq(self, solr_f_prefix, act_field_fq):
+        """ makes sure the solr prefix is on the fq if needed """
+        if solr_f_prefix != '':
+            if solr_f_prefix not in act_field_fq:
+                act_field_fq = solr_f_prefix + act_field_fq
+        return act_field_fq
+
     def process_prop(self, props):
         """ processes 'prop' (property) parameters
             property parameters are tricky because they
             can come in hierarchies
             that's why there's some complexity to this
         """
+        # is the property for the item itself, or for a related item?
         query_dict = {'fq': [],
                       'facet.field': [],
                       'stats.field': [],
@@ -296,17 +327,20 @@ class QueryMaker():
             last_field_label = False  # needed for full text highlighting
             predicate_solr_slug = False
             for prop_slug in prop_path_list:
+                field_prefix = self.get_related_slug_field_prefix(prop_slug)
+                solr_f_prefix = field_prefix.replace('-', '_')
+                db_prop_slug = self.clean_related_slug(prop_slug)
                 l_prop_entity = False
                 pred_prop_entity = False
                 require_id_field = False
                 if act_field_data_type == 'id':
                     # check entity exists, and save to memory
-                    found = self.mem_cache_obj.check_entity_found(prop_slug, False)
+                    found = self.mem_cache_obj.check_entity_found(db_prop_slug, False)
                     if found:
-                        entity = self.mem_cache_obj.get_entity(prop_slug, False)
+                        entity = self.mem_cache_obj.get_entity(db_prop_slug, False)
                         last_field_label = entity.label
-                        prop_slug = entity.slug
-                        if entity.item_type == 'uri' and 'oc-gen' not in prop_slug:
+                        prop_slug = field_prefix + entity.slug
+                        if entity.item_type == 'uri' and 'oc-gen' not in db_prop_slug:
                             if entity.entity_type == 'property':
                                 pred_prop_entity = True
                                 predicate_solr_slug = prop_slug.replace('-', '_')
@@ -326,13 +360,15 @@ class QueryMaker():
                                     # to be treated as an ID field
                                     require_id_field = True
                         if i == 0:
-                            if 'oc-gen' in prop_slug:
+                            if 'oc-gen' in db_prop_slug:
+                                # for open context categories / types
                                 act_field_fq = self.get_parent_item_type_facet_field(entity.uri)
                                 lr = LinkRecursion()
                                 parents = lr.get_jsonldish_entity_parents(entity.uri)
                                 if len(parents) > 1:
                                     p_slug = parents[-2]['slug']
                                     act_field_fq = p_slug.replace('-', '_') + '___pred_id'
+                                    act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
                             elif entity.item_type == 'uri':
                                 act_field_fq = SolrDocument.ROOT_LINK_DATA_SOLR
                             elif entity.item_type == 'predicates':
@@ -378,17 +414,19 @@ class QueryMaker():
                             dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
                             if isinstance(dtypes, list):
                                 # set te data type and the act-field
-                                found = self.mem_cache_obj.check_entity_found(prop_slug, False)
+                                found = self.mem_cache_obj.check_entity_found(db_prop_slug, False)
                                 if found:
-                                    entity = self.mem_cache_obj.get_entity(prop_slug, False)
+                                    entity = self.mem_cache_obj.get_entity(db_prop_slug, False)
                                     entity.date_type = dtypes[0]  # store for later use
-                                    self.mem_cache_obj.entities[prop_slug] = entity  # store for later use
+                                    self.mem_cache_obj.entities[db_prop_slug] = entity  # store for later use
                                 act_field_data_type = self.get_solr_field_type(dtypes[0])
                         if predicate_solr_slug is False or pred_prop_entity:
                             act_field_fq = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                            act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
                             # get a facet on this field
                             if act_field_data_type != 'string':
-                                ffield = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                                # adds a prefix for related properties
+                                ffield = solr_f_prefix + field_parts['prefix'] + '___pred_' + field_parts['suffix']
                                 if ffield not in query_dict['facet.field'] \
                                    and i >= (path_list_len - 1):
                                     query_dict['facet.field'].append(ffield)
@@ -411,6 +449,8 @@ class QueryMaker():
                                     ffield = field_parts['prefix'] \
                                              + '___pred_' \
                                              + field_parts['suffix']
+                                # adds a prefix, in case of a related property
+                                ffield = solr_f_prefix + ffield
                                 if ffield not in query_dict['facet.field'] \
                                    and i >= (path_list_len - 1):
                                     query_dict['facet.field'].append(ffield)
@@ -420,12 +460,14 @@ class QueryMaker():
                         if act_field_data_type == 'numeric':
                             # print('Numeric field: ' + act_field)
                             act_field_fq = field_parts['prefix'] + '___pred_numeric'
+                            act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
                             query_dict = self.add_math_facet_ranges(query_dict,
                                                                     act_field_fq,
                                                                     entity)
                         elif act_field_data_type == 'date':
                             # print('Date field: ' + act_field)
                             act_field_fq = field_parts['prefix'] + '___pred_date'
+                            act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
                             query_dict = self.add_date_facet_ranges(query_dict,
                                                                     act_field_fq,
                                                                     entity)

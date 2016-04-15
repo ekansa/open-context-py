@@ -905,9 +905,10 @@ class MakeJsonLd():
             facet_key_list = solr_facet_key.split('___')
             fsuffix_list = facet_key_list[-1].split('_')
             slug = facet_key_list[0].replace('_', '-')
-            found = self.mem_cache_obj.check_entity_found(slug, False)
+            db_slug = self.clean_related_slug(slug)
+            found = self.mem_cache_obj.check_entity_found(db_slug, False)
             if found:
-                entity = self.mem_cache_obj.get_entity(slug, False)
+                entity = self.mem_cache_obj.get_entity(db_slug, False)
                 if facet_key_list[-1] != facet_key_list[1]:
                     # there's a predicate slug as the second
                     # item in te facet_key_list
@@ -919,10 +920,36 @@ class MakeJsonLd():
                     self.add_active_facet_field(slug, fsuffix_list[0])
                 facet['id'] = id_prefix + '-' + entity.slug
                 facet['rdfs:isDefinedBy'] = entity.uri
-                facet['label'] = entity.label
+                if self.check_related_slug_field_prefix(slug):
+                    facet['label'] =  '(Related) ' + entity.label
+                else:
+                    facet['label'] = entity.label
             facet['data-type'] = fsuffix_list[-1]
         facet['type'] = ftype
         return facet
+
+    def check_related_slug_field_prefix(self, slug):
+        """ gets the field prefix for a related property
+            if it is present in the slug, 
+            then return the solr_field prefix otherwise
+            return a '' string
+        """
+        field_prefix = SolrDocument.RELATED_SOLR_FIELD_PREFIX
+        prefix_len = len(field_prefix)
+        slug_start = slug[:prefix_len]
+        if slug_start == field_prefix:
+            return True
+        else:
+            return False
+
+    def clean_related_slug(self, slug):
+        """ removes the field_prefix for related slugs """
+        field_prefix = SolrDocument.RELATED_SOLR_FIELD_PREFIX
+        prefix_len = len(field_prefix)
+        slug_start = slug[:prefix_len]
+        if slug_start == field_prefix:
+            slug = slug[prefix_len:]
+        return slug
 
     def make_facet_value_obj(self,
                              solr_facet_key,

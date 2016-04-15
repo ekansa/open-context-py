@@ -16,6 +16,25 @@ class SolrDocument:
     '''
     Defines the Solr Document objects that the crawler will crawl. Solr
     fields are stored in a Solr Document's "fields" property.
+
+from opencontext_py.apps.indexer.solrdocument import SolrDocument
+uuid = '2A9D7754-8A8C-488A-2606-B892085FB81C'
+sd_obj = SolrDocument(uuid)
+sd_obj.process_item()
+sd = sd_obj.fields
+uuid = '37c47df4-e12f-4715-93f6-e81a4a70ab54'
+sd_obj = SolrDocument(uuid)
+sd_obj.process_item()
+sd = sd_obj.fields
+uuid = '20f35298-2f52-4c05-9376-e86a0979ecbf'
+sd_obj = SolrDocument(uuid)
+sd_obj.process_item()
+sd = sd_obj.fields
+uuid = '737_DT_Res'
+sd_obj = SolrDocument(uuid)
+sd_obj.process_item()
+sd = sd_obj.fields
+
     '''
 
     # the list below defines predicates used for semantic equivalence in indexing
@@ -37,12 +56,22 @@ class SolrDocument:
     ROOT_PREDICATE_SOLR = 'root___pred_id'
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
     ROOT_PROJECT_SOLR = 'root___project_id'
+    FILE_SIZE_SOLR = 'filesize___pred_numeric'
+    FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
+    RELATED_SOLR_FIELD_PREFIX = 'rel--'
 
     def __init__(self, uuid):
         '''
         Using our Python JSON-LD and other info provided in OCitem,
         build up dictionary of solr fields to index.
         '''
+        # prefix for related solr_documents
+        self.field_prefix = ''
+        # do_related means that we're making solr fields for
+        # a related item (a subject linked to a media resource)
+        # this makes only some solr fields
+        self.do_related = False
+        self.max_file_size = 0
         # First get core data structures
         self.oc_item = OCitem().get_item(uuid)
         self.manifest = self.oc_item.manifest
@@ -50,22 +79,38 @@ class SolrDocument:
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
+    
+    def process_item(self):
         # Start processing and adding values...
-        self._process_core_solr_fields()
-        self._process_category()
-        self._process_context_path()
-        self._process_predicates()
-        self._process_geo()
-        self._process_chrono()
-        self._process_text_content()
-        self._process_dc_terms()
-        self._process_dc_authorship()
-        self._process_projects()
-        self._process_persistent_ids()
-        self._process_associated_linkedata()
-        self.process_equivalent_linked_data()
-        self._process_interest_score()
-        self.ensure_text_ok()
+        if self.do_related is False:
+            self.field_prefix = ''
+            self._process_core_solr_fields()
+            self._process_category()
+            self._process_context_path()
+            self._process_predicates()
+            self._process_geo()
+            self._process_chrono()
+            self._process_text_content()
+            self._process_dc_terms()
+            self._process_dc_authorship()
+            self._process_projects()
+            self._process_persistent_ids()
+            self._process_associated_linkedata()
+            self.process_equivalent_linked_data()
+            self.process_media_fields()
+            self._process_interest_score()
+            self.process_related_subjects_for_media()
+            self.ensure_text_ok()
+        else:
+            # making a solr-document that is related
+            # to a primary solr-document
+            # field_prefix differentiates solr fields from a
+            # related item from solr fields describing the primary item
+            self.field_prefix = self.RELATED_SOLR_FIELD_PREFIX
+            self._process_category()
+            self._process_predicates()
+            self._process_text_content()
+            self._process_associated_linkedata()
 
     def ensure_text_ok(self):
         """ makes sure the text is solr escaped """
@@ -145,15 +190,17 @@ class SolrDocument:
                             # case of a linking relation, don't bother looking
                             # up hierarchies or recording as a solr field, but
                             # check for image, other media, and document counts
-                            if 'media' in value['id'] \
-                                    and 'image' in value['type']:
-                                self.fields['image_media_count'] += 1
-                            elif 'media' in value['id'] \
-                                    and 'image' not in value['type']:
-                                 # other types of media
-                                self.fields['other_binary_media_count'] += 1
-                            elif 'documents' in value['id']:
-                                self.fields['document_count'] += 1
+                            if self.do_related is False:
+                                # only do this if not solr-doc related to media
+                                if 'media' in value['id'] \
+                                        and 'image' in value['type']:
+                                    self.fields['image_media_count'] += 1
+                                elif 'media' in value['id'] \
+                                        and 'image' not in value['type']:
+                                     # other types of media
+                                    self.fields['other_binary_media_count'] += 1
+                                elif 'documents' in value['id']:
+                                    self.fields['document_count'] += 1
                             self.fields['text'] += value['label'] + ' '
                     elif predicate_type in [
                         'xsd:integer', 'xsd:double', 'xsd:boolean'
@@ -163,9 +210,13 @@ class SolrDocument:
                         self.fields[solr_field_name].append(value +
                                                             'T00:00:00Z')
                     elif predicate_type == 'xsd:string':
-                        self.fields['text'] += value['xsd:string'] + ' \n'
-                        self.fields[solr_field_name].append(
-                            value['xsd:string'])
+                        if isinstance(value, dict):
+                            self.fields['text'] += str(value['xsd:string']) + ' \n'
+                            self.fields[solr_field_name].append(
+                                value['xsd:string'])
+                        else:
+                            self.fields['text'] += str(value) + ' \n'
+                            self.fields[solr_field_name].append(str(value))
                     else:
                         raise Exception("Error: Could not get predicate value")
                 self.fields['text'] += ' \n'
@@ -263,6 +314,7 @@ class SolrDocument:
         return output
 
     def _convert_slug_to_solr(self, slug):
+        slug = self.field_prefix + slug
         return slug.replace('-', '_')
 
     def _concat_solr_string_value(self, slug, type, id, label):
@@ -270,6 +322,7 @@ class SolrDocument:
         if 'http://opencontext.org' in id:
             if '/vocabularies/' not in id:
                 id_part = id.split('http://opencontext.org')[1]
+        slug = self.field_prefix + slug
         return slug + '___' + type + '___' + \
             id_part + '___' + label
 
@@ -306,7 +359,7 @@ class SolrDocument:
         if 'dc-terms:title' in self.oc_item.json_ld:
             self.fields['text'] += self.oc_item.json_ld['dc-terms:title'] + ' \n'
         else:
-            self.fields['text'] += self.oc_item.json_ld['label'] + ' \n'
+            self.fields['text'] += str(self.oc_item.json_ld['label']) + ' \n'
 
     def make_slug_type_uri_label(self):
         """ makes a slug_type_uri_label field for solr """
@@ -575,7 +628,7 @@ class SolrDocument:
                         self.fields[active_predicate_field].append(solr_value)
                     if item_type_found:
                         active_predicate_field = self._convert_slug_to_solr(
-                            prefix_ptype) + '___pred_id'
+                                prefix_ptype) + '___pred_id'
 
     def _process_text_content(self):
         """ Gets text content for indexing
@@ -638,6 +691,8 @@ class SolrDocument:
         if self.chrono_specified:
         # chrono data specified, more interesting
             self.fields['interest_score'] += 5
+        if self.max_file_size > 0:
+            self.fields['interest_score'] += self.max_file_size / 10000
 
     def _process_associated_linkedata(self):
         """ Finds linked data to add to index
@@ -915,3 +970,67 @@ class SolrDocument:
         else:
             output = False
         return output
+    
+    def process_media_fields(self):
+        """ adds a property for media file size """
+        if self.oc_item.item_type == 'media':
+            self.fields[self.FILE_MIMETYPE_SOLR] = []
+            self.fields[self.FILE_SIZE_SOLR] = []
+            if 'oc-gen:has-files' in self.oc_item.json_ld:
+                for file_item in self.oc_item.json_ld['oc-gen:has-files']:
+                    if 'type' in file_item and 'dc-terms:hasFormat' in file_item:
+                        if file_item['type'] == 'oc-gen:fullfile':
+                            self.fields[self.FILE_MIMETYPE_SOLR].append(file_item['dc-terms:hasFormat'])
+                    if 'dcat:size' in file_item:
+                        size = float(file_item['dcat:size'])
+                        if size > self.max_file_size:
+                            self.max_file_size = size
+            if self.max_file_size > 0:
+                self.fields[self.FILE_SIZE_SOLR].append(self.max_file_size)
+    
+    def process_related_subjects_for_media(self):
+        """ add some fields from subjects for media items """
+        if self.oc_item.item_type == 'media':
+            rel_uuids = []
+            # get the related subject from a context path
+            if isinstance(self.context_path, list):
+                last_context = self.context_path[-1]
+                rel_uri = self.get_entity_id(last_context)
+                if rel_uri is not False:
+                    if '/subjects/' in rel_uri:
+                        rel_uri_ex = rel_uri.split('/')
+                        rel_uuid = rel_uri_ex[-1]
+                        if rel_uuid not in rel_uuids:
+                            rel_uuids.append(rel_uuid)
+            # now get other associated subjects
+            if 'oc-gen:has-obs' in self.oc_item.json_ld:
+                for obs in self.oc_item.json_ld['oc-gen:has-obs']:
+                    for pred_key, val_obj in obs.items():
+                        if isinstance(val_obj, list):
+                            for val in val_obj:
+                                if isinstance(val, dict):
+                                    rel_uri = self.get_entity_id(val)
+                                    if rel_uri is not False:
+                                        if '/subjects/' in rel_uri:
+                                            rel_uri_ex = rel_uri.split('/')
+                                            rel_uuid = rel_uri_ex[-1]
+                                            if rel_uuid not in rel_uuids:
+                                                rel_uuids.append(rel_uuid)
+            for rel_uuid in rel_uuids:
+                sd_obj = SolrDocument(rel_uuid)
+                sd_obj.do_related = True
+                if sd_obj.oc_item.item_type == 'subjects':
+                    sd_obj.process_item()
+                    rel_solr = sd_obj.fields
+                    for field_key, vals in rel_solr.items():
+                        if field_key not in self.fields:
+                            if isinstance(vals, str):
+                                self.fields[field_key] = ''
+                            elif isinstance(vals, list):
+                                self.fields[field_key] = []
+                        if isinstance(vals, str):
+                            self.fields[field_key] += '\n ' + vals
+                        elif isinstance(vals, list):
+                            for val in vals:
+                                if val not in self.fields[field_key]:
+                                    self.fields[field_key].append(val)

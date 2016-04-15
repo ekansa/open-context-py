@@ -14,10 +14,16 @@ class SolrReIndex():
     """ This class contains methods to make updates to
         the solr index especially after edits
 
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
+uuids = []
+media_items = Manifest.objects.filter(item_type='media').exclude(indexed__gt='2016-04-12')
+for item in media_items:
+    uuids.append(item.uuid)
+    
+print('Items to index: ' + str(len(uuids)))
 sri = SolrReIndex()
-sri.annotated_after = '2015-10-26'
-sri.reindex()
+sri.reindex_uuids(uuids)
 
     """
 
