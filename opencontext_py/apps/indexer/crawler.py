@@ -59,7 +59,9 @@ class Crawler():
             # Process the UUID list in chunks
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
-                    solrdocument = SolrDocument(uuid).fields
+                    sd_obj = SolrDocument(uuid)
+                    sd_obj.process_item()
+                    solrdocument = sd_obj.fields 
                     if crawlutil().is_valid_document(solrdocument):
                         try:
                             manifest = Manifest.objects.get(uuid=uuid)
@@ -119,7 +121,9 @@ class Crawler():
                     manifest = False
                 if manifest is not False:
                     try:
-                        solrdocument = SolrDocument(uuid).fields
+                        sd_obj = SolrDocument(uuid)
+                        sd_obj.process_item()
+                        solrdocument = sd_obj.fields
                         if crawlutil().is_valid_document(solrdocument):
                             if solrdocument is not None:
                                 i += 1
@@ -183,7 +187,9 @@ class Crawler():
         print('\nAttempting to index document ' + uuid + '...\n')
         start_time = time.time()
         try:
-            solrdocument = SolrDocument(uuid).fields
+            sd_obj = SolrDocument(uuid)
+            sd_obj.process_item()
+            solrdocument = sd_obj.fields
             if crawlutil().is_valid_document(solrdocument):
                 # Commit the document and save the response status.
                 # Note: solr.update() expects a list

@@ -252,6 +252,7 @@ class ActiveFilters():
             with a label and set of entities (in cases of OR
             searchs)
         """
+        related_suffix = ''
         output = {'label': False,
                   'data-type': 'id',
                   'slug': False,
@@ -262,9 +263,12 @@ class ActiveFilters():
         else:
             vals = [act_val]
         for val in vals:
-            f_entity = self.mem_cache_obj.get_entity(val, False)
+            qm = QueryMaker()
+            db_val = qm.clean_related_slug(val)
+            if val != db_val:
+                related_suffix = ' (for related items)'
+            f_entity = self.mem_cache_obj.get_entity(db_val, False)
             if f_entity is not False:
-                qm = QueryMaker()
                 # get the solr field data type
                 ent_solr_data_type = qm.get_solr_field_type(f_entity.data_type)
                 if ent_solr_data_type is not False \
@@ -274,6 +278,6 @@ class ActiveFilters():
                 output['entities'].append(f_entity)
             else:
                 labels.append(val)
-        output['label'] = ' OR '.join(labels)
+        output['label'] = (' OR '.join(labels)) + related_suffix
         output['slug'] = '-or-'.join(vals)
         return output

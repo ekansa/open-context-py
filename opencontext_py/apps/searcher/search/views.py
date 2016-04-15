@@ -366,6 +366,9 @@ def media_html_view(request, spatial_context=None):
         solr_s = SolrSearch()
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'media'
+        # add category facet fields for related items
+        solr_s.facet_fields += SolrSearch.REL_CAT_FACET_FIELDS
+        solr_s.stats_fields += SolrSearch.MEDIA_STATS_FIELDS
         if solr_s.solr is not False:
             response = solr_s.search_solr(request_dict_json)
             mem_cache_obj = solr_s.mem_cache_obj  # reused cached memory items
@@ -433,6 +436,9 @@ def media_json_view(request, spatial_context=None):
         solr_s = SolrSearch()
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'media'
+        # add category facet fields for related items
+        solr_s.facet_fields += SolrSearch.REL_CAT_FACET_FIELDS
+        solr_s.stats_fields += SolrSearch.MEDIA_STATS_FIELDS
         if solr_s.solr is not False:
             response = solr_s.search_solr(request_dict_json)
             mem_cache_obj = solr_s.mem_cache_obj  # reused cached memory items

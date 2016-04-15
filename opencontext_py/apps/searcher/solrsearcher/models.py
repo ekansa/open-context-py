@@ -41,6 +41,10 @@ class SolrSearch():
                        'oc_gen_media___pred_id',
                        'oc_gen_persons___pred_id']
 
+    REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
+    GENERAL_STATS_FIELDS = ['updated', 'published']
+    MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
+
     def __init__(self):
         self.solr = False
         self.solr_connect()
@@ -49,6 +53,7 @@ class SolrSearch():
         self.mem_cache_obj = MemoryCache()  # memory caching object
         self.entities = {}  # entities involved in a search request
         self.facet_fields = self.DEFAULT_FACET_FIELDS
+        self.stats_fields = self.GENERAL_STATS_FIELDS
         self.rows = 20
         self.start = 0
         self.max_rows = 10000
@@ -112,7 +117,7 @@ class SolrSearch():
         query['facet.field'] = []
         query['facet.range'] = []
         query['stats'] = 'true'
-        query['stats.field'] = ['updated', 'published']
+        query['stats.field'] = self.stats_fields
         query['sort'] = SortingOptions.DEFAULT_SOLR_SORT
         s_param = self.get_request_param(request_dict,
                                          'sort',
