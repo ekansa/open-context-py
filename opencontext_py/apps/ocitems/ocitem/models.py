@@ -639,9 +639,8 @@ class ItemConstruction():
                 act_list = act_dict[act_pred_key]
             else:
                 act_list = []
-            if (assertion.object_type == 'xsd:string'):
-                if act_pred_key not in self.pred_strings:
-                    self.pred_strings[act_pred_key] = []
+            if assertion.object_type == 'xsd:string' \
+               and act_pred_key in self.pred_strings:
                 new_object_item = LastUpdatedOrderedDict()
                 if assertion.object_uuid not in self.pred_strings[act_pred_key]:
                     self.pred_strings[act_pred_key].append(assertion.object_uuid)  # for linked data
