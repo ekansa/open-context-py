@@ -17,13 +17,8 @@ class ExpFieldManage():
 from opencontext_py.apps.exports.expfields.manage import ExpFieldManage
 exfman = ExpFieldManage()
 table_id = '05f2db65ff4faee1290192bd9a1868ed'
-exfman.change_field_number(table_id, 78, 29)
-
-
-from opencontext_py.apps.exports.expfields.manage import ExpFieldManage
-exfman = ExpFieldManage()
-table_id = 'f07bce4fb08cfe926505c9e534d89a09'
-exfman.change_field_number(table_id, 32, 27)
+exfman.delete_fields_after(table_id, 158)
+# exfman.change_field_number(table_id, 174, 158)
 
 
     """
@@ -181,54 +176,69 @@ exfman.change_field_number(table_id, 32, 27)
         """
         # first put the field we're moving into a temporary location
         # for the time being it will be field_num -1
-        num_updated = ExpCell.objects\
-                             .filter(table_id=table_id,
-                                     field_num=old_field_num)\
-                             .update(field_num=-1)
-        print('Staged move of ' + str(num_updated) + ' cell records')
-        ok = ExpField.objects\
-                     .filter(table_id=table_id,
-                             field_num=old_field_num)\
-                     .update(field_num=-1)
-        # now update everything that currently has a new_field_num
-        # and higher to increment up 1 so we make space to for
-        # the field to be moved.
-        # NOTE! Need to order by cells in descending order of field_nums
-        # so we don't get update a cell into a field that's is already occupied
-        move_fields = ExpField.objects\
-                              .filter(table_id=table_id,
-                                      field_num__gte=new_field_num)\
-                              .order_by('-field_num')
-        for move_field in move_fields:
-            act_old_field_num = move_field.field_num
-            act_new_field_num = act_old_field_num + 1
-            # mass update the cell records to add 1 to the field_num
-            num_move_cells = ExpCell.objects\
-                                    .filter(table_id=table_id,
-                                            field_num=act_old_field_num)\
-                                    .update(field_num=act_new_field_num)
-            message = 'Shifted ' + str(num_move_cells) + ' from field: '
-            message += str(act_old_field_num) + ' to: ' + str(act_new_field_num)
-            print(message)
-            move_field.field_num = act_new_field_num
-            move_field.save()
-            print('Completed moving field: ' + str(act_old_field_num) + ' to ' + str(act_new_field_num))
-        # now, finally move the field we set aside to
-        # its new field number
-        num_updated = ExpCell.objects\
-                             .filter(table_id=table_id,
-                                     field_num=-1)\
-                             .update(field_num=new_field_num)
-        print('Completed move of ' + str(num_updated) + ' cell records')
-        ok = ExpField.objects\
-                     .filter(table_id=table_id,
-                             field_num=-1)\
-                     .update(field_num=new_field_num)
-        print('Completed move of field: ' + str(old_field_num) + ' to: ' + str(new_field_num))
-        # now that is done, we do some clean up to make sure
-        # the field numbers have no gaps
-        print('Doing final checks and cleanup...')
-        self.update_field_numbering(table_id)
+        to_move_field = None
+        to_move_f_list = ExpField.objects\
+                                 .filter(table_id=table_id,
+                                         field_num=old_field_num)[:1]
+        if len(to_move_f_list) > 0:
+            # temporarily save the to_move_field to field_num -1
+            to_move_field = to_move_f_list[0]
+            to_move_field.field_num = -1
+            to_move_field.save()
+            # now temporarily move cell records for the to_move_field to field_num -1
+            num_updated = ExpCell.objects\
+                                 .filter(table_id=table_id,
+                                         field_num=old_field_num)\
+                                 .update(field_num=-1)
+            print('Staged move of ' + str(num_updated) + ' cell records')
+            # now update everything that currently has a new_field_num
+            # and higher to increment up 1 so we make space to for
+            # the field to be moved.
+            # NOTE! Need to order by cells in descending order of field_nums
+            # so we don't get update a cell into a field that's is already occupied
+            move_fields = ExpField.objects\
+                                  .filter(table_id=table_id,
+                                          field_num__gte=new_field_num)\
+                                  .order_by('-field_num')
+            for move_field in move_fields:
+                act_old_field_num = move_field.field_num
+                act_new_field_num = act_old_field_num + 1
+                # mass update the cell records to add 1 to the field_num
+                if act_old_field_num != old_field_num:
+                    num_move_cells = ExpCell.objects\
+                                            .filter(table_id=table_id,
+                                                    field_num=act_old_field_num)\
+                                            .update(field_num=act_new_field_num)
+                    message = 'Shifted ' + str(num_move_cells) + ' from field: '
+                    message += str(act_old_field_num) + ' to: ' + str(act_new_field_num)
+                    print(message)
+                    move_field.field_num = act_new_field_num
+                    print('Completed moving field: ' + str(act_old_field_num) + ' to ' + str(act_new_field_num))
+                else:
+                    # delete the move field, since we have it stored in
+                    # memory and in field_num -1
+                    move_field.delete()
+            # now, finally move the field we set aside to
+            # its new field number
+            num_updated = ExpCell.objects\
+                                 .filter(table_id=table_id,
+                                         field_num=-1)\
+                                 .update(field_num=new_field_num)
+            print('Completed move of ' + str(num_updated) + ' cell records')
+            # now delete the field record for new_field_num,
+            # since it was copied to have a new_field_num + 1 field_num
+            ok = ExpField.objects\
+                         .filter(table_id=table_id,
+                                 field_num=new_field_num)\
+                         .delete()
+            # now save the field to be moved with the appropriate field number made vacant above
+            to_move_field.field_num = new_field_num
+            to_move_field.save()
+            print('Completed move of field: ' + str(old_field_num) + ' to: ' + str(new_field_num))
+            # now that is done, we do some clean up to make sure
+            # the field numbers have no gaps
+            print('Doing final checks and cleanup...')
+            self.update_field_numbering(table_id)
 
     def update_field_numbering(self, table_id):
         """ updates the numbering for fields after the
