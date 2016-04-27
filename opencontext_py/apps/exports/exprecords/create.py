@@ -802,6 +802,7 @@ class Create():
         """
         field_type_l = field_type.lower()
         field_type_mappings = {'uri': 'oc-tab:equiv-uri',
+                               'value': 'oc-tab:equiv-uri',
                                'label': 'oc-tab:equiv-label',
                                'source': 'oc-tab:rel-source',
                                'has': 'oc-tab:rel-ld'}

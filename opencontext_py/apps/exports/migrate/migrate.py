@@ -27,9 +27,22 @@ from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
 dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
 
+from opencontext_py.apps.exports.expfields.models import ExpField
+from opencontext_py.apps.exports.exprecords.models import ExpCell
+from opencontext_py.apps.exports.exptables.models import ExpTable
+del_tables = []
+ex_fields = ExpField.objects.filter(label='Has Biological Taxonomy [URI]')
+for ex_field in ex_fields:
+    if ex_field.table_id not in del_tables:
+        del_tables.append(ex_field.table_id)
+
+ExpCell.objects.filter(table_id__in=del_tables).delete()
+ExpField.objects.filter(table_id__in=del_tables).delete()
+ExpTable.objects.filter(table_id__in=del_tables).delete()
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
+exm.migrate_old_tables()
 exm.migrate_csv_tables()
 
 
@@ -40,8 +53,53 @@ exm.migrate_csv_tables()
     OLDER_TAB_BASE_URI = 'http://opencontext.org/tables/'
     SLEEP_TIME = .5
 
+    MIGRATION_SETTINGS = {
+        'default': {
+            'include_equiv_ld': True,
+            'include_ld_source_values': False,
+            'include_original_fields': True,
+            'include_equiv_ld_literals': False,
+        },
+        'f07bce4fb08cfe926505c9e534d89a09': {
+            # eol main
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': False,
+        },
+        '314adedf882421055fc215a56ba7a79b': {
+            # eol main v2
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': False,
+        },
+        '05f2db65ff4faee1290192bd9a1868ed': {
+            # eol metrics
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        },
+        '85624441bf9215018c73ecdce82b3ceb': {
+            # eol metrics
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        },
+        'def8fb9c9d7fdc1993db45b7350ca955': {
+            # eol metrics v2
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        }
+    }
+
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+        self.delete_existing = False
         self.table_id_list = []
         self.table_dir = 'oc-tabs'  # CSV files from more recent open context downloads
         self.old_oc_table_dir = 'old-oc-tabs'  # JSON files for older open context downloads
@@ -203,7 +261,21 @@ exm.migrate_csv_tables()
             except ExpTable.DoesNotExist:
                 exp_tab = False
             if exp_tab is not False:
-                print('Skipping already imported: ' + meta['table_id'])
+                if self.delete_existing:
+                    print('Delete previous import of: ' + meta['table_id'])
+                    ExpCell.objects\
+                           .filter(table_id=meta['table_id'])\
+                           .delete()
+                    ExpField.objects\
+                            .filter(table_id=meta['table_id'])\
+                            .delete()
+                    ExpTable.objects\
+                            .filter(table_id=meta['table_id'])\
+                            .delete()
+                    print('Re-loading: ' + meta['table_id'])
+                    self.migrate_csv_table_data(meta)
+                else:
+                    print('Skipping already imported: ' + meta['table_id'])
             else:
                 print('Checking: ' + meta['table_id'])
                 self.migrate_csv_table_data(meta)
@@ -215,10 +287,16 @@ exm.migrate_csv_tables()
         uuids = self.get_csv_uuid_list(meta['table_id'])
         if len(uuids) > 0:
             print('Adding: ' + meta['table_id'] + ', ' + str(len(uuids)) + ' uuids')
+            if meta['table_id'] in self.MIGRATION_SETTINGS:
+                mset = self.MIGRATION_SETTINGS[meta['table_id']]
+            else:
+                mset = self.MIGRATION_SETTINGS['default']
             ctab = Create()
             ctab.table_id = meta['table_id']
-            ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
-            ctab.include_original_fields = True  # include fields from source data
+            ctab.include_equiv_ld = mset['include_equiv_ld']
+            ctab.include_ld_source_values = mset['include_ld_source_values']
+            ctab.include_original_fields = mset['include_original_fields']
+            ctab.include_equiv_ld_literals = mset['include_equiv_ld_literals']
             ctab.boolean_multiple_ld_fields = False  # single field for LD fields
             ctab.source_field_label_suffix = ''  # blank suffix for source data field names
             ctab.prep_default_fields()
@@ -320,10 +398,13 @@ exm.migrate_csv_tables()
         """
         uuids = self.get_old_oc_record_uuids(old_table_id)
         if len(uuids) > 0:
+            mset = self.MIGRATION_SETTINGS['default']
             ctab = Create()
             ctab.table_id = old_table_id
-            ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
-            ctab.include_original_fields = True  # include fields from source data
+            ctab.include_equiv_ld = mset['include_equiv_ld']
+            ctab.include_ld_source_values = mset['include_ld_source_values']
+            ctab.include_original_fields = mset['include_original_fields']
+            ctab.include_equiv_ld_literals = mset['include_equiv_ld_literals']
             ctab.source_field_label_suffix = ''  # blank suffix for source data field names
             ctab.prep_default_fields()
             ctab.uuidlist = uuids
