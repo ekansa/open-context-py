@@ -14,13 +14,6 @@ class ExpFieldManage():
     certain fields from an export table. These methods
     accomplish those tasks.
 
-from opencontext_py.apps.exports.expfields.manage import ExpFieldManage
-exfman = ExpFieldManage()
-table_id = '05f2db65ff4faee1290192bd9a1868ed'
-exfman.delete_fields_after(table_id, 158)
-# exfman.change_field_number(table_id, 174, 158)
-
-
     """
 
     def __init__(self):
