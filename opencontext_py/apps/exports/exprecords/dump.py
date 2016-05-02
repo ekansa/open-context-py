@@ -11,8 +11,10 @@ class CSVdump():
     """ Methods for dumping a csv data to a file """
 
     def __init__(self):
+        self.root_export_dir = settings.STATIC_EXPORTS_ROOT
+        self.table_export_dir = False  # directory to export files into
         self.table_id = False
-        self.filename = False
+        self.dir_filename = False
         self.field_name_row = []
         self.field_count = 0
         self.max_row_number = 0
@@ -21,9 +23,9 @@ class CSVdump():
     def dump(self, table_id, filename, excel=False):
         """ Dumps an export table to a CSV output file """
         self.table_id = table_id
-        self.filename = os.path.join(settings.STATIC_ROOT,
-                                     self.DEFAULT_DIRECTORY,
-                                     filename)
+        directory = self.prep_directory()
+        self.dir_filename = os.path.join(directory,
+                                         filename)
         self.get_table_fields()
         self.get_max_row_number()
         output = False
@@ -31,8 +33,8 @@ class CSVdump():
             raise Exception('Crap! incomplete record of fields!')
         else:
             written_rows = 0
-            f = open(self.filename, 'w', newline='', encoding='utf-8')
-            writer = csv.writer(f)
+            f = open(self.dir_filename, 'w', newline='', encoding='utf-8')
+            writer = csv.writer(f, quoting=csv.QUOTE_ALL)
             writer.writerow(self.field_name_row)  # write the field labels in first row
             cells = ExportTableDump(self.table_id).cells
             last_row_num = 1
@@ -65,7 +67,9 @@ class CSVdump():
         row = []
         while field_index <= self.field_count:
             if field_index in act_row_dict:
-                row.append(act_row_dict[field_index])
+                # escaped_cell = '"' + act_row_dict[field_index] + '"'
+                escaped_cell = act_row_dict[field_index]
+                row.append(escaped_cell)
             else:
                 row.append('')  # no value for this cell, add blank record
             field_index += 1
@@ -105,3 +109,19 @@ class CSVdump():
                                 + ' but got: '\
                                 + str(exfield.field_num))
             check_num += 1
+
+    def prep_directory(self):
+        """ Prepares a directory to receive export files """
+        output = False
+        if self.table_export_dir is not False:
+            full_dir = self.root_export_dir + '/' + self.table_export_dir
+            full_dir.replace('//', '/')
+            if not os.path.exists(full_dir):
+                os.makedirs(full_dir)
+        else:
+            full_dir = self.root_export_dir
+        output = full_dir
+        if output[-1] != '/':
+            output += '/'
+        print('Prepared directory: ' + str(output))
+        return output

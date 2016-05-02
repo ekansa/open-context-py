@@ -27,19 +27,6 @@ from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
 dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
 
-from opencontext_py.apps.exports.expfields.models import ExpField
-from opencontext_py.apps.exports.exprecords.models import ExpCell
-from opencontext_py.apps.exports.exptables.models import ExpTable
-del_tables = []
-ex_fields = ExpField.objects.filter(label='Has Biological Taxonomy [URI]')
-for ex_field in ex_fields:
-    if ex_field.table_id not in del_tables:
-        del_tables.append(ex_field.table_id)
-
-ExpCell.objects.filter(table_id__in=del_tables).delete()
-ExpField.objects.filter(table_id__in=del_tables).delete()
-ExpTable.objects.filter(table_id__in=del_tables).delete()
-
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
 exm.migrate_old_tables()
