@@ -63,6 +63,7 @@ class SolrSearch():
         self.prequery_stats = []
         self.item_type_limit = False  # limit searches to a specific item type
         self.do_context_paths = True  # make sure context paths are in the query
+        self.is_bot = False
 
     def solr_connect(self):
         """ connects to solr """
@@ -82,6 +83,10 @@ class SolrSearch():
                     if isinstance(old_fq, str):
                         new_fq.append(old_fq.replace('(())', ' '))
                 query['fq'] = new_fq
+        if self.is_bot:
+            # bots don't get to do faceted search.
+            query['facet.field'] = []
+            query['stats.field'] = []
         """
         try:
             response = self.solr.search(**query)
