@@ -1,0 +1,23 @@
+
+{% if item.template_fields|length > 0 %}   
+<thead>
+    <tr>
+    {% for field in item.template_fields %}    
+        <th>
+        {{ field.label }}
+        {% if field.uris|length > 0 %}
+            <br/>
+            {% for uri in field.uris %}
+                {% if uri.predicates != False %}
+                <a href="{% url 'predicates_html' uri.predicates %}" target="_blank">    
+                {% else %}
+                <a href="{{ uri.uri }}" target="_blank">  
+                {%endif%}
+                <span class="glyphicon glyphicon-info-sign" aria-hidden="true"></span></a>  
+            {% endfor %}
+        {%endif%}
+        </th>
+    {% endfor %}
+     </tr>
+</thead>
+{%endif%}

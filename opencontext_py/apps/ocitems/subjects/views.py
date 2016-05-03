@@ -19,7 +19,7 @@ def index(request):
     """
     rp = RootPath()
     base_url = rp.get_baseurl()
-    new_url =  base_url + '/subjects-search/'
+    new_url = base_url + '/subjects-search/'
     return redirect(new_url, permanent=True)
 
 

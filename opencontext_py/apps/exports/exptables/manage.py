@@ -268,7 +268,7 @@ class ExpManage():
                 ok_new = mm.get_head_info(new_file_uri)
                 if ok_new:
                     dump_item = LastUpdatedOrderedDict()
-                    dump_item['id'] = old_file_uri
+                    dump_item['id'] = new_file_uri
                     dump_item['dc-terms:hasFormat'] = mm.mime_type_uri
                     dump_item['dcat:size'] = float(mm.filesize)
                     dump_item['dc-terms:replaces'] = old_file_uri
