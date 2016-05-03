@@ -1,0 +1,26 @@
+
+{% if item.sample_rows|length > 0 %}
+<div class="panel panel-default">
+    <div class="panel-body">
+        <h3>Sample Records (1 &ndash; {{ item.sample_rows|length }} of {{ item.exp_tab.row_count }} Total Rows)</h3>
+        <div class="table-responsive">
+            <table class="table table-condensed table-hover table-bordered table-striped">
+                {% include 'tables/fields.html' %}
+                <tbody>
+                {% for row in item.sample_rows %}    
+                <tr>
+                    {% for cell in row %}
+                    <td class="sample_rec"> 
+                        {% autoescape off %}
+                            {{ cell }}
+                        {% endautoescape %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{%endif%}

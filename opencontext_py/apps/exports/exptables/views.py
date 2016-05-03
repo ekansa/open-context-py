@@ -65,7 +65,8 @@ def html_view(request, table_id):
                     return redirect(exp_tt.csv_url, permanent=False)
                 else:
                     context = RequestContext(request,
-                                             {'item': exp_tt,
+                                             {'page_title': exp_tt.exp_tab.label,
+                                              'item': exp_tt,
                                               'base_url': base_url})
                     return HttpResponse(template.render(context))
             else:

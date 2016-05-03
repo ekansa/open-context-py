@@ -13,6 +13,7 @@ from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.create import Create
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
 
@@ -20,74 +21,18 @@ from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
 class ExpMigrate():
     """ Migrates old tables into new tables
 
-from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-exm = ExpMigrate()
-exm.migrate_old_tables()
 
-from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-exm = ExpMigrate()
-exm.document_missing_old_oc_uuids()
-
-from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-exm = ExpMigrate()
-exm.migrate_old_oc_table('2edc4d5eeffe18944c973b242c555cbe')
 
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
 dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
 
-
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
-table_id = '09c85ef2dd6784a0569fdc283a7d550c'
-exm.get_csv_uuid_list(table_id)
+exm.migrate_old_tables()
+exm.migrate_csv_tables()
 
 
-from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-tabs = [
-'barcin', 
-'catalhoyuk-areaTP-main-secure', 
-'catalhoyuk-areaTP-main', 
-'catalhoyuk-areaTP-metrics-secure', 
-'catalhoyuk-areaTP-metrics', 
-'catalhoyuk-areaTP-toothwear-secure', 
-'catalhoyuk-areaTP-toothwear', 
-'catalhoyuk-main-1', 
-'catalhoyuk-main-2', 
-'catalhoyuk-main-3', 
-'catalhoyuk-metrics', 
-'catalhoyuk-toothwear', 
-'cukurici', 
-'domuztepe', 
-'EOL-primary-v2-1', 
-'EOL-primary-v2-2', 
-'EOL-primary-v2-3', 
-'EOL-primary-v2-4', 
-'erbaba-suberde', 
-'ilipinar', 
-'karain-b', 
-'kosk', 
-'mentese', 
-'okuzini', 
-'pinarbasi', 
-'ulucak']
-for tab in tabs:
-    exm = ExpMigrate()
-    exm.table_dir = 'eol-tabs'
-    x = exm.check_csv_by_manifest(tab)
-
-
-
-from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
-tabs = [
-'missing-barcin',
-'missing-domuztepe',
-'missing-erbaba-suberde',
-'missing-mentese']
-for tab in tabs:
-    exm = ExpMigrate()
-    exm.table_dir = 'add-eol'
-    x = exm.add_subjects_from_table('eol', tab)
 
     """
 
@@ -95,8 +40,53 @@ for tab in tabs:
     OLDER_TAB_BASE_URI = 'http://opencontext.org/tables/'
     SLEEP_TIME = .5
 
+    MIGRATION_SETTINGS = {
+        'default': {
+            'include_equiv_ld': True,
+            'include_ld_source_values': False,
+            'include_original_fields': True,
+            'include_equiv_ld_literals': False,
+        },
+        'f07bce4fb08cfe926505c9e534d89a09': {
+            # eol main
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': False,
+        },
+        '314adedf882421055fc215a56ba7a79b': {
+            # eol main v2
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': False,
+        },
+        '05f2db65ff4faee1290192bd9a1868ed': {
+            # eol metrics
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        },
+        '85624441bf9215018c73ecdce82b3ceb': {
+            # eol metrics
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        },
+        'def8fb9c9d7fdc1993db45b7350ca955': {
+            # eol metrics v2
+            'include_equiv_ld': True,
+            'include_ld_source_values': True,
+            'include_original_fields': False,
+            'include_equiv_ld_literals': True,
+        }
+    }
+
     def __init__(self):
         self.root_import_dir = settings.STATIC_IMPORTS_ROOT
+        self.delete_existing = False
         self.table_id_list = []
         self.table_dir = 'oc-tabs'  # CSV files from more recent open context downloads
         self.old_oc_table_dir = 'old-oc-tabs'  # JSON files for older open context downloads
@@ -111,57 +101,85 @@ for tab in tabs:
 
     def add_subjects_from_table(self, source_id, old_table):
         """ adds subjects from a table """
+        proj_mappings = {
+            'Petra Great Temple Excavations': 'A5DDBEA2-B3C8-43F9-8151-33343CBDC857',
+            'Hazor: Zooarchaeology': 'HazorZooPRJ0000000010',
+            'San Diego Archaeological Center': '3FAAA477-5572-4B05-8DC1-CA264FE1FC10'
+        }
+        class_mappings = {
+            'Small Find': 'oc-gen:cat-object',
+            'Arch. Element': 'oc-gen:cat-arch-element',
+            'Locus': 'oc-gen:cat-locus',
+            'Non Diag. Bone': 'oc-gen:cat-non-diag-bone'
+        }
         filename = old_table + '.csv'
         tab_obj = self.load_csv_file(self.table_dir, filename)
         missing_parents = {}
         if tab_obj is not False:
             i = -1
-            context_cell_index = False
-            parent_label_index = False
+            context_cells_indexes = []
+            label_index = False
+            category_index = False
             for row in tab_obj:
                 i += 1
                 if i == 0:
                     cc = 0
                     for cell in row:
-                        if 'Context URI' == cell:
-                            context_cell_index = cc
-                            parent_label_index = cc - 1
-                            break
+                        if 'Context (' in cell:
+                            context_cells_indexes.append(cc)
+                        if 'Item name' == cell:
+                            label_index = cc
+                        if 'Category' == cell:
+                            category_index = cc
                         cc += 1
-                elif i > 0 and context_cell_index is not False:
+                elif i > 0 and label_index is not False \
+                    and category_index is not False:
                     # OK to generate a new item
                     uuid = row[0]
-                    label = row[3]
+                    label = row[label_index]
                     tab_source = row[1]
-                    project_uuid = self.get_uuid_from_uri(row[4])
-                    parent_label = self.get_uuid_from_uri(row[parent_label_index])
-                    parent_uuid = self.get_uuid_from_uri(row[context_cell_index])
-                    # print('Migrate: ' + uuid + ' ' + label + ' child of: ' + parent_uuid + ' in proj: ' + project_uuid)
-                    try:
-                        parent_ok = Manifest.objects.get(uuid=parent_uuid)
-                    except Manifest.DoesNotExist:
-                        parent_ok = False
-                    if parent_ok is not False:
-                        # we have a parent, so make the bone
-                        man = Manifest()
-                        m_ass = ManageAssertions()
-                        m_ass.source_id = source_id
-                        su_gen = SubjectGeneration()
-                        man.uuid = uuid
-                        man.label = label
-                        man.source_id = source_id
-                        man.item_type = 'subjects'
-                        man.class_uri = 'oc-gen:cat-animal-bone'
-                        man.project_uuid = project_uuid
-                        man.save()
-                        m_ass.add_containment_assertion(parent_uuid, man.uuid)
-                        su_gen.generate_save_context_path_from_manifest_obj(man)
-                        print('Added: ' + uuid + ' from ' + tab_source)
-                    else:
-                        missing_parents[parent_uuid] = {'label': parent_label, 'tab': tab_source}
+                    if row[3] in proj_mappings \
+                       and row[category_index] in class_mappings:
+                        class_uri = class_mappings[row[category_index]]
+                        project_uuid = proj_mappings[row[3]]
+                        parent_contexts = []
+                        for context_cell_index in context_cells_indexes:
+                            parent_contexts.append(row[context_cell_index])
+                        parent_context = '/'.join(parent_contexts)
+                        par_sub = Subject.objects\
+                                         .filter(project_uuid=project_uuid,
+                                                 context=parent_context)[:1]
+                        if len(par_sub) < 1:
+                            print('Cannot find parent: ' + parent_context)
+                        else:
+                            print('Found parent: ' + parent_context)
+                            parent_uuid = par_sub[0].uuid
+                            try:
+                                parent_ok = Manifest.objects.get(uuid=parent_uuid)
+                            except Manifest.DoesNotExist:
+                                parent_ok = False
+                            if parent_ok is not False:
+                                # we have a parent, so make the bone
+                                man = Manifest()
+                                m_ass = ManageAssertions()
+                                m_ass.source_id = source_id
+                                su_gen = SubjectGeneration()
+                                man.uuid = uuid
+                                man.label = label
+                                man.source_id = source_id
+                                man.item_type = 'subjects'
+                                man.class_uri = class_uri
+                                man.project_uuid = project_uuid
+                                man.save()
+                                m_ass.add_containment_assertion(parent_uuid, man.uuid)
+                                su_gen.generate_save_context_path_from_manifest_obj(man)
+                                print('Added: ' + uuid + ' from ' + tab_source)
+                            else:
+                                missing_parents[parent_uuid] = {'label': parent_label, 'tab': tab_source}
                 else:
                     if i > 0:
                         print('Strange problems...')
+                        raise('Check: ' + str(row))
             print('Missing parents: ' + str(missing_parents))
 
     def get_uuid_from_uri(self, uri):
@@ -230,7 +248,21 @@ for tab in tabs:
             except ExpTable.DoesNotExist:
                 exp_tab = False
             if exp_tab is not False:
-                print('Skipping already imported: ' + meta['table_id'])
+                if self.delete_existing:
+                    print('Delete previous import of: ' + meta['table_id'])
+                    ExpCell.objects\
+                           .filter(table_id=meta['table_id'])\
+                           .delete()
+                    ExpField.objects\
+                            .filter(table_id=meta['table_id'])\
+                            .delete()
+                    ExpTable.objects\
+                            .filter(table_id=meta['table_id'])\
+                            .delete()
+                    print('Re-loading: ' + meta['table_id'])
+                    self.migrate_csv_table_data(meta)
+                else:
+                    print('Skipping already imported: ' + meta['table_id'])
             else:
                 print('Checking: ' + meta['table_id'])
                 self.migrate_csv_table_data(meta)
@@ -242,10 +274,16 @@ for tab in tabs:
         uuids = self.get_csv_uuid_list(meta['table_id'])
         if len(uuids) > 0:
             print('Adding: ' + meta['table_id'] + ', ' + str(len(uuids)) + ' uuids')
+            if meta['table_id'] in self.MIGRATION_SETTINGS:
+                mset = self.MIGRATION_SETTINGS[meta['table_id']]
+            else:
+                mset = self.MIGRATION_SETTINGS['default']
             ctab = Create()
             ctab.table_id = meta['table_id']
-            ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
-            ctab.include_original_fields = True  # include fields from source data
+            ctab.include_equiv_ld = mset['include_equiv_ld']
+            ctab.include_ld_source_values = mset['include_ld_source_values']
+            ctab.include_original_fields = mset['include_original_fields']
+            ctab.include_equiv_ld_literals = mset['include_equiv_ld_literals']
             ctab.boolean_multiple_ld_fields = False  # single field for LD fields
             ctab.source_field_label_suffix = ''  # blank suffix for source data field names
             ctab.prep_default_fields()
@@ -347,10 +385,13 @@ for tab in tabs:
         """
         uuids = self.get_old_oc_record_uuids(old_table_id)
         if len(uuids) > 0:
+            mset = self.MIGRATION_SETTINGS['default']
             ctab = Create()
             ctab.table_id = old_table_id
-            ctab.include_ld_source_values = False  # do NOT include values assocated with linked data
-            ctab.include_original_fields = True  # include fields from source data
+            ctab.include_equiv_ld = mset['include_equiv_ld']
+            ctab.include_ld_source_values = mset['include_ld_source_values']
+            ctab.include_original_fields = mset['include_original_fields']
+            ctab.include_equiv_ld_literals = mset['include_equiv_ld_literals']
             ctab.source_field_label_suffix = ''  # blank suffix for source data field names
             ctab.prep_default_fields()
             ctab.uuidlist = uuids
@@ -539,7 +580,7 @@ for tab in tabs:
                     first_row = ['uuid', 'source-table']
                     first_row += row
                     uuids.append(first_row)
-                else :
+                else:
                     uri = row[0]  # the 1st column is the uri
                     uuid = uri.replace('http://opencontext.org/subjects/', '')
                     new_row = [uuid, table_id]

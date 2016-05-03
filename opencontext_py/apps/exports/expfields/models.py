@@ -6,6 +6,7 @@ from jsonfield import JSONField
 
 # Stores data about fields for research
 class ExpField(models.Model):
+
     hash_id = models.CharField(max_length=50, primary_key=True)
     table_id = models.CharField(max_length=50, db_index=True)
     field_num = models.IntegerField()

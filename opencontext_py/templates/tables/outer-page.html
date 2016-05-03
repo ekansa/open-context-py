@@ -8,8 +8,8 @@
                     {% with page_label='' %}
                     {% include 'header.html' %}
                     {% endwith %}
-                    {% with nav_items=nav_items %}
-                    {% with act_nav='about' %}
+                    {% with nav_items=item.nav_items %}
+                    {% with act_nav=item.act_nav %}
                     {% include 'navbar.html' %}
                     {% endwith %}
                     {% endwith %}
