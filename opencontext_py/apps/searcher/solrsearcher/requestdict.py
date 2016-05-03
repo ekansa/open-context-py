@@ -8,6 +8,7 @@ class RequestDict():
 
     def __init__(self):
         self.security_ok = True  # False if a security threat detected in the request
+        self.is_bot = False
 
     def make_request_dict_json(self, request, spatial_context):
         """ makes a JSON object of the request object
@@ -26,12 +27,26 @@ class RequestDict():
         else:
             new_request['path'] = False
         if request is not False:
+            bot_herder = BotHerder()
+            self.is_bot = bot_herder.check_bot(request)
+            if 'as_bot' in request.GET:
+                self.is_bot = True
+            if self.is_bot:
+                # bots don't get to search by context
+                new_request['path'] = False
             for key, key_val in request.GET.items():  # "for key in request.GET" works too.
-                if key != 'callback':
+                if key != 'callback' and self.is_bot is False:
                     # so JSON-P callbacks not in the request
                     self.security_check(request, key)  # check for SQL injections
                     new_request[key] = request.GET.getlist(key)
                     new_request = self.dinaa_period_kludge(key, new_request)
+                elif key in ['page', 'rows', 'start'] and self.is_bot:
+                    # only allow bot crawling with page, rows, or start parameters
+                    # this lets bots crawl the search, but not execute faceted searches
+                    new_request[key] = request.GET.getlist(key)
+                else:
+                    # do nothing
+                    pass
                 if self.security_ok is False:
                     break
         return new_request
@@ -68,3 +83,38 @@ class RequestDict():
                 if evil in val:
                     self.security_ok = False
         return self.security_ok
+
+
+class BotHerder():
+    """ methods to detect bots and herd them so they don't overly
+        tax the faceted search with too many filters complex
+    """
+    BOT_USERAGENTS = [
+        'Googlebot',
+        'Slurp',
+        'Twiceler',
+        'msnbot',
+        'KaloogaBot',
+        'YodaoBot',
+        'Baiduspider',
+        'googlebot',
+        'Speedy Spider',
+        'DotBot',
+        'bingbot'
+    ]
+
+    def __init__(self):
+        self.is_bot = False
+        self.bot_useragents = self.BOT_USERAGENTS
+        self.no_name_agent = 'Secret agent'
+
+    def check_bot(self, request):
+        """ checks to see if the user agent is a bot """
+        user_agent = request.META.get('HTTP_USER_AGENT',None)
+        if not user_agent:
+            user_agent = self.no_name_agent
+        for bot_agent in self.bot_useragents:
+            if bot_agent in user_agent:
+                self.is_bot = True
+                break
+        return self.is_bot

@@ -83,6 +83,7 @@ def html_view(request, spatial_context=None):
         else:
             json_url = url + '.json'
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         if solr_s.solr is not False:
             response = solr_s.search_solr(request_dict_json)
@@ -148,6 +149,7 @@ def json_view(request, spatial_context=None):
         return HttpResponse(template.render(context), status=400)
     else:
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         if solr_s.solr is not False:
             response = solr_s.search_solr(request_dict_json)
@@ -219,6 +221,7 @@ def subjects_html_view(request, spatial_context=None):
         else:
             json_url = url + '.json'
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'subjects'
         if solr_s.solr is not False:
@@ -291,6 +294,7 @@ def subjects_json_view(request, spatial_context=None):
         return HttpResponse(template.render(context), status=400)
     else:
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'subjects'
         if solr_s.solr is not False:
@@ -364,6 +368,7 @@ def media_html_view(request, spatial_context=None):
         else:
             json_url = url + '.json'
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'media'
         # add category facet fields for related items
@@ -434,6 +439,7 @@ def media_json_view(request, spatial_context=None):
         return HttpResponse(template.render(context), status=400)
     else:
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.item_type_limit = 'media'
         # add category facet fields for related items
@@ -507,6 +513,7 @@ def projects_html_view(request, spatial_context=None):
         else:
             json_url = url + '.json'
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.mem_cache_obj = mem_cache_obj
         solr_s.do_context_paths = False
         solr_s.item_type_limit = 'projects'
@@ -577,6 +584,7 @@ def projects_json_view(request, spatial_context=None):
         return HttpResponse(template.render(context), status=400)
     else:
         solr_s = SolrSearch()
+        solr_s.is_bot = rd.is_bot  # True if bot detected
         solr_s.do_context_paths = False
         solr_s.item_type_limit = 'projects'
         if solr_s.solr is not False:
