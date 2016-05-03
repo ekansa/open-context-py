@@ -266,8 +266,9 @@ class ResultRecord():
                 self.snippet = self.snippet.replace('[[[[/mark]]]]', '</mark>')
             if 'thumbnail' in props:
                 self.thumbnail = props['thumbnail']
-                if '/icons/' in self.thumbnail or '-noun-' in self.thumbnail:
-                    self.icon_thumbnail = True
+                if isinstance(self.thumbnail, str):
+                    if '/icons/' in self.thumbnail or '-noun-' in self.thumbnail:
+                        self.icon_thumbnail = True
             if 'published' in props:
                 self.published = QueryMaker().make_human_readable_date(props['published'])
             if 'updated' in props:
