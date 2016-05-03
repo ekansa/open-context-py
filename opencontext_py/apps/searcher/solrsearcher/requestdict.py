@@ -100,7 +100,10 @@ class BotHerder():
         'googlebot',
         'Speedy Spider',
         'DotBot',
-        'bingbot'
+        'bingbot',
+        'BLEXBot',
+        'Exabot',
+        'YandexBot'
     ]
 
     def __init__(self):
