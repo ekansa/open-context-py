@@ -118,9 +118,6 @@ def html_view(request, spatial_context=None):
                 json_ld = m_json_ld.convert_solr_json(response.raw_content)
                 # now cache the resulting JSON-LD
                 db_cache.save_cache_object(cache_key, json_ld)
-            else:
-                cache_control(no_cache=True)
-                return redirect('/about/', permanent=False)
         if json_ld is not None:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
@@ -156,6 +153,7 @@ def html_view(request, spatial_context=None):
                                         content_type=req_neg.use_response_type + "; charset=utf8",
                                         status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -236,6 +234,7 @@ def json_view(request, spatial_context=None):
                 return HttpResponse(req_neg.error_message,
                                     status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -347,6 +346,7 @@ def subjects_html_view(request, spatial_context=None):
                                         content_type=req_neg.use_response_type + "; charset=utf8",
                                         status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -430,6 +430,7 @@ def subjects_json_view(request, spatial_context=None):
                 return HttpResponse(req_neg.error_message,
                                     status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -535,6 +536,7 @@ def media_html_view(request, spatial_context=None):
                                         content_type=req_neg.use_response_type + "; charset=utf8",
                                         status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -619,6 +621,7 @@ def media_json_view(request, spatial_context=None):
                 return HttpResponse(req_neg.error_message,
                                     status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -724,6 +727,7 @@ def projects_html_view(request, spatial_context=None):
                                         content_type=req_neg.use_response_type + "; charset=utf8",
                                         status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
@@ -801,6 +805,7 @@ def projects_json_view(request, spatial_context=None):
                 return HttpResponse(req_neg.error_message,
                                     status=415)
         else:
+            cache_control(no_cache=True)
             template = loader.get_template('500.html')
             context = RequestContext(request,
                                      {'error': 'Solr Connection Problem'})
