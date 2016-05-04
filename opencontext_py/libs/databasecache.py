@@ -12,7 +12,7 @@ class DatabaseCache():
     """
 
     def __init__(self):
-        pass
+        self.do_caching = False
 
     def make_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
@@ -28,29 +28,35 @@ class DatabaseCache():
 
     def get_cache_object(self, key):
         """ gets a cached object """
-        try:
-            cache = caches['default']
-            obj = cache.get(key)
-        except:
-            obj = None
+        obj = None
+        if self.do_caching:
+            try:
+                cache = caches['default']
+                obj = cache.get(key)
+            except:
+                obj = None
         return obj
 
     def save_cache_object(self, key, obj):
         """ saves a cached object """
-        try:
-            cache = caches['default']
-            cache.set(key, obj)
-            ok = True
-        except:
-            ok = False
+        ok = False
+        if self.do_caching:
+            try:
+                cache = caches['default']
+                cache.set(key, obj)
+                ok = True
+            except:
+                ok = False
         return ok
 
     def remove_cache_object(self, key):
         """ deletes a cached object """
-        try:
-            cache = caches['default']
-            cache.delete(key)
-            ok = True
-        except:
-            ok = False
+        ok = False
+        if self.do_caching:
+            try:
+                cache = caches['default']
+                cache.delete(key)
+                ok = True
+            except:
+                ok = False
         return ok
