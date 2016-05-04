@@ -123,7 +123,8 @@ class BotHerder():
         'bingbot',
         'BLEXBot',
         'Exabot',
-        'YandexBot'
+        'YandexBot',
+        'Sogou web spider'
     ]
 
     def __init__(self):
