@@ -94,6 +94,7 @@ def html_view(request, spatial_context=None):
         db_cache = DatabaseCache()
         cache_key = db_cache.make_cache_key('search',
                                             request_dict_json)
+        # print('Cache key: ' + cache_key)
         if rd.refresh_cache:
             # the request wanted to refresh the cache
             db_cache.remove_cache_object(cache_key)
@@ -103,7 +104,7 @@ def html_view(request, spatial_context=None):
             # cached result is not found, so make it with a new search
             solr_s = SolrSearch()
             solr_s.is_bot = rd.is_bot  # True if bot detected
-            solr_s.do_bot_limit = rd.do_bot_limit # Toggle limits on facets for bots
+            solr_s.do_bot_limit = rd.do_bot_limit  # Toggle limits on facets for bots
             solr_s.mem_cache_obj = mem_cache_obj
             if solr_s.solr is not False:
                 response = solr_s.search_solr(request_dict_json)
@@ -117,6 +118,9 @@ def html_view(request, spatial_context=None):
                 json_ld = m_json_ld.convert_solr_json(response.raw_content)
                 # now cache the resulting JSON-LD
                 db_cache.save_cache_object(cache_key, json_ld)
+            else:
+                cache_control(no_cache=True)
+                return redirect('/about/', permanent=False)
         if json_ld is not None:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
