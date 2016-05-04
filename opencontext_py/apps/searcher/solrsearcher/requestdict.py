@@ -124,7 +124,7 @@ class BotHerder():
         'BLEXBot',
         'Exabot',
         'YandexBot',
-        'Sogou web spider'
+        'Sogou'
     ]
 
     def __init__(self):
@@ -134,7 +134,7 @@ class BotHerder():
 
     def check_bot(self, request):
         """ checks to see if the user agent is a bot """
-        user_agent = request.META.get('HTTP_USER_AGENT',None)
+        user_agent = request.META.get('HTTP_USER_AGENT', None)
         if not user_agent:
             user_agent = self.no_name_agent
         for bot_agent in self.bot_useragents:
