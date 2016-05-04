@@ -9,6 +9,8 @@ class RequestDict():
     def __init__(self):
         self.security_ok = True  # False if a security threat detected in the request
         self.is_bot = False
+        self.do_bot_limit = False
+        self.refresh_cache = False
 
     def make_request_dict_json(self, request, spatial_context):
         """ makes a JSON object of the request object
@@ -21,6 +23,14 @@ class RequestDict():
 
     def make_request_obj_dict(self, request, spatial_context):
         """ makes the Django request object into a dictionary obj """
+        bot_ok_params = [
+            # these are params OK for a bot to request
+            'proj',
+            'page',
+            'rows',
+            'start',
+            'as-bot'  # so we can experiment to get bot-views easily
+        ]
         new_request = LastUpdatedOrderedDict()
         if spatial_context is not None:
             new_request['path'] = spatial_context
@@ -29,21 +39,31 @@ class RequestDict():
         if request is not False:
             bot_herder = BotHerder()
             self.is_bot = bot_herder.check_bot(request)
-            if 'as_bot' in request.GET:
+            if 'as-bot' in request.GET:
                 self.is_bot = True
-            if self.is_bot:
+            if self.is_bot and isinstance(new_request['path'], str):
                 # bots don't get to search by context
-                new_request['path'] = False
+                if len(new_request['path']) > 0:
+                    self.do_bot_limit = True
+                    new_request['path'] = False
             for key, key_val in request.GET.items():  # "for key in request.GET" works too.
-                if key != 'callback' and self.is_bot is False:
+                if key == 'refresh-cache':
+                    # request to refresh the cache for this page, but note!
+                    # we're not including it in the new_request
+                    self.refresh_cache = True
+                elif key != 'callback' and self.is_bot is False:
                     # so JSON-P callbacks not in the request
                     self.security_check(request, key)  # check for SQL injections
                     new_request[key] = request.GET.getlist(key)
                     new_request = self.dinaa_period_kludge(key, new_request)
-                elif key in ['page', 'rows', 'start'] and self.is_bot:
+                elif key in bot_ok_params and self.is_bot:
                     # only allow bot crawling with page, rows, or start parameters
                     # this lets bots crawl the search, but not execute faceted searches
-                    new_request[key] = request.GET.getlist(key)
+                    if key != 'as-bot':
+                        new_request[key] = request.GET.getlist(key)
+                elif key not in bot_ok_params and self.is_bot:
+                    # bot has request parameters that we don't want to support
+                    self.do_bot_limit = True
                 else:
                     # do nothing
                     pass
