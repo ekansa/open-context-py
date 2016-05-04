@@ -19,8 +19,8 @@ class DatabaseCache():
         hash_obj = hashlib.sha1()
         concat_string = str(prefix) + " " + str(identifier)
         hash_obj.update(concat_string.encode('utf-8'))
-        output = hash_obj.hexdigest()
-        slug_prefix = slugify(prefix)
+        output = str(hash_obj.hexdigest())
+        slug_prefix = str(slugify(prefix))
         if len(slug_prefix) < 20:
             # human readable output
             output = slug_prefix + '-' + output
