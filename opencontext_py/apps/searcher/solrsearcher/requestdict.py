@@ -41,11 +41,10 @@ class RequestDict():
             self.is_bot = bot_herder.check_bot(request)
             if 'as-bot' in request.GET:
                 self.is_bot = True
-            if self.is_bot and isinstance(new_request['path'], str):
-                # bots don't get to search by context
-                if len(new_request['path']) > 0:
+            if self.is_bot:
+                if spatial_context is not None:
+                    # bots don't get to search by context
                     self.do_bot_limit = True
-                    new_request['path'] = False
             for key, key_val in request.GET.items():  # "for key in request.GET" works too.
                 if key == 'refresh-cache':
                     # request to refresh the cache for this page, but note!
@@ -130,7 +129,7 @@ class BotHerder():
     def __init__(self):
         self.is_bot = False
         self.bot_useragents = self.BOT_USERAGENTS
-        self.no_name_agent = 'Secret agent'
+        self.no_name_agent = 'Secretagent'
 
     def check_bot(self, request):
         """ checks to see if the user agent is a bot """
