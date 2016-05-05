@@ -15,7 +15,7 @@
     
     <div class="container-fluid">        
         <div class="row">
-            <div class="col-sm-8">
+            <div class="col-md-8">
                 
                 <div class="well well-sm">
                     <div class="media">
@@ -51,18 +51,6 @@
                                 
                                     <dt>Number of Rows</dt>
                                     <dd>{{ item.exp_tab.row_count }}</dd>
-                                    
-                                    {% if item.csv_url != False %}
-                                    <dt> </dt>
-                                    <dd>
-                                        <a style="margin-top:20px;"
-                                       role="botton"
-                                       class="btn btn-primary btn-lg btn-block" href=" {{ item.csv_url }}"
-                                       target="_blank">
-                            <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
-                            Click to Download CSV File ({{ item.csv_size_human }})</a>
-                                    </dd>
-                                    {%endif%}
                                 
                                     {% if item.abstract != False %}
                                     <dt>Description</dt>
@@ -73,6 +61,20 @@
                                     </dd>
                                     {%endif%}
                                 
+                                    {% if item.projects_list|length > 0 %}
+                                    <dt>{% if item.projects_list|length > 1 %}
+                                        Source Projects
+                                        {%else%}    
+                                        Source Project
+                                        {%endif%}
+                                    </dt>
+                                    <dd>{% for proj in item.projects_list %} 
+                                    {% if forloop.counter == 1 %}{%else%}, {%endif%}
+                                    <a href="{% url 'projects_html' proj.uuid %}" target="_blank">{{ proj.label }}</a>
+                                    ({{ proj.count }})
+                                    {% endfor %}
+                                    </dd>
+                                    {%endif%}    
                                 </dl>
                                 
                             </div>
@@ -90,7 +92,18 @@
     
     
             </div>
-            <div class="col-sm-4">
+            <div class="col-md-4">
+
+                {% if item.csv_url != False %}
+                <div style="margin-bottom:20px; min-width:245px;"> 
+                <a role="botton"
+                   class="btn btn-primary btn-lg btn-block" href=" {{ item.csv_url }}"
+                   target="_blank">
+                <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                            Download CSV ({{ item.csv_size_human }})</a>
+                </div>
+                {%endif%}
+                
                 {% include 'tables/citation.html' %}
             </div>
         </div>

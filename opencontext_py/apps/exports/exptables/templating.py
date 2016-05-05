@@ -30,6 +30,7 @@ class ExpTableTemplating():
         self.csv_url = False
         self.csv_size_human = False
         self.old_csv_files = []
+        self.projects_list = []
         self.abstract = False
         self.short_des = False
         self.cite_year = False
@@ -63,7 +64,7 @@ class ExpTableTemplating():
             self.make_cite_authors(json_ld)
             self.make_cite_editors(json_ld)
             self.make_cite_time(json_ld)
-            self.make_cite_projects(json_ld)
+            self.make_list_cite_projects(json_ld)
             self.make_template_field_list(json_ld)
             self.make_sample_records(1, 100)
             if isinstance(self.exp_tab.abstract, str):
@@ -110,13 +111,21 @@ class ExpTableTemplating():
         if 'dc-terms:modified' in json_ld:
             self.cite_updated = json_ld['dc-terms:modified']
 
-    def make_cite_projects(self, json_ld):
+    def make_list_cite_projects(self, json_ld):
         """ makes a string for citation of projects """
         projects_list = []
+        cite_projects_list = []
         if 'dc-terms:source' in json_ld:
             for item in json_ld['dc-terms:source']:
-                projects_list.append(item['label'])
-        self.cite_projects = ', '.join(projects_list)
+                cite_projects_list.append(item['label'])
+                proj_item = {}
+                proj_item['uuid'] = URImanagement.get_uuid_from_oc_uri(item['rdfs:isDefinedBy'], False)
+                proj_item['uri'] = item['rdfs:isDefinedBy']
+                proj_item['label'] = item['label']
+                proj_item['count'] = item['count']
+                projects_list.append(proj_item)
+        self.cite_projects = ', '.join(cite_projects_list)
+        self.projects_list = projects_list
         return self.cite_projects
 
     def get_field_list(self):
@@ -269,6 +278,7 @@ class ExpTableTemplating():
 
     def make_sample_records(self, start_row, end_row):
         """ makes sample records for a given table """
+        numeric_trim_fields = [8, 9]  # only trim zeros for lat, lon fields
         row_nums = []
         rows = LastUpdatedOrderedDict()
         exp_cells = ExpCell.objects\
@@ -286,7 +296,12 @@ class ExpTableTemplating():
                     field_vals[field_num] = ''
                     field_num += 1
                 rows[exp_cell.row_num] = field_vals
-            record = self.html_format_record(exp_cell.record)
+            if exp_cell.field_num in numeric_trim_fields:
+                # we need to trim trailing zeros
+                record = self.html_format_record(exp_cell.record, True)
+            else:
+                # do not trim trailing zeros
+                record = self.html_format_record(exp_cell.record, False)
             rows[exp_cell.row_num][exp_cell.field_num] = record
         sample_rows = []
         for row_num in row_nums:
@@ -299,7 +314,7 @@ class ExpTableTemplating():
         self.sample_rows = sample_rows
         return self.sample_rows
 
-    def html_format_record(self, record):
+    def html_format_record(self, record, trim_numeric=False):
         """ adds html formatting to a record, including putting
             URIs into <a> tags
         """
@@ -319,16 +334,20 @@ class ExpTableTemplating():
                 new_part += rec_part + '</a>'
                 new_parts.append(new_part)
             else:
-                num_part_trim = False
-                try:
-                    num_str = float(rec_part)
-                except:
-                    num_str = False
-                if num_str is not False:
-                    num_part_trim = self.trim_trailing_zeros(rec_part)
-                if num_part_trim is not False:
-                    change = True
-                    new_parts.append(num_part_trim)
+                if trim_numeric:
+                    # only do the numeric triming for some fields
+                    num_part_trim = False
+                    try:
+                        num_str = float(rec_part)
+                    except:
+                        num_str = False
+                    if num_str is not False:
+                        num_part_trim = self.trim_trailing_zeros(rec_part)
+                    if num_part_trim is not False:
+                        change = True
+                        new_parts.append(num_part_trim)
+                    else:
+                        new_parts.append(rec_part)
                 else:
                     new_parts.append(rec_part)
         if change:
