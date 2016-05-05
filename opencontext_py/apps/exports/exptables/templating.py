@@ -30,6 +30,7 @@ class ExpTableTemplating():
         self.csv_url = False
         self.csv_size_human = False
         self.old_csv_files = []
+        self.projects_list = []
         self.abstract = False
         self.short_des = False
         self.cite_year = False
@@ -63,7 +64,7 @@ class ExpTableTemplating():
             self.make_cite_authors(json_ld)
             self.make_cite_editors(json_ld)
             self.make_cite_time(json_ld)
-            self.make_cite_projects(json_ld)
+            self.make_list_cite_projects(json_ld)
             self.make_template_field_list(json_ld)
             self.make_sample_records(1, 100)
             if isinstance(self.exp_tab.abstract, str):
@@ -110,13 +111,21 @@ class ExpTableTemplating():
         if 'dc-terms:modified' in json_ld:
             self.cite_updated = json_ld['dc-terms:modified']
 
-    def make_cite_projects(self, json_ld):
+    def make_list_cite_projects(self, json_ld):
         """ makes a string for citation of projects """
         projects_list = []
+        cite_projects_list = []
         if 'dc-terms:source' in json_ld:
             for item in json_ld['dc-terms:source']:
-                projects_list.append(item['label'])
-        self.cite_projects = ', '.join(projects_list)
+                cite_projects_list.append(item['label'])
+                proj_item = {}
+                proj_item['uuid'] = URImanagement.get_uuid_from_oc_uri(item['rdfs:isDefinedBy'], False)
+                proj_item['uri'] = item['rdfs:isDefinedBy']
+                proj_item['label'] = item['label']
+                proj_item['count'] = item['count']
+                projects_list.append(proj_item)
+        self.cite_projects = ', '.join(cite_projects_list)
+        self.projects_list = projects_list
         return self.cite_projects
 
     def get_field_list(self):
