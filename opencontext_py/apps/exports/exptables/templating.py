@@ -30,6 +30,8 @@ class ExpTableTemplating():
         self.csv_url = False
         self.csv_size_human = False
         self.old_csv_files = []
+        self.abstract = False
+        self.short_des = False
         self.cite_year = False
         self.cite_released = False
         self.cite_updated = False
@@ -64,6 +66,12 @@ class ExpTableTemplating():
             self.make_cite_projects(json_ld)
             self.make_template_field_list(json_ld)
             self.make_sample_records(1, 100)
+            if isinstance(self.exp_tab.abstract, str):
+                if len(self.exp_tab.abstract) > 0:
+                    self.abstract = self.exp_tab.abstract
+            if isinstance(self.exp_tab.short_des, str):
+                if len(self.exp_tab.short_des) > 0:
+                    self.short_des = self.exp_tab.short_des
 
     def prep_csv(self):
         """ preps CSV data """
@@ -88,6 +96,7 @@ class ExpTableTemplating():
             json_ld['rows'] = self.exp_tab.row_count
             json_ld['dc-terms:issued'] = self.exp_tab.created.date().isoformat()
             json_ld['dc-terms:modified'] = self.exp_tab.updated.date().isoformat()
+            json_ld['dc-terms:abstract'] = self.exp_tab.abstract
             json_ld['has-fields'] = self.get_field_list()
             for key, objects in self.exp_tab.meta_json.items():
                 json_ld[key] = objects
