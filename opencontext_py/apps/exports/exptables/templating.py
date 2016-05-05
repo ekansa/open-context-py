@@ -278,6 +278,7 @@ class ExpTableTemplating():
 
     def make_sample_records(self, start_row, end_row):
         """ makes sample records for a given table """
+        numeric_trim_fields = [8, 9]  # only trim zeros for lat, lon fields
         row_nums = []
         rows = LastUpdatedOrderedDict()
         exp_cells = ExpCell.objects\
@@ -295,7 +296,12 @@ class ExpTableTemplating():
                     field_vals[field_num] = ''
                     field_num += 1
                 rows[exp_cell.row_num] = field_vals
-            record = self.html_format_record(exp_cell.record)
+            if exp_cell.field_num in numeric_trim_fields:
+                # we need to trim trailing zeros
+                record = self.html_format_record(exp_cell.record, True)
+            else:
+                # do not trim trailing zeros
+                record = self.html_format_record(exp_cell.record, False)
             rows[exp_cell.row_num][exp_cell.field_num] = record
         sample_rows = []
         for row_num in row_nums:
@@ -308,7 +314,7 @@ class ExpTableTemplating():
         self.sample_rows = sample_rows
         return self.sample_rows
 
-    def html_format_record(self, record):
+    def html_format_record(self, record, trim_numeric=False):
         """ adds html formatting to a record, including putting
             URIs into <a> tags
         """
@@ -328,16 +334,20 @@ class ExpTableTemplating():
                 new_part += rec_part + '</a>'
                 new_parts.append(new_part)
             else:
-                num_part_trim = False
-                try:
-                    num_str = float(rec_part)
-                except:
-                    num_str = False
-                if num_str is not False:
-                    num_part_trim = self.trim_trailing_zeros(rec_part)
-                if num_part_trim is not False:
-                    change = True
-                    new_parts.append(num_part_trim)
+                if trim_numeric:
+                    # only do the numeric triming for some fields
+                    num_part_trim = False
+                    try:
+                        num_str = float(rec_part)
+                    except:
+                        num_str = False
+                    if num_str is not False:
+                        num_part_trim = self.trim_trailing_zeros(rec_part)
+                    if num_part_trim is not False:
+                        change = True
+                        new_parts.append(num_part_trim)
+                    else:
+                        new_parts.append(rec_part)
                 else:
                     new_parts.append(rec_part)
         if change:
