@@ -47,7 +47,7 @@ def html_view(request, table_id):
     base_url = rp.get_baseurl()
     if exp_tt.exp_tab is not False:
         exp_tt.prep_html()
-        template = loader.get_template('tables/temp.html')
+        template = loader.get_template('tables/view.html')
         if exp_tt.view_permitted:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
