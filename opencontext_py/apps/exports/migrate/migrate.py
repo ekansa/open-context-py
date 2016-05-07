@@ -2,6 +2,7 @@ import csv
 import os
 import json
 import requests
+from django.utils.encoding import smart_text
 from time import sleep
 from collections import OrderedDict
 from django.db import models
@@ -16,6 +17,8 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.manage import ManageAssertions
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
+
 
 
 class ExpMigrate():
@@ -29,8 +32,8 @@ dump.dump('2edc4d5eeffe18944c973b242c555cbe', 'test.csv')
 
 from opencontext_py.apps.exports.migrate.migrate import ExpMigrate
 exm = ExpMigrate()
-exm.migrate_old_tables()
-exm.migrate_csv_tables()
+exm.get_table_dois()
+
 
 
 
@@ -98,6 +101,51 @@ exm.migrate_csv_tables()
         self.act_table_obj = False
         self.abs_path = 'C:\\GitHub\\open-context-py\\static\\imports\\'
         self.tab_metadata = []
+
+    def get_table_dois(self):
+        """ gets a list of tables from the tab-manifest.csv directory """
+        tab_obj = self.load_csv_file(self.table_dir, self.table_manifest_csv)
+        if tab_obj is not False:
+            fields = self.get_table_fields(tab_obj)
+            # first field is the tableID
+            i = 0
+            for row in tab_obj:
+                if i > 0:
+                    meta = {}
+                    meta['table_id'] = row[0]  # first cell has the table ID field
+                    meta['label'] = row[3]
+                    meta['created'] = row[4]
+                    row_len = len(row)
+                    ids = {'doi': None,
+                           'ark': None}
+                    f_i = 12
+                    last_f_i = row_len - 1
+                    while f_i <= last_f_i:
+                        json_part = row[f_i].replace('\\', '')
+                        if '"doi":' in json_part and \
+                           '"doi":"http://' not in json_part:
+                            doi = json_part.replace('"doi":', '')
+                            doi = doi.replace('"', '')
+                            ids['doi'] = doi
+                            print('DOI: ' + doi)
+                        if '"ark":' in json_part and \
+                           '"ark":"http://' not in json_part:
+                            ark = json_part.replace('"ark":', '')
+                            ark = ark.replace('"', '')
+                            ids['ark'] = ark
+                            print('ark: ' + ark)
+                        f_i += 1
+                    for stable_type, ident in ids.items():
+                        if ident is not None:
+                            id_obj = StableIdentifer()
+                            id_obj.stable_id = ident
+                            id_obj.stable_type = stable_type
+                            id_obj.uuid = meta['table_id']
+                            id_obj.project_uuid = '0'
+                            id_obj.item_type = 'tables'
+                            id_obj.save()
+                i += 1
+        return self.tab_metadata
 
     def add_subjects_from_table(self, source_id, old_table):
         """ adds subjects from a table """
