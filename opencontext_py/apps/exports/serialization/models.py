@@ -50,8 +50,8 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
 sj.after_date = '2016-02-28'
-sj.limit_item_types = ['persons']
-sj.dump_serialized_data('5A6DDB94-70BE-43B4-2D5D-35D983B21515')
+sj.limit_item_types = ['tables']
+sj.dump_serialized_data('0')
 
 projects = Project.objects.filter(updated__gte="2015-06-01")
 
@@ -293,6 +293,9 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
             slug = man_proj[0].slug
             self.project_uuid = project_uuid
             proj_dir = self.prep_directory(slug)
+        elif project_uuid == '0':
+            self.project_uuid = project_uuid
+            proj_dir = self.prep_directory('oc-dump')
         return proj_dir
 
     def export_project_meta(self):
