@@ -8,6 +8,7 @@ from opencontext_py.libs.filemath import FileMath
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 
 class ExpTableTemplating():
@@ -98,10 +99,29 @@ class ExpTableTemplating():
             json_ld['dc-terms:issued'] = self.exp_tab.created.date().isoformat()
             json_ld['dc-terms:modified'] = self.exp_tab.updated.date().isoformat()
             json_ld['dc-terms:abstract'] = self.exp_tab.abstract
+            stable_ids = self.get_stable_ids()
+            if len(stable_ids) > 0:
+                json_ld['owl:sameAs'] = stable_ids
             json_ld['has-fields'] = self.get_field_list()
             for key, objects in self.exp_tab.meta_json.items():
                 json_ld[key] = objects
         return json_ld
+
+    def get_stable_ids(self):
+        """ gets stable identifiers for the table """
+        stable_ids = []
+        stable_ids_objs = StableIdentifer.objects\
+                                         .filter(uuid=self.table_id)
+        for s_id in stable_ids_objs:
+            if s_id.stable_type in StableIdentifer.ID_TYPE_PREFIXES:
+                item = {}
+                item['id'] = StableIdentifer.ID_TYPE_PREFIXES[s_id.stable_type] + s_id.stable_id
+                if s_id.stable_type == 'doi':
+                    self.doi = item['id']
+                elif s_id.stable_type == 'ark':
+                    self.ark = item['id']
+                stable_ids.append(item)
+        return stable_ids
 
     def make_cite_time(self, json_ld):
         """ makes attributes used for citation purposes (time) """

@@ -47,6 +47,12 @@ def html_view(request, identifier):
     uri = 'http://opencontext.org/vocabularies/' + str(identifier)
     lequiv = LinkEquivalence()
     id_list = lequiv.get_identifier_list_variants(uri)
+    lequiv = LinkEquivalence()
+    id_s_list = lequiv.get_identifier_list_variants(uri + '/')
+    for id_s in id_s_list:
+        if id_s not in id_list:
+            # add the slashed version to the list
+            id_list.append(id_s)
     entity_obj = False
     for test_id in id_list:
         ent = Entity()
