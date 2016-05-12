@@ -96,9 +96,11 @@ class ExpTableTemplating():
         json_ld = LastUpdatedOrderedDict()
         if self.exp_tab is not False:
             json_ld['id'] = URImanagement.make_oc_uri(self.public_table_id, 'tables')
+            json_ld['uuid'] = self.public_table_id
             json_ld['label'] = self.exp_tab.label
             json_ld['fields'] = self.exp_tab.field_count
             json_ld['rows'] = self.exp_tab.row_count
+            json_ld['dc-terms:identifier'] = self.table_id
             json_ld['dc-terms:issued'] = self.exp_tab.created.date().isoformat()
             json_ld['dc-terms:modified'] = self.exp_tab.updated.date().isoformat()
             json_ld['dc-terms:abstract'] = self.exp_tab.abstract

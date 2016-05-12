@@ -5,6 +5,7 @@ function itemEdit(item_type, item_uuid){
 	this.super_user = false;
 	this.project_uuid = project_uuid;
 	this.item_uuid = item_uuid;
+	this.item_alt_id = false;  // an alternative identifier
 	this.item_type = item_type;
 	this.label_field = false; // the field object for the item label
 	this.class_field = false; // the field object for the item class
@@ -103,6 +104,14 @@ function itemEdit(item_type, item_uuid){
 				if (this.item_type == 'persons') {
 					// display person specifics
 					this.display_person_edits();
+				}
+				if (this.item_type == 'tables') {
+					// display table specifics
+					if (this.item_json_ld_obj.data.hasOwnProperty('dc-terms:identifier')) {
+						// the table's alternative identifier
+						this.item_alt_id = this.item_json_ld_obj.data['dc-terms:identifier'];
+					}
+					this.display_table_edits();
 				}
 			}
 		}
@@ -1139,107 +1148,11 @@ function itemEdit(item_type, item_uuid){
 	}
 	
 	this.display_proj_abstract = function(){
-		// inferface for editing short project description
-		if (this.item_json_ld_obj.data.hasOwnProperty('dc-terms:abstract')) {
-			var proj_abstract = this.item_json_ld_obj.data['dc-terms:abstract'];
-		}
-		else{
-			var proj_abstract = '';
-		}
-		if (proj_abstract.length > 0) {
-			var placeholder = '';
-		}
-		else{
-			var placeholder = 'placeholder="A detailed abstract descripting the project, research methods, data reuse ideas, etc."';
-		}
-		var button_html = [
-			'<button type="button" ',
-			'class="btn btn-primary" ',
-			'onclick="' + this.obj_name + '.updateAbstract();">',
-			'Update',
-			'</button>'
-		].join('\n');
-		
-		var html = [
-			'<div class="row">',
-				'<div class="col-sm-9">',
-					'<div class="form-group">',
-                        '<label for="proj-abstract">Project Abstract / Overview</label>',
-                        '<textarea id="proj-abstract" ',
-						'class="form-control" rows="24" ',
-						placeholder + '>',
-						proj_abstract,
-						'</textarea>',
-                    '</div>', 
-				'</div>',
-				'<div class="col-sm-3">',
-					'<div id="proj-abstract-submitcon" style="padding-top: 24px;">',
-					button_html,
-					'</div>',
-					'<div id="proj-abstract-respncon" style="padding-top: 10px;">',
-					'</div>',
-					'<div id="proj-abstract-valid">',
-					'</div>',
-					'<div>',
-						'<label>Note</label>',
-						'<p class="small">',
-						'An abstract should use HMTL tags for formatting, including images, ',
-						'hyperlinks, and may even include some javascript for dynamic ',
-						'interactions. The content of the abstract should include ',
-						'essential background information about the project, its research goals, ',
-						'research methods and potential sampling biases / issues, ',
-						'potential ways the data can be reused, and other important information ',
-						'useful for interpretation.',
-						'</p>',
-						'<p class="small">',
-						'The abstract should validate as HTML. Upon submission or update, Open ',
-						'Context will check and validate the HTML. It will accept bad HTML, but bad ',
-						'HTML may cause severe formatting or other problems. Please use the W3C ',
-						'HTML <a href="https://validator.w3.org/" targer="_blank">validation services</a> ',
-						'to help debug your HTML.',
-						'</p>',
-					'</div>',
-				'</div>',
-			'</div>'
-		].join('\n');
+		// inferface for editing abstract / long project description
+		var html = this.make_abstract_edit_html();
 		document.getElementById("edit-proj-abstract").innerHTML = html;
 	}
-	this.updateAbstract = function() {
-		/* updates the short description of a project item
-		*/
-		var act_domID = "proj-abstract";
-		var content = document.getElementById(act_domID).value;
-		var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
-		var act_icon = document.getElementById('proj-abstract-respncon');
-		act_icon.innerHTML = '';
-		var act_note = document.getElementById('proj-abstract-valid');
-		act_note.innerHTML = 'Uploading and validating...';
-		var req = $.ajax({
-			type: "POST",
-			url: url,
-			dataType: "json",
-			data: {
-				content: content,
-				content_type: 'content',
-				csrfmiddlewaretoken: csrftoken},
-			context: this,
-			success: this.updateAbstractDone,
-			error: function (request, status, error) {
-				alert('Problem updating the abstract: ' + status);
-			}
-		});
-	}
-	this.updateAbstractDone = function(data){
-		// handles successful result of short description updates
-		var act_icon = document.getElementById('proj-abstract-respncon');
-		act_icon.innerHTML = '';
-		var act_note = document.getElementById('proj-abstract-valid');
-		act_note.innerHTML = '';
-		if (data.ok) {
-			this.make_temp_update_note_html('proj-abstract-respncon');
-		}
-		this.make_html_valid_note_html(data, 'proj-abstract-valid');
-	}
+
 	
 	
 	this.display_proj_hero_images = function(){
@@ -1854,6 +1767,152 @@ function itemEdit(item_type, item_uuid){
 		}
 	}
 	
+	
+	/******************************************************
+	 * Tables Editing functions
+	 * ***************************************************/
+	this.display_table_edits = function(){
+		//displays table edit fields
+		this.display_table_abstract();
+	}
+	this.display_table_abstract = function(){
+		// inferface for editing abstract / long table description
+		var html = this.make_abstract_edit_html();
+		document.getElementById("edit-table-abstract").innerHTML = html;
+	}
+	
+	
+	/******************************************************
+	* Abstract related editing funcitons
+	*******************************************************/
+	this.make_abstract_edit_html = function(){
+		
+		var dom_prefix = 'proj-';
+		var note_text = [
+			'An abstract should use HMTL tags for formatting, including images, ',
+			'hyperlinks, and may even include some javascript for dynamic ',
+			'interactions. The content of the abstract should include ',
+			'essential background information about the project, its research goals, ',
+			'research methods and potential sampling biases / issues, ',
+			'potential ways the data can be reused, and other important information ',
+			'useful for interpretation.'
+		].join('\n');
+		
+		if (this.item_type == 'tables') {
+			dom_prefix = 'tables-';
+			note_text = [
+				'An abstract should use HMTL tags for formatting, including images, ',
+				'hyperlinks. The content of the abstract should include ',
+				'essential background information about the dataset, ',
+				'potential sampling biases / issues, ',
+				'potential ways the data can be reused, and other important information ',
+				'useful for interpretation.'
+			].join('\n');
+		}
+		// inferface for editing short project description
+		if (this.item_json_ld_obj.data.hasOwnProperty('dc-terms:abstract')) {
+			var abstract_html = this.item_json_ld_obj.data['dc-terms:abstract'];
+		}
+		else{
+			var abstract_html = '';
+		}
+		if (abstract_html.length > 0) {
+			var placeholder = '';
+		}
+		else{
+			var placeholder = 'placeholder="A detailed abstract descripting the project, research methods, data reuse ideas, etc."';
+		}
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updateAbstract();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-9">',
+					'<div class="form-group">',
+                        '<label for="' + dom_prefix + 'abstract">Abstract / Overview</label>',
+                        '<textarea id="' + dom_prefix + 'abstract" ',
+						'class="form-control" rows="24" ',
+						placeholder + '>',
+						abstract_html,
+						'</textarea>',
+                    '</div>', 
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="' + dom_prefix + 'abstract-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="' + dom_prefix + 'abstract-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="' + dom_prefix + 'abstract-valid">',
+					'</div>',
+					'<div>',
+						'<label>Note</label>',
+						'<p class="small">',
+						note_text,
+						'</p>',
+						'<p class="small">',
+						'The abstract should validate as HTML. Upon submission or update, Open ',
+						'Context will check and validate the HTML. It will accept bad HTML, but bad ',
+						'HTML may cause severe formatting or other problems. Please use the W3C ',
+						'HTML <a href="https://validator.w3.org/" targer="_blank">validation services</a> ',
+						'to help debug your HTML.',
+						'</p>',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		return html;
+	}
+	this.updateAbstract = function() {
+		/* updates the short description of a project item
+		*/
+		var dom_prefix = 'proj-';
+		if (this.item_type == 'tables') {
+			dom_prefix = 'tables-';
+		}
+		var act_domID = dom_prefix + 'abstract';
+		var content = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById(dom_prefix + 'abstract-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById(dom_prefix + 'abstract-valid');
+		act_note.innerHTML = 'Uploading and validating...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				item_alt_id: this.item_alt_id,
+				content: content,
+				content_type: 'content',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateAbstractDone,
+			error: function (request, status, error) {
+				alert('Problem updating the abstract: ' + status);
+			}
+		});
+	}
+	this.updateAbstractDone = function(data){
+		// handles successful result of abstract / long description updates
+		var dom_prefix = 'proj-';
+		if (this.item_type == 'tables') {
+			dom_prefix = 'tables-';
+		}
+		var act_icon = document.getElementById(dom_prefix + 'abstract-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById(dom_prefix + 'abstract-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html(dom_prefix + 'abstract-respncon');
+		}
+		this.make_html_valid_note_html(data, dom_prefix + 'abstract-valid');
+	}
 	
 	
 	/******************************************************
