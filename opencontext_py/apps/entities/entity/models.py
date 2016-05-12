@@ -50,6 +50,8 @@ class Entity():
         output = False
         try_manifest = True
         identifier = URImanagement.convert_prefix_to_full_uri(identifier)
+        if (settings.CANONICAL_HOST + '/tables/') in identifier:
+            identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
         if(link_entity_slug or (len(identifier) > 8)):
             if(link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
                 try:

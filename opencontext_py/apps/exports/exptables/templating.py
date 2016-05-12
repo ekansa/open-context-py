@@ -8,6 +8,7 @@ from opencontext_py.libs.filemath import FileMath
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
+from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 
@@ -16,17 +17,19 @@ class ExpTableTemplating():
     Methods for making metadata templates for a table
     """
 
-    def __init__(self, table_id):
+    def __init__(self, identifier):
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = 'tables'
-        self.public_table_id = table_id
-        if '/' in table_id:
-            id_ex = table_id.split('/')
-            table_id = id_ex[1] + '_' + id_ex[0]
-        self.table_id = table_id
-        self.exp_tab = self.get_exp_table_obj(table_id)
-        self.uuid = table_id  # for template
-        self.project_uuid = table_id  # for template
+        # figure out public, internal and uri IDs based on the 'identifier' input
+        # this is because we have some legacy identifiers of 'parts' of exports
+        # from old Open Context versions
+        ex_id = ExpTableIdentifiers()
+        ex_id.make_all_identifiers(identifier)
+        self.public_table_id = ex_id.public_table_id
+        self.table_id = ex_id.table_id
+        self.exp_tab = self.get_exp_table_obj(ex_id.table_id)
+        self.uuid = ex_id.table_id  # for template
+        self.project_uuid = '0'  # for template
         self.view_permitted = True
         self.csv_url = False
         self.csv_size_human = False
@@ -42,7 +45,7 @@ class ExpTableTemplating():
         self.cite_projects = ''
         self.doi = False
         self.ark = False
-        self.cite_uri = URImanagement.make_oc_uri(self.public_table_id, 'tables')
+        self.cite_uri = ex_id.uri
         self.template_fields = []
         self.sample_rows = []
 

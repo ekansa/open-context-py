@@ -58,6 +58,7 @@ class TemplateItem():
         self.use_accordions = False
         self.item_linked_data = False
         self.item_dc_metadata = False
+        self.related_tables = []
         self.request = request
         self.view_permitted = True  # defaults to allow views
         self.edit_permitted = False
@@ -272,6 +273,7 @@ class TemplateItem():
         self.linked_data = linked_data
         self.item_linked_data = linked_data.get_item_annotations(self.act_nav, json_ld)
         self.item_dc_metadata = linked_data.get_item_dc_metadata(self.act_nav, json_ld)
+        self.related_tables = linked_data.related_tables
 
     def create_content(self, json_ld):
         """
@@ -1102,6 +1104,7 @@ class LinkedData():
         self.item_annotations = []  # annotations on the main entity of the JSON-LD
         self.item_dc_metadata = []  # dublin-core annotations on the main entity of the JSON-LD
         self.measurement_meta = {}  # measurement metadata for predicates
+        self.related_tables = []  # references to related tables
         self.project = False
         dc_terms_obj = DCterms()
         self.ITEM_DC_METADATA_PREDICATES = dc_terms_obj.get_dc_terms_list()
@@ -1373,11 +1376,23 @@ class LinkedData():
                             if ent.vocab_uri is False \
                                and self.project.uuid is not False:
                                 ld_obj['vocab_uri'] = self.base_url \
-                                                      + '/projects/' \
-                                                      + self.project.uuid
-                                ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
-                                                       + ' :: ' + self.project.label
-                        act_i_ass['objects'].append(ld_obj)
+                                    + '/projects/' \
+                                    + self.project.uuid
+                                if isinstance(self.project.label, str):
+                                    ld_obj['vocabulary'] = settings.CANONICAL_SITENAME \
+                                        + ' :: ' + self.project.label
+                                else:
+                                    ld_obj['vocabulary'] = settings.CANONICAL_SITENAME
+                        if 'opencontext' in ld_obj['id'] and \
+                           '/tables/' in ld_obj['id']:
+                            # we have an open context table!
+                            ld_obj['table_id'] = ld_obj['id'].replace((settings.CANONICAL_HOST + '/tables/'), '')
+                            self.related_tables.append(ld_obj)
+                        else:
+                            # treat as normal linked data
+                            act_i_ass['objects'].append(ld_obj)
+                    if len(act_i_ass['objects']) < 1:
+                        add_annotation = False
                     if add_annotation:
                         self.item_dc_metadata.append(act_i_ass)
                     if 'subject' in act_i_ass['id'] \
@@ -1398,7 +1413,7 @@ class LinkedData():
         else:
             output = False
         return output
-    
+
     def make_query_parameter(self,
                              predicate,
                              obj,
@@ -1421,5 +1436,5 @@ class LinkedData():
             query = 'obj=' + obj
         else:
             query = 'prop=' + predicate + '---' + obj
-        return query    
+        return query
 

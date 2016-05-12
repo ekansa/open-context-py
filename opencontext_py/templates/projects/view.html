@@ -92,6 +92,33 @@
             </div>
             {%endif%}
             {%endif%}
+         
+            {% if item.related_tables|length > 0 %}
+            <div class="row">
+               <div class="col-sm-12">
+                  {% with top_panel_num=0 %}
+                  {% with show_header=True %}
+                  {% with panel_label='Related Data Tables for Download' %}
+                  {% with panel_label_suffix=False %}
+                  {% with prefix_node_id='tables-' %}
+                  {% with node_id=1 %}
+                  {% with suffix_node_id='-download' %}
+                  {% include 'items/plain-panel-start.html' %}
+                  {% endwith %}
+                  {% endwith %}
+                  {% endwith %}
+                  {% endwith %}
+                  {% endwith %}
+                  {% endwith %}
+                  {% endwith %}
+                  <div id="download-tables">
+                  {% include 'items/project-table-list.html' %}
+                  </div>
+                  {% include 'items/plain-panel-end.html' %}
+               </div>
+            </div>
+            {%endif%}
+         
             <div class="row">
                 <div class="col-sm-12">
                     {% include 'items/observations.html' %}

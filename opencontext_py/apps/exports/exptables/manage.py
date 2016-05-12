@@ -10,10 +10,12 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
+from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers
 from opencontext_py.apps.ocitems.mediafiles.models import ManageMediafiles
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
 
 
@@ -23,6 +25,11 @@ class ExpManage():
         access to table dumps from the previous version
         of Open Context
 
+from opencontext_py.apps.exports.exptables.manage import ExpManage
+ex_man = ExpManage()
+ex_man.make_manifest_for_all_tables()
+ex_man = ExpManage()
+ex_man.link_all_tables_to_projects()
     """
 
     SLEEP_TIME = .5
@@ -31,6 +38,7 @@ class ExpManage():
         self.delay_before_request = self.SLEEP_TIME
         self.authors_field = 7
         self.category_field = 5
+        self.project_to_table_predicate = 'dc-terms:isReferencedBy'
         self.cat_vocab_uri = 'http://opencontext.org/vocabularies/oc-general/'
         self.temp_table_base_url = 'http://artiraq.org/static/opencontext/tables/'
         self.rev_table_base_url = 'http://artiraq.org/static/opencontext/revised-tables/'
@@ -38,6 +46,83 @@ class ExpManage():
                                     'dc-terms:creator',
                                     'dc-terms:source',
                                     'dc-terms:subject']
+
+    def make_manifest_for_all_tables(self):
+        """ makes manifest records for all tables
+            that do not yet have such manifest records
+        """
+        exp_tabs = ExpTable.objects.all()
+        for exp_tab in exp_tabs:
+            self.save_table_manifest_record(exp_tab.table_id)
+
+    def link_all_tables_to_projects(self):
+        """ links all tables with projects, where
+            the project is the subject of the linking relationship
+        """
+        exp_tabs = ExpTable.objects.all()
+        for exp_tab in exp_tabs:
+            self.link_table_to_projects(exp_tab.table_id)
+
+    def link_table_to_projects(self, table_id):
+        """ links a table to a project """
+        ex_id = ExpTableIdentifiers()
+        ex_id.make_all_identifiers(table_id)
+        proj_uuid_counts = self.get_table_project_uuid_counts(ex_id.table_id)
+        for proj_uuid_count in proj_uuid_counts:
+            project_uuid = proj_uuid_count['project_uuid']
+            la_recs = LinkAnnotation.objects\
+                                    .filter(subject=project_uuid,
+                                            object_uri=ex_id.uri)[:1]
+            if len(la_recs) < 1:
+                # we don't have a relationship between this project and this
+                # table yet, so OK to create it.
+                la = LinkAnnotation()
+                la.subject = project_uuid
+                la.subject_type = 'projects'
+                la.project_uuid = project_uuid
+                la.source_id = 'exp-tables-management'
+                la.predicate_uri = self.project_to_table_predicate
+                la.object_uri = ex_id.uri
+                la.creator_uuid = ''
+                la.save()
+                print('Linked project: ' + project_uuid + ' to ' + ex_id.uri)
+
+    def save_table_manifest_record(self, table_id):
+        """ saves a table (public-id) record
+            to the manifest
+        """
+        ex_id = ExpTableIdentifiers()
+        ex_id.make_all_identifiers(table_id)
+        tab_obj = False
+        try:
+            tab_obj = ExpTable.objects.get(table_id=ex_id.table_id)
+        except Manifest.DoesNotExist:
+            tab_obj = False
+        if tab_obj is not False:
+            man_list = Manifest.objects\
+                               .filter(uuid=ex_id.public_table_id)[:1]
+            if len(man_list) < 1:
+                project_uuid = '0'  # default to all projects
+                proj_uuid_counts = self.get_table_project_uuid_counts(ex_id.table_id)
+                if len(proj_uuid_counts) == 1:
+                    project_uuid = proj_uuid_counts[0]['project_uuid']
+                man_obj = Manifest()
+                man_obj.uuid = ex_id.public_table_id
+                man_obj.project_uuid = project_uuid
+                man_obj.source_id = 'exp-tables-management'
+                man_obj.item_type = 'tables'
+                man_obj.class_uri = ''
+                man_obj.label = tab_obj.label
+                man_obj.save()
+                print('Manifest saved table: ' + str(unidecode(man_obj.label)))
+            else:
+                man_obj = man_list[0]
+                if man_obj.label != tab_obj.label:
+                    man_obj.label = tab_obj.label
+                    man_obj.save()
+                    print('Manifest updated for table: ' + str(unidecode(man_obj.label)))
+                else:
+                    print('Manifest all ready current for table: ' + str(unidecode(man_obj.label)))
 
     def create_missing_metadata(self):
         """ creates missing metadata for an export table """

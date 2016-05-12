@@ -79,7 +79,7 @@ sd = sd_obj.fields
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
-    
+
     def process_item(self):
         # Start processing and adding values...
         if self.do_related is False:
@@ -441,13 +441,15 @@ sd = sd_obj.fields
                         meta['id'] = meta['rdfs:isDefinedBy']
                     self.fields['text'] += meta['label'] + '\n'
                     self.fields['text'] += meta['id'] + '\n'
-                    item = self._concat_solr_string_value(
-                        meta['slug'],
-                        'id',
-                        meta['id'],
-                        meta['label'])
-                    self.fields[fname].append(item)
-                    self.process_object_uri(meta['id'])
+                    if 'opencontext.org/tables/' not in meta['id']:
+                        # do not index table references in this way
+                        item = self._concat_solr_string_value(
+                            meta['slug'],
+                            'id',
+                            meta['id'],
+                            meta['label'])
+                        self.fields[fname].append(item)
+                        self.process_object_uri(meta['id'])
 
     def _process_dc_authorship(self):
         """
