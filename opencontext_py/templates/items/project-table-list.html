@@ -1,0 +1,21 @@
+{% load partition %}
+{% if item.related_tables|length > 0 %}
+    {% for row in item.related_tables|columns:2 %}    
+    <div class="row">
+        {% for table in row %}
+        <div class="col-xs-6 col-md-6">
+            <div class="media" style="padding-bottom: 15px;">
+                <div class="media-left media-middle">
+                  <a href="{% url 'tables_html' table.table_id %}" target="_blank">
+                    <img style="width: 30px;" class="media-object" src="{{ base_url }}/static/oc/images/noun-icons-small/table-noun-4305.png" alt="Table Icon">
+                  </a>
+                </div>
+                <div class="media-body">
+                  <a href="{% url 'tables_html' table.table_id %}" target="_blank">{{ table.label }}</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+{%endif%}

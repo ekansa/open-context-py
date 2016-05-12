@@ -38,6 +38,10 @@ class SerizializeJSON():
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.dump_serialized_rel_tables()
+
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+sj = SerizializeJSON()
 sj.after_date = '2016-02-28'
 sj.dump_serialized_data('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
 
@@ -87,6 +91,9 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                                'crt_relations',
                                'crt_rules',
                                'link_annotations']
+        self.table_models = ['oc_manifest',
+                             'exp_tables',
+                             'link_annotations']
 
     def check_table_qset(self,
                          table_name,
@@ -115,6 +122,29 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                     proj.save()
                 print('Output: ' + str(man_proj[0].slug) + ' (' + str(proj.uuid) + ')')
                 self.dump_serialized_data(proj.uuid)
+
+    def dump_serialized_rel_tables(self):
+        """ dumps serialized data documenting tables """
+        self.limit_item_types = ['tables']
+        proj_dir = self.prep_directory('rel-tabs')
+        if proj_dir is not False:
+            table_list = self.all_models + self.table_models
+            for table_name in table_list:
+                print('Working on ' + table_name + ' for export tables')
+                batch = 1
+                query_set = self.get_queryset(table_name)
+                if query_set is not False and query_set is not None:
+                    act_set = []
+                    for obj in query_set.iterator():
+                        if len(act_set) < self.chunk_size:
+                            act_set.append(obj)
+                        if len(act_set) >= self.chunk_size:
+                            self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
+                            batch = batch + 1
+                            act_set = []  # start the act set from scratch again
+                    if len(act_set) > 0:
+                        # now save the remaining batch
+                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
 
     def dump_serialized_data(self, project_uuid):
         """ dumps serialized data for a projproect """
@@ -165,12 +195,14 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                 query_set = LinkEntity.objects.all()
             else:
                 query_set = False
-        elif table_name in self.project_models:
+        elif table_name in self.project_models or \
+             table_name in self.table_models:
             # the table name is for a model
             # that is filtered by the project_uuid
             args = {}
-            args['project_uuid__in'] = [self.project_uuid,
-                                        '0']
+            if self.project_uuid is not False:
+                args['project_uuid__in'] = [self.project_uuid,
+                                            '0']
             if self.after_date is not False:
                 if table_name != 'oc_manifest':
                     args['updated__gte'] = self.after_date
@@ -182,6 +214,10 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                     args['item_type__in'] = self.limit_item_types
                 if table_name == 'oc_assertions':
                     args['subject_type__in'] = self.limit_item_types
+                if len(self.limit_item_types) == 1 and \
+                   self.limit_item_types[0] == 'tables':
+                    if table_name == 'link_annotations':
+                        args['object_uri__contains'] = '/tables/'
             if table_name == 'oc_assertions':
                 query_set = Assertion.objects\
                                      .filter(**args)
