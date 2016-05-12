@@ -55,9 +55,11 @@
                                     {% if item.abstract != False %}
                                     <dt>Description</dt>
                                     <dd>
+                                        <div>
                                         {% autoescape off %}
                                         {{ item.abstract }}
                                         {% endautoescape %}
+                                        </div>
                                     </dd>
                                     {%endif%}
                                 

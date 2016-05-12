@@ -13,6 +13,8 @@ from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers
+from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -83,6 +85,17 @@ class ItemBasicEdit():
             subj_gen = SubjectGeneration()
             subj_gen.generate_save_context_path_from_uuid(self.manifest.uuid)
             note = str(subj_gen.changes) + ' items affected'
+        elif self.manifest.item_type == 'tables':
+            ex_id = ExpTableIdentifiers()
+            ex_id.make_all_identifiers(self.manifest.uuid)
+            try:
+                cobj = ExpTable.objects.get(table_id=ex_id.table_id)
+                cobj.label = label
+                cobj.save()
+                ok = True
+            except ExpTable.DoesNotExist:
+                self.errors['uuid'] = ex_id.table_id + ' not in tables'
+                ok = False
         elif self.manifest.item_type == 'persons':
             # we need to adjust person's combined name
             try:
@@ -102,11 +115,12 @@ class ItemBasicEdit():
                 self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                 ok = False
         # now reindex for solr, including child items impacted by the changes
-        sri = SolrReIndex()
-        sri.reindex_related(self.manifest.uuid)
-        if ok:
-            # now clear the cache a change was made
-            self.clear_caches()
+        if self.manifest.item_type != 'tables':
+            sri = SolrReIndex()
+            sri.reindex_related(self.manifest.uuid)
+            if ok:
+                # now clear the cache a change was made
+                self.clear_caches()
         self.response = {'action': 'update-label',
                          'ok': ok,
                          'change': {'prop': 'label',
@@ -370,6 +384,20 @@ class ItemBasicEdit():
                     ok = True
                 except Project.DoesNotExist:
                     self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                    ok = False
+            elif self.manifest.item_type == 'tables':
+                ex_id = ExpTableIdentifiers()
+                ex_id.make_all_identifiers(self.manifest.uuid)
+                try:
+                    cobj = ExpTable.objects.get(table_id=ex_id.table_id)
+                    if content_type == 'short_des':
+                        cobj.short_des = content
+                    else:
+                        cobj.abstract = content
+                    cobj.save()
+                    ok = True
+                except ExpTable.DoesNotExist:
+                    self.errors['uuid'] = ex_id.table_id + ' not in tables'
                     ok = False
             elif self.manifest.item_type == 'documents' and content_type == 'content':
                 try:
