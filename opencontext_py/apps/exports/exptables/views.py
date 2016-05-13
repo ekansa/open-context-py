@@ -1,6 +1,7 @@
 import json
 from django.conf import settings
 from django.shortcuts import redirect
+from opencontext_py.apps.entities.redirects.manage import RedirectURL
 from django.http import HttpResponse, Http404
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
@@ -81,14 +82,21 @@ def html_view(request, table_id):
                                       'base_url': base_url})
             return HttpResponse(template.render(context), status=401)
     else:
-        # raise Http404
-        template = loader.get_template('tables/index.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: Tables',
-                                  'act_nav': 'tables',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        # did not find a record for the table, check for redirects
+        r_url = RedirectURL()
+        r_ok = r_url.get_direct_by_type_id('tables', exp_tt.public_table_id)
+        if r_ok:
+            # found a redirect!!
+            return redirect(r_url.redirect, permanent=r_url.permanent)
+        else:
+            # raise Http404
+            template = loader.get_template('tables/index.html')
+            context = RequestContext(request,
+                                     {'base_url': base_url,
+                                      'page_title': 'Open Context: Tables',
+                                      'act_nav': 'tables',
+                                      'nav_items': settings.NAV_ITEMS})
+            return HttpResponse(template.render(context))
 
 
 def json_view(request, table_id):

@@ -89,6 +89,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.edit.inputs.rules',
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
+    'opencontext_py.apps.entities.redirects',
     'opencontext_py.apps.ocitems.namespaces',
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
