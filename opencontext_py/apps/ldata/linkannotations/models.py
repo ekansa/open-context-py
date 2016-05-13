@@ -1,5 +1,7 @@
 import reversion  # version control object
 import hashlib
+import collections
+from jsonfield import JSONField  # json field for complex objects
 from django.db import models
 from opencontext_py.apps.ldata.linkentities.models import LinkEntityGeneration
 
@@ -34,6 +36,9 @@ class LinkAnnotation(models.Model):
     source_id = models.CharField(max_length=200)  # longer than the normal 50 for URI-identifed vocabs
     predicate_uri = models.CharField(max_length=200, db_index=True)
     object_uri = models.CharField(max_length=200, db_index=True)
+    obj_extra = JSONField(default={},
+                          load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                          blank=True)
     creator_uuid = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
 

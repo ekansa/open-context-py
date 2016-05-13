@@ -27,7 +27,7 @@ class ExpManage():
 
 from opencontext_py.apps.exports.exptables.manage import ExpManage
 ex_man = ExpManage()
-ex_man.generate_table_metadata('de58ca868faca2c87a25631523879b7f', None, True)
+ex_man.migrate_meta_to_ld_annotations()
     """
 
     SLEEP_TIME = .5
@@ -121,6 +121,56 @@ ex_man.generate_table_metadata('de58ca868faca2c87a25631523879b7f', None, True)
                     print('Manifest updated for table: ' + str(unidecode(man_obj.label)))
                 else:
                     print('Manifest all ready current for table: ' + str(unidecode(man_obj.label)))
+
+    def migrate_meta_to_ld_annotations(self):
+        """ run this once to migtate metadata about
+            tables to the link_annotations table
+        """
+        ignore_extra_preds = [
+            # predicates to ignore for the extra info
+            # in the link_annotation object_extra dict
+            'id',
+            'rdfs:isDefinedBy',
+            'label'
+        ]
+        ex_tabs = ExpTable.objects.all()
+        for ex_tab in ex_tabs:
+            table_id = ex_tab.table_id
+            meta = ex_tab.meta_json
+            ex_id = ExpTableIdentifiers()
+            ex_id.make_all_identifiers(table_id)
+            man_list = Manifest.objects\
+                               .filter(uuid=ex_id.public_table_id)[:1]
+            if len(man_list) > 0:
+                # the table exists in the manifest, so use it's project uuid
+                man_obj = man_list[0]
+                for predicate_key, object_vals in meta.items():
+                    print('Looking at: ' + predicate_key)
+                    if isinstance(object_vals, list):
+                        sort = 0
+                        for object_item in object_vals:
+                            object_uri = None
+                            if 'http://' in object_item['id']:
+                                object_uri = object_item['id']
+                            elif 'rdfs:isDefinedBy' in object_item:
+                                object_uri = object_item['rdfs:isDefinedBy']
+                            if isinstance(object_uri, str):
+                                sort += 1
+                                obj_extra = LastUpdatedOrderedDict()
+                                for pred_key, obj_val in object_item.items():
+                                    if pred_key not in ignore_extra_preds:
+                                        obj_extra[pred_key] = obj_val
+                                la = LinkAnnotation()
+                                la.subject = man_obj.uuid
+                                la.subject_type = man_obj.item_type
+                                la.project_uuid = man_obj.project_uuid
+                                la.source_id = 'exp-table-manage-meta-move'
+                                la.predicate_uri = predicate_key
+                                la.object_uri = object_uri
+                                la.creator_uuid = '0'
+                                la.sort = sort
+                                la.obj_extra = obj_extra
+                                la.save()
 
     def create_missing_metadata(self):
         """ creates missing metadata for an export table """
