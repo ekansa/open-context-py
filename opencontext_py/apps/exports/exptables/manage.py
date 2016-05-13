@@ -27,9 +27,7 @@ class ExpManage():
 
 from opencontext_py.apps.exports.exptables.manage import ExpManage
 ex_man = ExpManage()
-ex_man.make_manifest_for_all_tables()
-ex_man = ExpManage()
-ex_man.link_all_tables_to_projects()
+ex_man.generate_table_metadata('de58ca868faca2c87a25631523879b7f', None, True)
     """
 
     SLEEP_TIME = .5
@@ -128,12 +126,24 @@ ex_man.link_all_tables_to_projects()
         """ creates missing metadata for an export table """
         ex_tabs = ExpTable.objects.all()
         for ex_tab in ex_tabs:
+            self.generate_table_metadata(ex_tab.table_id, ex_tab, False)
+
+    def generate_table_metadata(self, table_id, ex_tab=None, overwrite=False):
+        """ makes metadata for a specific table """
+        if ex_tab is None:
+            # get the table object
+            try:
+                ex_tab = ExpTable.objects.get(table_id=table_id)
+            except ExpTable.DoesNotExist:
+                ex_tab = None
+        if ex_tab is not None:
             proj_uuid_counts = None
             table_id = ex_tab.table_id
             old_meta = ex_tab.meta_json
             new_meta = LastUpdatedOrderedDict()
             for meta_pred in self.metadata_predicates:
-                if meta_pred in old_meta:
+                if meta_pred in old_meta and overwrite is False:
+                    # only keep the old if overwrite is false
                     new_meta[meta_pred] = old_meta[meta_pred]
                 else:
                     if meta_pred == 'dc-terms:contributor':
