@@ -279,10 +279,14 @@ class ExpTableTemplating():
                 count = last_count
             last_count = count
             act_name = raw_person['label']
+            if not isinstance(act_name, str):
+                act_name = '[Not named]'
             act_uniname = unidecode(act_name)
             act_id = raw_person['id']
             for look_person in look_person_list:
                 look_id = look_person['id']
+                if not isinstance(look_person['label'], str):
+                    look_person['label'] = '[Not named]'
                 if look_id != act_id and \
                    look_id not in consolidated_ids and \
                    (act_name == look_person['label'] or act_uniname == unidecode(look_person['label'])):
