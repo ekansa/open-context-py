@@ -202,7 +202,7 @@ ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
                                 la.object_uri = URImanagement.make_oc_uri(proj_uuid_count['project_uuid'],
                                                                           'projects')
                                 la.creator_uuid = '0'
-                                la.sort = create_sort
+                                la.sort = proj_sort
                                 la.obj_extra = obj_extra
                                 la.save()
                     if meta_pred == 'dc-terms:subject':
