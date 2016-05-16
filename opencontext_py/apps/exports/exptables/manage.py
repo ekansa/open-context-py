@@ -27,7 +27,7 @@ class ExpManage():
 
 from opencontext_py.apps.exports.exptables.manage import ExpManage
 ex_man = ExpManage()
-ex_man.migrate_meta_to_ld_annotations()
+ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
     """
 
     SLEEP_TIME = .5
@@ -44,22 +44,6 @@ ex_man.migrate_meta_to_ld_annotations()
                                     'dc-terms:creator',
                                     'dc-terms:source',
                                     'dc-terms:subject']
-
-    def make_manifest_for_all_tables(self):
-        """ makes manifest records for all tables
-            that do not yet have such manifest records
-        """
-        exp_tabs = ExpTable.objects.all()
-        for exp_tab in exp_tabs:
-            self.save_table_manifest_record(exp_tab.table_id)
-
-    def link_all_tables_to_projects(self):
-        """ links all tables with projects, where
-            the project is the subject of the linking relationship
-        """
-        exp_tabs = ExpTable.objects.all()
-        for exp_tab in exp_tabs:
-            self.link_table_to_projects(exp_tab.table_id)
 
     def link_table_to_projects(self, table_id):
         """ links a table to a project """
@@ -122,83 +106,60 @@ ex_man.migrate_meta_to_ld_annotations()
                 else:
                     print('Manifest all ready current for table: ' + str(unidecode(man_obj.label)))
 
-    def migrate_meta_to_ld_annotations(self):
-        """ run this once to migtate metadata about
-            tables to the link_annotations table
-        """
-        ignore_extra_preds = [
-            # predicates to ignore for the extra info
-            # in the link_annotation object_extra dict
-            'id',
-            'rdfs:isDefinedBy',
-            'label'
-        ]
-        ex_tabs = ExpTable.objects.all()
-        for ex_tab in ex_tabs:
-            table_id = ex_tab.table_id
-            meta = ex_tab.meta_json
-            ex_id = ExpTableIdentifiers()
-            ex_id.make_all_identifiers(table_id)
-            man_list = Manifest.objects\
-                               .filter(uuid=ex_id.public_table_id)[:1]
-            if len(man_list) > 0:
-                # the table exists in the manifest, so use it's project uuid
-                man_obj = man_list[0]
-                for predicate_key, object_vals in meta.items():
-                    print('Looking at: ' + predicate_key)
-                    if isinstance(object_vals, list):
-                        sort = 0
-                        for object_item in object_vals:
-                            object_uri = None
-                            if 'http://' in object_item['id']:
-                                object_uri = object_item['id']
-                            elif 'rdfs:isDefinedBy' in object_item:
-                                object_uri = object_item['rdfs:isDefinedBy']
-                            if isinstance(object_uri, str):
-                                sort += 1
-                                obj_extra = LastUpdatedOrderedDict()
-                                for pred_key, obj_val in object_item.items():
-                                    if pred_key not in ignore_extra_preds:
-                                        obj_extra[pred_key] = obj_val
-                                la = LinkAnnotation()
-                                la.subject = man_obj.uuid
-                                la.subject_type = man_obj.item_type
-                                la.project_uuid = man_obj.project_uuid
-                                la.source_id = 'exp-table-manage-meta-move'
-                                la.predicate_uri = predicate_key
-                                la.object_uri = object_uri
-                                la.creator_uuid = '0'
-                                la.sort = sort
-                                la.obj_extra = obj_extra
-                                la.save()
-
-    def create_missing_metadata(self):
-        """ creates missing metadata for an export table """
-        ex_tabs = ExpTable.objects.all()
-        for ex_tab in ex_tabs:
-            self.generate_table_metadata(ex_tab.table_id, ex_tab, False)
-
-    def generate_table_metadata(self, table_id, ex_tab=None, overwrite=False):
+    def generate_table_metadata(self, table_id, overwrite=False):
         """ makes metadata for a specific table """
-        if ex_tab is None:
-            # get the table object
-            try:
-                ex_tab = ExpTable.objects.get(table_id=table_id)
-            except ExpTable.DoesNotExist:
-                ex_tab = None
-        if ex_tab is not None:
+        ex_id = ExpTableIdentifiers()
+        ex_id.make_all_identifiers(table_id)
+        table_ids = [ex_id.table_id,
+                     ex_id.public_table_id]
+        try:
+            ex_tab = ExpTable.objects.get(table_id=table_id)
+        except ExpTable.DoesNotExist:
+            print('No ExpTable object for: ' + ex_id.public_table_id)
+            ex_tab = None
+        try:
+            man_obj = Manifest.objects.get(uuid=ex_id.public_table_id)
+        except Manifest.DoesNotExist:
+            print('No manifest object for: ' + ex_id.public_table_id)
+            man_obj = None
+        if ex_tab is not None and man_obj is not None:
             proj_uuid_counts = None
-            table_id = ex_tab.table_id
-            old_meta = ex_tab.meta_json
-            new_meta = LastUpdatedOrderedDict()
             for meta_pred in self.metadata_predicates:
-                if meta_pred in old_meta and overwrite is False:
-                    # only keep the old if overwrite is false
-                    new_meta[meta_pred] = old_meta[meta_pred]
+                if overwrite:
+                    num_old_delete = LinkAnnotation.objects\
+                                                   .filter(subject__in=table_ids,
+                                                           predicate_uri=meta_pred)\
+                                                   .delete()
+                    print('Deleted annoations ' + str(num_old_delete) + ' for ' + meta_pred)
+                    add_meta_for_pred = True
                 else:
+                    num_exists = LinkAnnotation.objects\
+                                               .filter(subject__in=table_ids,
+                                                       predicate_uri=meta_pred)[:1]
+                    if len(num_exists) < 1:
+                        add_meta_for_pred = True
+                    else:
+                        add_meta_for_pred = False
+                if add_meta_for_pred:
                     if meta_pred == 'dc-terms:contributor':
                         print('Getting contributors for ' + table_id)
-                        new_meta[meta_pred] = self.make_table_dc_contributor_list(table_id)
+                        sorted_author_list = self.get_table_author_counts(table_id)
+                        contrib_sort = 0
+                        for s_author in sorted_author_list:
+                            contrib_sort += 1
+                            obj_extra = LastUpdatedOrderedDict()
+                            obj_extra['count'] = s_author['count']
+                            la = LinkAnnotation()
+                            la.subject = man_obj.uuid
+                            la.subject_type = man_obj.item_type
+                            la.project_uuid = man_obj.project_uuid
+                            la.source_id = 'exp-table-manage'
+                            la.predicate_uri = meta_pred
+                            la.object_uri = URImanagement.make_oc_uri(s_author['uuid'], 'persons')
+                            la.creator_uuid = '0'
+                            la.sort = contrib_sort
+                            la.obj_extra = obj_extra
+                            la.save()
                     if meta_pred in ['dc-terms:creator',
                                      'dc-terms:source']:
                         # need to get projects for this
@@ -208,39 +169,61 @@ ex_man.migrate_meta_to_ld_annotations()
                             proj_uuid_counts = self.get_table_project_uuid_counts(table_id)
                         if meta_pred == 'dc-terms:creator':
                             print('Getting creators for ' + table_id)
-                            new_meta[meta_pred] = self.make_table_dc_creator_list(proj_uuid_counts)
+                            dc_creator_list = self.make_table_dc_creator_list(proj_uuid_counts)
+                            create_sort = 0
+                            for dc_creator in dc_creator_list:
+                                create_sort += 1
+                                obj_extra = LastUpdatedOrderedDict()
+                                obj_extra['count'] = dc_creator['count']
+                                la = LinkAnnotation()
+                                la.subject = man_obj.uuid
+                                la.subject_type = man_obj.item_type
+                                la.project_uuid = man_obj.project_uuid
+                                la.source_id = 'exp-table-manage'
+                                la.predicate_uri = meta_pred
+                                la.object_uri = dc_creator['id']
+                                la.creator_uuid = '0'
+                                la.sort = create_sort
+                                la.obj_extra = obj_extra
+                                la.save()
                         if meta_pred == 'dc-terms:source':
                             print('Getting sources for ' + table_id)
-                            new_meta[meta_pred] = self.make_table_project_uri_counts_list(proj_uuid_counts)
+                            proj_sort = 0
+                            for proj_uuid_count in proj_uuid_counts:
+                                proj_sort += 1
+                                obj_extra = LastUpdatedOrderedDict()
+                                obj_extra['count'] = proj_uuid_count['num_uuids']
+                                la = LinkAnnotation()
+                                la.subject = man_obj.uuid
+                                la.subject_type = man_obj.item_type
+                                la.project_uuid = man_obj.project_uuid
+                                la.source_id = 'exp-table-manage'
+                                la.predicate_uri = meta_pred
+                                la.object_uri = URImanagement.make_oc_uri(proj_uuid_count['project_uuid'],
+                                                                          'projects')
+                                la.creator_uuid = '0'
+                                la.sort = create_sort
+                                la.obj_extra = obj_extra
+                                la.save()
                     if meta_pred == 'dc-terms:subject':
                         print('Getting subjects for ' + table_id)
-                        new_meta[meta_pred] = self.make_table_dc_subject_category_list(table_id)
-            for meta_key, old_meta_val in old_meta.items():
-                if meta_key not in new_meta:
-                    print('Setting old metadata ' + meta_key + '   for ' + table_id)
-                    new_meta[meta_key] = old_meta_val
-            ex_tab.meta_json = new_meta
-            json_str = json.dumps(ex_tab.meta_json,
-                                  indent=4,
-                                  ensure_ascii=False)
-            print(str(unidecode(json_str)))
-            ex_tab.save()
-
-    def make_table_dc_contributor_list(self, table_id):
-        """ gets a list of dc-contributors from the counts
-            of authors in the author field
-        """
-        dc_contribs = []
-        sorted_author_list = self.get_table_author_counts(table_id)
-        for s_author in sorted_author_list:
-            i = len(dc_contribs) + 1
-            item = LastUpdatedOrderedDict()
-            item['id'] = '#contributor-' + str(i)
-            item['rdfs:isDefinedBy'] = URImanagement.make_oc_uri(s_author['uuid'], 'persons')
-            item['label'] = s_author['label']
-            item['count'] = s_author['count']
-            dc_contribs.append(item)
-        return dc_contribs
+                        dc_subject_list = self.make_table_dc_subject_category_list(table_id)
+                        subj_sort = 0
+                        for dc_subject in dc_subject_list:
+                            subj_sort += 1
+                            obj_extra = LastUpdatedOrderedDict()
+                            obj_extra['count'] = dc_subject['count']
+                            la = LinkAnnotation()
+                            la.subject = man_obj.uuid
+                            la.subject_type = man_obj.item_type
+                            la.project_uuid = man_obj.project_uuid
+                            la.source_id = 'exp-table-manage'
+                            la.predicate_uri = meta_pred
+                            la.object_uri = dc_subject['id']
+                            la.creator_uuid = '0'
+                            la.sort = subj_sort
+                            la.obj_extra = obj_extra
+                            la.save()
 
     def get_table_author_counts(self, table_id):
         """ gets author names (and uuids) for a table
@@ -317,9 +300,7 @@ ex_man.migrate_meta_to_ld_annotations()
             if len(ld_ents) > 0:
                 i = len(category_counts) + 1
                 item = LastUpdatedOrderedDict()
-                item['id'] = '#category-' + str(i)
-                item['rdfs:isDefinedBy'] = ld_ents[0].uri
-                item['label'] = label
+                item['id'] = ld_ents[0].uri
                 item['count'] = raw_cat_count['num_uuids']
                 category_counts.append(item)
         return category_counts
@@ -341,6 +322,7 @@ ex_man.migrate_meta_to_ld_annotations()
         dc_creators = []
         for proj_uuid_count in proj_uuid_counts:
             project_uuid = proj_uuid_count['project_uuid']
+            proj_count = proj_uuid_count['num_uuids']
             auth = Authorship()
             auth.get_project_authors(project_uuid)
             if len(auth.creators) < 1 and \
@@ -356,35 +338,10 @@ ex_man.migrate_meta_to_ld_annotations()
                     if auth_man is not False:
                         i = len(dc_creators) + 1
                         item = LastUpdatedOrderedDict()
-                        item['id'] = '#creator-' + str(i)
-                        item['rdfs:isDefinedBy'] = URImanagement.make_oc_uri(auth_uuid, 'persons')
-                        item['label'] = auth_man.label
-                        item['count'] = proj_uuid_count['num_uuids']
+                        item['id'] = URImanagement.make_oc_uri(auth_uuid, 'persons')
+                        item['count'] = proj_count
                         dc_creators.append(item)
         return dc_creators
-
-    def make_table_project_uri_counts_list(self, proj_uuid_counts):
-        """ makes a list of project URIs with labels
-            and counts of records
-        """
-        project_list = []
-        i = 0
-        for proj_uuid_count in proj_uuid_counts:
-            i = len(project_list) + 1
-            item = LastUpdatedOrderedDict()
-            item['id'] = '#project-' + str(i)
-            item['rdfs:isDefinedBy'] = URImanagement.make_oc_uri(proj_uuid_count['project_uuid'], 'projects')
-            proj_man = False
-            item['label'] = '[Project label not known]'
-            try:
-                proj_man = Manifest.objects.get(uuid=proj_uuid_count['project_uuid'])
-            except Manifest.DoesNotExist:
-                proj_man = False
-            if proj_man is not False:
-                item['label'] = proj_man.label
-            item['count'] = proj_uuid_count['num_uuids']
-            project_list.append(item)
-        return project_list
 
     def temp_crawl_csv(self):
         """ add download link to ExpTable metadata """
