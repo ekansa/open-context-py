@@ -10,6 +10,8 @@ from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.identifiers import ExpTableIdentifiers
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 class ExpTableTemplating():
@@ -104,12 +106,15 @@ class ExpTableTemplating():
             json_ld['dc-terms:issued'] = self.exp_tab.created.date().isoformat()
             json_ld['dc-terms:modified'] = self.exp_tab.updated.date().isoformat()
             json_ld['dc-terms:abstract'] = self.exp_tab.abstract
+            json_ld = self.get_link_annotations(json_ld)
             stable_ids = self.get_stable_ids()
             if len(stable_ids) > 0:
                 json_ld['owl:sameAs'] = stable_ids
             json_ld['has-fields'] = self.get_field_list()
+            """
             for key, objects in self.exp_tab.meta_json.items():
                 json_ld[key] = objects
+            """
         return json_ld
 
     def get_stable_ids(self):
@@ -128,6 +133,44 @@ class ExpTableTemplating():
                 stable_ids.append(item)
         return stable_ids
 
+    def get_link_annotations(self, json_ld):
+        """ gets link annotations for making JSON-LD """
+        table_ids = [self.table_id,
+                     self.public_table_id]
+        l_annos = LinkAnnotation.objects\
+                                .filter(subject__in=table_ids)\
+                                .order_by('predicate_uri', 'sort')
+        for l_anno in l_annos:
+            if l_anno.predicate_uri not in json_ld:
+                # add the predicate as a to the JSON-LD with a list for objects
+                json_ld[l_anno.predicate_uri] = []
+            item = LastUpdatedOrderedDict()
+            item['id'] = l_anno.object_uri
+            if isinstance(l_anno.obj_extra, dict):
+                if 'count' in l_anno.obj_extra:
+                    # there's a count for this, so make the ID a
+                    # fragment ID based on the predicate
+                    # the URI is then rdfs:isDefinedBy
+                    new_item_index = len(json_ld[l_anno.predicate_uri]) + 1
+                    item['id'] = l_anno.predicate_uri.replace(':', '-')
+                    item['id'] += '-' + str(new_item_index)
+                    item['rdfs:isDefinedBy'] = l_anno.object_uri
+            if l_anno.predicate_uri != 'void:dataDump':
+                ent = Entity()
+                found = ent.dereference(l_anno.object_uri)
+                if found:
+                    item['label'] = ent.label
+                else:
+                    item['label'] = False
+            # now add any other information that may be in the
+            # obj_extra dict
+            if isinstance(l_anno.obj_extra, dict):
+                for key, vals in l_anno.obj_extra.items():
+                    item[key] = vals
+            # add this item object to the list for this predicate
+            json_ld[l_anno.predicate_uri].append(item)
+        return json_ld
+
     def make_cite_time(self, json_ld):
         """ makes attributes used for citation purposes (time) """
         if 'dc-terms:issued' in json_ld:
@@ -144,10 +187,19 @@ class ExpTableTemplating():
             for item in json_ld['dc-terms:source']:
                 cite_projects_list.append(item['label'])
                 proj_item = {}
-                proj_item['uuid'] = URImanagement.get_uuid_from_oc_uri(item['rdfs:isDefinedBy'], False)
-                proj_item['uri'] = item['rdfs:isDefinedBy']
+                if 'rdfs:isDefinedBy' in item:
+                    proj_item['uuid'] = URImanagement.get_uuid_from_oc_uri(item['rdfs:isDefinedBy'],
+                                                                           False)
+                    proj_item['uri'] = item['rdfs:isDefinedBy']
+                else:
+                    proj_item['uuid'] = URImanagement.get_uuid_from_oc_uri(item['id'],
+                                                                           False)
+                    proj_item['uri'] = item['id']
                 proj_item['label'] = item['label']
-                proj_item['count'] = item['count']
+                if 'count' in item:
+                    proj_item['count'] = item['count']
+                else:
+                    proj_item['count'] = False
                 projects_list.append(proj_item)
         self.cite_projects = ', '.join(cite_projects_list)
         self.projects_list = projects_list
