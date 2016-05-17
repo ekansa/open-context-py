@@ -15,8 +15,7 @@ class ExpTable(models.Model):
     field_count = models.IntegerField()
     row_count = models.IntegerField()
     meta_json = JSONField(default={},
-                          load_kwargs={'object_pairs_hook': collections.OrderedDict},
-                          blank=True)
+                          load_kwargs={'object_pairs_hook': collections.OrderedDict})
     short_des = models.CharField(max_length=200)
     abstract = models.TextField()
     created = models.DateTimeField()
