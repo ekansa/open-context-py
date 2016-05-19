@@ -19,6 +19,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ldata.uberon.api import uberonAPI
 from opencontext_py.apps.ldata.eol.api import eolAPI
+from opencontext_py.apps.ldata.getty.api import gettyAPI
 
 
 # Processes to generate subjects items for an import
@@ -29,13 +30,26 @@ class ProcessTypes():
     to describe it
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
-source_id = 'ref:2194665153707'
-pred_uuid = '64eaaa74-a4df-449c-8857-2ef7aaf76384'
-type_f = 2
-rel_pred = 'skos:closeMatch'
-le_f = 3
+source_id = 'ref:1903543025071'
+pred_uuid = 'c01b2f13-8c6f-4fca-8a47-50e573dd01d0'  # Materials 1
+type_f = 17
+rel_pred = 'skos:exactMatch'
+le_f = 19
 pt = ProcessTypes(source_id)
 pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
+
+from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
+source_id = 'ref:1903543025071'
+pred_uuid = '7cdf8d0a-521c-4fab-ae8c-8fd3adafa776'  # Materials 2
+type_f = 21
+rel_pred = 'skos:exactMatch'
+le_f = 23
+pt = ProcessTypes(source_id)
+pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
+
+
+
+
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
 source_id = 'ref:1699742791864'
@@ -340,6 +354,15 @@ for bad_ent in bad_ents:
                 label = label.replace('_', ' ')  # underscores in Wikipedia titles
                 alt_label = label
                 vocab_uri = 'http://www.wikipedia.org/'
+            elif 'vocab.getty.edu/aat' in uri:
+                print('Finding: ' + uri)
+                getty_api = gettyAPI()
+                vocab_uri = gettyAPI().VOCAB_URI
+                labels = getty_api.get_labels_for_uri(uri)
+                if isinstance(labels, dict):
+                    # got the label!
+                    label = labels['label']
+                    alt_label = labels['alt_label']
             if label is not False and vocab_uri is not False:
                 # ok to make an entity then!
                 ent = LinkEntity()
