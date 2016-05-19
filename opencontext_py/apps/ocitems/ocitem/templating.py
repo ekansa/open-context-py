@@ -1087,11 +1087,12 @@ class GeoMap():
 
 class LinkedData():
 
-    REL_PREDICATES = ['skos:closeMatch']
+    REL_PREDICATES = ['skos:closeMatch', 'skos:exactMatch']
     REL_MEASUREMENTS = ['cidoc-crm:P67_refers_to',
                         'oc-gen:has-technique',
                         'rdfs:range']
     ITEM_REL_PREDICATES = ['skos:closeMatch',
+                           'skos:exactMatch',
                            'owl:sameAs',
                            'skos:related',
                            'skos:broader',
