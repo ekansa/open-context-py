@@ -200,6 +200,19 @@ class LinkEntityManage():
 
 from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
 lem = LinkEntityManage()
+old_uri = 'http://www.cidoc-crm.org/rdfs/cidoc-crm#P45F.consists_'
+new_uri = 'http://erlangen-crm.org/current/P45_consists_of'
+new_label = 'Consists of'
+new_vocab_uri = 'http://www.cidoc-crm.org/cidoc-crm/'
+lem.replace_uri(old_uri, new_uri, new_label, new_vocab_uri)
+
+from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
+lem = LinkEntityManage()
+old_uri = 'http://www.eol.org/pages/695'
+new_uri = 'http://eol.org/pages/695'
+new_label = 'Aves'
+new_vocab_uri = 'http://eol.org/'
+lem.replace_uri(old_uri, new_uri, new_label, new_vocab_uri)
 
         """
         try:
@@ -210,10 +223,14 @@ lem = LinkEntityManage()
             # now change to use the new information
             new_ent = old_ent
             old_ent.delete()
-            new_ent.uri = new_uri
-            new_ent.label = new_label
-            new_ent.vocab_uri = new_vocab_uri
-            new_ent.save()
+            try:
+                new_ent_exists = LinkEntity.objects.get(uri=new_uri)
+            except LinkEntity.DoesNotExist:
+                # replace the old ent with the new ent
+                new_ent.uri = new_uri
+                new_ent.label = new_label
+                new_ent.vocab_uri = new_vocab_uri
+                new_ent.save()
         # do this even if the old item does not exist
         la_manage = LinkAnnoManagement()
         la_manage.replace_subject_uri(old_uri,
