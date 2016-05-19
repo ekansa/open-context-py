@@ -47,6 +47,7 @@ class ItemBasicEdit():
         self.errors = {'uuid': False,
                        'html': False}
         self.response = {}
+        self.edit_status = 0
         if uuid is not False:
             try:
                 self.manifest = Manifest.objects.get(uuid=uuid)
@@ -60,6 +61,13 @@ class ItemBasicEdit():
             else:
                 # default to no editting permissions
                 self.edit_permitted = False
+        if self.manifest is not False:
+            try:
+                proj = Project.objects.get(uuid=self.manifest.project_uuid)
+                self.edit_status = proj.edit_status
+            except ModProject.DoesNotExist:
+                proj = False
+                self.edit_status = 0
 
     def update_label(self, label, post_data):
         """ Updates an item's label. Generally straightforward
@@ -115,7 +123,7 @@ class ItemBasicEdit():
                 self.errors['uuid'] = self.manifest.uuid + ' not in projects'
                 ok = False
         # now reindex for solr, including child items impacted by the changes
-        if self.manifest.item_type != 'tables':
+        if self.manifest.item_type != 'tables' and self.edit_status > 0:
             sri = SolrReIndex()
             sri.reindex_related(self.manifest.uuid)
             if ok:
@@ -324,8 +332,7 @@ class ItemBasicEdit():
         return self.response
 
     def update_class_uri(self, class_uri):
-        """ Updates an item's label. Generally straightforward
-            except for subjects
+        """ Updates an item's class_uri
         """
         ok = True
         old_class_uri = self.manifest.class_uri
