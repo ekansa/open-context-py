@@ -129,8 +129,13 @@
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
-    <!-- table_id identifies a related downloadable table. not required. don't store, since only want facets of these -->
-    <field name="table_id" type="string" indexed="true" stored="false" multiValued="true" />
+    <!-- in_table_id identifies a downloadable table the contains this record.
+    not required. don't store, since only want facets of these -->
+    <field name="in_table_id" type="string" indexed="true" stored="false" multiValued="true" />
+    
+    <!-- has_table_id identifies a downloadable table associated with this project.
+    not required. don't store, since only want facets of these -->
+    <field name="has_table_id" type="string" indexed="true" stored="false" multiValued="true" />
 
     <!-- general item type ('subjects', 'media', 'documents', etc.) -->
     <field name="item_type" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -225,8 +230,12 @@
 
     <dynamicField name="*___context_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
 
-    <!-- Used for filter queries. Just captures the slug -->
+    <!-- Used for filter queries. Just captures the slug.
+    Deprecated for Solr 6, which does not allow copying of dynamic fields
+    
     <copyField source="*___context_id" dest="*___context_id_fq"/>
+    -->    
+    
 
     <!-- to index nominal predicates @type = "@id" values
     the root dynamic field is 'root___pred_id'
@@ -236,9 +245,11 @@
 
     <dynamicField name="*___pred_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
 
-    <!-- Used for filter queries. Just captures the slug -->
+    <!-- Used for filter queries. Just captures the slug
+    Deprecated for Solr 6, which does not allow copying of dynamic fields
+    
     <copyField source="*___pred_id" dest="*___pred_id_fq"/>
-
+    -->
 
 
     <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
@@ -743,7 +754,7 @@
       http://wiki.apache.org/solr/SolrAdaptersForLuceneSpatial4
     -->
     <fieldType name="location_rpt" class="solr.SpatialRecursivePrefixTreeFieldType"
-        geo="true" distErrPct="0.025" maxDistErr="0.000009" units="degrees" />
+        geo="true" distErrPct="0.025" maxDistErr="0.000009" distanceUnits="degrees" />
 
    <!-- Money/currency field type. See http://wiki.apache.org/solr/MoneyFieldType
         Parameters:
