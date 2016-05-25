@@ -6,6 +6,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
+from opencontext_py.apps.contexts.projectcontext import ProjectContext
 
 
 def index(request, spatial_context=None):
@@ -51,3 +52,37 @@ def search_view(request):
         return HttpResponse(req_neg.error_message,
                             status=415)
 
+
+def projects_json(request, uuid):
+    """ provides a JSON-LD context for
+        the data in a project. This will include
+        annotations of predicates and types
+    """
+    proj_context = ProjectContext(uuid, request)
+    if 'hashes' in request.GET:
+        proj_context.assertion_hashes = True
+    if proj_context.manifest is not False:
+        req_neg = RequestNegotiation('application/json')
+        req_neg.supported_types = ['application/ld+json',
+                                   'application/vnd.geo+json']
+        if 'HTTP_ACCEPT' in request.META:
+            req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+        if req_neg.supported:
+            json_ld = proj_context.make_context_json_ld()
+            json_output = json.dumps(json_ld,
+                                     indent=4,
+                                     ensure_ascii=False)
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                return HttpResponse(funct + '(' + json_output + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json_output,
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
+        else:
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
+    else:
+        raise Http404
