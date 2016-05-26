@@ -7,6 +7,8 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.contexts.models import SearchContext
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
 
 def index(request, spatial_context=None):
@@ -53,6 +55,8 @@ def search_view(request):
                             status=415)
 
 
+@cache_control(no_cache=True)
+@never_cache
 def projects_json(request, uuid):
     """ provides a JSON-LD context for
         the data in a project. This will include
