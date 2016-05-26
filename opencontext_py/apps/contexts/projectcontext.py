@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.cache import caches
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.contexts.models import GeneralContext
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -41,6 +42,8 @@ class ProjectContext():
         self.cannonical_href = False
         self.json_ld = False
         self.errors = []
+        self.pred_sql_dict_list = None
+        self.most_recent_date = None
         if uuid is not None:
             self.dereference_uuid(uuid)
             self.set_uri_urls(uuid)
@@ -51,17 +54,35 @@ class ProjectContext():
         """ makes the context JSON-LD """
         if self.manifest is not False:
             self.json_ld = LastUpdatedOrderedDict()
-            context = LastUpdatedOrderedDict()
-            context['oc-pred'] = settings.CANONICAL_HOST + '/predicates/'
-            context['oc-type'] = settings.CANONICAL_HOST + '/types/'
-            context = self.add_project_predicates_and_annotations(context)
-            context = self.add_project_types_with_annotations(context)
+            gen_context = GeneralContext()
+            context = gen_context.context
+            context = self.add_project_predicates_to_context(context)
             self.json_ld['@context'] = context
+            self.json_ld['id'] = self.id
+            self.json_ld['label'] = 'Context and Standards Annotations for ' + self.manifest.label
+            graph = []
+            graph = self.add_project_predicates_and_annotations_to_graph(graph)
+            graph = self.add_project_types_with_annotations_to_graph(graph)
+            self.json_ld['@graph'] = graph
         else:
             self.json_ld = False
         return self.json_ld
 
-    def add_project_predicates_and_annotations(self, context):
+    def add_project_predicates_to_context(self, context):
+        """ adds project predicates to the context """
+        pred_sql_dict_list = self.get_working_project_predicates()
+        if isinstance(pred_sql_dict_list, list):
+            for sql_dict in pred_sql_dict_list:
+                act_pred = LastUpdatedOrderedDict()
+                if sql_dict['data_type'] == 'id':
+                    act_pred['type'] = '@id'
+                else:
+                    act_pred['type'] = sql_dict['data_type']
+                context_key = 'oc-pred:' + sql_dict['slug']
+                context[context_key] = act_pred
+        return context
+    
+    def add_project_predicates_and_annotations_to_graph(self, graph):
         """ gets the project predicates and their
             annotations with database calls
         """
@@ -70,14 +91,14 @@ class ProjectContext():
         if isinstance(pred_sql_dict_list, list):
             for sql_dict in pred_sql_dict_list:
                 act_pred = LastUpdatedOrderedDict()
+                act_pred['@id'] =  'oc-pred:' + sql_dict['slug']
                 act_pred['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['predicate_uuid'],
                                                                    'predicates')
                 act_pred['label'] = sql_dict['label']
                 act_pred['slug'] = sql_dict['slug']
-                if sql_dict['data_type'] == 'id':
-                    act_pred['type'] = '@id'
-                else:
-                    act_pred['type'] = sql_dict['data_type']
+                if isinstance(sql_dict['class_uri'], str):
+                    if len(sql_dict['class_uri']) > 0:
+                        act_pred['oc-gen:predType'] = sql_dict['class_uri']
                 pred_found = False
                 for la_pred in la_preds:
                     if la_pred.subject == sql_dict['predicate_uuid']:
@@ -93,9 +114,8 @@ class ProjectContext():
                             # because this list is sorted by la_pred.subject, we're done
                             # finding any more annotations on act_pred item
                             break
-                context_key = 'oc-pred:' + sql_dict['slug']
-                context[context_key] = act_pred
-        return context
+                graph.append(act_pred)
+        return graph
 
     def get_working_project_predicates(self):
         """ gets project predicates from the assertions table.
@@ -106,7 +126,7 @@ class ProjectContext():
             which has to be OK and not a SQL injection
         """
         output = None
-        if self.manifest is not False:
+        if self.manifest is not False and self.pred_sql_dict_list is None:
             # security protection
             not_in_list = [
                 Assertion.PREDICATES_CONTAINS,
@@ -123,7 +143,8 @@ class ProjectContext():
                      'm.label AS label, '
                      'm.slug AS slug, '
                      'm.class_uri AS class_uri, '
-                     'p.data_type AS data_type '
+                     'p.data_type AS data_type, '
+                     'm.revised AS updated'
                      'FROM oc_assertions AS ass '
                      'LEFT JOIN oc_manifest AS m ON ass.predicate_uuid = m.uuid '
                      'LEFT JOIN oc_predicates AS p ON ass.predicate_uuid = p.uuid '
@@ -132,13 +153,15 @@ class ProjectContext():
                      'm.label, '
                      'm.slug, '
                      'm.class_uri, '
+                     'm.revised, '
                      'p.data_type '
                      'ORDER BY p.data_type, m.slug, m.class_uri; ')
             cursor = connection.cursor()
             cursor.execute(query, [self.manifest.uuid])
             rows = self.dictfetchall(cursor)
             output = rows
-        return output
+            self.pred_sql_dict_list = output
+        return self.pred_sql_dict_list
 
     def get_link_annotations_for_preds(self, pred_sql_dict_list):
         """ gets link annotations for predicates """
@@ -152,25 +175,35 @@ class ProjectContext():
                                      .order_by('subject', 'predicate_uri', 'sort')
         return la_preds
 
-    def add_project_types_with_annotations(self, context):
+    def add_project_types_with_annotations_to_graph(self, graph):
         """ adds project types that have annotations """
         type_sql_dict_list = self.get_working_project_types()
         if isinstance(type_sql_dict_list, list):
+            # consolidate things so a given type is given once in the list
+            # of a graph. To do so, we first put everything in a all_types
+            # dict
+            all_types = LastUpdatedOrderedDict()
             for sql_dict in type_sql_dict_list:
-                type_uri = 'oc-type:' + sql_dict['type_uuid']
-                if type_uri not in context:
+                type_uri = URImanagement.make_oc_uri(sql_dict['type_uuid'],
+                                                              'types')
+                if type_uri not in all_types:
                     act_type = LastUpdatedOrderedDict()
+                    act_type['@id'] = type_uri 
                     act_type['label'] = sql_dict['type_label']
+                    act_type['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['type_slug'],
+                                                                       'types')
                     act_type['slug'] = sql_dict['type_slug']
                 else:
-                    act_type = context[type_uri]
+                    act_type = all_types[type_uri]
                 la_pred_uri = URImanagement.prefix_common_uri(sql_dict['predicate_uri'])
                 if la_pred_uri not in act_type:
                     act_type[la_pred_uri] = []
                 la_object_item = self.make_object_dict_item(sql_dict['object_uri'])
                 act_type[la_pred_uri].append(la_object_item)
-                context[type_uri] = act_type
-        return context
+                all_types[type_uri] = act_type
+            for type_uri, act_type in all_types.items():
+                graph.append(act_type)
+        return graph
 
     def get_working_project_types(self):
         """ gets project types that have linked data annotations.

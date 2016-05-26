@@ -55,7 +55,7 @@ def search_view(request):
                             status=415)
 
 
-# @cache_control(no_cache=True)
+@cache_control(no_cache=True)
 # @never_cache
 def projects_json(request, uuid):
     """ provides a JSON-LD context for
