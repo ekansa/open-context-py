@@ -2,20 +2,12 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
-class ItemContext():
+class GeneralContext():
     """
     General namespaces used for JSON-LD
-    for Items
+    for project contexts and for items
     """
-    DOI = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
-
     def __init__(self, id_href=True):
-        self.id = self.DOI  # DOI for this
-        rp = RootPath()
-        base_url = rp.get_baseurl()
-        self.href = base_url + '/contexts/item.json'  # URL for this
-        if id_href:
-            self.id = self.href
         context = LastUpdatedOrderedDict()
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
@@ -38,6 +30,24 @@ class ItemContext():
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
+        self.context = context
+
+class ItemContext():
+    """
+    General namespaces used for JSON-LD
+    for Items
+    """
+    DOI = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
+
+    def __init__(self, id_href=True):
+        self.id = self.DOI  # DOI for this
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        self.href = base_url + '/contexts/item.json'  # URL for this
+        if id_href:
+            self.id = self.href
+        gen_context = GeneralContext()
+        context = gen_context.context
         context['Feature'] = 'geojson:Feature'
         context['FeatureCollection'] = 'geojson:FeatureCollection'
         context['GeometryCollection'] = 'geojson:GeometryCollection'

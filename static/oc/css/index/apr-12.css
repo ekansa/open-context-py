@@ -87,3 +87,6 @@ ul.works-list li{
 ul.icon-list li{
     text-align: left;
 }
+a.video-link {
+    background-color: #0088CC;
+}
