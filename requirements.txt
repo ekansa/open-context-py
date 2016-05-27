@@ -26,3 +26,4 @@ pillow==2.9.0
 shapely==1.5.13
 redis==2.10.5
 django-redis-cache==1.6.5
+rdflib-jsonld==0.4.0
