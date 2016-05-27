@@ -144,7 +144,7 @@ class ProjectContext():
                      'm.slug AS slug, '
                      'm.class_uri AS class_uri, '
                      'p.data_type AS data_type, '
-                     'm.revised AS updated'
+                     'm.revised AS updated '
                      'FROM oc_assertions AS ass '
                      'LEFT JOIN oc_manifest AS m ON ass.predicate_uuid = m.uuid '
                      'LEFT JOIN oc_predicates AS p ON ass.predicate_uuid = p.uuid '
