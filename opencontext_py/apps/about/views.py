@@ -34,7 +34,8 @@ def index_view(request):
         return HttpResponse(req_neg.error_message,
                             status=415)
 
-
+@cache_control(no_cache=True)
+@never_cache
 def uses_view(request):
     """ Get the search context JSON-LD """
     rp = RootPath()
@@ -44,7 +45,7 @@ def uses_view(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        template = loader.get_template('about/temp.html')
+        template = loader.get_template('about/uses.html')
         context = RequestContext(request,
                                  {'base_url': base_url,
                                   'page_title': 'Open Context: About - Uses',

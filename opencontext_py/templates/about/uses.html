@@ -1,0 +1,191 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>How Can I Use Open Context?</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/info-noun-118049.png" alt="Information icon"/>
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context publishes data you can analyse, media you can reuse, and field notes you can explore. All content published by Open Context carries Creative Commons copyright licenses, which means you have explicit legal permission to reuse and adapt this content in your own works, as long as you provide appropriate citations to Open Context contributors. Below we illustrate some of the ways you can use Open Context published content for your own work.</p>
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+        
+		<style type="text/css">
+			img.uses-icon {
+				height: 100px;
+				text-align: center;
+				margin-left: auto;
+				margin-right: auto;
+				margin-top: 20px;
+			}
+			div.uses-rows {
+				margin-top: 40px;
+			}
+		</style>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/search-noun-74320.png" alt="Search icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Find and Cite Comparanda</h3>
+                <p>Open Context offers a variety of search option ranging from simple fulltext searchs to more sophisticated faceted browse tools. Fulltext searches work like conventional search engines and simply match patterns of characters you typed in your query. Faceted browse provides ways to precisely query data (and metadata) published by Open Context through a point-and-click interface to select different search filters. Common search facets include context, project, common-standard descriptive attributes and descriptive attributes specific to a given project. You can browse through objects by typology, materials, and other attributes defined by data contributors. You can combine fulltext search with faceted browse also.
+                </p>
+                <p>These search tools make it easy to find and examine individual records published by Open Context. The records can describe objects or contexts relevant to your research interests. These may be used and cited for comparative analysis or other applications.</p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+        
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/images-noun-14313.png" alt="Images icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Find and Reuse Images</h3>
+                <p>Contributing researchers often provide rich image (drawings and photographs) to further document datasets. You can find relevant images using the search and faceted browse tools discussed above. The images published by Open Context carry Creative Commons copyright licenses. These licenses give explicit permission to reuse content, including the images, provided you properly cite creators. So you can use images published by Open Context in your own websites, presentations, or in your own publications, provided you cite the image creator with the information provided in the "Suggested Citation" box associated with each image.
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/table-noun-4305.png" alt="Images icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Download Data Tables</h3>
+                <p>Structured data &mdash; meaning data meant for quantification and analysis &mdash; represnts a large fraction of the content published by Open Context. While Open Context offers powerful APIs (<a href="{{ base_url }}/about/services" title="Learn more about Open Context APIs">Application Program Interfaces</a>), many users will prefer to simply download structured data in the CSV format for use with Excel or other software. You can find tables available for download for a given project listed on the project description page (<a href="{{ base_url }}/projects/3">see example</a>).
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+        
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/fieldnotes-noun-34584.png" alt="Fieldnotes icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Search and Read Field Notes</h3>
+                <p>In addition to structured data for quantitative analysis, Open Context often publishes textual field notes. Individual field note documents can be searched with through the text-search boxes. In addition, because field notes typically link to objects and contexts, field notes can be browsed with the <a href="{{ base_url }}/search/?type=documents">faceted search interface</a> according to context and other metadata attributes.
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/web-map-noun-16143.png" alt="Mapping icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Reference Place URIs</h3>
+                <p>Open Context, as a partner of the Digital Index of North American Archaeology (<a href="http://ux.opencontext.org/" title="Find out more about DINAA" target="_blank">DINAA</a>) project publishes archaeological site file records aggregated from US state government and similar sources. Each site file record has its own unique Web URI (Uniform Resource Identifier). You can reference these Web URIs to explicitly relate your data with DINAA and an increasing array of data and collections associated with DINAA. 
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/link-noun-31902.png" alt="Linking icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Reference Descriptive Attribute and Type URIs</h3>
+                <p>When researchers publish data with Open Context, they also publish their recording attributes and types (see this <a href="{{ base_url }}/predicates/86-wei-zhi-bone-zones-present" title="Example descriptive attribute">well-described example</a>). Sharing recording systems, typological systems, and controlled vocabularies are important because many areas of research lack common recording standards. Each descriptive attribute and type published by Open Context can be referenced with a stable URI. It is good practice to reference these URIs to relate new datasets with relevant datasets published by colleagues. Even if one does not agree with every typological category or descriptive attribute, explicitly relating this kind of information can be a key to long term interoperability. 
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/gears-icon-noun-1063.png" alt="Gears icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Programatic Applications</h3>
+                <p>While Open Context has a variety of search and browse interfaces, there are many, many more valuable ways to visualize and explore Open Context published data. Open Context offers a a variety of APIs (<a href="{{ base_url }}/about/services">Application Program Interfaces</a>) that can enable programmers to develop new interfces, visualizations, and analysis tools. We will shortly provide examples of programs and analyses using Open Context APIs.      
+                </p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+        
+        <h5 style="margin-top: 120px;">Icon Credits</h5>
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Information icon by <a target="_blank" href="https://thenounproject.com/term/information/118049/">Jürgen Bauer</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Accept icon by <a target="_blank" href="https://thenounproject.com/term/accept/140275/">Andreas Wikström</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Route / Path icon by <a target="_blank" href="https://thenounproject.com/term/route/212109/">Magicon</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        
+        
+    </div>
+    
+{% endblock %} 
