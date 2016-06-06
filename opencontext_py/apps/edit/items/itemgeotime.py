@@ -312,7 +312,7 @@ class ItemGeoTime():
                   'errors': errors}
         geo_obj = False
         try:
-            geo_obj = json.loads(geo_obj)
+            geo_obj = json.loads(geojson_str)
         except:
             geo_obj = False
             message = 'Cannot parse GeoJSON as JSON'
