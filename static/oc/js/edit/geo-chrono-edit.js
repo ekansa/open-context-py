@@ -97,6 +97,20 @@ function geoChronoEdit(item_type, item_uuid){
 			].join('\n');
 			html_list.push(feat_item);
 		}
+		if (this.edit_features.length < 1){
+			var editfeat = {
+				id: false,
+				properties: {'reference-type': 'specified'},
+				geometry: {id: false}
+			};
+			var feat_html = this.make_edit_feature_html(0, editfeat);
+			var feat_item = [
+				'<li class="list-group-item">',
+				feat_html,
+				'</li>'
+			].join('\n');
+			html_list.push(feat_item);
+		}
 		html_list.push('</ul>');
 		var html = html_list.join('\n');
 		if (document.getElementById('edit-geo-features')) {
