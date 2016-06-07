@@ -22,7 +22,7 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.sorting import LinkEntitySorter
 
 
-# Creates an export table
+# Creates records for an export table
 class Create():
 
     EQUIV_PREDICATES = ['skos:closeMatch',
