@@ -27,6 +27,7 @@ class Entity():
         self.class_uri = False
         self.entity_type = False
         self.data_type = False
+        self.sort = False
         self.alt_label = False
         self.vocab_uri = False
         self.vocabulary = False
@@ -120,8 +121,9 @@ class Entity():
                         oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
                     except Predicate.DoesNotExist:
                         oc_pred = False
-                    if(oc_pred is not False):
+                    if oc_pred is not False:
                         self.data_type = oc_pred.data_type
+                        self.sort = oc_pred.sort
                 elif(manifest_item.item_type == 'subjects' and self.get_context):
                     try:
                         subj = Subject.objects.get(uuid=manifest_item.uuid)
