@@ -1,6 +1,8 @@
 import csv
 import os
+import codecs
 from django.conf import settings
+from django.http import HttpResponse
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
@@ -8,7 +10,17 @@ from opencontext_py.apps.exports.exprecords.uuidlist import UUIDsRowsExportTable
 
 
 class CSVdump():
-    """ Methods for dumping a csv data to a file """
+    """ Methods for dumping a csv data to a file
+
+from opencontext_py.apps.exports.exprecords.dump import CSVdump
+dump = CSVdump()
+dump.dump('b5f81371-35db-4644-b353-3f5648eeb222', 'b5f81371-35db-4644-b353-3f5648eeb222.csv')
+
+from opencontext_py.apps.exports.exprecords.dump import CSVdump
+dump = CSVdump()
+dump.dump('ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'ea16a444-9876-4fe7-8ffb-389b54a7e3a0.csv')    
+    
+    """
 
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
@@ -33,8 +45,9 @@ class CSVdump():
             raise Exception('Crap! incomplete record of fields!')
         else:
             written_rows = 0
-            f = open(self.dir_filename, 'w', newline='', encoding='utf-8')
-            writer = csv.writer(f, quoting=csv.QUOTE_ALL)
+            # f = open(self.dir_filename, 'w', newline='', encoding='utf-8')
+            f = codecs.open(self.dir_filename, 'w', encoding='utf-8')
+            writer = csv.writer(f, dialect='excel', quoting=csv.QUOTE_ALL)
             writer.writerow(self.field_name_row)  # write the field labels in first row
             cells = ExportTableDump(self.table_id).cells
             last_row_num = 1
@@ -58,6 +71,35 @@ class CSVdump():
             if written_rows == self.max_row_number:
                 output = True
         return output
+    
+    def web_dump(self, table_id):
+        """ writes a csv file for a Web dump instead of a file save """
+        self.table_id = table_id
+        self.get_table_fields()
+        self.get_max_row_number()
+        filename = 'oc-table-' + table_id + '.csv'
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="'+ filename + '"'
+        writer = csv.writer(response, dialect='excel', quoting=csv.QUOTE_ALL)
+        writer.writerow(self.field_name_row)  # write the field labels in first row
+        cells = ExportTableDump(self.table_id).cells
+        written_rows = 0
+        last_row_num = 1
+        act_row_dict = LastUpdatedOrderedDict()
+        for cell in cells:
+            if cell['row_num'] > last_row_num:
+                # we've advanced to the next row, time to write the
+                # active row to the csv file
+                ok = self.compose_write_row(writer, act_row_dict)
+                if ok:
+                    written_rows += 1
+                act_row_dict = None
+                act_row_dict = LastUpdatedOrderedDict()
+                last_row_num = cell['row_num']
+            act_row_dict[cell['field_num']] = cell['record']
+        # now right the last row
+        ok = self.compose_write_row(writer, act_row_dict)
+        return response
 
     def compose_write_row(self, writer, act_row_dict):
         """ Takes the row_dict, fills in blank cells,

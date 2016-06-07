@@ -99,10 +99,18 @@
                 {% if item.csv_url != False %}
                 <div style="margin-bottom:20px; min-width:245px;"> 
                 <a role="botton"
-                   class="btn btn-primary btn-lg btn-block" href=" {{ item.csv_url }}"
+                   class="btn btn-primary btn-lg btn-block" href="{{ item.csv_url }}"
                    target="_blank">
                 <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
                             Download CSV ({{ item.csv_size_human }})</a>
+                </div>
+                {%else%}
+                <div style="margin-bottom:20px; min-width:245px;"> 
+                <a role="botton"
+                   class="btn btn-primary btn-lg btn-block" href="{{ base_url }}/tables/{{ item.public_table_id }}.csv"
+                   target="_blank">
+                <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
+                            Download CSV</a>
                 </div>
                 {%endif%}
                 

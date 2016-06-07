@@ -7,6 +7,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exptables.templating import ExpTableTemplating
+from opencontext_py.apps.exports.exprecords.dump import CSVdump
 from django.template import RequestContext, loader
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -130,7 +131,11 @@ def csv_view(request, table_id):
         if 'HTTP_ACCEPT' in request.META:
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
-            return redirect(exp_tt.csv_url, permanent=False)
+            if isinstance(exp_tt.csv_url, str):
+                return redirect(exp_tt.csv_url, permanent=False)
+            else:
+                dump = CSVdump()
+                return dump.web_dump(exp_tt.table_id)
         else:
             # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
