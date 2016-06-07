@@ -289,16 +289,20 @@ class Create():
                 limit_obs = True
         uuids = UUIDListExportTable(self.table_id).uuids
         # seems faster than a select distinct with a join.
+        temp_predicate_uuids = LastUpdatedOrderedDict()
+        max_count = 1  #  useful for sorting
         for uuid in uuids:
             if limit_obs:
                 pred_uuids = Assertion.objects\
                                       .values_list('predicate_uuid', flat=True)\
                                       .filter(uuid=uuid,
-                                              obs_num__in=self.obs_limits)
+                                              obs_num__in=self.obs_limits)\
+                                      .order_by('sort')
             else:
                 pred_uuids = Assertion.objects\
                                       .values_list('predicate_uuid', flat=True)\
-                                      .filter(uuid=uuid)
+                                      .filter(uuid=uuid)\
+                                      .order_by('sort')
             item_preds = LastUpdatedOrderedDict()
             for pred_uuid in pred_uuids:
                 if pred_uuid not in item_preds:
@@ -309,12 +313,40 @@ class Create():
                 if pred_uuid not in self.predicate_uuids:
                     pred_label = self.deref_entity_label(pred_uuid)
                     pred_type = self.entities[pred_uuid].data_type
-                    self.predicate_uuids[pred_uuid] = {'count': count,
+                    pred_sort = self.entities[pred_uuid].sort
+                    if pred_sort is False:
+                        pred_sort = 10000 # default to putting this at the end
+                    temp_predicate_uuids[pred_uuid] = {'count': count,
+                                                       'sort': pred_sort,
                                                        'label': pred_label,
                                                        'type': pred_type}
                 else:
-                    if self.predicate_uuids[pred_uuid]['count'] < count:
-                        self.predicate_uuids[pred_uuid]['count'] = count
+                    if max_count < count:
+                        max_count = count
+                    if temp_predicate_uuids[pred_uuid]['count'] < count:
+                        temp_predicate_uuids[pred_uuid]['count'] = count
+        # now sort the temp_predicates
+        keys = []
+        keyed_pred_uuids = {}
+        i = 0
+        for pred_uuid, pred_data in temp_predicate_uuids.items():
+            make_new_key = True
+            # first sort by the sort value, then by count (more is higher ranking)
+            key = float(pred_data['sort']) +  (1 - (float(pred_data['count']) / float(max_count)))
+            while make_new_key:
+                # make sure the key is unique, so add some for the index
+                i += (1 / 1000000000)
+                key += i
+                if key not in keys:
+                    make_new_key = False
+            keys.append(key)
+            keyed_pred_uuids[key] = pred_uuid
+        # now sort the key and add to the self.predicate_uuids (a sorted dict)
+        for key in sorted(keys):
+            pred_uuid = keyed_pred_uuids[key]
+            # now the self.predicate_uuids are properly sorted by pred sort order
+            # then by count
+            self.predicate_uuids[pred_uuid] = temp_predicate_uuids[pred_uuid]
         return self.predicate_uuids
 
     def get_predicate_link_annotations(self):

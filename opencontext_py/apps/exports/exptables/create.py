@@ -11,6 +11,31 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 
 # Creates export table
 class ExpTabCreate():
+    """
+
+from opencontext_py.apps.exports.exptables.create import ExpTabCreate
+extab_c = ExpTabCreate()
+extab_c.table_id = 'b5f81371-35db-4644-b353-3f5648eeb222'
+extab_c.label = 'Literature Compiled Data for European Aurochs and Domestic Cattle'
+extab_c.include_equiv_ld_literals = False
+extab_c.include_ld_source_values = False
+extab_c.project_uuids = ['1816A043-92E2-471D-A23D-AAC58695D0D3']
+extab_c.class_uris = ['oc-gen:cat-animal-bone']
+extab_c.source_ids = ['ref:1910791260696']
+extab_c.create_table()
+
+from opencontext_py.apps.exports.exptables.create import ExpTabCreate
+extab_c = ExpTabCreate()
+extab_c.table_id = 'ea16a444-9876-4fe7-8ffb-389b54a7e3a0'
+extab_c.label = 'Cranial Specimen Data for European Aurochs and Domestic Cattle'
+extab_c.include_equiv_ld_literals = False
+extab_c.include_ld_source_values = False
+extab_c.project_uuids = ['1816A043-92E2-471D-A23D-AAC58695D0D3']
+extab_c.class_uris = ['oc-gen:cat-animal-bone']
+extab_c.source_ids = ['ref:2288268357961']
+extab_c.create_table()
+
+    """
 
     def __init__(self):
         self.table_id = None
@@ -21,7 +46,7 @@ class ExpTabCreate():
         self.include_ld_obj_uris = True  # include URIs to linked data objects
         self.include_ld_source_values = True  # include original values annoted as
                                               # equivalent to linked data
-        self.boolean_multiple_ld_fields = 'yes'  # for multiple values of linked data
+        self.boolean_multiple_ld_fields = False  # for multiple values of linked data
                                                  # (same predicate, multiple objects)
                                                  # make multiple fields if NOT False.
                                                  # When this value is NOT False, its
@@ -60,9 +85,11 @@ class ExpTabCreate():
         # now get the uuids!
         man_items = Manifest.objects\
                             .filter(**args)\
+                            .order_by('sort')\
                             .iterator()
-        for man in man_item:
+        for man in man_items:
             self.uuid_list.append(man.uuid)
+        return self.uuid_list
 
     def create_table(self):
         """ creates an export table """
@@ -73,6 +100,8 @@ class ExpTabCreate():
             ex_tab = ExpTable()
             ex_tab.table_id = self.table_id
             ex_tab.label = self.label
+            ex_tab.field_count = 0
+            ex_tab.row_count = 0
             ex_tab.save()
             ctab = Create()
             ctab.table_id = self.table_id
@@ -84,7 +113,7 @@ class ExpTabCreate():
             ctab.source_field_label_suffix = self.source_field_label_suffix  # blank suffix for source data field names
             ctab.prep_default_fields()
             ctab.uuidlist = self.uuid_list
-            ctab.process_uuid_list(uuids)
+            ctab.process_uuid_list(self.uuid_list)
             ctab.get_predicate_uuids()  # now prepare to do item descriptions
             ctab.get_predicate_link_annotations()  # even if not showing linked data
             ctab.process_ld_predicates_values()  # only if exporting linked data
