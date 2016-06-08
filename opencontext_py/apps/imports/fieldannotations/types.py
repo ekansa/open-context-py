@@ -13,13 +13,10 @@ from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.sources.unimport import UnImport
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkentities.web import WebLinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
-from opencontext_py.apps.ldata.uberon.api import uberonAPI
-from opencontext_py.apps.ldata.eol.api import eolAPI
-from opencontext_py.apps.ldata.getty.api import gettyAPI
 
 
 # Processes to generate subjects items for an import
@@ -46,9 +43,6 @@ rel_pred = 'skos:exactMatch'
 le_f = 23
 pt = ProcessTypes(source_id)
 pt.make_type_ld_annotations(pred_uuid, type_f, rel_pred, le_f)
-
-
-
 
 
 from opencontext_py.apps.imports.fieldannotations.types import ProcessTypes
@@ -163,7 +157,8 @@ for bad_ent in bad_ents:
                 new_la.object_uri = rel['object_uri']
                 new_la.creator_uuid = ''
                 new_la.save()
-                self.reconcile_link_entities(rel['object_uri'])
+                web_le = WebLinkEntity()
+                web_le.check_add_link_entity(rel['object_uri'])
 
     def make_type_relations(self, sub_type_pred_uuid,
                                   sub_type_f_num,
@@ -310,68 +305,6 @@ for bad_ent in bad_ents:
                                              field_type='late')[:1]
         if len(stop_field_list) > 0:
             self.stop_field = stop_field_list[0]
-
-    def reconcile_link_entities(self, uri):
-        """ checkes to see if an entity exists, if not, it adds
-            it if we recognize the URI to be part of a
-            known vocabulary
-        """
-        try:
-            act_ent = LinkEntity.objects.get(uri=uri)
-        except LinkEntity.DoesNotExist:
-            act_ent = False
-        if act_ent is False:
-            label = False
-            alt_label = False
-            ent_type = 'class'
-            vocab_uri = False
-            if '.geonames.org' in uri:
-                geo_api = GeonamesAPI()
-                vocab_uri = GeonamesAPI().VOCAB_URI
-                labels = geo_api.get_labels_for_uri(uri)
-                if isinstance(labels, dict):
-                    # got the label!
-                    label = labels['label']
-                    alt_label = labels['alt_label']
-            elif 'UBERON' in uri:
-                uber_api = uberonAPI()
-                vocab_uri = uberonAPI().VOCAB_URI
-                label = uber_api.get_uri_label_from_graph(uri)
-                if label is not False:
-                    alt_label = label
-            elif 'eol.org' in uri:
-                eol_api = eolAPI()
-                vocab_uri = eolAPI().VOCAB_URI
-                labels = eol_api.get_labels_for_uri(uri)
-                if isinstance(labels, dict):
-                    # got the label!
-                    label = labels['label']
-                    alt_label = labels['alt_label']
-            elif 'wikipedia.org' in uri:
-                # page name in the URI of the article
-                link_ex = uri.split('/')
-                label = urlunquote(link_ex[-1])
-                label = label.replace('_', ' ')  # underscores in Wikipedia titles
-                alt_label = label
-                vocab_uri = 'http://www.wikipedia.org/'
-            elif 'vocab.getty.edu/aat' in uri:
-                print('Finding: ' + uri)
-                getty_api = gettyAPI()
-                vocab_uri = gettyAPI().VOCAB_URI
-                labels = getty_api.get_labels_for_uri(uri)
-                if isinstance(labels, dict):
-                    # got the label!
-                    label = labels['label']
-                    alt_label = labels['alt_label']
-            if label is not False and vocab_uri is not False:
-                # ok to make an entity then!
-                ent = LinkEntity()
-                ent.uri = uri
-                ent.label = label
-                ent.alt_label = alt_label
-                ent.vocab_uri = vocab_uri
-                ent.ent_type = ent_type
-                ent.save()
 
 
 class TimeEventType():
