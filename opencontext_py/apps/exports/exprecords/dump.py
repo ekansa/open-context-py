@@ -19,7 +19,7 @@ dump.dump('b5f81371-35db-4644-b353-3f5648eeb222', 'b5f81371-35db-4644-b353-3f564
 from opencontext_py.apps.exports.exprecords.dump import CSVdump
 dump = CSVdump()
 dump.dump('ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'ea16a444-9876-4fe7-8ffb-389b54a7e3a0.csv')    
-    
+
     """
 
     def __init__(self):
@@ -47,7 +47,7 @@ dump.dump('ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'ea16a444-9876-4fe7-8ffb-389b5
             written_rows = 0
             # f = open(self.dir_filename, 'w', newline='', encoding='utf-8')
             f = codecs.open(self.dir_filename, 'w', encoding='utf-8')
-            writer = csv.writer(f, dialect='excel', quoting=csv.QUOTE_ALL)
+            writer = csv.writer(f, dialect=csv.excel, quoting=csv.QUOTE_ALL)
             writer.writerow(self.field_name_row)  # write the field labels in first row
             cells = ExportTableDump(self.table_id).cells
             last_row_num = 1
@@ -71,7 +71,7 @@ dump.dump('ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'ea16a444-9876-4fe7-8ffb-389b5
             if written_rows == self.max_row_number:
                 output = True
         return output
-    
+
     def web_dump(self, table_id):
         """ writes a csv file for a Web dump instead of a file save """
         self.table_id = table_id
