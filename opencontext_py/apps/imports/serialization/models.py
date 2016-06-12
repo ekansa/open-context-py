@@ -63,6 +63,10 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
+imp_sj.load_data_in_directory('65-c4')
+
+from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
+imp_sj = ImportSerizializedJSON()
 imp_sj.act_import_dir = '/home/dainst_ekansa'
 imp_sj.load_data_in_directory('85-traces')
 
@@ -115,6 +119,7 @@ imp_sj.load_data_in_directory('86-oracle-bones')
                     # synch different instances of open contex
                     obj.save()
         except Exception as e:
+            print('Problem: ' + str(e))
             all_ok = False
         return all_ok
 

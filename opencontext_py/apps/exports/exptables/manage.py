@@ -27,6 +27,8 @@ class ExpManage():
 
 from opencontext_py.apps.exports.exptables.manage import ExpManage
 ex_man = ExpManage()
+ex_man.reduce_lat_lon_precision('b5f81371-35db-4644-b353-3f5648eeb222')
+ex_man.reduce_lat_lon_precision('ea16a444-9876-4fe7-8ffb-389b54a7e3a0')
 ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
     """
 
@@ -379,6 +381,21 @@ ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
                 if ok_old and ok_new:
                     ex_tab.meta_json[ExpTable.PREDICATE_DUMP] = dump_list
                     ex_tab.save()
+
+    def reduce_lat_lon_precision(self, table_id, places=6):
+        """ gets rid of annoying floating point errors that
+            give too much precision to coordinate numbers
+        """
+        act_fields = [8,9]
+        lat_lons = ExpCell.objects\
+                          .filter(table_id=table_id,
+                                  field_num__in=act_fields)
+        for lat_lon in lat_lons:
+            if len(lat_lon.record) > 0:
+                val = float(lat_lon.record)
+                new_val = round(val, places)
+                lat_lon.record = str(new_val)
+                lat_lon.save()
 
     def dump_tables(self):
         """ Prepares a directory to find import GeoJSON files """
