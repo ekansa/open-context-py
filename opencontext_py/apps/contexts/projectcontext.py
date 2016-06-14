@@ -81,7 +81,7 @@ class ProjectContext():
                 context_key = 'oc-pred:' + sql_dict['slug']
                 context[context_key] = act_pred
         return context
-    
+
     def add_project_predicates_and_annotations_to_graph(self, graph):
         """ gets the project predicates and their
             annotations with database calls
@@ -91,10 +91,11 @@ class ProjectContext():
         if isinstance(pred_sql_dict_list, list):
             for sql_dict in pred_sql_dict_list:
                 act_pred = LastUpdatedOrderedDict()
-                act_pred['@id'] =  'oc-pred:' + sql_dict['slug']
+                act_pred['@id'] = 'oc-pred:' + sql_dict['slug']
                 act_pred['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['predicate_uuid'],
                                                                    'predicates')
                 act_pred['label'] = sql_dict['label']
+                act_pred['uuid'] = sql_dict['predicate_uuid']
                 act_pred['slug'] = sql_dict['slug']
                 if isinstance(sql_dict['class_uri'], str):
                     if len(sql_dict['class_uri']) > 0:
@@ -192,6 +193,7 @@ class ProjectContext():
                     act_type['label'] = sql_dict['type_label']
                     act_type['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['type_slug'],
                                                                        'types')
+                    act_type['uuid'] = sql_dict['type_uuid']
                     act_type['slug'] = sql_dict['type_slug']
                 else:
                     act_type = all_types[type_uri]
