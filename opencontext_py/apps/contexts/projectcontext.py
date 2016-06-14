@@ -45,8 +45,8 @@ class ProjectContext():
         self.pred_sql_dict_list = None
         self.most_recent_date = None
         if uuid is not None:
-            self.dereference_uuid(uuid)
-            self.set_uri_urls(uuid)
+            self.dereference_uuid_or_slug(uuid)
+            self.set_uri_urls(self.uuid)
             if request is not None:
                 self.check_permissions(request)
 
@@ -261,23 +261,24 @@ class ProjectContext():
             item['slug'] = ent.slug
         return item
 
-    def dereference_uuid(self, uuid):
+    def dereference_uuid_or_slug(self, uuid_or_slug):
         """ dereferences the uuid to make sure it is a project """
         man_list = Manifest.objects\
-                           .filter(uuid=uuid,
+                           .filter(Q(uuid=uuid_or_slug) | Q(slug=uuid_or_slug),
                                    item_type='projects')[:1]
         if len(man_list) > 0:
             self.manifest = man_list[0]
+            self.uuid = self.manifest.uuid
         else:
             self.manifest = False
-            self.errors.append('Item ' + uuid + ' not in manifest')
+            self.errors.append('Item ' + uuid_or_slug + ' not in manifest')
         if self.manifest is not False:
             try:
-                self.project_obj = Project.objects.get(uuid=self.manifest.project_uuid)
+                self.project_obj = Project.objects.get(uuid=self.manifest.uuid)
                 self.edit_status = self.project_obj.edit_status
             except Project.DoesNotExist:
                 self.project_obj = False
-                self.edit_status = 0 
+                self.edit_status = 0
 
     def check_permissions(self, request):
         """ checks permissions """
