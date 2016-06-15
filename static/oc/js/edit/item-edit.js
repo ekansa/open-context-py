@@ -154,6 +154,10 @@ function itemEdit(item_type, item_uuid){
 		//this.item_json_ld_obj.getPredicates();
 		var observations = this.item_json_ld_obj.getObservations();
 		var number_obs = observations.length;
+		if (number_obs < 1) {
+			number_obs = 1;
+			this.observations[1] = {id: 1};
+		}
 		var obs_html_list = [];
 		for (var raw_obs_num = 0; raw_obs_num < number_obs; raw_obs_num++) {
 			var obs_num = raw_obs_num + 1;
