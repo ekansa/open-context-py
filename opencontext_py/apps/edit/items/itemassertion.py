@@ -45,6 +45,12 @@ class ItemAssertion():
         self.user_id = False
         self.ok = True
         self.response = False
+        self.global_predicates = {
+            Assertion.PREDICATES_LINK: {'data_type': 'id',
+                                        'label': 'Link'},
+            Assertion.PREDICATES_NOTE: {'data_type': 'xsd:string',
+                                        'label': 'Has note'}
+        }
 
     def add_edit_assertions(self, field_data, item_man=False):
         """ adds or edits assertion data """
@@ -85,17 +91,28 @@ class ItemAssertion():
                                 new_data = resp
                                 note = 'Item Label updated to ' + label
                 else:
-                    data_type = self.get_predicate_data_type(field['predicate_uuid'])
-                    pred_man = self.get_manifest_item(field['predicate_uuid'])
-                    if data_type is False or pred_man is False:
-                        self.ok = False
-                        self.errors['uuid'] = 'Cannot find records for predicate_uuid: ' + field['predicate_uuid']
-                        note = self.errors['uuid']
+                    predicate_uuid = field['predicate_uuid']
+                    data_type = False
+                    pred_label = False
+                    if predicate_uuid in self.global_predicates:
+                        # a global predicate, so get from dictionary set above
+                        data_type = self.global_predicates[predicate_uuid]['data_type']
+                        pred_label = self.global_predicates[predicate_uuid]['label']
+                    else:
+                        # not a global predicate, so look up values
+                        data_type = self.get_predicate_data_type(predicate_uuid)
+                        pred_man = self.get_manifest_item(predicate_uuid)
+                        if data_type is False or pred_man is False:
+                            self.ok = False
+                            self.errors['uuid'] = 'Cannot find records for predicate_uuid: ' + predicate_uuid
+                            note = self.errors['uuid']
+                        else:
+                            pred_label = pred_man.label
                     if self.ok:
                         if 'label' not in field:
-                            field['label'] = pred_man.label
+                            field['label'] = pred_label
                         if 'sort' not in field:
-                            field['sort'] = self.get_predicate_sort(field['predicate_uuid'])
+                            field['sort'] = self.get_predicate_sort(predicate_uuid)
                         if field['sort'] == 0 and 'draft_sort' in field:
                             try:
                                 field['sort'] = int(float(field['draft_sort']))
@@ -113,7 +130,7 @@ class ItemAssertion():
                                 del_objs = Assertion.objects\
                                                     .filter(uuid=item_man.uuid,
                                                             obs_num=field['obs_num'],
-                                                            predicate_uuid=pred_man.uuid)
+                                                            predicate_uuid=predicate_uuid)
                                 for del_obj in del_objs:
                                     drev.assertion_keys.append(del_obj.hash_id)
                                     del_obj.delete()
@@ -560,13 +577,17 @@ class ItemAssertion():
         object_type = data_type
         data_num = None
         data_date = None
-        pred_man = self.get_manifest_item(field['predicate_uuid'])
-        if pred_man is False or data_type is False:
-            # could not find a predicate_uuid!!
-            valid = False
-            self.errors[error_key] = 'Problem with: ' + field['label'] + ' '
-            self.errors[error_key] += '(' + field['predicate_uuid'] + ') is not found.'
-        else:
+        if field['predicate_uuid'] in self.global_predicates:
+            # a global predicate, so get from dictionary set above
+            data_type = self.global_predicates[field['predicate_uuid']]['data_type']
+        else: 
+            pred_man = self.get_manifest_item(field['predicate_uuid'])
+            if pred_man is False or data_type is False:
+                # could not find a predicate_uuid!!
+                valid = False
+                self.errors[error_key] = 'Problem with: ' + field['label'] + ' '
+                self.errors[error_key] += '(' + field['predicate_uuid'] + ') is not found.'
+        if valid:
             # predicate_uuid exists
             str_obj = None
             if data_type == 'xsd:string':
@@ -575,6 +596,7 @@ class ItemAssertion():
                 str_man.source_id = item_man.source_id
                 str_obj = str_man.get_make_string(str(literal_val))
                 object_uuid = str_obj.uuid
+                object_type = data_type
             elif data_type == 'id':
                 # first check is to see if the field_value exists in the manifest
                 val_man = self.get_manifest_item(id_val)

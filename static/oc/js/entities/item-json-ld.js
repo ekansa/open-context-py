@@ -143,6 +143,18 @@ function item_object(item_type, uuid){
 						}
 					}
 				}
+				// now add a preset predicate type
+				var pred_item = {
+					slug_key: 'oc-gen:has-note',
+					slug: 'oc-gen:has-note',
+					id: 'oc-gen:has-note',
+					uuid: 'oc-gen:has-note',
+					label: 'Note',
+					pred_type: 'variable',
+					data_type: 'xsd:string'};
+				output.push(pred_item);
+				this.predicates_by_slug_key[pred_item.slug_key] = pred_item;
+				this.predicates_by_uuid[pred_item.uuid] = pred_item;
 			}
 		}
 		return output;
