@@ -108,6 +108,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.predicatetree',
     'opencontext_py.apps.ocitems.identifiers',
     'opencontext_py.apps.ocitems.obsmetadata',
+    'opencontext_py.apps.ocitems.editorials',
     'opencontext_py.apps.imports.ocmysql',
     'opencontext_py.apps.imports.fields',
     'opencontext_py.apps.imports.fieldannotations',
