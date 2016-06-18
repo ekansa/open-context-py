@@ -98,7 +98,7 @@ class GeoJsonRegions():
         """
         self.get_geotile_scope(solr_tiles)
         if isinstance(self.geotile_scope, str):
-            self.aggregation_depth += round(len(self.geotile_scope)*.75, 0)
+            self.aggregation_depth += round(len(self.geotile_scope)*.66, 0)
             self.aggregation_depth = int(self.aggregation_depth)
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
