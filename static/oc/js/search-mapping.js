@@ -69,6 +69,10 @@ function search_map(json_url, base_search_link) {
 				geodeep = 6;
 			}
 		}
+		// make sure it's no less deep than the tile zoom
+		if (geodeep < response_tile_zoom) {
+			geodeep = response_tile_zoom;
+		}
 		//if geodeep is in the url, use it.
 		if (url_parts['geodeep']) {
 			geodeep = url_parts['geodeep'];
