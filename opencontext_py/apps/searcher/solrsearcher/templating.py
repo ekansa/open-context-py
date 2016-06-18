@@ -26,6 +26,7 @@ class SearchTemplate():
         self.start_num = 0
         self.end_num = 0
         self.items_per_page = 0
+        self.response_tile_zoom = 0
         self.filters = []
         self.paging = {}
         self.num_facets = []
@@ -52,6 +53,8 @@ class SearchTemplate():
                 self.end_num = self.json_ld['startIndex'] + self.items_per_page
                 if self.end_num > self.total_count:
                     self.end_num = self.total_count
+            if 'oc-api:response-tile-zoom' in self.json_ld:
+                self.response_tile_zoom = self.json_ld['oc-api:response-tile-zoom']
             if 'oc-api:active-filters' in self.json_ld:
                 for json_filter in self.json_ld['oc-api:active-filters']:
                     s_filter = SearchFilter()
