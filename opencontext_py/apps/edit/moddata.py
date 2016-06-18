@@ -18,6 +18,17 @@ from opencontext_py.apps.ocitems.persons.models import Person
 
 # This class is used to delete or merge entities
 class DeleteMerge():
+    """ methods to delete and merge entities, including
+        subjects entities
+
+from opencontext_py.apps.edit.moddata import DeleteMerge
+dm = DeleteMerge()
+delete_uuid = '82a9bac8-af13-4a38-8ace-c8087983df9e'
+merge_into_uuid = '19123788-ba01-459f-b5a3-302a4530d0a1'
+dm.merge_by_uuid(delete_uuid, merge_into_uuid)
+
+    """
+
 
     def __init__(self):
         self.delete_uuid = False

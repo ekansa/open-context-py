@@ -23,6 +23,7 @@ class GeoJsonRegions():
         self.max_tile_precision = 0
         self.max_depth = 20
         self.result_depth = self.aggregation_depth
+        self.geotile_scope = None
         self.min_date = False
         self.max_date = False
         try:
@@ -87,7 +88,7 @@ class GeoJsonRegions():
             if add_region:
                 self.geojson_regions.append(record)
 
-    def set_aggregation_depth(self, request_dict_json):
+    def set_aggregation_depth(self, request_dict_json, solr_tiles):
         """ sets the aggregatin depth for
             aggregating geospatial tiles
 
@@ -108,7 +109,11 @@ class GeoJsonRegions():
             req_param_tile = request_dict['disc-geotile'][0]
             req_param_tile = re.sub(r'\|', r'', req_param_tile)  # strip ors
             self.aggregation_depth += len(req_param_tile)
-            filter_request_dict.pop('disc-geotile', None) # so as to set up for filter links
+            filter_request_dict.pop('disc-geotile', None)  # so as to set up for filter links
+        self.get_geotile_scope(solr_tiles)
+        if isinstance(self.geotile_scope, str):
+            self.aggregation_depth += round(len(self.geotile_scope)*.5, 0)
+            self.aggregation_depth = int(self.aggregation_depth)
         if self.aggregation_depth < 3:
             self.aggregation_depth = 3
         elif self.aggregation_depth > self.max_depth:
@@ -120,6 +125,37 @@ class GeoJsonRegions():
                                                    indent=4)
         self.result_depth = self.aggregation_depth
         return self.aggregation_depth
+
+    def get_geotile_scope(self, solr_tiles):
+        """ find the most specific tile shared by the whole dataset """
+        geo_tiles = []
+        for tile_key in solr_tiles[::2]:
+            geo_tiles.append(tile_key)
+        if len(geo_tiles) > 0:
+            test_tile = geo_tiles[0]  # we compare against the first tile
+            tile_len = len(test_tile)  # size of the tile
+            in_all_geotiles = True
+            i = 0
+            while (i < tile_len and in_all_geotiles):
+                if i > 0:
+                    test_val = str(test_tile[0:i])
+                else:
+                    test_val = str(test_tile[0])
+                for geo_tile in geo_tiles:
+                    if i > len(geo_tile):
+                        in_all_geotiles = False
+                    else:
+                        if i > 0:
+                            geo_tile_part = geo_tile[0:i]
+                        else:
+                            geo_tile_part = geo_tile[0]
+                        if test_val != geo_tile_part:
+                            in_all_geotiles = False
+                if in_all_geotiles:
+                    # ok! we have somthing that is still in all tiles
+                    self.geotile_scope = test_val
+                    i += 1
+        return self.geotile_scope
 
     def aggregate_spatial_tiles(self, solr_tiles, aggregation_depth=False):
         """ Aggregates tiles to a depth that gives multiple tiles, since single tile maps

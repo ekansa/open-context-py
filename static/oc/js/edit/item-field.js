@@ -86,6 +86,12 @@ function edit_field(){
 	this.make_field_html = function(){
 		
 		this.initialize();
+		if (this.predicate_uuid == this.note_pred_uuid){
+			// don't show a link to a standard link field
+			this.show_predicate_link = false;
+			this.data_type = 'xsd:string';
+			this.class_uri = 'variable';
+		}
 		if (this.profile_uuid != false) {
 			//we're using this field in an input profile
 			var html = this.make_field_profile_html();
@@ -159,8 +165,7 @@ function edit_field(){
 		}
 		else{
 			var after_pred_note = '';
-		}
-
+		}		
 		var html = [
 		'<td>',
 			this.make_pred_label_html(),
@@ -234,7 +239,8 @@ function edit_field(){
 				var val_html = this.make_context_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.note_pred_uuid) {
-				var val_html = this.make_note_val_html(i, value_obj);
+				// var val_html = this.make_note_val_html(i, value_obj);
+				var val_html = this.make_string_val_html(i, value_obj);
 			}
 			else{
 				if (this.data_type == 'id') {

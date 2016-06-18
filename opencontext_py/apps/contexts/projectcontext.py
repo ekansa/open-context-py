@@ -45,8 +45,8 @@ class ProjectContext():
         self.pred_sql_dict_list = None
         self.most_recent_date = None
         if uuid is not None:
-            self.dereference_uuid(uuid)
-            self.set_uri_urls(uuid)
+            self.dereference_uuid_or_slug(uuid)
+            self.set_uri_urls(self.uuid)
             if request is not None:
                 self.check_permissions(request)
 
@@ -81,7 +81,7 @@ class ProjectContext():
                 context_key = 'oc-pred:' + sql_dict['slug']
                 context[context_key] = act_pred
         return context
-    
+
     def add_project_predicates_and_annotations_to_graph(self, graph):
         """ gets the project predicates and their
             annotations with database calls
@@ -91,10 +91,11 @@ class ProjectContext():
         if isinstance(pred_sql_dict_list, list):
             for sql_dict in pred_sql_dict_list:
                 act_pred = LastUpdatedOrderedDict()
-                act_pred['@id'] =  'oc-pred:' + sql_dict['slug']
+                act_pred['@id'] = 'oc-pred:' + sql_dict['slug']
                 act_pred['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['predicate_uuid'],
                                                                    'predicates')
                 act_pred['label'] = sql_dict['label']
+                act_pred['uuid'] = sql_dict['predicate_uuid']
                 act_pred['slug'] = sql_dict['slug']
                 if isinstance(sql_dict['class_uri'], str):
                     if len(sql_dict['class_uri']) > 0:
@@ -192,6 +193,7 @@ class ProjectContext():
                     act_type['label'] = sql_dict['type_label']
                     act_type['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['type_slug'],
                                                                        'types')
+                    act_type['uuid'] = sql_dict['type_uuid']
                     act_type['slug'] = sql_dict['type_slug']
                 else:
                     act_type = all_types[type_uri]
@@ -259,23 +261,24 @@ class ProjectContext():
             item['slug'] = ent.slug
         return item
 
-    def dereference_uuid(self, uuid):
+    def dereference_uuid_or_slug(self, uuid_or_slug):
         """ dereferences the uuid to make sure it is a project """
         man_list = Manifest.objects\
-                           .filter(uuid=uuid,
+                           .filter(Q(uuid=uuid_or_slug) | Q(slug=uuid_or_slug),
                                    item_type='projects')[:1]
         if len(man_list) > 0:
             self.manifest = man_list[0]
+            self.uuid = self.manifest.uuid
         else:
             self.manifest = False
-            self.errors.append('Item ' + uuid + ' not in manifest')
+            self.errors.append('Item ' + uuid_or_slug + ' not in manifest')
         if self.manifest is not False:
             try:
-                self.project_obj = Project.objects.get(uuid=self.manifest.project_uuid)
+                self.project_obj = Project.objects.get(uuid=self.manifest.uuid)
                 self.edit_status = self.project_obj.edit_status
             except Project.DoesNotExist:
                 self.project_obj = False
-                self.edit_status = 0 
+                self.edit_status = 0
 
     def check_permissions(self, request):
         """ checks permissions """

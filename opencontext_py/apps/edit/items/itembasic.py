@@ -48,6 +48,7 @@ class ItemBasicEdit():
                        'html': False}
         self.response = {}
         self.edit_status = 0
+        self.manifest = False
         if uuid is not False:
             try:
                 self.manifest = Manifest.objects.get(uuid=uuid)
@@ -65,7 +66,7 @@ class ItemBasicEdit():
             try:
                 proj = Project.objects.get(uuid=self.manifest.project_uuid)
                 self.edit_status = proj.edit_status
-            except ModProject.DoesNotExist:
+            except Project.DoesNotExist:
                 proj = False
                 self.edit_status = 0
 

@@ -154,6 +154,10 @@ function itemEdit(item_type, item_uuid){
 		//this.item_json_ld_obj.getPredicates();
 		var observations = this.item_json_ld_obj.getObservations();
 		var number_obs = observations.length;
+		if (number_obs < 1) {
+			number_obs = 1;
+			this.observations[1] = {id: 1};
+		}
 		var obs_html_list = [];
 		for (var raw_obs_num = 0; raw_obs_num < number_obs; raw_obs_num++) {
 			var obs_num = raw_obs_num + 1;
@@ -332,7 +336,13 @@ function itemEdit(item_type, item_uuid){
 				'</div>',
 				'<div class="row">',
 					'<div class="col-xs-6" id="act-button">',
-						
+						'<label>Add Note (Below), or Search Fields (Right):</label>',
+						'<br/>',
+						'<button type="button" class="btn btn-default" aria-label="Left Align" ',
+						' onclick="' + this.obj_name + '.addNoteField(\'' + obs_num + '\')" >',
+						'<span class="glyphicon glyphicon-pencil" aria-hidden="true"></span>',
+						' Add a Note',
+						'</button>',
 					'</div>',
 					'<div class="col-xs-6">',
 					'<p><small>',
@@ -351,6 +361,29 @@ function itemEdit(item_type, item_uuid){
 		body_dom.innerHTML = body_html;
 		$("#myModal").modal('show');
 	}
+	this.addNoteField = function(obs_num){
+		var note_pred ={
+			label: 'Note',
+			data_type: 'xsd:string',
+			uuid: 'oc-gen:has-note',
+			class_uri: 'variable'
+		}
+		if (document.getElementById('act-label')) {
+			document.getElementById('act-label').value = note_pred.label;
+		}
+		if (document.getElementById('act-data-type')) {
+			document.getElementById('act-data-type').value = note_pred.data_type;
+		}
+		if (document.getElementById('act-id')) {
+			document.getElementById('act-id').value = note_pred.uuid;
+		}
+		this.addField_exec(obs_num,
+						   note_pred.uuid,
+						   note_pred.label,
+						   note_pred.class_uri,
+						   note_pred.data_type);
+		$("#myModal").modal('hide');
+	}
 	this.make_add_field_button = function(obs_num){
 		if (this.active_search_entity != false) {
 			if (document.getElementById('act-button')) {
@@ -364,10 +397,8 @@ function itemEdit(item_type, item_uuid){
 				document.getElementById('act-button').innerHTML = html;
 			}
 		}
-		
 	}
 	this.addField = function(obs_num){
-		var dom_ids = this.make_obs_dom_ids(obs_num);
 		if (this.active_search_entity != false) {
 			// we have a search entity to use
 			var predicate_uuid = false;
@@ -377,50 +408,61 @@ function itemEdit(item_type, item_uuid){
 			else if (this.active_search_entity.hasOwnProperty('id')) {
 				var predicate_uuid = this.active_search_entity.id;
 			}
-			var obs = this.observations[obs_num];
-			var field = new edit_field();
-			field.id = this.fields.length;
-			field.project_uuid = this.project_uuid;
-			field.pred_type = this.active_search_entity.class_uri;
-			field.parent_obj_name = this.obj_name;
-			field.obj_name = 'fields[' + field.id + ']';
-			field.add_new_data_row = true;
-			field.edit_new = false;
-			field.edit_uuid = this.item_uuid;
-			field.item_type = this.item_type;
-			field.label = this.active_search_entity.label;
-			field.predicate_uuid = predicate_uuid;
-			field.draft_sort = this.fields.length + 1;
-			field.obs_num = obs_num;
-			field.obs_node = obs['id'];
-			field.data_type = this.active_search_entity.data_type;
-			field.values_obj = [];
-			field.initialize();
-			this.fields.push(field);
-			if (document.getElementById(dom_ids.fields)) {
-				var obs_field_dom = document.getElementById(dom_ids.fields);
-				var obs_field_html = obs_field_dom.innerHTML;
-				var field_html = [
-					'<tr>',
-					'<td>',
-					this.make_field_more_options_button_html(field.id),
-					'</td>',
-					'<td>',
-					this.make_field_sort_button_html(field.id, -1),
-					this.make_field_sort_button_html(field.id, 1),
-					'</td>',
-					field.make_field_html(),
-					'</tr>'
-				].join("\n");
-				obs_field_html += field_html;
-				obs_field_dom.innerHTML = obs_field_html;
-				field.postprocess();
+			else{
+				
 			}
+			this.addField_exec(obs_num,
+							   predicate_uuid,
+							   this.active_search_entity.label,
+							   this.active_search_entity.class_uri,
+							   this.active_search_entity.data_type);
 			//now hide the modal interface
 			$("#myModal").modal('hide');
-		}
+		}	
 		else{
 			alert('no active field');
+		}
+	}
+	this.addField_exec = function(obs_num, predicate_uuid, label, class_uri, data_type){
+		var dom_ids = this.make_obs_dom_ids(obs_num);
+		var obs = this.observations[obs_num];
+		var field = new edit_field();
+		field.id = this.fields.length;
+		field.project_uuid = this.project_uuid;
+		field.pred_type = class_uri;
+		field.parent_obj_name = this.obj_name;
+		field.obj_name = 'fields[' + field.id + ']';
+		field.add_new_data_row = true;
+		field.edit_new = false;
+		field.edit_uuid = this.item_uuid;
+		field.item_type = this.item_type;
+		field.label = label;
+		field.predicate_uuid = predicate_uuid;
+		field.draft_sort = this.fields.length + 1;
+		field.obs_num = obs_num;
+		field.obs_node = obs['id'];
+		field.data_type = data_type;
+		field.values_obj = [];
+		field.initialize();
+		this.fields.push(field);
+		if (document.getElementById(dom_ids.fields)) {
+			var obs_field_dom = document.getElementById(dom_ids.fields);
+			var obs_field_html = obs_field_dom.innerHTML;
+			var field_html = [
+				'<tr>',
+				'<td>',
+				this.make_field_more_options_button_html(field.id),
+				'</td>',
+				'<td>',
+				this.make_field_sort_button_html(field.id, -1),
+				this.make_field_sort_button_html(field.id, 1),
+				'</td>',
+				field.make_field_html(),
+				'</tr>'
+			].join("\n");
+			obs_field_html += field_html;
+			obs_field_dom.innerHTML = obs_field_html;
+			field.postprocess();
 		}
 	}
 	this.make_field_sort_button_html = function(field_id, sort_change){

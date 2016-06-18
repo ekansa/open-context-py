@@ -1,9 +1,9 @@
 import datetime
 from django.utils.html import strip_tags
-from urllib.parse import urlparse, parse_qs, urlunparse
 from django.http import QueryDict
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
@@ -21,6 +21,7 @@ class SearchTemplate():
             self.ok = True
         else:
             self.ok = False
+        self.geotile_scope = ''  # geo-tile applicable to all data
         self.total_count = 0
         self.start_num = 0
         self.end_num = 0
@@ -70,12 +71,22 @@ class SearchTemplate():
                     if ff.id is not False:
                         self.facets.append(ff)
             if 'features' in self.json_ld:
+                geo_tiles = []
                 for feature in self.json_ld['features']:
                     if 'category' in feature:
                         if feature['category'] == 'oc-api:geo-record':
+                            # this is a feature describing a result record
                             geor = ResultRecord()
                             geor.parse_json_record(feature)
                             self.geo_records.append(geor)
+                        elif feature['category'] == 'oc-api:geo-facet':
+                            # this is a feature describing a geo-region facet
+                            if 'geometry' in feature:
+                                if 'id' in feature['geometry']:
+                                    tile_id = feature['geometry']['id']
+                                    tile_id_ex = tile_id.split('-')
+                                    act_tile = tile_id_ex[-1]  # last part of a geometry ID is the tile
+                                    geo_tiles.append(act_tile)
             if 'oc-api:has-results' in self.json_ld:
                 for json_rec in self.json_ld['oc-api:has-results']:
                     rr = ResultRecord()
