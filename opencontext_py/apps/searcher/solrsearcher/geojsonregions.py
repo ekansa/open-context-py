@@ -97,9 +97,6 @@ class GeoJsonRegions():
             level of spatial depth
         """
         self.get_geotile_scope(solr_tiles)
-        if isinstance(self.geotile_scope, str):
-            self.aggregation_depth += round(len(self.geotile_scope)*1, 0)
-            self.aggregation_depth = int(self.aggregation_depth)
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
         filter_request_dict = request_dict
@@ -129,8 +126,31 @@ class GeoJsonRegions():
     def get_geotile_scope(self, solr_tiles):
         """ find the most specific tile shared by the whole dataset """
         geo_tiles = []
+        lat_lons = []
+        max_distance = 0
         for tile_key in solr_tiles[::2]:
-            geo_tiles.append(tile_key)
+            if tile_key[:6] != '211111':
+                # a bit of a hack to exclude display of
+                # erroroneous data without spatial reference
+                geo_tiles.append(tile_key)
+                gm = GlobalMercator()
+                lat_lon = gm.quadtree_to_lat_lon(tile_key)
+                lat_lons.append(lat_lon)
+        i = 0
+        for alat_lon in lat_lons:
+            j = 0
+            for blat_lon in lat_lons:
+                if i != j:
+                    # don't compute distances between the same item
+                    gm = GlobalMercator()
+                    dist = gm.distance_on_unit_sphere(alat_lon[0],
+                                                      alat_lon[1],
+                                                      blat_lon[0],
+                                                      blat_lon[1])
+                    if dist > max_distance:
+                        max_distance = dist
+                j += 1
+            i += 1
         if len(geo_tiles) > 0:
             test_tile = geo_tiles[0]  # we compare against the first tile
             tile_len = len(test_tile)  # size of the tile
@@ -155,6 +175,22 @@ class GeoJsonRegions():
                     # ok! we have somthing that is still in all tiles
                     self.geotile_scope = test_val
                     i += 1
+        """
+        # Ignore this. Not a good way to set aggregation depth
+        if isinstance(self.geotile_scope, str):
+            self.aggregation_depth += round(len(self.geotile_scope)*1, 0)
+            self.aggregation_depth = int(self.aggregation_depth)
+        """
+        gm = GlobalMercator()
+        if max_distance == 0:
+            self.aggregation_depth = 10
+        else:
+            # converts the maximum distance between points into a zoom level
+            # appropriate for tile aggregation. seems to work well.
+            self.aggregation_depth = gm.ZoomForPixelSize(max_distance) + 2
+            # print('now: ' + str(self.aggregation_depth) + ' for ' + str(max_distance))
+            if self.aggregation_depth > self.max_depth:
+                self.aggregation_depth = self.max_depth
         return self.geotile_scope
 
     def aggregate_spatial_tiles(self, solr_tiles, aggregation_depth=False):
