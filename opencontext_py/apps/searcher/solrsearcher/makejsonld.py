@@ -559,12 +559,14 @@ class MakeJsonLd():
             geo_regions.min_date = self.min_date
             geo_regions.max_date = self.max_date
             geo_regions.spatial_context = self.spatial_context
-            geo_regions.set_aggregation_depth(self.request_dict_json)  # also needed for making filter links
+            geo_regions.set_aggregation_depth(self.request_dict_json,
+                                              solr_disc_geotile_facets)  # also needed for making filter links
             geo_regions.process_solr_tiles(solr_disc_geotile_facets)
             if len(geo_regions.geojson_regions) > 0:
                 self.json_ld['type'] = 'FeatureCollection'
                 self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
                 self.json_ld['oc-api:response-tile-zoom'] = geo_regions.result_depth
+                self.json_ld['oc-api:geotile-scope'] = geo_regions.geotile_scope
                 self.json_ld['features'] = geo_regions.geojson_regions
 
     def make_project_geojson(self, solr_json):
