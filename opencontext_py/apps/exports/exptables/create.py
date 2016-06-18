@@ -15,13 +15,13 @@ class ExpTabCreate():
 
 from opencontext_py.apps.exports.exptables.create import ExpTabCreate
 extab_c = ExpTabCreate()
-extab_c.table_id = 'b5f81371-35db-4644-b353-3f5648eeb222'
-extab_c.label = 'Literature Compiled Data for European Aurochs and Domestic Cattle'
+# extab_c.table_id = 'b5f81371-35db-4644-b353-3f5648eeb222'
+extab_c.label = 'Data Table of Biometry for Dog "Burials" from Tell Gezer and Other Sites'
 extab_c.include_equiv_ld_literals = False
 extab_c.include_ld_source_values = False
-extab_c.project_uuids = ['1816A043-92E2-471D-A23D-AAC58695D0D3']
+extab_c.project_uuids = ['646b7034-07b7-4971-8d89-ebe37dda4cd2']
 extab_c.class_uris = ['oc-gen:cat-animal-bone']
-extab_c.source_ids = ['ref:1910791260696']
+# extab_c.source_ids = ['ref:1910791260696']
 extab_c.create_table()
 
 from opencontext_py.apps.exports.exptables.create import ExpTabCreate
