@@ -90,6 +90,7 @@ function edit_field(){
 			// don't show a link to a standard link field
 			this.show_predicate_link = false;
 			this.data_type = 'xsd:string';
+			this.class_uri = 'variable';
 		}
 		if (this.profile_uuid != false) {
 			//we're using this field in an input profile
