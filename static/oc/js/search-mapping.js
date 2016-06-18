@@ -13,7 +13,12 @@ function search_map(json_url, base_search_link) {
 	this.base_search_link = base_search_link;
 	this.json_url = json_url; // base url for geo-json requests
 	this.json_url = this.json_url.replace('&amp;', '&');
-	this.geodeep = 6; // geo-tile zoom level beyond current zoom level
+	if (response_tile_zoom !== undefined) {
+		this.geodeep = response_tile_zoom; // geo-tile zoom level beyond current zoom level
+	}
+	else{
+		this.geodeep = 6; // geo-tile zoom level beyond current zoom level
+	}
 	
 	this.set_geodeep = function() {
 		/* We need to set a reasonable size for the geospatial facet
