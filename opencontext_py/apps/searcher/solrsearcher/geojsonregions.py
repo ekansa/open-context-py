@@ -96,6 +96,10 @@ class GeoJsonRegions():
             with 20 being the most fine-grain, specific
             level of spatial depth
         """
+        self.get_geotile_scope(solr_tiles)
+        if isinstance(self.geotile_scope, str):
+            self.aggregation_depth += round(len(self.geotile_scope)*.66, 0)
+            self.aggregation_depth = int(self.aggregation_depth)
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
         filter_request_dict = request_dict
@@ -110,10 +114,6 @@ class GeoJsonRegions():
             req_param_tile = re.sub(r'\|', r'', req_param_tile)  # strip ors
             self.aggregation_depth += len(req_param_tile)
             filter_request_dict.pop('disc-geotile', None)  # so as to set up for filter links
-        self.get_geotile_scope(solr_tiles)
-        if isinstance(self.geotile_scope, str):
-            self.aggregation_depth += round(len(self.geotile_scope)*.5, 0)
-            self.aggregation_depth = int(self.aggregation_depth)
         if self.aggregation_depth < 3:
             self.aggregation_depth = 3
         elif self.aggregation_depth > self.max_depth:
