@@ -136,21 +136,6 @@ class GeoJsonRegions():
                 gm = GlobalMercator()
                 lat_lon = gm.quadtree_to_lat_lon(tile_key)
                 lat_lons.append(lat_lon)
-        i = 0
-        for alat_lon in lat_lons:
-            j = 0
-            for blat_lon in lat_lons:
-                if i != j:
-                    # don't compute distances between the same item
-                    gm = GlobalMercator()
-                    dist = gm.distance_on_unit_sphere(alat_lon[0],
-                                                      alat_lon[1],
-                                                      blat_lon[0],
-                                                      blat_lon[1])
-                    if dist > max_distance:
-                        max_distance = dist
-                j += 1
-            i += 1
         if len(geo_tiles) > 0:
             test_tile = geo_tiles[0]  # we compare against the first tile
             tile_len = len(test_tile)  # size of the tile
@@ -175,22 +160,39 @@ class GeoJsonRegions():
                     # ok! we have somthing that is still in all tiles
                     self.geotile_scope = test_val
                     i += 1
-        """
-        # Ignore this. Not a good way to set aggregation depth
         if isinstance(self.geotile_scope, str):
             self.aggregation_depth += round(len(self.geotile_scope)*1, 0)
             self.aggregation_depth = int(self.aggregation_depth)
-        """
-        gm = GlobalMercator()
-        if max_distance == 0:
-            self.aggregation_depth = 10
-        else:
-            # converts the maximum distance between points into a zoom level
-            # appropriate for tile aggregation. seems to work well.
-            self.aggregation_depth = gm.ZoomForPixelSize(max_distance) + 2
-            # print('now: ' + str(self.aggregation_depth) + ' for ' + str(max_distance))
-            if self.aggregation_depth > self.max_depth:
-                self.aggregation_depth = self.max_depth
+            if self.aggregation_depth < 6:
+                self.aggregation_depth = 6
+        if self.aggregation_depth > 6:
+            i = 0
+            for alat_lon in lat_lons:
+                j = 0
+                for blat_lon in lat_lons:
+                    if i != j:
+                        # don't compute distances between the same item
+                        gm = GlobalMercator()
+                        dist = gm.distance_on_unit_sphere(alat_lon[0],
+                                                          alat_lon[1],
+                                                          blat_lon[0],
+                                                          blat_lon[1])
+                        if dist > max_distance:
+                            max_distance = dist
+                    j += 1
+                i += 1
+            gm = GlobalMercator()
+            if max_distance == 0:
+                self.aggregation_depth = 10
+            else:
+                # converts the maximum distance between points into a zoom level
+                # appropriate for tile aggregation. seems to work well.
+                self.aggregation_depth = gm.ZoomForPixelSize(max_distance) + 2
+                # print('now: ' + str(self.aggregation_depth) + ' for ' + str(max_distance))
+                if self.aggregation_depth > self.max_depth:
+                    self.aggregation_depth = self.max_depth
+                if self.aggregation_depth < 6:
+                    self.aggregation_depth = 6
         return self.geotile_scope
 
     def aggregate_spatial_tiles(self, solr_tiles, aggregation_depth=False):
