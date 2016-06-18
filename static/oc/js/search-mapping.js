@@ -3,7 +3,7 @@
  * from the GeoJSON API service
  */
 
-function search_map(json_url, base_search_link) {
+function search_map(json_url, base_search_link, response_tile_zoom) {
 	
 	var map_dom_id = 'map';
 	var rows = 20; // default number of rows
