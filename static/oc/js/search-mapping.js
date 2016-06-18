@@ -31,48 +31,6 @@ function search_map(json_url, base_search_link) {
 			geodeep = 4;
 			tile_constrained = true;
 		}
-		else{
-			// no explicit geotile filter, but there maybe other filters
-			// that would make different geodeep zooms more appropriate
-			
-			// first remove start, rows params, since these aren't filters
-			var check_url = removeURLParameter(this.json_url, 'start');
-			check_url = removeURLParameter(check_url, 'rows');
-			check_url = check_url.replace('.json', '');
-			// now remove the last char if it is a '?'
-			var check_len = check_url.length;
-			var last_char = check_url.charAt(check_len - 1);
-			if (last_char == '?') {
-				check_url = check_url.replace('?', '');
-			} 
-			var url_last = check_url.replace((base_url + this.base_search_link), '');
-			url_last = url_last.trim();
-			if (url_last.length > 0) {
-				geodeep += 1;
-				var qindex = url_last.indexOf('?');
-				if (qindex > 0) {
-					url_last = url_last.substr(0, qindex);
-				}
-				if (url_last.length > 0) {
-					geodeep += 1;
-					var slash_count = (url_last.match(/\//g) || []).length;
-					if (slash_count > 0) {
-						// we've got a context path, so ask for
-						// more tile depth
-						geodeep += slash_count + 2;
-					}
-				}
-			}
-			else{
-				// use the default tile depth, since there's no
-				// search filter in the request URL
-				geodeep = 6;
-			}
-		}
-		// make sure it's no less deep than the tile zoom
-		if (geodeep < response_tile_zoom) {
-			geodeep = response_tile_zoom;
-		}
 		//if geodeep is in the url, use it.
 		if (url_parts['geodeep']) {
 			geodeep = url_parts['geodeep'];
