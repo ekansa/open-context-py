@@ -18,10 +18,10 @@ class ExpCell(models.Model):
         saves with created time if None
         """
         if self.rec_id is None:
-            self.rec_id = self.table_id + '-' + str(self.field_num) + '-' + str(self.row_num)
+            self.rec_id = str(self.row_num) + '-' + str(self.field_num) + '-' + self.table_id 
         else:
             if len(self.rec_id) < 4:
-                self.rec_id = self.table_id + '-' + str(self.field_num) + '-' + str(self.row_num)
+                self.rec_id = str(self.row_num) + '-' + str(self.field_num) + '-' + self.table_id  
         super(ExpCell, self).save(*args, **kwargs)
 
     class Meta:
