@@ -123,19 +123,49 @@ class GeoJsonRegions():
         self.result_depth = self.aggregation_depth
         return self.aggregation_depth
 
+    def get_min_max(self, lat_lon_min_max, bounds):
+        """ sets a minimum or maximum value """
+        i = 0
+        # lat the bottom right and top left coordinates
+        lat_lons = [
+            [bounds[0], bounds[1]],
+            [bounds[2], bounds[3]]
+        ]
+        for lat_lon in lat_lons:
+            i = 0
+            for coord in lat_lon:
+                if lat_lon_min_max[i]['min'] is None:
+                    lat_lon_min_max[i]['min'] = coord
+                else:
+                    if coord < lat_lon_min_max[i]['min']:
+                        lat_lon_min_max[i]['min'] = coord
+                if lat_lon_min_max[i]['max'] is None:
+                    lat_lon_min_max[i]['max'] = coord
+                else:
+                    if coord > lat_lon_min_max[i]['max']:
+                        lat_lon_min_max[i]['max'] = coord
+                i += 1
+        return lat_lon_min_max
+
     def get_geotile_scope(self, solr_tiles):
         """ find the most specific tile shared by the whole dataset """
         geo_tiles = []
-        lat_lons = []
+        bound_list = []
         max_distance = 0
+        lat_lon_min_max = [
+            {'min': None, 'max': None},
+            {'min': None, 'max': None}
+        ]
         for tile_key in solr_tiles[::2]:
             if tile_key[:6] != '211111':
                 # a bit of a hack to exclude display of
                 # erroroneous data without spatial reference
                 geo_tiles.append(tile_key)
                 gm = GlobalMercator()
-                lat_lon = gm.quadtree_to_lat_lon(tile_key)
-                lat_lons.append(lat_lon)
+                bounds = gm.quadtree_to_lat_lon(tile_key)
+                lat_lon_min_max = self.get_min_max(lat_lon_min_max,
+                                                   bounds)
+                bound_list.append(bounds)
         if len(geo_tiles) > 0:
             test_tile = geo_tiles[0]  # we compare against the first tile
             tile_len = len(test_tile)  # size of the tile
@@ -165,23 +195,12 @@ class GeoJsonRegions():
             self.aggregation_depth = int(self.aggregation_depth)
             if self.aggregation_depth < 6:
                 self.aggregation_depth = 6
-        if self.aggregation_depth > 6:
-            i = 0
-            for alat_lon in lat_lons:
-                j = 0
-                for blat_lon in lat_lons:
-                    if i != j:
-                        # don't compute distances between the same item
-                        gm = GlobalMercator()
-                        dist = gm.distance_on_unit_sphere(alat_lon[0],
-                                                          alat_lon[1],
-                                                          blat_lon[0],
-                                                          blat_lon[1])
-                        if dist > max_distance:
-                            max_distance = dist
-                    j += 1
-                i += 1
+        if self.aggregation_depth > 6 and len(bound_list) >= 2:
             gm = GlobalMercator()
+            max_distance = gm.distance_on_unit_sphere(lat_lon_min_max[0]['min'],
+                                                      lat_lon_min_max[1]['min'],
+                                                      lat_lon_min_max[0]['max'],
+                                                      lat_lon_min_max[1]['max'])
             if max_distance == 0:
                 self.aggregation_depth = 10
             else:
