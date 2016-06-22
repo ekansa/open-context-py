@@ -195,7 +195,7 @@ class GeoJsonRegions():
             self.aggregation_depth = int(self.aggregation_depth)
             if self.aggregation_depth < 6:
                 self.aggregation_depth = 6
-        if self.aggregation_depth > 6 and len(bound_list) >= 2:
+        if self.aggregation_depth >= 6 and len(bound_list) >= 2:
             gm = GlobalMercator()
             max_distance = gm.distance_on_unit_sphere(lat_lon_min_max[0]['min'],
                                                       lat_lon_min_max[1]['min'],
@@ -206,7 +206,7 @@ class GeoJsonRegions():
             else:
                 # converts the maximum distance between points into a zoom level
                 # appropriate for tile aggregation. seems to work well.
-                self.aggregation_depth = gm.ZoomForPixelSize(max_distance) + 2
+                self.aggregation_depth = gm.ZoomForPixelSize(max_distance) + 3
                 # print('now: ' + str(self.aggregation_depth) + ' for ' + str(max_distance))
                 if self.aggregation_depth > self.max_depth:
                     self.aggregation_depth = self.max_depth
