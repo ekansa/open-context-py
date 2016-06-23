@@ -35,7 +35,7 @@ class SolrSearch():
 
     #facet fields for different item_types
     ITEM_TYPE_FACETFIELDS = {'projects': ['dc_terms_subject___pred_id',
-                                          'dc_terms_temporal___pred_id',
+                                          # 'dc_terms_temporal___pred_id',
                                           'dc_terms_spatial___pred_id',
                                           'dc_terms_coverage___pred_id'],
                              'subjects': ['oc_gen_subjects___pred_id']}
