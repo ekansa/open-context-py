@@ -48,6 +48,8 @@ class ItemBasicEdit():
                        'html': False}
         self.response = {}
         self.edit_status = 0
+        self.default_language = 'en'  # default language
+        self.default_script = 'la'  # default script
         self.manifest = False
         if uuid is not False:
             try:
@@ -75,54 +77,74 @@ class ItemBasicEdit():
             except for subjects
         """
         ok = True
-        old_label = self.manifest.label
-        self.manifest.label = label
-        self.manifest.save()
-        self.manifest.revised_save()
         note = ''
-        if self.manifest.item_type == 'projects':
-            try:
-                cobj = Project.objects.get(uuid=self.manifest.uuid)
-                cobj.label = label
-                cobj.save()
-                ok = True
-            except Project.DoesNotExist:
-                self.errors['uuid'] = self.manifest.uuid + ' not in projects'
-                ok = False
-        elif self.manifest.item_type == 'subjects':
-            # we need to adjust context paths for this subject + its children
-            subj_gen = SubjectGeneration()
-            subj_gen.generate_save_context_path_from_uuid(self.manifest.uuid)
-            note = str(subj_gen.changes) + ' items affected'
-        elif self.manifest.item_type == 'tables':
-            ex_id = ExpTableIdentifiers()
-            ex_id.make_all_identifiers(self.manifest.uuid)
-            try:
-                cobj = ExpTable.objects.get(table_id=ex_id.table_id)
-                cobj.label = label
-                cobj.save()
-                ok = True
-            except ExpTable.DoesNotExist:
-                self.errors['uuid'] = ex_id.table_id + ' not in tables'
-                ok = False
-        elif self.manifest.item_type == 'persons':
-            # we need to adjust person's combined name
-            try:
-                cobj = Person.objects.get(uuid=self.manifest.uuid)
-                cobj.combined_name = label
-                if 'given_name' in post_data:
-                    cobj.given_name = post_data['given_name']
-                if 'surname' in post_data:
-                    cobj.surname = post_data['surname']
-                if 'initials' in post_data:
-                    cobj.initials = post_data['initials']
-                if 'mid_init' in post_data:
-                    cobj.mid_init = post_data['mid_init']
-                cobj.save()
-                ok = True
-            except Person.DoesNotExist:
-                self.errors['uuid'] = self.manifest.uuid + ' not in projects'
-                ok = False
+        old_label = self.manifest.label
+        if 'language' in post_data:
+            language = post_data['language']
+        else:
+            language = self.default_language
+        if 'script' in post_data:
+            script = post_data['script']
+        else:
+            script = self.default_script
+        if language != self.default_language:
+            # editing another language, not the default
+            key = language
+            if script != self.default_script \
+               and script != language:
+                key = language + '-' + script
+            self.manifest.localized_json[key] = label
+            self.manifest.save()
+            self.manifest.revised_save()
+        else:
+            # editing the default language
+            self.manifest.label = label
+            self.manifest.save()
+            self.manifest.revised_save()
+            # only do additional label changes in default language
+            if self.manifest.item_type == 'projects':
+                try:
+                    cobj = Project.objects.get(uuid=self.manifest.uuid)
+                    cobj.label = label
+                    cobj.save()
+                    ok = True
+                except Project.DoesNotExist:
+                    self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                    ok = False
+            elif self.manifest.item_type == 'subjects':
+                # we need to adjust context paths for this subject + its children
+                subj_gen = SubjectGeneration()
+                subj_gen.generate_save_context_path_from_uuid(self.manifest.uuid)
+                note = str(subj_gen.changes) + ' items affected'
+            elif self.manifest.item_type == 'tables':
+                ex_id = ExpTableIdentifiers()
+                ex_id.make_all_identifiers(self.manifest.uuid)
+                try:
+                    cobj = ExpTable.objects.get(table_id=ex_id.table_id)
+                    cobj.label = label
+                    cobj.save()
+                    ok = True
+                except ExpTable.DoesNotExist:
+                    self.errors['uuid'] = ex_id.table_id + ' not in tables'
+                    ok = False
+            elif self.manifest.item_type == 'persons':
+                # we need to adjust person's combined name
+                try:
+                    cobj = Person.objects.get(uuid=self.manifest.uuid)
+                    cobj.combined_name = label
+                    if 'given_name' in post_data:
+                        cobj.given_name = post_data['given_name']
+                    if 'surname' in post_data:
+                        cobj.surname = post_data['surname']
+                    if 'initials' in post_data:
+                        cobj.initials = post_data['initials']
+                    if 'mid_init' in post_data:
+                        cobj.mid_init = post_data['mid_init']
+                    cobj.save()
+                    ok = True
+                except Person.DoesNotExist:
+                    self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                    ok = False
         # now reindex for solr, including child items impacted by the changes
         if self.manifest.item_type != 'tables' and self.edit_status > 0:
             sri = SolrReIndex()

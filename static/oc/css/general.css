@@ -230,3 +230,12 @@ div.f-count {
 .sep-list li {
 		margin-bottom: 18px;
 }
+nav.top-search {
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
+}
+nav.lower-search {
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
+	margin-bottom: 0px;
+}

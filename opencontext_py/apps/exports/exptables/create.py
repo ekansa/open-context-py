@@ -24,6 +24,15 @@ extab_c.class_uris = ['oc-gen:cat-animal-bone']
 # extab_c.source_ids = ['ref:1910791260696']
 extab_c.create_table()
 
+
+from opencontext_py.apps.exports.exptables.models import ExpTable
+from opencontext_py.apps.exports.exprecords.models import ExpCell
+from opencontext_py.apps.exports.expfields.models import ExpField
+rem_tabs = ['ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'b5f81371-35db-4644-b353-3f5648eeb222']
+ExpTable.objects.filter(table_id__in=rem_tabs).delete()
+ExpField.objects.filter(table_id__in=rem_tabs).delete()
+ExpCell.objects.filter(table_id__in=rem_tabs).delete()
+
 from opencontext_py.apps.exports.exptables.create import ExpTabCreate
 extab_c = ExpTabCreate()
 extab_c.table_id = 'ea16a444-9876-4fe7-8ffb-389b54a7e3a0'
@@ -34,6 +43,18 @@ extab_c.project_uuids = ['1816A043-92E2-471D-A23D-AAC58695D0D3']
 extab_c.class_uris = ['oc-gen:cat-animal-bone']
 extab_c.source_ids = ['ref:2288268357961']
 extab_c.create_table()
+
+from opencontext_py.apps.exports.exptables.create import ExpTabCreate
+extab_c = ExpTabCreate()
+extab_c.table_id = 'b5f81371-35db-4644-b353-3f5648eeb222'
+extab_c.label = 'Postcranial Data for European Aurochs and Domestic Cattle'
+extab_c.include_equiv_ld_literals = False
+extab_c.include_ld_source_values = False
+extab_c.project_uuids = ['1816A043-92E2-471D-A23D-AAC58695D0D3']
+extab_c.class_uris = ['oc-gen:cat-animal-bone']
+extab_c.source_ids = ['ref:1910791260696', 'ref:1569687538629']
+extab_c.create_table()
+
 
     """
 
