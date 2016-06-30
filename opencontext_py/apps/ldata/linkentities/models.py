@@ -1,5 +1,7 @@
 import re
 import reversion  # version control object
+import collections
+from jsonfield import JSONField  # json field for complex objects
 from django.db import models
 from unidecode import unidecode
 from django.template.defaultfilters import slugify
@@ -16,6 +18,9 @@ class LinkEntity(models.Model):
     vocab_uri = models.CharField(max_length=200)
     ent_type = models.CharField(max_length=50)
     updated = models.DateTimeField(auto_now=True)
+    localized_json = JSONField(default={},
+                               load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                               blank=True)
 
     def clean_uri(self, uri):
         """
