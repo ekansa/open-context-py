@@ -5,6 +5,9 @@
 
 function edit_field(){
 	
+	this.localize_dom_id = 'localize-modal';
+	this.localize_title_dom_id = 'localize-title';
+	this.localize_inter_dom_id = 'localize-interface';
 	this.edit_uuid = false;  //uuid of the item being edited
 	this.edit_new = false;  //is the item new (true, not created) or false (being edited)
 	this.item_type = false;
@@ -921,13 +924,57 @@ function edit_field(){
 				'<div ' + style + ' >',
 				'<button title="' + title + '" ',
 				'class="btn btn-info btn-xs" ',
-				'onclick="' + this.name + '.localizeFieldValue(\'' + value_num + '\');">',
+				'onclick="' + this.name + '.localizeInterface(\'' + value_num + '\');">',
 				'<span class="glyphicon glyphicon-flag"></span>',
 				'</button>',
 				'</div>',
 				].join('\n');
 		}
 		return button_html;
+	}
+	this.localizeInterface = function(value_num){
+		var inter_dom = document.getElementById(this.localize_inter_dom_id);
+		var title_dom = document.getElementById(this.localize_title_dom_id);
+		title_dom.innerHTML = 'Add Translation for <em>' + this.label + '</em>';
+		var interface_html = this.make_localize_interface_html(value_num);
+		inter_dom.innerHTML = interface_html;
+		$("#" + this.localize_dom_id).modal('show');
+	}
+	this.make_localize_interface_html = function(value_num){
+		// makes localizaton html
+		var html = [
+			'<label>Select a Language</label><br/>',
+			'<div class="row">',
+			'<div class="col-xs-5">',
+			this.make_localize_selection_html(value_num),
+			'</div>',
+			'<div class="col-xs-7">',
+			'<small>Select the language of the translation</small>',
+			'</div>',
+			'</div>',
+		].join('\n');
+		return html;
+	}
+	this.make_localize_selection_html = function(value_num){
+		// makes the selection for lanugages html
+		var dom_ids = this.make_field_val_domids(value_num);
+		var lang_obj = new multilingual();
+		var html_list = [];
+		var sel_html = '<select id="' + dom_ids.lang_sel + '" class="form-control">';
+		html_list.push(sel_html);
+		for (var key in lang_obj.languages) {
+			if (lang_obj.languages.hasOwnProperty(key)) {
+				var item = lang_obj.languages[key];
+				var opt_html = '<option value="' + key + '">';
+				opt_html += item['localized'];
+				opt_html += ' (' + item['label'] + ')';
+				opt_html += '</option>';
+				html_list.push(opt_html);
+			}
+		}
+		html_list.push('</select>');
+		var html = html_list.join('\n');
+		return html;
 	}
 	this.make_val_delete_button_html = function(value_num){
 		if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
@@ -1031,7 +1078,9 @@ function edit_field(){
 			id_len: (value_num + '-field-id-len-' + this.id), //for label comosition, id length
 			sug_alert: (value_num + '-field-sug-alert-' + this.id), //for label comosition, id length
 			sug_label: (value_num + '-field-sug-label-' + this.id), //suggested label
-			focal: (value_num + '-field-fcl-' + this.id)  //for scrolling to a part of the page
+			focal: (value_num + '-field-fcl-' + this.id),  //for scrolling to a part of the page
+			lang_out: (value_num + '-field-fcl-' + this.id),  //for language adding options
+			lang_sel: (value_num + '-field-langsel-' + this.id)  //for language selection input
 		};
 		return dom_ids;	
 	}

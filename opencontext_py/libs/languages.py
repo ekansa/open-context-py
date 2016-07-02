@@ -24,6 +24,12 @@ class Languages():
                 'script_code': 'la',
                 'default_key': 'de'
             },
+            'el': {
+                'label': 'Greek',
+                'localized': 'ελληνικά',
+                'script_code': 'el',
+                'default_key': 'el'
+            },
             'en': {
                 'label': 'English',
                 'localized': 'English',

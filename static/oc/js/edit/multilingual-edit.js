@@ -1,15 +1,7 @@
 /*
  * Functions to edit multiple language strings
  */
-function multilingualEdit(){
-	this.project_uuid = project_uuid;
-	this.item_uuid = item_uuid;
-	this.item_type = item_type;
-	this.predicate = false;
-	this.parent_obj_name = false;
-	this.obj_name = 'multilingual';
-	this.name = this.obj_name;
-	this.item_json_ld_obj = false;
+function multilingual(){
 	this.language_label = 'English';
 	this.language_localized = 'English';
 	this.language_code = 'en';
@@ -29,6 +21,12 @@ function multilingualEdit(){
 			'script_code': 'la',
 			'default_key': 'de'
 		},
+		'el': {
+            'label': 'Greek',
+            'localized': 'ελληνικά',
+            'script_code': 'el',
+            'default_key': 'el'
+        },
 		'en': {
 			'label': 'English',
 			'localized': 'English',
@@ -78,5 +76,4 @@ function multilingualEdit(){
 			'default_key': 'zh'
 		}
 	}
-	
 }
