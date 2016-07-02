@@ -361,6 +361,34 @@ def add_edit_item_assertion(request, uuid):
 @cache_control(no_cache=True)
 @transaction.atomic()
 @reversion.create_revision()
+def add_edit_string_translation(request, string_uuid):
+    """ Handles POST requests to add a containment assertion for an item """
+    item_edit = ItemBasicEdit(False, False)
+    string_exists = item_edit.check_string_edit(string_uuid, request)
+    if string_exists:
+        if request.method == 'POST':
+            if item_edit.edit_permitted or request.user.is_superuser:
+                item_ass = ItemAssertion()
+                json_output = item_ass.add_edit_string_translation(string_uuid,
+                                                                   request.POST)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
 def add_edit_item_containment(request, uuid):
     """ Handles POST requests to add a containment assertion for an item """
     item_edit = ItemBasicEdit(uuid, request)

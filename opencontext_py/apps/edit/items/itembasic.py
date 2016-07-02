@@ -5,6 +5,7 @@ import lxml.html
 from django.db import models
 from django.db.models import Q
 from django.core.cache import caches
+from opencontext_py.libs.languages import Languages
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -48,8 +49,6 @@ class ItemBasicEdit():
                        'html': False}
         self.response = {}
         self.edit_status = 0
-        self.default_language = 'en'  # default language
-        self.default_script = 'la'  # default script
         self.manifest = False
         if uuid is not False:
             try:
@@ -72,6 +71,26 @@ class ItemBasicEdit():
                 proj = False
                 self.edit_status = 0
 
+    def check_string_edit(self, string_uuid, requests=False):
+        """ checks to see if a string exists, also determines
+            if the user has permissions to edit
+        """
+        ok = False
+        try:
+            str_obj = OCstring.objects.get(uuid=string_uuid)
+        except OCstring.DoesNotExist:
+            str_obj = False
+        if str_obj is not False:
+            ok = True
+            if request is not False:
+                # check to make sure edit permissions OK
+                pp = ProjectPermissions(str_obj.project_uuid)
+                self.edit_permitted = pp.edit_allowed(request)
+            else:
+                # default to no editting permissions
+                self.edit_permitted = False
+        return ok
+
     def update_label(self, label, post_data):
         """ Updates an item's label. Generally straightforward
             except for subjects
@@ -82,17 +101,15 @@ class ItemBasicEdit():
         if 'language' in post_data:
             language = post_data['language']
         else:
-            language = self.default_language
+            language = Languages.DEFAULT_LANGUAGE
         if 'script' in post_data:
             script = post_data['script']
         else:
-            script = self.default_script
-        if language != self.default_language:
+            script = None
+        if language != Languages.DEFAULT_LANGUAGE:
             # editing another language, not the default
-            key = language
-            if script != self.default_script \
-               and script != language:
-                key = language + '-' + script
+            lan_obj = Languages()
+            key = lan_obj.get_language_script_key(language, script)
             self.manifest.localized_json[key] = label
             self.manifest.save()
             self.manifest.revised_save()

@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Q
 from django.conf import settings
 from django.core.cache import caches
+from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -45,11 +46,15 @@ class ItemAssertion():
         self.user_id = False
         self.ok = True
         self.response = False
+        self.default_language = 'en'  # default language
+        self.default_script = 'la'  # default script
         self.global_predicates = {
             Assertion.PREDICATES_LINK: {'data_type': 'id',
                                         'label': 'Link'},
             Assertion.PREDICATES_NOTE: {'data_type': 'xsd:string',
-                                        'label': 'Has note'}
+                                        'label': 'Has note'},
+            'skos:note': {'data_type': 'xsd:string',
+                          'label': 'Has note'}
         }
 
     def add_edit_assertions(self, field_data, item_man=False):
@@ -691,6 +696,84 @@ class ItemAssertion():
         if record in booleans:
             output = booleans[record]
         return output
+
+    def add_edit_string_translation(self, string_uuid, post_data):
+        """ adds or edits assertion data """
+        self.ok = True
+        note = ''
+        if 'language' in post_data:
+            language = post_data['language']
+        else:
+            self.ok = False
+            language = None
+            error = 'POST data needs a "language" parameter'
+            self.errors['language'] = error
+            note += error
+        if 'script' in post_data:
+            script = post_data['script']
+        else:
+            script = None
+        if 'content' in post_data:
+            trans_text = post_data['content']
+        else:
+            self.ok = False
+            error = 'POST data needs a "content" parameter'
+            self.errors['content'] = error
+            note += error
+        if self.ok:
+            self.ok = self.add_translation(string_uuid,
+                                           language,
+                                           script,
+                                           trans_text)
+            if self.ok is False:
+                error = 'Could not find string content to edit for "' + str(string_uuid) + '".'
+                self.errors['uuid'] = error
+                note += error
+        if self.ok:
+            # now clear the cache a change was made
+            self.clear_caches()
+        self.response = {'action': 'add-edit-string-translation',
+                         'ok': self.ok,
+                         'change': {'string_uuid': string_uuid,
+                                    'language': language,
+                                    'script': script}}
+        return self.response
+
+    def add_translation(self,
+                        string_uuid,
+                        language,
+                        script,
+                        trans_text
+                        ):
+        """ adds translation to a string
+        """
+        ok = False
+        trans_text = str(trans_text)
+        trans_text = trans_text.strip()
+        try:
+            str_obj = OCstring.objects.get(uuid=string_uuid)
+        except OCstring.DoesNotExist:
+            str_obj = False
+        if str_obj is not False:
+            # found the string object
+            if language != Languages.DEFAULT_LANGUAGE:
+                # editing in another language, so save to localization object
+                lan_obj = Languages()
+                key = lan_obj.get_language_script_key(language, script)
+                if len(trans_text) > 1:
+                    # we have non-blank translation text
+                    str_obj.localized_json[key] = trans_text
+                else:
+                    if key in str_obj.localized_json:
+                        # we're deleting the translation, since
+                        # the translation text is blank
+                        str_obj.localized_json.pop(key, None)
+                str_obj.save()
+            else:
+                str_obj.content = trans_text
+                str_obj.save()
+            ok = True
+        return ok
 
     def add_description_note(self, note):
         """ adds a description note about a new item

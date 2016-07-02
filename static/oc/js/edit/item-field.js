@@ -343,6 +343,7 @@ function edit_field(){
 							'<div class="row">',
 								'<div class="' + this.value_del_col_class + '">',
 								this.make_val_delete_button_html(i),
+								this.make_val_translate_button_html(i),
 								'</div>',
 								'<div class="' + this.value_sort_col_class + '">',
 								sort_buttons,
@@ -905,6 +906,26 @@ function edit_field(){
 			'</button>',
 			'</div>'
 			].join('\n');
+		}
+		return button_html;
+	}
+	this.make_val_translate_button_html = function(value_num){
+		if (this.data_type != 'xsd:string') {
+			// no button for translating non-string values
+			var button_html = '';
+		}
+		else{
+			var style = ' style="margin-top: 5px;" ';
+			var title = 'Translate / localize this text';
+			var button_html = [
+				'<div ' + style + ' >',
+				'<button title="' + title + '" ',
+				'class="btn btn-info btn-xs" ',
+				'onclick="' + this.name + '.localizeFieldValue(\'' + value_num + '\');">',
+				'<span class="glyphicon glyphicon-flag"></span>',
+				'</button>',
+				'</div>',
+				].join('\n');
 		}
 		return button_html;
 	}
