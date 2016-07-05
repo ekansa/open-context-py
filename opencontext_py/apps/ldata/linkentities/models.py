@@ -131,7 +131,7 @@ class LinkEntityGeneration():
                         'http://creativecommons.org/publicdomain': 'cc-publicdomain',
                         'http://n2t.net/ark:/99152/p0': 'periodo-p0',
                         'http://vocab.getty.edu/aat': 'getty-aat',
-                        'http://nomisma.org/ontology#': 'nmo',
+                        'http://nomisma.org/ontology': 'nmo',
                         'http://numismatics.org/ocre/id': 'ans-ochre',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
