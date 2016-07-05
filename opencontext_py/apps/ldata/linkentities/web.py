@@ -5,6 +5,7 @@ from opencontext_py.apps.ldata.geonames.api import GeonamesAPI
 from opencontext_py.apps.ldata.uberon.api import uberonAPI
 from opencontext_py.apps.ldata.eol.api import eolAPI
 from opencontext_py.apps.ldata.getty.api import gettyAPI
+from opencontext_py.apps.ldata.ansochre.api import ANSochreAPI
 
 
 # This class has methods to call external Web APIs to add information about linked entities
@@ -12,7 +13,7 @@ class WebLinkEntity():
     """
 from opencontext_py.apps.ldata.linkentities.web import WebLinkEntity
 web_le = WebLinkEntity()
-web_le.check_add_link_entity()
+web_le.check_add_link_entity(uri)
 
     """
 
@@ -67,6 +68,15 @@ web_le.check_add_link_entity()
                 getty_api = gettyAPI()
                 vocab_uri = gettyAPI().VOCAB_URI
                 labels = getty_api.get_labels_for_uri(uri)
+                if isinstance(labels, dict):
+                    # got the label!
+                    label = labels['label']
+                    alt_label = labels['alt_label']
+            elif 'numismatics.org/ocre/id/' in uri:
+                print('Finding: ' + uri)
+                ANSochre = ANSochreAPI()
+                vocab_uri = ANSochreAPI().VOCAB_URI
+                labels = ANSochre.get_labels_for_uri(uri)
                 if isinstance(labels, dict):
                     # got the label!
                     label = labels['label']
