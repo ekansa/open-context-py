@@ -131,6 +131,7 @@ class LinkEntityGeneration():
                         'http://creativecommons.org/publicdomain': 'cc-publicdomain',
                         'http://n2t.net/ark:/99152/p0': 'periodo-p0',
                         'http://vocab.getty.edu/aat': 'getty-aat',
+                        'http://nomisma.org/ontology#': 'nmo',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
