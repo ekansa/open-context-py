@@ -22,6 +22,7 @@ class GeneralContext():
         context['dcat'] = 'http://www.w3.org/ns/dcat#'
         context['geojson'] = 'http://ld.geojson.org/vocab#'
         context['cc'] = 'http://creativecommons.org/ns#'
+        context['nmo'] = 'http://nomisma.org/ontology#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
         context['id'] = '@id'
@@ -30,7 +31,9 @@ class GeneralContext():
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
+        context['localization'] = {'@id': 'oc-gen:has-localization', '@container': '@language'}
         self.context = context
+
 
 class ItemContext():
     """
