@@ -936,36 +936,89 @@ function edit_field(){
 		var inter_dom = document.getElementById(this.localize_inter_dom_id);
 		var title_dom = document.getElementById(this.localize_title_dom_id);
 		title_dom.innerHTML = 'Add Translation for <em>' + this.label + '</em>';
-		var interface_html = this.make_localize_interface_html(value_num);
+		var interface_html = this.make_localize_interface_html(value_num, null);
 		inter_dom.innerHTML = interface_html;
 		$("#" + this.localize_dom_id).modal('show');
 	}
-	this.make_localize_interface_html = function(value_num){
+	this.make_localize_interface_html = function(value_num, language_code){
 		// makes localizaton html
+		if (value_num < this.values_obj.length) {
+			var value_obj = this.values_obj[value_num];
+		}
+		else{
+			alert('Cannot find the value_obj for this value: ' + value_num);
+			var value_obj = null;
+		}
+		var dom_ids = this.make_field_val_domids(value_num);
+		var placeholder = 'placeholder="Enter translation text here, and select a language above."';
+		var translate_text = '';
+		if ('localization' in value_obj) {
+			if (language_code != null){
+				// we have a requested language_code designated
+				placeholder = 'placeholder="Enter translation in the selected language."';
+				if (value_obj.localization != null) {
+					if (language_code in value_obj.localization) {
+						// we have a text for this selected language
+						translate_text = value_obj.localization[language_code];
+						placeholder = '';
+					}
+				}
+			}
+		}
 		var html = [
-			'<label>Select a Language</label><br/>',
 			'<div class="row">',
-			'<div class="col-xs-5">',
-			this.make_localize_selection_html(value_num),
+				'<div class="col-xs-5">',
+				this.make_localize_selection_html(value_num, language_code),
+				'</div>',
+				'<div class="col-xs-7">',
+				'<small>Select the language of the translation</small>',
+				'</div>',
 			'</div>',
-			'<div class="col-xs-7">',
-			'<small>Select the language of the translation</small>',
-			'</div>',
+			'<div class="row" style="margin-top:20px;">',
+				'<div class="col-xs-8">',
+					'<label>Translation Text</label><br/>',
+					'<textarea id="' + dom_ids.lang_literal + '" ',
+					'onchange="' + this.name + '.validateTranslationHTML(\'' + value_num + '\');" ',
+					'class="form-control input-sm" rows="3" ' + placeholder + ' >',
+					translate_text,
+					'</textarea>',
+					'<p class="small">Submit blank text to delete a translation for a selected language.</p>',
+				'</div>',
+				'<div class="col-xs-4">',
+					'<div id="' + dom_ids.lang_valid + '">',
+					'</div>',
+					'<div id="' + dom_ids.lang_submitcon + '">',
+					'</div>',
+					'<div id="' + dom_ids.lang_respncon + '">',
+					'</div>',
+				'</div>',
 			'</div>',
 		].join('\n');
 		return html;
 	}
-	this.make_localize_selection_html = function(value_num){
+	this.make_localize_selection_html = function(value_num, language_code){
 		// makes the selection for lanugages html
 		var dom_ids = this.make_field_val_domids(value_num);
 		var lang_obj = new multilingual();
 		var html_list = [];
-		var sel_html = '<select id="' + dom_ids.lang_sel + '" class="form-control">';
+		var sel_html = '<select id="' + dom_ids.lang_sel
+		sel_html += '" onchange="' + this.name + '.selectLocalization(\'' + value_num + '\');" ';
+		if (language_code != null) {
+			// sel_html += ' value="' + language_code + '" ';
+		}
+		sel_html += ' class="form-control">';
 		html_list.push(sel_html);
 		for (var key in lang_obj.languages) {
 			if (lang_obj.languages.hasOwnProperty(key)) {
 				var item = lang_obj.languages[key];
-				var opt_html = '<option value="' + key + '">';
+				var opt_html = '<option value="' + key + '" ';
+				if (language_code != null) {
+					if (language_code == key) {
+						// this is the selected value
+						opt_html += ' selected="selected" ';
+					}
+				}
+				opt_html += '>';
 				opt_html += item['localized'];
 				opt_html += ' (' + item['label'] + ')';
 				opt_html += '</option>';
@@ -975,6 +1028,15 @@ function edit_field(){
 		html_list.push('</select>');
 		var html = html_list.join('\n');
 		return html;
+	}
+	this.selectLocalization = function(value_num){
+		// run this onchange event for a selection of a language for translation
+		var dom_ids = this.make_field_val_domids(value_num);
+		var select_dom = document.getElementById(dom_ids.lang_sel);
+		var language_code = select_dom.value;
+		var inter_dom = document.getElementById(this.localize_inter_dom_id);
+		var interface_html = this.make_localize_interface_html(value_num, language_code);
+		inter_dom.innerHTML = interface_html;
 	}
 	this.make_val_delete_button_html = function(value_num){
 		if (this.single_value_preds.indexOf(this.predicate_uuid) >= 0) {
@@ -1080,7 +1142,12 @@ function edit_field(){
 			sug_label: (value_num + '-field-sug-label-' + this.id), //suggested label
 			focal: (value_num + '-field-fcl-' + this.id),  //for scrolling to a part of the page
 			lang_out: (value_num + '-field-fcl-' + this.id),  //for language adding options
-			lang_sel: (value_num + '-field-langsel-' + this.id)  //for language selection input
+			lang_sel: (value_num + '-field-lang=sel-' + this.id),  //for language selection input
+			lang_literal: (value_num + '-field-lang-lit-' + this.id),  //for language text literal
+			lang_valid: (value_num + '-field-lang-valid-' + this.id), //container ID for language validation feedback
+			lang_valid_val: (value_num + '-field-lang-valid-val-' + this.id), //hidden input field for language value validation results
+			lang_submitcon: (value_num + '-field-lang-sbcon-' + this.id), //container ID for language submitt button
+			lang_respncon: (value_num + '-field-lang-respcon-' + this.id), //container ID for language submission response
 		};
 		return dom_ids;	
 	}
@@ -1491,7 +1558,116 @@ function edit_field(){
 		}
 		return field_val;
 	}
-	
+	this.addEditStringTranslation = function(value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.lang_valid)) {
+			document.getElementById(dom_ids.lang_valid).innerHTML = this.make_loading_gif('Submitting data...');
+		}
+		if (document.getElementById(dom_ids.lang_submitcon)) {
+			document.getElementById(dom_ids.lang_valid).innerHTML = '';
+		}
+		this.active_value_num = value_num;
+		var language_code = null;
+		if (document.getElementById(dom_ids.lang_sel)) {
+			var select_dom = document.getElementById(dom_ids.lang_sel);
+			var language_code = select_dom.value;
+		}
+		var text = '';
+		if (document.getElementById(dom_ids.lang_literal)) {
+			var text = document.getElementById(dom_ids.lang_literal).value;
+		}
+		if (value_num < this.values_obj.length) {
+			var value_obj = this.values_obj[value_num];
+		}
+		if ('localization' in value_obj) {
+			if (language_code != null){
+				// we have a requested language_code designated
+				if (value_obj.localization == null) {
+					value_obj.localization = {};
+				}
+				value_obj.localization[language_code] = text;
+				this.values_obj[value_num] = value_obj;
+				console.log(value_obj);
+			}
+		}
+		this.ajax_add_edit_string_translation(value_num);
+	}
+	this.ajax_add_edit_string_translation = function(value_num){
+		// sends an ajax request to update a translation value
+		var dom_ids = this.make_field_val_domids(value_num);
+		var string_uuid = false;
+		if (document.getElementById(dom_ids.id)) {
+			var string_uuid = document.getElementById(dom_ids.id).value;	
+		}
+		var language_code = null;
+		if (document.getElementById(dom_ids.lang_sel)) {
+			var select_dom = document.getElementById(dom_ids.lang_sel);
+			var language_code = select_dom.value;
+		}
+		var text = '';
+		if (document.getElementById(dom_ids.lang_literal)) {
+			var text = document.getElementById(dom_ids.lang_literal).value;
+		}
+		var data = {
+			language: language_code,
+			content: text,
+			csrfmiddlewaretoken: csrftoken};	
+		var url = this.make_url("/edit/add-edit-string-translation/");
+		url += encodeURIComponent(string_uuid);
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_add_edit_string_translationDone,
+				error: function (request, status, error) {
+					alert('Translation adding or update failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
+	this.ajax_add_edit_string_translationDone = function(data){
+		// handle responses to adding, editing string translations
+		var value_num = this.active_value_num;
+		this.active_value_num = false;
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (data.ok) {
+			// success
+			var html = [
+				'<div style="margin-top: 10px;">',
+					'<div class="alert alert-success small" role="alert">',
+						'<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>',
+						'<span class="sr-only">Success:</span>',
+						'Update done.',
+					'</div>',
+				'</div>'
+			].join('\n');
+			var act_dom = document.getElementById(dom_ids.lang_respncon);
+			act_dom.innerHTML = html;
+			setTimeout(function() {
+				// display an OK message for a short time
+				act_dom.innerHTML = '';
+			}, 4500);
+		}
+		else{
+			// failure
+			var html = [
+				'<div style="margin-top: 10px;">',
+					'<div class="alert alert-danger small" role="alert">',
+						'<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>',
+						'<span class="sr-only">Problem:</span>',
+						'Update failed.',
+					'</div>',
+				'</div>'
+			].join('\n');
+			var act_dom = document.getElementById(dom_ids.lang_respncon);
+			act_dom.innerHTML = html;
+			setTimeout(function() {
+				// display an OK message for a short time
+				act_dom.innerHTML = '';
+			}, 4500);
+		}
+	}
 	/*
 	 * VALIDATION FUNCTIONS
 	 */
@@ -1975,7 +2151,130 @@ function edit_field(){
 		
 		return ret;	
 	}
-	
+	this.validateTranslationHTML = function(value_num){
+		// calls a function to make an ajax request to validate translation HTML
+		this.ajax_validate_translation_html(value_num);
+	}
+	this.ajax_validate_translation_html = function(value_num){
+		// AJAX request to validate HTML
+		this.active_value_num = value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (document.getElementById(dom_ids.lang_literal)) {
+			var text = document.getElementById(dom_ids.lang_literal).value;
+			var url = this.make_url('/edit/html-validate/');
+			var data = {
+				text: text,
+				csrfmiddlewaretoken: csrftoken};
+			return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_validate_translation_htmlDone,
+				error: function (request, status, error) {
+					alert('Request to validate translation HTML failed, sadly. Status: ' + request.status);
+				}
+			});
+		}
+		else{
+			return false;
+		}
+	}
+	this.ajax_validate_translation_htmlDone = function(data){
+		var value_num = this.active_value_num;
+		var dom_ids = this.make_field_val_domids(value_num);
+		this.active_value_num = false;
+		if (data.ok) {
+			var val_mes = 'Input text OK to use as HTML';
+			this.make_translation_submit_button(true, value_num);
+			this.make_translation_validation_html(val_mes, true, value_num);
+		}
+		else{
+			var val_mes = data.errors.html;
+			this.make_translation_submit_button(false, value_num);
+			this.make_translation_validation_html(val_mes, false, value_num);
+		}
+	}
+	this.make_translation_submit_button = function(is_valid, value_num){
+		//makes a submission button for translation
+		var dom_ids = this.make_field_val_domids(value_num);
+		var language_code = null;
+		if (document.getElementById(dom_ids.lang_sel)) {
+			var select_dom = document.getElementById(dom_ids.lang_sel);
+			var language_code = select_dom.value;
+		}
+		if (is_valid && language_code != null) {
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-success btn-block" onclick="' + this.name + '.addEditStringTranslation(\'' + value_num + '\');">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit',
+					'</button>',
+				'</div>'
+			].join('\n');
+		}
+		else if (is_valid == false && language_code != null) {
+			
+			if (document.getElementById(dom_ids.lang_valid_val)) {
+				document.getElementById(dom_ids.lang_valid_val).value = '1';
+			}
+			
+			//code allow submission of bad HTML
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-warning btn-block" onclick="' + this.name + '.addEditStringTranslation(\'' + value_num + '\');">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit Anyway',
+					'</button>',
+				'</div>'
+			].join('\n');
+		}
+		else{
+			var button_html = [
+				'<div style="margin-top: 10px;">',
+					'<button class="btn btn-warning btn-block" disabled="disbled">',
+					'<span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span>',
+					' Submit',
+					'</button>',
+					'<p class="small">Be sure to select a language</p>',
+				'</div>'
+			].join('\n');
+			button_html = '';
+		}
+		if (document.getElementById(dom_ids.lang_submitcon)) {
+			document.getElementById(dom_ids.lang_submitcon).innerHTML = button_html;
+		}
+		return button_html;
+	}
+	this.make_translation_validation_html = function(message_html, is_valid, value_num){
+		var dom_ids = this.make_field_val_domids(value_num);
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+			var val_status = '<input id="' + dom_ids.lang_valid_val + '" type="hidden" value="1" />';
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var alert_class = this.invalid_alert_class;
+			var val_status = '<input id="' + dom_ids.lang_valid_val + '" type="hidden" value="0" />';
+		}
+		var alert_html = [
+				'<div role="alert" class="' + alert_class + '" >',
+					icon_html,
+					message_html,
+					val_status,
+				'</div>'
+			].join('\n');
+		
+		if (document.getElementById(dom_ids.lang_valid)) {
+			var act_dom = document.getElementById(dom_ids.lang_valid);
+			act_dom.innerHTML = alert_html;
+		}
+		else{
+			alert("cannot find " + dom_ids.lang_valid);
+		}
+	}
 	
 	/* ---------------------------------------
 	 * User interaction functions

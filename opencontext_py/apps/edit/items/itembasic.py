@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.core.cache import caches
 from opencontext_py.libs.languages import Languages
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -71,7 +72,7 @@ class ItemBasicEdit():
                 proj = False
                 self.edit_status = 0
 
-    def check_string_edit(self, string_uuid, requests=False):
+    def check_string_edit(self, string_uuid, request=False):
         """ checks to see if a string exists, also determines
             if the user has permissions to edit
         """
@@ -110,7 +111,16 @@ class ItemBasicEdit():
             # editing another language, not the default
             lan_obj = Languages()
             key = lan_obj.get_language_script_key(language, script)
-            self.manifest.localized_json[key] = label
+            if self.manifest.localized_json is None:
+                self.manifest.localized_json = LastUpdatedOrderedDict()
+            if len(label) > 1:
+                # we have non-blank translation text
+                self.manifest.localized_json[key] = label
+            else:
+                if key in self.manifest.localized_json:
+                    # we're deleting the translation, since
+                    # the translation text is blank
+                    self.manifest.localized_json.pop(key, None)
             self.manifest.save()
             self.manifest.revised_save()
         else:

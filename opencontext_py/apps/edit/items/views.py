@@ -369,8 +369,11 @@ def add_edit_string_translation(request, string_uuid):
         if request.method == 'POST':
             if item_edit.edit_permitted or request.user.is_superuser:
                 item_ass = ItemAssertion()
-                json_output = item_ass.add_edit_string_translation(string_uuid,
-                                                                   request.POST)
+                result = item_ass.add_edit_string_translation(string_uuid,
+                                                              request.POST)
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
                 return HttpResponse(json_output,
                                     content_type='application/json; charset=utf8')
             else:

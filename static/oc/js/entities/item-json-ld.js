@@ -89,7 +89,7 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	}
-   this.getPredicates = function(){
+    this.getPredicates = function(){
 		// gets a list of predicates used in the item
 		var output = [];
 		if (this.data != false) {
@@ -223,6 +223,10 @@ function item_object(item_type, uuid){
 				uuid: raw_value.id.replace('#string-', ''),
 				literal: raw_value['xsd:string'],
 				hash_id: null,
+				localizations: null
+			}
+			if ('localization' in raw_value) {
+				act_value.localization = raw_value['localization'];
 			}
 		}
 		else{

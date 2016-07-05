@@ -736,7 +736,8 @@ class ItemAssertion():
                          'ok': self.ok,
                          'change': {'string_uuid': string_uuid,
                                     'language': language,
-                                    'script': script}}
+                                    'script': script,
+                                    'note': note}}
         return self.response
 
     def add_translation(self,
@@ -760,6 +761,8 @@ class ItemAssertion():
                 # editing in another language, so save to localization object
                 lan_obj = Languages()
                 key = lan_obj.get_language_script_key(language, script)
+                if str_obj.localized_json is None:
+                    str_obj.localized_json = LastUpdatedOrderedDict()
                 if len(trans_text) > 1:
                     # we have non-blank translation text
                     str_obj.localized_json[key] = trans_text
