@@ -1096,7 +1096,8 @@ class LinkedData():
                            'owl:sameAs',
                            'skos:related',
                            'skos:broader',
-                           'dc-terms:references']
+                           'dc-terms:references',
+                           'http://nomisma.org/ontology#hasTypeSeriesItem']
 
     def __init__(self):
         self.linked_predicates = False
