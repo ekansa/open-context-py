@@ -165,17 +165,17 @@ function itemEdit(item_type, item_uuid){
 			var dom_ids = this.make_obs_dom_ids(obs_num);
 			var fields_html = [
 				'<table class="table table-condensed table-hover table-striped">',
-            '<thead>',
-               '<tr>',
-                  '<th class="col-sm-1">Options</th>',
-                  '<th class="col-sm-1">Sort</th>',
-                  '<th class="col-sm-2">Property</th>',
-                  '<th class="col-sm-8">Values</th>',
-               '</tr>',
-            '</thead>',
-            '<tbody id="' + dom_ids.fields + '">',
-            this.make_obs_fields_html(obs_num),
-            '</tbody>',
+					'<thead>',
+					   '<tr>',
+						  '<th class="col-sm-1">Options</th>',
+						  '<th class="col-sm-1">Sort</th>',
+						  '<th class="col-sm-2">Property</th>',
+						  '<th class="col-sm-8">Values</th>',
+					   '</tr>',
+					'</thead>',
+					'<tbody id="' + dom_ids.fields + '">',
+						this.make_obs_fields_html(obs_num),
+					'</tbody>',
 				'</table>',
 				this.make_add_buttons(obs_num),
 			].join("\n");
@@ -518,6 +518,7 @@ function itemEdit(item_type, item_uuid){
 		field.item_type = this.item_type;
 		field.label = 'Item Label';
 		field.item_label = this.item_json_ld_obj.data.label;
+		field.item_altlabel = this.item_json_ld_obj.getAltLabel();
 		field.predicate_uuid = field.label_pred_uuid;
 		field.draft_sort = 10000;
 		field.data_type = 'xsd:string';

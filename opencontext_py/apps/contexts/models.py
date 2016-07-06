@@ -31,6 +31,7 @@ class GeneralContext():
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
+        context['altLabel'] = {'@id': 'skos:altLabel', '@container': '@language'}
         context['localization'] = {'@id': 'oc-gen:has-localization', '@container': '@language'}
         self.context = context
 

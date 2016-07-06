@@ -52,7 +52,7 @@ class Languages():
                 'label': 'French',
                 'localized': 'Français',
                 'script_code': 'la',
-                'default_key': 'en'
+                'default_key': 'fr'
             },
             'he': {
                 'label': 'Hebrew',
