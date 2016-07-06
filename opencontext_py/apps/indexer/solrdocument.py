@@ -4,6 +4,7 @@ from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
@@ -18,23 +19,14 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = '2A9D7754-8A8C-488A-2606-B892085FB81C'
+uuid = 'CB9037DD-843B-46C1-A25B-DC0C72439899'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
-sd = sd_obj.fields
-uuid = '37c47df4-e12f-4715-93f6-e81a4a70ab54'
+sd_a = sd_obj.fields
+uuid = '0ffa1856-fabb-4d49-88a5-4919444fcfbf'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
-sd = sd_obj.fields
-uuid = '20f35298-2f52-4c05-9376-e86a0979ecbf'
-sd_obj = SolrDocument(uuid)
-sd_obj.process_item()
-sd = sd_obj.fields
-uuid = '737_DT_Res'
-sd_obj = SolrDocument(uuid)
-sd_obj.process_item()
-sd = sd_obj.fields
-
+sd_b = sd_obj.fields
     '''
 
     # the list below defines predicates used for semantic equivalence in indexing
@@ -46,6 +38,11 @@ sd = sd_obj.fields
 
     LD_IDENTIFIER_PREDICATES = ['owl:sameAs',
                                 'foaf:isPrimaryTopicOf']
+
+    LD_DIRECT_PREDICATES = ['http://nomisma.org/ontology#hasTypeSeriesItem',
+                            'nmo:hasTypeSeriesItem',
+                            'http://erlangen-crm.org/current/P2_has_type',
+                            'cidoc-crm:P2_has_type']
 
     PERSISTENT_ID_ROOTS = ['dx.doi.org',
                            'n2t.net/ark:/',
@@ -97,6 +94,7 @@ sd = sd_obj.fields
             self._process_persistent_ids()
             self._process_associated_linkedata()
             self.process_equivalent_linked_data()
+            self.process_direct_linked_data()
             self.process_media_fields()
             self._process_interest_score()
             self.process_related_subjects_for_media()
@@ -713,103 +711,109 @@ sd = sd_obj.fields
                             # a semantic equivalence predicate exists for this oc-pred
                             for equiv_entity in entity[equiv_pred]:
                                 equiv_id = self.get_entity_id(equiv_entity)
-                                parents = LinkRecursion().get_jsonldish_entity_parents(equiv_id)
-                                act_solr_field = self.ROOT_LINK_DATA_SOLR
-                                last_index = len(parents) - 1
-                                for index, parent in enumerate(parents):
-                                    if index == last_index:
-                                        # use the predicates solr-field type, which may be numeric, date, string, or ID
-                                        act_solr_datatype = pres_solr_datatype
-                                    else:
-                                        # use an id field type, since this is in a hierarchy that contains children
-                                        act_solr_datatype = 'id'
-                                    solr_value = self._concat_solr_string_value(parent['slug'],
-                                                                                act_solr_datatype,
-                                                                                parent['id'],
-                                                                                parent['label'])
-                                    if act_solr_field not in self.fields:
-                                        self.fields[act_solr_field] = []
-                                    self.fields[act_solr_field].append(solr_value)
-                                    last_linked_pred_label = parent['label']
-                                    last_linked_pred_uri = parent['id']
-                                    act_solr_field = \
-                                        self._convert_slug_to_solr(parent['slug'])\
-                                        + '___pred_' \
-                                        + act_solr_datatype
-                                # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
-                                self.fields['text'] += last_linked_pred_label + ': \n'
-                                act_pred_root_act_solr_field = act_solr_field
-                                if act_pred_root_act_solr_field not in self.fields:
-                                    self.fields[act_pred_root_act_solr_field] = []
-                                # --------------------------------
-                                # Now we handle the objects of this predicate!
-                                # 1. obs_values come from the item's observations,
-                                # 2. we treat literals differently than URI objects, since URI objects maybe in a hierarchy
-                                # --------------------------------
-                                if pred_datatype != '@id' and obs_values is not False:
-                                    # objects of this predicate are literals
-                                    for obs_val in obs_values:
-                                        if isinstance(obs_val, dict):
-                                            if pred_datatype in obs_val:
-                                                self.fields[act_pred_root_act_solr_field].append(obs_val[pred_datatype])
-                                                self.fields['text'] += obs_val[pred_datatype] + '\n'
-                                        else:
-                                            self.fields[act_pred_root_act_solr_field].append(obs_val)
-                                            self.fields['text'] += str(obs_val) + '\n'
-                                else:
-                                    # objects of this predicate IDed by URIs
-                                    if obs_values is not False:
-                                        for obs_val in obs_values:
-                                            # gets the id for the observation object
-                                            obs_object_id = self.get_entity_id(obs_val)
-                                            # gets linked data equivalents of the obs-object-id
-                                            use_objects = self.get_equivalent_linked_data(obs_object_id)
-                                            if use_objects is False:
-                                                # no linked data equivalents found, so make a list w. 1 item
-                                                use_objects = [{'id': obs_object_id}]
-                                            for use_obj in use_objects:
-                                                # make sure the active solr field is reset to be from
-                                                # the last equivalent predicates. important if we're looping
-                                                # through multiple use_objects
-                                                last_object_uri = False
-                                                last_object_label = ''
-                                                act_solr_field = act_pred_root_act_solr_field
-                                                #-------------------------------
-                                                # Now make a solr field for ALL the objects (parents, childred)
-                                                # using this predicate
-                                                all_obj_solr_field = 'obj_all___' + act_pred_root_act_solr_field
-                                                if all_obj_solr_field not in self.fields:
-                                                    self.fields[all_obj_solr_field] = []
-                                                # URI objects can be in hierarchies, look for these!
-                                                object_id = self.get_entity_id(use_obj)
-                                                parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
-                                                for index, parent in enumerate(parents):
-                                                    solr_value = self._concat_solr_string_value(parent['slug'],
-                                                                                                'id',
-                                                                                                parent['id'],
-                                                                                                parent['label'])
-                                                    last_object_uri = parent['id']
-                                                    if act_solr_field not in self.fields:
-                                                        self.fields[act_solr_field] = []
-                                                    if parent['ld_object_ok']:
-                                                        # only add this if it's OK for linked data use
-                                                        # in presenting a facet
-                                                        self.fields[act_solr_field].append(solr_value)
-                                                    #-------------------------------
-                                                    # This way, you don't need to know a parent to search
-                                                    # for a child. Since facets aren't made with this,
-                                                    # it's OK for on-linked-data-ok objects to be used
-                                                    #-------------------------------
-                                                    if solr_value not in self.fields[all_obj_solr_field]:
-                                                        self.fields[all_obj_solr_field].append(solr_value)
-                                                    if parent['id'] not in self.fields['text']:
-                                                        self.fields['text'] += parent['id'] + ' '
-                                                        self.fields['text'] += parent['label'] + '\n'
-                                                    act_solr_field = \
-                                                        self._convert_slug_to_solr(parent['slug']) \
-                                                        + '___' + act_pred_root_act_solr_field
-                                                if last_object_uri is not False:
-                                                    self.process_object_uri(last_object_uri)
+                                self.process_ld_predicate_objects(equiv_id, pred_datatype, obs_values)
+
+    def process_ld_predicate_objects(self, predicate_uri, pred_datatype, obs_values):
+        """ processes a LD predicate uri and the associated objects for that URI
+        """
+        pres_solr_datatype = self._get_predicate_type_string(pred_datatype)
+        parents = LinkRecursion().get_jsonldish_entity_parents(predicate_uri)
+        act_solr_field = self.ROOT_LINK_DATA_SOLR
+        last_index = len(parents) - 1
+        for index, parent in enumerate(parents):
+            if index == last_index:
+                # use the predicates solr-field type, which may be numeric, date, string, or ID
+                act_solr_datatype = pres_solr_datatype
+            else:
+                # use an id field type, since this is in a hierarchy that contains children
+                act_solr_datatype = 'id'
+            solr_value = self._concat_solr_string_value(parent['slug'],
+                                                        act_solr_datatype,
+                                                        parent['id'],
+                                                        parent['label'])
+            if act_solr_field not in self.fields:
+                self.fields[act_solr_field] = []
+            self.fields[act_solr_field].append(solr_value)
+            last_linked_pred_label = parent['label']
+            last_linked_pred_uri = parent['id']
+            act_solr_field = \
+                self._convert_slug_to_solr(parent['slug'])\
+                + '___pred_' \
+                + act_solr_datatype
+        # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
+        self.fields['text'] += last_linked_pred_label + ': \n'
+        act_pred_root_act_solr_field = act_solr_field
+        if act_pred_root_act_solr_field not in self.fields:
+            self.fields[act_pred_root_act_solr_field] = []
+        # --------------------------------
+        # Now we handle the objects of this predicate!
+        # 1. obs_values come from the item's observations,
+        # 2. we treat literals differently than URI objects, since URI objects maybe in a hierarchy
+        # --------------------------------
+        if pred_datatype != '@id' and isinstance(obs_values, list):
+            # objects of this predicate are literals
+            for obs_val in obs_values:
+                if isinstance(obs_val, dict):
+                    if pred_datatype in obs_val:
+                        self.fields[act_pred_root_act_solr_field].append(obs_val[pred_datatype])
+                        self.fields['text'] += obs_val[pred_datatype] + '\n'
+                else:
+                    self.fields[act_pred_root_act_solr_field].append(obs_val)
+                    self.fields['text'] += str(obs_val) + '\n'
+        else:
+            # objects of this predicate IDed by URIs
+            if isinstance(obs_values, list):
+                for obs_val in obs_values:
+                    # gets the id for the observation object
+                    obs_object_id = self.get_entity_id(obs_val)
+                    # gets linked data equivalents of the obs-object-id
+                    use_objects = self.get_equivalent_linked_data(obs_object_id)
+                    if use_objects is False:
+                        # no linked data equivalents found, so make a list w. 1 item
+                        use_objects = [{'id': obs_object_id}]
+                    for use_obj in use_objects:
+                        # make sure the active solr field is reset to be from
+                        # the last equivalent predicates. important if we're looping
+                        # through multiple use_objects
+                        last_object_uri = False
+                        last_object_label = ''
+                        act_solr_field = act_pred_root_act_solr_field
+                        #-------------------------------
+                        # Now make a solr field for ALL the objects (parents, childred)
+                        # using this predicate
+                        all_obj_solr_field = 'obj_all___' + act_pred_root_act_solr_field
+                        if all_obj_solr_field not in self.fields:
+                            self.fields[all_obj_solr_field] = []
+                        # URI objects can be in hierarchies, look for these!
+                        object_id = self.get_entity_id(use_obj)
+                        parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
+                        for index, parent in enumerate(parents):
+                            solr_value = self._concat_solr_string_value(parent['slug'],
+                                                                        'id',
+                                                                        parent['id'],
+                                                                        parent['label'])
+                            last_object_uri = parent['id']
+                            if act_solr_field not in self.fields:
+                                self.fields[act_solr_field] = []
+                            if parent['ld_object_ok']:
+                                # only add this if it's OK for linked data use
+                                # in presenting a facet
+                                self.fields[act_solr_field].append(solr_value)
+                            #-------------------------------
+                            # This way, you don't need to know a parent to search
+                            # for a child. Since facets aren't made with this,
+                            # it's OK for on-linked-data-ok objects to be used
+                            #-------------------------------
+                            if solr_value not in self.fields[all_obj_solr_field]:
+                                self.fields[all_obj_solr_field].append(solr_value)
+                            if parent['id'] not in self.fields['text']:
+                                self.fields['text'] += parent['id'] + ' '
+                                self.fields['text'] += parent['label'] + '\n'
+                            act_solr_field = \
+                                self._convert_slug_to_solr(parent['slug']) \
+                                + '___' + act_pred_root_act_solr_field
+                        if last_object_uri is not False:
+                            self.process_object_uri(last_object_uri)
 
     def process_equivalent_linked_data(self):
         """ Types are useful for entity reconciliation
@@ -896,6 +900,21 @@ sd = sd_obj.fields
                     self.fields[fname].append(item)
                     self.fields[allname].append(item)
 
+    def process_direct_linked_data(self):
+        """ Sometimes items have linked data directly asserted
+            (not via equivalence to predicates, types)
+        """
+        for pred_uri in self.LD_DIRECT_PREDICATES:
+            if pred_uri in self.oc_item.json_ld:
+                obs_values = self.oc_item.json_ld[pred_uri]
+                pred_ent = Entity()
+                found = pred_ent.dereference(pred_uri)
+                if found:
+                    # the predicate URI is found!
+                    pred_slug_id = pred_ent.slug
+                    pred_datatype = '@id'
+                    self.process_ld_predicate_objects(pred_ent.uri, pred_datatype, obs_values)
+
     def process_object_uri(self, object_uri):
         """ Projecesses object URIs.
             Useful to have a simple field that
@@ -972,7 +991,7 @@ sd = sd_obj.fields
         else:
             output = False
         return output
-    
+
     def process_media_fields(self):
         """ adds a property for media file size """
         if self.oc_item.item_type == 'media':
@@ -989,7 +1008,7 @@ sd = sd_obj.fields
                             self.max_file_size = size
             if self.max_file_size > 0:
                 self.fields[self.FILE_SIZE_SOLR].append(self.max_file_size)
-    
+
     def process_related_subjects_for_media(self):
         """ add some fields from subjects for media items """
         if self.oc_item.item_type == 'media':
