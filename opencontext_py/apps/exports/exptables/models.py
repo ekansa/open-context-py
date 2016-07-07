@@ -20,6 +20,12 @@ class ExpTable(models.Model):
     abstract = models.TextField()
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
+    sm_localized_json = JSONField(default={},
+                                  load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                                  blank=True)
+    lg_localized_json = JSONField(default={},
+                                  load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                                  blank=True)
 
     def save(self, *args, **kwargs):
         """

@@ -111,16 +111,9 @@ class ItemBasicEdit():
             # editing another language, not the default
             lan_obj = Languages()
             key = lan_obj.get_language_script_key(language, script)
-            if self.manifest.localized_json is None:
-                self.manifest.localized_json = LastUpdatedOrderedDict()
-            if len(label) > 1:
-                # we have non-blank translation text
-                self.manifest.localized_json[key] = label
-            else:
-                if key in self.manifest.localized_json:
-                    # we're deleting the translation, since
-                    # the translation text is blank
-                    self.manifest.localized_json.pop(key, None)
+            self.manifest.localized_json = lan_obj.modify_localization_json(self.manifest.localized_json,
+                                                                            key,
+                                                                            label)
             self.manifest.save()
             self.manifest.revised_save()
         else:
@@ -420,23 +413,49 @@ class ItemBasicEdit():
                                     'note': note}}
         return self.response
 
-    def update_string_content(self, content, content_type='content'):
+    def update_string_content(self, content, content_type='content', post_data={}):
         """ Updates the main string content of an item
             (project, document, or table abstract)
         """
+        content = content.strip()
         html_ok = self.valid_as_html(content)  # check if valid, but allow invalid
         if html_ok:
             note = ''
         else:
             note = self.errors['html']
         if self.manifest is not False:
+            # check for translation!
+            if 'language' in post_data:
+                language = post_data['language']
+            else:
+                language = Languages.DEFAULT_LANGUAGE
+            if 'script' in post_data:
+                script = post_data['script']
+            else:
+                script = None
+            if language != Languages.DEFAULT_LANGUAGE:
+                # editing another language, not the default
+                lan_obj = Languages()
+                localize_key = lan_obj.get_language_script_key(language, script)
+            else:
+                localize_key = False
             if self.manifest.item_type == 'projects':
                 try:
                     cobj = Project.objects.get(uuid=self.manifest.uuid)
-                    if content_type == 'short_des':
-                        cobj.short_des = content
+                    if localize_key is not False:
+                        if content_type == 'short_des':
+                            cobj.sm_localized_json = lan_obj.modify_localization_json(cobj.sm_localized_json,
+                                                                                      localize_key,
+                                                                                      content)
+                        else:
+                            cobj.lg_localized_json = lan_obj.modify_localization_json(cobj.lg_localized_json,
+                                                                                      localize_key,
+                                                                                      content)
                     else:
-                        cobj.content = content
+                        if content_type == 'short_des':
+                            cobj.short_des = content
+                        else:
+                            cobj.content = content
                     cobj.save()
                     ok = True
                 except Project.DoesNotExist:
@@ -447,10 +466,20 @@ class ItemBasicEdit():
                 ex_id.make_all_identifiers(self.manifest.uuid)
                 try:
                     cobj = ExpTable.objects.get(table_id=ex_id.table_id)
-                    if content_type == 'short_des':
-                        cobj.short_des = content
+                    if localize_key is not False:
+                        if content_type == 'short_des':
+                            cobj.sm_localized_json = lan_obj.modify_localization_json(cobj.sm_localized_json,
+                                                                                      localize_key,
+                                                                                      content)
+                        else:
+                            cobj.lg_localized_json = lan_obj.modify_localization_json(cobj.lg_localized_json,
+                                                                                      localize_key,
+                                                                                      content)
                     else:
-                        cobj.abstract = content
+                        if content_type == 'short_des':
+                            cobj.short_des = content
+                        else:
+                            cobj.abstract = content
                     cobj.save()
                     ok = True
                 except ExpTable.DoesNotExist:
@@ -459,7 +488,12 @@ class ItemBasicEdit():
             elif self.manifest.item_type == 'documents' and content_type == 'content':
                 try:
                     cobj = OCdocument.objects.get(uuid=self.manifest.uuid)
-                    cobj.content = content
+                    if localize_key is not False:
+                        cobj.localized_json = lan_obj.modify_localization_json(cobj.localized_json,
+                                                                               localize_key,
+                                                                               content)
+                    else:
+                        cobj.content = content
                     cobj.save()
                     ok = True
                 except OCdocument.DoesNotExist:
@@ -474,48 +508,68 @@ class ItemBasicEdit():
                                              predicate_uuid='skos:note')
                 for old_note in old_notes:
                     string_uuid = old_note.object_uuid
-                    old_note.delete()
-                if string_uuid is not None:
-                    string_used = Assertion.objects\
-                                           .filter(project_uuid=self.manifest.project_uuid,
-                                                   object_uuid=string_uuid)[:1]
-                    if len(string_used) > 0:
-                        # the string is used elsewhere, so we can't just use that
-                        # string uuid
-                        string_uuid = None
-                    else:
-                        # put the new content int the string that is not in use
+                    if localize_key is False:
+                        # only delete if this is not a translation!
+                        old_note.delete()
+                if localize_key is not False and string_uuid is not None:
+                    # OK, we're just adding a translation
+                    act_string = False
+                    try:
+                        act_string = OCstring.objects.get(uuid=string_uuid)
+                    except OCstring.DoesNotExist:
                         act_string = False
-                        try:
-                            act_string = OCstring.objects.get(uuid=string_uuid)
-                        except OCstring.DoesNotExist:
-                            act_string = False
+                        string_uuid = None
+                    if act_string is not False:
+                        # update the localization JSON with the content
+                        act_string.localized_json = lan_obj.modify_localization_json(act_string.localized_json,
+                                                                                     localize_key,
+                                                                                     content)
+                        act_string.save()
+                if localize_key is False:
+                    # this is for changing SKOS notes in cases where we're not
+                    # adding a translation
+                    if string_uuid is not None:
+                        string_used = Assertion.objects\
+                                               .filter(project_uuid=self.manifest.project_uuid,
+                                                       object_uuid=string_uuid)[:1]
+                        if len(string_used) > 0:
+                            # the string is used elsewhere, so we can't just use that
+                            # string uuid
                             string_uuid = None
-                        if act_string is not False:
-                            # save the content in the string to overwrite it
-                            act_string.content = content
-                            act_string.save()
-                if string_uuid is None:
-                    # we don't have a string_uuid to overwrite
-                    str_man = StringManagement()
-                    str_man.project_uuid = self.manifest.project_uuid
-                    str_man.source_id = 'web-form'
-                    str_obj = str_man.get_make_string(str(content))
-                    string_uuid = str_obj.uuid
-                # now make the assertion
-                new_ass = Assertion()
-                new_ass.uuid = uuid = self.manifest.uuid
-                new_ass.subject_type = self.manifest.item_type
-                new_ass.project_uuid = self.manifest.project_uuid
-                new_ass.source_id = 'web-form'
-                new_ass.obs_node = '#obs-1'
-                new_ass.obs_num = 1
-                new_ass.sort = 1
-                new_ass.visibility = 1
-                new_ass.predicate_uuid = 'skos:note'
-                new_ass.object_type = 'xsd:string'
-                new_ass.object_uuid = string_uuid
-                new_ass.save()
+                        else:
+                            # put the new content int the string that is not in use
+                            # for other items
+                            act_string = False
+                            try:
+                                act_string = OCstring.objects.get(uuid=string_uuid)
+                            except OCstring.DoesNotExist:
+                                act_string = False
+                                string_uuid = None
+                            if act_string is not False:
+                                # save the content in the string to overwrite it
+                                act_string.content = content
+                                act_string.save()
+                    if string_uuid is None:
+                        # we don't have a string_uuid to overwrite
+                        str_man = StringManagement()
+                        str_man.project_uuid = self.manifest.project_uuid
+                        str_man.source_id = 'web-form'
+                        str_obj = str_man.get_make_string(str(content))
+                        string_uuid = str_obj.uuid
+                    # now make the assertion
+                    new_ass = Assertion()
+                    new_ass.uuid = uuid = self.manifest.uuid
+                    new_ass.subject_type = self.manifest.item_type
+                    new_ass.project_uuid = self.manifest.project_uuid
+                    new_ass.source_id = 'web-form'
+                    new_ass.obs_node = '#obs-1'
+                    new_ass.obs_num = 1
+                    new_ass.sort = 1
+                    new_ass.visibility = 1
+                    new_ass.predicate_uuid = 'skos:note'
+                    new_ass.object_type = 'xsd:string'
+                    new_ass.object_uuid = string_uuid
+                    new_ass.save()
             else:
                 ok = False
         if ok:

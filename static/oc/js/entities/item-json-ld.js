@@ -64,7 +64,18 @@ function item_object(item_type, uuid){
  *
  * --------------------------------------------------
  */
-   this.getItemCategories = function(){
+    this.getAltLabel = function(){
+		// gets  (SKOS) alt label object, a dictionary object of labels
+		// where the key is the language code
+		var output = null;
+		if (this.data != false) {
+			if (this.data['altLabel'] !== undefined) {
+				output = this.data['altLabel'];
+			}
+		}
+		return output;
+	}
+    this.getItemCategories = function(){
 		var output = [];
 		if (this.data != false) {
 			if (this.data['category'] !== undefined) {
@@ -72,7 +83,7 @@ function item_object(item_type, uuid){
 					var cat_id = this.data['category'][i];
 					var cat_item = {
 						id: cat_id,
-					   label: this.getCategoryLabel(cat_id),
+					    label: this.getCategoryLabel(cat_id),
 						icon: this.getCategoryIcon(cat_id)
 					};
 					output.push(cat_item);
@@ -159,7 +170,7 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	}
-   this.getValuesByPredicateUUID = function(predicate_uuid){
+    this.getValuesByPredicateUUID = function(predicate_uuid){
 		var output = [];
 		var predicates = this.getPredicates();
 		if (predicate_uuid in this.predicates_by_uuid) {

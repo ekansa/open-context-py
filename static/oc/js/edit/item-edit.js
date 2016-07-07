@@ -11,6 +11,7 @@ function itemEdit(item_type, item_uuid){
 	this.class_field = false; // the field object for the item class
 	this.context_field = false; // the field object for the item context
 	this.fields = [];  // list of field objects for other descriptive fields (in the item observations)
+	this.multilingual = {}; // objects for creating, editing, validating multilingual texts.
 	this.obj_name = 'edit_item';
 	this.panels = [];
 	this.obs_fields = {};
@@ -165,17 +166,17 @@ function itemEdit(item_type, item_uuid){
 			var dom_ids = this.make_obs_dom_ids(obs_num);
 			var fields_html = [
 				'<table class="table table-condensed table-hover table-striped">',
-            '<thead>',
-               '<tr>',
-                  '<th class="col-sm-1">Options</th>',
-                  '<th class="col-sm-1">Sort</th>',
-                  '<th class="col-sm-2">Property</th>',
-                  '<th class="col-sm-8">Values</th>',
-               '</tr>',
-            '</thead>',
-            '<tbody id="' + dom_ids.fields + '">',
-            this.make_obs_fields_html(obs_num),
-            '</tbody>',
+					'<thead>',
+					   '<tr>',
+						  '<th class="col-sm-1">Options</th>',
+						  '<th class="col-sm-1">Sort</th>',
+						  '<th class="col-sm-2">Property</th>',
+						  '<th class="col-sm-8">Values</th>',
+					   '</tr>',
+					'</thead>',
+					'<tbody id="' + dom_ids.fields + '">',
+						this.make_obs_fields_html(obs_num),
+					'</tbody>',
 				'</table>',
 				this.make_add_buttons(obs_num),
 			].join("\n");
@@ -518,6 +519,7 @@ function itemEdit(item_type, item_uuid){
 		field.item_type = this.item_type;
 		field.label = 'Item Label';
 		field.item_label = this.item_json_ld_obj.data.label;
+		field.item_altlabel = this.item_json_ld_obj.getAltLabel();
 		field.predicate_uuid = field.label_pred_uuid;
 		field.draft_sort = 10000;
 		field.data_type = 'xsd:string';
@@ -835,7 +837,8 @@ function itemEdit(item_type, item_uuid){
 			'<div class="row">',
 				'<div class="col-sm-9">',
 					'<div class="form-group">',
-                        '<label for="skos-note">Definition Note (skos:note)</label>',
+                        '<label for="skos-note">',
+						'Definition Note (skos:note)</label>',
                         '<textarea id="skos-note" ',
 						'class="form-control" rows="24" ',
 						placeholder + '>',
@@ -851,6 +854,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="skos-note-valid">',
 					'</div>',
+					this.make_localize_row_html('skos_note', 'content', 'Definition or Note (skos:note)'),
 					'<div>',
 						'<label>Note</label>',
 						'<p class="small">',
@@ -1124,7 +1128,8 @@ function itemEdit(item_type, item_uuid){
 			'<div class="row">',
 				'<div class="col-sm-6">',
 					'<div class="form-group">',
-                        '<label for="proj-short-des">Short Description / Summary</label>',
+                        '<label for="proj-short-des">',
+						'Short Description / Summary</label>',
                         '<textarea id="proj-short-des" ',
 						'class="form-control" rows="3" ',
 						placeholder + '>',
@@ -1140,6 +1145,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="proj-short-des-valid">',
 					'</div>',
+					this.make_localize_row_html('short_des', 'short_des', 'Short Description'),
 				'</div>',
 				'<div class="col-sm-3">',
 					'<label>Note</label>',
@@ -1147,7 +1153,7 @@ function itemEdit(item_type, item_uuid){
 					'A short "Tweetable" (140 character) or so text description',
 					'</p>',
 				'</div>',
-			'</div>'
+			'</div>',
 		].join('\n');
 		document.getElementById("edit-proj-short-des").innerHTML = html;
 	}
@@ -1876,7 +1882,8 @@ function itemEdit(item_type, item_uuid){
 			'<div class="row">',
 				'<div class="col-sm-9">',
 					'<div class="form-group">',
-                        '<label for="' + dom_prefix + 'abstract">Abstract / Overview</label>',
+                        '<label for="' + dom_prefix + 'abstract">',
+						'Abstract / Overview</label>',
                         '<textarea id="' + dom_prefix + 'abstract" ',
 						'class="form-control" rows="24" ',
 						placeholder + '>',
@@ -1892,6 +1899,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="' + dom_prefix + 'abstract-valid">',
 					'</div>',
+					this.make_localize_row_html('abs', 'content', 'Abstract'),
 					'<div>',
 						'<label>Note</label>',
 						'<p class="small">',
@@ -1956,6 +1964,70 @@ function itemEdit(item_type, item_uuid){
 		this.make_html_valid_note_html(data, dom_prefix + 'abstract-valid');
 	}
 	
+	
+	/******************************************************
+	 * Functions relating to making localizaiton buttings,
+	 * creating multilingual localization objects
+	 * ***************************************************/
+	this.localizeInterface = function(ml_key, content_type, label){
+		// creates a localization object if not already present for this ml_key
+		// then opens its interface
+		if (ml_key in this.multilingual) {
+			// we already have a multilingual object for this key
+			var act_ml = this.multilingual[ml_key];
+		}
+		else{
+			// create a new multingual object for this ml_key
+			var act_ml = new multilingual();
+		    act_ml.parent_obj_name = this.obj_name;
+			act_ml.obj_name = 'multilingual[\'' + ml_key + '\']';
+			act_ml.label = label;
+			act_ml.edit_type = 'content';
+			act_ml.content_type = content_type;
+			act_ml.edit_uuid = this.item_uuid;
+			act_ml.dom_ids = act_ml.default_domids(0, ml_key);
+			if (ml_key == 'abs' || ml_key == 'skos_note') {
+				// make a big text box, because abstract
+				act_ml.text_box_rows = 24;
+			}
+			act_ml.initialize();
+			this.multilingual[ml_key] = act_ml;
+		}
+		act_ml.localizeInterface();
+		return false;
+	}
+	this.make_localize_row_html = function(ml_key, content_type, label){
+		var note = '<p class="small">Click button to translate <em>' + label + '</em></p>';
+		var html = [
+			//'<div class="container-fluid">',
+				'<div class="row">',
+					'<div class="col-xs-1" style="padding-top: 5px;">',
+					this.make_localize_buttom_html(ml_key, content_type, label),
+					'</div>',
+					'<div class="col-xs-10">',
+					note,
+					'</div>',
+				'</div>',
+			//'</div>',
+		].join('\n');
+		return html;
+	}
+	this.make_localize_buttom_html = function(ml_key, content_type, label){
+		var title = 'Translate / localize ' + label;
+		var style = '';
+		var buttom_params = '\'' + ml_key + '\', \'' + content_type + '\', \'' + label + '\'';
+		var button_html = [
+			'<div ' + style + ' >',
+			'<button title="' + title + '" ',
+			'class="btn btn-info btn-xs" ',
+			// below, the "return false;" part stops the page from reloading after onlick is done
+			'onclick="' + this.obj_name + '.localizeInterface(' + buttom_params + '); return false;">',
+			'<span class="glyphicon glyphicon-flag"></span>',
+			'</button>',
+			'</div>',
+			].join('\n');
+		return button_html;
+	}
 	
 	/******************************************************
 	 * Generally used, helper functions
