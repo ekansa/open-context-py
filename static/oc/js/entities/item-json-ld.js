@@ -9,6 +9,7 @@ function item_object(item_type, uuid){
 	this.predicates_by_slug_key = {}; // predicate items by slug key
 	this.predicates_by_uuid = {}; // predicate items by uuid key
 	this.req = false;
+	this.default_language = 'en'; // default language code
 	this.exec_before_data_get = false; // can add a function to complete before AJAX data retreval
 	this.exec_after_data_get = false; // can add a function to complete after AJAX data is retrieved
 	this.do_async = false;
@@ -69,8 +70,8 @@ function item_object(item_type, uuid){
 		// where the key is the language code
 		var output = null;
 		if (this.data != false) {
-			if (this.data['altLabel'] !== undefined) {
-				output = this.data['altLabel'];
+			if (this.data['skos:altLabel'] !== undefined) {
+				output = this.data['skos:altLabel'];
 			}
 		}
 		return output;
@@ -232,12 +233,9 @@ function item_object(item_type, uuid){
 			var act_value = {
 				id: raw_value.id,
 				uuid: raw_value.id.replace('#string-', ''),
-				literal: raw_value['xsd:string'],
+				literal: this.getDefaultString(raw_value['xsd:string']),
 				hash_id: null,
-				localizations: null
-			}
-			if ('localization' in raw_value) {
-				act_value.localization = raw_value['localization'];
+				localization: this.getLocalizations(raw_value['xsd:string'])
 			}
 		}
 		else{
@@ -445,6 +443,61 @@ function item_object(item_type, uuid){
 		}
 		return output;
 	};
+	this.predGetDefaultString = function(predicate_key){
+		// values for string predicates can be just simple strings (for default language)
+		// or they can be dictionary objects if there are localizations given
+		// this gets just the default language string
+		var output = false;
+		if (this.data != false) {
+			if (this.data.hasOwnProperty(predicate_key)) {
+				output = this.getDefaultString(this.data[predicate_key]);
+			}
+		}
+		return output;
+	}
+	this.predGetLocalizations = function(predicate_key){
+		// values for string predicates can be just simple strings (for default language)
+		// or they can be dictionary objects if there are localizations given
+		// this gets JUST the dictionary object of localizations (NO default language)
+		var output = null;
+		if (this.data != false) {
+			if (this.data.hasOwnProperty(predicate_key)) {
+				output = this.getLocalizations(this.data[predicate_key]);
+			}
+		}
+		return output;
+	}
+	this.getDefaultString = function(value_obj){
+		//gets the default language string from a value obj
+		var output = null;
+		if (typeof value_obj === 'string' || value_obj instanceof String) {
+			output = value_obj;
+		}
+		else{
+			if (this.default_language in value_obj) {
+				output = value_obj[this.default_language];
+			}
+		}
+		return output;
+	}
+	this.getLocalizations = function(value_obj){
+		//gets an array  of the localizations (not including the default language)
+		var output = null;
+		if (typeof value_obj === 'string' || value_obj instanceof String) {
+			output = null;
+		}
+		else{
+			output = {};
+			for (var key in value_obj) {
+				if (value_obj.hasOwnProperty(key)) {
+					if (this.default_language != key){
+						output[key] = value_obj[key]; 
+					}
+				}
+			}
+		}
+		return output;
+	}
 	this.getIDvalue = function(entity_obj){
 		// gets an ID for a entity referenced in the JSON-LD
 		if (entity_obj['@id'] !== undefined) {

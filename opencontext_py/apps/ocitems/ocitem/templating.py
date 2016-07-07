@@ -3,6 +3,7 @@ import copy
 import datetime
 from random import randint
 from django.conf import settings
+from opencontext_py.libs.languages import Languages
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
@@ -279,6 +280,7 @@ class TemplateItem():
         """
         Gets various forms of content for media, documents, projects
         """
+        lang_obj = Languages()
         if 'oc-gen:has-files' in json_ld:
             # content for media
             if self.content is False:
@@ -314,17 +316,17 @@ class TemplateItem():
             # content for documents
             if self.content is False:
                 self.content = {}
-            self.content['main_text'] = json_ld['rdf:HTML']
+            self.content['main_text'] = lang_obj.get_default_value_str(json_ld['rdf:HTML'])
         elif 'dc-terms:abstract' in json_ld:
             # content for project abstracts
             if self.content is False:
                 self.content = {}
-            self.content['main_text'] = json_ld['dc-terms:abstract']
+            self.content['main_text'] = lang_obj.get_default_value_str(json_ld['dc-terms:abstract'])
         if 'description' in json_ld:
             # content for project descriptions
             if self.content is False:
                 self.content = {}
-            self.content['sum_text'] = json_ld['description']
+            self.content['sum_text'] = lang_obj.get_default_value_str(json_ld['description'])
         if self.content is not False \
            and settings.CANONICAL_HOST != settings.DEPLOYED_HOST:
             if 'main_text' in self.content:
@@ -923,8 +925,9 @@ class PropValue():
                 self.thumbnail = val_item['oc-gen:thumbnail-uri']
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
-            if('xsd:string' in val_item):
-                self.val = val_item['xsd:string']
+            if 'xsd:string' in val_item:
+                lang_obj = Languages()
+                self.val = lang_obj.get_default_value_str(val_item['xsd:string'])
         else:
             if self.vartype == 'xsd:integer':
                 self.val = str(int(float(val_item)))

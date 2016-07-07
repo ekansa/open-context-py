@@ -10,6 +10,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.core.cache import caches
+from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
@@ -320,6 +321,7 @@ class OCitem():
         creates JSON-LD documents for an item
         currently, it's just here to make some initial JSON while we learn python
         """
+        lang_obj = Languages()
         item_con = ItemConstruction()
         item_con.uuid = self.uuid
         item_con.project_uuid = self.project_uuid
@@ -334,7 +336,7 @@ class OCitem():
         json_ld['label'] = self.label
         if isinstance(self.manifest.localized_json, dict):
             if len(self.manifest.localized_json) > 0:
-                json_ld['altLabel'] = self.manifest.localized_json
+                json_ld['skos:altLabel'] = self.manifest.localized_json
         if(len(self.manifest.class_uri) > 0):
             json_ld['category'] = [self.manifest.class_uri]
             item_con.class_type_list.append(self.manifest.class_uri)
@@ -384,9 +386,9 @@ class OCitem():
                                                   self.item_type,
                                                   self.geo_meta,
                                                   self.event_meta)
-        if(self.media is not False):
+        if self.media is not False:
             json_ld = item_con.add_media_json(json_ld, self.media)
-        if(self.document is not False):
+        if self.document is not False:
             json_ld = item_con.add_document_json(json_ld, self.document)
         json_ld = item_con.add_dc_title(json_ld)  # adds dublin core title information, useful for indexing
         if self.published is not None and self.published is not False:
@@ -398,8 +400,10 @@ class OCitem():
                                                               self.PREDICATES_DCTERMS_ISPARTOF,
                                                               self.project_uuid, 'projects')
         if self.project is not False:
-            json_ld['description'] = self.project.short_des
-            json_ld['dc-terms:abstract'] = self.project.content
+            json_ld['description'] = lang_obj.make_json_ld_value_obj(self.project.short_des,
+                                                                     self.project.sm_localized_json)
+            json_ld['dc-terms:abstract'] = lang_obj.make_json_ld_value_obj(self.project.content,
+                                                                           self.project.lg_localized_json)
             json_ld = item_con.add_editorial_status(json_ld, self.project.edit_status)
             json_ld = item_con.add_project_hero_images(json_ld, self.hero_images)
         # add dublin-core descriptive metadata predicates
@@ -572,7 +576,9 @@ class ItemConstruction():
                 if assertion.object_type == 'xsd:string':
                     try:
                         string_item = OCstring.objects.get(uuid=assertion.object_uuid)
-                        content = string_item.content
+                        lang_obj = Languages()
+                        content = lang_obj.make_json_ld_value_obj(string_item.content,
+                                                                  string_item.localized_json)
                     except OCstring.DoesNotExist:
                         content = 'string content missing'
                 elif (assertion.object_type == 'xsd:date'):
@@ -650,10 +656,9 @@ class ItemConstruction():
                 new_object_item['id'] = '#string-' + str(assertion.object_uuid)
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
-                    new_object_item[assertion.object_type] = string_item.content
-                    if isinstance(string_item.localized_json, dict):
-                        if len(string_item.localized_json) > 0:
-                            new_object_item['localization'] = string_item.localized_json
+                    lang_obj = Languages()
+                    new_object_item[assertion.object_type] = lang_obj.make_json_ld_value_obj(string_item.content,
+                                                                                             string_item.localized_json)
                 except OCstring.DoesNotExist:
                     new_object_item[assertion.object_type] = 'string content missing'
                 act_list.append(new_object_item)
@@ -689,10 +694,9 @@ class ItemConstruction():
                 new_object_item['id'] = '#string-' + str(assertion.object_uuid)
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
-                    new_object_item[assertion.object_type] = string_item.content
-                    if isinstance(string_item.localized_json, dict):
-                        if len(string_item.localized_json) > 0:
-                            new_object_item['localization'] = string_item.localized_json
+                    lang_obj = Languages()
+                    new_object_item[assertion.object_type] = lang_obj.make_json_ld_value_obj(string_item.content,
+                                                                                             string_item.localized_json)
                 except OCstring.DoesNotExist:
                     new_object_item[assertion.object_type] = 'string content missing'
             elif (assertion.object_type == 'xsd:date'):
@@ -1414,7 +1418,9 @@ class ItemConstruction():
         adds document content
         """
         if(document is not False):
-            act_dict['rdf:HTML'] = document.content
+            lan_obj = Languages()
+            act_dict['rdf:HTML'] = lan_obj.make_json_ld_value_obj(document.content,
+                                                                  document.localized_json)
         return act_dict
 
     def add_project_hero_images(self, act_dict, hero_list):
