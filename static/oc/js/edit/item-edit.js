@@ -87,7 +87,7 @@ function itemEdit(item_type, item_uuid){
 					edit_geoevents.show_existing_data()
 				}
 				if (this.item_type == 'predicates') {
-					// display person specifics
+					// display predicate specifics
 					this.display_predicate_edits();
 				}
 				if (this.item_type == 'types') {
@@ -95,8 +95,12 @@ function itemEdit(item_type, item_uuid){
 					this.display_type_edits();
 				}
 				if (this.item_type == 'media') {
-					// display person specifics
+					// display media specifics
 					this.display_media_edits();
+				}
+				if (this.item_type == 'documents') {
+					// display document specifics
+					this.display_document_edits();
 				}
 				if (this.item_type == 'projects') {
 					// display project specifics
@@ -1825,6 +1829,115 @@ function itemEdit(item_type, item_uuid){
 	
 	
 	/******************************************************
+	 * Documents Editing functions
+	 * ***************************************************/
+	this.display_document_edits = function(){
+		//displays table edit fields
+		this.display_document_content();
+	}
+	this.display_document_content = function(){
+		// inferface for editing document HTML
+		var act_pred = 'rdf:HTML';
+		var doc_html = this.item_json_ld_obj.predGetDefaultString(act_pred);
+		if (doc_html == false) {
+			var doc_html = '';
+			var placeholder = 'placeholder="A note defining this concept."';
+		}
+		else {
+			var placeholder = '';
+		}
+		
+		var button_html = [
+			'<button type="button" ',
+			'class="btn btn-primary" ',
+			'onclick="' + this.obj_name + '.updateDocumentHTML();">',
+			'Update',
+			'</button>'
+		].join('\n');
+		
+		var html = [
+			'<div class="row">',
+				'<div class="col-sm-9">',
+					'<div class="form-group">',
+                        '<label for="document-note">',
+						'Document Content (HTML)</label>',
+                        '<textarea id="document-note" ',
+						'class="form-control" rows="24" ',
+						placeholder + '>',
+						doc_html,
+						'</textarea>',
+                    '</div>', 
+				'</div>',
+				'<div class="col-sm-3">',
+					'<div id="document-note-submitcon" style="padding-top: 24px;">',
+					button_html,
+					'</div>',
+					'<div id="document-note-respncon" style="padding-top: 10px;">',
+					'</div>',
+					'<div id="document-note-valid">',
+					'</div>',
+					this.make_localize_row_html(act_pred, 'content', 'Document Content'),
+					'<div>',
+						'<label>Note</label>',
+						'<p class="small">',
+						'An note should use HMTL tags for formatting, including images, ',
+						'hyperlinks, and may even include some javascript for dynamic ',
+						'interactions. The content of the note should include ',
+						'information needed to understand and reuse this concept. ',
+						'</p>',
+						'<p class="small">',
+						'The note should validate as HTML. Upon submission or update, Open ',
+						'Context will check and validate the HTML. It will accept bad HTML, but bad ',
+						'HTML may cause severe formatting or other problems. Please use the W3C ',
+						'HTML <a href="https://validator.w3.org/" targer="_blank">validation services</a> ',
+						'to help debug your HTML.',
+						'</p>',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		document.getElementById("edit-document-content").innerHTML = html;
+		
+	}
+	this.updateDocumentHTML = function() {
+		/* updates the document html content for the item
+		*/
+		var act_domID = "document-note";
+		var content = document.getElementById(act_domID).value;
+		var url = this.make_url("/edit/update-item-basics/") + encodeURIComponent(this.item_uuid);
+		var act_icon = document.getElementById('document-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('document-note-valid');
+		act_note.innerHTML = 'Uploading and validating...';
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				content: content,
+				content_type: 'content',
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.updateDocumentHTMLDone,
+			error: function (request, status, error) {
+				alert('Problem updating the document HTML: ' + status);
+			}
+		});
+	}
+	this.updateDocumentHTMLDone = function(data){
+		// handles successful result of document content HTML updates
+		var act_icon = document.getElementById('document-note-respncon');
+		act_icon.innerHTML = '';
+		var act_note = document.getElementById('document-note-valid');
+		act_note.innerHTML = '';
+		if (data.ok) {
+			this.make_temp_update_note_html('document-note-respncon');
+		}
+		this.make_html_valid_note_html(data, 'document-note-valid');
+	}
+	
+	
+	/******************************************************
 	* Abstract related editing funcitons
 	*******************************************************/
 	this.make_abstract_edit_html = function(){
@@ -1977,7 +2090,7 @@ function itemEdit(item_type, item_uuid){
 			act_ml.content_type = content_type;
 			act_ml.edit_uuid = this.item_uuid;
 			act_ml.dom_ids = act_ml.default_domids(0, ml_key);
-			if (ml_key == 'dc-terms-abstract' || ml_key == 'skos-note') {
+			if (ml_key == 'dc-terms-abstract' || ml_key == 'skos-note' || ml_key == 'rdf-HTML') {
 				// make a big text box, because abstract
 				act_ml.text_box_rows = 24;
 			}
