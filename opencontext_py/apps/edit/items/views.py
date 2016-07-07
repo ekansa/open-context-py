@@ -156,7 +156,8 @@ def update_item_basics(request, uuid):
                      and 'content_type' in request.POST:
                     rev_label = 'Update item text content in ' + item_edit.manifest.label
                     result = item_edit.update_string_content(request.POST['content'],
-                                                             request.POST['content_type'])
+                                                             request.POST['content_type'],
+                                                             request.POST)
                 result['errors'] = item_edit.errors
                 json_output = json.dumps(result,
                                          indent=4,

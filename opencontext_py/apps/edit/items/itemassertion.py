@@ -46,8 +46,6 @@ class ItemAssertion():
         self.user_id = False
         self.ok = True
         self.response = False
-        self.default_language = 'en'  # default language
-        self.default_script = 'la'  # default script
         self.global_predicates = {
             Assertion.PREDICATES_LINK: {'data_type': 'id',
                                         'label': 'Link'},
@@ -761,16 +759,9 @@ class ItemAssertion():
                 # editing in another language, so save to localization object
                 lan_obj = Languages()
                 key = lan_obj.get_language_script_key(language, script)
-                if str_obj.localized_json is None:
-                    str_obj.localized_json = LastUpdatedOrderedDict()
-                if len(trans_text) > 1:
-                    # we have non-blank translation text
-                    str_obj.localized_json[key] = trans_text
-                else:
-                    if key in str_obj.localized_json:
-                        # we're deleting the translation, since
-                        # the translation text is blank
-                        str_obj.localized_json.pop(key, None)
+                str_obj.localized_json = lan_obj.modify_localization_json(str_obj.localized_json,
+                                                                          key,
+                                                                          trans_text)
                 str_obj.save()
             else:
                 str_obj.content = trans_text

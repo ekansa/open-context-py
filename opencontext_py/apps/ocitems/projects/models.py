@@ -1,7 +1,9 @@
 import numpy as np
 import reversion  # version control object
+import collections
+from jsonfield import JSONField  # json field for complex objects
 from numpy import vstack, array
-from scipy.cluster.vq import kmeans,vq
+from scipy.cluster.vq import kmeans, vq
 from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.apps.ocitems.geospace.models import Geospace
@@ -24,6 +26,12 @@ class Project(models.Model):
     label = models.CharField(max_length=200)
     short_des = models.CharField(max_length=200)
     content = models.TextField()
+    sm_localized_json = JSONField(default={},
+                                  load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                                  blank=True)
+    lg_localized_json = JSONField(default={},
+                                  load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                                  blank=True)
 
     def save(self, *args, **kwargs):
         """

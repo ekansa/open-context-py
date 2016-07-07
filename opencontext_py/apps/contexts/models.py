@@ -1,5 +1,6 @@
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.languages import Languages
 
 
 class GeneralContext():
@@ -25,6 +26,7 @@ class GeneralContext():
         context['nmo'] = 'http://nomisma.org/ontology#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
         context['oc-pred'] = 'http://opencontext.org/predicates/'
+        context['@language'] = Languages().DEFAULT_LANGUAGE
         context['id'] = '@id'
         context['label'] = 'rdfs:label'
         context['uuid'] = 'dc-terms:identifier'

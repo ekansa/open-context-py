@@ -17,6 +17,7 @@ function multilingual(){
 	this.script_label = 'Latin';
 	this.script_localized = 'Latin';
 	this.script_code = 'la';
+	this.text_box_rows = 3;  // number of rows in the default text-box
 	this.languages = {
 		'ar': {
 			'label': 'Arabic',
@@ -88,6 +89,7 @@ function multilingual(){
 	this.dom_ids = null;
 	this.edit_uuid = null;
 	this.edit_type = false;
+	this.content_type = 'content'; // default content type for content translation
 	this.localization = null;
 	this.initialize = function(){
 		if (this.parent_obj_name != false) {
@@ -208,7 +210,7 @@ function multilingual(){
 					'<label>Translation Text</label><br/>',
 					'<textarea id="' + this.dom_ids.lang_literal + '" ',
 					'onchange="' + this.name + '.validateTranslationHTML();" ',
-					'class="form-control input-sm" rows="3" ' + placeholder + ' >',
+					'class="form-control input-sm" rows="' + this.text_box_rows + '" ' + placeholder + ' >',
 					translate_text,
 					'</textarea>',
 					'<p class="small">Submit blank text to delete a translation for a selected language.</p>',
@@ -305,6 +307,10 @@ function multilingual(){
 		this.general_submit_processes();
 		this.ajax_add_edit_label_translation();
 	}
+	this.addEditContentTranslation = function(){
+		this.general_submit_processes();
+		this.ajax_add_edit_content_translation();
+	}
 	this.addEditStringTranslation = function(){
 		this.general_submit_processes();
 		this.ajax_add_edit_string_translation();
@@ -347,8 +353,39 @@ function multilingual(){
 				} 
 			});
 	}
+	this.ajax_add_edit_content_translation = function(){
+		// sends an ajax request to update a label translation value for a content field
+		// such as an abstract, short description, document content, or a skos:note
+		var language_code = null;
+		if (document.getElementById(this.dom_ids.lang_sel)) {
+			var select_dom = document.getElementById(this.dom_ids.lang_sel);
+			var language_code = select_dom.value;
+		}
+		var text = '';
+		if (document.getElementById(this.dom_ids.lang_literal)) {
+			var text = document.getElementById(this.dom_ids.lang_literal).value;
+		}
+		var data = {
+			language: language_code,
+			content: text, // the translated text for the content
+			content_type: this.content_type,
+			csrfmiddlewaretoken: csrftoken};	
+		var url = this.make_url("/edit/update-item-basics/");
+		url += encodeURIComponent(this.edit_uuid); // the edit_uuid is the item_uuid in the manifest
+		return $.ajax({
+				type: "POST",
+				url: url,
+				dataType: "json",
+				context: this,
+				data: data,
+				success: this.ajax_add_edit_translationDone,
+				error: function (request, status, error) {
+					alert('Translation adding or update failed, sadly. Status: ' + request.status);
+				} 
+			});
+	}
 	this.ajax_add_edit_string_translation = function(){
-		// sends an ajax request to update a string translation value
+		// sends an ajax request to update a string translation value for a string field
 		var language_code = null;
 		if (document.getElementById(this.dom_ids.lang_sel)) {
 			var select_dom = document.getElementById(this.dom_ids.lang_sel);
@@ -470,6 +507,9 @@ function multilingual(){
 		if (this.edit_type == 'label') {
 			var sub_function = this.name + '.addEditLabelTranslation();';
 		}
+		else if (this.edit_type == 'content') {
+			var sub_function = this.name + '.addEditContentTranslation();';
+		}	
 		else{
 			var sub_function = this.name + '.addEditStringTranslation();';
 		}

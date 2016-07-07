@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from django.conf import settings
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class Languages():
@@ -105,3 +106,20 @@ class Languages():
                     # the language, so needs specification
                     key = language + '-' + script
         return key
+
+    def modify_localization_json(self, localized_json, key, translation):
+        """ updates localization json with new text, or removes
+            a language key of the text is blank
+        """
+        translation = translation.strip()
+        if not isinstance(localized_json, dict):
+            localized_json = LastUpdatedOrderedDict()
+        if len(translation) > 1:
+            # we have non-blank translation text
+            localized_json[key] = translation
+        else:
+            if key in localized_json:
+                # we're deleting the translation, since
+                # the translation text is blank
+                localized_json.pop(key, None)
+        return localized_json

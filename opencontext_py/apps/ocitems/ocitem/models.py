@@ -332,6 +332,9 @@ class OCitem():
         json_ld['uuid'] = self.uuid
         json_ld['slug'] = self.slug
         json_ld['label'] = self.label
+        if isinstance(self.manifest.localized_json, dict):
+            if len(self.manifest.localized_json) > 0:
+                json_ld['altLabel'] = self.manifest.localized_json
         if(len(self.manifest.class_uri) > 0):
             json_ld['category'] = [self.manifest.class_uri]
             item_con.class_type_list.append(self.manifest.class_uri)
@@ -648,6 +651,9 @@ class ItemConstruction():
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
                     new_object_item[assertion.object_type] = string_item.content
+                    if isinstance(string_item.localized_json, dict):
+                        if len(string_item.localized_json) > 0:
+                            new_object_item['localization'] = string_item.localized_json
                 except OCstring.DoesNotExist:
                     new_object_item[assertion.object_type] = 'string content missing'
                 act_list.append(new_object_item)
@@ -684,6 +690,9 @@ class ItemConstruction():
                 try:
                     string_item = OCstring.objects.get(uuid=assertion.object_uuid)
                     new_object_item[assertion.object_type] = string_item.content
+                    if isinstance(string_item.localized_json, dict):
+                        if len(string_item.localized_json) > 0:
+                            new_object_item['localization'] = string_item.localized_json
                 except OCstring.DoesNotExist:
                     new_object_item[assertion.object_type] = 'string content missing'
             elif (assertion.object_type == 'xsd:date'):
