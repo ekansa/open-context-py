@@ -114,12 +114,63 @@ class Languages():
         translation = translation.strip()
         if not isinstance(localized_json, dict):
             localized_json = LastUpdatedOrderedDict()
-        if len(translation) > 1:
-            # we have non-blank translation text
-            localized_json[key] = translation
-        else:
-            if key in localized_json:
-                # we're deleting the translation, since
-                # the translation text is blank
-                localized_json.pop(key, None)
+        if key != self.DEFAULT_LANGUAGE:
+            # we will only modify localizations if the key is not
+            # the same as the default language
+            if len(translation) > 1:
+                # we have non-blank translation text
+                localized_json[key] = translation
+            else:
+                if key in localized_json:
+                    # we're deleting the translation, since
+                    # the translation text is blank
+                    localized_json.pop(key, None)
         return localized_json
+
+    def make_json_ld_value_obj(self, default_content, localized_json):
+        """ makes an value object for json_ld, which is either
+            just a string or is a dict object (container) for
+            localized_json
+        """
+        output = default_content
+        if isinstance(localized_json, dict):
+            # ok, we have dict
+            if self.DEFAULT_LANGUAGE in localized_json:
+                # we do not allow the default language in the
+                # localized array
+                localized_json.pop(self.DEFAULT_LANGUAGE, None)
+            if len(localized_json) > 0:
+                # we have a non-empty dict
+                output = LastUpdatedOrderedDict()
+                # now add the default content to this dict
+                # the first key will always be the default language
+                output[self.DEFAULT_LANGUAGE] = default_content
+                # add the other content
+                for key, value in localized_json.items():
+                    output[key] = value
+        return output
+
+    def get_default_value_str(self, value_obj):
+        """ gets the default value string from a
+            value object found in JSON-LD
+        """
+        output = value_obj
+        if isinstance(value_obj, dict):
+            # ok, we have dict
+            if self.DEFAULT_LANGUAGE in value_obj:
+                output = value_obj[self.DEFAULT_LANGUAGE]
+        return output
+
+    def get_all_value_str(self, value_obj, delim=' \n '):
+        """ gets and concatenates all the localization values in
+            a value string or a value dict object found in JSON-LD
+        """
+        output = value_obj
+        if isinstance(value_obj, dict):
+            # ok, we have dict
+            vals_list = []
+            for key, value in value_obj.items():
+                vals_list.append(value)
+            output = delim.join(vals_list)
+        return output
+

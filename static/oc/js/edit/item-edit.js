@@ -812,10 +812,9 @@ function itemEdit(item_type, item_uuid){
 	 *************************************************************/
 	this.display_skos_note = function(){
 		// inferface for editing skos notes for predicates and types
-		if (this.item_json_ld_obj.data.hasOwnProperty('skos:note')) {
-			var skos_note = this.item_json_ld_obj.data['skos:note'];
-		}
-		else{
+		var act_pred = 'skos:note';
+		var skos_note = this.item_json_ld_obj.predGetDefaultString(act_pred);
+		if (skos_note == false) {
 			var skos_note = '';
 		}
 		if (skos_note.length > 0) {
@@ -854,7 +853,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="skos-note-valid">',
 					'</div>',
-					this.make_localize_row_html('skos_note', 'content', 'Definition or Note (skos:note)'),
+					this.make_localize_row_html(act_pred, 'content', 'Definition or Note (skos:note)'),
 					'<div>',
 						'<label>Note</label>',
 						'<p class="small">',
@@ -1104,16 +1103,11 @@ function itemEdit(item_type, item_uuid){
 	}
 	this.display_proj_short_des = function(){
 		// inferface for editing short project description
-		if (this.item_json_ld_obj.data.hasOwnProperty('description')) {
-			var short_des = this.item_json_ld_obj.data['description'];
-		}
-		else{
+		var act_pred = 'description';
+		var placeholder = '';
+		var short_des = this.item_json_ld_obj.predGetDefaultString(act_pred);
+		if (short_des == false) {
 			var short_des = '';
-		}
-		if (short_des.length > 0) {
-			var placeholder = '';
-		}
-		else{
 			var placeholder = 'placeholder="Short Tweet length description"';
 		}
 		var button_html = [
@@ -1145,7 +1139,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="proj-short-des-valid">',
 					'</div>',
-					this.make_localize_row_html('short_des', 'short_des', 'Short Description'),
+					this.make_localize_row_html(act_pred, 'short_des', 'Short Description'),
 				'</div>',
 				'<div class="col-sm-3">',
 					'<label>Note</label>',
@@ -1834,7 +1828,7 @@ function itemEdit(item_type, item_uuid){
 	* Abstract related editing funcitons
 	*******************************************************/
 	this.make_abstract_edit_html = function(){
-		
+		// interface for making (long) project and table abstracts
 		var dom_prefix = 'proj-';
 		var note_text = [
 			'An abstract should use HMTL tags for formatting, including images, ',
@@ -1857,17 +1851,12 @@ function itemEdit(item_type, item_uuid){
 				'useful for interpretation.'
 			].join('\n');
 		}
-		// inferface for editing short project description
-		if (this.item_json_ld_obj.data.hasOwnProperty('dc-terms:abstract')) {
-			var abstract_html = this.item_json_ld_obj.data['dc-terms:abstract'];
-		}
-		else{
+		
+		var act_pred = 'dc-terms:abstract';
+		var placeholder = '';
+		var abstract_html = this.item_json_ld_obj.predGetDefaultString(act_pred);
+		if (abstract_html == false) {
 			var abstract_html = '';
-		}
-		if (abstract_html.length > 0) {
-			var placeholder = '';
-		}
-		else{
 			var placeholder = 'placeholder="A detailed abstract descripting the project, research methods, data reuse ideas, etc."';
 		}
 		var button_html = [
@@ -1899,7 +1888,7 @@ function itemEdit(item_type, item_uuid){
 					'</div>',
 					'<div id="' + dom_prefix + 'abstract-valid">',
 					'</div>',
-					this.make_localize_row_html('abs', 'content', 'Abstract'),
+					this.make_localize_row_html(act_pred, 'content', 'Abstract'),
 					'<div>',
 						'<label>Note</label>',
 						'<p class="small">',
@@ -1969,9 +1958,10 @@ function itemEdit(item_type, item_uuid){
 	 * Functions relating to making localizaiton buttings,
 	 * creating multilingual localization objects
 	 * ***************************************************/
-	this.localizeInterface = function(ml_key, content_type, label){
+	this.localizeInterface = function(act_pred, content_type, label){
 		// creates a localization object if not already present for this ml_key
 		// then opens its interface
+		var ml_key = act_pred.replace(':', '-');
 		if (ml_key in this.multilingual) {
 			// we already have a multilingual object for this key
 			var act_ml = this.multilingual[ml_key];
@@ -1979,6 +1969,7 @@ function itemEdit(item_type, item_uuid){
 		else{
 			// create a new multingual object for this ml_key
 			var act_ml = new multilingual();
+			act_ml.localization = this.item_json_ld_obj.predGetLocalizations(act_pred);
 		    act_ml.parent_obj_name = this.obj_name;
 			act_ml.obj_name = 'multilingual[\'' + ml_key + '\']';
 			act_ml.label = label;
@@ -1986,7 +1977,7 @@ function itemEdit(item_type, item_uuid){
 			act_ml.content_type = content_type;
 			act_ml.edit_uuid = this.item_uuid;
 			act_ml.dom_ids = act_ml.default_domids(0, ml_key);
-			if (ml_key == 'abs' || ml_key == 'skos_note') {
+			if (ml_key == 'dc-terms-abstract' || ml_key == 'skos-note') {
 				// make a big text box, because abstract
 				act_ml.text_box_rows = 24;
 			}

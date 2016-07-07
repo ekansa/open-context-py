@@ -322,6 +322,15 @@ STABLE_ID_URI_PREFIXES = {'doi': 'http://dx.doi.org/',
                           'orcid': 'http://orcid.org/',
                           'ark': 'http://n2t.net/ark:/'}
 
+TEXT_CONTENT_PREDICATES = [
+    'dc-terms:description',
+    'description',
+    'dc-terms:abstract',
+    'rdfs:comment',
+    'rdf:HTML',
+    'skos:note'
+]
+
 NAV_ITEMS = [{'key': 'about',
               'link': None,
               'display': 'About',

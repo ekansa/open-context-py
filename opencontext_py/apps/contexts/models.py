@@ -1,3 +1,4 @@
+from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.languages import Languages
@@ -33,8 +34,12 @@ class GeneralContext():
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
-        context['altLabel'] = {'@id': 'skos:altLabel', '@container': '@language'}
-        context['localization'] = {'@id': 'oc-gen:has-localization', '@container': '@language'}
+        context['skos:altLabel'] = {'@container': '@language'}
+        context['xsd:string'] = {'@container': '@language'}
+        context['description'] = {'@id': 'dc-terms:description', '@container': '@language'}
+        for pred in settings.TEXT_CONTENT_PREDICATES:
+            if pred not in context:
+                context[pred] = {'@container': '@language'}
         self.context = context
 
 
@@ -54,6 +59,10 @@ class ItemContext():
             self.id = self.href
         gen_context = GeneralContext()
         context = gen_context.context
+        context['oc-gen:has-path-items'] = {'@container': '@list'}  # order of containment semantically important
+        context['dc-terms:creator'] = {'@container': '@list'}  # order of authorship semantically important
+        context['dc-terms:contributor'] = {'@container': '@list'}  # order of authorship semantically important
+        context['oc-gen:has-path-items'] = {'@container': '@list'}
         context['Feature'] = 'geojson:Feature'
         context['FeatureCollection'] = 'geojson:FeatureCollection'
         context['GeometryCollection'] = 'geojson:GeometryCollection'
@@ -69,7 +78,6 @@ class ItemContext():
         context['circa'] = 'geojson:circa'
         context['coordinates'] = 'geojson:coordinates'
         context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
-        context['description'] = 'dc-terms:description'
         context['features'] = {'@id': 'geojson:features', '@container': '@set'}
         context['geometry'] = 'geojson:geometry'
         context['properties'] = 'geojson:properties'

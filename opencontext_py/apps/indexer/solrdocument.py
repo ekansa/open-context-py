@@ -1,5 +1,7 @@
 import datetime
 import json
+from django.conf import settings
+from opencontext_py.libs.languages import Languages
 from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
@@ -19,11 +21,11 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = 'CB9037DD-843B-46C1-A25B-DC0C72439899'
+uuid = 'dd9112bc-1cd1-482d-a2c2-6b123a2aa6ec'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
-uuid = '0ffa1856-fabb-4d49-88a5-4919444fcfbf'
+uuid = 'f266d43c-cdea-465c-9135-8c39b7ba6cd9'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_b = sd_obj.fields
@@ -209,9 +211,10 @@ sd_b = sd_obj.fields
                                                             'T00:00:00Z')
                     elif predicate_type == 'xsd:string':
                         if isinstance(value, dict):
-                            self.fields['text'] += str(value['xsd:string']) + ' \n'
-                            self.fields[solr_field_name].append(
-                                value['xsd:string'])
+                            lang_obj = Languages()
+                            act_str = lang_obj.get_all_value_str(value['xsd:string'])
+                            self.fields['text'] += str(act_str) + ' \n'
+                            self.fields[solr_field_name].append(act_str)
                         else:
                             self.fields['text'] += str(value) + ' \n'
                             self.fields[solr_field_name].append(str(value))
@@ -358,6 +361,10 @@ sd_b = sd_obj.fields
             self.fields['text'] += self.oc_item.json_ld['dc-terms:title'] + ' \n'
         else:
             self.fields['text'] += str(self.oc_item.json_ld['label']) + ' \n'
+        if 'skos:altLabel' in self.oc_item.json_ld:
+            # get the multilingual skos altLabels for this item
+            lang_obj = Languages()
+            self.fields['text'] += lang_obj.get_all_value_str(self.oc_item.json_ld['skos:altLabel'])
 
     def make_slug_type_uri_label(self):
         """ makes a slug_type_uri_label field for solr """
@@ -633,15 +640,10 @@ sd_b = sd_obj.fields
     def _process_text_content(self):
         """ Gets text content for indexing
         """
-        text_predicates = ['dc-terms:description',
-                           'description',
-                           'dc-terms:abstract',
-                           'rdfs:comment',
-                           'rdf:HTML',
-                           'skos:note']
-        for pred in text_predicates:
+        for pred in settings.TEXT_CONTENT_PREDICATES:
             if pred in self.oc_item.json_ld:
-                self.fields['text'] += self.oc_item.json_ld[pred] + '\n'
+                lang_obj = Languages()
+                self.fields['text'] += lang_obj.get_all_value_str(self.oc_item.json_ld[pred]) + '\n'
 
     def _process_persistent_ids(self):
         """ Gets stable identifiers for indexing
