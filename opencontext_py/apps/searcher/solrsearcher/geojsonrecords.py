@@ -83,6 +83,7 @@ class GeoJsonRecords():
             self.do_media_thumbs = False
         thumbnail_data = self.get_media_thumbs(solr_recs)
         media_file_data = self.get_all_media_files(solr_recs)
+        string_attrib_data = self.get_string_rec_attributes(solr_recs)
         i = self.rec_start
         for solr_rec in solr_recs:
             i += 1
@@ -96,6 +97,7 @@ class GeoJsonRecords():
             rec_props_obj.rec_attributes = self.rec_attributes
             rec_props_obj.thumbnail_data = thumbnail_data
             rec_props_obj.media_file_data = media_file_data
+            rec_props_obj.string_attrib_data = string_attrib_data
             rec_props_obj.parse_solr_record(solr_rec)
             record['id'] = '#record-' + str(i) + '-of-' + str(self.total_found)
             if rec_props_obj.label is False:
@@ -219,7 +221,7 @@ class GeoJsonRecords():
             return solr_uuids.get_media_thumbs(solr_recs)
         else:
             return {}
-    
+
     def get_all_media_files(self, solr_recs):
         """ gets all media files for items using the SolrUUIDs object"""
         if self.get_all_media:
@@ -229,3 +231,14 @@ class GeoJsonRecords():
             return solr_uuids.get_all_media_files(solr_recs)
         else:
             return {}
+
+    def get_string_rec_attributes(self, solr_recs):
+        """ gets string record attributes from the database.
+            The solr index does not keep string-fields in memory
+        """
+        solr_uuids = SolrUUIDs(self.response_dict_json)
+        solr_uuids.rec_attributes = self.rec_attributes
+        solr_uuids.mem_cache_obj = self.mem_cache_obj
+        output = solr_uuids.get_string_rec_attributes(solr_recs)
+        self.mem_cache_obj = solr_uuids.mem_cache_obj
+        return output
