@@ -36,7 +36,7 @@ class SolrUUIDs():
         # A list of (non-standard) attributes to include in a record
         self.rec_attributes = []
         self.do_media_thumbs = True  # get thumbnails for records
-        self.get_all_media = False # get links to all media files for an item
+        self.get_all_media = False  # get links to all media files for an item
 
     def make_uuids_from_solr(self, solr_json):
         """ makes geojson-ld point records from a solr response """
@@ -61,6 +61,7 @@ class SolrUUIDs():
                 self.do_media_thumbs = False
             thumbnail_data = self.get_media_thumbs(solr_recs)
             media_file_data = self.get_all_media_files(solr_recs)
+            string_attrib_data = self.get_string_rec_attributes(solr_recs)
             for solr_rec in solr_recs:
                 rec_props_obj = RecordProperties(self.response_dict_json)
                 rec_props_obj.mem_cache_obj = self.mem_cache_obj
@@ -71,6 +72,7 @@ class SolrUUIDs():
                 rec_props_obj.rec_attributes = self.rec_attributes
                 rec_props_obj.thumbnail_data = thumbnail_data
                 rec_props_obj.media_file_data = media_file_data
+                rec_props_obj.string_attrib_data = string_attrib_data
                 item_ok = rec_props_obj.get_item_basics(solr_rec)
                 if item_ok:
                     if uris_only:
@@ -121,7 +123,10 @@ class SolrUUIDs():
                 prop_key = rec_props_obj.prevent_attribute_key_collision(item,
                                                                          prop_key)
                 if self.flatten_rec_attributes:
-                    item[prop_key] = attribute['value']
+                    if 'value' in attribute:
+                        item[prop_key] = attribute['value']
+                    elif 'values_list' in attribute:
+                        item[prop_key] = RecordProperties.ATTRIBUTE_DELIM.join(attribute['values_list'])
                 else:
                     item[prop_key] = attribute['values_list']
         return item
@@ -217,7 +222,7 @@ class SolrUUIDs():
         return media_file_results
 
     def get_thumbs_for_non_media(self, uuid_list):
-        q_uuids = self.make_quey_uuids(uuid_list)
+        q_uuids = self.make_query_uuids(uuid_list)
         query = ('SELECT ass.uuid AS uuid, m.file_uri AS file_uri, '
                  'm.uuid AS media_uuid '
                  'FROM oc_assertions AS ass '
@@ -230,7 +235,7 @@ class SolrUUIDs():
         rows = self.dictfetchall(cursor)
         return rows
 
-    def make_quey_uuids(self, uuid_list):
+    def make_query_uuids(self, uuid_list):
         """ makes a string for uuid list query """
         uuid_q = []
         for uuid in uuid_list:
@@ -245,3 +250,81 @@ class SolrUUIDs():
             dict(zip(columns, row))
             for row in cursor.fetchall()
         ]
+
+    def get_string_rec_attributes(self, solr_recs):
+        """ gets string record attributes from the database.
+            The solr index does not keep string-fields in memory
+        """
+        output = {}
+        str_attribs = {}
+        for attribute in self.rec_attributes:
+            entity = self.mem_cache_obj.get_entity(attribute, False)
+            if entity is not False:
+                prop_slug = entity.slug
+                # check to make sure we have the entity data type for linked fields
+                if entity.data_type is False and entity.item_type == 'uri':
+                    dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
+                    if isinstance(dtypes, list):
+                        # set te data type and the act-field
+                        # print('Found for ' + prop_slug + ' ' + dtypes[0])
+                        entity.data_type = dtypes[0]
+                if entity.data_type == 'xsd:string':
+                    str_attribs[attribute] = entity
+        if len(str_attribs) > 0:
+            uuid_list = []
+            for solr_rec in solr_recs:
+                if 'uuid' in solr_rec:
+                    uuid = str(solr_rec['uuid'])
+                    uuid_list.append(uuid)
+            output = self.get_string_attributes(uuid_list, str_attribs)
+        return output
+
+    def get_string_attributes(self, uuid_list, str_attribute_ent_dict):
+        """ Gets string attribute data for a solr dict """
+        output = {}
+        pred_uuid_list = []
+        pred_uuid_objs = {}
+        for key, entity in str_attribute_ent_dict.items():
+            if isinstance(entity.uuid, str):
+                # add string predicate entity uuid to the list
+                pred_uuid_list.append(entity.uuid)
+                pred_uuid_objs[entity.uuid] = {'rec_attribute': key,
+                                               'property': entity.label,
+                                               'pred_uuid': entity.uuid,
+                                               'slug': entity.slug}
+        if len(pred_uuid_list) > 0 and len(uuid_list) > 0:
+            q_rows = self. get_string_attributes_sql(uuid_list, pred_uuid_list)
+            dict_rows = {}
+            for row in q_rows:
+                # print(str(row))
+                # the whole "dict row" bullshit is because for some reason
+                # we can't simply append to the output of the 
+                uuid = row['uuid']
+                pred_uuid = row['predicate_uuid']
+                content = row['content']
+                if uuid not in dict_rows:
+                    dict_rows[uuid] = {}
+                if pred_uuid not in dict_rows[uuid]:
+                    dict_rows[uuid][pred_uuid] = []
+                if isinstance(content, str):
+                    dict_rows[uuid][pred_uuid].append(content)
+                    # print(str(dict_rows[uuid][pred_uuid]))
+            output = {'pred_ents': pred_uuid_objs,
+                      'data': dict_rows}
+        return output
+
+    def get_string_attributes_sql(self, uuid_list, pred_uuid_list):
+        """ executes SQL query to get strings for the solr uuids and predicates """
+        q_uuids = self.make_query_uuids(uuid_list)
+        p_uuids = self.make_query_uuids(pred_uuid_list)
+        query = ('SELECT ass.uuid AS uuid, ass.predicate_uuid AS predicate_uuid, '
+                 's.content AS content '
+                 'FROM oc_assertions AS ass '
+                 'JOIN oc_strings AS s ON ass.object_uuid = s.uuid '
+                 'WHERE ass.uuid IN (' + q_uuids + ') AND '
+                 'ass.predicate_uuid IN (' + p_uuids + ')'
+                 'ORDER BY ass.uuid,  ass.predicate_uuid, s.content; ')
+        cursor = connection.cursor()
+        cursor.execute(query)
+        rows = self.dictfetchall(cursor)
+        return rows

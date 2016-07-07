@@ -72,6 +72,7 @@ class RecordProperties():
         self.max_date = False
         self.thumbnail_data = {}
         self.media_file_data = {}
+        self.string_attrib_data = {}
 
     def parse_solr_record(self, solr_rec):
         """ Parses a solr rec object """
@@ -86,7 +87,8 @@ class RecordProperties():
             self.get_thumbnail(solr_rec)
             self.get_media_files(solr_rec)
             self.get_snippet(solr_rec)  # get snippet of highlighted text
-            self.get_attributes(solr_rec) # get non-standard attributes
+            self.get_attributes(solr_rec)  # get non-standard attributes
+            self.get_string_attributes(solr_rec)  # get non-standard string attributes
 
     def get_item_basics(self, solr_rec):
         """ get basic metadata for an item """
@@ -236,7 +238,7 @@ class RecordProperties():
             else:
                 # did not precache thumbnail data, get an indivitual record
                 self.get_thumbnail_from_database(solr_rec)
-    
+
     def get_media_files(self, solr_rec):
         """ get media record and thumbnai if it exists """
         if 'uuid' in solr_rec:
@@ -315,6 +317,7 @@ class RecordProperties():
                         entity.data_type = dtypes[0]
                 field_parts = qm.make_prop_solr_field_parts(entity)
                 solr_field = field_parts['prefix'] + '___pred_' + field_parts['suffix']
+                # print('Found: ' + solr_field)
                 # extract children of the solr_field so we know if
                 # we have the most specific attributes, then we can get
                 # values for the most specific attributes
@@ -345,6 +348,22 @@ class RecordProperties():
                        and string_val is False:
                         attribute_dict['value'] = values[0]
                     self.other_attributes.append(attribute_dict)
+
+    def get_string_attributes(self, solr_rec):
+        """ gets string attributes for a solr rec, from a previous database query
+            needed because solr does not cache string field data
+        """
+        if isinstance(self.string_attrib_data, dict):
+            # now add predicate attributes for string predicates, from the database
+            if 'uuid' in solr_rec:
+                uuid = solr_rec['uuid']
+                if uuid in self.string_attrib_data['data']:
+                    item_data = self.string_attrib_data['data'][uuid]
+                    for pred_uuid, values_list in item_data.items():
+                        act_attribute = self.string_attrib_data['pred_ents'][pred_uuid]
+                        act_attribute['values_list'] = values_list
+                        act_attribute['value'] = self.ATTRIBUTE_DELIM.join(values_list)
+                        self.other_attributes.append(act_attribute)
 
     def prevent_attribute_key_collision(self, item_prop_dict, prop_key):
         """ checks to make sure there's no collision between the prop_key
