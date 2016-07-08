@@ -79,6 +79,7 @@ urlpatterns = patterns('',
                        url(r'^search/(?P<spatial_context>\S+)?.json', SearchViews.json_view, name='search_json'),
                        url(r'^search/(?P<spatial_context>\S+)?', SearchViews.html_view, name='search_html'),
                        # Subjects views for main records (subjects of observations)
+                       url(r'^database/space.php', SubjectViews.old_redirect_view, name='old_redirect_html'),
                        url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
                        url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
                        url(r'^subjects', SubjectViews.index, name='subjects_index_html_s'),

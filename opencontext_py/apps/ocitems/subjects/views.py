@@ -23,6 +23,19 @@ def index(request):
     return redirect(new_url, permanent=True)
 
 
+def old_redirect_view(request):
+    """ Redirects from the original PHP version of
+        Open Context when ".php" was in URLs
+    """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url = base_url + '/subjects-search/'
+    if 'item' in request.GET:
+        uuid = request.GET['item']
+        new_url = base_url + '/subjects/' + uuid
+    return redirect(new_url, permanent=True)
+
+
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
