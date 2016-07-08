@@ -355,7 +355,7 @@ class RecordProperties():
         """
         if isinstance(self.string_attrib_data, dict):
             # now add predicate attributes for string predicates, from the database
-            if 'uuid' in solr_rec:
+            if 'uuid' in solr_rec and 'data' in self.string_attrib_data:
                 uuid = solr_rec['uuid']
                 if uuid in self.string_attrib_data['data']:
                     item_data = self.string_attrib_data['data'][uuid]
