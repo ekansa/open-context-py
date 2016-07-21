@@ -160,6 +160,20 @@ class Languages():
             if self.DEFAULT_LANGUAGE in value_obj:
                 output = value_obj[self.DEFAULT_LANGUAGE]
         return output
+    
+    def get_other_values_dict(self, value_obj):
+        """ gets a dictionary object for all the
+            non-default localized / translated languges
+            as a key => value dict.
+        """
+        output = None
+        if isinstance(value_obj, dict):
+            # ok, we have dict
+            output = LastUpdatedOrderedDict()
+            for lang_code, value in value_obj.items(): 
+                if lang_code != self.DEFAULT_LANGUAGE:
+                    output[lang_code] = value
+        return output
 
     def get_all_value_str(self, value_obj, delim=' \n '):
         """ gets and concatenates all the localization values in

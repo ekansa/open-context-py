@@ -167,8 +167,9 @@ class ItemBasicEdit():
                     ok = False
         # now reindex for solr, including child items impacted by the changes
         if self.manifest.item_type != 'tables' and self.edit_status > 0:
-            sri = SolrReIndex()
-            sri.reindex_related(self.manifest.uuid)
+            if 'reindex' in post_data:
+                sri = SolrReIndex()
+                sri.reindex_related(self.manifest.uuid)
             if ok:
                 # now clear the cache a change was made
                 self.clear_caches()

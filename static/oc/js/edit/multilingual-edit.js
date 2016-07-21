@@ -2,9 +2,9 @@
  * Functions to edit multiple language strings
  */
 function multilingual(){
-	this.localize_dom_id = 'localize-modal';
-	this.localize_title_dom_id = 'localize-title';
-	this.localize_inter_dom_id = 'localize-interface';
+	this.modal_dom_id = 'localize-modal';
+	this.modal_title_dom_id = 'localize-title';
+	this.modal_inter_dom_id = 'localize-interface';
 	this.invalid_alert_class = 'alert alert-warning';
 	this.parent_obj_name = false;
 	this.value_num = 0;
@@ -120,8 +120,8 @@ function multilingual(){
 	 * ***********************************************
 	 */
 	this.localizeInterface = function(){
-		var inter_dom = document.getElementById(this.localize_inter_dom_id);
-		var title_dom = document.getElementById(this.localize_title_dom_id);
+		var inter_dom = document.getElementById(this.modal_inter_dom_id);
+		var title_dom = document.getElementById(this.modal_title_dom_id);
 		if (this.edit_type == 'label') {
 			// translate a label for an item
 			title_dom.innerHTML = 'Add Translation for <em>' + this.label + '</em>';
@@ -134,7 +134,7 @@ function multilingual(){
 			var interface_html = this.make_localize_string_interface_html(null);
 			inter_dom.innerHTML = interface_html;
 		}
-		var modal_id = "#" + this.localize_dom_id;
+		var modal_id = "#" + this.modal_dom_id;
 		$(modal_id).modal('show');
 	}
 	this.make_localize_label_interface_html = function(language_code){
@@ -265,7 +265,7 @@ function multilingual(){
 		// run this onchange event for a selection of a language for translation
 		var select_dom = document.getElementById(this.dom_ids.lang_sel);
 		var language_code = select_dom.value;
-		var inter_dom = document.getElementById(this.localize_inter_dom_id);
+		var inter_dom = document.getElementById(this.modal_inter_dom_id);
 		if (this.edit_type == 'label') {
 			// translate a label for an item
 			var interface_html = this.make_localize_label_interface_html(language_code);

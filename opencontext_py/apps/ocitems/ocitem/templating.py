@@ -614,7 +614,7 @@ class Observation():
         if 'skos:note' in json_ld:
             act_val = PropValue()
             act_val.vartype = 'xsd:string'
-            act_val.val = json_ld['skos:note']
+            act_val.set_string_val_and_localizations(json_ld['skos:note'])
             act_prop = Property()
             act_prop.varlabel = 'Definition or note'
             act_prop.varuri = False
@@ -663,7 +663,7 @@ class Observation():
         if 'skos:note' in json_ld:
             act_val = PropValue()
             act_val.vartype = 'xsd:string'
-            act_val.val = json_ld['skos:note']
+            act_val.set_string_val_and_localizations(json_ld['skos:note'])
             act_prop = Property()
             act_prop.varlabel = 'Definition or note'
             act_prop.varuri = False
@@ -901,6 +901,7 @@ class PropValue():
         self.type = False
         self.thumbnail = False
         self.oc_item = True
+        self.localizations = False
 
     def make_value(self, val_item):
         if isinstance(val_item, dict):
@@ -926,8 +927,7 @@ class PropValue():
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
             if 'xsd:string' in val_item:
-                lang_obj = Languages()
-                self.val = lang_obj.get_default_value_str(val_item['xsd:string'])
+                self.set_string_val_and_localizations(val_item['xsd:string'])
         else:
             if self.vartype == 'xsd:integer':
                 self.val = str(int(float(val_item)))
@@ -938,7 +938,14 @@ class PropValue():
                     self.val = 'False'
             else:
                 self.val = val_item
-
+                
+    def set_string_val_and_localizations(self, xsd_string_obj):
+        """ sets the string value for the default language
+            as well as localized / translated values
+        """
+        lang_obj = Languages()
+        self.val = lang_obj.get_default_value_str(xsd_string_obj)
+        self.localizations = lang_obj.get_other_values_dict(xsd_string_obj)
 
 class Project():
     """ This class makes an object useful for templating

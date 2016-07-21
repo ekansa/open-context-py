@@ -6,7 +6,7 @@ from dateutil.parser import parse
 import uuid as GenUUID
 from django.db import models
 from django.db.models import Q, Count
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.edit.inputs.profiles.models import InputProfile
 from opencontext_py.apps.edit.inputs.fieldgroups.models import InputFieldGroup
@@ -100,7 +100,7 @@ class InputProfileUse():
             note += '.. FAILED!'
         if self.ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': action,
                          'ok': self.ok,
                          'change': {'uuid': self.edit_uuid,
@@ -324,3 +324,10 @@ class InputProfileUse():
     def make_source_id(self):
         """ makes a source id based on the profile_uuid """
         return 'profile:' + self.profile_uuid
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
