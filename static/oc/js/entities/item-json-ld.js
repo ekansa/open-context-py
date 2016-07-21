@@ -272,7 +272,7 @@ function item_object(item_type, uuid){
 		// gets a object for the item's immediate parent, if it exists
 		var output = false;
 		if (this.data != false) {
-			if (this.data['oc-gen:has-obs'] !== undefined) {
+			if (this.data['oc-gen:has-context-path'] !== undefined) {
 				if (this.data['oc-gen:has-context-path']['oc-gen:has-path-items'] !== undefined) {
 					var pcount = this.data['oc-gen:has-context-path']['oc-gen:has-path-items'].length;
 					output = this.data['oc-gen:has-context-path']['oc-gen:has-path-items'][pcount-1];

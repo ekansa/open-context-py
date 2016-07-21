@@ -2,35 +2,6 @@
 
 {% block itemcontent %}
 <div id="item-content">
-    <!-- BEGIN item edit general javascript includes -->
-    <script type="text/javascript">
-        <!--
-        var csrftoken = $.cookie('csrftoken');
-        var item_label = '{{ item.label }}';
-        var item_type = '{{ item.act_nav }}';
-        var uuid = '{{ item.uuid }}';
-        var project_uuid = '{{ item.project.uuid }}';
-        var base_url = '{{ base_url }}';
-        var field_group_vis = {
-        {% for key,val in field_group_vis.items %}
-            {{ key }}: '{% autoescape off %}{{ val }}{% endautoescape %}',
-        {% endfor %}
-        };
-        var label_prefix = '{{ item.label_prefix }}';
-        {% if item.label_id_len != False %}
-        var label_id_len = {{ item.label_id_len }};
-        {% else %}
-        var label_id_len = false;
-        {% endif %}
-        var edit_uuid = '{{ item.edit_uuid }}';
-        {% if item.edit_man != False %}
-            item_type = '{{ item.edit_man.item_type }}';
-        var edit_new = false;
-        {% else %}
-        var edit_new = true;
-        {% endif %}
-        -->
-    </script>
     <style type="text/css">
         #fieldtabfields .ui-selecting { background: #FFFF99; }
         #fieldtabfields .ui-selected { background: #FFFF66; }
@@ -76,52 +47,67 @@
         {% include 'edit/edit-modal.html' %}
         {% include 'edit/edit-small-modal.html' %}
         
+        <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
+        <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/entities/entities.js"></script>
+        <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
+        <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
+        <script src="{{ base_url }}/static/oc/js/entities/item-annotations.js"></script>
+        <script src="{{ base_url }}/static/oc/js/edit/context-edit.js"></script>
+        <script src="{{ base_url }}/static/oc/js/edit/geo-chrono-edit.js"></script>
+        <script src="{{ base_url }}/static/oc/js/edit/item-annotate.js"></script>
+        <script src="{{ base_url }}/static/oc/js/edit/item-field.js"></script>
+        
+        <!-- BEGIN javascript includes -->
         <script type="text/javascript">
             <!--
-            var act_profile = false;
-            function use_profile(){
-                act_profile = new useProfile(uuid, edit_uuid, edit_new);
-                act_profile.label_prefix = label_prefix;
-                act_profile.label_id_len = label_id_len;
-                if (!edit_new) {
-                    act_profile.item_type = item_type;
-                    var item_json_ld_obj = new item_object(item_type, edit_uuid);
-                    act_profile.item_json_ld_obj = item_json_ld_obj;
-                    act_profile.get_data().then(function(){
-                        act_profile.getItemJSON();
-                    }).then(function(){
-                        act_profile.profile_items.get_data();
-                    });
-                }
-               
-                if (label_prefix.length > 0 || label_id_len != false) {
-                    // add a suggested label
-                    act_profile.preset_label = true;
-                    act_profile.get_data().then(function(){
-                        act_profile.presetLabel();
-                    }).then(function(){
-                        act_profile.profile_items.get_data();
-                    });
-                }
-                else{
-                    // just get the data without making a suggested label
-                    act_profile.get_data().then(function(){
-                        act_profile.profile_items.get_data();
-                    });
-                }
+            var csrftoken = $.cookie('csrftoken');
+            var base_url = '{{ base_url }}';
+            
+            var item_label = '{{ item.label }}';
+            var item_type = '{{ item.act_nav }}';
+            var profile_uuid = '{{ item.uuid }}';
+            var project_uuid = '{{ item.project.uuid }}';
+            
+            var field_group_vis = {
+            {% for key,val in field_group_vis.items %}
+                {{ key }}: '{% autoescape off %}{{ val }}{% endautoescape %}',
+            {% endfor %}
+            };
+            
+            var label_prefix = '{{ item.label_prefix }}';
+            {% if item.label_id_len != False %}
+            var label_id_len = {{ item.label_id_len }};
+            {% else %}
+            var label_id_len = false;
+            {% endif %}
+            var edit_uuid = '{{ item.edit_uuid }}';
+            {% if item.edit_man != False %}
+                item_type = '{{ item.edit_man.item_type }}';
+            var edit_new = false;
+            {% else %}
+            var edit_new = true;
+            {% endif %}
+            -->
+        </script>
+         
+        <script type="text/javascript">
+            <!--
+            var profile_obj = false;
+            function start_profile_use(){
+                // gets the profile object ready
+                profile_obj = new useProfile(profile_uuid, edit_uuid, item_type, edit_new);
+                profile_obj.get_all_data();
             }
             -->
         </script> 
         
-        <link rel="stylesheet" href="{{ base_url }}/static/oc/css/dates/bootstrap-datepicker3.min.css" />
-        <script src="{{ base_url }}/static/oc/js/entities/item-json-ld.js"></script>
-        <script src="{{ base_url }}/static/oc/js/dates/bootstrap-datepicker.min.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/json/json2.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/entities/hierarchy-tree.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/entities/entities.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/edit/profile-panel.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/edit/profile-item-list.js" ></script>
-        <script src="{{ base_url }}/static/oc/js/edit/profile-use.js" onload="use_profile();"></script>
+        <!-- Localization / Translation Modal -->
+        {% include 'edit/localize-modal.html' %} 
+         
+        <script src="{{ base_url }}/static/oc/js/edit/profile-use.js" onload="start_profile_use();"></script>
      </div>
 </div>
 {% endblock %} 
