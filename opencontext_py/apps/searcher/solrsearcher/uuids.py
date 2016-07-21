@@ -59,6 +59,8 @@ class SolrUUIDs():
                 self.do_media_thumbs = False
             if self.get_all_media:
                 self.do_media_thumbs = False
+            if 'thumbnail' in self.rec_attributes:
+                self.do_media_thumbs = True
             thumbnail_data = self.get_media_thumbs(solr_recs)
             media_file_data = self.get_all_media_files(solr_recs)
             string_attrib_data = self.get_string_rec_attributes(solr_recs)
