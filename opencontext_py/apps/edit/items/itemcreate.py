@@ -4,7 +4,7 @@ from lxml import etree
 import lxml.html
 from django.db import models
 from django.db.models import Q
-from django.core.cache import cache
+from django.core.cache import caches
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
@@ -193,7 +193,7 @@ class ItemCreate():
             uuid = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -254,7 +254,7 @@ class ItemCreate():
             uuid = False
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -447,7 +447,7 @@ class ItemCreate():
         if ok:
             # now clear the cache a change was made
             self.created_uuid = uuid
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -539,7 +539,7 @@ class ItemCreate():
                                       pred_note)
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -622,7 +622,7 @@ class ItemCreate():
                                  post_data['thumbs_uri'])
         if ok:
             # now clear the cache a change was made
-            cache.clear()
+            self.clear_caches()
         self.response = {'action': 'create-item-into',
                          'ok': ok,
                          'change': {'uuid': uuid,
@@ -688,3 +688,10 @@ class ItemCreate():
         else:
             note = 'Failed to create item into: ' + proj_label
         return note
+
+    def clear_caches(self):
+        """ clears all the caches """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
