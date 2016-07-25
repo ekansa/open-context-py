@@ -63,6 +63,12 @@
          </div>
          <div class="col-sm-4">
          {% include 'items/citation.html' %}
+         {% if super_user %}
+         {% if item.uuid %}
+         <!-- Deletion Interface -->
+         {% include 'edit/delete-modal.html' %}
+         {%endif%}
+         {%endif%}
          {% include 'items/project.html' %}
          {% include 'items/map.html' %}
          <div style="margin-top: 20px;">

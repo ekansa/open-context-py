@@ -14,6 +14,8 @@ function deleteItem(){
 	this.dom_ids = null;
 	this.edit_uuid = null;
 	this.edit_type = false;
+	this.act_editorial_type = 'edit-deletion';
+	this.editorial_types = {};
 	
 	this.initialize = function(){
 		if (this.parent_obj_name != false) {
@@ -28,13 +30,11 @@ function deleteItem(){
 	}
 	this.default_domids = function(value_num, suffix){
 		var dom_ids = {
-			lang_out: (value_num + '-field-fcl-' + suffix),  //for language adding options
-			lang_sel: (value_num + '-field-lang-sel-' + suffix),  //for language selection input
-			lang_literal: (value_num + '-field-lang-lit-' + suffix),  //for language text literal
-			lang_valid: (value_num + '-field-lang-valid-' + suffix), //container ID for language validation feedback
-			lang_valid_val: (value_num + '-field-lang-valid-val-' + suffix), //hidden input field for language value validation results
-			lang_submitcon: (value_num + '-field-lang-sbcon-' + suffix), //container ID for language submitt button
-			lang_respncon: (value_num + '-field-lang-respcon-' + suffix), //container ID for language submission response
+			del_label: (value_num + '-del-label-' + suffix),  //for delete editorial label
+			del_note: (value_num + '-del-note-' + suffix),  //for delete editorial note
+			del_class: (value_num + '-del-class-' + suffix),  //for delete editorial class_uri
+			del_submitcon: (value_num + '-del-sbcon-' + suffix), //container ID for delete submitt button
+			del_respncon: (value_num + '-del-respcon-' + suffix), //container ID for delete submission response
 		}
 		this.dom_ids = dom_ids;
 		return dom_ids;
@@ -46,13 +46,27 @@ function deleteItem(){
 	this.deleteInterface = function(){
 		var inter_dom = document.getElementById(this.modal_inter_dom_id);
 		var title_dom = document.getElementById(this.modal_title_dom_id);
-		title_dom.innerHTML = 'Delete "<em>' + this.label + '</em>"?';
-		var interface_html = this.make_localize_string_interface_html(null);
+		title_dom.innerHTML = 'Delete <em>"' + this.label + '"</em> ?';
+		var interface_html = this.make_interface_html();
 		inter_dom.innerHTML = interface_html;
 		var modal_id = "#" + this.modal_dom_id;
 		$(modal_id).modal('show');
 	}
-	
+	this.make_interface_html = function(){
+		// make the HTML for the interface
+		var html = [
+			'<div class="container-fluid">',
+				'<div class="row">',
+					'<div class="col-xs-12">',
+					'Open Context organizes data by linking records together. ',
+					'This means deleting records will can impact related records. ',
+					'',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		return html;
+	}
 	
 	/*
 	 * Supplemental Functions (used throughout)
