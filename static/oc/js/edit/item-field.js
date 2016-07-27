@@ -881,6 +881,7 @@ function edit_field(){
 													 vocab_uri: false};
 			var val_mes = 'Valid context selected.';
 			this.validation_id_response(true, this.value_num);
+			// console.log(this);
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
 		this.sobjs.push(entSearchObj);
@@ -1170,10 +1171,11 @@ function edit_field(){
 			class_pred_uuid: this.class_pred_uuid,
 			class_vocab_uri: this.class_vocab_uri,
 			context_pred_uuid: this.context_pred_uuid,
-			validation_id_response: this.validation_id_response,
+			oc_required: this.oc_required,
 			after_validation_done: this.after_validation_done,
 			after_validation_function: this.after_validation_function,
 			values_modified: this.values_modified,
+			validation_id_response: this.validation_id_response,
 			exec: false
 		}
 		return afterSelectDone;
@@ -1573,6 +1575,7 @@ function edit_field(){
 		if (this.after_validation_done != false && this.oc_required) {
 			// execute function after validation
 			if (typeof(this.after_validation_done.exec) !== 'undefined') {
+				console.log('Do after validation done...' + this.label);
 				this.after_validation_done.exec();
 			}
 		}
@@ -1922,7 +1925,7 @@ function edit_field(){
 		return alert_html;
 	}
 	this.make_submit_button = function(is_valid, value_num){
-		console.log('Making that button, again for ' + value_num);
+		// console.log('Making that button, again for ' + value_num);
 		var dom_ids = this.make_field_val_domids(value_num);
 		
 		if (is_valid) {

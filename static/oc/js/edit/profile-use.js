@@ -267,10 +267,14 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						required_valid.all = false;
 						required_valid.missing.push(field.label);
 					}
+					console.log('OC-req-0-not-found: ' + field.label);
+					// console.log(required_valid);
 				}
 				else{
 					required_valid.all = false;
 					required_valid.missing.push(field.label);
+					console.log('OC-req-0-not-found: ' + field.label);
+					// console.log(required_valid);
 				}
 			}
 		}
@@ -436,6 +440,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			field.obs_num = obs_num;
 			field.obs_node = '#obs-' + obs_num;
 			field.data_type = profile_field.data_type;
+			field = this.add_oc_require_validation_function(field);
 			if (this.item_json_ld_obj != false) {
 				// show existing data for this predicate
 				field.values_obj = [];
@@ -495,9 +500,9 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		meta_panel.body_html = body_html;
 		return meta_panel.make_html();
 	}
-	this.postprocess_fields = function(){
-		// activates hiearchy trees + other post-processing functions
-		// than need to happen after fields are addded to the DOM
+	this.add_oc_require_validation_function = function(field){
+		// adds a function to oc_require fields. this executes when
+		// a user input is validated on a value for a require field
 		
 		// execute this after validation is completed for required fields
 		var after_validation_done = {
@@ -514,11 +519,18 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			}
 		};
 		
+		if (field.oc_required) {
+			//this field is required, so add the validation function
+			field.after_validation_done = after_validation_done;
+		}
+		return field;
+	}
+	this.postprocess_fields = function(){
+		// activates hiearchy trees + other post-processing functions
+		// than need to happen after fields are addded to the DOM
+		
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
-			if (field.oc_required) {
-				field.after_validation_done = after_validation_done;
-			}
 			field.postprocess();
 		}
 		
