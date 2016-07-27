@@ -280,12 +280,14 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		var submit_ok = this.prep_all_create_update();
 		if (submit_ok) {
 			var data = {csrfmiddlewaretoken: csrftoken};
-			var field_data = [];
+			var field_key = this.id;
+			field_data = {};
 			for (var i = 0, length = this.fields.length; i < length; i++) {
 				var field = this.fields[i];
 				var act_field = field.make_field_submission_obj(true);
+				var field_key = act_field.field_uuid;
 				if (act_field.values.length > 0 && field.values_modified) {
-					field_data.push(act_field);
+					field_data[field_key] = act_field;
 				}
 			}
 			console.log(field_data);
@@ -314,6 +316,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				// we succeeded in creating a new item
 				var mess = 'Item successfully created!';
 				this.edit_new = false;
+				
 			}
 			else{
 				var mess = 'Item successfully updated.';
@@ -336,7 +339,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				}
 				mess += error_html;
 			}
-			var alert_html = this.make_validation_html(mess, true, false);
+			var alert_html = this.make_validation_html(mess, true);
 			this.activateFieldUpdateButtons(); // make the individual field update buttons active
 		}
 		else{
@@ -358,12 +361,30 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				error_html += '</ul>';
 				mess += error_html;
 			}
-			var alert_html = this.make_validation_html(mess, false, false);
+			var alert_html = this.make_validation_html(mess, false);
 		}
 		if (document.getElementById(this.fields_complete_dom_id)) {
-			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
+			document.getElementById(this.fields_complete_dom_id).innerHTML = alert_html;
 		}
 	}
+	this.make_validation_html = function(message_html, is_valid){
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var alert_class = this.invalid_alert_class;
+		}
+		var alert_html = [
+				'<div role="alert" class="' + alert_class + '" >',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		return alert_html;
+	}
+	
 	
 	/* ---------------------------------------
 	 * Field Group and Field HTML 

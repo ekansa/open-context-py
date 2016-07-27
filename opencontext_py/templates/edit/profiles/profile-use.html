@@ -77,12 +77,6 @@
             {% endfor %}
             };
             
-            var label_prefix = '{{ item.label_prefix }}';
-            {% if item.label_id_len != False %}
-            var label_id_len = {{ item.label_id_len }};
-            {% else %}
-            var label_id_len = false;
-            {% endif %}
             var edit_uuid = '{{ item.edit_uuid }}';
             {% if item.edit_man != False %}
                 item_type = '{{ item.edit_man.item_type }}';
@@ -99,6 +93,12 @@
             function start_profile_use(){
                 // gets the profile object ready
                 profile_obj = new useProfile(profile_uuid, edit_uuid, item_type, edit_new);
+                profile_obj.label_prefix = '{{ item.label_prefix }}';
+                {% if item.label_id_len != False %}
+                    profile_obj.label_id_len = {{ item.label_id_len }};
+                {% else %}
+                    profile_obj.label_id_len = false;
+                {% endif %}
                 profile_obj.get_all_data();
             }
             -->

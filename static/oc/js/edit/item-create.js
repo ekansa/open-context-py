@@ -1107,7 +1107,7 @@ function createMediaFields(){
 	var html = [
 	'<div>',
 		'<div class="form-group">',
-			'<label for="new-item-labe;">Label</label>',
+			'<label for="new-item-label">Label</label>',
 			'<input id="new-item-label" class="form-control input-sm" ',
 			'type="text" value="" onchange="media_label_check();" />',
 		'</div>',

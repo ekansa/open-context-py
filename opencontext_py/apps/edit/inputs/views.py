@@ -40,7 +40,7 @@ def profile_use(request, profile_uuid, edit_uuid):
                     edit_man = False
                     raise Http404
             else:
-                edit_uuid = proj_inp.mint_new_uuid
+                edit_uuid = proj_inp.mint_new_uuid()
                 edit_man = False
             if 'prefix' in request.GET:
                 prefix = request.GET['prefix']

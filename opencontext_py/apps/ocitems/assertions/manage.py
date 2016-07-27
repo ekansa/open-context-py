@@ -3,7 +3,7 @@ from django.conf import settings
 from django.db import models
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.edit.moddata import DeleteMerge
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 
 

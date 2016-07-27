@@ -11,6 +11,7 @@ from jsonfield import JSONField
 # Documents editorial actions that mat beed documenting. 
 @reversion.register  # records in this model under version control
 class Editorial(models.Model):
+
     EDITORIAL_TYPES ={
         'dispute-redaction' : {
             'label': 'Dispute Redaction',
@@ -23,6 +24,10 @@ class Editorial(models.Model):
         'error-redaction' : {
             'label': 'Error Correction Redaction',
             'skos:note': 'Content redacted, removed because of content or processing error.'
+        },
+        'edit-deletion' : {
+            'label': 'Edting Deletion',
+            'skos:note': 'Content deletion for editing purposes.'
         }
     }
     

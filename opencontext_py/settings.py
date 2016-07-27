@@ -71,6 +71,21 @@ added_host = get_secret('ALLOWED_HOST')
 if len(added_host) > 1:
     ALLOWED_HOSTS.append(added_host)
 
+
+
+# Is this deployement connected to the Web?
+# Defaults to TRUE, but the setting exists in case
+# only locally available files (CSS, Javascript, media)
+# can be used
+WEB_OK = True
+if 'WEB_OK' in secrets:
+    secrets_web_ok = get_secret('WEB_OK')
+    if secrets_web_ok != 1:
+        WEB_OK = False
+
+
+
+
 # Application definition
 
 INSTALLED_APPS = (

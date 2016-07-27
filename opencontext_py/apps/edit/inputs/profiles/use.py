@@ -76,28 +76,35 @@ class InputProfileUse():
             action = 'create-profle-item'
             note = 'Item not found, creating.'
             self.new_item = True
-        # now collect the required field data
-        required_make_data = self.get_required_make_data(field_data)
-        if item_man is not False:
-            # we've found a record for this item, so we can
-            # update any of the required fields.
-            self.update_required_make_data(item_man, required_make_data)
-        else:
-            item_man = self.create_item(required_make_data)
-        if item_man is not False:
-            label = item_man.label
-            for field_uuid, field_values in field_data.items():
-                self.profile_field_update(item_man, field_uuid, field_values)
-            if self.do_solr_index:
-                if item_man.uuid not in self.solr_reindex_uuids:
-                    self.solr_reindex_uuids.append(item_man.uuid)
-                sri = SolrReIndex()
-                num_reindexed = sri.reindex_uuids(self.solr_reindex_uuids)
-                note += ' Indexed ' + str(num_reindexed) + ' items.'
+        if isinstance(field_data, dict):
+            # now collect the required field data
+            required_make_data = self.get_required_make_data(field_data)
+            if item_man is not False:
+                # we've found a record for this item, so we can
+                # update any of the required fields.
+                self.update_required_make_data(item_man, required_make_data)
+            else:
+                item_man = self.create_item(required_make_data)
+            if item_man is not False:
+                label = item_man.label
+                # the act_sub_field below is a field from field_data
+                # submitted by the user
+                for sub_field_key, act_sub_field in field_data.items():
+                    self.profile_field_update(item_man, sub_field_key, act_sub_field)
+                if self.do_solr_index:
+                    if item_man.uuid not in self.solr_reindex_uuids:
+                        self.solr_reindex_uuids.append(item_man.uuid)
+                    sri = SolrReIndex()
+                    num_reindexed = sri.reindex_uuids(self.solr_reindex_uuids)
+                    note += ' Indexed ' + str(num_reindexed) + ' items.'
+            else:
+                self.ok = False
+                label = 'No item'
+                note += '.. FAILED!'
         else:
             self.ok = False
             label = 'No item'
-            note += '.. FAILED!'
+            note += '.. "field_data" needs to be a dictionary object (parsed from JSON)'
         if self.ok:
             # now clear the cache a change was made
             self.clear_caches()
@@ -108,7 +115,7 @@ class InputProfileUse():
                                     'note': note}}
         return self.response
 
-    def profile_field_update(self, item_man, field_uuid, field_values):
+    def profile_field_update(self, item_man, sub_field_key, act_sub_field):
         """ lookup the object for the profile's input field
             based on the field_uuid
 
@@ -116,28 +123,23 @@ class InputProfileUse():
             required by open context,
             since those get special handling
         """
-        item_ass = ItemAssertion()
-        item_ass.source_id = item_man.source_id
+        # field_uuid is the field identifier from the data
+        # submitted by the user
+        field_uuid = act_sub_field['field_uuid']
         for fgroup in self.profile_obj['fgroups']:
             obs_num = fgroup['obs_num']
             for field in fgroup['fields']:
                 if field['oc_required'] is False \
                    and field['id'] == field_uuid:
-                    if 'obs_num' not in field:
-                        field['obs_num'] = obs_num
+                    if 'obs_num' not in act_sub_field:
+                        act_sub_field['obs_num'] = obs_num
                     # we've found the field!
                     # first delete existing uses of this field
-                    Assertion.objects\
-                             .filter(uuid=item_man.uuid,
-                                     predicate_uuid=field['predicate_uuid'])\
-                             .delete()
-                    value_index = 0
-                    for field_value in field_values:
-                        item_ass.validate_save_field_value(item_man,
-                                                           field,
-                                                           field_value,
-                                                           value_index)
-                        value_index += 1
+                    item_ass = ItemAssertion()
+                    item_ass.source_id = item_man.source_id
+                    add_edit_field_data = {sub_field_key: act_sub_field}
+                    item_ass.add_edit_assertions(add_edit_field_data, item_man)
+                        
 
     def update_required_make_data(self, item_man, required_make_data):
         """ updates items based on required make data
@@ -274,30 +276,56 @@ class InputProfileUse():
             for field in fgroup['fields']:
                 if field['oc_required']:
                     missing_data = True
-                    if field['id'] in field_data:
-                        if len(field_data[field['id']]) > 0:
-                            # field data comes in a list.
-                            # required fields can only have 1 value, so use the first
-                            act_field_data = field_data[field['id']][0]
-                            if len(act_field_data) > 0:
-                                # we have the required data!
+                    # in the profile dict object, the field['id']
+                    # is the field's UUID
+                    required_field_uuid = field['id']
+                    # the act_sub_field below is a field from field_data
+                    # submitted by the user
+                    for sub_field_key, act_sub_field in field_data.items():
+                        if act_sub_field['field_uuid'] == required_field_uuid:
+                            # we have matching required_field_uuid with field
+                            # data submitted by the user
+                            if len(act_sub_field['values']) > 0:
+                                # field data comes in a list.
+                                # required fields can only have 1 value, so use the first
+                                act_sub_value_obj = act_sub_field['values'][0] 
                                 if field['predicate_uuid'] == 'oc-gen:class_uri':
                                     # check to make sure the class_uri is valid
+                                    # since this is an ID field, get the value from the ID
+                                    act_value = act_sub_value_obj['id']
                                     man_class = ManifestClasses()
                                     if self.item_type == 'subjects':
                                         man_class.allow_blank = False
-                                    class_uri = man_class.validate_class_uri(act_field_data)
+                                    class_uri = man_class.validate_class_uri(act_value)
                                     if class_uri is not False:
                                         missing_data = False
                                         field['value'] = class_uri
                                         required_make_data.append(field)
                                     else:
                                         self.ok = False
-                                        self.errors[field['predicate_uuid']] = 'Cannot find "' + str(act_field_data)
-                                        self.errors[field['predicate_uuid']] += '" for ' + field['label']
-                                else:
+                                        self.errors[act_sub_field['predicate_uuid']] = 'Cannot find "' + str(act_field_data)
+                                        self.errors[act_sub_field['predicate_uuid']] += '" for ' + field['label']
+                                elif field['predicate_uuid'] == 'oc-gen:contained-in':
+                                    # since this is an ID field, get the value from the ID
+                                    act_value = act_sub_value_obj['id']
                                     missing_data = False
-                                    field['value'] = act_field_data
+                                    field['value'] = act_value
+                                    required_make_data.append(field)
+                                elif field['predicate_uuid'] == 'oc-gen:label':
+                                    # since this is an string field, get the value from the literal
+                                    act_value = act_sub_value_obj['literal']
+                                    missing_data = False
+                                    field['value'] = act_value
+                                    required_make_data.append(field)
+                                else:
+                                    # we don't know if it is an ID or literal, so use the
+                                    # non-null value as the value
+                                    if act_sub_value_obj['id'] is not None:
+                                        act_value = act_sub_value_obj['id']
+                                    else:
+                                        act_value = act_sub_value_obj['literal']
+                                    missing_data = False
+                                    field['value'] = act_value
                                     required_make_data.append(field)
                     if missing_data:
                         missing_required = True
