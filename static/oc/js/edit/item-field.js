@@ -2186,6 +2186,7 @@ function edit_field(){
 		var id_len = parseInt(document.getElementById(dom_ids.id_len).value);
 		if (this.isInt(id_len)) {
 			data.id_len = id_len;
+			this.label_id_len = id_len; // to pass to the profile object, if used
 		}
 		if (this.passed_value == false) {
 			var label = document.getElementById(dom_ids.literal).value;
@@ -2204,6 +2205,7 @@ function edit_field(){
 		var prefix = document.getElementById(dom_ids.label_prefix).value;
 		if (prefix.length > 0) {
 			data.prefix = prefix;
+			this.label_prefix = prefix;  // to pass to the profile object, if used
 		}
 		if (this.context_uuid != false) {
 			data.context_uuid = this.context_uuid;

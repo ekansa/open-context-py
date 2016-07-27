@@ -66,6 +66,8 @@ class InputProfileUse():
     def create_update(self, field_data):
         """ creates or updates an item with post data """
         # first check to see if the item exists
+        item_type = None
+        label = None
         try:
             item_man = Manifest.objects.get(uuid=self.edit_uuid)
             action = 'update-profle-item'
@@ -87,6 +89,7 @@ class InputProfileUse():
                 item_man = self.create_item(required_make_data)
             if item_man is not False:
                 label = item_man.label
+                item_type = item_man.item_type
                 # the act_sub_field below is a field from field_data
                 # submitted by the user
                 for sub_field_key, act_sub_field in field_data.items():
@@ -111,6 +114,7 @@ class InputProfileUse():
         self.response = {'action': action,
                          'ok': self.ok,
                          'change': {'uuid': self.edit_uuid,
+                                    'item_type': item_type,
                                     'label': label,
                                     'note': note}}
         return self.response

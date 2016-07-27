@@ -259,6 +259,12 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
 			if (field.oc_required) {
+				if (field.predicate_uuid == field.label_pred_uuid) {
+					// we have a label field! use the prefix, and id_len to set to
+					// this object's label prefix and id_len
+					this.label_id_len = field.label_id_len;
+					this.label_prefix = field.label_prefix;
+				}
 				if (0 in field.value_num_validations) {
 					//checks if the first, or value_num 0 value
 					var is_valid = field.value_num_validations[0];
@@ -316,14 +322,70 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		console.log(data);
 		if (data.ok) {
 			// the request was OK
+			var relative_url = '/edit/inputs/profiles/' + this.profile_uuid + '/new';
+			if (this.label_prefix != '' || this.label_id_len != false) {
+				// we should pass parameters to make a default label for the next item
+				// in this profile
+				var params = {};
+				if (this.label_prefix != ''){
+					params['prefix'] = this.label_prefix;
+				}
+				if (this.label_id_len != false){
+					if(this.label_id_len > 0){
+						params['id_len'] = this.label_id_len;
+					}
+				}
+				var next_url = this.make_url_params(relative_url, params);
+			}
+			else{
+				var next_url = this.make_url(relative_url);
+			}
+			
+			// url for the item created or updated
+			var edited_url = this.make_url('/' + data.change.item_type + '/' + data.change.uuid);
+			
 			if (this.edit_new) {
 				// we succeeded in creating a new item
-				var mess = 'Item successfully created!';
+				var mess = [
+					'<p><strong>Item successfully created!</strong></p>',
+				    '<p>Options:</p>',
+					'<ul>',
+						'<li>',
+							'<a href="' + next_url + '">',
+							'Create another ' + this.profile_data.label + ' item',
+							'</a>',
+						'</li>',
+						'<li>',
+							'View new item: <a href="' + edited_url + '" target="_blank">',
+							'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+							data.change.label,
+							'</a>',
+						'</li>',
+						'<li>Stay and edit this item</li>',
+					'</ul>',
+				].join('/n');
 				this.edit_new = false;
 				
 			}
 			else{
-				var mess = 'Item successfully updated.';
+				var mess = [
+					'<p><strong>Item successfully updated!</strong></p>',
+				    '<p>Options:</p>',
+					'<ul>',
+						'<li>',
+							'<a href="' + next_url + '">',
+							'Create another ' + this.profile_data.label + ' item',
+							'</a>',
+						'</li>',
+						'<li>',
+							'View edited item: <a href="' + edited_url + '" target="_blank">',
+							'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+							data.change.label,
+							'</a>',
+						'</li>',
+						'<li>Stay and edit this item</li>',
+					'</ul>',
+				].join('/n');
 				this.edit_new = false;
 			}
 			if ('errors' in data) {
@@ -344,7 +406,6 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				mess += error_html;
 			}
 			var alert_html = this.make_validation_html(mess, true);
-			this.activateFieldUpdateButtons(); // make the individual field update buttons active
 		}
 		else{
 			if (this.edit_new) {
@@ -543,6 +604,18 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	/*
 	 * GENERAL FUNCTIONS
 	 */
+	this.make_url_params = function(relative_url, key_values){
+		// makes a url with parameters from a dict
+		var url = this.make_url(relative_url);
+		var new_param_chr = '?';
+		for (var parameter_key in key_values) {
+			if (key_values.hasOwnProperty(parameter_key)) {
+				var val = key_values[parameter_key]; 
+				url += new_param_chr + parameter_key + '=' + encodeURIComponent(val);
+			}
+		}
+		return url;
+	}
 	this.make_url = function(relative_url){
 		//makes a URL for requests, checking if the base_url is set	
 		var rel_first = relative_url.charAt(0);
