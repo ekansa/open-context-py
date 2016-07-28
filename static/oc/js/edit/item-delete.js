@@ -397,7 +397,8 @@ function deleteItem(){
 		if (data.ok) {
 			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
 			var alert_class = 'alert alert-success';
-			var message_html = '<p>' + data.changes.note + '</p>';
+			var message_html = '<p>' + icon_html + ' <strong>Note</strong><br/> ';
+			message_html += data.change.note + '</p>';
 			if (data.merge_into_uuid != null) {
 				var merge_url = this.make_url('/' + data.merge_into_type + '/' + data.merge_into_uuid);
 				if (data.user_specified_merge) {
@@ -416,7 +417,7 @@ function deleteItem(){
 		else{
 			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
 			var alert_class = 'alert alert-warning';
-			var message_html = '<p>Problem(s) encountered deleting item: </p>';
+			var message_html = '<p>' + icon_html + ' Problem(s) encountered deleting item: </p>';
 			if (data.errors.length > 0) {
 				message_html += '<ul>';
 				for (var i = 0, length = data.errors.length; i < length; i++) {
@@ -431,7 +432,6 @@ function deleteItem(){
 		}
 		var alert_html = [
 				'<div role="alert" class="' + alert_class + '" >',
-					icon_html,
 					message_html,
 				'</div>'
 			].join('\n');

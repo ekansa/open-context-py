@@ -363,7 +363,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						'</li>',
 						'<li>Stay and edit this item</li>',
 					'</ul>',
-				].join('/n');
+				].join('\n');
 				this.edit_new = false;
 				
 			}
@@ -385,7 +385,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						'</li>',
 						'<li>Stay and edit this item</li>',
 					'</ul>',
-				].join('/n');
+				].join('\n');
 				this.edit_new = false;
 			}
 			if ('errors' in data) {

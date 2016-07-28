@@ -121,7 +121,7 @@ item_del = ItemDelete()
         if len(self.errors) > 0:
             note = ' '.join(self.errors)
         else:
-            note = 'Completed: ' + self.editorial_label
+            note = 'Completed ' + self.editorial_label
         if ok:
             # deletion OK, so clear caches.
             self.clear_caches()
@@ -240,7 +240,6 @@ item_del = ItemDelete()
                                 'subjects',
                                 self.uuid,
                                 self.merge_into_uuid,
-                                True,
                                 Assertion.PREDICATES_CONTAINS)
                 # now change the path information for the Subjects
                 sg = SubjectGeneration()
