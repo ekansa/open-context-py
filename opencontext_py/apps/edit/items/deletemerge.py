@@ -21,7 +21,7 @@ class DeleteMerge():
     """ methods to delete and merge entities, including
         subjects entities
 
-from opencontext_py.apps.edit.moddata import DeleteMerge
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
 dm = DeleteMerge()
 delete_uuid = '82a9bac8-af13-4a38-8ace-c8087983df9e'
 merge_into_uuid = '19123788-ba01-459f-b5a3-302a4530d0a1'
@@ -31,6 +31,7 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
 
 
     def __init__(self):
+        self.source_id = None
         self.delete_uuid = False
         self.delete_manifest_obj = False
         self.delete_prefix_uri = False
@@ -57,46 +58,16 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
             output['assertions'] = self.alter_assertions(delete_uuid, merge_into_uuid)
             output['annotations'] = self.alter_annotations(delete_uuid, merge_into_uuid)
             self.delete_self_containment(merge_into_uuid)
-            cont = Containment()
-            self.merge_children = cont.get_children_by_parent_uuid(merge_into_uuid,
-                                                                   True)
-            output['altered_children'] = self.update_children_subjects(self.merge_children)
+            # changes oc_subjects path information to reflect new reality
+            sg = SubjectGeneration()
+            sg.generate_save_context_path_from_uuid(merge_into_uuid,
+                                                    True)
             output['message'] = 'Merged item. Deleted - '
             output['message'] += self.delete_manifest_obj.label + '(' + delete_uuid + ')'
             output['message'] = ', merged into - '
             output['message'] += self.merge_manifest_obj.label + '(' + merge_into_uuid + ')'
             self.delete_manifest_obj.delete()  # deletes object from the manifest
             self.delete_type_records(delete_uuid, self.delete_manifest_obj.item_type)
-            output['done'] = True
-        return output
-
-    def delete_by_uuid(self, delete_uuid):
-        """ Deletes an item by uuid, returns dictionary object with information about deletion """
-        self.delete_uuid = delete_uuid
-        output = {}
-        output['done'] = False
-        ok_delete = self.prep_delete_uuid(delete_uuid)
-        if ok_delete:
-            if self.delete_manifest_obj.item_type == 'subjects':
-                cont = Containment()
-                self.delete_children = cont.get_children_by_parent_uuid(delete_uuid,
-                                                                        True)
-                cont = Containment()
-                parents = cont.get_parents_by_child_uuid(delete_uuid, False)
-                if len(cont.contexts_list) > 0:
-                    parent_uuid = cont.contexts_list[0]
-                    # use the deleted item's parent as the new parent for it's child items
-                    output['containment'] = self.alter_assertions_by_role('subjects',
-                                                                          delete_uuid,
-                                                                          parent_uuid,
-                                                                          Assertion.PREDICATES_CONTAINS)
-        if ok_delete:
-            output['assertions'] = self.alter_assertions(delete_uuid, False)
-            output['annotations'] = self.alter_annotations(delete_uuid, False)
-            output['altered_children'] = self.update_children_subjects(self.delete_children)
-            output['message'] = 'Deleted item: ' + self.delete_manifest_obj.label + '(' + delete_uuid + ')'
-            self.delete_type_records(delete_uuid, self.delete_manifest_obj.item_type)
-            self.delete_manifest_obj.delete()  # deletes object from the manifest
             output['done'] = True
         return output
 
@@ -121,19 +92,6 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
         else:
             output = False
         return output
-
-    def update_children_subjects(self, contents):
-        """ Updates the paths for children items """
-        alter_count = 0
-        if contents is not False:
-            if len(contents) > 0:
-                for tree_node, children_list in contents.items():
-                    for child_uuid in children_list:
-                        sg = SubjectGeneration()
-                        altered = sg.generate_save_context_path_from_uuid(child_uuid)
-                        if altered is not False:
-                            alter_count += 0
-        return alter_count
 
     def prep_delete_uuid(self, delete_uuid):
         """ Prepares some information needed to delete a uuid
@@ -286,6 +244,8 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
                 # the assertion needs to get modified to use the new
                 # uuid
                 new_anno = bad_anno
+                if isinstance(self.source_id, str):
+                    new_anno.source_id = self.source_id
                 if role == 'subjects':
                     new_anno.subject = merge_into_uuid
                 elif role == 'predicates':

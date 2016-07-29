@@ -9,8 +9,10 @@ from opencontext_py.apps.edit.items.itemassertion import ItemAssertion
 from opencontext_py.apps.edit.items.itemannotation import ItemAnnotation
 from opencontext_py.apps.edit.items.itemcreate import ItemCreate
 from opencontext_py.apps.edit.items.itemgeotime import ItemGeoTime
+from opencontext_py.apps.edit.items.itemdelete import ItemDelete
 from opencontext_py.apps.edit.inputs.profiles.templating import InputProfileTemplating
 from opencontext_py.apps.ldata.linkentities.manage import LinkEntityManage
+from opencontext_py.apps.ocitems.editorials.models import Editorial
 from django.db import transaction
 import reversion
 from opencontext_py.apps.edit.versioning.models import VersionMetadata
@@ -54,12 +56,16 @@ def html_view(request, uuid):
         temp_item.check_edit_permitted = True
         temp_item.read_jsonld_dict(ocitem.json_ld)
         if temp_item.edit_permitted:
+            editorial_types = json.dumps(Editorial.EDITORIAL_TYPES,
+                                         indent=4,
+                                         ensure_ascii=False)
             template = loader.get_template('edit/item-edit.html')
             context = RequestContext(request,
                                      {'item': temp_item,
                                       'profile': check_profile_use(ocitem.manifest),
                                       'super_user': request.user.is_superuser,
                                       'icons': ItemBasicEdit.UI_ICONS,
+                                      'editorial_types': editorial_types,
                                       'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
@@ -1054,3 +1060,62 @@ def create_project(request):
     else:
         return HttpResponseForbidden
 
+
+@cache_control(no_cache=True)
+@transaction.atomic()
+@reversion.create_revision()
+def delete_item(request, uuid):
+    """ Handles POST requests to DELETE an item """
+    item_edit = ItemBasicEdit(uuid, request)
+    if item_edit.manifest is not False:
+        if request.method == 'POST':
+            if request.user.is_superuser:
+                # only super users can delete an item, since deletion
+                # can have big impacts
+                item_del = ItemDelete(item_edit.manifest)
+                result = item_del.delete_and_document(request.POST)
+                if len(item_del.errors) > 0:
+                    result['errors'] = item_del.errors
+                else:
+                    result['errors'] = []
+                json_output = json.dumps(result,
+                                         indent=4,
+                                         ensure_ascii=False)
+                # version control metadata
+                rev_label = 'Delete item ' + item_del.manifest.label
+                reversion.set_user(request.user)
+                reversion.add_meta(VersionMetadata,
+                                   project_uuid=item_del.manifest.project_uuid,
+                                   uuid=item_del.manifest.uuid,
+                                   item_type=item_del.manifest.item_type,
+                                   label=rev_label,
+                                   json_note=json_output)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                json_output = json.dumps({'error': 'edit permission required'},
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8',
+                                    status=401)
+        else:
+            return HttpResponseForbidden
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+def check_delete_item(request, uuid):
+    """ Handles GET requests check on impacts of deleting an item """
+    item_edit = ItemBasicEdit(uuid, request)
+    if item_edit.manifest is not False:
+        item_del = ItemDelete(item_edit.manifest)
+        result = item_del.check_delete_item()
+        json_output = json.dumps(result,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404

@@ -1,19 +1,59 @@
 {% block delete-modal %}
-<script src="{{ base_url }}/static/oc/js/edit/item-delete.js"></script>
-
-<div class="modal fade" tabindex="-1" role="dialog" id="delete-modal">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                <h4 class="modal-title" id="delete-title">Delete Item</h4>
-            </div>
-        <div class="modal-body" id="delete-interface">
-            <div class="modal-content" id="delete-interface-b">
-            ...
+    
+    <div id="area-delete" class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">Delete Item</h3>
+        </div>
+        <div class="panel-body">
+            
+                <div class="row">
+                    <div class="col-xs-6">
+                        <button class="btn btn-default btn-sm btn-block"
+                                onclick="deleteItem.deleteInterface();">
+                            Delete Options</button>
+                    </div>
+                    <div class="col-xs-1">
+                    </div>
+                    <div class="col-xs-5">
+                        <small>
+                        Delete permissions only for administrators
+                        </small>
+                    </div>
+                </div>
+            
+        </div>
+    </div>
+    
+    <script src="{{ base_url }}/static/oc/js/edit/item-delete.js"></script>
+    <script type="text/javascript">
+        <!--
+        
+        // Javascript for item deletion interface and AJAX
+        var deleteItem = new deleteItem();
+        deleteItem.initialize();
+        deleteItem.label = '{{ item.label }}';
+        deleteItem.edit_uuid = '{{ item.uuid }}';
+        deleteItem.edit_type = '{{ item.act_nav }}';
+        deleteItem.edit_project_uuid = '{{ item.project_uuid }}';
+        deleteItem.editorial_types = {% autoescape off %}{{ editorial_types }}; {% endautoescape %}
+        
+        -->
+    </script>
+    
+    <div class="modal fade" tabindex="-1" role="dialog" id="delete-modal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="delete-title">Delete Item</h4>
+                </div>
+                <div class="modal-body" id="delete-interface">
+                    <div class="modal-content" id="delete-interface-b">
+                    ...
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 {% endblock %}

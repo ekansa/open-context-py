@@ -175,7 +175,7 @@ sd_b = sd_obj.fields
                                         parent['label']
                                     )
                                 self.fields['text'] += ' ' + \
-                                    parent['label'] + ' '
+                                    str(parent['label']) + ' '
                                 self.fields[active_solr_field].append(
                                     active_solr_value
                                 )
@@ -201,7 +201,7 @@ sd_b = sd_obj.fields
                                     self.fields['other_binary_media_count'] += 1
                                 elif 'documents' in value['id']:
                                     self.fields['document_count'] += 1
-                            self.fields['text'] += value['label'] + ' '
+                            self.fields['text'] += str(value['label']) + ' '
                     elif predicate_type in [
                         'xsd:integer', 'xsd:double', 'xsd:boolean'
                             ]:
@@ -258,7 +258,7 @@ sd_b = sd_obj.fields
                     link_predicate = True
                 else:
                 # add the label of the variable to the text field
-                    self.fields['text'] += ' ' + parent['label'] + ' '
+                    self.fields['text'] += ' ' + str(parent['label']) + ' '
                 # Treat the first parent in a special way
                 if index == 0:
                     if link_predicate is False:
@@ -444,7 +444,7 @@ sd_b = sd_obj.fields
                        and 'rdfs:isDefinedBy' in meta:
                         # special case for inferred relationship
                         meta['id'] = meta['rdfs:isDefinedBy']
-                    self.fields['text'] += meta['label'] + '\n'
+                    self.fields['text'] += str(meta['label']) + '\n'
                     self.fields['text'] += meta['id'] + '\n'
                     if 'opencontext.org/tables/' not in meta['id']:
                         # do not index table references in this way
@@ -469,7 +469,7 @@ sd_b = sd_obj.fields
                        and 'rdfs:isDefinedBy' in meta:
                         # special case for inferred relationship
                         meta['id'] = meta['rdfs:isDefinedBy']
-                    self.fields['text'] += meta['label'] + '\n'
+                    self.fields['text'] += str(meta['label']) + '\n'
                     self.fields['text'] += meta['id'] + '\n'
                     item = self._concat_solr_string_value(
                         meta['slug'],
@@ -810,7 +810,7 @@ sd_b = sd_obj.fields
                                 self.fields[all_obj_solr_field].append(solr_value)
                             if parent['id'] not in self.fields['text']:
                                 self.fields['text'] += parent['id'] + ' '
-                                self.fields['text'] += parent['label'] + '\n'
+                                self.fields['text'] += str(parent['label']) + '\n'
                             act_solr_field = \
                                 self._convert_slug_to_solr(parent['slug']) \
                                 + '___' + act_pred_root_act_solr_field
@@ -833,7 +833,7 @@ sd_b = sd_obj.fields
                        or 'https://' in entity['id']):
                         # only do this if this is NOT an open context URI
                         if 'label' in entity:
-                            self.fields['text'] += entity['label'] + '\n'
+                            self.fields['text'] += str(entity['label']) + '\n'
                         self.fields['text'] += entity['id'] + '\n'
                         if 'label' in entity and 'slug' in entity:
                             # first, add the fields if needed
@@ -877,7 +877,7 @@ sd_b = sd_obj.fields
             for entity in self.oc_item.json_ld['skos:related']:
                 if 'http://' in entity['id'] \
                    or 'https://' in entity['id']:
-                    self.fields['text'] += entity['label'] + '\n'
+                    self.fields['text'] += str(entity['label']) + '\n'
                     self.fields['text'] += entity['id'] + '\n'
                     item = self._concat_solr_string_value(
                         entity['slug'],
@@ -892,7 +892,7 @@ sd_b = sd_obj.fields
                     pred_uuid = URImanagement.get_uuid_from_oc_uri(
                                 entity['owl:sameAs']
                                 )
-                    self.fields['text'] += entity['label'] + '\n'
+                    self.fields['text'] += str(entity['label']) + '\n'
                     self.fields['text'] += entity['id'] + '\n'
                     item = self._concat_solr_string_value(
                         entity['slug'],

@@ -27,11 +27,11 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		this.show_loading();
 		if (this.edit_new) {
 			// we've got a new item, so don't look for existing JSON-LD data
-         this.get_profile_data();
+            this.get_profile_data().then(this.getProfileItems);
 		}
 		else{
 			// we've got an existing item, so look for existing JSON-LD data first
-			this.getItemJSON().then(this.get_profile_data);
+			this.getItemJSON().then(this.get_profile_data).then(this.getProfileItems);
 		}
 	}
 	this.getItemJSON = function(){
@@ -77,6 +77,31 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		this.item_type = data.item_type;
 		this.display_profile_data();
 	}
+	this.getProfileItems = function(){
+		
+		var act_dom = document.getElementById(this.profile_items_dom_id);
+		act_dom.innerHTML = this.make_loading_gif('Listing related items...');
+		
+		var url = this.make_url('/edit/inputs/profile-item-list/' + encodeURIComponent(this.profile_uuid));
+		var data = {sort: '-label,-revised'};
+		return $.ajax({
+			type: "GET",
+			url: url,
+			context: this,
+			dataType: "json",
+			data: data,
+			success: this.getProfileItemsDone,
+			error: function (request, status, error) {
+				alert('Profile created items retrieval failed, sadly. Status: ' + request.status);
+			}
+		});
+	}
+	
+	
+	/*******************************************
+	 * Initial display of the profile and data (if not creating a new item)
+	 *
+	 * ****************************************/
 	this.display_profile_data = function(){
 		if (document.getElementById(this.act_meta_dom_id)) {
 			// make metadata about the profile
@@ -96,6 +121,36 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			this.postprocess_fields();
 		}
 	}
+	this.getProfileItemsDone = function(data){
+		// handle results of displaying the profile
+		console.log('Profiles items data');
+		console.log(data);
+		var act_dom = document.getElementById(this.profile_items_dom_id);
+		act_dom.innerHTML = '';
+		if (data.count > 0) {
+			var html_l = ['<ul class="list-unstyled">'];
+			for (var i = 0, length = data.items.length; i < length; i++) {
+				var item = data.items[i];
+				var url = this.make_url('/' + item.item_type + '/' + encodeURIComponent(item.uuid));
+				var rec = [
+					'<li>',
+						'<a href="' + url + '" target="_blank">',
+						'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+						item.label,
+						'</a>',
+					'</li>',
+				].join('\n');
+				html_l.push(rec);
+			}
+			html_l.push('</ul>');
+			act_dom.innerHTML = html_l.join('\n');
+		}
+		else{
+			act_dom.innerHTML = 'No items with this profile.';
+		}
+		
+	}
+	
 	
 	/* ---------------------------------------
 	 * Profile HTML display
@@ -259,6 +314,12 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
 			if (field.oc_required) {
+				if (field.predicate_uuid == field.label_pred_uuid) {
+					// we have a label field! use the prefix, and id_len to set to
+					// this object's label prefix and id_len
+					this.label_id_len = field.label_id_len;
+					this.label_prefix = field.label_prefix;
+				}
 				if (0 in field.value_num_validations) {
 					//checks if the first, or value_num 0 value
 					var is_valid = field.value_num_validations[0];
@@ -267,10 +328,14 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						required_valid.all = false;
 						required_valid.missing.push(field.label);
 					}
+					console.log('OC-req-0-not-found: ' + field.label);
+					// console.log(required_valid);
 				}
 				else{
 					required_valid.all = false;
 					required_valid.missing.push(field.label);
+					console.log('OC-req-0-not-found: ' + field.label);
+					// console.log(required_valid);
 				}
 			}
 		}
@@ -279,44 +344,108 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.submitAll = function(){
 		var submit_ok = this.prep_all_create_update();
 		if (submit_ok) {
-			var data = {csrfmiddlewaretoken: csrftoken};
-			var field_data = [];
-			for (var i = 0, length = this.fields.length; i < length; i++) {
-				var field = this.fields[i];
-				var act_field = field.make_field_submission_obj(true);
-				if (act_field.values.length > 0 && field.values_modified) {
-					field_data.push(act_field);
-				}
-			}
-			console.log(field_data);
-			data['field_data'] = JSON.stringify(field_data, null, 2);
-			var url = this.make_url("/edit/inputs/create-update-profile-item/");
-			url += encodeURIComponent(this.profile_uuid);
-			url += '/' + encodeURIComponent(this.edit_uuid);
-			return $.ajax({
-				type: "POST",
-				url: url,
-				dataType: "json",
-				context: this,
-				data: data,
-				success: this.submitDataDone,
-				error: function (request, status, error) {
-					alert('Data submission failed, sadly. Status: ' + request.status);
-				} 
-			});
+			// runs the AJAX request to submit all,
+			// then gets recent profile items
+			this.ajax_submit_all().then(this.getProfileItems);
 		}
 	}
+	this.ajax_submit_all = function(){
+		// executes the AJAX request for submitting all
+		var data = {csrfmiddlewaretoken: csrftoken};
+		var field_key = this.id;
+		field_data = {};
+		for (var i = 0, length = this.fields.length; i < length; i++) {
+			var field = this.fields[i];
+			var act_field = field.make_field_submission_obj(true);
+			var field_key = act_field.field_uuid;
+			if (act_field.values.length > 0 && field.values_modified) {
+				field_data[field_key] = act_field;
+			}
+		}
+		console.log(field_data);
+		data['field_data'] = JSON.stringify(field_data, null, 2);
+		var url = this.make_url("/edit/inputs/create-update-profile-item/");
+		url += encodeURIComponent(this.profile_uuid);
+		url += '/' + encodeURIComponent(this.edit_uuid);
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: data,
+			success: this.submitDataDone,
+			error: function (request, status, error) {
+				alert('Data submission failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
 	this.submitDataDone = function(data){
-		console.log(data);
 		if (data.ok) {
 			// the request was OK
-			if (this.edit_new) {
-				// we succeeded in creating a new item
-				var mess = 'Item successfully created!';
-				this.edit_new = false;
+			var relative_url = '/edit/inputs/profiles/' + this.profile_uuid + '/new';
+			if (this.label_prefix != '' || this.label_id_len != false) {
+				// we should pass parameters to make a default label for the next item
+				// in this profile
+				var params = {};
+				if (this.label_prefix != ''){
+					params['prefix'] = this.label_prefix;
+				}
+				if (this.label_id_len != false){
+					if(this.label_id_len > 0){
+						params['id_len'] = this.label_id_len;
+					}
+				}
+				var next_url = this.make_url_params(relative_url, params);
 			}
 			else{
-				var mess = 'Item successfully updated.';
+				var next_url = this.make_url(relative_url);
+			}
+			
+			// url for the item created or updated
+			var edited_url = this.make_url('/' + data.change.item_type + '/' + data.change.uuid);
+			
+			if (this.edit_new) {
+				// we succeeded in creating a new item
+				var mess = [
+					'<p><strong>Item successfully created!</strong></p>',
+				    '<p>Options:</p>',
+					'<ul>',
+						'<li>',
+							'<a href="' + next_url + '">',
+							'Create another ' + this.profile_data.label + ' item',
+							'</a>',
+						'</li>',
+						'<li>',
+							'View new item: <a href="' + edited_url + '" target="_blank">',
+							'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+							data.change.label,
+							'</a>',
+						'</li>',
+						'<li>Stay and edit this item</li>',
+					'</ul>',
+				].join('\n');
+				this.edit_new = false;
+				
+			}
+			else{
+				var mess = [
+					'<p><strong>Item successfully updated!</strong></p>',
+				    '<p>Options:</p>',
+					'<ul>',
+						'<li>',
+							'<a href="' + next_url + '">',
+							'Create another ' + this.profile_data.label + ' item',
+							'</a>',
+						'</li>',
+						'<li>',
+							'View edited item: <a href="' + edited_url + '" target="_blank">',
+							'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+							data.change.label,
+							'</a>',
+						'</li>',
+						'<li>Stay and edit this item</li>',
+					'</ul>',
+				].join('\n');
 				this.edit_new = false;
 			}
 			if ('errors' in data) {
@@ -336,8 +465,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				}
 				mess += error_html;
 			}
-			var alert_html = this.make_validation_html(mess, true, false);
-			this.activateFieldUpdateButtons(); // make the individual field update buttons active
+			var alert_html = this.make_validation_html(mess, true);
 		}
 		else{
 			if (this.edit_new) {
@@ -358,12 +486,30 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 				error_html += '</ul>';
 				mess += error_html;
 			}
-			var alert_html = this.make_validation_html(mess, false, false);
+			var alert_html = this.make_validation_html(mess, false);
 		}
 		if (document.getElementById(this.fields_complete_dom_id)) {
-			document.getElementById(this.fields_complete_dom_id).innerHTML = message_html;
+			document.getElementById(this.fields_complete_dom_id).innerHTML = alert_html;
 		}
 	}
+	this.make_validation_html = function(message_html, is_valid){
+		if (is_valid) {
+			var icon_html = '<span class="glyphicon glyphicon-ok-circle" aria-hidden="true"></span>';
+			var alert_class = "alert alert-success";
+		}
+		else{
+			var icon_html = '<span class="glyphicon glyphicon-warning-sign" aria-hidden="true"></span>';
+			var alert_class = this.invalid_alert_class;
+		}
+		var alert_html = [
+				'<div role="alert" class="' + alert_class + '" >',
+					icon_html,
+					message_html,
+				'</div>'
+			].join('\n');
+		return alert_html;
+	}
+	
 	
 	/* ---------------------------------------
 	 * Field Group and Field HTML 
@@ -415,6 +561,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			field.obs_num = obs_num;
 			field.obs_node = '#obs-' + obs_num;
 			field.data_type = profile_field.data_type;
+			field = this.add_oc_require_validation_function(field);
 			if (this.item_json_ld_obj != false) {
 				// show existing data for this predicate
 				field.values_obj = [];
@@ -474,9 +621,9 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		meta_panel.body_html = body_html;
 		return meta_panel.make_html();
 	}
-	this.postprocess_fields = function(){
-		// activates hiearchy trees + other post-processing functions
-		// than need to happen after fields are addded to the DOM
+	this.add_oc_require_validation_function = function(field){
+		// adds a function to oc_require fields. this executes when
+		// a user input is validated on a value for a require field
 		
 		// execute this after validation is completed for required fields
 		var after_validation_done = {
@@ -493,11 +640,18 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			}
 		};
 		
+		if (field.oc_required) {
+			//this field is required, so add the validation function
+			field.after_validation_done = after_validation_done;
+		}
+		return field;
+	}
+	this.postprocess_fields = function(){
+		// activates hiearchy trees + other post-processing functions
+		// than need to happen after fields are addded to the DOM
+		
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
-			if (field.oc_required) {
-				field.after_validation_done = after_validation_done;
-			}
 			field.postprocess();
 		}
 		
@@ -510,6 +664,19 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	/*
 	 * GENERAL FUNCTIONS
 	 */
+	this.make_url_params = function(relative_url, key_values){
+		// makes a url with parameters from a dict
+		var url = this.make_url(relative_url);
+		var new_param_chr = '?';
+		for (var parameter_key in key_values) {
+			if (key_values.hasOwnProperty(parameter_key)) {
+				var val = key_values[parameter_key]; 
+				url += new_param_chr + parameter_key + '=' + encodeURIComponent(val);
+				new_param_chr = '&';
+			}
+		}
+		return url;
+	}
 	this.make_url = function(relative_url){
 		//makes a URL for requests, checking if the base_url is set	
 		var rel_first = relative_url.charAt(0);

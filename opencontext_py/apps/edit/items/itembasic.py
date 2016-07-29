@@ -26,7 +26,7 @@ from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.indexer.reindex import SolrReIndex
-from opencontext_py.apps.edit.moddata import DeleteMerge
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
 
 
 # Help organize the code, with a class to make editing items easier

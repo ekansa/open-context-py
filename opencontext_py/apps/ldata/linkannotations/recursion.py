@@ -16,7 +16,7 @@ class LinkRecursion():
 
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 lr = LinkRecursion()
-lr.get_jsonldish_entity_parents('oc-gen:cat-site')
+lr.get_jsonldish_entity_parents('oc-gen:cat-site', False)
 
     """
     def __init__(self):
@@ -109,7 +109,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site')
                 supersubj_anno = False
         except LinkAnnotation.DoesNotExist:
             supersubj_anno = False
-        if(supersubj_anno is not False):
+        if supersubj_anno is not False:
             parent_id = supersubj_anno[0].subject
             if(parent_id.count('/') > 1):
                 oc_uuid = URImanagement.get_uuid_from_oc_uri(parent_id)

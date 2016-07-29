@@ -1,6 +1,7 @@
 import hashlib
 from django.db import models
 from django.db.models import Q
+from opencontext_py.apps.entities.entity.models import Entity 
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -65,6 +66,54 @@ lam.add_skos_hierarachy(parent_uri, child_uri)
         else:
             print('Cannot find parent or child')
 
+    def replace_hierarchy(self, old_parent, new_parent):
+        """ replaces hirearchy annotations, so that children
+            of the old_parent become children of the new_parent
+        """
+        ok = False
+        lequiv = LinkEquivalence()
+        old_parent_ids = lequiv.get_identifier_list_variants(old_parent)
+        p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
+        preds_for_superobjs = lequiv.get_identifier_list_variants(p_for_superobjs)
+        p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
+        preds_for_subobjs = lequiv.get_identifier_list_variants(p_for_subobjs)
+        new_parent_entity_obj = False
+        new_parent_entity_obj = Entity()
+        found = new_parent_entity_obj.dereference(new_parent)
+        if found:
+            ok = True
+            # get children (the subjects) where the parent is a superclass object
+            child_subs_by_superobjs = LinkAnnotation.objects\
+                                                    .filter(object_uri__in=old_parent_ids,
+                                                            predicate_uri__in=preds_for_superobjs)
+            for child_subj in child_subs_by_superobjs:
+                new_parent_superobj = child_subj
+                del_hash_id = child_subj.hash_id
+                # change the object (the super class) to the new parent
+                new_parent_superobj.object_uri = new_parent_entity_obj.uri
+                new_parent_superobj.source_id = self.source_id
+                LinkAnnotation.objects\
+                              .filter(hash_id=del_hash_id).delete()
+                new_parent_superobj.save()
+            # get children (the objects) where the parent is a superclass subject
+            child_objs_by_subobjs = LinkAnnotation.objects\
+                                                  .filter(subject__in=old_parent_ids,
+                                                          predicate_uri__in=preds_for_subobjs)
+            for child_obj in child_objs_by_subobjs:
+                new_parent_supersubj = child_obj
+                del_hash_id = child_obj.hash_id
+                # change the subject (the super class) to the new parent
+                if isinstance(new_parent_superobj.uuid, str):
+                    new_parent_supersubj.subject = new_parent_superobj.uuid
+                else:
+                    new_parent_supersubj.subject = new_parent_superobj.uri
+                new_parent_supersubj.subject_type = new_parent_superobj.item_type
+                new_parent_supersubj.source_id = self.source_id
+                LinkAnnotation.objects\
+                              .filter(hash_id=del_hash_id).delete()
+                new_parent_supersubj.save()
+        return ok
+        
     def replace_subject_uri(self,
                             old_subject_uri,
                             new_subject_uri):

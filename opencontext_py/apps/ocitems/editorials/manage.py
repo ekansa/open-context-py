@@ -75,53 +75,87 @@ ed_act.redact_uuids(uuids)
                                'oc_types']
     
     def redact_uuids(self, uuid_list):
-        """ Redacts uuids from a data publication for an editorial reason """
-        ok = True
-        if isinstance(uuid_list, list):
-            editorial = Editorial()
-            editorial.project_uuid = self.editorial_project_uuid
-            editorial.user_id = self.editorial_user_id
-            if self.editorial_uuid is not None:
-                editorial.uuid = self.editorial_uuid
-            if self.editorial_class_uri is not None:
-                editorial.class_uri = self.editorial_class_uri
-            if self.editorial_label is not None:
-                editorial.label = self.editorial_label
-            if self.editorial_note is not None:
-                editorial.note = self.editorial_note
-            editorial.save()
-            if editorial.uuid is not None:
-                print('Preparing editorial action: ' + str(editorial.uuid))
-                self.editorial_uuid = editorial.uuid
-            JSONserializer = serializers.get_serializer('json')
-            json_serializer = JSONserializer()
-            data = LastUpdatedOrderedDict()
-            for model_name in self.project_models:
-                query_set = self.get_query_set(model_name, uuid_list)
-                if len(query_set) > 0:
-                    save_ok = False
-                    model_data = json_serializer.serialize(query_set,
-                                                           ensure_ascii=False)
-                    data[model_name] = model_data
-                    editorial.restore_json = data
-                    try:
-                        editorial.save()
-                        save_ok = True
-                    except:
-                        print('Failed to save restore data at: ' + model_name)
-                        save_ok = False
-                        ok = False
-                    if save_ok:
-                        print('Saved restore data for model: ' + model_name)
-                        # we've succeeded in saving the restore data, now delete these items
-                        del_count = 0
-                        for model_obj in query_set:
-                            model_obj.delete()
-                            del_count += 1
-                        print('Deleted ' + str(del_count) + ' records from ' + model_name)
+        """ Redacts uuids from a data publication for an editorial reason
+            This saves the original data as a JSON formated string
+            for the editorial, so in theory the original redacted data
+            can be restored.
+            Once the editorial and the restore data are saved, the
+            redaction (deleteion) is executed
+        """
+        saved_query_sets = self.save_editorial_and_pre_redaction_data(uuid_list)
+        del_count = self.delete_query_set_model_objects(saved_query_sets)
+        if del_count > 0:
+            ok = True
+        else:
+            ok = False
         return ok
-        
-            
+    
+    def save_editorial_and_pre_redaction_data(self, uuid_list):
+        """ Redacts uuids from a data publication for an editorial reason """
+        saved_query_sets = []
+        ok = True
+        if not isinstance(uuid_list, list):
+            uuid_list = [uuid_list]
+        editorial = Editorial()
+        editorial.project_uuid = self.editorial_project_uuid
+        editorial.user_id = self.editorial_user_id
+        if self.editorial_uuid is not None:
+            editorial.uuid = self.editorial_uuid
+        if self.editorial_class_uri is not None:
+            editorial.class_uri = self.editorial_class_uri
+        if self.editorial_label is not None:
+            editorial.label = self.editorial_label
+        if self.editorial_note is not None:
+            editorial.note = self.editorial_note
+        editorial.save()
+        if editorial.uuid is not None:
+            print('Preparing editorial action: ' + str(editorial.uuid))
+            self.editorial_uuid = editorial.uuid
+        JSONserializer = serializers.get_serializer('json')
+        json_serializer = JSONserializer()
+        data = LastUpdatedOrderedDict()
+        for model_name in self.project_models:
+            query_set = self.get_query_set(model_name, uuid_list)
+            if len(query_set) > 0:
+                save_ok = False
+                model_data = json_serializer.serialize(query_set,
+                                                       ensure_ascii=False)
+                data[model_name] = model_data
+                editorial.restore_json = data
+                try:
+                    editorial.save()
+                    save_ok = True
+                except:
+                    print('Failed to save restore data at: ' + model_name)
+                    save_ok = False
+                    ok = False
+                if save_ok:
+                    print('Saved restore data for model: ' + model_name)
+                    saved_query_sets.append(query_set)
+        if ok is False:
+            # we don't want to delete anything if we had a problem
+            # saving the restore data
+            saved_query_sets = None
+        return saved_query_sets
+    
+    def delete_query_set_model_objects(self, saved_query_sets):
+        """ deletes models from a list of query sets
+            related to the item(s) to be redacted
+        """
+        del_count = 0
+        for query_set in saved_query_sets:
+            # we've succeeded in saving the restore data, now delete these items
+            for model_obj in query_set:
+                del_ok = False
+                try:
+                    model_obj.delete()
+                    del_ok = True
+                except:
+                    del_ok = False
+                if del_ok:
+                    del_count += 1
+        return del_count
+
     def get_query_set(self, model_name, uuid_list):
         """ gets a query set for a given model name """
         if model_name == 'oc_assertions__subject':

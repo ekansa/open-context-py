@@ -219,11 +219,9 @@ class InputProfileTemplating():
             output['uuid'] = uuid
             output['source_id'] = source_id
             output['label'] = self.inp_prof.label
-            man_count = Manifest.objects\
-                                .filter(source_id=source_id)\
-                                .values('source_id')\
-                                .annotate(total=Count('uuid'))
-            total = man_count[0]['total']
+            total = Manifest.objects\
+                            .filter(source_id=source_id)\
+                            .count()
             end = start + rows
             output['count'] = total
             num_pages = round(total / rows, 0)
@@ -281,6 +279,7 @@ class InputProfileTemplating():
                 item['index'] = index
                 item['uuid'] = man.uuid
                 item['label'] = man.label
+                item['item_type'] = man.item_type
                 item['revised'] = man.revised.date().isoformat()
                 output['items'].append(item)
         return output

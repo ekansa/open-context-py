@@ -64,6 +64,9 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
+	this.content_pred_uuid = 'oc-gen:content';  // for document contents, from profiles
+	this.textarea_rows = 3;  // number of rows for a text area input
+	this.textarea_rows_content = 20; // number of rows for text-area input of document content
 	this.html_validation = false;
 	this.values_dom_id = false;
 	this.single_value_preds = [
@@ -96,6 +99,15 @@ function edit_field(){
 			this.show_predicate_link = false;
 			this.data_type = 'xsd:string';
 			this.class_uri = 'variable';
+		}
+		if (this.predicate_uuid == this.content_pred_uuid){
+			// document text content, don't show a link to a standard link field
+			// only used with creating documents via a profile
+			this.single_value_only = true;
+			this.show_predicate_link = false;
+			this.data_type = 'xsd:string';
+			this.class_uri = 'variable';
+			this.textarea_rows = this.textarea_rows_content;
 		}
 		if (this.profile_uuid != false) {
 			//we're using this field in an input profile
@@ -217,7 +229,19 @@ function edit_field(){
 		this.activate_calendars();
 		this.activate_expand_collapse();
 		this.make_trees();
+		this.default_preset_label();
 		return true;
+	}
+	this.default_preset_label = function(){
+		// sets suggested default label for an item
+		// based on passed arguments
+		if (this.predicate_uuid == this.label_pred_uuid) {
+			// this is a label predicate
+			if (this.label_prefix.lenghth > 0 || this.label_id_len != false) {
+				// compose a preset default label
+				this.presetLabel(0);
+			}
+		}
 	}
 	this.make_vals_html = function(){
 		this.initialize();
@@ -235,16 +259,23 @@ function edit_field(){
 		for (var i = 0, length = values_obj.length; i < length; i++) {
 			var value_obj = values_obj[i];
 			if (this.predicate_uuid == this.label_pred_uuid) {
+				// makes edit interface for item labels
 				var val_html = this.make_label_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.class_pred_uuid) {
+				// makes edit interface for item category / class
 				var val_html = this.make_category_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.context_pred_uuid) {
+				// makes edit interface for item context
 				var val_html = this.make_context_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.note_pred_uuid) {
-				// var val_html = this.make_note_val_html(i, value_obj);
+				// makes edit interfce for item note fields
+				var val_html = this.make_string_val_html(i, value_obj);
+			}
+			else if (this.predicate_uuid == this.content_pred_uuid) {
+				// makes edit interface for document item text content
 				var val_html = this.make_string_val_html(i, value_obj);
 			}
 			else{
@@ -522,7 +553,8 @@ function edit_field(){
 			'type="hidden" value="' + display_id + '" />',
 			'<textarea id="' + dom_ids.literal + '" ',
 			'onchange="' + this.name + '.validateHTML(\'' + value_num + '\');" ',
-			'class="form-control input-sm" rows="3" ' + placeholder + ' >',
+			'class="form-control input-sm" rows="' + this.textarea_rows,
+			'" ' + placeholder + ' >',
 			display_value,
 			'</textarea>'
 		].join("\n");
@@ -869,6 +901,7 @@ function edit_field(){
 													 vocab_uri: false};
 			var val_mes = 'Valid context selected.';
 			this.validation_id_response(true, this.value_num);
+			// console.log(this);
 		};
 		entSearchObj.afterSelectDone = afterSelectDone;
 		this.sobjs.push(entSearchObj);
@@ -1158,10 +1191,11 @@ function edit_field(){
 			class_pred_uuid: this.class_pred_uuid,
 			class_vocab_uri: this.class_vocab_uri,
 			context_pred_uuid: this.context_pred_uuid,
-			validation_id_response: this.validation_id_response,
+			oc_required: this.oc_required,
 			after_validation_done: this.after_validation_done,
 			after_validation_function: this.after_validation_function,
 			values_modified: this.values_modified,
+			validation_id_response: this.validation_id_response,
 			exec: false
 		}
 		return afterSelectDone;
@@ -1561,6 +1595,7 @@ function edit_field(){
 		if (this.after_validation_done != false && this.oc_required) {
 			// execute function after validation
 			if (typeof(this.after_validation_done.exec) !== 'undefined') {
+				console.log('Do after validation done...' + this.label);
 				this.after_validation_done.exec();
 			}
 		}
@@ -1571,13 +1606,13 @@ function edit_field(){
 
 		if (is_valid) {
 			this.validation_id_response(is_valid, value_num);
+			return is_valid;
 		}
 		else{
 			// the item is not yet known to be valid (either null or false)
 			// so make an AJAX request to check
-			this.ajax_validate_id(value_num);
+			return this.ajax_validate_id(value_num);
 		}
-		return is_valid;
 	}
 	this.validateButtonID = function(value_num){
         // validates and leaves a submit button to use
@@ -1672,6 +1707,7 @@ function edit_field(){
 		}
 		this.validation_id_response(is_valid, value_num);
 		this.values_modified = true; // a value was modified
+		return is_valid;
 	}
 	this.validation_id_response = function(is_valid, value_num){
 		//console.log(this.pred_type);
@@ -1774,27 +1810,27 @@ function edit_field(){
 		}
 		else{
 			// numeric result detected, now make sure it fits the specific datatype
-			if (data_type == 'xsd:double') {
+			if (this.data_type == 'xsd:double') {
 				check_val = parseFloat(check_val);
 				if (this.isFloat(check_val)) {
 					is_valid = true;
-					var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					var val_mes = 'Valid ' + this.get_human_readable_data_type(this.data_type) + ' value.';
 					this.make_validation_html(val_mes, true, value_num);
 				}
 				else{
-					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(this.data_type) + ' value.';
 					this.make_validation_html(val_mes, false, value_num);
 				}
 			}
-			if (data_type == 'xsd:integer') {
+			if (this.data_type == 'xsd:integer') {
 				var check_val = parseFloat(check_val);
 				if (this.isInt(check_val)) {
 					is_valid = true;
-					var val_mes = 'Valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					var val_mes = 'Valid ' + this.get_human_readable_data_type(this.data_type) + ' value.';
 					this.make_validation_html(val_mes, true, value_num);
 				}
 				else{
-					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(data_type) + ' value.';
+					var val_mes = 'Not a valid ' + this.get_human_readable_data_type(this.data_type) + ' value.';
 					this.make_validation_html(val_mes, false, value_num);
 				}
 			}	
@@ -1909,7 +1945,7 @@ function edit_field(){
 		return alert_html;
 	}
 	this.make_submit_button = function(is_valid, value_num){
-		console.log('Making that button, again for ' + value_num);
+		// console.log('Making that button, again for ' + value_num);
 		var dom_ids = this.make_field_val_domids(value_num);
 		
 		if (is_valid) {
@@ -2164,12 +2200,13 @@ function edit_field(){
 		var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
 		var data = {
 			item_type: this.item_type,
-		   uuid: this.edit_uuid
+		    uuid: this.edit_uuid
 		};
 		
 		var id_len = parseInt(document.getElementById(dom_ids.id_len).value);
 		if (this.isInt(id_len)) {
 			data.id_len = id_len;
+			this.label_id_len = id_len; // to pass to the profile object, if used
 		}
 		if (this.passed_value == false) {
 			var label = document.getElementById(dom_ids.literal).value;
@@ -2188,6 +2225,7 @@ function edit_field(){
 		var prefix = document.getElementById(dom_ids.label_prefix).value;
 		if (prefix.length > 0) {
 			data.prefix = prefix;
+			this.label_prefix = prefix;  // to pass to the profile object, if used
 		}
 		if (this.context_uuid != false) {
 			data.context_uuid = this.context_uuid;
@@ -2209,43 +2247,14 @@ function edit_field(){
 	}
    
 	this.presetLabel = function(value_num){
-		
-		var field = this.get_field_obj_by_predicate_uuid(this.label_pred_uuid);
-		if (field != false) {
-			this.act_field_uuid = field.id; // so as to remember what field we're validating
-			var url = this.make_url('/edit/inputs/item-label-check/' + encodeURIComponent(this.project_uuid));
-			var data = {
-				item_type: this.item_type,
-			   prefix: this.label_prefix,
-				id_len: this.label_id_len,
-				edit_uuid: this.edit_uuid
-			};
-			var act_dom = document.getElementById('v-' + field.id);
-			act_dom.innerHTML = this.make_loading_gif('Suggesting label...');
-			return $.ajax({
-				type: "GET",
-				url: url,
-				dataType: "json",
-				context: this,
-				data: data,
-				async: true,
-				success: this.validateLabelDone,
-				error: function (request, status, error) {
-					alert('Item Label suggestion failed, sadly. Status: ' + request.status);
-				} 
-			});
-		}
+		// same as validate, just use the preset_label flag
+		this.preset_label = true;
+		return this.validateLabel(value_num);	
 	}
 	this.validateLabelDone = function(data){
 		var value_num = this.active_value_num;
 		this.active_value_num = false;
 		var dom_ids = this.make_field_val_domids(value_num); 
-		
-		if (this.preset_label) {
-			//we wanted to use data.suggested to preset the label
-			document.getElementById(dom_ids.literal).value = data.suggested.trim();
-			this.preset_label = false;
-		}
 		
 		var act_dom = document.getElementById(dom_ids.valid);
 		var is_valid = false;
@@ -2347,6 +2356,15 @@ function edit_field(){
 		this.make_submit_button(is_valid, value_num);
 		this.value_num_validations[value_num] = is_valid;
 		this.values_modified = true; // a value was modified
+		
+		// do this with the preset_label function
+		if (this.preset_label) {
+			//we wanted to use data.suggested to preset the label
+			this.preset_label = false;
+			document.getElementById(dom_ids.literal).value = data.suggested;
+			this.useSuggestedLabel(value_num);
+		}
+		
 		this.after_validation_function();
 	}
 	this.useSuggestedLabel = function(value_num){
