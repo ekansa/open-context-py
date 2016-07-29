@@ -64,6 +64,9 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
+	this.content_pred_uuid = 'oc-gen:content';  // for document contents, from profiles
+	this.textarea_rows = 3;  // number of rows for a text area input
+	this.textarea_rows_content = 20; // number of rows for text-area input of document content
 	this.html_validation = false;
 	this.values_dom_id = false;
 	this.single_value_preds = [
@@ -96,6 +99,15 @@ function edit_field(){
 			this.show_predicate_link = false;
 			this.data_type = 'xsd:string';
 			this.class_uri = 'variable';
+		}
+		if (this.predicate_uuid == this.content_pred_uuid){
+			// document text content, don't show a link to a standard link field
+			// only used with creating documents via a profile
+			this.single_value_only = true;
+			this.show_predicate_link = false;
+			this.data_type = 'xsd:string';
+			this.class_uri = 'variable';
+			this.textarea_rows = this.textarea_rows_content;
 		}
 		if (this.profile_uuid != false) {
 			//we're using this field in an input profile
@@ -247,16 +259,23 @@ function edit_field(){
 		for (var i = 0, length = values_obj.length; i < length; i++) {
 			var value_obj = values_obj[i];
 			if (this.predicate_uuid == this.label_pred_uuid) {
+				// makes edit interface for item labels
 				var val_html = this.make_label_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.class_pred_uuid) {
+				// makes edit interface for item category / class
 				var val_html = this.make_category_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.context_pred_uuid) {
+				// makes edit interface for item context
 				var val_html = this.make_context_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.note_pred_uuid) {
-				// var val_html = this.make_note_val_html(i, value_obj);
+				// makes edit interfce for item note fields
+				var val_html = this.make_string_val_html(i, value_obj);
+			}
+			else if (this.predicate_uuid == this.content_pred_uuid) {
+				// makes edit interface for document item text content
 				var val_html = this.make_string_val_html(i, value_obj);
 			}
 			else{
@@ -534,7 +553,8 @@ function edit_field(){
 			'type="hidden" value="' + display_id + '" />',
 			'<textarea id="' + dom_ids.literal + '" ',
 			'onchange="' + this.name + '.validateHTML(\'' + value_num + '\');" ',
-			'class="form-control input-sm" rows="3" ' + placeholder + ' >',
+			'class="form-control input-sm" rows="' + this.textarea_rows,
+			'" ' + placeholder + ' >',
 			display_value,
 			'</textarea>'
 		].join("\n");

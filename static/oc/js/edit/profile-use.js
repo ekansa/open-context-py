@@ -27,11 +27,11 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		this.show_loading();
 		if (this.edit_new) {
 			// we've got a new item, so don't look for existing JSON-LD data
-         this.get_profile_data();
+            this.get_profile_data().then(this.getProfileItems);
 		}
 		else{
 			// we've got an existing item, so look for existing JSON-LD data first
-			this.getItemJSON().then(this.get_profile_data);
+			this.getItemJSON().then(this.get_profile_data).then(this.getProfileItems);
 		}
 	}
 	this.getItemJSON = function(){
@@ -77,6 +77,31 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		this.item_type = data.item_type;
 		this.display_profile_data();
 	}
+	this.getProfileItems = function(){
+		
+		var act_dom = document.getElementById(this.profile_items_dom_id);
+		act_dom.innerHTML = this.make_loading_gif('Listing related items...');
+		
+		var url = this.make_url('/edit/inputs/profile-item-list/' + encodeURIComponent(this.profile_uuid));
+		var data = {sort: '-label,-revised'};
+		return $.ajax({
+			type: "GET",
+			url: url,
+			context: this,
+			dataType: "json",
+			data: data,
+			success: this.getProfileItemsDone,
+			error: function (request, status, error) {
+				alert('Profile created items retrieval failed, sadly. Status: ' + request.status);
+			}
+		});
+	}
+	
+	
+	/*******************************************
+	 * Initial display of the profile and data (if not creating a new item)
+	 *
+	 * ****************************************/
 	this.display_profile_data = function(){
 		if (document.getElementById(this.act_meta_dom_id)) {
 			// make metadata about the profile
@@ -96,6 +121,36 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			this.postprocess_fields();
 		}
 	}
+	this.getProfileItemsDone = function(data){
+		// handle results of displaying the profile
+		console.log('Profiles items data');
+		console.log(data);
+		var act_dom = document.getElementById(this.profile_items_dom_id);
+		act_dom.innerHTML = '';
+		if (data.count > 0) {
+			var html_l = ['<ul class="list-unstyled">'];
+			for (var i = 0, length = data.items.length; i < length; i++) {
+				var item = data.items[i];
+				var url = this.make_url('/' + item.item_type + '/' + encodeURIComponent(item.uuid));
+				var rec = [
+					'<li>',
+						'<a href="' + url + '" target="_blank">',
+						'<span class="glyphicon glyphicon-new-window" aria-hidden="true"></span> ',
+						item.label,
+						'</a>',
+					'</li>',
+				].join('\n');
+				html_l.push(rec);
+			}
+			html_l.push('</ul>');
+			act_dom.innerHTML = html_l.join('\n');
+		}
+		else{
+			act_dom.innerHTML = 'No items with this profile.';
+		}
+		
+	}
+	
 	
 	/* ---------------------------------------
 	 * Profile HTML display
@@ -289,37 +344,42 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.submitAll = function(){
 		var submit_ok = this.prep_all_create_update();
 		if (submit_ok) {
-			var data = {csrfmiddlewaretoken: csrftoken};
-			var field_key = this.id;
-			field_data = {};
-			for (var i = 0, length = this.fields.length; i < length; i++) {
-				var field = this.fields[i];
-				var act_field = field.make_field_submission_obj(true);
-				var field_key = act_field.field_uuid;
-				if (act_field.values.length > 0 && field.values_modified) {
-					field_data[field_key] = act_field;
-				}
-			}
-			console.log(field_data);
-			data['field_data'] = JSON.stringify(field_data, null, 2);
-			var url = this.make_url("/edit/inputs/create-update-profile-item/");
-			url += encodeURIComponent(this.profile_uuid);
-			url += '/' + encodeURIComponent(this.edit_uuid);
-			return $.ajax({
-				type: "POST",
-				url: url,
-				dataType: "json",
-				context: this,
-				data: data,
-				success: this.submitDataDone,
-				error: function (request, status, error) {
-					alert('Data submission failed, sadly. Status: ' + request.status);
-				} 
-			});
+			// runs the AJAX request to submit all,
+			// then gets recent profile items
+			this.ajax_submit_all().then(this.getProfileItems);
 		}
 	}
+	this.ajax_submit_all = function(){
+		// executes the AJAX request for submitting all
+		var data = {csrfmiddlewaretoken: csrftoken};
+		var field_key = this.id;
+		field_data = {};
+		for (var i = 0, length = this.fields.length; i < length; i++) {
+			var field = this.fields[i];
+			var act_field = field.make_field_submission_obj(true);
+			var field_key = act_field.field_uuid;
+			if (act_field.values.length > 0 && field.values_modified) {
+				field_data[field_key] = act_field;
+			}
+		}
+		console.log(field_data);
+		data['field_data'] = JSON.stringify(field_data, null, 2);
+		var url = this.make_url("/edit/inputs/create-update-profile-item/");
+		url += encodeURIComponent(this.profile_uuid);
+		url += '/' + encodeURIComponent(this.edit_uuid);
+		return $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			context: this,
+			data: data,
+			success: this.submitDataDone,
+			error: function (request, status, error) {
+				alert('Data submission failed, sadly. Status: ' + request.status);
+			} 
+		});
+	}
 	this.submitDataDone = function(data){
-		console.log(data);
 		if (data.ok) {
 			// the request was OK
 			var relative_url = '/edit/inputs/profiles/' + this.profile_uuid + '/new';
@@ -612,6 +672,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			if (key_values.hasOwnProperty(parameter_key)) {
 				var val = key_values[parameter_key]; 
 				url += new_param_chr + parameter_key + '=' + encodeURIComponent(val);
+				new_param_chr = '&';
 			}
 		}
 		return url;

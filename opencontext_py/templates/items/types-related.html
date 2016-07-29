@@ -1,0 +1,67 @@
+{% block type_related %}
+    
+    <div class="row">
+        <div class="col-sm-12">
+    
+    {% if item.use_accordions %}
+        {% with top_panel_num=-1 %}
+        {% with idprefix='type-rel' %}
+        {% with idnum=100 %}
+        {% with idsuffix='-items' %}
+        {% with panel_label='Items Described with this Type' %}
+        {% with panel_label_suffix=False %}
+        {% include 'items/accordion-group-panel-start.html' %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+    {%else%}
+        {% with top_panel_num=item.observations|length %}
+        {% with show_header=True %}
+        {% with panel_label='Items Described with this Type' %}
+        {% with panel_label_suffix='' %}
+        {% with prefix_node_id='type-rel' %}
+        {% with node_id=100 %}
+        {% with suffix_node_id='-items' %}
+        {% include 'items/plain-panel-start.html' %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+        {% endwith %}
+    {%endif%}    
+        
+        <div id="type-rel-items-examples">
+            
+        </div>
+        
+        <a href="{{ base_url }}{{ item.type_query_link }}">View Items</a> described with this type.
+        
+        <script src="{{ base_url}}/static/oc/js/datavis/predicates.js"></script>
+        <script src="{{ base_url}}/static/oc/js/oc-utilities.js"></script>
+    
+        <script type="text/javascript">
+        <!--
+        var json_url = "{{ base_url}}{{ item.type_query_link }}";
+        
+            
+        -->
+        </script>
+        
+    
+    
+    
+    {% if item.use_accordions %}
+        {% include 'items/accordion-group-panel-end.html' %}
+    {%else%}
+        {% include 'items/plain-panel-end.html' %}
+    {%endif%}
+    
+        </div>
+    </div>
+    
+{% endblock %}

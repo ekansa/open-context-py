@@ -68,6 +68,8 @@ class TemplateItem():
         self.project_hero_uri = False  # randomly selects an image for the project
         self.predicate_query_link = False  # link for querying with a predicate
         self.predicate_query_json = False  # link for querying json with a predicate
+        self.type_query_link = False  # link for querying with a type
+        self.type_query_json = False  # link for querying json with a type
         self.proj_content = False
 
     def read_jsonld_dict(self, json_ld):
@@ -405,6 +407,17 @@ class TemplateItem():
                 if self.project.slug is not False:
                     self.predicate_query_link += '&proj=' + self.project.slug
                     self.predicate_query_json += '&proj=' + self.project.slug
+        elif self.act_nav == 'types':
+            if 'skos:related' in json_ld:
+                if isinstance(json_ld['skos:related'], list):
+                    if len(json_ld['skos:related']) > 0:
+                        pred_slug = json_ld['skos:related'][0]['slug']
+                        q_prop = '---'.join([pred_slug, self.slug])
+                        self.type_query_link = '/search/?prop=' + q_prop
+                        self.type_query_json = '/search/.json?prop=' + q_prop
+                        if self.project.slug is not False:
+                            self.type_query_link += '&proj=' + self.project.slug
+                            self.type_query_json += '&proj=' + self.project.slug
 
     def create_project_hero(self, json_ld):
         """ creates a link for displaying a hero image
