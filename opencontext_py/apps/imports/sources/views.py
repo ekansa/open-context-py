@@ -1,4 +1,5 @@
 import json
+from opencontext_py.libs.rootpath import RootPath
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from opencontext_py.apps.imports.sources.projects import ImportProjects
 from opencontext_py.apps.imports.sources.models import ImportSource
@@ -158,6 +159,8 @@ def index(request):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ipr = ImportProjects()
         projs = ipr.get_all_projects()
         imnav = ImportNavigation()
@@ -166,7 +169,8 @@ def index(request):
         template = loader.get_template('imports/projects.html')
         context = RequestContext(request,
                                  {'projs': projs,
-                                  'proj': proj})
+                                  'proj': proj,
+                                  'base_url': base_url})
         return HttpResponse(template.render(context))
 
 
@@ -178,6 +182,8 @@ def project(request, project_uuid):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ipr = ImportProjects()
         proj = ipr.get_project(project_uuid)
         if proj is not False:
@@ -187,7 +193,8 @@ def project(request, project_uuid):
                                         False)
             template = loader.get_template('imports/project.html')
             context = RequestContext(request,
-                                     {'proj': proj})
+                                     {'proj': proj,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
             raise Http404
@@ -208,6 +215,8 @@ def field_types(request, source_id):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
             ip.get_fields()
@@ -217,7 +226,8 @@ def field_types(request, source_id):
                                    source_id)
             template = loader.get_template('imports/field-types.html')
             context = RequestContext(request,
-                                     {'ip': ip})
+                                     {'ip': ip,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
             raise Http404
@@ -231,6 +241,8 @@ def field_types_more(request, source_id):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
             ip.get_subject_type_fields()
@@ -241,7 +253,8 @@ def field_types_more(request, source_id):
             if len(ip.fields) > 0:
                 template = loader.get_template('imports/field-types-more.html')
                 context = RequestContext(request,
-                                         {'ip': ip})
+                                         {'ip': ip,
+                                          'base_url': base_url})
                 return HttpResponse(template.render(context))
             else:
                 redirect = '../../imports/field-types/' + source_id
@@ -260,6 +273,8 @@ def field_entity_relations(request, source_id):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
             ip.get_fields()
@@ -272,7 +287,8 @@ def field_entity_relations(request, source_id):
                                        source_id)
                 template = loader.get_template('imports/field-entity-relations.html')
                 context = RequestContext(request,
-                                         {'ip': ip})
+                                         {'ip': ip,
+                                          'base_url': base_url})
                 return HttpResponse(template.render(context))
             else:
                 redirect = '../../imports/field-types/' + source_id
@@ -291,6 +307,8 @@ def field_descriptions(request, source_id):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
             ip.get_fields()
@@ -300,7 +318,8 @@ def field_descriptions(request, source_id):
                                    source_id)
             template = loader.get_template('imports/field-descriptions.html')
             context = RequestContext(request,
-                                     {'ip': ip})
+                                     {'ip': ip,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
             raise Http404
@@ -316,6 +335,8 @@ def finalize(request, source_id):
     if not request.user.is_superuser:
         return HttpResponse('Unauthorized', status=401)
     else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         ip = ImportProfile(source_id)
         if ip.project_uuid is not False:
             ip.get_fields()
@@ -325,7 +346,8 @@ def finalize(request, source_id):
                                    source_id)
             template = loader.get_template('imports/finalize.html')
             context = RequestContext(request,
-                                     {'ip': ip})
+                                     {'ip': ip,
+                                      'base_url': base_url})
             return HttpResponse(template.render(context))
         else:
             raise Http404
