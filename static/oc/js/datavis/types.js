@@ -88,7 +88,7 @@ function types_item_examples(examples_url) {
 			if (document.getElementById(this.summary_dom_id)) {
 				var sum_dom = document.getElementById(this.summary_dom_id);
 				if (this.data['totalResults'] > 0) {
-					var sum_html = 'Examples of this ';
+					var sum_html = 'Examples of the ';
 					sum_html += this.data['totalResults'];
 					sum_html += ' Item(s) Described by this Type';
 				}
