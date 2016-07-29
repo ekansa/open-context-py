@@ -179,20 +179,20 @@ function types_item_examples(examples_url) {
 				'title="' + record.label + '" ',
 				'target="_blank">',
 					'<img alt="thumbail for ' + record.label + '" ',
-					'src="' + thumb + '" class="img-responsive img-rounded" />',
+					'src="' + thumb + '" class="img-responsive img-rounded center-block" />',
 				'</a>'
 			].join('\n');
 		}
 		else{
 			var item_html = [
-				'<a href="' + record.href + '" target="_blank">',
+				'<a href="' + record.href + '" target="_blank" class="text-center">',
 					record.label,
 				'</a>'
 			].join('\n');
 		}
 		
 		var record_html = [
-			'<div class="col-xs-3">',
+			'<div class="col-xs-6 col-sm-4 col-md-3">',
 			    '<div class="type-example-panel-outer">',
 					'<div class="panel panel-default">',
 						'<div class="panel-body type-example-item text-center">',
