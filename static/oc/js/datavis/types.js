@@ -118,7 +118,6 @@ function types_item_examples(examples_url) {
 						if (act_row.length >= this.examples_per_row) {
 							all_rows.push(act_row);
 							var act_row = [];
-							act_row.push(record_html);
 						}
 						act_row.push(record_html);
 					}
