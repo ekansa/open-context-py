@@ -9,33 +9,70 @@ from django.db import models
 class InputField(models.Model):
 
     # required fields for creating items in open context
-    PREDICATES_OC = {'subjects': ['oc-gen:label',
-                                  'oc-gen:class_uri',
-                                  'oc-gen:contained-in'],
-                     'media': ['oc-gen:label'],
-                     'documents': ['oc-gen:label',
-                                   'oc-gen:content'],
-                     'persons': ['oc-gen:label']}
+    PREDICATES_OC = {
+        'subjects': [
+            'oc-gen:label',
+            'oc-gen:class_uri',
+            'oc-gen:contained-in'
+        ],
+        'media': [
+            'oc-gen:label',
+            'oc-gen:subjects-link'
+        ],
+        'documents': [
+            'oc-gen:label',
+            'oc-gen:subjects-link',
+            'oc-gen:content'
+        ],
+        'persons': [
+            'oc-gen:label']
+    }
 
-    PREDICATE_ITEMS = {'oc-gen:label': {'label': 'Item Label',
-                                        'data_type': 'xsd:string',
-                                        'note': 'Main identifying label for an item.',
-                                        'validation': {}},
-                       'oc-gen:class_uri': {'label': 'Item Category',
-                                            'data_type': 'id',
-                                            'note': 'General type/classification',
-                                            'validation': {'search': {'search_type': 'hierarchy',
-                                                                      'ent_type': 'uri'}}
-                                            },
-                       'oc-gen:content': {'label': 'Text Content',
-                                          'data_type': 'xsd:string',
-                                          'note': 'Body of text representing the content of the item (HTML is ok).',
-                                          'validation': {}},
-                       'oc-gen:contained-in': {'label': 'Contained within',
-                                               'data_type': 'id',
-                                               'note': 'Context of where the item was discovered.',
-                                               'validation': {'search': {'search_type': 'look-up',
-                                                                         'ent_type': 'subjects'}}}}
+    PREDICATE_ITEMS = {
+        'oc-gen:label': {
+            'label': 'Item Label',
+            'data_type': 'xsd:string',
+            'note': 'Main identifying label for an item.',
+            'validation': {}},
+        'oc-gen:class_uri': {
+            'label': 'Item Category',
+            'data_type': 'id',
+            'note': 'General type/classification',
+            'validation': {
+                'search': {
+                    'search_type': 'hierarchy',
+                    'ent_type': 'uri'
+                }
+            }
+        },
+        'oc-gen:content': {
+            'label': 'Text Content',
+            'data_type': 'xsd:string',
+            'note': 'Body of text representing the content of the item (HTML is ok).',
+            'validation': {}},
+        'oc-gen:contained-in': {
+            'label': 'Contained within',
+            'data_type': 'id',
+            'note': 'Context of where the item was discovered.',
+            'validation': {
+                'search': {
+                    'search_type': 'look-up',
+                    'ent_type': 'subjects'
+                }
+            }
+        },
+        'oc-gen:subjects-link': {
+            'label': 'Linked Subject',
+            'data_type': 'id',
+            'note': 'Linked / associated subject (location or object).',
+            'validation': {
+                'search': {
+                    'search_type': 'look-up',
+                    'ent_type': 'subjects'
+                }
+            }
+        }
+    }
 
     uuid = models.CharField(max_length=50, primary_key=True)  # uuid for the InputField itself
     project_uuid = models.CharField(max_length=50, db_index=True)

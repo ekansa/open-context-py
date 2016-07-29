@@ -202,6 +202,12 @@ function deleteItem(){
 			impacts += impact_html;
 			impacts += '</div>';
 		}
+		else{
+			impacts = '<div class="small" style="margin-bottom: 20px;">';
+			impacts += '<p><strong>Impacts if you Delete</strong></p>';
+			impacts += 'No other items will be affected.';
+			impacts += '</div>';
+		}
 		var del_dom = document.getElementById(this.dom_ids.del_concon);
 		del_dom.innerHTML = '';
 		var conf_dom = document.getElementById(this.dom_ids.del_confcon);
