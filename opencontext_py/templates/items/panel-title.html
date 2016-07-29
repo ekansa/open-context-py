@@ -17,6 +17,6 @@
         </span>
     </h4>
     {%endif%}
-    <h4 class="panel-title">{% if accordion %}<a data-toggle="collapse" data-parent="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc" href="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel"><span class="glyphicon glyphicon-resize-vertical"></span> {{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}</a>{%else%}{{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}{%endif%}</h4>
+    <h4 class="panel-title">{% if accordion %}<a data-toggle="collapse" data-parent="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-acc" href="#{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel"><span class="glyphicon glyphicon-resize-vertical"></span><span id="{{ idprefix }}-{{ idnum }}-{{ idsuffix }}-panel-title">{{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}</span></a>{%else%}{{ panel_label }}{% if panel_label_suffix != False %} ({{ panel_label_suffix }}){%endif%}{%endif%}</h4>
 </div>
 {%endif%}
