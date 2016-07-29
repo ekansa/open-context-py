@@ -314,6 +314,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		for (var i = 0, length = this.fields.length; i < length; i++) {
 			var field = this.fields[i];
 			if (field.oc_required) {
+				console.log('Checking: ' + field.label);
 				if (field.predicate_uuid == field.label_pred_uuid) {
 					// we have a label field! use the prefix, and id_len to set to
 					// this object's label prefix and id_len
@@ -328,14 +329,13 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						required_valid.all = false;
 						required_valid.missing.push(field.label);
 					}
-					console.log('OC-req-0-not-found: ' + field.label);
+					console.log('OC-req-0-found: ' + field.label);
 					// console.log(required_valid);
 				}
 				else{
 					required_valid.all = false;
 					required_valid.missing.push(field.label);
 					console.log('OC-req-0-not-found: ' + field.label);
-					// console.log(required_valid);
 				}
 			}
 		}

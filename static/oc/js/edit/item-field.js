@@ -64,7 +64,8 @@ function edit_field(){
 	this.class_pred_uuid = 'oc-gen:class_uri';
 	this.context_pred_uuid = 'oc-gen:contained-in';
 	this.note_pred_uuid = 'oc-gen:has-note';
-	this.content_pred_uuid = 'oc-gen:content';  // for document contents, from profiles
+	this.content_pred_uuid = 'oc-gen:content';  // for document contents, via profiles
+	this.subs_link_pred_uuid = 'oc-gen:subjects-link';  // for linking to subjects, via profiles
 	this.textarea_rows = 3;  // number of rows for a text area input
 	this.textarea_rows_content = 20; // number of rows for text-area input of document content
 	this.html_validation = false;
@@ -108,6 +109,12 @@ function edit_field(){
 			this.data_type = 'xsd:string';
 			this.class_uri = 'variable';
 			this.textarea_rows = this.textarea_rows_content;
+		}
+		if (this.predicate_uuid == this.subs_link_pred_uuid){
+			// for linking a media item or document to a subjects item
+			// only used with creating documents via a profile
+			this.show_predicate_link = false;
+			this.data_type = 'id';
 		}
 		if (this.profile_uuid != false) {
 			//we're using this field in an input profile
@@ -269,6 +276,10 @@ function edit_field(){
 			else if (this.predicate_uuid == this.context_pred_uuid) {
 				// makes edit interface for item context
 				var val_html = this.make_context_val_html(i, value_obj);
+			}
+			else if (this.predicate_uuid == this.subs_link_pred_uuid) {
+				// makes edit interface for item subjects link
+				var val_html = this.make_subjects_link_val_html(i, value_obj);
 			}
 			else if (this.predicate_uuid == this.note_pred_uuid) {
 				// makes edit interfce for item note fields
@@ -848,6 +859,30 @@ function edit_field(){
 	}
 	this.make_context_val_html = function(value_num, value_obj){
 		// make a tree list for searching for contexts
+		var html = this.make_subs_links_or_contexts_html(
+			value_num,
+			value_obj,
+			'Context',
+			'Select a Context Below'
+		);
+		return html;
+	}
+	this.make_subjects_link_val_html = function(value_num, value_obj){
+		var html = this.make_subs_links_or_contexts_html(
+			value_num,
+			value_obj,
+			'Linked Subjects (Locations or Objects)',
+			'Select a Location or Object ("subjects")'
+		);
+		return html;
+	}
+	this.make_subs_links_or_contexts_html = function(
+		value_num,
+		value_obj,
+		entities_panel_title,
+		option_b_title){
+		
+		// make a tree list for searching for contexts
 		var dom_ids = this.make_field_val_domids(value_num);
 		var display_label = '';
 		var display_id = '';
@@ -861,18 +896,19 @@ function edit_field(){
 		}
 		
 		this.prep_field_tree(value_num, this.project_uuid, 'context');
-		var entities_panel_title = "Select a Context";
+
 		var search_sup_html = [
 			'<br/>',
 			'<label>',
-			'<u>Option B</u>: Select a Context Below ',
+			'<u>Option B</u>: ' + option_b_title,
 			'(<a title="Click to expand" role="button" ',
 			'id="' + dom_ids.treebut + '" ',
 			'onclick="'+ this.name + '.toggleCollapseTree(\''+ value_num + '\');">',
 			'<span class="glyphicon glyphicon-cloud-download" aria-hidden="true">',
 			'</span></a>)',
 			'</label><br/>',
-			'<div id="' + dom_ids.tree + '" class="container-fluid collapse in" aria-expanded="true" >', // where the tree will go
+			'<div id="' + dom_ids.tree + '" class="container-fluid collapse in" ',
+			'aria-expanded="true" >', // where the tree will go
 			'</div>',
 		].join("\n");
 		
@@ -896,10 +932,11 @@ function edit_field(){
 			var sel_label = document.getElementById(this.entDomID +  "-sel-entity-label").value;
 			document.getElementById(this.dom_ids.label).value = sel_label;
 			document.getElementById(this.dom_ids.id).value = sel_id;
-			this.ids_validation[sel_id] = {label: sel_label,
-													 item_type: 'types',
-													 vocab_uri: false};
-			var val_mes = 'Valid context selected.';
+			this.ids_validation[sel_id] = {
+				label: sel_label,
+				item_type: 'subjects',
+			vocab_uri: false};
+			var val_mes = 'Valid location or object ("subjects" item) selected.';
 			this.validation_id_response(true, this.value_num);
 			// console.log(this);
 		};
@@ -1797,6 +1834,7 @@ function edit_field(){
 		this.html_validation = false;
 		this.value_num_validations[value_num] = data.ok;
 		this.values_modified = true; // a value was modified
+		this.after_validation_function();
 	}
 	this.validateNumber = function(value_num){
 		//validates numeric fields

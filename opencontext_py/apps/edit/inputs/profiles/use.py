@@ -183,6 +183,11 @@ class InputProfileUse():
                     self.save_contained_subject(context_uuid, item_man)
                 # now get uuids for solr reindexing, including child items impacted by the changes
                 self.collect_solr_reindex_uuids(item_man.uuid)
+            elif req_field['predicate_uuid'] == 'oc-gen:subjects-link':
+                subject_uuid = req_field['value']
+                self.save_subject_link(subject_uuid, item_man)
+                # now get uuids for solr reindexing, including child items impacted by the changes
+                self.collect_solr_reindex_uuids(item_man.uuid)
             elif req_field['predicate_uuid'] == 'oc-gen:class_uri':
                 item_man.class_uri = req_field['value']
                 item_man.save()
@@ -195,6 +200,7 @@ class InputProfileUse():
             context_uuid = False
             content = False
             class_uri = ''
+            subject_uuid = False
             for req_field in required_make_data:
                 if req_field['predicate_uuid'] == 'oc-gen:label':
                     label = req_field['value']
@@ -204,6 +210,8 @@ class InputProfileUse():
                     context_uuid = req_field['value']
                 elif req_field['predicate_uuid'] == 'oc-gen:class_uri':
                     class_uri = req_field['value']
+                elif req_field['predicate_uuid'] == 'oc-gen:subjects-link':
+                    subject_uuid = req_field['value']
         if self.create_ok:
             item_man = Manifest()
             item_man.uuid = self.edit_uuid
@@ -219,6 +227,8 @@ class InputProfileUse():
             if context_uuid is not False \
                and self.item_type == 'subjects':
                 self.save_contained_subject(context_uuid, item_man)
+            if subject_uuid is not False:
+                self.save_subject_link(subject_uuid, item_man)
             if content is not False \
                and self.item_type == 'documents':
                 doc = OCdocument()
@@ -271,6 +281,44 @@ class InputProfileUse():
                 self.errors['context'] += parent.item_type + ', and '
                 self.errors['context'] += 'child item ' + item_man.label + ' (' + item_man.uuid + ') is: '
                 self.errors['context'] += item_man.item_type + '. Both need to be "subjects" items.'
+
+    def save_subject_link(self, subject_uuid, item_man):
+        """ create a containment relationship and a subject item """
+        try:
+            l_subject = Manifest.objects.get(uuid=subject_uuid)
+        except Manifest.DoesNotExist:
+            l_subject = False
+            self.ok = False
+            self.errors['subject_uuid'] = 'The linked subject (location or object): '
+            self.errors['subject_uuid'] += str(subject_uuid) + ' does not exist.'
+        if l_subject is not False:
+            if l_subject.item_type == 'subjects':
+                # the parent context exists, so we can create a containment relationship with it.
+                # first delete any existing containment relations
+                Assertion.objects\
+                         .filter(predicate_uuid=Assertion.PREDICATES_LINK,
+                                 object_uuid=item_man.uuid)\
+                         .delete()
+                # now create the new containment assertion
+                subl_ass = Assertion()
+                subl_ass.uuid = l_subject.uuid
+                subl_ass.subject_type = l_subject.item_type
+                subl_ass.project_uuid = self.project_uuid
+                subl_ass.source_id = self.make_source_id()
+                subl_ass.obs_node = '#obs-1'
+                subl_ass.obs_num = 1
+                subl_ass.sort = 1
+                subl_ass.visibility = self.visibility
+                subl_ass.predicate_uuid = Assertion.PREDICATES_LINK
+                subl_ass.object_uuid = item_man.uuid
+                subl_ass.object_type = item_man.item_type
+                subl_ass.save()
+            else:
+                self.ok = False
+                self.errors['context'] = 'Linked Subject ' + l_subject.label
+                self.errors['context'] += ' (' + l_subject.uuid + ') is: '
+                self.errors['context'] += l_subject.item_type
+                self.errors['context'] += '. It needs to be a "subjects" item.'
 
     def get_required_make_data(self, field_data):
         """ gets data for required fields """
