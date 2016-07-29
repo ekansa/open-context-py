@@ -4,7 +4,7 @@ from django.conf import settings
 
 class RootPath():
     """
-    Stores items in the order the keys were last added
+    Makes the root path for URLs in this deployment
     """
     def __init__(self):
         pass
@@ -20,6 +20,8 @@ class RootPath():
                 base_url = settings.DEPLOYED_HOST
         else:
             base_url = settings.CANONICAL_HOST
+        if settings.DEFAULT_HTTPS and 'https://' not in base_url:
+            base_url = base_url.replace('http://', 'https://')
         return base_url
 
     def convert_local_url(self, url):

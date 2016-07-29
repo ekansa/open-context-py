@@ -84,6 +84,15 @@ if 'WEB_OK' in secrets:
         WEB_OK = False
 
 
+# Is this deployment defaulting to HTTPS?
+# Defaults to False, but the setting exists
+# in case we want to make all links, and all
+# static files and media HTTPS
+DEFAULT_HTTPS = False:
+if 'DEFAULT_HTTPS' in secrets:
+    secrets_https = get_secret('DEFAULT_HTTPS')
+    if secrets_https == 1:
+        DEFAULT_HTTPS = True    
 
 
 # Application definition
@@ -290,10 +299,15 @@ except:
     HOSTNAME = 'localhost'
 
 ADMIN_EMAIL = get_secret('ADMIN_EMAIL')
+
 # assumes DEPLOYED_HOST starts with 'http://' or 'https://'
 DEPLOYED_HOST = get_secret('DEPLOYED_HOST')
 if 'http://' not in DEPLOYED_HOST and 'https://' not in DEPLOYED_HOST:
-    DEPLOYED_HOST = 'http://' + DEPLOYED_HOST
+    if DEFAULT_HTTPS:
+        DEPLOYED_HOST = 'https://' + DEPLOYED_HOST
+    else:
+        DEPLOYED_HOST = 'http://' + DEPLOYED_HOST
+
 DEPLOYED_SITE_NAME = get_secret('DEPLOYED_SITE_NAME')
 if get_secret('DEPLOYED_HOST') == 1:
     TO_DEPLOYED_URIS = True
