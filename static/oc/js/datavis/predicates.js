@@ -184,15 +184,16 @@ function predicate_bar_chart(json_url) {
 			.attr("y", groupHeight / 2)
 			.attr("dy", ".30em")
 			.text(function(d,i) {
-			var label = "";
-			if (i % data.series.length === 0){
-				label = data.labels[Math.floor(i/data.series.length)]
-				if (label.length > 25) {
-					label = label.substring(0, 22) + '...';
+				var label = "";
+				if (i % data.series.length === 0){
+					label = data.labels[Math.floor(i/data.series.length)];
+					if (label.length > 25) {
+						label = label.substring(0, 22) + '...';
+					}
 				}
-			}
-			return label;
+				return label;
 			});
+			
 		
 		    bar.on("click", function (d,i){
 			if (i % data.series.length === 0){
@@ -201,7 +202,8 @@ function predicate_bar_chart(json_url) {
 			}
 		    });
 		    
-		    chart.append("g")
+			
+			chart.append("g")
 			  .attr("class", "y axis")
 			  .attr("transform", "translate(" + spaceForLabels + ", " + -gapBetweenGroups/2 + ")")
 			  .call(yAxis);

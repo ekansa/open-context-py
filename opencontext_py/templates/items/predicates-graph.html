@@ -17,6 +17,14 @@
             fill: black;
             font: 14px sans-serif;
             text-anchor: end;
+            cursor: pointer;
+            color: #337ab7;
+            text-decoration: none;
+          }
+          
+          .chart .label:hover {
+            color: #23527c;
+            text-decoration: underline;
           }
           
           .bar:hover {
@@ -31,7 +39,7 @@
           }
 
     </style>
-    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="{{ base_url}}/static/d3/d3.v3.min.js"></script>
     <script src="{{ base_url}}/static/oc/js/datavis/predicates.js"></script>
     <script src="{{ base_url}}/static/oc/js/oc-utilities.js"></script>
     
@@ -39,6 +47,7 @@
         <div id="predicate-graph-loading"></div>
         <svg class="chart"></svg>
     </div>
+    
     <script type="text/javascript">
         <!--
         var json_url = "{{ base_url}}{{ item.predicate_query_json}}";
