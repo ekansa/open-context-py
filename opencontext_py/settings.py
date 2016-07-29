@@ -88,7 +88,7 @@ if 'WEB_OK' in secrets:
 # Defaults to False, but the setting exists
 # in case we want to make all links, and all
 # static files and media HTTPS
-DEFAULT_HTTPS = False:
+DEFAULT_HTTPS = False
 if 'DEFAULT_HTTPS' in secrets:
     secrets_https = get_secret('DEFAULT_HTTPS')
     if secrets_https == 1:
