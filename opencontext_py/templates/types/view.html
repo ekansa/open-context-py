@@ -61,6 +61,12 @@
                     {% include 'items/observations.html' %}
                 </div>
             </div>
+            
+          {% if item.type_query_link != False %}
+               <!-- showing related items of this type-->
+               {% include 'items/types-related.html' %}
+          {%endif%}
+            
          </div>
          <div class="col-sm-4">
          {% include 'items/citation.html' %}

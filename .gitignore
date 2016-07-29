@@ -17,6 +17,7 @@ static/fontawesome/
 static/fonts/
 static/exports/
 static/imports/
+static /d3/
 static/robots/robots.txt
 *.pyc
 solr-config/schema.xml.old
@@ -27,3 +28,4 @@ wsgi.py
 *.swp
 node_modules
 bower_components
+static/d3/d3.v3.min.js
