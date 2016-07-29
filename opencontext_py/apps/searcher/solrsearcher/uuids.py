@@ -90,7 +90,7 @@ class SolrUUIDs():
         """ makes item dictionary object from a record prop obj """
         item = LastUpdatedOrderedDict()
         item['uri'] = rec_props_obj.uri
-        if cannonical is False:
+        if cannonical is False or 'href' in self.rec_attributes:
             item['href'] = rec_props_obj.href
         item['citation uri'] = rec_props_obj.cite_uri
         item['label'] = rec_props_obj.label
