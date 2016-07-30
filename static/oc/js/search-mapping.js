@@ -69,24 +69,24 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		map.geodeep = 20;
 	}
 	var bounds = new L.LatLngBounds();
-	var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 		id: 'osm',
-		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+		attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		id: 'mapbox-light',
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
 	
-	var mapboxDark = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+	var mapboxDark = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
 		id: 'mapbox-dark',
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
    
-	var ESRISatelliteTiles = L.tileLayer(							'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	var ESRISatelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 		id: 'esri-sat',
-		attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
+		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
 	var gmapRoad = new L.Google('ROADMAP');
