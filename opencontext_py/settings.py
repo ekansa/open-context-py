@@ -88,11 +88,11 @@ if 'WEB_OK' in secrets:
 # Defaults to False, but the setting exists
 # in case we want to make all links, and all
 # static files and media HTTPS
-DEFAULT_HTTPS = False
-if 'DEFAULT_HTTPS' in secrets:
-    secrets_https = get_secret('DEFAULT_HTTPS')
+SECURE_SSL_REDIRECT = False
+if 'SECURE_SSL_REDIRECT' in secrets:
+    secrets_https = get_secret('SECURE_SSL_REDIRECT')
     if secrets_https == 1:
-        DEFAULT_HTTPS = True    
+        SECURE_SSL_REDIRECT = True    
 
 
 # Application definition
@@ -303,7 +303,7 @@ ADMIN_EMAIL = get_secret('ADMIN_EMAIL')
 # assumes DEPLOYED_HOST starts with 'http://' or 'https://'
 DEPLOYED_HOST = get_secret('DEPLOYED_HOST')
 if 'http://' not in DEPLOYED_HOST and 'https://' not in DEPLOYED_HOST:
-    if DEFAULT_HTTPS:
+    if SECURE_SSL_REDIRECT:
         DEPLOYED_HOST = 'https://' + DEPLOYED_HOST
     else:
         DEPLOYED_HOST = 'http://' + DEPLOYED_HOST
