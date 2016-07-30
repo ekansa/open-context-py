@@ -12,17 +12,17 @@ function initmap() {
      
 	map = L.map('map').setView([start_lat, start_lon], start_zoom); //map the map
 	bounds = new L.LatLngBounds();
-	var osmTiles = L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-	var mapboxTiles = L.tileLayer('http://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	var mapboxTiles = L.tileLayer('https://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
    
-	var ESRISatelliteTiles = L.tileLayer('http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+	var ESRISatelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
 	    maxNativeZoom: 19,
-		attribution: '&copy; <a href="http://services.arcgisonline.com/">ESRI.com</a> '
+		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
 	var gmapRoad = new L.Google('ROADMAP');

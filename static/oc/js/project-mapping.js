@@ -34,11 +34,11 @@ function project_map(map_dom_id, json_url) {
 	map.show_browse_count = true;  // show counts in popup for browsing collections
 	
 	var bounds = new L.LatLngBounds();
-	var mapboxLight = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
-	var mapboxAlt = L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.run-bike-hike/{z}/{x}/{y}.png?access_token=' + map_box_token, {
-		attribution: '&copy; <a href="http://MapBox.com">MapBox.com</a> '
+	var mapboxAlt = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.run-bike-hike/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
 	var baseMaps = {
 		"Light": mapboxLight,
