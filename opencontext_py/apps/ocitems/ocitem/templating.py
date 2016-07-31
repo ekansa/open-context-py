@@ -290,9 +290,10 @@ class TemplateItem():
                 self.content['fullfile'] = False
                 self.content['preview'] = False
                 self.content['thumbnail'] = False
+            rp = RootPath()
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
-                    self.content['fullfile'] = file_item['id']
+                    self.content['fullfile'] = rp.convert_to_https(file_item['id'])
                     self.fulldownload = True
                     if 'dc-terms:hasFormat' in file_item:
                         for mime_type in self.FULLIMAGE_MIMETYPES:
@@ -302,18 +303,18 @@ class TemplateItem():
                                 break
                         if 'application/pdf' in file_item['dc-terms:hasFormat']:
                             # this is a pdf that can be previewed
-                            self.content['preview'] = file_item['id']
+                            self.content['preview'] = rp.convert_to_https(file_item['id'])
                             self.item_category_label = 'Acrobat PDF File'
                             rp = RootPath()
-                            target_url = file_item['id']
-                            if 'https:' in target_url:
-                                target_url = target_url.replace('https:', 'http:')
+                            target_url = rp.convert_to_https(file_item['id'])
+                            # if 'https:' in target_url:
+                                # target_url = target_url.replace('https:', 'http:')
                             self.full_doc_file = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
                             # self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':
-                    self.content['preview'] = file_item['id']
+                    self.content['preview'] = rp.convert_to_https(file_item['id'])
                 elif file_item['type'] == 'oc-gen:thumbnail':
-                    self.content['thumbnail'] = file_item['id']
+                    self.content['thumbnail'] = rp.convert_to_https(file_item['id'])
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:
@@ -342,6 +343,7 @@ class TemplateItem():
         """ Stores information about classes / categories, including labels and icons
             needed for user inferface
         """
+        rp = RootPath()
         if('@graph' in json_ld):
             for g_anno in json_ld['@graph']:
                 identifier = False
@@ -354,7 +356,7 @@ class TemplateItem():
                     if('label' in g_anno):
                         meta['typelabel'] = g_anno['label']
                     if('oc-gen:hasIcon' in g_anno):
-                        meta['icon'] = g_anno['oc-gen:hasIcon'][0]['id']
+                        meta['icon'] = rp.convert_to_https(g_anno['oc-gen:hasIcon'][0]['id'])
                     self.class_type_metadata[identifier] = meta
         if 'category' in json_ld:
             item_cat_labels = []
@@ -425,6 +427,7 @@ class TemplateItem():
             associated with the project
         """
         if self.act_nav == 'projects':
+            rp = RootPath()
             if 'foaf:depiction' in json_ld:
                 # predicate for images
                 heros = json_ld['foaf:depiction']
@@ -434,7 +437,7 @@ class TemplateItem():
                         act_index = randint(0, (len_heros - 1))
                     else:
                         act_index = 0
-                    self.project_hero_uri = heros[act_index]['id']    
+                    self.project_hero_uri = rp.convert_to_https(heros[act_index]['id'])    
 
     def create_license(self, json_ld):
         """ creates a license link
@@ -937,6 +940,9 @@ class PropValue():
                 self.val = val_item['label']
             if 'oc-gen:thumbnail-uri' in val_item:
                 self.thumbnail = val_item['oc-gen:thumbnail-uri']
+                # convert to HTTPS if needed
+                rp = RootPath()
+                self.thumbnail = rp.convert_to_https(self.thumbnail)
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
             if 'xsd:string' in val_item:

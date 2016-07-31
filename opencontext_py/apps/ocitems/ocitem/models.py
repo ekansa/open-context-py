@@ -10,6 +10,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.core.cache import caches
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
