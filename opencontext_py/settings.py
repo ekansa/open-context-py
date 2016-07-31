@@ -93,7 +93,7 @@ DEFAULT_HTTPS = False
 if 'SECURE_SSL_REDIRECT' in secrets:
     secrets_https = get_secret('SECURE_SSL_REDIRECT')
     if secrets_https == 1:
-        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTOCOL', 'https')
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
         SECURE_SSL_REDIRECT = True
         DEFAULT_HTTPS = True
 
@@ -164,6 +164,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    # Adding security
+    'django.middleware.security.SecurityMiddleware'
 )
 
 
