@@ -32,3 +32,9 @@ class RootPath():
         if settings.CANONICAL_HOST != base_url:
             url = url.replace(settings.CANONICAL_HOST, base_url)
         return url
+
+    def convert_to_https(self, url):
+        """ converts a URL to an HTTPS url """
+        if settings.DEFAULT_HTTPS:
+            url = url.replace('http://', 'https://')
+        return url

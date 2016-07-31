@@ -235,6 +235,8 @@ class RecordProperties():
                     self.thumbnail_href = self.thumbnail_data[uuid]['href']
                     self.thumbnail_uri = self.thumbnail_data[uuid]['uri']
                     self.thumbnail_scr = self.thumbnail_data[uuid]['scr']
+                    rp = RootPath()
+                    self.thumbnail_scr = rp.convert_to_https(self.thumbnail_scr)
             else:
                 # did not precache thumbnail data, get an indivitual record
                 self.get_thumbnail_from_database(solr_rec)
@@ -245,13 +247,14 @@ class RecordProperties():
             uuid = solr_rec['uuid']
             if uuid in self.media_file_data:
                 if self.media_file_data[uuid] is not False:
+                    rp = RootPath()
                     for file_type, file_uri in self.media_file_data[uuid].items():
                         if file_type == 'oc-gen:thumbnail':
-                            self.thumbnail_scr = file_uri
+                            self.thumbnail_scr = rp.convert_to_https(file_uri)
                         elif file_type == 'oc-gen:preview':
-                            self.preview_scr = file_uri
+                            self.preview_scr = rp.convert_to_https(file_uri)
                         elif file_type == 'oc-gen:fullfile':
-                            self.fullfile_scr = file_uri
+                            self.fullfile_scr = rp.convert_to_https(file_uri)
 
     def get_thumbnail_from_database(self, solr_rec):
         """ get media record and thumbnail, if it exists """
