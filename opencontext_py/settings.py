@@ -164,6 +164,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
+    # Adding security
+    'django.middleware.security.SecurityMiddleware'
 )
 
 
