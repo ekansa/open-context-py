@@ -18,6 +18,7 @@ function orcidObj() {
 		// calls the orcid API to get data
 		var url = this.api_url;
 		if (url != false) {
+		    url = url.replace('http://', 'https://');
 			this.loading_data();
 			return $.ajax({
 				type: "GET",
