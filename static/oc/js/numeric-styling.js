@@ -47,9 +47,11 @@ function numericStyle(){
 	this.base_opacity = base_opacity
 	
 	//starting default gradient colors from low to high
-	var gradient_colors = [convertToRGB('#FFFF66'),
-			       convertToRGB('#FF3300'),
-			       convertToRGB('#5A0000')];
+	var gradient_colors = [
+		convertToRGB('#FFFF66'),
+		convertToRGB('#FF3300'),
+		convertToRGB('#5A0000')
+    ];
 	
 	this.gradient_colors = gradient_colors;
 	this.hex_prefix = '#'; // for making a hex color, add the prefix
