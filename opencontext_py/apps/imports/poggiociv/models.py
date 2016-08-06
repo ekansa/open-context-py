@@ -1,9 +1,11 @@
+import re
 import os
 import json
 import codecs
 import requests
 from lxml import etree
 import lxml.html
+from unidecode import unidecode
 from django.conf import settings
 from django.db import connection
 from django.db.models import Q
@@ -50,7 +52,8 @@ pc.scrape_content(link, pc.pc_directory, False)
 from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
 pc = PoggioCiv(True)
 pc.year_after = 1950
-pc.year_before = 1980
+pc.year_before = 2017
+pc.recache_year = 2020
 pc.max_checked_links = 10000
 pc.scrape_content_from_index(pc.pc_directory, True)
 
@@ -91,9 +94,18 @@ pc.scrape_content_from_index(pc.pc_directory, True)
             'viewlocus': '/admin/',
             'trenchbookviewer': False  # don't follow these, no scans
         }
+        self.fail_url_file = 'fail-urls.json'
+        self.fail_urls = []
+        self.save_fails = []
+        self.save_fail_file = 'fail-save.json'
+        self.done_root_links = []
+        self.done_root_links_file = 'done-root-links.json'
         self.year_after = 1950
-        self.year_before = 1980
+        self.year_before = 2020
+        self.recache_year = 2017
+        self.recache = False
         self.max_checked_links = 5000
+        self.current_location = ''
         self.checked_links = []
     
     
@@ -106,26 +118,63 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                                                self.trench_book_index_json)
         else:
             items = self.get_scrape_trench_book_index()
+        done_root_links = self.load_json_file_os_obj(act_dir,
+                                                     self.done_root_links_file)
+        if isinstance(done_root_links, list):
+            self.done_root_links = done_root_links 
+        fail_urls = self.load_json_file_os_obj(act_dir,
+                                               self.fail_url_file)
+        if isinstance(fail_urls, list):
+            # we have old fail urls
+            self.fail_urls = fail_urls
+        save_fail_urls = self.load_json_file_os_obj(act_dir,
+                                                    self.save_fail_file)
+        if isinstance(save_fail_urls, list):
+            # we have old fail urls
+            self.save_fails = save_fail_urls
         if isinstance(items, list):
             for item in items:
                 if item['max_year'] <= self.year_before \
                    and item['max_year'] >= self.year_after:
+                    self.current_location = item['label'] + ' ' + str(item['max_year'])
                     link = item['page']
+                    if item['max_year'] == self.recache_year:
+                        self.recache = True
+                    else:
+                        self.recache = False
                     param_sep = '?'
+                    param_keys = []
                     for param_key, param_val in item['params'].items():
+                        param_keys.append(param_key)
+                    param_keys.sort()
+                    for param_key in param_keys:
+                        param_val = item['params'][param_key]
                         link += param_sep + str(param_key) + '=' + str(param_val)
                         param_sep = '&'
-                    print('')
-                    print('')
-                    print('')
-                    print('Starting from index: ' + link)
-                    self.scrape_content(link, act_dir, recursive)
+                    if link not in self.done_root_links:
+                        print('')
+                        print('')
+                        print('')
+                        print('Starting from index: ' + link)
+                        self.scrape_content(link, act_dir, recursive)
+                        self.done_root_links.append(link)
+                        self.save_as_json_file(act_dir,
+                                               self.done_root_links_file,
+                                               self.done_root_links)
+                    else:
+                        print('')
+                        print('')
+                        print('')
+                        print('Skipping: ' + self.current_location)
+                        print('Skipping done index: ' + link)
     
     def scrape_content(self, link, act_dir, recursive=True):
         """scrapes the content of a page
            gets links to save the next pages also
         """
-        if link not in self.checked_links:
+        if link in self.checked_links:
+            print(self.current_location + ', already processed: ' + link)
+        else:
             # so we don't repeat follow the same link and get stuck
             # in an infitite loop
             self.checked_links.append(link)
@@ -135,11 +184,17 @@ pc.scrape_content_from_index(pc.pc_directory, True)
             filename = self.compose_filename_from_link(link)
             dir_file = self.define_import_directory_file(act_dir, filename)
             if not isinstance(url, str):
-                print('Skipping page for: ' + link)
+                pass
+                # print('Skipping page for: ' + link)
             else:
                 # we have a url to get data
+                recache_file = False
+                if self.recache and 'locus' not in filename:
+                    # we want to recache this, because it may have been edited
+                    recache_file = True
+                    print('Recache this year to update.')
                 html_str = None
-                if not os.path.exists(dir_file):
+                if not os.path.exists(dir_file) or recache_file:
                     # new file, we haven't seen this before
                     ok = self.cache_page_locally(url, {}, act_dir, filename)
                     if ok is False:
@@ -153,6 +208,7 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                     html_str = self.load_file(dir_file)
                 if isinstance(html_str, str):
                     # we have HTML retrieved
+                    print('Working in: ' + self.current_location)
                     print('Getting links...')
                     all_links = self.get_links_from_page(html_str)
                     for link_type, links in all_links.items():
@@ -352,7 +408,8 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                     params = self.get_param_obj(url_params_str)
                     filename = link_type + '-'
                     for param_key, param_val in params.items():
-                        filename += '--' + param_key + '-' + param_val
+                        param_val = re.sub(r'[^0-9]', r'', param_val)
+                        filename += '--' + param_key.strip() + '-' + str(param_val)
                     filename += '.html'
         return filename
     
@@ -376,7 +433,7 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                         url_params_str = url_params_str.replace("'", '')
                         url_params_str = url_params_str.replace(')', '')
                         url_params_str = url_params_str.replace('&amp;', '&')
-                        if '>' in url_params:
+                        if '>' in url_params_str:
                             # a case where there is a missing end quote
                             # setting off the URL
                             url_params_ex = url_params_str.split('>')
@@ -385,56 +442,77 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                         if link_type == 'viewlocus' and \
                            'lid' in params:
                             # remove kruft from locus data
-                            clean_link = link_prefix + '?lid=' + params['lid']    
+                            clean_link = link_prefix + '?lid=' + str(params['lid'])    
                         else:
-                            clean_link = link_prefix + '?' + url_params_str
-                        if '##' not in url_params:
+                            # clean_link = link_prefix + '?' + url_params_str
+                            clean_link = link_prefix
+                            param_sep = '?'
+                            for param_key, param_val in params.items():
+                                clean_link += param_sep + str(param_key) + '=' + str(param_val)
+                                param_sep = '&'
+                        if '##' not in url_params_str:
                             #  so we can skip blank links
+                            clean_link = unidecode(clean_link)
+                            clean_link = clean_link.replace('\\', '')
                             links[link_type].append(clean_link)
         return links               
 
     def cache_page_locally(self, url, payload, act_dir, filename):
         """ caches content of a page locally if successfuly downloaded
         """
-        if self.delay_before_request > 0:
-            # default to sleep BEFORE a request is sent, to
-            # give the remote service a break.
-            sleep(self.delay_before_request)
-        file_path = self.define_import_directory_file(act_dir,
-                                                      filename)
         ok = False
-        try:
-            gapi = GeneralAPI()
-            r = requests.get(url,
-                             params=payload,
-                             timeout=240,
-                             headers=gapi.client_headers)
-            self.request_url = r.url
-            r.raise_for_status()
-            content = r.text
-            saved = False
+        if url not in self.fail_urls:
+            if self.delay_before_request > 0:
+                # default to sleep BEFORE a request is sent, to
+                # give the remote service a break.
+                sleep(self.delay_before_request)
+            file_path = self.define_import_directory_file(act_dir,
+                                                          filename)
             try:
-                file = codecs.open(file_path, 'w', 'utf-8')
-                # file.write(codecs.BOM_UTF8)
-                file.write(content)
-                file.close()
-                saved = True
-            except:
+                gapi = GeneralAPI()
+                r = requests.get(url,
+                                 params=payload,
+                                 timeout=240,
+                                 headers=gapi.client_headers)
+                self.request_url = r.url
+                r.encoding = 'utf-8'
+                r.raise_for_status()
+                content = str(r.content)
                 saved = False
-            if saved is False:
+                print('Working in: ' + self.current_location)
+                print('Attempting to save: ' + url)
                 try:
+                    # file = codecs.open(file_path, 'w', 'utf-8')
+                    # file.write(codecs.BOM_UTF8)
+                    # file.write(content)
+                    # file.close()
                     f = open(file_path, 'w', encoding='utf-8')
                     f.write(content)
                     f.close()
-                except:
+                    saved = True
+                except Exception as e:
+                    print('Save fail: ' + str(e))
                     saved = False
-            if saved:
-                ok = True
-            else:
-                print('CANNOT SAVE: ' + file_path)
+                if saved is False:
+                    content = unidecode(content)
+                    try:
+                        f = open(file_path, 'w', encoding='utf-8')
+                        f.write(content)
+                        f.close()
+                    except Exception as e:
+                        print('Save fail attempt 2: ' + str(e))
+                        saved = False
+                if saved:
+                    ok = True
+                else:
+                    print('CANNOT SAVE: ' + file_path)
+                    self.save_fails.append(url)
+                    self.save_as_json_file(act_dir, self.save_fail_file, self.save_fails)
+                    ok = False
+            except:
                 ok = False
-        except:
-            ok = False
+                self.fail_urls.append(url)
+                self.save_as_json_file(act_dir, self.fail_url_file, self.fail_urls)
         return ok
 
     def valid_as_html(self, check_str):

@@ -18,9 +18,12 @@ class JsonLDchronology():
         self.total_found = False
         self.filter_request_dict_json = False
         self.spatial_context = False
+        self.min_tile_depth = 12
         self.aggregation_depth = 16
+        self.min_tile_count = 12
         self.max_depth = ChronoTile.MAX_TILE_DEPTH
         self.limiting_tile = False
+        self.ok_for_suggested_tile_depth = True
         self.min_date = False  # bce / ce
         self.max_date = False  # bce / ce
         try:
@@ -38,9 +41,12 @@ class JsonLDchronology():
         aggregate_tiles = LastUpdatedOrderedDict()
         i = -1
         t = 0
-        if len(solr_tiles) <= 10:
+        if len(solr_tiles) <= self.min_tile_count:
             # don't aggregate if there's not much to aggregate
             self.aggregation_depth = self.max_depth
+        else:
+            # suggest tile-depth
+            self.aggregation_depth = self.get_suggested_tile_depth(solr_tiles)
         for tile_key in solr_tiles[::2]:
             t += 1
             i += 2
@@ -123,8 +129,8 @@ class JsonLDchronology():
             aggregating chronological tiles
 
             aggregation depth varies between 3 and 20
-            with 20 being the most fine-grain, specific
-            level of spatial depth
+            with 32 being the most fine-grain, specific
+            level of time specificity
         """
         # now set up for filter requests, by removing the
         request_dict = json.loads(request_dict_json)
@@ -138,6 +144,7 @@ class JsonLDchronology():
             # filter out non numeric characters
             deep = re.sub(r'[^0-9]', r'', deep)
             if len(deep) > 0:
+                self.ok_for_suggested_tile_depth = False
                 self.aggregation_depth = int(float(deep))
         if self.aggregation_depth < 6:
             self.aggregation_depth = 6
@@ -148,6 +155,41 @@ class JsonLDchronology():
         self.filter_request_dict_json = json.dumps(filter_request_dict,
                                                    ensure_ascii=False,
                                                    indent=4)
+        return self.aggregation_depth
+
+    def get_suggested_tile_depth(self, solr_tiles):
+        """ gets the suggested tile depth
+        """
+        if len(solr_tiles) <= self.min_tile_count:
+            # don't aggregate if there's not much to aggregate
+            self.aggregation_depth = self.max_depth
+        elif self.ok_for_suggested_tile_depth:
+            # only do this if we've got more than
+            # the minimum number of chronotiles to aggregate
+            # also only do this if we haven't gotten a tile depth by
+            # other means
+            tile_depths = LastUpdatedOrderedDict()
+            t_depth = self.min_tile_depth - 1
+            keep_looping = True
+            while keep_looping:
+                t_depth += 1
+                tile_depths[t_depth] = []
+                # print('check: ' + str(t_depth) + ' ' + str(len(tile_depths[t_depth])))
+                if t_depth > self.max_depth:
+                    keep_looping = False
+                else:
+                    for tile_key in solr_tiles[::2]:
+                        if tile_key != 'false':
+                            tile_key_at_depth = tile_key[:t_depth]
+                            if tile_key_at_depth not in tile_depths[t_depth]:
+                                # we haven't seen this tile yet, so add it
+                                tile_depths[t_depth].append(tile_key_at_depth)
+                            if len(tile_depths[t_depth]) >= self.min_tile_count:
+                                self.aggregation_depth = t_depth
+                                keep_looping = False
+                                break
+        else:
+            pass
         return self.aggregation_depth
 
     def make_url_from_val_string(self,
