@@ -15,9 +15,9 @@ function chrono_chart(chart_dom_id, json_url) {
 		'#5A0000'
 	]; // list of colors for gradients
 	this.line_color_list = [
-		'#FFFF80',
-		'#FF3380',
-		'#5A0080'
+		'#FDFDB1',
+		'#FD8364',
+		'#8A4B4B'
 	]; // list of colors for gradients
 	
 	this.current_y_at_x = {};
@@ -142,8 +142,13 @@ function chrono_chart(chart_dom_id, json_url) {
 			}
 			// prop_max_c_per_year = prop_max_c_per_year + (max_c_per_year * .1);
 			
-			dataset.backgroundColor = hex_color;
-			dataset.borderColor = l_hex_color;
+			var b_gradient = this.make_grandient_object(hex_color);
+			var l_gradient = this.make_grandient_object(l_hex_color);
+			
+			// dataset.backgroundColor = hex_color;
+			dataset.backgroundColor = b_gradient;
+			// dataset.borderColor = l_hex_color;
+			dataset.borderColor = l_gradient;
 			dataset.borderStrokeColor = "#fff";
 			dataset.label = chrono['start'] + ' to ' + chrono['stop'];
 			dataset.data = this.make_data_points(prop_max_c_per_year,
@@ -152,6 +157,20 @@ function chrono_chart(chart_dom_id, json_url) {
 		} 
 		
 		return datasets;
+	}
+	this.make_grandient_object = function(hex_color){
+		// makes a gradient object for a color hex string
+		var chart = this.ctx.getContext('2d');
+		var gradient = chart.createLinearGradient(0, 0, 0, 400);
+		
+		var rgba_background = convertToRGB(hex_color);
+		var rgba_str_0 = 'rgba(' + rgba_background.join(', ') + ', 1)';
+		var rgba_str_1 = 'rgba(' + rgba_background.join(', ') + ', .5)';
+		var rgba_str_2 = 'rgba(' + rgba_background.join(', ') + ', 0)';
+		gradient.addColorStop(0, rgba_str_0);   
+		gradient.addColorStop(.5, rgba_str_1);
+		gradient.addColorStop(1, rgba_str_2);
+		return gradient;
 	}
 	this.make_current_y_at_x = function(all_min_year, all_max_year){
 		var t_span = Math.abs(all_max_year - all_min_year);
@@ -182,7 +201,7 @@ function chrono_chart(chart_dom_id, json_url) {
 		var end = parseFloat(chrono['stop']);
 		var median_year = (start + end) / 2;
 		var t_span = Math.abs(end - start);
-		var added = .001;
+		var added = .002;
 		for (var i = 0, length = this.curent_year_keys.length; i < length; i++) {
 			var year = this.curent_year_keys[i];
 			if (year >= start && year <= end) {
@@ -208,18 +227,23 @@ function chrono_chart(chart_dom_id, json_url) {
 		console.log(data_list);
 		return data_list;
 	}
+	
 	this.make_y_value = function(t_span,
 								 added,
 								 year,
 								 c_per_year,
 								 mid_year){
+		var half_span = t_span * .5;
+		var mid_year_dif = Math.abs(mid_year - year);
+		var per_span = (half_span - mid_year_dif) / half_span;
 		var sigma = 150;
-		var y = this.gaussian(year, mid_year, sigma);
+		var y_mean = (year + mid_year) / 2;
+		var y_mean = mid_year;
+		var y = this.gaussian(year, y_mean, sigma);
 		y = y * c_per_year;
+		
+		
 		if (y < added){
-			var half_span = t_span * .5;
-			var mid_year_dif = Math.abs(mid_year - year);
-			var per_span = (half_span - mid_year_dif) / half_span;
 			if (per_span <= .15) {
 				// we're at the extreme ends
 				var y = added * ( per_span / .15);
@@ -247,7 +271,7 @@ function chrono_chart(chart_dom_id, json_url) {
 			pointRadius: 0,
 			showLines: true,
 			spanGaps: true,
-			lineTension: 1,
+			lineTension: 0,
 			lineJoin: 'round',
 		}
 		return dataset;
@@ -274,7 +298,7 @@ function chrono_chart(chart_dom_id, json_url) {
 						type: 'linear',
 						position: 'top',
 						ticks: {
-							max: 2050,
+							max: 2000,
 						}
 					}]
 				}
