@@ -14,7 +14,7 @@ class ImageImport():
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.project_uuid = '8859aa10-c0c4-42ad-993b-cc9d79800d8e'
-ii.make_image_versions('abydos')
+ii.make_image_versions('valdivia')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -87,6 +87,9 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
             method
         """
         output = False
+        png = False
+        if '.png' in src_file or '.PNG' in src_file:
+            png = True
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
@@ -115,12 +118,24 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         print('Problem rescaling image for: ' + new_file)
                         self.errors.append(new_file)
                     if rescale_ok:
-                        im.thumbnail(size, Image.ANTIALIAS)
-                        try:
-                            im.save(new_file, "JPEG", quality=100)
-                            output = new_file
-                        except:
-                            print('cannot save the preview file: ' + new_file)
+                        if png:
+                            im.thumbnail(size, Image.ANTIALIAS)
+                            background = Image.new("RGB", im.size, (255, 255, 255))
+                            try:
+                                background.paste(im, mask=im.split()[3]) # 3 is the alpha channel
+                                background.save(new_file, "JPEG", quality=100)
+                                output = new_file
+                            except:
+                                png = False
+                                print('cannot save the preview file: ' + new_file)
+                            del background
+                        if png is False:
+                            im.thumbnail(size, Image.ANTIALIAS)
+                            try:
+                                im.save(new_file, "JPEG", quality=100)
+                                output = new_file
+                            except:
+                                print('cannot save the preview file: ' + new_file)
                     del im
         return output
 
@@ -130,6 +145,9 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
             meaning it has a max height and a max width
         """
         output = False
+        png = False
+        if '.png' in src_file or '.PNG' in src_file:
+            png = True
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
@@ -152,13 +170,24 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         print('Problem rescaling image for: ' + new_file)
                         self.errors.append(new_file)
                     if rescale_ok:
-                        im.thumbnail(size, Image.ANTIALIAS)
-                        try:
-                            im.save(new_file, "JPEG", quality=100)
-                            output = new_file
-                        except:
-                            print('Cannot save the rescaled file: ' + new_file)
-                            self.errors.append(new_file)
+                        if png:
+                            im.thumbnail(size, Image.ANTIALIAS)
+                            background = Image.new("RGB", im.size, (255, 255, 255))
+                            try:
+                                background.paste(im, mask=im.split()[3]) # 3 is the alpha channel
+                                background.save(new_file, "JPEG", quality=100)
+                                output = new_file
+                            except:
+                                png = False
+                                print('cannot save the preview file: ' + new_file)
+                            del background
+                        if png is False:
+                            im.thumbnail(size, Image.ANTIALIAS)
+                            try:
+                                im.save(new_file, "JPEG", quality=100)
+                                output = new_file
+                            except:
+                                print('cannot save the preview file: ' + new_file)
                     del im
         return output
 
