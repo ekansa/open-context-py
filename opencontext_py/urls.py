@@ -26,6 +26,7 @@ from opencontext_py.apps.imports.fields import views as Imp_fields
 from opencontext_py.apps.imports.fieldannotations import views as Imp_field_annos
 from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.oai import views as OAIviews
+from opencontext_py.apps.utilities import views as UtilitiesViews
 
 urlpatterns = patterns('',
                        # Examples:
@@ -300,6 +301,10 @@ urlpatterns = patterns('',
                        # BELOW ARE OAI REQUESTS (OAIviews)
                        #----------------------------
                        url(r'^oai/', OAIviews.index, name='oai_index'),
+                       #----------------------------
+                       # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
+                       #----------------------------
+                       url(r'^utilities/meters-to-lat-lon', UtilitiesViews.meters_to_lat_lon, name='meters_to_lat_lon'),
                        #----------------------------
                        # BELOW ARE INDEX REQUESTS
                        #----------------------------

@@ -1,0 +1,33 @@
+<h3>Geospatial Utilities</h3>
+
+<p>Open Context has included a library called "GDAL2Tiles", from the Google Summer of Code 2007 & 2008, developed by Klokan Petr Pridal.</p>
+
+<p>We are testing use of this library to help with various useful transformations of geospatial coordinates. Currently, the Open Context supports a service to convert from Web Mercator meters to WGS-84 Lat / Lon coordinates. This is described below:</p>
+
+<h4>Convert from Web Mercator Meters to WGS-84 Lat / Lon Coordinates</h4>
+
+<ol>
+    
+    <li>
+        <p>This example assumes the field with meters (east-west) field is called the "X" column, and the meters (north-south) field is called the "Y" column. Click on the column with the "Y" meters values to select it. Create a column for the JSON result of the coordinate transform by <samp>Add Column By Fetching URLs...</samp>. You can name the field something like 'json-transform'.</p>
+    </li>
+    
+    <li>
+        <p>In the expression field, write:</p>
+        <p><samp>"{{ base_url }}/utilities/meters-to-lat-lon?mx=" + cells["X"].value + "&my=" + value</samp></p>
+        <p>The above expression will get a small JSON response with latitude ("lat") and longitude ("lon") equivalents for these Web Mercator meter values. You can set the "throttle delay" to as low as 333 milliseconds (this delay makes pauses between requests so Open Context won't interpret repreated requests as abuse). If you have a big dataset, 1/3 second delays add up.</p>
+    </li>
+    
+    <li>
+        <p>Completing the step above will populate this new column with JSON data (a "machine-readable" data format) from Open Context. You'll need to process these results further with the <samp>Edit Cells > Transform...</samp> command.</p>
+        <p>In the expression field, write:</p>
+        <p><samp>value.parseJson()["lon"]</samp></p>
+        <p>The above expression extracts the longitude value from the JSON results. Similarly, you can make a new field for latitude with</p>
+        <p>In the expression field, write:</p>
+        <p><samp>value.parseJson()["lat"]</samp></p>
+        
+    <li>
+        <p>Check the results! We're borrowing code here, and we don't fully understand if it has problems or limitations. We provide this service as a convenience, but highly recommend consulting with geospatial data experts before trusting these results.</p>
+    </li>
+    
+</ol>

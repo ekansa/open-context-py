@@ -44,14 +44,14 @@
                 <!-- page tabs -->
                 <ul class="nav nav-tabs" id="about-tabs" data-tabs="tabs">
                     <li class="active"><a data-toggle="tab" href="#dinaa">Linking to DINAA Sites</a></li>
-                    <li><a data-toggle="tab" href="#more">More Soon...</a></li>
+                    <li><a data-toggle="tab" href="#geo-utilities">Geo Utilities</a></li>
                 </ul>
                 <div class="tab-content about-tab-all">
                     <div id="dinaa" class="tab-pane fade in active">
                         {% include 'about/recipes-dinaa.html' %}
                     </div>
-                    <div id="more" class="tab-pane fade">
-                        <h3>More Soon...</h3>
+                    <div id="geo-utilities" class="tab-pane fade">
+                        {% include 'about/recipes-geo.html' %}
                     </div>
                 </div>
                 <!-- end of tab content -->
