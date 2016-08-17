@@ -291,8 +291,7 @@ class SolrSearch():
                                             False)
         if form_start is not False:
             # query for form-use-live start date
-            form_start_query = qm.process_form_date_chrono(self,
-                                                           form_use_life_date,
+            form_start_query = qm.process_form_date_chrono(form_start,
                                                            'start')
             query['fq'] += form_start_query['fq']
         form_stop = self.get_request_param(request_dict,
@@ -301,8 +300,7 @@ class SolrSearch():
                                            False)
         if form_stop is not False:
             # query for form-use-live stop date
-            form_stop_query = qm.process_form_date_chrono(self,
-                                                          form_use_life_date,
+            form_stop_query = qm.process_form_date_chrono(form_stop,
                                                           'stop')
             query['fq'] += form_stop_query['fq']
         """ Updated and Published Times

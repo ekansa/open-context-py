@@ -34,8 +34,8 @@ function convertToRGB (hex) {
 	// Convert hexidecimal color string to an RGB list value
 	var color = new Array();
 	color[0] = parseInt ((trim(hex)).substring (0, 2), 16);
-	color[1] = parseInt ((trim(hex)).substring (2, 4), 16);
-	color[2] = parseInt ((trim(hex)).substring (4, 6), 16);
+	color[1] = parseInt((trim(hex)).substring (2, 4), 16);
+	color[2] = parseInt((trim(hex)).substring (4, 6), 16);
 	return color;
 }
 
@@ -47,9 +47,11 @@ function numericStyle(){
 	this.base_opacity = base_opacity
 	
 	//starting default gradient colors from low to high
-	var gradient_colors = [convertToRGB('#FFFF66'),
-			       convertToRGB('#FF3300'),
-			       convertToRGB('#5A0000')];
+	var gradient_colors = [
+		convertToRGB('#FFFF66'),
+		convertToRGB('#FF3300'),
+		convertToRGB('#5A0000')
+    ];
 	
 	this.gradient_colors = gradient_colors;
 	this.hex_prefix = '#'; // for making a hex color, add the prefix

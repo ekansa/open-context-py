@@ -31,6 +31,12 @@
                        
                 </div>
             </div>  
+        
+            {% if chart %} 
+            <!-- include a chronological chart, now only in testing -->
+            {% include 'search/chrono-chart.html' %}
+            
+            {%endif%}
         </div>
         <div class="col-sm-4">
             {% include 'search/text-search.html' %}

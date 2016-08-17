@@ -250,6 +250,9 @@ def subjects_html_view(request, spatial_context=None):
     csv_downloader = False  # provide CSV downloader interface
     if request.GET.get('csv') is not None:
         csv_downloader = True
+    chart = False # provide a chart, now only experimental
+    if request.GET.get('chart') is not None:
+        chart = True
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -327,12 +330,13 @@ def subjects_html_view(request, spatial_context=None):
                 template = loader.get_template('search/view.html')
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
-                    if len(props) > 1:
+                    if len(props) > 1 or st.total_count <= 10000:
                         # allow downloads, multiple props selected
                         csv_downloader = True
                 context = RequestContext(request,
                                          {'st': st,
                                           'csv_downloader': csv_downloader,
+                                          'chart': chart,
                                           'item_type': 'subjects',
                                           'base_search_link': m_json_ld.base_search_link,
                                           'url': url,
