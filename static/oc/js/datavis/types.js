@@ -123,11 +123,11 @@ function types_item_examples(examples_url) {
 					}
 					all_rows.push(act_row);
 					
-					// now print the rows
+					// now make the html for the rows
 					for (var i = 0, length = all_rows.length; i < length; i++) {
 						var act_row = all_rows[i];
 						result_html += '<div class="row">';
-						for (var j = 0, length = act_row.length; j < length; j++) {
+						for (var j = 0, ar_length = act_row.length; j < ar_length; j++) {
 							var act_cell = act_row[j];
 							result_html += act_cell;
 						}
