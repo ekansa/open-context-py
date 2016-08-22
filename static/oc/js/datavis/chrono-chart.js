@@ -10,14 +10,16 @@ function chrono_chart(chart_dom_id, json_url) {
 	this.json_url = this.json_url.replace('&amp;', '&');
 	this.json_url = this.json_url.replace('response=geo-facet', 'response=chrono');
 	this.area_color_list = [
-		'#FFFF66',
-		'#FF3300',
-		'#5A0000'
+		'#166CA5',
+		'#1383C4',
+		// '#FFFF66',
+		'#B22A29'
 	]; // list of colors for gradients
 	this.line_color_list = [
-		'#FDFDB1',
-		'#FD8364',
-		'#8A4B4B'
+		'#166CA5',
+		'#1383C4',
+		// '#FFFF00',
+		'#B22A00'
 	]; // list of colors for gradients
 	
 	this.current_y_at_x = {};
@@ -166,8 +168,8 @@ function chrono_chart(chart_dom_id, json_url) {
 		var rgba_background = convertToRGB(hex_color);
 		var rgba_str_0 = 'rgba(' + rgba_background.join(', ') + ', 1)';
 		var rgba_str_1 = 'rgba(' + rgba_background.join(', ') + ', .5)';
-		var rgba_str_2 = 'rgba(' + rgba_background.join(', ') + ', 0)';
-		gradient.addColorStop(0, rgba_str_0);   
+		var rgba_str_2 = 'rgba(' + rgba_background.join(', ') + ', .15)';
+		gradient.addColorStop(.15, rgba_str_0);   
 		gradient.addColorStop(.5, rgba_str_1);
 		gradient.addColorStop(1, rgba_str_2);
 		return gradient;
