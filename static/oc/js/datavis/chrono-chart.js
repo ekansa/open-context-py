@@ -164,7 +164,6 @@ function chrono_chart(chart_dom_id, json_url) {
 		// makes a gradient object for a color hex string
 		var chart = this.ctx.getContext('2d');
 		var gradient = chart.createLinearGradient(0, 0, 0, 400);
-		
 		var rgba_background = convertToRGB(hex_color);
 		var rgba_str_0 = 'rgba(' + rgba_background.join(', ') + ', 1)';
 		var rgba_str_1 = 'rgba(' + rgba_background.join(', ') + ', .5)';
