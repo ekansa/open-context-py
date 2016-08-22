@@ -926,6 +926,7 @@ class MakeJsonLd():
                     facet['label'] =  '(Related) ' + entity.label
                 else:
                     facet['label'] = entity.label
+                facet['slug'] = slug
             facet['data-type'] = fsuffix_list[-1]
         facet['type'] = ftype
         return facet
