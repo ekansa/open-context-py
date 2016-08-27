@@ -31,7 +31,8 @@ pelagios.g.serialize(format='turtle')
         'oa': 'http://www.w3.org/ns/oa#',
         'pelagios': 'http://pelagios.github.io/vocab/terms#',
         'relations': 'http://pelagios.github.io/vocab/relations#',
-        'xsd': 'http://www.w3.org/2001/XMLSchema'
+        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        'oc-gen': 'http://opencontext.org/vocabularies/oc-general/'
     }
     
     def __init__(self):
@@ -59,11 +60,16 @@ pelagios.g.serialize(format='turtle')
                     uri = URImanagement.make_oc_uri(oa_item.manifest.uuid,
                                                     oa_item.manifest.item_type)
                     self.make_add_triple(uri, RDF.type, 'pelagios:AnnotatedThing')
-                    title = oa_item.manifest.label
-                    if isinstance(oa_item.context, str):
-                        title += ' from ' + oa_item.context
-                    self.make_add_triple(uri, 'dcterms:title', None, title)
-                    
+                    title = self.make_dcterms_title(oa_item.manifest.label,
+                                                    oa_item.context)
+                    self.make_add_triple(uri,
+                                         self.make_full_uri('dcterms', 'title'),
+                                         None,
+                                         title)
+                    self.make_add_triple(uri,
+                                         self.make_full_uri('foaf', 'homepage'),
+                                         settings.CANONICAL_HOST)
+                                    
     def make_add_triple(self, sub_uri, pred_uri, obj_uri=None, obj_literal=None):
         """ makes a triple and adds it to the graph """
         act_s = URIRef(sub_uri)
@@ -73,6 +79,27 @@ pelagios.g.serialize(format='turtle')
         else:
             act_o = URIRef(obj_uri)
         self.g.add((act_s, act_p, act_o))
+    
+    def make_full_uri(self, prefix, value):
+        """ makes a full uri for a prefix and value """
+        if prefix in self.NAMESPACES:
+            output = self.NAMESPACES[prefix] + value
+        else:
+            output = prefix + ':' + value
+        return output
+    
+    def make_dcterms_title(self, label, context):
+        """ makes a dcterms title, includes context if present """
+        if isinstance(context, str):
+            if '/' in context:
+                context_ex = context.split('/')
+                if context_ex[-1] == label:
+                    context_ex.pop(-1)
+                context = '/'.join(context_ex)
+            title = label + ' from ' + context       
+        else:
+            title = label
+        return title
     
     def get_db_data(self):
         """ gets gazetteer related items, then
