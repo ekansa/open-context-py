@@ -29,7 +29,15 @@ class TemplateItem():
     FULLIMAGE_MIMETYPES = ['image/png',
                            'image/jpeg',
                            'image/gif']
+    
     OPEN_CONTEXT_ICON = '/static/oc/images/about/oc-reduced-logo-sm.png'
+    
+    ITEM_TYPE_DESCRIPTIONS = {
+        'subjects': 'data record',
+        'media': 'media item',
+        'documents': 'document (field notes, diaries, narratives)',
+        'projects': 'project or collection publication'
+    }
 
     def __init__(self, request=False):
         self.label = False
@@ -519,7 +527,18 @@ class TemplateItem():
                 rp = RootPath()
                 base_url = rp.get_baseurl()
                 self.og_image = base_url + self.OPEN_CONTEXT_ICON
-        self.og_title = self.citation.cite_title   
+        self.og_title = self.citation.cite_title
+        if not isinstance(self.og_description, str):
+            self.og_description = ''
+            if isinstance(self.item_category_label, str) and self.act_nav == 'subjects':
+                self.og_description += self.item_category_label
+            if self.act_nav in self.ITEM_TYPE_DESCRIPTIONS:
+                if self.og_description == '':
+                    self.og_description = 'A'
+                self.og_description += ' ' + self.ITEM_TYPE_DESCRIPTIONS[self.act_nav]
+            if self.act_nav != 'projects' and isinstance(self.project.label, str):
+                self.og_description += '; part of the ' + self.project.label
+                self.og_description += ' data publication.'
 
 
 class ItemMetadata():
