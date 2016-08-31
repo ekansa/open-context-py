@@ -39,6 +39,24 @@
     <meta name="DC.source" content="Open Context"/>
     <meta name="DC.type" content="Dataset"/>
     <!-- End of Bibliographic Metadata -->
+    
+    <!-- Start of Open Graph + Twitter Metadata -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="{{ item.twitter_site }}" />
+    <meta property="og:type" content="{{ item.og_type }}" />
+    <meta property="og:url" content="{{ item.citation.uri }}" />
+    <meta property="og:site_name" content="{{ item.og_site_name }}" />
+    {% if item.og_title != False %}
+    <meta property="og:title" content="{{ item.og_title }}" />
+    {%endif%}
+    {% if item.og_description != False %}
+    <meta property="og:description" content="{{ item.og_description }}" />
+    {%endif%}
+    {% if item.og_image != False %}
+    <meta property="og:image" content="{{ item.og_image }}" />
+    {%endif%}
+    <!-- End of Open Graph + Twitter Metadata -->
+    
     <link rel="shortcut icon" href="{{ base_url }}/static/oc/images/oc-favicon.ico" />
     <link rel="stylesheet" href="{{ base_url }}/static/bootstrap/3.3.4/css/bootstrap.min.css" />
     <link rel="stylesheet" href="{{ base_url }}/static/fontawesome/css/font-awesome.min.css" />

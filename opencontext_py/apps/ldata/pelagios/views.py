@@ -33,7 +33,7 @@ def project_annotations(request, identifier):
             pelagios.make_graph()
             output = pelagios.g.serialize(format='turtle')
             return HttpResponse(output,
-                                content_type='text/html; charset=utf8')
+                                content_type='text/turtle; charset=utf8')
         else:
             found = False
     if found is False:

@@ -53,7 +53,7 @@ function CSVexporter(json_url, total_results){
 	this.csv_filename = 'open-context-csv-export.csv';
 	this.geojson_filename = 'open-context-geojson-export.json';
 	this.show_interface = function(){
-		/* shows an interface for creating an item
+		/* shows an interface for starting the exporter
 		 * 
 		*/
 		var main_modal_title_domID = this.modal_id + "Label";
@@ -71,7 +71,7 @@ function CSVexporter(json_url, total_results){
 		}
 	}
 	this.make_interface_body_html = function(){
-		/* shows an interface for creating an item
+		/* makes the HTML for the exporter interface
 		 * 
 		*/
 		var controls_html = this.show_controls_html();
@@ -139,6 +139,7 @@ function CSVexporter(json_url, total_results){
 		return html;
 	}
 	this.make_file_type_radio_html = function(){
+		// makes the html for the radio buttons for export file formats
 		var export_csv = '';
 		var export_geojson = '';
 		if (this.export_type == 'csv') {
@@ -169,6 +170,7 @@ function CSVexporter(json_url, total_results){
 		return html;
 	}
 	this.make_file_type_radio_inline_html = function(){
+		// another HTML format for export file format interface controls
 		var export_csv = '';
 		var export_geojson = '';
 		if (this.export_type == 'csv') {
@@ -272,7 +274,7 @@ function CSVexporter(json_url, total_results){
 		return html;
 	}
 	this.make_reset_button_html = function(){
-		//makes the HTML for the start button, optionally disabled
+		//makes the HTML for the reset button, optionally disabled
 		var dis_html = '';
 		if (this.continue_exporting) {
 			var dis_html = ' disabled="disabled" ';
@@ -341,7 +343,7 @@ function CSVexporter(json_url, total_results){
 			var current_export_page = this.completed_export_page + 1;
 			if (start_index < this.total_results) {
 				if (start_index > 1) {
-					// pause between requests
+					// pause between requests, because of rate limiting on server
 					var slept = this.sleep(this.sleep_pause);
 				}
 				if (this.export_type == 'csv') {
