@@ -29,6 +29,7 @@ class TemplateItem():
     FULLIMAGE_MIMETYPES = ['image/png',
                            'image/jpeg',
                            'image/gif']
+    OPEN_CONTEXT_ICON = '/static/oc/images/about/oc-reduced-logo-sm.png'
 
     def __init__(self, request=False):
         self.label = False
@@ -38,8 +39,15 @@ class TemplateItem():
         self.id = False
         self.href = False
         self.slug = False
+        self.og_title = False  # open graph title
+        self.og_image = False  # open graph image
+        self.og_description = False  # open graph description
+        self.og_type = 'website'  # open graph type
+        self.og_site_name = settings.CANONICAL_SITENAME  # open graph site name
+        self.twitter_site = settings.TWITTER_SITE  # twitter site account
         self.item_category_label = False
         self.item_category_uri = False
+        self.item_category_icon = False
         self.context = False
         self.children = False
         self.observations = False
@@ -101,6 +109,7 @@ class TemplateItem():
         self.create_project_hero(json_ld)
         self.create_license(json_ld)
         self.check_contents_top()
+        self.create_opengraph()
 
     def create_person_data(self, json_ld):
         """ Creates person names from FOAF properties """
@@ -364,6 +373,7 @@ class TemplateItem():
                 self.item_category_uri = cat
                 if cat in self.class_type_metadata:
                     item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
+                    self.item_category_icon = self.class_type_metadata[cat]['icon'] 
             self.item_category_label = ', '.join(item_cat_labels)
         if self.item_category_label is False:
             # make sure the item has category label, if needed get from settings nav_items
@@ -469,6 +479,47 @@ class TemplateItem():
                         loop = False
                 if i < 2:
                     loop = False
+
+    def create_opengraph(self):
+        """ creates opengraph metadata to facilitate snippets for
+            social media sites
+        """
+        if isinstance(self.project_hero_uri, str):
+            self.og_image = self.project_hero_uri
+        else:
+            if self.observations is not False:
+                for obs in self.observations:
+                    if obs.media_link_count >0:
+                        for link in obs.media_links:
+                            self.og_image = link.media[0].thumbnail
+                            break
+        if self.content is not False:
+            # use a preview or a thumbnail image as the og_image
+            # also maybe a short description
+            if 'preview' in self.content and self.fullimage:
+                if isinstance(self.content['preview'], str):
+                    self.og_image = self.content['preview']
+            elif 'thumbnail' in self.content:
+                if isinstance(self.content['thumbnail'], str):
+                    self.og_image = self.content['thumbnail']
+            else:
+                # don't use any image
+                pass
+            if 'sum_text' in self.content:
+                # we have summary text, so use it
+                if len(self.content['sum_text']) > 0:
+                    self.og_description = self.content['sum_text']
+        if not isinstance(self.og_image, str):
+            if isinstance(self.item_category_icon, str):
+                # we don't have an og_image yet, but we do have a category icon,
+                # so use that
+                self.og_image = self.item_category_icon
+            else:
+                # use the default Open Context icon
+                rp = RootPath()
+                base_url = rp.get_baseurl()
+                self.og_image = base_url + self.OPEN_CONTEXT_ICON
+        self.og_title = self.citation.cite_title   
 
 
 class ItemMetadata():

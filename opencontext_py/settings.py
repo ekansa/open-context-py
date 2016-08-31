@@ -321,6 +321,7 @@ else:
 
 CANONICAL_HOST = 'http://opencontext.org'
 CANONICAL_SITENAME = 'Open Context'
+TWITTER_SITE = '@opencontext'
 
 # useful hack to allow presence of a 'debug.json' file to
 # toggle debug mode
