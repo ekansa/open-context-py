@@ -36,7 +36,10 @@ class TemplateItem():
         'subjects': 'data record',
         'media': 'media item',
         'documents': 'document (field notes, diaries, narratives)',
-        'projects': 'project or collection publication'
+        'projects': 'project or collection publication',
+        'predicates': 'descriptive attribute or linking relation',
+        'types': 'controlled vocabulary (often a typology) concept',
+        'persons': 'person or organization record'
     }
 
     def __init__(self, request=False):
