@@ -5,11 +5,14 @@ from django.conf import settings
 from django.db import connection
 from django.db import models
 from django.db.models import Q
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
+from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
@@ -45,12 +48,27 @@ class PelagiosData():
         'projects'
     ]
     
+    # for making dcterms:description of individual records
+    ITEM_TYPE_DESCRIPTIONS = {
+        'subjects': 'data record',
+        'media': 'media item',
+        'documents': 'document (field notes, diaries, narratives)',
+        'projects': 'project or collection publication'
+    }
+
+    # for making dcterms:description of sets of records
+    ITEM_TYPE_DESCRIPTIONS_PLR = {
+        'subjects': 'Data Records',
+        'media': 'Media Items',
+        'documents': 'Documents (Field notes, Diaries, Narratives)',
+        'projects': 'Project or Collection Publications'
+    }
     def __init__(self):
         self.oa_items = {}  # dict with uuid key of open annotation item objects
-        self.mem_cache_entities = {}
         self.db_chunk_size = 100
-        self.test_limit = False
+        self.test_limit = None
         self.project_uuids = []
+        self.mem_cache_entities = {}
     
     def get_prep_ocitems_rel_gazetteer(self):
         """ gets gazetteer related items, then
@@ -72,6 +90,10 @@ class PelagiosData():
                 oa_item.validate()
                 if oa_item.is_valid:
                     oa_item.get_associated_categories()
+                    oa_item.mem_cache_entities = self.mem_cache_entities
+                    oa_item.prep_item_dc_metadata()
+                    oa_item.prep_assocated_dc_metadata()
+                    self.mem_cache_entities = oa_item.mem_cache_entities
                     print(oa_item.manifest.label)
                     print('Number associated: ' + str(len(oa_item.associated)))
                     valid_cnt += 1
@@ -211,13 +233,22 @@ class OaItem():
     
     def __init__(self):
         self.is_valid = None
+        self.title = None
+        self.description = None
+        self.class_label = None
+        self.class_slug = None
+        self.uri = None
+        self.project_uri = None
         self.uuid = None
         self.manifest = None
         self.context = None
         self.contents_cnt = 0
+        self.geo_meta = None
+        self.event_meta = None
         self.gazetteer_uris = []
         self.mem_cache_entities = {}
-        self.associated = {}
+        self.associated = []
+        self.raw_associated = {}
     
     def get_manifest_obj_context(self, uuid):
         """ gets manifest object and context for an item """
@@ -253,6 +284,208 @@ class OaItem():
             self.is_valid = True
         return self.is_valid
     
+    def prep_item_dc_metadata(self):
+        """ prepared dublin core metadata for an item,
+            this needs to happen before we prep dc metadata
+            for associated items and sets of items
+        """
+        if self.is_valid:
+            # make some uris
+            self.uri = URImanagement.make_oc_uri(self.manifest.uuid,
+                                                 self.manifest.item_type)
+            self.project_uri = URImanagement.make_oc_uri(self.manifest.project_uuid,
+                                                         'projects')
+            # get data about entities describing the item
+            category_ent = self.get_entity(self.manifest.class_uri)
+            if category_ent is not False:
+                self.class_label = category_ent.label
+                self.class_slug = category_ent.slug
+            project_ent = self.get_entity(self.manifest.project_uuid)
+            self.title = self.make_dcterms_title(self.manifest.label,
+                                                 self.context)
+            item_type = self.manifest.item_type
+            if item_type == 'subjects':
+                if category_ent is not False:
+                    self.description = category_ent.label
+                    if item_type in PelagiosData.ITEM_TYPE_DESCRIPTIONS:
+                        self.description += ' ' + PelagiosData.ITEM_TYPE_DESCRIPTIONS[item_type].lower()
+                context = self.remove_label_from_context(self.manifest.label,
+                                                         self.context)
+                if isinstance(context, str):
+                    self.description += ' from the context: ' + context
+                if project_ent is not False:
+                    self.description += '; part of the "' + project_ent.label
+                    self.description += '" data publication.'
+            else:
+                self.description = 'A ' + PelagiosData.ITEM_TYPE_DESCRIPTIONS[item_type]
+                if project_ent is not False and item_type != 'projects':
+                    self.description += '; part of the "' + project_ent.label
+                    self.description += '" data publication.'
+    
+    def prep_assocated_dc_metadata(self):
+        """ prepares dc_metadata for items associated to the
+            main item that actually has 1 or more gazetteer links
+        """
+        if self.is_valid and len(self.raw_associated) > 0:
+            project_ent = self.get_entity(self.manifest.project_uuid)
+            ass_items = []  # list of associated items
+            ass_sets = [] # list of associated sets
+            for key, ass in self.raw_associated.items():
+                if isinstance(ass['uuid'], str) and \
+                   isinstance(ass['label'], str):
+                    # we have a uuid identified item, meaning a specific
+                    # related resource
+                    ass['uri'] = URImanagement.make_oc_uri(ass['uuid'],
+                                                           ass['item_type'])
+                    ass['title'] = self.make_dcterms_title(ass['label'],
+                                                           self.context)
+                    # now prepare description information
+                    description = ''
+                    cat_ent = self.get_entity(ass['media_class_uri'])
+                    if cat_ent is not False:
+                        ass['class_label'] = cat_ent.label
+                        ass['class_slug'] = cat_ent.slug
+                        description += cat_ent.label
+                    if ass['item_type'] in PelagiosData.ITEM_TYPE_DESCRIPTIONS:
+                        if description == '':
+                            description = 'A'
+                        description += ' ' + PelagiosData.ITEM_TYPE_DESCRIPTIONS[ass['item_type']]
+                    ass['description'] = self.add_description_item_class_project(description,
+                                                                                 project_ent)
+                    ass_items.append(ass)
+                elif self.contents_cnt > 1:
+                    # the associated item is for a result set, not an individual item
+                    rel_media_cat_ent = False
+                    if isinstance(ass['media_class_uri'], str):
+                        rel_media_cat_ent = self.get_entity(ass['media_class_uri'])
+                    cat_ent = self.get_entity(ass['class_uri'])
+                    description = 'A set of '
+                    if cat_ent is not False:
+                        ass['class_label'] = cat_ent.label
+                        ass['class_slug'] = cat_ent.slug
+                        ass['title'] = cat_ent.label
+                        description += cat_ent.label.lower()
+                    else:
+                        ass['title'] = 'Related'
+                    if rel_media_cat_ent is not False:
+                        ass['title'] += ' ' + rel_media_cat_ent.label
+                        description += ' ' + rel_media_cat_ent.label.lower()
+                    if ass['item_type'] in PelagiosData.ITEM_TYPE_DESCRIPTIONS_PLR:
+                        type_des = PelagiosData.ITEM_TYPE_DESCRIPTIONS_PLR[ass['item_type']]
+                        ass['title'] += ' ' + type_des
+                        description += ' ' + type_des.lower()
+                    ass['title'] += ' Related to: ' + self.manifest.label
+                    if isinstance(self.class_label, str):
+                        ass['title'] += ' (' + self.class_label + ')'
+                    ass['description'] = self.add_description_item_class_project(description,
+                                                                                 project_ent)
+                    param_sep = '?'
+                    if ass['item_type'] == 'media': 
+                        ass['uri'] = settings.CANONICAL_HOST + '/media-search/'
+                        if isinstance(self.context, str):
+                            ass['uri'] += self.encode_url_context_path(self.context)
+                        if cat_ent is not False:
+                            ass['uri'] += param_sep + 'prop=rel--' + cat_ent.slug
+                            param_sep = '&'
+                        if rel_media_cat_ent is not False:
+                            ass['uri'] += param_sep + 'prop=' + rel_media_cat_ent.slug
+                            param_sep = '&'
+                        elif isinstance(ass['media_class_uri'], str):
+                            ass['uri'] += param_sep + 'prop=' + quote_plus(ass['media_class_uri'])
+                    elif ass['item_type'] == 'subjects':
+                        ass['uri'] = settings.CANONICAL_HOST + '/subjects-search/'
+                        if isinstance(self.context, str):
+                            ass['uri'] += self.encode_url_context_path(self.context)
+                        if cat_ent is not False:
+                            ass['uri'] += param_sep + 'prop=' + cat_ent.slug
+                            param_sep = '&'
+                    else:
+                        ass['uri'] = settings.CANONICAL_HOST + '/search/'
+                        if isinstance(self.context, str):
+                            ass['uri'] += self.encode_url_context_path(self.context)
+                        if cat_ent is not False:
+                            ass['uri'] += param_sep + 'prop=rel--' + cat_ent.slug
+                            param_sep = '&'
+                        ass['uri'] += param_sep + 'type=' + ass_cat['item_type']
+                        param_sep = '&'
+                    if project_ent is not False:
+                        ass['uri'] += param_sep + 'proj=' + project_ent.slug
+                    ass_sets.append(ass)
+                else:
+                    pass
+            self.associated = ass_items + ass_sets
+    
+    def add_description_item_class_project(self, description, project_ent):
+        """ adds item class and project information to a dublin core metadata
+            description for associated items
+        """
+        description += ' associated with the '
+        if isinstance(self.class_label, str):
+            description += self.class_label.lower() + ' record: ' + self.title
+        elif self.manifest.item_type == 'projects':
+            description += 'data publication: "' + self.title + '"'
+        else:
+            description += 'item: ' + self.title
+        if project_ent is not False and self.manifest.item_type != 'projects':
+            description += '; part of the "' + project_ent.label
+            description += '" data publication.'
+        return description
+     
+    def remove_label_from_context(self, label, context):
+        """ removes a label from a context """
+        if isinstance(context, str):
+            if '/' in context:
+                context_ex = context.split('/')
+                if context_ex[-1] == label:
+                    context_ex.pop(-1)
+                context = '/'.join(context_ex)
+            elif label == context:
+                context = None
+        return context
+    
+    def make_dcterms_title(self, label, context):
+        """ makes a dcterms title, includes context if present """
+        if isinstance(context, str):
+            context = self.remove_label_from_context(label, context)
+            title = label + ' from ' + context       
+        else:
+            title = label
+        return title
+    
+    def encode_url_context_path(self, context):
+        """ encodes a context path for a URL, retains
+            the path '/' characters
+        """
+        if '/' in context:
+            context_ex = context.split('/')
+        else:
+            context_ex = [context]
+        quote_context_list = []
+        for c_part in context_ex:
+            url_c_part = urlquote_plus(c_part)
+            quote_context_list.append(url_c_part)
+        return '/'.join(quote_context_list)        
+    
+    def get_geo_event_metadata(self):
+        """ gets geospatial and event metadata for the item """
+        if self.is_valid:
+            act_contain = Containment()
+            if self.manifest.item_type == 'subjects':
+                parents = act_contain.get_parents_by_child_uuid(self.manifest.uuid)
+                subject_list = act_contain.contexts_list
+                subject_list.insert(0, self.manifest.uuid)
+                self.geo_meta = act_contain.get_geochron_from_subject_list(subject_list,
+                                                                           'geo')
+                self.event_meta = act_contain.get_geochron_from_subject_list(subject_list,
+                                                                             'event')
+            else:
+                self.geo_meta = act_contain.get_related_geochron(self.manifest.uuid,
+                                                                 self.manifest.item_type,
+                                                                 'geo')
+                self.event_meta = act_contain.get_related_geochron(self.manifest.uuid,
+                                                                   self.manifest.item_type,
+                                                                   'event')
+    
     def get_associated_categories(self):
         """ get categories of items related to the current
             annotated item
@@ -262,31 +495,32 @@ class OaItem():
                 # we have a context path string
                 cont_uuids = Subject.objects\
                                     .filter(context__startswith=self.context)\
+                                    .exclude(uuid=self.manifest.uuid)\
                                     .values_list('uuid', flat=True)
                 if len(cont_uuids) > 1:
                     self.contents_cnt = len(cont_uuids) 
                 # now get categories of items contained in this list
                 act_categories = self.get_distinct_categories_from_uuids(cont_uuids)
                 # add these categories to the self.associated dict
-                self.make_associated_from_categories(act_categories)
+                self.make_raw_associated_from_categories(act_categories)
                 # now get media + document items related to this list
                 act_categories = self.get_media_rel_categories(cont_uuids)
                 # add these categories to the self.associated dict
-                self.make_associated_from_categories(act_categories)
+                self.make_raw_associated_from_categories(act_categories)
             elif self.manifest.item_type == 'projects':
                 project_uuid = self.manifest.project_uuid
                 # add subjects categories
                 act_categories = self.get_distinct_categories_from_project(project_uuid)
-                self.make_associated_from_categories(act_categories)
+                self.make_raw_associated_from_categories(act_categories)
                 # now add media + documents, classified also by related subjects 
                 act_categories = self.get_project_media_rel_categories(project_uuid)
-                self.make_associated_from_categories(act_categories)
+                self.make_raw_associated_from_categories(act_categories)
             else:
-                self.associated = {}
+                self.raw_associated = {}
     
-    def make_associated_from_categories(self, categories):
+    def make_raw_associated_from_categories(self, categories):
         """ takes category data and consolidates it as a
-            for the associated dict
+            for the raw_associated dict
         """
         for cat in categories:
             key_fields = []
@@ -299,9 +533,18 @@ class OaItem():
                 key_fields.append('False')
             if 'label' not in cat:
                 cat['label'] = False
+            if 'uuid' not in cat:
+                cat['uuid'] = False
+            cat['title'] = None
+            cat['description'] = None
+            cat['class_label'] = None
+            cat['class_slug'] = None
+            cat['uri'] = None
+            cat['related'] = self.uri
             key = '/'.join(key_fields)
-            if key not in self.associated:
-                self.associated = cat
+            if key not in self.raw_associated:
+                # adds the category to the dict of raw_associated
+                self.raw_associated[key] = cat
                             
     def get_distinct_categories_from_uuids(self, uuid_list):
         """ gets distinct categories in a list of uuids """
@@ -313,7 +556,7 @@ class OaItem():
         else:
             categories = Manifest.objects\
                                  .filter(uuid__in=uuid_list)\
-                                 .values('label', 'item_type', 'class_uri')\
+                                 .values('uuid', 'label', 'item_type', 'class_uri')\
                                  .distinct()
         return categories
     
@@ -348,18 +591,32 @@ class OaItem():
             we have images or documents related to
             bones, sites, potttery or other class_uri
         """
+        if len(uuid_list) < 1:
+            uuid_list = [self.manifest.uuid]
         media_obj_types = ['media', 'documents']
         q_obj_types = self.make_query_list(media_obj_types)
         q_uuids = self.make_query_list(uuid_list)
-        query = ('SELECT mm.item_type AS item_type, '
-                 'm.class_uri AS class_uri, '
-                 'mm.class_uri AS media_class_uri '
-                 'FROM oc_manifest AS m '
-                 'JOIN oc_assertions AS ass ON ass.uuid = m.uuid '
-                 'JOIN oc_manifest AS mm ON ass.object_uuid = mm.uuid '
-                 'WHERE m.uuid IN (' + q_uuids + ') '
-                 'AND ass.object_type IN (' + q_obj_types + ') '
-                 'GROUP BY mm.item_type, m.class_uri, mm.class_uri; ')
+        if len(uuid_list) > 1:
+            query = ('SELECT mm.item_type AS item_type, '
+                     'm.class_uri AS class_uri, '
+                     'mm.class_uri AS media_class_uri '
+                     'FROM oc_manifest AS m '
+                     'JOIN oc_assertions AS ass ON ass.uuid = m.uuid '
+                     'JOIN oc_manifest AS mm ON ass.object_uuid = mm.uuid '
+                     'WHERE m.uuid IN (' + q_uuids + ') '
+                     'AND ass.object_type IN (' + q_obj_types + ') '
+                     'GROUP BY mm.item_type, m.class_uri, mm.class_uri; ')
+        else:
+            query = ('SELECT mm.uuid AS uuid, mm.label AS label, '
+                     'mm.item_type AS item_type, '
+                     'm.class_uri AS class_uri, '
+                     'mm.class_uri AS media_class_uri '
+                     'FROM oc_manifest AS m '
+                     'JOIN oc_assertions AS ass ON ass.uuid = m.uuid '
+                     'JOIN oc_manifest AS mm ON ass.object_uuid = mm.uuid '
+                     'WHERE m.uuid IN (' + q_uuids + ') '
+                     'AND ass.object_type IN (' + q_obj_types + ') '
+                     '; ')
         cursor = connection.cursor()
         cursor.execute(query)
         rows = self.dictfetchall(cursor)

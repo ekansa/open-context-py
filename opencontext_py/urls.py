@@ -27,6 +27,8 @@ from opencontext_py.apps.imports.fieldannotations import views as Imp_field_anno
 from opencontext_py.apps.ldata.linkvocabularies import views as vocabViews
 from opencontext_py.apps.oai import views as OAIviews
 from opencontext_py.apps.utilities import views as UtilitiesViews
+from opencontext_py.apps.ldata.pelagios import views as PelagiosViews
+
 
 urlpatterns = patterns('',
                        # Examples:
@@ -301,6 +303,7 @@ urlpatterns = patterns('',
                        # BELOW ARE OAI REQUESTS (OAIviews)
                        #----------------------------
                        url(r'^oai/', OAIviews.index, name='oai_index'),
+                       url(r'^pelagios/(?P<identifier>\S+)', PelagiosViews.project_annotations, name='pelagios_proj'),
                        #----------------------------
                        # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
                        #----------------------------

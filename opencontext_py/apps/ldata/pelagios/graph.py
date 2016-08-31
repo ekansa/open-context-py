@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import connection
 from django.db import models
 from django.db.models import Q
+from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -31,17 +32,18 @@ pelagios.g.serialize(format='turtle')
         'oa': 'http://www.w3.org/ns/oa#',
         'pelagios': 'http://pelagios.github.io/vocab/terms#',
         'relations': 'http://pelagios.github.io/vocab/relations#',
-        'xsd': 'http://www.w3.org/2001/XMLSchema',
+        # 'xsd': 'http://www.w3.org/2001/XMLSchema',
         'oc-gen': 'http://opencontext.org/vocabularies/oc-general/'
     }
     
     def __init__(self):
         self.data_obj = PelagiosData()
         self.project_uuids = []
-        self.test_limit = False
+        self.test_limit = None
         self.g = None
         self.prep_graph()
-        self.base_uri = settings.CANONICAL_HOST + '/pelagios/.ttl#'
+        self.base_uri = settings.CANONICAL_HOST + '/pelagios/'
+        self.anno_index = 0
     
     def prep_graph(self):
         """ prepares a graph for Pelagios """
@@ -51,24 +53,88 @@ pelagios.g.serialize(format='turtle')
             self.g.bind(prefix, ns)
     
     def make_graph(self):
+        associated_uris = []
         self.get_db_data()
         if len(self.data_obj.oa_items) > 0:
-            item_cnt = 0
             for uuid, oa_item in self.data_obj.oa_items.items():
-                if oa_item.is_valid:
-                    # make annotation assertion
-                    uri = URImanagement.make_oc_uri(oa_item.manifest.uuid,
-                                                    oa_item.manifest.item_type)
-                    self.make_add_triple(uri, RDF.type, 'pelagios:AnnotatedThing')
-                    title = self.make_dcterms_title(oa_item.manifest.label,
-                                                    oa_item.context)
-                    self.make_add_triple(uri,
+                if oa_item.is_valid and len(oa_item.gazetteer_uris) > 0:
+                    # only make annotations if the item is valid and actually has
+                    # gazetteer uris
+                    self.make_add_triple(oa_item.uri,
+                                         RDF.type,
+                                         'pelagios:AnnotatedThing')
+                    self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('dcterms', 'title'),
                                          None,
-                                         title)
-                    self.make_add_triple(uri,
+                                         oa_item.title)
+                    self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('foaf', 'homepage'),
                                          settings.CANONICAL_HOST)
+                    if isinstance(oa_item.description, str):
+                        # add description
+                        self.make_add_triple(oa_item.uri,
+                                             self.make_full_uri('dcterms', 'description'),
+                                             None,
+                                             oa_item.description)
+                    # add language assertion
+                    self.make_add_triple(oa_item.uri,
+                                         self.make_full_uri('dcterms', 'language'),
+                                         None,
+                                         settings.LANGUAGE_CODE)
+                    # add assertion about part of a project
+                    self.make_add_triple(oa_item.uri,
+                                         self.make_full_uri('dcterms', 'isPartOf'),
+                                         oa_item.project_uri)
+                    # now add gazetteer annotations to the item
+                    base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
+                    base_anno_uri += '/annotations/'
+                    self.make_gazetteer_annotations(oa_item.uri,
+                                                    oa_item.gazetteer_uris,
+                                                    base_anno_uri)
+                    # now add related annotations
+                    if len(oa_item.associated) > 0:
+                        for ass in oa_item.associated:
+                            self.make_add_triple(ass['uri'],
+                                                 RDF.type,
+                                                 'pelagios:AnnotatedThing')
+                            self.make_add_triple(ass['uri'],
+                                                 self.make_full_uri('dcterms', 'title'),
+                                                 None,
+                                                 ass['title'])
+                            self.make_add_triple(ass['uri'],
+                                                 self.make_full_uri('foaf', 'homepage'),
+                                                 settings.CANONICAL_HOST)
+                            self.make_add_triple(ass['uri'],
+                                                 self.make_full_uri('dcterms', 'description'),
+                                                 None,
+                                                 ass['description'])
+                            self.make_add_triple(ass['uri'],
+                                                 self.make_full_uri('dcterms', 'language'),
+                                                 None,
+                                                 settings.LANGUAGE_CODE)
+                            self.make_add_triple(ass['uri'],
+                                                 self.make_full_uri('dcterms', 'related'),
+                                                 oa_item.uri)
+                            self.make_gazetteer_annotations(ass['uri'],
+                                                            oa_item.gazetteer_uris,
+                                                            base_anno_uri)
+                            
+                                 
+    def make_gazetteer_annotations(self, target_uri, gazetteer_uris, base_anno_uri):
+        """ makes annotations for a target_uri from from a list of gazetteer_uris """
+        for gaz_uri in gazetteer_uris:
+            self.anno_index += 1
+            anno_uri = base_anno_uri + str(self.anno_index)
+            self.make_add_triple(anno_uri,
+                                 RDF.type,
+                                 self.make_full_uri('oa', 'Annotation'))
+            self.make_add_triple(anno_uri,
+                                 self.make_full_uri('oa', 'hasTarget'),
+                                 target_uri)
+            self.make_add_triple(anno_uri,
+                                 self.make_full_uri('oa', 'hasBody'),
+                                 gaz_uri)
+            
                                     
     def make_add_triple(self, sub_uri, pred_uri, obj_uri=None, obj_literal=None):
         """ makes a triple and adds it to the graph """
@@ -87,20 +153,7 @@ pelagios.g.serialize(format='turtle')
         else:
             output = prefix + ':' + value
         return output
-    
-    def make_dcterms_title(self, label, context):
-        """ makes a dcterms title, includes context if present """
-        if isinstance(context, str):
-            if '/' in context:
-                context_ex = context.split('/')
-                if context_ex[-1] == label:
-                    context_ex.pop(-1)
-                context = '/'.join(context_ex)
-            title = label + ' from ' + context       
-        else:
-            title = label
-        return title
-    
+            
     def get_db_data(self):
         """ gets gazetteer related items, then
             populates these with manifest objects and context
