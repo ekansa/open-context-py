@@ -407,7 +407,7 @@ class OaItem():
                         if cat_ent is not False:
                             ass['uri'] += param_sep + 'prop=rel--' + cat_ent.slug
                             param_sep = '&'
-                        ass['uri'] += param_sep + 'type=' + ass_cat['item_type']
+                        ass['uri'] += param_sep + 'type=' + ass['item_type']
                         param_sep = '&'
                     if project_ent is not False:
                         ass['uri'] += param_sep + 'proj=' + project_ent.slug

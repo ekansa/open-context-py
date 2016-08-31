@@ -82,9 +82,10 @@ pelagios.g.serialize(format='turtle')
                                          None,
                                          settings.LANGUAGE_CODE)
                     # add assertion about part of a project
-                    self.make_add_triple(oa_item.uri,
-                                         self.make_full_uri('dcterms', 'isPartOf'),
-                                         oa_item.project_uri)
+                    if oa_item.uri != oa_item.project_uri:
+                        self.make_add_triple(oa_item.uri,
+                                             self.make_full_uri('dcterms', 'isPartOf'),
+                                             oa_item.project_uri)
                     # now add gazetteer annotations to the item
                     base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
                     base_anno_uri += '/annotations/'
