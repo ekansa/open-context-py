@@ -384,7 +384,8 @@ class TemplateItem():
                 self.item_category_uri = cat
                 if cat in self.class_type_metadata:
                     item_cat_labels.append(self.class_type_metadata[cat]['typelabel'])
-                    self.item_category_icon = self.class_type_metadata[cat]['icon'] 
+                    if 'icon' in self.class_type_metadata[cat]:
+                        self.item_category_icon = self.class_type_metadata[cat]['icon'] 
             self.item_category_label = ', '.join(item_cat_labels)
         if self.item_category_label is False:
             # make sure the item has category label, if needed get from settings nav_items
