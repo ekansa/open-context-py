@@ -353,7 +353,7 @@ class OaItem():
                     ass['description'] = self.add_description_item_class_project(description,
                                                                                  project_ent)
                     ass_items.append(ass)
-                elif self.contents_cnt > 1:
+                elif self.contents_cnt > 1 or self.manifest.item_type == 'projects':
                     # the associated item is for a result set, not an individual item
                     rel_media_cat_ent = False
                     if isinstance(ass['media_class_uri'], str):
@@ -375,7 +375,8 @@ class OaItem():
                         ass['title'] += ' ' + type_des
                         description += ' ' + type_des.lower()
                     ass['title'] += ' Related to: ' + self.manifest.label
-                    if isinstance(self.class_label, str):
+                    if isinstance(self.class_label, str) and \
+                       self.manifest.item_type != 'projects':
                         ass['title'] += ' (' + self.class_label + ')'
                     ass['description'] = self.add_description_item_class_project(description,
                                                                                  project_ent)
@@ -418,9 +419,10 @@ class OaItem():
     def add_description_item_class_project(self, description, project_ent):
         """ adds item class and project information to a dublin core metadata
             description for associated items
-        """
+        """ 
         description += ' associated with the '
-        if isinstance(self.class_label, str):
+        if isinstance(self.class_label, str) and \
+           self.manifest.item_type != 'projects':
             description += self.class_label.lower() + ' record: ' + self.title
         elif self.manifest.item_type == 'projects':
             description += 'data publication: "' + self.title + '"'
