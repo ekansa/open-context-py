@@ -23,9 +23,6 @@ def index(request):
 
 
 @cache_control(no_cache=True)
-@never_cache
-@cache_control(no_cache=True)
-@never_cache
 def void_ttl(request):
     """ Returns RDF void data describing different datasets for
         Pelagios, in turtle
@@ -36,7 +33,9 @@ def void_ttl(request):
     output = p_void.g.serialize(format='turtle')
     return HttpResponse(output,
                         content_type='text/turtle; charset=utf8')
-    
+
+
+@cache_control(no_cache=True)
 def void(request):
     """ Returns RDF void data describing different datasets for
         Pelagious
@@ -67,6 +66,7 @@ def void(request):
                             content_type='text/turtle; charset=utf8')
 
 
+@cache_control(no_cache=True)
 def project_annotations(request, identifier):
     """ Returns RDF open annotation assertions conforming to
         Pelagios specifications that link
@@ -81,6 +81,9 @@ def project_annotations(request, identifier):
             permitted = pp.view_allowed(request)
             if permitted:
                 pelagios = PelagiosGraph()
+                if 'refresh' in request.GET:
+                    # we're going to refresh the cache
+                    pelagios.refresh_cache = True
                 pelagios.project_uuids = [ent.uuid]
                 pelagios.test_limit = None
                 pelagios.make_graph()
@@ -115,6 +118,7 @@ def project_annotations(request, identifier):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def project_annotations_ttl(request, identifier):
     """ Returns RDF open annotation assertions conforming to
         Pelagios specifications that link

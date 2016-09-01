@@ -1,5 +1,6 @@
 import json
 import requests
+import hashlib
 from time import sleep
 from rdflib import Graph, URIRef, Literal, Namespace
 from rdflib.namespace import RDF, RDFS, SKOS, OWL
@@ -7,6 +8,7 @@ from django.conf import settings
 from django.db import connection
 from django.db import models
 from django.db.models import Q
+from django.core.cache import caches
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
@@ -45,6 +47,10 @@ pelagios.g.serialize(format='turtle')
         self.base_uri = settings.CANONICAL_HOST + '/pelagios/data/'
         self.anno_index = 0
         self.request = False
+        self.refresh_cache = False
+        self.print_caching = False
+        self.cache_ok = True
+        self.cache_timeout = None  # None means forever
     
     def prep_graph(self):
         """ prepares a graph for Pelagios """
@@ -160,8 +166,61 @@ pelagios.g.serialize(format='turtle')
         """ gets gazetteer related items, then
             populates these with manifest objects and context
             paths (for subjects)
-        """ 
-        self.data_obj.project_uuids = self.project_uuids
-        self.data_obj.test_limit = self.test_limit
-        self.data_obj.get_prep_ocitems_rel_gazetteer()
+        """
+        key = self.make_cache_key('pelagios',
+                                  '-'.join(self.project_uuids))
+        if self.refresh_cache:
+            # we forcing a refresh of the cache, not us of cached data
+            cache_data_obj = None
+        else:
+            # check to see if we have a cached version
+            cache_data_obj = self.get_cache_object(key)
+        if cache_data_obj is None:
+            self.data_obj.project_uuids = self.project_uuids
+            self.data_obj.test_limit = self.test_limit
+            self.data_obj.get_prep_ocitems_rel_gazetteer()
+            # now cache the data
+            self.save_cache_object(key, self.data_obj)
+        else:
+            # use the cached data for the data object
+            self.data_obj = cache_data_obj
+    
+    def make_cache_key(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        return str(prefix) + "-" + str(identifier)
+    
+    def make_cache_key_hash(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        hash_obj = hashlib.sha1()
+        concat_string = str(prefix) + "-" + str(identifier)
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
+
+    def get_cache_object(self, key):
+        """ gets a cached reddis object """
+        try:
+            cache = caches['default']
+            obj = cache.get(key)
+            if self.print_caching:
+                print('Cache checked: ' + key)
+        except:
+            obj = None
+            if self.print_caching:
+                print('Cache Fail checked: ' + key)
+        return obj
+
+    def save_cache_object(self, key, obj):
+        """ saves a cached reddis object """
+        try:
+            cache = caches['default']
+            cache.set(key, obj, self.cache_timeout)
+            ok = True
+            if self.print_caching:
+                print('Cache Saved: ' + key)
+        except:
+            self.cache_ok = False
+            ok = False
+            if self.print_caching:
+                print('Failed to cache: ' + key)
+        return ok
     
