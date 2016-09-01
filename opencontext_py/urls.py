@@ -303,7 +303,13 @@ urlpatterns = patterns('',
                        # BELOW ARE OAI REQUESTS (OAIviews)
                        #----------------------------
                        url(r'^oai/', OAIviews.index, name='oai_index'),
-                       url(r'^pelagios/(?P<identifier>\S+)', PelagiosViews.project_annotations, name='pelagios_proj'),
+                       #----------------------------
+                       # BELOW ARE PELAGIOS REQUESTS (PelagiosViews)
+                       #----------------------------
+                       url(r'^pelagios/void', PelagiosViews.void, name='pelagios_void'),
+                       url(r'^pelagios/data/(?P<identifier>\S+)',
+                           PelagiosViews.project_annotations,
+                           name='pelagios_proj'),
                        #----------------------------
                        # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
                        #----------------------------
