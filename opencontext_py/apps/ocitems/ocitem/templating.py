@@ -30,7 +30,7 @@ class TemplateItem():
                            'image/jpeg',
                            'image/gif']
     
-    OPEN_CONTEXT_ICON = '/static/oc/images/about/oc-reduced-logo-sm.png'
+    OPEN_CONTEXT_ICON = '/static/oc/images/index/oc-blue-square-logo.png'
     
     ITEM_TYPE_DESCRIPTIONS = {
         'subjects': 'data record',
@@ -531,6 +531,10 @@ class TemplateItem():
                 rp = RootPath()
                 base_url = rp.get_baseurl()
                 self.og_image = base_url + self.OPEN_CONTEXT_ICON
+            # do this anyway, since small pictures do not work.
+            rp = RootPath()
+            base_url = rp.get_baseurl()
+            self.og_image = base_url + self.OPEN_CONTEXT_ICON
         self.og_title = self.citation.cite_title
         if not isinstance(self.og_description, str):
             self.og_description = ''

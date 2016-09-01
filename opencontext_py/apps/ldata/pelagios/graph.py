@@ -42,8 +42,9 @@ pelagios.g.serialize(format='turtle')
         self.test_limit = None
         self.g = None
         self.prep_graph()
-        self.base_uri = settings.CANONICAL_HOST + '/pelagios/'
+        self.base_uri = settings.CANONICAL_HOST + '/pelagios/data/'
         self.anno_index = 0
+        self.request = False
     
     def prep_graph(self):
         """ prepares a graph for Pelagios """
@@ -114,7 +115,7 @@ pelagios.g.serialize(format='turtle')
                                                  None,
                                                  settings.LANGUAGE_CODE)
                             self.make_add_triple(ass['uri'],
-                                                 self.make_full_uri('dcterms', 'related'),
+                                                 self.make_full_uri('dcterms', 'relation'),
                                                  oa_item.uri)
                             self.make_gazetteer_annotations(ass['uri'],
                                                             oa_item.gazetteer_uris,
@@ -159,9 +160,8 @@ pelagios.g.serialize(format='turtle')
         """ gets gazetteer related items, then
             populates these with manifest objects and context
             paths (for subjects)
-        """
+        """ 
         self.data_obj.project_uuids = self.project_uuids
         self.data_obj.test_limit = self.test_limit
         self.data_obj.get_prep_ocitems_rel_gazetteer()
-    
     
