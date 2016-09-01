@@ -26,9 +26,9 @@ def index(request):
 @never_cache
 @cache_control(no_cache=True)
 @never_cache
-def void(request):
+def void_ttl(request):
     """ Returns RDF void data describing different datasets for
-        Pelagious
+        Pelagios, in turtle
     """
     p_void = PelagiosVoid()
     p_void.request = request
@@ -37,25 +37,36 @@ def void(request):
     return HttpResponse(output,
                         content_type='text/turtle; charset=utf8')
     
-def void_alt(request):
+def void(request):
     """ Returns RDF void data describing different datasets for
         Pelagious
     """
     p_void = PelagiosVoid()
     p_void.request = request
+    p_void.make_graph()
     req_neg = RequestNegotiation('text/turtle')
-    req_neg.supported_types = ['text/turtle']
+    req_neg.supported_types = ['application/rdf+xml',
+                               'text/n3',
+                               'application/n-triples']
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
-    if req_neg.supported:
-        if 'turtle' in req_neg.use_response_type:
-            output = p_void.g.serialize(format='turtle')
+        if req_neg.supported:
+            content_type = req_neg.use_response_type + '; charset=utf8'
+            output = p_void.g.serialize(format=req_neg.use_response_type)
             return HttpResponse(output,
-                                content_type='text/turtle; charset=utf8')
+                                content_type=content_type)
+        else:
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type="text/plain; charset=utf8",
+                                status=415)
+    else:
+        # default to outputting in turtle
+        output = p_void.g.serialize(format='turtle')
+        return HttpResponse(output,
+                            content_type='text/turtle; charset=utf8')
 
 
-@cache_control(no_cache=True)
-@never_cache
 def project_annotations(request, identifier):
     """ Returns RDF open annotation assertions conforming to
         Pelagios specifications that link
@@ -73,6 +84,55 @@ def project_annotations(request, identifier):
                 pelagios.project_uuids = [ent.uuid]
                 pelagios.test_limit = None
                 pelagios.make_graph()
+                req_neg = RequestNegotiation('text/turtle')
+                req_neg.supported_types = ['application/rdf+xml',
+                                           'text/n3',
+                                           'application/n-triples']
+                if 'HTTP_ACCEPT' in request.META:
+                    req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+                    if req_neg.supported:
+                        content_type = req_neg.use_response_type + '; charset=utf8'
+                        output = pelagios.g.serialize(format=req_neg.use_response_type)
+                        return HttpResponse(output,
+                                            content_type=content_type)
+                    else:
+                        # client wanted a mimetype we don't support
+                        return HttpResponse(req_neg.error_message,
+                                            content_type="text/plain; charset=utf8",
+                                            status=415)
+                else:
+                    # default to outputting in turtle
+                    output = pelagios.g.serialize(format='turtle')
+                    return HttpResponse(output,
+                                        content_type='text/turtle; charset=utf8')
+            else:
+                return HttpResponse('Not authorized to get this resource',
+                                    content_type='text/html; charset=utf8',
+                                    status=401)
+        else:
+            found = False
+    if found is False:
+        raise Http404
+
+
+def project_annotations_ttl(request, identifier):
+    """ Returns RDF open annotation assertions conforming to
+        Pelagios specifications that link
+        Open Context resources with place entities in
+        gazetteers, in the turtle format
+    """
+    ent = Entity()
+    found = ent.dereference(identifier)
+    if found:
+        if ent.item_type == 'projects':
+            pp = ProjectPermissions(ent.uuid)
+            permitted = pp.view_allowed(request)
+            if permitted:
+                pelagios = PelagiosGraph()
+                pelagios.project_uuids = [ent.uuid]
+                pelagios.test_limit = None
+                pelagios.make_graph()
+                # default to outputting in turtle
                 output = pelagios.g.serialize(format='turtle')
                 return HttpResponse(output,
                                     content_type='text/turtle; charset=utf8')
