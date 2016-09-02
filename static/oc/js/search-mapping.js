@@ -226,6 +226,47 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			big_tile_control.link.id = 'tile-less-precision';
 			region_controls = true;
 			
+			var download_control = L.easyButton('glyphicon-download', 
+				function (){
+					if( confirm('Save region-summary GeoJSON (GIS) data?') ) {
+						/*
+						var geo_json_url = replaceURLparameter(map.json_url, 'geodeep', map.geodeep);
+						geo_json_url = replaceURLparameter(geo_json_url, 'response', 'geo-facet');
+						var win = window.open(geo_json_url, '_blank');
+						if (win) {
+							//Browser has allowed it to be opened
+							win.focus();
+						} else {
+							//Browser has blocked it
+							alert('Please allow popups for Open Context to download');
+						}
+						*/
+						var data = map.geojson_facets[map.geodeep];
+						var geojson = JSON.stringify(data, null, 2);
+						//now save it!
+						var filename = 'Open-Context-GeoSpatial-Summary.geojson';
+						var blob = new Blob([geojson], { type: 'application/json;charset=utf-8;' });
+						if (navigator.msSaveBlob) { // IE 10+
+							navigator.msSaveBlob(blob, filename);
+						} else {
+							var link = document.createElement("a");
+							if (link.download !== undefined) { // feature detection
+								// Browsers that support HTML5 download attribute
+								var url = URL.createObjectURL(blob);
+								link.setAttribute("href", url);
+								link.setAttribute("download", filename);
+								link.style.visibility = 'hidden';
+								document.body.appendChild(link);
+								link.click();
+								document.body.removeChild(link);
+							}
+						}
+						
+					}
+				}, 
+				'Download & Save GeoJSON (GIS) region summary of search results',
+				buttonControls
+			);
 			//now add a box-zoom
 			var zoom_control = L.control.zoomBox({modal: true});
 			map.addControl(zoom_control);
