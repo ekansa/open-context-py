@@ -328,11 +328,13 @@ def subjects_html_view(request, spatial_context=None):
                 st = SearchTemplate(json_ld)
                 st.process_json_ld()
                 template = loader.get_template('search/view.html')
+                props = []
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
-                    if len(props) > 1 or st.total_count <= 10000:
-                        # allow downloads, multiple props selected
-                        csv_downloader = True
+                if len(props) > 1 or st.total_count <= 25000:
+                    # allow downloads, multiple props selected
+                    # or relatively few records
+                    csv_downloader = True
                 context = RequestContext(request,
                                          {'st': st,
                                           'csv_downloader': csv_downloader,
