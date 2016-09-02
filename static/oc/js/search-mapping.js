@@ -228,19 +228,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			
 			var download_control = L.easyButton('glyphicon-download', 
 				function (){
-					if( confirm('Save region-summary GeoJSON (GIS) data?') ) {
-						/*
-						var geo_json_url = replaceURLparameter(map.json_url, 'geodeep', map.geodeep);
-						geo_json_url = replaceURLparameter(geo_json_url, 'response', 'geo-facet');
-						var win = window.open(geo_json_url, '_blank');
-						if (win) {
-							//Browser has allowed it to be opened
-							win.focus();
-						} else {
-							//Browser has blocked it
-							alert('Please allow popups for Open Context to download');
-						}
-						*/
+					if( confirm('Save a file of region-summary GeoJSON (GIS) data?') ) {
+						
 						var data = map.geojson_facets[map.geodeep];
 						var geojson = JSON.stringify(data, null, 2);
 						//now save it!
@@ -264,7 +253,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 						
 					}
 				}, 
-				'Download & Save GeoJSON (GIS) region summary of search results',
+				'Locally save GeoJSON (GIS) region summary of search results',
 				buttonControls
 			);
 			//now add a box-zoom
