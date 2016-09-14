@@ -43,12 +43,17 @@ function hierarchy(parent_id, act_dom_id) {
 	 this.exec_primary_link = 'edit';
 	 //this.supplemental_links = ['view'];
 	 this.supplemental_links = [];
+      this.vocab_ontology = false;  // are we doing a local vocabulary or ontology?
 	 this.do_description_tree = function(){
 		 // if doing a desciption tree, change the request URL
 		 this.request_url = this.make_url("/entities/description-children/");
 	 }
 	 this.do_entity_hierarchy_tree = function(){
 			this.request_url = this.make_url("/entities/hierarchy-children/"); 
+	 }
+      this.do_vocab_hierarchy_tree = function(){
+               this.vocab_ontology = true;
+			this.request_url = this.make_url("/vocabularies/"); 
 	 }
 	 this.get_data = function(){
 		 // ajax request to get the data for this hiearchy
@@ -208,14 +213,25 @@ function hierarchy(parent_id, act_dom_id) {
 			 }
 			 if (child_has_children) {
 				 //this child has children so make a loading carrot for it.
-				 var tog_html = this.make_load_more_html(child.id, node_i, i);
+                     if (this.vocab_ontology){
+                         var slug_id = child.slug + '.json';
+                         var tog_html = this.make_load_more_html(slug_id, node_i, i);
+                     }
+                     else{
+                         var tog_html = this.make_load_more_html(child.id, node_i, i);    
+                     }
 				 var children_area_html = this.make_more_div_html(node_i, i);
 			 }
 			 else{
 				 var tog_html = '<span class="glyphicon glyphicon-file" aria-hidden="true"></span>';
 				 var children_area_html = '';
 			 }
-			 var item_html = this.make_item_linking_html(child.id, child.label, child.item_type);
+                if (this.vocab_ontology){
+                    var item_html = this.make_item_linking_html(child.id, child.label, false);
+                }
+                else{
+                    var item_html = this.make_item_linking_html(child.id, child.label, child.item_type);
+                }
 			 html.push('<li>');
 			 html.push(tog_html);
 			 html.push(item_html);
@@ -276,7 +292,12 @@ function hierarchy(parent_id, act_dom_id) {
 				}
 				else{
 					var title = 'View in new window';
-					var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+                         if (this.vocab_ontology){
+                              var href = id;
+                         }
+                         else{
+                              var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+                         }
 				}
 				item_html += 'title="' + title + '" href="' + href + '" >';
 		  }

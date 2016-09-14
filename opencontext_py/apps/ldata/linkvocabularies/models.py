@@ -1,12 +1,14 @@
 import itertools
 import json
 from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import SKOS, RDFS, OWL
+from rdflib.namespace import RDF, RDFS, SKOS, OWL
+from opencontext_py.libs.languages import Languages
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
@@ -15,6 +17,15 @@ class LinkVocabulary():
     """
     Loads an OWL vocabulary (defaults to RDF-OWL)
     To store some hierarchy relationships, labels, and icons in the database
+
+from opencontext_py.apps.ldata.linkvocabularies.models import LinkVocabulary
+lv = LinkVocabulary()
+lv.vocabulary_uri = 'http://opencontext.org/vocabularies/dinaa'
+lv.vocab_file_uri = 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/dinaa-alt.owl'
+lv.load_parse_vocabulary(lv.vocab_file_uri)
+lv.update_entity_types()
+lv.save_entity_comments()
+
     """
     SORT_HIERARCHY_DEPTH = 10  # depth of the hiearchy for sorting purposes
 
@@ -30,7 +41,7 @@ class LinkVocabulary():
         hierarchical relationships for these entities in the database
         for use in formulating Solr index """
         output = {}
-        if(vocab_uri is not False):
+        if vocab_uri is not False:
             self.vocabulary_uri = vocab_uri
         self.load_parse_vocabulary(vocab_file_uri)
         output['labels'] = self.save_entity_labels()
@@ -46,35 +57,104 @@ class LinkVocabulary():
         """
         graph = Graph()
         try:
-            if(fformat is not False):
+            if fformat is not False:
                 graph.parse(uri, format=fformat)
             else:
                 graph.parse(uri)
         except:
             print('Failed to load the graph.')
             graph = False
-        if(graph is not False):
+        if graph is not False:
             self.vocab_file_uri = uri
             self.graph = graph
         return self.graph
 
+    def update_entity_types(self):
+        """ updates the entity types (for class or property entities) """
+        if self.graph is not False and self.vocabulary_uri is not False:
+            for s, p, o in self.graph.triples((None,
+                                               RDF.type,
+                                               None)):
+                subject_uri = s.__str__()  # get the URI of the subject as a string
+                object_uri = o.__str__()  # get the Label of the object as a string    
+                print(subject_uri + ' a ' + object_uri)
+                if 'Property' in object_uri or \
+                   'property' in object_uri or \
+                   'Class' in object_uri or \
+                   'class' in object_uri:
+                    # update the entity's ent_type
+                    link_ent = False
+                    try:
+                        link_ent = LinkEntity.objects.get(uri=subject_uri)
+                    except LinkEntity.DoesNotExist:
+                        link_ent = False
+                    if link_ent is not False:
+                        if 'Property' in object_uri or \
+                           'property' in object_uri:
+                            # is a property entity
+                            link_ent.ent_type = 'property'
+                        else:
+                            # has to be a class
+                            link_ent.ent_type = 'class'
+                        link_ent.save()
+
+    def save_entity_comments(self):
+        """ saves comments about an entity """
+        if self.graph is not False and self.vocabulary_uri is not False:
+            lequiv = LinkEquivalence()
+            # get all the varients of RDFS:comments
+            comment_uris = lequiv.get_identifier_list_variants('rdfs:comment')
+            # now get all the entities from this vocabulary (that may be the subject of a comment)
+            raw_subject_uris = LinkEntity.objects.filter(vocab_uri=self.vocabulary_uri)
+            lequiv = LinkEquivalence()
+            subject_uris = lequiv.get_identifier_list_variants(raw_subject_uris)
+            if self.replace_old:
+                # delete the old comments
+                LinkAnnotation.objects\
+                              .filter(subject__in=subject_uris,
+                                      predicate_uri__in=comment_uris)\
+                              .delete()
+            for s, p, o in self.graph.triples((None,
+                                               RDFS.comment,
+                                               None)):
+                subject_uri = s.__str__()  # get the URI of the subject as a string
+                comment = o.__str__()  # get the comment from the object as a string
+                # update the entity's comment
+                link_ent = False
+                try:
+                    link_ent = LinkEntity.objects.get(uri=subject_uri)
+                except LinkEntity.DoesNotExist:
+                    link_ent = False
+                if link_ent is not False:
+                    lang = Languages()
+                    newr = LinkAnnotation()
+                    # make the subject a prefixed URI if common
+                    newr.subject = URImanagement.prefix_common_uri(subject_uri)
+                    newr.subject_type = 'uri'
+                    newr.project_uuid = '0'
+                    newr.source_id = self.vocabulary_uri
+                    newr.predicate_uri = 'rdfs:comment'
+                    newr.obj_extra = {}
+                    newr.obj_extra[lang.DEFAULT_LANGUAGE] = comment
+                    newr.save()
+
     def save_entity_labels(self):
         """ saves labels of entities in a vocabulary """
         output = False
-        if(self.graph is not False and self.vocabulary_uri is not False):
+        if self.graph is not False and self.vocabulary_uri is not False:
             output = []
-            if(self.replace_old):
+            if self.replace_old:
                 LinkEntity.objects.filter(vocab_uri=self.vocabulary_uri).delete()
             for s, p, o in self.graph.triples((None,
                                                RDFS.label,
                                                None)):
                 subject_uri = s.__str__()  # get the URI of the subject as a string
-                label = o.__str__()  # get the Label of the object as a string
+                label = o.__str__()  # get the Label of from object as a string
                 newr = LinkEntity()
                 newr.uri = subject_uri
                 newr.label = label
                 newr.alt_label = label
-                newr.ent_type = 'type'
+                newr.ent_type = 'class'
                 newr.vocab_uri = self.vocabulary_uri
                 newr.save()
                 act_t = {'s': subject_uri,

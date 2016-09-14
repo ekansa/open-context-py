@@ -259,6 +259,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			//now add a box-zoom
 			var zoom_control = L.control.zoomBox({modal: true});
 			map.addControl(zoom_control);
+			
 		}
 		else{
 			// toggle map controls based on map.geodeep
@@ -650,6 +651,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 				}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
+				var scale = L.control.scale().addTo(map); 
 				if (map.req_hash != false) {
 					// for the initial load of the page,
 					// go back to the original request hash
