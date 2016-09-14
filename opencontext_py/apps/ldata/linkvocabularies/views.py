@@ -54,58 +54,19 @@ def html_view(request, identifier):
         if id_s not in id_list:
             # add the slashed version to the list
             id_list.append(id_s)
-    entity_obj = False
+    entity = False
     for test_id in id_list:
         ent = Entity()
         found = ent.dereference(test_id)
         if found is False:
             found = ent.dereference(test_id, test_id)
         if found:
-            entity_obj = LastUpdatedOrderedDict()
-            entity_obj['id'] = ent.uri
-            entity_obj['label'] = ent.label
-            entity_obj['uuid'] = ent.uuid
-            entity_obj['slug'] = ent.slug
-            entity_obj['entity_type'] = ent.entity_type
-            entity_obj['vocab_uri'] = ent.vocab_uri
-            if ent.uri == ent.vocab_uri:
-                # request of a vocabulary, not a specific entity
-                t_vocab = TemplateVocab()
-                t_vocab.uri = ent.uri
-                t_vocab.vocab_uri = ent.vocab_uri
-                t_vocab.get_comments()
-                t_vocab.get_top_entities()
-                entity_obj['comment'] = t_vocab.default_comment
-                entity_obj['rdfs:comment'] = t_vocab.comment
-                entity_obj['top_classes'] = t_vocab.top_classes
-                entity_obj['top_properties'] = t_vocab.top_properties
-            else:
-                # request an entity in a vocabulary
-                t_vocab = TemplateVocab()
-                t_vocab.vocab_uri = ent.vocab_uri
-                t_vocab.uri = ent.uri
-                t_vocab.get_comments()
-                t_vocab.get_entity_parents()
-                t_vocab.get_entity_children()
-                entity_obj['comment'] = t_vocab.default_comment
-                entity_obj['rdfs:comment'] = t_vocab.comment
-                entity_obj['parents'] = t_vocab.parents
-                entity_obj['children'] = t_vocab.children
-            ent_voc = Entity()
-            vocab_found = ent_voc.dereference(ent.vocab_uri)
-            if vocab_found:
-                entity_obj['vocab_label'] = ent_voc.label
-            else:
-                entity_obj['vocab_label'] = ent.vocab_uri
-            entity_obj['project_uuid'] = ent.project_uuid
-            if 'dinaa' in ent.vocab_uri:
-                entity_obj['github'] = 'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/dinaa-alt.owl'
-            elif 'oc-general' in ent.vocab_uri:
-                entity_obj['github'] = 'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/oc-general.owl'
-            else:
-                entity_obj['github'] = False
+            entity = ent
             break
-    if entity_obj is not False:
+    if entity is not False:
+        t_vocab = TemplateVocab()
+        t_vocab.create_template_for_entity(entity)
+        t_vocab.make_json_for_html()
         req_neg = RequestNegotiation('text/html')
         req_neg.supported_types = ['application/ld+json',
                                    'application/json']
@@ -114,13 +75,14 @@ def html_view(request, identifier):
         if req_neg.supported:
             if 'json' in req_neg.use_response_type:
                 # content negotiation requested JSON or JSON-LD
-                return HttpResponse(json.dumps(entity_obj,
+                json_obj = t_vocab.make_json_obj()
+                return HttpResponse(json.dumps(json_obj,
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
-                template = loader.get_template('vocabularies/temp.html')
+                template = loader.get_template('vocabularies/view.html')
                 context = RequestContext(request,
-                                         {'item': entity_obj,
+                                         {'item': t_vocab,
                                           'base_url': base_url,
                                           'page_title': 'Open Context: Vocabularies + Ontologies',
                                           'act_nav': 'vocabularies',
@@ -149,62 +111,25 @@ def json_view(request, identifier):
         if id_s not in id_list:
             # add the slashed version to the list
             id_list.append(id_s)
-    entity_obj = False
+    entity = False
     for test_id in id_list:
         ent = Entity()
         found = ent.dereference(test_id)
         if found is False:
             found = ent.dereference(test_id, test_id)
         if found:
-            entity_obj = LastUpdatedOrderedDict()
-            entity_obj['id'] = ent.uri
-            entity_obj['label'] = ent.label
-            entity_obj['uuid'] = ent.uuid
-            entity_obj['slug'] = ent.slug
-            entity_obj['entity_type'] = ent.entity_type
-            entity_obj['vocab_uri'] = ent.vocab_uri
-            ent_voc = Entity()
-            vocab_found = ent_voc.dereference(ent.vocab_uri)
-            if ent.uri == ent.vocab_uri:
-                # request of a vocabulary, not a specific entity
-                t_vocab = TemplateVocab()
-                t_vocab.uri = ent.uri
-                t_vocab.vocab_uri = ent.vocab_uri
-                t_vocab.get_comments()
-                t_vocab.get_top_entities()
-                entity_obj['rdfs:comment'] = t_vocab.comment
-                entity_obj['top_classes'] = t_vocab.top_classes
-                entity_obj['top_properties'] = t_vocab.top_properties
-            else:
-                # request an entity in a vocabulary
-                t_vocab = TemplateVocab()
-                t_vocab.vocab_uri = ent.vocab_uri
-                t_vocab.uri = ent.uri
-                t_vocab.get_comments()
-                t_vocab.get_entity_parents()
-                t_vocab.get_entity_children()
-                entity_obj['rdfs:comment'] = t_vocab.comment
-                entity_obj['parents'] = t_vocab.parents
-                entity_obj['children'] = t_vocab.children
-            if vocab_found:
-                entity_obj['vocab_label'] = ent_voc.label
-            else:
-                entity_obj['vocab_label'] = ent.vocab_uri
-            entity_obj['project_uuid'] = ent.project_uuid
-            if 'dinaa' in ent.vocab_uri:
-                entity_obj['github'] = 'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/dinaa-alt.owl'
-            elif 'oc-general' in ent.vocab_uri:
-                entity_obj['github'] = 'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/oc-general.owl'
-            else:
-                entity_obj['github'] = False
+            entity = ent
             break
-    if entity_obj is not False:
+    if entity is not False:
+        t_vocab = TemplateVocab()
+        t_vocab.create_template_for_entity(entity)
+        json_obj = t_vocab.make_json_obj()
         req_neg = RequestNegotiation('application/ld+json')
         req_neg.supported_types = ['application/json']
         if 'HTTP_ACCEPT' in request.META:
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
-            return HttpResponse(json.dumps(entity_obj,
+            return HttpResponse(json.dumps(json_obj,
                                 ensure_ascii=False, indent=4),
                                 content_type=req_neg.use_response_type + "; charset=utf8")
         else:

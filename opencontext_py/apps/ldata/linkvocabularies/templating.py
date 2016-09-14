@@ -19,23 +19,126 @@ from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 
 
-# Help organize the code, with a class to make templating easier
 class TemplateVocab():
     """ This class makes an object useful displaying hierarchies
         of items in vocabularies
     """
+    
+    VERSION_CONTROL_LINKS = {
+        'http://opencontext.org/vocabularies/dinaa': \
+        'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/dinaa-alt.owl',
+        'http://opencontext.org/vocabularies/oc-general': \
+        'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/oc-general.owl'
+    }
 
     def __init__(self):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.uri = None
+        self.uuid = False
         self.vocab_uri = None
+        self.json_obj = LastUpdatedOrderedDict()
+        self.entity = None  # entity object for the concept or vocabulary item
+        self.vocab_entity = None  # entity object for the parent vocabulary
+        self.project_uuid = None
+        self.version_control_uri = False  # uri to vocab version control
         self.default_comment = None
         self.comment = None
-        self.top_classes = []
-        self.top_properties = []
+        self.root_classes = []
+        self.root_properties = []
+        self.json_tree = False
         self.parents = []
         self.children = []
+    
+    def create_template_for_entity(self, entity):
+        """ creates a template for diplaying a
+            concept or vocabulary entity, either in
+            HTML or in JSON
+        """
+        self.entity = entity
+        self.uri = entity.uri
+        self.vocab_uri = entity.vocab_uri
+        self.project_uuid = entity.project_uuid
+        # add the version control uri
+        for vocab_key, version_uri in self.VERSION_CONTROL_LINKS.items():
+            if vocab_key == self.vocab_uri:
+                self.version_control_uri = version_uri
+                break
+        self.get_comments()  # always get comments for the entity
+        if self.uri == self.vocab_uri:
+            # we have a vocabulary so do vocab methods
+            self.vocab_entity = entity
+            self.get_root_entities()
+        else:
+            # we have a concept in a vocabulary, so do
+            # concept methods
+            ent_voc = Entity()
+            vocab_found = ent_voc.dereference(self.vocab_uri)
+            if vocab_found:
+                # found the parent vocab entity
+                self.vocab_entity = ent_voc
+            self.get_entity_parents()
+            self.get_entity_children()
+    
+    def make_json_for_html(self):
+        """ makes JSON strings for embedding in HTML """
+        root_obj = []
+        if len(self.root_classes) > 0:
+            # we have root level categories
+            root_dict = LastUpdatedOrderedDict()
+            root_dict['root'] = 'Top-Level Classes / Categories'
+            root_dict['children'] = self.root_classes
+            root_dict['more'] = True
+            root_obj.append(root_dict)
+        if len(self.root_properties) > 0:
+            # we have root level properties
+            root_dict = LastUpdatedOrderedDict()
+            root_dict['root'] = 'Top-Level Properties / Relations'
+            root_dict['children'] = self.root_properties
+            root_dict['more'] = True
+            root_obj.append(root_dict)
+        if len(self.children) > 0:
+            # we have concpet children
+            root_dict = LastUpdatedOrderedDict()
+            if self.entity.entity_type == 'class':    
+                root_dict['root'] = 'Sub-categories for ' + self.entity.label
+            else:
+                root_dict['root'] = 'Sub-properties for ' + self.entity.label
+            root_dict['children'] = self.children
+            root_dict['more'] = True
+            root_obj.append(root_dict)
+        if len(root_obj) > 0:
+            # we items to display for the json_tree  
+            self.json_tree = json.dumps(root_obj,
+                                        ensure_ascii=False,
+                                        indent=4)
+    
+    def make_json_obj(self, children_only=False):
+        """ makes the json object for the current concept
+            or vocabulary entity
+        """
+        if self.entity is not None:
+            self.json_obj['id'] = self.entity.uri
+            self.json_obj['label'] = self.entity.label
+            self.json_obj['slug'] = self.entity.slug
+            self.json_obj['href'] = self.make_local_url(self.entity.uri)
+            self.json_obj['rdfs:comment'] = self.comment
+            self.json_obj['vocab_uri'] = self.vocab_uri
+            self.json_obj['version_control'] = self.version_control_uri
+            if self.uri == self.vocab_uri:
+                # we have a vocabulary so add vocab attributes
+                self.json_obj['entity_type'] = 'vocabulary'
+                self.json_obj['vocab_label'] = self.entity.label
+                self.json_obj['root_classes'] = self.root_classes
+                self.json_obj['root_properties'] = self.root_properties
+            else:
+                # we have a concept entity (from a vocabulary)
+                self.json_obj['entity_type'] = self.entity.entity_type
+                if self.vocab_entity is not None:
+                    self.json_obj['vocab_label'] = self.vocab_entity.label
+                self.json_obj['parents'] = self.parents
+                self.json_obj['children'] = self.children
+        return self.json_obj
     
     def get_entity_parents(self):
         """ gets the parents of a given entity """
@@ -57,6 +160,8 @@ class TemplateVocab():
             raw_children = self.get_uri_children(self.uri)
             for child in raw_children:
                 child['children'] = self.get_uri_children(child['id'])
+                if len(child['children']) > 0:
+                    child['more'] = True;
                 self.children.append(child)
     
     def get_uri_children(self, uri):
@@ -104,21 +209,21 @@ class TemplateVocab():
                 lang = Languages()
                 self.default_comment = lang.get_default_value_str(self.comment)
         
-    def get_top_entities(self):
+    def get_root_entities(self):
         """ gets top level entities that are not
             part of parent classes or properties
         """
         if isinstance(self.vocab_uri, str):
             class_ents = self.get_entities('class')
             prop_ents = self.get_entities('property')
-            self.top_classes = self.make_top_entity_list(class_ents)
-            self.top_properties = self.make_top_entity_list(prop_ents)
+            self.root_classes = self.make_root_entity_list(class_ents)
+            self.root_properties = self.make_root_entity_list(prop_ents)
     
-    def make_top_entity_list(self, entity_list):
+    def make_root_entity_list(self, entity_list):
         """ makes a list of entities that
             are not children of other items in the hierarchy
         """
-        top_entities = []
+        root_entities = []
         for act_ent in entity_list:
             lr = LinkRecursion()
             parents = lr.get_jsonldish_entity_parents(act_ent.uri, False)
@@ -129,8 +234,10 @@ class TemplateVocab():
                 ent_dict['slug'] = act_ent.slug
                 ent_dict['href'] = self.make_local_url(act_ent.uri)
                 ent_dict['children'] = self.get_uri_children(act_ent.uri)
-                top_entities.append(ent_dict)
-        return top_entities
+                if len(ent_dict['children']) > 0:
+                    ent_dict['more'] = True;
+                root_entities.append(ent_dict)
+        return root_entities
     
     def get_entities(self, entity_types):
         """ gets entities in the vocabulary """
