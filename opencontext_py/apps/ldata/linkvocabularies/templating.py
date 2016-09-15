@@ -28,6 +28,8 @@ class TemplateVocab():
         'http://opencontext.org/vocabularies/dinaa': \
         'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/dinaa-alt.owl',
         'http://opencontext.org/vocabularies/oc-general': \
+        'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/oc-general.owl',
+        'http://opencontext.org/vocabularies/oc-general/': \
         'https://github.com/ekansa/oc-ontologies/blob/master/vocabularies/oc-general.owl'
     }
 

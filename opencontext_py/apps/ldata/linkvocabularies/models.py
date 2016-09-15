@@ -26,6 +26,14 @@ lv.load_parse_vocabulary(lv.vocab_file_uri)
 lv.update_entity_types()
 lv.save_entity_comments()
 
+from opencontext_py.apps.ldata.linkvocabularies.models import LinkVocabulary
+lv = LinkVocabulary()
+lv.vocabulary_uri = 'http://opencontext.org/vocabularies/oc-general'
+lv.vocab_file_uri = 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/oc-general.owl'
+lv.load_parse_vocabulary(lv.vocab_file_uri)
+lv.update_entity_types()
+lv.save_entity_comments()
+
     """
     SORT_HIERARCHY_DEPTH = 10  # depth of the hiearchy for sorting purposes
 
