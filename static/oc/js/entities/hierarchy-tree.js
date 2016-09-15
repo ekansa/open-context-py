@@ -43,12 +43,17 @@ function hierarchy(parent_id, act_dom_id) {
 	 this.exec_primary_link = 'edit';
 	 //this.supplemental_links = ['view'];
 	 this.supplemental_links = [];
+      this.vocab_ontology = false;  // are we doing a local vocabulary or ontology?
 	 this.do_description_tree = function(){
 		 // if doing a desciption tree, change the request URL
 		 this.request_url = this.make_url("/entities/description-children/");
 	 }
 	 this.do_entity_hierarchy_tree = function(){
 			this.request_url = this.make_url("/entities/hierarchy-children/"); 
+	 }
+      this.do_vocab_hierarchy_tree = function(){
+               this.vocab_ontology = true;
+			this.request_url = this.make_url("/vocabularies/"); 
 	 }
 	 this.get_data = function(){
 		 // ajax request to get the data for this hiearchy
@@ -132,22 +137,55 @@ function hierarchy(parent_id, act_dom_id) {
 		  }
 	 }
 	 this.make_data_html = function(data){
-		 var html = [];
-		 for (var i = 0, length = data.length; i < length; i++) {
-			 //html.push('<ul class="list-group" style="margin-bottom:5px">');
-			 if ('id' in data) {
-				 var item_html = this.make_item_linking_html(data.id, data.label, data.item_type);
-				 html.push(item_html);
-			 }
-			 html.push('<ul class="list-unstyled">');
-			 var children_html = this.make_children_html(data[i].children, i);
-			 html.push(children_html);
-			 html.push('</ul>');
+          if ('id' in data){
+               // the data is not a list, but a single dictionary object
+               var html = this.make_nonlist_data_html(data);
+          }
+		else{
+               // the data is in a list, so iterate through the list
+               var html = [];
+               for (var i = 0, length = data.length; i < length; i++) {
+                    //html.push('<ul class="list-group" style="margin-bottom:5px">');
+                    var rec = data[i];
+                    if ('id' in rec || 'href' in rec) {
+                        if (this.vocab_ontology){
+                             // use the href property for linking vocab concepts
+                             var item_html = this.make_item_linking_html(rec.href, rec.label, false);
+                             html.push(item_html);
+                        }
+                        else{
+                             // use the item ID for linking
+                             var item_html = this.make_item_linking_html(rec.id, rec.label, rec.item_type);
+                        }
+                    }
+                    if('root' in rec && this.vocab_ontology){
+                        var item_html = '<h5>' + rec.root + '</h5>';
+                        html.push(item_html);
+                    }
+                    if('children' in rec){
+                        html.push('<ul class="list-unstyled">');
+                        var children_html = this.make_children_html(rec.children, i);
+                        html.push(children_html);
+                        html.push('</ul>');
+                    }
+               }
+          }
+		return html.join('\n');
+	 }
+      this.make_nonlist_data_html = function(data){
+          // makes a list of html for data that's not in a list
+          var html_list = [];
+          if('children' in data){
+               html_list.push('<ul class="list-unstyled">');
+               var children_html = this.make_children_html(data.children, 0);
+               html_list.push(children_html);
+               html_list.push('</ul>');
 		 }
-		 return html.join('\n');
+		 return html_list;
 	 }
 	 this.make_children_html = function(children, node_i){
 		 var html = [];
+           
 		 var class_list = [];
 		 if (this.class_subdivide) {
 			 // sub divide children into lists of seperate classes
@@ -208,14 +246,26 @@ function hierarchy(parent_id, act_dom_id) {
 			 }
 			 if (child_has_children) {
 				 //this child has children so make a loading carrot for it.
-				 var tog_html = this.make_load_more_html(child.id, node_i, i);
+                     if (this.vocab_ontology){
+                         var slug_id = child.slug + '.json';
+                         var tog_html = this.make_load_more_html(slug_id, node_i, i);
+                     }
+                     else{
+                         var tog_html = this.make_load_more_html(child.id, node_i, i);    
+                     }
 				 var children_area_html = this.make_more_div_html(node_i, i);
 			 }
 			 else{
 				 var tog_html = '<span class="glyphicon glyphicon-file" aria-hidden="true"></span>';
 				 var children_area_html = '';
 			 }
-			 var item_html = this.make_item_linking_html(child.id, child.label, child.item_type);
+                if (this.vocab_ontology){
+                    // use the href property for linking vocab concepts
+                    var item_html = this.make_item_linking_html(child.href, child.label, false);
+                }
+                else{
+                    var item_html = this.make_item_linking_html(child.id, child.label, child.item_type);
+                }
 			 html.push('<li>');
 			 html.push(tog_html);
 			 html.push(item_html);
@@ -226,8 +276,8 @@ function hierarchy(parent_id, act_dom_id) {
 	 }
 	 this.make_load_more_html = function(item_id, node_i, index){
 		 // makes html for the 
-		 var dom_id = this.object_prefix + '-exp-' + node_i + '-' +index;
-		 var more_div_dom_id = this.object_prefix + '-more-' + node_i + '-' +index;
+		 var dom_id = this.object_prefix + '-exp-' + node_i + '-' + index;
+		 var more_div_dom_id = this.object_prefix + '-more-' + node_i + '-' + index;
 		 var tog_html = [
 			 '<span id="' + dom_id + '">',
 			 '<a title="Click to load more data and expand" role="button" ',
@@ -276,7 +326,12 @@ function hierarchy(parent_id, act_dom_id) {
 				}
 				else{
 					var title = 'View in new window';
-					var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+                         if (this.vocab_ontology){
+                              var href = id;
+                         }
+                         else{
+                              var href = base_url + '/' + item_type + '/' + encodeURIComponent(id);
+                         }
 				}
 				item_html += 'title="' + title + '" href="' + href + '" >';
 		  }
@@ -291,7 +346,7 @@ function hierarchy(parent_id, act_dom_id) {
 				item_html += 'title="' + this.exec_primary_title + '" >';
 		  }
 		  item_html += label + '</a>';
-		  if (this.exec_primary_onclick == false && id.indexOf('/') > -1) {
+		  if (this.exec_primary_onclick == false && id.indexOf('/') > -1 && !this.vocab_ontology) {
 				item_html = label;
 		  }
 		  // add supplemental links, if configured for supplmental links.
@@ -339,11 +394,15 @@ function load_expand(tree_key, parent_id, act_dom_id, button_dom_id){
 				expanded_tree.exec_primary_title = hierarchy_objs[tree_key].exec_primary_title;
 				expanded_tree.exec_primary_onclick = hierarchy_objs[tree_key].exec_primary_onclick;
 				expanded_tree.exec_primary_passed_val = hierarchy_objs[tree_key].exec_primary_passed_val;
+                    expanded_tree.exec_primary_link = hierarchy_objs[tree_key].exec_primary_link;
+                    expanded_tree.vocab_ontology = hierarchy_objs[tree_key].vocab_ontology;
+false
 		  }
 		  expanded_tree.button_dom_id = button_dom_id;
 		  expanded_tree.get_data();
 		  var tree_key = expanded_tree.object_prefix; 
 		  hierarchy_objs[tree_key] = expanded_tree;
+            // console.log(hierarchy_objs);
 	 }
 }
 

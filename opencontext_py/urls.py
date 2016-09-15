@@ -125,6 +125,7 @@ urlpatterns = patterns('',
                        url(r'^tables/(?P<table_id>\S+)', OCtableViews.html_view, name='tables_html'),
                        url(r'^tables', OCtableViews.index_view, name='tables_index'),
                        # Vocabulary views for viewing controlled vocab + ontology entities
+                       url(r'^vocabularies/(?P<identifier>\S+).json', vocabViews.json_view, name='vocabularies_json'),
                        url(r'^vocabularies/(?P<identifier>\S+)', vocabViews.html_view, name='vocabularies_html'),
                        url(r'^vocabularies', vocabViews.index_view, name='vocabularies_index'),
                        # --------------------------
