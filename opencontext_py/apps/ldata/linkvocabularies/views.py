@@ -40,8 +40,8 @@ def index_view(request):
                             status=415)
 
 
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
 def html_view(request, identifier):
     rp = RootPath()
     base_url = rp.get_baseurl()
@@ -97,8 +97,8 @@ def html_view(request, identifier):
         raise Http404
 
 
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
 def json_view(request, identifier):
     rp = RootPath()
     base_url = rp.get_baseurl()
