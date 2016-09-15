@@ -76,7 +76,7 @@ pelagios.g.serialize(format='turtle')
                                          oa_item.title)
                     self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('foaf', 'homepage'),
-                                         settings.CANONICAL_HOST)
+                                         oa_item.uri)
                     if isinstance(oa_item.description, str):
                         # add description
                         self.make_add_triple(oa_item.uri,
@@ -111,7 +111,7 @@ pelagios.g.serialize(format='turtle')
                                                  ass['title'])
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('foaf', 'homepage'),
-                                                 settings.CANONICAL_HOST)
+                                                 ass['uri'])
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('dcterms', 'description'),
                                                  None,
