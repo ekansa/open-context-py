@@ -7,781 +7,103 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574> a <void:Dataset> ;
-    dcterms:description "Archaeology of an Early Bronze through Islamic settlement south of Amman, Jordan" ;
-    dcterms:issued "2011-08-05" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Dhiban Excavation and Development Project" ;
-    void:dataDump <http://opencontext.org/pelagios/data/01D080DF-2F6B-4F59-BCF0-87543AC89574> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC> a <void:Dataset> ;
-    dcterms:description "Residue analysis of lipids from various ceramic vessel types in late prehistoric China" ;
-    dcterms:modified "2015-12-09" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Patterns of Consumption: Ceramic Residue Analysis at Liangchengzhen, Shandong, China" ;
-    void:dataDump <http://opencontext.org/pelagios/data/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/02594C48-7497-40D7-11AE-AB942DC513B8> a <void:Dataset> ;
-    dcterms:description "Faunal Data from Area TP of Çatalhöyük, Turkey" ;
-    dcterms:issued "2013-03-02" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Çatalhöyük Area TP Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/02594C48-7497-40D7-11AE-AB942DC513B8> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/03828ABD-2B37-4B91-A592-4266B3DB2383> a <void:Dataset> ;
-    dcterms:description "A collection of presentations, fliers, correspondence, notes, blog posts, photos, and other data to supplement the book 'Sushi in Cortez'" ;
-    dcterms:modified "2015-06-11" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Essays from the Edge of Academia: Supplements to 'Sushi in Cortez'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/03828ABD-2B37-4B91-A592-4266B3DB2383> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/0404C6DC-A467-421E-47B8-D68F7090FBCC> a <void:Dataset> ;
-    dcterms:description """Conjunto de datos métricos de huesos de camélidos sudamericanos reunidos en una base de datos colectivamente construida
-""" ;
-    dcterms:issued "2013-10-16" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Osteometric Database of South American Camelids" ;
-    void:dataDump <http://opencontext.org/pelagios/data/0404C6DC-A467-421E-47B8-D68F7090FBCC> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/05F5B702-2967-49B1-FEAA-9B2AA0184513> a <void:Dataset> ;
-    dcterms:description "Faunal data from the site of Köşk Höyük, Turkey, recorded between 2004-2011 in the excavation field house and the Niğde Museum" ;
-    dcterms:issued "2013-05-17" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Köşk Höyük Faunal Data" ;
-    void:dataDump <http://opencontext.org/pelagios/data/05F5B702-2967-49B1-FEAA-9B2AA0184513> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E> a <void:Dataset> ;
-    dcterms:description "Archaeological site information managed and maintained by the South Carolina Institute of Archaeology and Anthropology (SCIAA)" ;
-    dcterms:issued "2014-01-21" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "South Carolina SHPO" ;
-    void:dataDump <http://opencontext.org/pelagios/data/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/1816A043-92E2-471D-A23D-AAC58695D0D3> a <void:Dataset> ;
-    dcterms:description """Bos primigenius and Bos taurus biometrical and ageing data from a number of European sites dating from the Middle Pleistocene to the Medieval period
-""" ;
-    dcterms:issued "2016-04-03" ;
-    dcterms:modified "2015-06-11" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Biometrical Database of European Aurochs and Domestic Cattle" ;
-    void:dataDump <http://opencontext.org/pelagios/data/1816A043-92E2-471D-A23D-AAC58695D0D3> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1> a <void:Dataset> ;
-    dcterms:description "Faunal data from Neolithic Çatalhöyük and Chalcolithic Çatalhöyük West, Konya, Turkey." ;
-    dcterms:issued "2013-02-13" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Çatalhöyük Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/1B426F7C-99EC-4322-4069-E8DBD927CCF1> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/1ae2a5d9-5515-4796-92e3-52400293f8e0> a <void:Dataset> ;
-    dcterms:description "Data used in an analysis of the paleoethnobotanical material from Khirbat al-Mudayana al-'Aliya, central Jordan " ;
-    dcterms:modified "2016-04-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Paleoethnobotany at Early Iron Age Khirbat al-Mudayana al-'Aliya (KMA)" ;
-    void:dataDump <http://opencontext.org/pelagios/data/1ae2a5d9-5515-4796-92e3-52400293f8e0> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D> a <void:Dataset> ;
-    dcterms:description "Datasets and media with 'The Archaeology of Mesoamerican Animals' (2015, Lockwood Press)" ;
-    dcterms:issued "2013-09-16" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "The Archaeology of Mesoamerican Animals" ;
-    void:dataDump <http://opencontext.org/pelagios/data/21A79037-01EA-4CBB-7048-6AA054FB4A0D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/22f3e357-c900-4ad5-9d91-248e68cfeba6> a <void:Dataset> ;
-    dcterms:description "There are a total of 113 sites from Greece, Turkey, Black Sea, Middle East and Europe all marked and geocoded." ;
-    dcterms:modified "2015-08-06" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "The Middle and Late Byzantine Glazed Fine Wares" ;
-    void:dataDump <http://opencontext.org/pelagios/data/22f3e357-c900-4ad5-9d91-248e68cfeba6> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/23696274-1f6d-44ca-9697-36b9d5e3fe5d> a <void:Dataset> ;
-    dcterms:description """Aboriginal archaeological sites, Nepean River and contiguous areas in New South Wales, Australia
-
-""" ;
-    dcterms:issued "2016-03-30" ;
-    dcterms:modified "2016-02-15" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Traces in the Lost Landscape" ;
-    void:dataDump <http://opencontext.org/pelagios/data/23696274-1f6d-44ca-9697-36b9d5e3fe5d> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7> a <void:Dataset> ;
-    dcterms:description """Tracing the Spread and Development of Oracle Bone Divination in Ancient East Asia
-""" ;
-    dcterms:issued "2016-04-04" ;
-    dcterms:modified "2016-04-03" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Oracle Bones in East Asia" ;
-    void:dataDump <http://opencontext.org/pelagios/data/27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D> a <void:Dataset> ;
-    dcterms:description "Survey exploring Roman provincial acculturation through the lens of Rough Cilician material and cultural remains" ;
-    dcterms:issued "2012-04-28" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Rough Cilicia" ;
-    void:dataDump <http://opencontext.org/pelagios/data/295B5BF4-0F44-4698-80CD-7A39CB6F133D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/2c337d0f-7906-4f8c-aeff-cbb65989d284> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Archaeological Animals of the Southern Maya Highlands: Zooarchaeology of Kaminaljuyu'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/2c337d0f-7906-4f8c-aeff-cbb65989d284> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3> a <void:Dataset> ;
-    dcterms:description "Excavations of a Late Neolithic site in south-central Turkey" ;
-    dcterms:issued "2006-02-28" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Domuztepe Excavations" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/334853c8-320e-4bdc-96b3-f696171b5a58> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Preliminary Analysis of the Zooarchaeology of the San Cristóbal Site, Nicaragua: The Bounty of Mohammed’s Paradise'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/334853c8-320e-4bdc-96b3-f696171b5a58> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E> a <void:Dataset> ;
-    dcterms:description "The Upper Tigris Archaeological Research Project’s Excavations at Kenan Tepe in Southeastern Turkey" ;
-    dcterms:issued "2012-02-27" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Kenan Tepe" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3DE4CD9C-259E-4C14-9B03-8B10454BA66E> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2> a <void:Dataset> ;
-    dcterms:description "Pedestrian survey, geophysical prospecting, and excavation near Pyla, on the southern coast of Cyprus" ;
-    dcterms:issued "2013-10-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Pyla-Koutsopetria Archaeological Project" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3F6DCD13-A476-488E-ED10-47D25513FCB2> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10> a <void:Dataset> ;
-    dcterms:description "Collections maintained by the San Diego Archaeological Center" ;
-    dcterms:issued "2010-02-01" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "San Diego Archaeological Center" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3FAAA477-5572-4B05-8DC1-CA264FE1FC10> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3d9b9ce0-47ee-40cb-ae94-046a056eb8b1> a <void:Dataset> ;
-    dcterms:description "Intensive archaeological survey data from the lower valley of the Eg River in Northern Mongolia" ;
-    dcterms:modified "2016-08-12" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Egiin Gol Survey" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3d9b9ce0-47ee-40cb-ae94-046a056eb8b1> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/3e59f952-ccaa-47b4-962f-0bc6aaa052d2> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'The Zooarchaeology of Olmec and epi-Olmec Foodways along Mexico’s Gulf Coast'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/3e59f952-ccaa-47b4-962f-0bc6aaa052d2> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/416A274C-CF88-4471-3E31-93DB825E9E4A> a <void:Dataset> ;
-    dcterms:description "Publication and integration of North American archaeological site file records" ;
-    dcterms:issued "2015-10-21" ;
-    dcterms:modified "2015-10-21" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Index of North American Archaeology (DINAA)" ;
-    void:dataDump <http://opencontext.org/pelagios/data/416A274C-CF88-4471-3E31-93DB825E9E4A> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9> a <void:Dataset> ;
-    dcterms:description "Zooarchaeology data for Neolithic Menteşe Höyük, a site in NW Anatolia" ;
-    dcterms:issued "2014-05-12" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Faunal Data from Neolithic Menteşe" ;
-    void:dataDump <http://opencontext.org/pelagios/data/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5> a <void:Dataset> ;
-    dcterms:description "Zooarchaeological observations from Prehistoric and Achaemenid levels at Chogha Mish, Iran." ;
-    dcterms:issued "2010-08-24" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Chogha Mish Fauna" ;
-    void:dataDump <http://opencontext.org/pelagios/data/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA> a <void:Dataset> ;
-    dcterms:description "Element composition of Asian Stoneware Jars from the 9th - 19th centuries CE" ;
-    dcterms:issued "2013-03-05" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Asian Stoneware Jars" ;
-    void:dataDump <http://opencontext.org/pelagios/data/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/4B5721E9-2BB3-423F-5D04-1B948FA65FAB> a <void:Dataset> ;
-    dcterms:description "Archaeological site information managed and maintained by the Missouri State Historical Preservation Office" ;
-    dcterms:issued "2014-02-23" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Missouri Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/4B5721E9-2BB3-423F-5D04-1B948FA65FAB> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Pre-Columbian Exploitation of Birds Around Panama Bay'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D> a <void:Dataset> ;
-    dcterms:description "West Stow, Suffolk County, UK Rescue excavations conducted at the site in advance of the construction of a new Visitor Centre" ;
-    dcterms:issued "2013-02-23" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "West Stow West Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/59E7BFBC-2557-4FE4-FC14-284ED10D903D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49> a <void:Dataset> ;
-    dcterms:description "Georgia State Archaeological Site Files published as part of the DINAA Project" ;
-    dcterms:issued "2013-10-15" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Georgia Archaeological Site File (GASF)" ;
-    void:dataDump <http://opencontext.org/pelagios/data/64013C33-4039-46C9-609A-A758CE51CA49> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/646b7034-07b7-4971-8d89-ebe37dda4cd2> a <void:Dataset> ;
-    dcterms:description "Digital Companion to \"The Context and Biometry of Iron Age II and Hellenistic Period Dog 'Burials' from Tell Gezer Compared to those from Other Sites in the Region\"" ;
-    dcterms:issued "2016-06-17" ;
-    dcterms:modified "2016-06-17" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Biometry of Iron Age II and Hellenistic Period Dog 'Burials' from Tell Gezer and Other Sites" ;
-    void:dataDump <http://opencontext.org/pelagios/data/646b7034-07b7-4971-8d89-ebe37dda4cd2> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/6eebf118-1c43-409e-8a47-307380d5d261> a <void:Dataset> ;
-    dcterms:description "Anthropomorphic figurines known from Halaf sites, northern Mesopotamia. Data from studying objects in museums, site depots and publications." ;
-    dcterms:modified "2016-08-18" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Halaf Figurines Project: A Catalog of Figurines Excavated from Sixth Millennium Northern Mesopotamian Sites in Syria and Turkey" ;
-    void:dataDump <http://opencontext.org/pelagios/data/6eebf118-1c43-409e-8a47-307380d5d261> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5> a <void:Dataset> ;
-    dcterms:description "Changes in hunter-gatherer lifestyles that may have led to sedentary agricultural economies in SW Anatolia" ;
-    dcterms:issued "2013-02-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Zooarchaeology of Karain Cave B" ;
-    void:dataDump <http://opencontext.org/pelagios/data/731B0670-CE2A-414A-8EF6-9C050A1C60F5> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E> a <void:Dataset> ;
-    dcterms:description "Zooarchaeology of Neolithic Phases at Barçın Höyük, Turkey" ;
-    dcterms:issued "2013-02-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Barçın Höyük Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/74749949-4FD4-4C3E-C830-5AA75703E08E> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> a <void:Dataset> ;
-    dcterms:description "" ;
-    dcterms:modified "2015-06-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Hybrid Objects and Intercultural" ;
-    void:dataDump <http://opencontext.org/pelagios/data/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/77a8ecc1-25ba-4b5e-9783-d667d008538b> a <void:Dataset> ;
-    dcterms:description "This dataset is on the glazed fine ware finds in 113 excavated sites from Greece, Turkey, the Middle East, and Europe." ;
-    dcterms:modified "2015-08-06" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Middle and Late Byzantine Glazed Fine Wares" ;
-    void:dataDump <http://opencontext.org/pelagios/data/77a8ecc1-25ba-4b5e-9783-d667d008538b> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/781abb20-45c7-4213-8cd3-596a29457346> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Inferring the Archaeological Context Through Taphonomy: The Use of the White-Tailed Deer (Odocoileus virginianus) in Chinikihá, Chiapas'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/781abb20-45c7-4213-8cd3-596a29457346> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/78affbdc-4ea7-4caf-89e5-c3bcea21e46d> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Animal Consumption at the Monumental Center of Mayapán'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/78affbdc-4ea7-4caf-89e5-c3bcea21e46d> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/81204AF8-127C-4686-E9B0-1202C3A47959> a <void:Dataset> ;
-    dcterms:description "Florida State Archaeological Site Files published as part of the DINAA Project" ;
-    dcterms:issued "2013-11-13" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Florida Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/81204AF8-127C-4686-E9B0-1202C3A47959> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8492AEC3-E406-44C6-03CA-2BF280D8F5B0> a <void:Dataset> ;
-    dcterms:description "Archaeological site files maintained by the Iowa Office of the State Archaeologist (OSA)" ;
-    dcterms:issued "2014-03-16" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Iowa Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8492AEC3-E406-44C6-03CA-2BF280D8F5B0> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8859aa10-c0c4-42ad-993b-cc9d79800d8e> a <void:Dataset> ;
-    dcterms:description "A collection of images from the 2013 field season of the Institute of Fine Arts, New York University Abydos Expedition. " ;
-    dcterms:modified "2015-08-06" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Images Documenting Looting in the North Cemetery at Abydos, Egypt" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8859aa10-c0c4-42ad-993b-cc9d79800d8e> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A> a <void:Dataset> ;
-    dcterms:description "Animal exploitation patterns in SW Anatolia during the Epipaleolithic from assemblages excavated from a finely-stratified cave" ;
-    dcterms:issued "2013-02-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Zooarchaeology of Öküzini Cave" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8894EEC0-DC96-4304-1EFC-4572FD91717A> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32> a <void:Dataset> ;
-    dcterms:description "Physical measurements and photographs of weights (and possible weights) from a single site, multiple excavations from 1889-1972." ;
-    dcterms:issued "2013-10-08" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Balance Pan Weights from Nippur" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8F947319-3C69-4847-B7A2-09E00ED90B32> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8ae150fc-50f1-4e60-9dd3-df594b02ddd4> a <void:Dataset> ;
-    dcterms:description "'Content related to a chapter in The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Late Nineteenth and Early Twentieth-Century Animal Use by San Pedro Maya and British Populations at Holotunich, Belize'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8ae150fc-50f1-4e60-9dd3-df594b02ddd4> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/8d6d255b-bb48-42a8-a095-3c2eab42eb2e> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Molluscs as Food in a Prolific Coastal Environment: Evidence for Selective Foraging and Taphonomy from Cueva de los Vampiros (Central Panama)'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/8d6d255b-bb48-42a8-a095-3c2eab42eb2e> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/99BDB878-6411-44F8-2D7B-A99384A6CA21> a <void:Dataset> ;
-    dcterms:description "Zooarchaeology of a portion of the vertebrate remains from Ulucak Höyük's Neolithic layers" ;
-    dcterms:issued "2013-08-11" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Zooarchaeology of Neolithic Ulucak" ;
-    void:dataDump <http://opencontext.org/pelagios/data/99BDB878-6411-44F8-2D7B-A99384A6CA21> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749> a <void:Dataset> ;
-    dcterms:description "Analysis of groundstone finds from the Dove Mountain Project in the Tucson Basin" ;
-    dcterms:issued "2010-04-03" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Dove Mountain Groundstone" ;
-    void:dataDump <http://opencontext.org/pelagios/data/A3CBADB6-6CD4-4099-9FE2-A33757EAB749> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> a <void:Dataset> ;
-    dcterms:description "Brown University Excavations at the Great Temple of Petra, Jordan" ;
-    dcterms:issued "2007-11-11" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Petra Great Temple Excavations" ;
-    void:dataDump <http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/ABABD13C-A69F-499E-CA7F-5118F3684E4D> a <void:Dataset> ;
-    dcterms:description "NAA data to firmly establish the geological provenience of Cypriot ceramics" ;
-    dcterms:issued "2013-09-21" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Ceramics, Trade, Provenience and Geology: Cyprus in the Late Bronze Age" ;
-    void:dataDump <http://opencontext.org/pelagios/data/ABABD13C-A69F-499E-CA7F-5118F3684E4D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E> a <void:Dataset> ;
-    dcterms:description "State of Virginia Archaeological Site Files" ;
-    dcterms:issued "2015-10-21" ;
-    dcterms:modified "2015-10-21" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Virginia Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D> a <void:Dataset> ;
-    dcterms:description """Mollusk Shells in Troia, Yenibademli, and Ulucak:
-An Archaeomalacological Approach to
-Environment and Economy in the Aegean""" ;
-    dcterms:issued "2010-01-10" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Aegean Archaeomalacology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/B1DAC335-4DC6-4A57-622E-75BF28BA598D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6> a <void:Dataset> ;
-    dcterms:description "Tell en-Nasbeh Collection at the Badè Museum of Biblical Archaeology" ;
-    dcterms:issued "2010-02-16" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Bade Museum" ;
-    void:dataDump <http://opencontext.org/pelagios/data/B4345F6A-F926-4062-144E-3FBC175CC7B6> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510> a <void:Dataset> ;
-    dcterms:description "Animal Bone Analysis in medieval Emden, Germany" ;
-    dcterms:issued "2010-10-29" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Zooarchaeology of Medieval Emden" ;
-    void:dataDump <http://opencontext.org/pelagios/data/B7047162-6906-4A5E-13C0-B5B86A108510> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452> a <void:Dataset> ;
-    dcterms:description "Archaeological site files maintained by the Illinois State Museum (ISM)" ;
-    dcterms:issued "2014-03-15" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Illinois Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/BC90D462-6639-4087-8527-6BB9E528E07D> a <void:Dataset> ;
-    dcterms:description "Zooarchaeology of Late Neolithic - Early Bronze Age Çukuriçi Höyük, Turkey" ;
-    dcterms:issued "2013-02-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Çukuriçi Höyük Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/BC90D462-6639-4087-8527-6BB9E528E07D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7> a <void:Dataset> ;
-    dcterms:description "Ongoing investigations of El Presidio de San Francisco and other archaeological resources at the Presidio of San Francisco" ;
-    dcterms:issued "2010-01-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Presidio of San Francisco" ;
-    void:dataDump <http://opencontext.org/pelagios/data/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/CBB6B9F7-500C-4DDD-71AA-4D5E5B96CDBB> a <void:Dataset> ;
-    dcterms:description "Investigations of an Early Iron Age site in a semi-arid zone in west-central Jordan" ;
-    dcterms:issued "2010-06-08" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Khirbat al-Mudayna al-Aliya" ;
-    void:dataDump <http://opencontext.org/pelagios/data/CBB6B9F7-500C-4DDD-71AA-4D5E5B96CDBB> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846> a <void:Dataset> ;
-    dcterms:description "Faunal data from Erbaba Höyük, Turkey, supplemented by additional data from Suberde" ;
-    dcterms:issued "2013-05-17" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Erbaba Höyük and Suberde Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/CDD40C27-62ED-4966-AF3D-E781DD0D4846> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5> a <void:Dataset> ;
-    dcterms:description "Lead isotope and other analyses of metal objects from the Near East and Mediterranean (1500 - 500 BCE)" ;
-    dcterms:issued "2012-09-19" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Hacksilber Project" ;
-    void:dataDump <http://opencontext.org/pelagios/data/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/CF6E1364-D6EF-4042-B726-82CFB73F7C9D> a <void:Dataset> ;
-    dcterms:description "Finds catalog from Mikt’sqaq Angayuk, an historic Alutiiq settlement of the early 19th century, Alaska" ;
-    dcterms:issued "2013-03-07" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Mikt’sqaq Angayuk Finds" ;
-    void:dataDump <http://opencontext.org/pelagios/data/CF6E1364-D6EF-4042-B726-82CFB73F7C9D> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/D297CD29-50CA-4B2C-4A07-498ADF3AF487> a <void:Dataset> ;
-    dcterms:description "This dataset contains faunal data recorded by Hijlke Buitenhuis from the site of Ilıpınar, Turkey" ;
-    dcterms:issued "2013-08-12" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Ilıpınar Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/D297CD29-50CA-4B2C-4A07-498ADF3AF487> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677> a <void:Dataset> ;
-    dcterms:description "Archaeological site files maintained by the Indiana Department of Natural Resources, Division of Historic Preservation and Archaeology (DNR-DHPA)" ;
-    dcterms:issued "2014-02-05" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Indiana Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/D42FC0EB-61B0-4937-700E-4EFEAB008677> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63> a <void:Dataset> ;
-    dcterms:description "Zooarchaeology of Tel-e Malyan" ;
-    dcterms:issued "2011-06-18" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Tal-e Malyan Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F> a <void:Dataset> ;
-    dcterms:description "Poggio Civitate Excavation Project" ;
-    dcterms:issued "2012-07-06" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Murlo" ;
-    void:dataDump <http://opencontext.org/pelagios/data/DF043419-F23B-41DA-7E4D-EE52AF22F92F> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/DTrev1PRJ0000000014> a <void:Dataset> ;
-    dcterms:description "Epidemiology and Etiology of Corneal Ulcers in South India" ;
-    dcterms:issued "2006-07-11" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Corneal Ulceration in South East Asia" ;
-    void:dataDump <http://opencontext.org/pelagios/data/DTrev1PRJ0000000014> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/E10CD7DB-C567-4F97-A8B0-605D31A1F919> a <void:Dataset> ;
-    dcterms:description "Data and images related to zooarchaeology and cultural ecology of traditional ranchers and pastoralists of west, central Argentina" ;
-    dcterms:modified "2015-06-11" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Zooarchaeology and Cultural Ecology of Puesteros in Southern Mendoza,   Argentina" ;
-    void:dataDump <http://opencontext.org/pelagios/data/E10CD7DB-C567-4F97-A8B0-605D31A1F919> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7> a <void:Dataset> ;
-    dcterms:description "Archaeological site files maintained by the Kentucky Office of State Archaeology (KOSA)" ;
-    dcterms:issued "2014-03-06" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Kentucky Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/F05ACE4F-9B55-48A0-D640-5276B8B899C7> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE> a <void:Dataset> ;
-    dcterms:description "Alabama State Archaeological Site Files" ;
-    dcterms:issued "2015-10-21" ;
-    dcterms:modified "2015-10-21" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Alabama Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/F905BD53-C843-4349-0A46-48FF32B5F1BE> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/GBHayPRJ0000000005> a <void:Dataset> ;
-    dcterms:description "Micromorphology samples from Mousterian, Kebaran, Natufian, and Byzantine contexts at Hayonim, Israel" ;
-    dcterms:issued "2006-04-05" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Hayonim: Micromorphology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/GBHayPRJ0000000005> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/GHF1PRJ0000000025> a <void:Dataset> ;
-    dcterms:description "Overview of the Global Heritage Fund's conservation work in Iraq" ;
-    dcterms:issued "2006-11-07" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Iraq Heritage Program" ;
-    void:dataDump <http://opencontext.org/pelagios/data/GHF1PRJ0000000025> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/HPeaZooPRJ0000000012> a <void:Dataset> ;
-    dcterms:description "Harvard Peabody Museum Zooarchaeology Laboratory Reference Collection" ;
-    dcterms:issued "2006-05-15" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Harvard Peabody Mus. Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/HPeaZooPRJ0000000012> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/HazorZooPRJ0000000010> a <void:Dataset> ;
-    dcterms:description "Zooarchaeological observations for Late Bronze Age and Iron Age Hazor, Israel" ;
-    dcterms:issued "2006-05-12" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Hazor: Zooarchaeology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/HazorZooPRJ0000000010> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/MHS1PRJ0000000021> a <void:Dataset> ;
-    dcterms:description "Descriptions and provenience information for 7837 artifacts" ;
-    dcterms:issued "2006-11-01" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Lake Carlos Beach Site, 1992 and 1996" ;
-    void:dataDump <http://opencontext.org/pelagios/data/MHS1PRJ0000000021> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/PGold1PRJ0000000005> a <void:Dataset> ;
-    dcterms:description "Micromorphology samples for an Upper Paleolithic cave site in the Ach Valley of Germany" ;
-    dcterms:issued "2006-04-04" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Geissenklosterle: Micromorphology" ;
-    void:dataDump <http://opencontext.org/pelagios/data/PGold1PRJ0000000005> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/TESTPRJ0000000004> a <void:Dataset> ;
-    dcterms:description "Analysis of faunal remains from prehistoric contexts at Pınarbaşı in central Turkey" ;
-    dcterms:issued "2006-03-25" ;
-    dcterms:modified "2014-05-19" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Pınarbaşı 1994: Animal Bones" ;
-    void:dataDump <http://opencontext.org/pelagios/data/TESTPRJ0000000004> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/a820af0c-ab4d-4518-ba91-ac3bede21c4d> a <void:Dataset> ;
-    dcterms:description """Content related to a chapter in "The Wide Lens in Archaeology: Honoring Brian Hesse's Contributions to Anthropological Archaeology"
-""" ;
-    dcterms:modified "2016-06-16" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to \"A Preliminary Analysis of the Iron Age III Faunal Remains from Tell Ta'yinat, Turkey (Ancient Kunulua)\"" ;
-    void:dataDump <http://opencontext.org/pelagios/data/a820af0c-ab4d-4518-ba91-ac3bede21c4d> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/ab22d409-8051-4f52-a000-7c081ddce52a> a <void:Dataset> ;
-    dcterms:description "Handmade, Low-Fired Earthenwares in New Orleans (1718-1803)" ;
-    dcterms:modified "2015-06-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Hybrid Objects and Intercultural Assemblages in Colonial Louisiana" ;
-    void:dataDump <http://opencontext.org/pelagios/data/ab22d409-8051-4f52-a000-7c081ddce52a> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Crawling and Walking at the Same Time: Challenges in 'Animal Archaeology' in Northern South America'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/b674332d-d19b-4097-a99f-64c614e65b05> a <void:Dataset> ;
-    dcterms:description """Indicies of Household Maize Beer Production in the Andes: An Ethnoarchaeological Investigation
-""" ;
-    dcterms:modified "2015-10-29" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Chicha Pottery Ethnoarchaeological Study" ;
-    void:dataDump <http://opencontext.org/pelagios/data/b674332d-d19b-4097-a99f-64c614e65b05> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/bdc6cb19-e739-404b-8b4f-eeeaae3b8aae> a <void:Dataset> ;
-    dcterms:description "Animal remains from the Etruscan settlement at Forcello (MN). Excludes fish and molluscs" ;
-    dcterms:issued "2015-10-21" ;
-    dcterms:modified "2015-03-29" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Animal remains from Forcello" ;
-    void:dataDump <http://opencontext.org/pelagios/data/bdc6cb19-e739-404b-8b4f-eeeaae3b8aae> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/cc9ea1e3-342d-4d94-a5f1-f05de35f4460> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Dog Remains from the Marismas Nacionales'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/cc9ea1e3-342d-4d94-a5f1-f05de35f4460> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/d1c85af4-c870-488a-865b-b3cf784cfc60> a <void:Dataset> ;
-    dcterms:description "Data related to documenting pig husbandry strategies in northern Mesopotamia from the 7th through 3rd millennium. " ;
-    dcterms:issued "2016-03-01" ;
-    dcterms:modified "2015-06-11" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Northern Mesopotamian Pig Husbandry (Late Neolithic-EBA)" ;
-    void:dataDump <http://opencontext.org/pelagios/data/d1c85af4-c870-488a-865b-b3cf784cfc60> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/d3bed915-947d-4c1a-8c9a-b7723f03d21a> a <void:Dataset> ;
-    dcterms:description "" ;
-    dcterms:issued "2016-05-07" ;
-    dcterms:modified "2016-05-07" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Virtual Valdivia" ;
-    void:dataDump <http://opencontext.org/pelagios/data/d3bed915-947d-4c1a-8c9a-b7723f03d21a> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/d69293e8-c8a7-4fc0-b3e3-4c2ff23486e6> a <void:Dataset> ;
-    dcterms:description """Data from faunal and stable isotope analyses from the archaeological site of Ceibal, Guatemala
-""" ;
-    dcterms:modified "2016-02-16" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Animals of the First Maya States: Zooarchaeological and Stable Isotopic Analyses from Ceibal, Guatemala" ;
-    void:dataDump <http://opencontext.org/pelagios/data/d69293e8-c8a7-4fc0-b3e3-4c2ff23486e6> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/d9f52a5f-ff53-49a9-9b29-6e199b49797a> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-14" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'Archaeofauna at Isla Cilvituk, Campeche, Mexico: Residential Site Structure and Taphonomy in Postclassic Mesoamerica'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/d9f52a5f-ff53-49a9-9b29-6e199b49797a> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/eddedde7-d654-41b3-a14d-73d0fd673a51> a <void:Dataset> ;
-    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
-    dcterms:modified "2015-09-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Digital Companion to 'The Use of Animals by the Pre-Hispanic Maya of the Northern Lowlands'" ;
-    void:dataDump <http://opencontext.org/pelagios/data/eddedde7-d654-41b3-a14d-73d0fd673a51> ;
-    foaf:homepage <http://opencontext.org> .
-
-<http://opencontext.org/projects/fab0532a-2953-4f13-aa97-8a9d7e992dbe> a <void:Dataset> ;
-    dcterms:description """Objects from the Short Barracks of Fort Snelling, at the confluence of the Mississippi and Minnesota Rivers
-""" ;
-    dcterms:issued "2016-06-23" ;
-    dcterms:modified "2016-05-18" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Historic Fort Snelling" ;
-    void:dataDump <http://opencontext.org/pelagios/data/fab0532a-2953-4f13-aa97-8a9d7e992dbe> ;
+<http://opencontext.org/projects/> a void:Dataset ;
+    dcterms:title "Open Context" ;
+    void:subset <http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574>,
+        <http://opencontext.org/projects/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC>,
+        <http://opencontext.org/projects/02594C48-7497-40D7-11AE-AB942DC513B8>,
+        <http://opencontext.org/projects/03828ABD-2B37-4B91-A592-4266B3DB2383>,
+        <http://opencontext.org/projects/0404C6DC-A467-421E-47B8-D68F7090FBCC>,
+        <http://opencontext.org/projects/05F5B702-2967-49B1-FEAA-9B2AA0184513>,
+        <http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E>,
+        <http://opencontext.org/projects/1816A043-92E2-471D-A23D-AAC58695D0D3>,
+        <http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1>,
+        <http://opencontext.org/projects/1ae2a5d9-5515-4796-92e3-52400293f8e0>,
+        <http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D>,
+        <http://opencontext.org/projects/22f3e357-c900-4ad5-9d91-248e68cfeba6>,
+        <http://opencontext.org/projects/23696274-1f6d-44ca-9697-36b9d5e3fe5d>,
+        <http://opencontext.org/projects/27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7>,
+        <http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D>,
+        <http://opencontext.org/projects/2c337d0f-7906-4f8c-aeff-cbb65989d284>,
+        <http://opencontext.org/projects/3>,
+        <http://opencontext.org/projects/334853c8-320e-4bdc-96b3-f696171b5a58>,
+        <http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E>,
+        <http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2>,
+        <http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10>,
+        <http://opencontext.org/projects/3d9b9ce0-47ee-40cb-ae94-046a056eb8b1>,
+        <http://opencontext.org/projects/3e59f952-ccaa-47b4-962f-0bc6aaa052d2>,
+        <http://opencontext.org/projects/416A274C-CF88-4471-3E31-93DB825E9E4A>,
+        <http://opencontext.org/projects/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9>,
+        <http://opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5>,
+        <http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA>,
+        <http://opencontext.org/projects/4B5721E9-2BB3-423F-5D04-1B948FA65FAB>,
+        <http://opencontext.org/projects/4c9d2f6b-98d5-46bf-8871-85b106b96d5d>,
+        <http://opencontext.org/projects/56110B30-3C18-49F9-BDA9-550FE8E28450>,
+        <http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D>,
+        <http://opencontext.org/projects/5A6DDB94-70BE-43B4-2D5D-35D983B21515>,
+        <http://opencontext.org/projects/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D>,
+        <http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49>,
+        <http://opencontext.org/projects/646b7034-07b7-4971-8d89-ebe37dda4cd2>,
+        <http://opencontext.org/projects/6eebf118-1c43-409e-8a47-307380d5d261>,
+        <http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5>,
+        <http://opencontext.org/projects/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7>,
+        <http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E>,
+        <http://opencontext.org/projects/766698E3-2E79-4A78-B0BC-245FF435BBBD>,
+        <http://opencontext.org/projects/766d9fd5-2175-41e3-b7c9-7eba6777f1f0>,
+        <http://opencontext.org/projects/77a8ecc1-25ba-4b5e-9783-d667d008538b>,
+        <http://opencontext.org/projects/781abb20-45c7-4213-8cd3-596a29457346>,
+        <http://opencontext.org/projects/78affbdc-4ea7-4caf-89e5-c3bcea21e46d>,
+        <http://opencontext.org/projects/81204AF8-127C-4686-E9B0-1202C3A47959>,
+        <http://opencontext.org/projects/8492AEC3-E406-44C6-03CA-2BF280D8F5B0>,
+        <http://opencontext.org/projects/8859aa10-c0c4-42ad-993b-cc9d79800d8e>,
+        <http://opencontext.org/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A>,
+        <http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32>,
+        <http://opencontext.org/projects/8ae150fc-50f1-4e60-9dd3-df594b02ddd4>,
+        <http://opencontext.org/projects/8d6d255b-bb48-42a8-a095-3c2eab42eb2e>,
+        <http://opencontext.org/projects/99BDB878-6411-44F8-2D7B-A99384A6CA21>,
+        <http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749>,
+        <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857>,
+        <http://opencontext.org/projects/ABABD13C-A69F-499E-CA7F-5118F3684E4D>,
+        <http://opencontext.org/projects/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E>,
+        <http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D>,
+        <http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6>,
+        <http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510>,
+        <http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452>,
+        <http://opencontext.org/projects/BC90D462-6639-4087-8527-6BB9E528E07D>,
+        <http://opencontext.org/projects/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7>,
+        <http://opencontext.org/projects/CBB6B9F7-500C-4DDD-71AA-4D5E5B96CDBB>,
+        <http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846>,
+        <http://opencontext.org/projects/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5>,
+        <http://opencontext.org/projects/CF6E1364-D6EF-4042-B726-82CFB73F7C9D>,
+        <http://opencontext.org/projects/D297CD29-50CA-4B2C-4A07-498ADF3AF487>,
+        <http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677>,
+        <http://opencontext.org/projects/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63>,
+        <http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F>,
+        <http://opencontext.org/projects/DTrev1PRJ0000000014>,
+        <http://opencontext.org/projects/E10CD7DB-C567-4F97-A8B0-605D31A1F919>,
+        <http://opencontext.org/projects/EDDA846F-7225-495E-AB77-7314C256449A>,
+        <http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7>,
+        <http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE>,
+        <http://opencontext.org/projects/F9970276-8636-478D-A3F0-08CC7EFEAD4F>,
+        <http://opencontext.org/projects/GBHayPRJ0000000005>,
+        <http://opencontext.org/projects/GHF1PRJ0000000025>,
+        <http://opencontext.org/projects/HPeaZooPRJ0000000012>,
+        <http://opencontext.org/projects/HazorZooPRJ0000000010>,
+        <http://opencontext.org/projects/MHS1PRJ0000000021>,
+        <http://opencontext.org/projects/PGold1PRJ0000000005>,
+        <http://opencontext.org/projects/TESTPRJ0000000004>,
+        <http://opencontext.org/projects/a820af0c-ab4d-4518-ba91-ac3bede21c4d>,
+        <http://opencontext.org/projects/ab22d409-8051-4f52-a000-7c081ddce52a>,
+        <http://opencontext.org/projects/ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1>,
+        <http://opencontext.org/projects/b674332d-d19b-4097-a99f-64c614e65b05>,
+        <http://opencontext.org/projects/bdc6cb19-e739-404b-8b4f-eeeaae3b8aae>,
+        <http://opencontext.org/projects/cc9ea1e3-342d-4d94-a5f1-f05de35f4460>,
+        <http://opencontext.org/projects/d1c85af4-c870-488a-865b-b3cf784cfc60>,
+        <http://opencontext.org/projects/d3bed915-947d-4c1a-8c9a-b7723f03d21a>,
+        <http://opencontext.org/projects/d69293e8-c8a7-4fc0-b3e3-4c2ff23486e6>,
+        <http://opencontext.org/projects/d9f52a5f-ff53-49a9-9b29-6e199b49797a>,
+        <http://opencontext.org/projects/eddedde7-d654-41b3-a14d-73d0fd673a51>,
+        <http://opencontext.org/projects/fab0532a-2953-4f13-aa97-8a9d7e992dbe> ;
     foaf:homepage <http://opencontext.org> .
 
 <http://opencontext.org/pelagios/data/01D080DF-2F6B-4F59-BCF0-87543AC89574> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
@@ -842,7 +164,13 @@ Environment and Economy in the Aegean""" ;
 
 <http://opencontext.org/pelagios/data/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
+<http://opencontext.org/pelagios/data/56110B30-3C18-49F9-BDA9-550FE8E28450> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
 <http://opencontext.org/pelagios/data/59E7BFBC-2557-4FE4-FC14-284ED10D903D> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/pelagios/data/5A6DDB94-70BE-43B4-2D5D-35D983B21515> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/pelagios/data/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/64013C33-4039-46C9-609A-A758CE51CA49> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -852,7 +180,11 @@ Environment and Economy in the Aegean""" ;
 
 <http://opencontext.org/pelagios/data/731B0670-CE2A-414A-8EF6-9C050A1C60F5> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
+<http://opencontext.org/pelagios/data/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
 <http://opencontext.org/pelagios/data/74749949-4FD4-4C3E-C830-5AA75703E08E> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/pelagios/data/766698E3-2E79-4A78-B0BC-245FF435BBBD> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -918,9 +250,13 @@ Environment and Economy in the Aegean""" ;
 
 <http://opencontext.org/pelagios/data/E10CD7DB-C567-4F97-A8B0-605D31A1F919> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
+<http://opencontext.org/pelagios/data/EDDA846F-7225-495E-AB77-7314C256449A> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
 <http://opencontext.org/pelagios/data/F05ACE4F-9B55-48A0-D640-5276B8B899C7> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/F905BD53-C843-4349-0A46-48FF32B5F1BE> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/pelagios/data/F9970276-8636-478D-A3F0-08CC7EFEAD4F> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/GBHayPRJ0000000005> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -959,4 +295,745 @@ Environment and Economy in the Aegean""" ;
 <http://opencontext.org/pelagios/data/eddedde7-d654-41b3-a14d-73d0fd673a51> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/fab0532a-2953-4f13-aa97-8a9d7e992dbe> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574> a void:Dataset ;
+    dcterms:description "Archaeology of an Early Bronze through Islamic settlement south of Amman, Jordan" ;
+    dcterms:issued "2011-08-05" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Dhiban Excavation and Development Project" ;
+    void:dataDump <http://opencontext.org/pelagios/data/01D080DF-2F6B-4F59-BCF0-87543AC89574> .
+
+<http://opencontext.org/projects/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC> a void:Dataset ;
+    dcterms:description "Residue analysis of lipids from various ceramic vessel types in late prehistoric China" ;
+    dcterms:modified "2015-12-09" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Patterns of Consumption: Ceramic Residue Analysis at Liangchengzhen, Shandong, China" ;
+    void:dataDump <http://opencontext.org/pelagios/data/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC> .
+
+<http://opencontext.org/projects/02594C48-7497-40D7-11AE-AB942DC513B8> a void:Dataset ;
+    dcterms:description "Faunal Data from Area TP of Çatalhöyük, Turkey" ;
+    dcterms:issued "2013-03-02" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Çatalhöyük Area TP Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/02594C48-7497-40D7-11AE-AB942DC513B8> .
+
+<http://opencontext.org/projects/03828ABD-2B37-4B91-A592-4266B3DB2383> a void:Dataset ;
+    dcterms:description "A collection of presentations, fliers, correspondence, notes, blog posts, photos, and other data to supplement the book 'Sushi in Cortez'" ;
+    dcterms:modified "2015-06-11" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Essays from the Edge of Academia: Supplements to 'Sushi in Cortez'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/03828ABD-2B37-4B91-A592-4266B3DB2383> .
+
+<http://opencontext.org/projects/0404C6DC-A467-421E-47B8-D68F7090FBCC> a void:Dataset ;
+    dcterms:description """Conjunto de datos métricos de huesos de camélidos sudamericanos reunidos en una base de datos colectivamente construida
+""" ;
+    dcterms:issued "2013-10-16" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Osteometric Database of South American Camelids" ;
+    void:dataDump <http://opencontext.org/pelagios/data/0404C6DC-A467-421E-47B8-D68F7090FBCC> .
+
+<http://opencontext.org/projects/05F5B702-2967-49B1-FEAA-9B2AA0184513> a void:Dataset ;
+    dcterms:description "Faunal data from the site of Köşk Höyük, Turkey, recorded between 2004-2011 in the excavation field house and the Niğde Museum" ;
+    dcterms:issued "2013-05-17" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Köşk Höyük Faunal Data" ;
+    void:dataDump <http://opencontext.org/pelagios/data/05F5B702-2967-49B1-FEAA-9B2AA0184513> .
+
+<http://opencontext.org/projects/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E> a void:Dataset ;
+    dcterms:description "Archaeological site information managed and maintained by the South Carolina Institute of Archaeology and Anthropology (SCIAA)" ;
+    dcterms:issued "2014-01-21" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "South Carolina SHPO" ;
+    void:dataDump <http://opencontext.org/pelagios/data/0EE6A09E-62E5-45F0-1CB9-F5CDA44F4D9E> .
+
+<http://opencontext.org/projects/1816A043-92E2-471D-A23D-AAC58695D0D3> a void:Dataset ;
+    dcterms:description """Bos primigenius and Bos taurus biometrical and ageing data from a number of European sites dating from the Middle Pleistocene to the Medieval period
+""" ;
+    dcterms:issued "2016-04-03" ;
+    dcterms:modified "2015-06-11" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Biometrical Database of European Aurochs and Domestic Cattle" ;
+    void:dataDump <http://opencontext.org/pelagios/data/1816A043-92E2-471D-A23D-AAC58695D0D3> .
+
+<http://opencontext.org/projects/1B426F7C-99EC-4322-4069-E8DBD927CCF1> a void:Dataset ;
+    dcterms:description "Faunal data from Neolithic Çatalhöyük and Chalcolithic Çatalhöyük West, Konya, Turkey." ;
+    dcterms:issued "2013-02-13" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Çatalhöyük Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/1B426F7C-99EC-4322-4069-E8DBD927CCF1> .
+
+<http://opencontext.org/projects/1ae2a5d9-5515-4796-92e3-52400293f8e0> a void:Dataset ;
+    dcterms:description "Data used in an analysis of the paleoethnobotanical material from Khirbat al-Mudayana al-'Aliya, central Jordan " ;
+    dcterms:modified "2016-04-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Paleoethnobotany at Early Iron Age Khirbat al-Mudayana al-'Aliya (KMA)" ;
+    void:dataDump <http://opencontext.org/pelagios/data/1ae2a5d9-5515-4796-92e3-52400293f8e0> .
+
+<http://opencontext.org/projects/21A79037-01EA-4CBB-7048-6AA054FB4A0D> a void:Dataset ;
+    dcterms:description "Datasets and media with 'The Archaeology of Mesoamerican Animals' (2015, Lockwood Press)" ;
+    dcterms:issued "2013-09-16" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "The Archaeology of Mesoamerican Animals" ;
+    void:dataDump <http://opencontext.org/pelagios/data/21A79037-01EA-4CBB-7048-6AA054FB4A0D> .
+
+<http://opencontext.org/projects/22f3e357-c900-4ad5-9d91-248e68cfeba6> a void:Dataset ;
+    dcterms:description "There are a total of 113 sites from Greece, Turkey, Black Sea, Middle East and Europe all marked and geocoded." ;
+    dcterms:modified "2015-08-06" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "The Middle and Late Byzantine Glazed Fine Wares" ;
+    void:dataDump <http://opencontext.org/pelagios/data/22f3e357-c900-4ad5-9d91-248e68cfeba6> .
+
+<http://opencontext.org/projects/23696274-1f6d-44ca-9697-36b9d5e3fe5d> a void:Dataset ;
+    dcterms:description """Aboriginal archaeological sites, Nepean River and contiguous areas in New South Wales, Australia
+
+""" ;
+    dcterms:issued "2016-03-30" ;
+    dcterms:modified "2016-02-15" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Traces in the Lost Landscape" ;
+    void:dataDump <http://opencontext.org/pelagios/data/23696274-1f6d-44ca-9697-36b9d5e3fe5d> .
+
+<http://opencontext.org/projects/27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7> a void:Dataset ;
+    dcterms:description """Tracing the Spread and Development of Oracle Bone Divination in Ancient East Asia
+""" ;
+    dcterms:issued "2016-04-04" ;
+    dcterms:modified "2016-04-03" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Oracle Bones in East Asia" ;
+    void:dataDump <http://opencontext.org/pelagios/data/27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7> .
+
+<http://opencontext.org/projects/295B5BF4-0F44-4698-80CD-7A39CB6F133D> a void:Dataset ;
+    dcterms:description "Survey exploring Roman provincial acculturation through the lens of Rough Cilician material and cultural remains" ;
+    dcterms:issued "2012-04-28" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Rough Cilicia" ;
+    void:dataDump <http://opencontext.org/pelagios/data/295B5BF4-0F44-4698-80CD-7A39CB6F133D> .
+
+<http://opencontext.org/projects/2c337d0f-7906-4f8c-aeff-cbb65989d284> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Archaeological Animals of the Southern Maya Highlands: Zooarchaeology of Kaminaljuyu'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/2c337d0f-7906-4f8c-aeff-cbb65989d284> .
+
+<http://opencontext.org/projects/3> a void:Dataset ;
+    dcterms:description "Excavations of a Late Neolithic site in south-central Turkey" ;
+    dcterms:issued "2006-02-28" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Domuztepe Excavations" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3> .
+
+<http://opencontext.org/projects/334853c8-320e-4bdc-96b3-f696171b5a58> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Preliminary Analysis of the Zooarchaeology of the San Cristóbal Site, Nicaragua: The Bounty of Mohammed’s Paradise'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/334853c8-320e-4bdc-96b3-f696171b5a58> .
+
+<http://opencontext.org/projects/3DE4CD9C-259E-4C14-9B03-8B10454BA66E> a void:Dataset ;
+    dcterms:description "The Upper Tigris Archaeological Research Project’s Excavations at Kenan Tepe in Southeastern Turkey" ;
+    dcterms:issued "2012-02-27" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Kenan Tepe" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3DE4CD9C-259E-4C14-9B03-8B10454BA66E> .
+
+<http://opencontext.org/projects/3F6DCD13-A476-488E-ED10-47D25513FCB2> a void:Dataset ;
+    dcterms:description "Pedestrian survey, geophysical prospecting, and excavation near Pyla, on the southern coast of Cyprus" ;
+    dcterms:issued "2013-10-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Pyla-Koutsopetria Archaeological Project" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3F6DCD13-A476-488E-ED10-47D25513FCB2> .
+
+<http://opencontext.org/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10> a void:Dataset ;
+    dcterms:description "Collections maintained by the San Diego Archaeological Center" ;
+    dcterms:issued "2010-02-01" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "San Diego Archaeological Center" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3FAAA477-5572-4B05-8DC1-CA264FE1FC10> .
+
+<http://opencontext.org/projects/3d9b9ce0-47ee-40cb-ae94-046a056eb8b1> a void:Dataset ;
+    dcterms:description "Intensive archaeological survey data from the lower valley of the Eg River in Northern Mongolia" ;
+    dcterms:modified "2016-08-12" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Egiin Gol Survey" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3d9b9ce0-47ee-40cb-ae94-046a056eb8b1> .
+
+<http://opencontext.org/projects/3e59f952-ccaa-47b4-962f-0bc6aaa052d2> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'The Zooarchaeology of Olmec and epi-Olmec Foodways along Mexico’s Gulf Coast'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/3e59f952-ccaa-47b4-962f-0bc6aaa052d2> .
+
+<http://opencontext.org/projects/416A274C-CF88-4471-3E31-93DB825E9E4A> a void:Dataset ;
+    dcterms:description "Publication and integration of North American archaeological site file records" ;
+    dcterms:issued "2015-10-21" ;
+    dcterms:modified "2015-10-21" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Index of North American Archaeology (DINAA)" ;
+    void:dataDump <http://opencontext.org/pelagios/data/416A274C-CF88-4471-3E31-93DB825E9E4A> .
+
+<http://opencontext.org/projects/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9> a void:Dataset ;
+    dcterms:description "Zooarchaeology data for Neolithic Menteşe Höyük, a site in NW Anatolia" ;
+    dcterms:issued "2014-05-12" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Faunal Data from Neolithic Menteşe" ;
+    void:dataDump <http://opencontext.org/pelagios/data/42EAD4DB-BAED-4A58-9B9B-7EC85266D2A9> .
+
+<http://opencontext.org/projects/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5> a void:Dataset ;
+    dcterms:description "Zooarchaeological observations from Prehistoric and Achaemenid levels at Chogha Mish, Iran." ;
+    dcterms:issued "2010-08-24" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Chogha Mish Fauna" ;
+    void:dataDump <http://opencontext.org/pelagios/data/497ADEAD-0C2A-4C62-FEEF-9079FB09B1A5> .
+
+<http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA> a void:Dataset ;
+    dcterms:description "Element composition of Asian Stoneware Jars from the 9th - 19th centuries CE" ;
+    dcterms:issued "2013-03-05" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Asian Stoneware Jars" ;
+    void:dataDump <http://opencontext.org/pelagios/data/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA> .
+
+<http://opencontext.org/projects/4B5721E9-2BB3-423F-5D04-1B948FA65FAB> a void:Dataset ;
+    dcterms:description "Archaeological site information managed and maintained by the Missouri State Historical Preservation Office" ;
+    dcterms:issued "2014-02-23" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Missouri Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/4B5721E9-2BB3-423F-5D04-1B948FA65FAB> .
+
+<http://opencontext.org/projects/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Pre-Columbian Exploitation of Birds Around Panama Bay'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> .
+
+<http://opencontext.org/projects/56110B30-3C18-49F9-BDA9-550FE8E28450> a void:Dataset ;
+    dcterms:description "Louisiana State Archaeological Site Files" ;
+    dcterms:modified "2015-04-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Louisiana Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/56110B30-3C18-49F9-BDA9-550FE8E28450> .
+
+<http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D> a void:Dataset ;
+    dcterms:description "West Stow, Suffolk County, UK Rescue excavations conducted at the site in advance of the construction of a new Visitor Centre" ;
+    dcterms:issued "2013-02-23" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "West Stow West Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/59E7BFBC-2557-4FE4-FC14-284ED10D903D> .
+
+<http://opencontext.org/projects/5A6DDB94-70BE-43B4-2D5D-35D983B21515> a void:Dataset ;
+    dcterms:description """Excavations at the settlements of the Old Kingdom pyramid builders
+
+""" ;
+    dcterms:modified "2015-10-06" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Giza AERA Project" ;
+    void:dataDump <http://opencontext.org/pelagios/data/5A6DDB94-70BE-43B4-2D5D-35D983B21515> .
+
+<http://opencontext.org/projects/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> a void:Dataset ;
+    dcterms:description "North Carolina State Archaeological Site Files" ;
+    dcterms:modified "2015-04-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "North Carolina Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> .
+
+<http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49> a void:Dataset ;
+    dcterms:description "Georgia State Archaeological Site Files published as part of the DINAA Project" ;
+    dcterms:issued "2013-10-15" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Georgia Archaeological Site File (GASF)" ;
+    void:dataDump <http://opencontext.org/pelagios/data/64013C33-4039-46C9-609A-A758CE51CA49> .
+
+<http://opencontext.org/projects/646b7034-07b7-4971-8d89-ebe37dda4cd2> a void:Dataset ;
+    dcterms:description "Digital Companion to \"The Context and Biometry of Iron Age II and Hellenistic Period Dog 'Burials' from Tell Gezer Compared to those from Other Sites in the Region\"" ;
+    dcterms:issued "2016-06-17" ;
+    dcterms:modified "2016-06-17" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Biometry of Iron Age II and Hellenistic Period Dog 'Burials' from Tell Gezer and Other Sites" ;
+    void:dataDump <http://opencontext.org/pelagios/data/646b7034-07b7-4971-8d89-ebe37dda4cd2> .
+
+<http://opencontext.org/projects/6eebf118-1c43-409e-8a47-307380d5d261> a void:Dataset ;
+    dcterms:description "Anthropomorphic figurines known from Halaf sites, northern Mesopotamia. Data from studying objects in museums, site depots and publications." ;
+    dcterms:modified "2016-08-18" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Halaf Figurines Project: A Catalog of Figurines Excavated from Sixth Millennium Northern Mesopotamian Sites in Syria and Turkey" ;
+    void:dataDump <http://opencontext.org/pelagios/data/6eebf118-1c43-409e-8a47-307380d5d261> .
+
+<http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5> a void:Dataset ;
+    dcterms:description "Changes in hunter-gatherer lifestyles that may have led to sedentary agricultural economies in SW Anatolia" ;
+    dcterms:issued "2013-02-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Zooarchaeology of Karain Cave B" ;
+    void:dataDump <http://opencontext.org/pelagios/data/731B0670-CE2A-414A-8EF6-9C050A1C60F5> .
+
+<http://opencontext.org/projects/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> a void:Dataset ;
+    dcterms:description "Tracing the Spread and Development of Oracle Bone Divination in Ancient East Asia [In Prep]" ;
+    dcterms:issued "2016-04-04" ;
+    dcterms:modified "2016-04-03" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Oracle Bones in East Asia [In Prep]" ;
+    void:dataDump <http://opencontext.org/pelagios/data/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> .
+
+<http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E> a void:Dataset ;
+    dcterms:description "Zooarchaeology of Neolithic Phases at Barçın Höyük, Turkey" ;
+    dcterms:issued "2013-02-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Barçın Höyük Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/74749949-4FD4-4C3E-C830-5AA75703E08E> .
+
+<http://opencontext.org/projects/766698E3-2E79-4A78-B0BC-245FF435BBBD> a void:Dataset ;
+    dcterms:description "Pennsylvania State Archaeological Site Files" ;
+    dcterms:modified "2015-04-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Pennsylvania Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/766698E3-2E79-4A78-B0BC-245FF435BBBD> .
+
+<http://opencontext.org/projects/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> a void:Dataset ;
+    dcterms:description "" ;
+    dcterms:modified "2015-06-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Hybrid Objects and Intercultural" ;
+    void:dataDump <http://opencontext.org/pelagios/data/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> .
+
+<http://opencontext.org/projects/77a8ecc1-25ba-4b5e-9783-d667d008538b> a void:Dataset ;
+    dcterms:description "This dataset is on the glazed fine ware finds in 113 excavated sites from Greece, Turkey, the Middle East, and Europe." ;
+    dcterms:modified "2015-08-06" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Middle and Late Byzantine Glazed Fine Wares" ;
+    void:dataDump <http://opencontext.org/pelagios/data/77a8ecc1-25ba-4b5e-9783-d667d008538b> .
+
+<http://opencontext.org/projects/781abb20-45c7-4213-8cd3-596a29457346> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Inferring the Archaeological Context Through Taphonomy: The Use of the White-Tailed Deer (Odocoileus virginianus) in Chinikihá, Chiapas'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/781abb20-45c7-4213-8cd3-596a29457346> .
+
+<http://opencontext.org/projects/78affbdc-4ea7-4caf-89e5-c3bcea21e46d> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Animal Consumption at the Monumental Center of Mayapán'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/78affbdc-4ea7-4caf-89e5-c3bcea21e46d> .
+
+<http://opencontext.org/projects/81204AF8-127C-4686-E9B0-1202C3A47959> a void:Dataset ;
+    dcterms:description "Florida State Archaeological Site Files published as part of the DINAA Project" ;
+    dcterms:issued "2013-11-13" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Florida Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/81204AF8-127C-4686-E9B0-1202C3A47959> .
+
+<http://opencontext.org/projects/8492AEC3-E406-44C6-03CA-2BF280D8F5B0> a void:Dataset ;
+    dcterms:description "Archaeological site files maintained by the Iowa Office of the State Archaeologist (OSA)" ;
+    dcterms:issued "2014-03-16" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Iowa Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8492AEC3-E406-44C6-03CA-2BF280D8F5B0> .
+
+<http://opencontext.org/projects/8859aa10-c0c4-42ad-993b-cc9d79800d8e> a void:Dataset ;
+    dcterms:description "A collection of images from the 2013 field season of the Institute of Fine Arts, New York University Abydos Expedition. " ;
+    dcterms:modified "2015-08-06" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Images Documenting Looting in the North Cemetery at Abydos, Egypt" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8859aa10-c0c4-42ad-993b-cc9d79800d8e> .
+
+<http://opencontext.org/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A> a void:Dataset ;
+    dcterms:description "Animal exploitation patterns in SW Anatolia during the Epipaleolithic from assemblages excavated from a finely-stratified cave" ;
+    dcterms:issued "2013-02-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Zooarchaeology of Öküzini Cave" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8894EEC0-DC96-4304-1EFC-4572FD91717A> .
+
+<http://opencontext.org/projects/8F947319-3C69-4847-B7A2-09E00ED90B32> a void:Dataset ;
+    dcterms:description "Physical measurements and photographs of weights (and possible weights) from a single site, multiple excavations from 1889-1972." ;
+    dcterms:issued "2013-10-08" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Balance Pan Weights from Nippur" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8F947319-3C69-4847-B7A2-09E00ED90B32> .
+
+<http://opencontext.org/projects/8ae150fc-50f1-4e60-9dd3-df594b02ddd4> a void:Dataset ;
+    dcterms:description "'Content related to a chapter in The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Late Nineteenth and Early Twentieth-Century Animal Use by San Pedro Maya and British Populations at Holotunich, Belize'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8ae150fc-50f1-4e60-9dd3-df594b02ddd4> .
+
+<http://opencontext.org/projects/8d6d255b-bb48-42a8-a095-3c2eab42eb2e> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Molluscs as Food in a Prolific Coastal Environment: Evidence for Selective Foraging and Taphonomy from Cueva de los Vampiros (Central Panama)'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/8d6d255b-bb48-42a8-a095-3c2eab42eb2e> .
+
+<http://opencontext.org/projects/99BDB878-6411-44F8-2D7B-A99384A6CA21> a void:Dataset ;
+    dcterms:description "Zooarchaeology of a portion of the vertebrate remains from Ulucak Höyük's Neolithic layers" ;
+    dcterms:issued "2013-08-11" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Zooarchaeology of Neolithic Ulucak" ;
+    void:dataDump <http://opencontext.org/pelagios/data/99BDB878-6411-44F8-2D7B-A99384A6CA21> .
+
+<http://opencontext.org/projects/A3CBADB6-6CD4-4099-9FE2-A33757EAB749> a void:Dataset ;
+    dcterms:description "Analysis of groundstone finds from the Dove Mountain Project in the Tucson Basin" ;
+    dcterms:issued "2010-04-03" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Dove Mountain Groundstone" ;
+    void:dataDump <http://opencontext.org/pelagios/data/A3CBADB6-6CD4-4099-9FE2-A33757EAB749> .
+
+<http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> a void:Dataset ;
+    dcterms:description "Brown University Excavations at the Great Temple of Petra, Jordan" ;
+    dcterms:issued "2007-11-11" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Petra Great Temple Excavations" ;
+    void:dataDump <http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+
+<http://opencontext.org/projects/ABABD13C-A69F-499E-CA7F-5118F3684E4D> a void:Dataset ;
+    dcterms:description "NAA data to firmly establish the geological provenience of Cypriot ceramics" ;
+    dcterms:issued "2013-09-21" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Ceramics, Trade, Provenience and Geology: Cyprus in the Late Bronze Age" ;
+    void:dataDump <http://opencontext.org/pelagios/data/ABABD13C-A69F-499E-CA7F-5118F3684E4D> .
+
+<http://opencontext.org/projects/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E> a void:Dataset ;
+    dcterms:description "State of Virginia Archaeological Site Files" ;
+    dcterms:issued "2015-10-21" ;
+    dcterms:modified "2015-10-21" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Virginia Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/AF0D2F67-2EAB-4C28-9C61-0F019CBF628E> .
+
+<http://opencontext.org/projects/B1DAC335-4DC6-4A57-622E-75BF28BA598D> a void:Dataset ;
+    dcterms:description """Mollusk Shells in Troia, Yenibademli, and Ulucak:
+An Archaeomalacological Approach to
+Environment and Economy in the Aegean""" ;
+    dcterms:issued "2010-01-10" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Aegean Archaeomalacology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/B1DAC335-4DC6-4A57-622E-75BF28BA598D> .
+
+<http://opencontext.org/projects/B4345F6A-F926-4062-144E-3FBC175CC7B6> a void:Dataset ;
+    dcterms:description "Tell en-Nasbeh Collection at the Badè Museum of Biblical Archaeology" ;
+    dcterms:issued "2010-02-16" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Bade Museum" ;
+    void:dataDump <http://opencontext.org/pelagios/data/B4345F6A-F926-4062-144E-3FBC175CC7B6> .
+
+<http://opencontext.org/projects/B7047162-6906-4A5E-13C0-B5B86A108510> a void:Dataset ;
+    dcterms:description "Animal Bone Analysis in medieval Emden, Germany" ;
+    dcterms:issued "2010-10-29" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Zooarchaeology of Medieval Emden" ;
+    void:dataDump <http://opencontext.org/pelagios/data/B7047162-6906-4A5E-13C0-B5B86A108510> .
+
+<http://opencontext.org/projects/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452> a void:Dataset ;
+    dcterms:description "Archaeological site files maintained by the Illinois State Museum (ISM)" ;
+    dcterms:issued "2014-03-15" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Illinois Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/B7F85EB6-4BF5-43FA-98E7-FF8FAF1AA452> .
+
+<http://opencontext.org/projects/BC90D462-6639-4087-8527-6BB9E528E07D> a void:Dataset ;
+    dcterms:description "Zooarchaeology of Late Neolithic - Early Bronze Age Çukuriçi Höyük, Turkey" ;
+    dcterms:issued "2013-02-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Çukuriçi Höyük Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/BC90D462-6639-4087-8527-6BB9E528E07D> .
+
+<http://opencontext.org/projects/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7> a void:Dataset ;
+    dcterms:description "Ongoing investigations of El Presidio de San Francisco and other archaeological resources at the Presidio of San Francisco" ;
+    dcterms:issued "2010-01-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Presidio of San Francisco" ;
+    void:dataDump <http://opencontext.org/pelagios/data/C5B4F73B-5EF8-4099-590E-B0275EDBA2A7> .
+
+<http://opencontext.org/projects/CBB6B9F7-500C-4DDD-71AA-4D5E5B96CDBB> a void:Dataset ;
+    dcterms:description "Investigations of an Early Iron Age site in a semi-arid zone in west-central Jordan" ;
+    dcterms:issued "2010-06-08" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Khirbat al-Mudayna al-Aliya" ;
+    void:dataDump <http://opencontext.org/pelagios/data/CBB6B9F7-500C-4DDD-71AA-4D5E5B96CDBB> .
+
+<http://opencontext.org/projects/CDD40C27-62ED-4966-AF3D-E781DD0D4846> a void:Dataset ;
+    dcterms:description "Faunal data from Erbaba Höyük, Turkey, supplemented by additional data from Suberde" ;
+    dcterms:issued "2013-05-17" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Erbaba Höyük and Suberde Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/CDD40C27-62ED-4966-AF3D-E781DD0D4846> .
+
+<http://opencontext.org/projects/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5> a void:Dataset ;
+    dcterms:description "Lead isotope and other analyses of metal objects from the Near East and Mediterranean (1500 - 500 BCE)" ;
+    dcterms:issued "2012-09-19" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Hacksilber Project" ;
+    void:dataDump <http://opencontext.org/pelagios/data/CF179695-1E6A-440F-1DDB-4FEA7B02A5B5> .
+
+<http://opencontext.org/projects/CF6E1364-D6EF-4042-B726-82CFB73F7C9D> a void:Dataset ;
+    dcterms:description "Finds catalog from Mikt’sqaq Angayuk, an historic Alutiiq settlement of the early 19th century, Alaska" ;
+    dcterms:issued "2013-03-07" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Mikt’sqaq Angayuk Finds" ;
+    void:dataDump <http://opencontext.org/pelagios/data/CF6E1364-D6EF-4042-B726-82CFB73F7C9D> .
+
+<http://opencontext.org/projects/D297CD29-50CA-4B2C-4A07-498ADF3AF487> a void:Dataset ;
+    dcterms:description "This dataset contains faunal data recorded by Hijlke Buitenhuis from the site of Ilıpınar, Turkey" ;
+    dcterms:issued "2013-08-12" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Ilıpınar Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/D297CD29-50CA-4B2C-4A07-498ADF3AF487> .
+
+<http://opencontext.org/projects/D42FC0EB-61B0-4937-700E-4EFEAB008677> a void:Dataset ;
+    dcterms:description "Archaeological site files maintained by the Indiana Department of Natural Resources, Division of Historic Preservation and Archaeology (DNR-DHPA)" ;
+    dcterms:issued "2014-02-05" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Indiana Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/D42FC0EB-61B0-4937-700E-4EFEAB008677> .
+
+<http://opencontext.org/projects/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63> a void:Dataset ;
+    dcterms:description "Zooarchaeology of Tel-e Malyan" ;
+    dcterms:issued "2011-06-18" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Tal-e Malyan Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/D6B25EC9-2884-4E3C-00E8-0C5A6472FA63> .
+
+<http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F> a void:Dataset ;
+    dcterms:description "Poggio Civitate Excavation Project" ;
+    dcterms:issued "2012-07-06" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Murlo" ;
+    void:dataDump <http://opencontext.org/pelagios/data/DF043419-F23B-41DA-7E4D-EE52AF22F92F> .
+
+<http://opencontext.org/projects/DTrev1PRJ0000000014> a void:Dataset ;
+    dcterms:description "Epidemiology and Etiology of Corneal Ulcers in South India" ;
+    dcterms:issued "2006-07-11" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Corneal Ulceration in South East Asia" ;
+    void:dataDump <http://opencontext.org/pelagios/data/DTrev1PRJ0000000014> .
+
+<http://opencontext.org/projects/E10CD7DB-C567-4F97-A8B0-605D31A1F919> a void:Dataset ;
+    dcterms:description "Data and images related to zooarchaeology and cultural ecology of traditional ranchers and pastoralists of west, central Argentina" ;
+    dcterms:modified "2015-06-11" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Zooarchaeology and Cultural Ecology of Puesteros in Southern Mendoza,   Argentina" ;
+    void:dataDump <http://opencontext.org/pelagios/data/E10CD7DB-C567-4F97-A8B0-605D31A1F919> .
+
+<http://opencontext.org/projects/EDDA846F-7225-495E-AB77-7314C256449A> a void:Dataset ;
+    dcterms:description "Ohio State Archaeological Site Files" ;
+    dcterms:modified "2015-04-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Ohio Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/EDDA846F-7225-495E-AB77-7314C256449A> .
+
+<http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7> a void:Dataset ;
+    dcterms:description "Archaeological site files maintained by the Kentucky Office of State Archaeology (KOSA)" ;
+    dcterms:issued "2014-03-06" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Kentucky Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/F05ACE4F-9B55-48A0-D640-5276B8B899C7> .
+
+<http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE> a void:Dataset ;
+    dcterms:description "Alabama State Archaeological Site Files" ;
+    dcterms:issued "2015-10-21" ;
+    dcterms:modified "2015-10-21" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Alabama Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/F905BD53-C843-4349-0A46-48FF32B5F1BE> .
+
+<http://opencontext.org/projects/F9970276-8636-478D-A3F0-08CC7EFEAD4F> a void:Dataset ;
+    dcterms:description "Maryland State Archaeological Site Files" ;
+    dcterms:modified "2015-04-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Maryland Site Files" ;
+    void:dataDump <http://opencontext.org/pelagios/data/F9970276-8636-478D-A3F0-08CC7EFEAD4F> .
+
+<http://opencontext.org/projects/GBHayPRJ0000000005> a void:Dataset ;
+    dcterms:description "Micromorphology samples from Mousterian, Kebaran, Natufian, and Byzantine contexts at Hayonim, Israel" ;
+    dcterms:issued "2006-04-05" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Hayonim: Micromorphology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/GBHayPRJ0000000005> .
+
+<http://opencontext.org/projects/GHF1PRJ0000000025> a void:Dataset ;
+    dcterms:description "Overview of the Global Heritage Fund's conservation work in Iraq" ;
+    dcterms:issued "2006-11-07" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Iraq Heritage Program" ;
+    void:dataDump <http://opencontext.org/pelagios/data/GHF1PRJ0000000025> .
+
+<http://opencontext.org/projects/HPeaZooPRJ0000000012> a void:Dataset ;
+    dcterms:description "Harvard Peabody Museum Zooarchaeology Laboratory Reference Collection" ;
+    dcterms:issued "2006-05-15" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Harvard Peabody Mus. Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/HPeaZooPRJ0000000012> .
+
+<http://opencontext.org/projects/HazorZooPRJ0000000010> a void:Dataset ;
+    dcterms:description "Zooarchaeological observations for Late Bronze Age and Iron Age Hazor, Israel" ;
+    dcterms:issued "2006-05-12" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Hazor: Zooarchaeology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/HazorZooPRJ0000000010> .
+
+<http://opencontext.org/projects/MHS1PRJ0000000021> a void:Dataset ;
+    dcterms:description "Descriptions and provenience information for 7837 artifacts" ;
+    dcterms:issued "2006-11-01" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Lake Carlos Beach Site, 1992 and 1996" ;
+    void:dataDump <http://opencontext.org/pelagios/data/MHS1PRJ0000000021> .
+
+<http://opencontext.org/projects/PGold1PRJ0000000005> a void:Dataset ;
+    dcterms:description "Micromorphology samples for an Upper Paleolithic cave site in the Ach Valley of Germany" ;
+    dcterms:issued "2006-04-04" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Geissenklosterle: Micromorphology" ;
+    void:dataDump <http://opencontext.org/pelagios/data/PGold1PRJ0000000005> .
+
+<http://opencontext.org/projects/TESTPRJ0000000004> a void:Dataset ;
+    dcterms:description "Analysis of faunal remains from prehistoric contexts at Pınarbaşı in central Turkey" ;
+    dcterms:issued "2006-03-25" ;
+    dcterms:modified "2014-05-19" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Pınarbaşı 1994: Animal Bones" ;
+    void:dataDump <http://opencontext.org/pelagios/data/TESTPRJ0000000004> .
+
+<http://opencontext.org/projects/a820af0c-ab4d-4518-ba91-ac3bede21c4d> a void:Dataset ;
+    dcterms:description """Content related to a chapter in "The Wide Lens in Archaeology: Honoring Brian Hesse's Contributions to Anthropological Archaeology"
+""" ;
+    dcterms:modified "2016-06-16" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to \"A Preliminary Analysis of the Iron Age III Faunal Remains from Tell Ta'yinat, Turkey (Ancient Kunulua)\"" ;
+    void:dataDump <http://opencontext.org/pelagios/data/a820af0c-ab4d-4518-ba91-ac3bede21c4d> .
+
+<http://opencontext.org/projects/ab22d409-8051-4f52-a000-7c081ddce52a> a void:Dataset ;
+    dcterms:description "Handmade, Low-Fired Earthenwares in New Orleans (1718-1803)" ;
+    dcterms:modified "2015-06-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Hybrid Objects and Intercultural Assemblages in Colonial Louisiana" ;
+    void:dataDump <http://opencontext.org/pelagios/data/ab22d409-8051-4f52-a000-7c081ddce52a> .
+
+<http://opencontext.org/projects/ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Crawling and Walking at the Same Time: Challenges in 'Animal Archaeology' in Northern South America'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1> .
+
+<http://opencontext.org/projects/b674332d-d19b-4097-a99f-64c614e65b05> a void:Dataset ;
+    dcterms:description """Indicies of Household Maize Beer Production in the Andes: An Ethnoarchaeological Investigation
+""" ;
+    dcterms:modified "2015-10-29" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Chicha Pottery Ethnoarchaeological Study" ;
+    void:dataDump <http://opencontext.org/pelagios/data/b674332d-d19b-4097-a99f-64c614e65b05> .
+
+<http://opencontext.org/projects/bdc6cb19-e739-404b-8b4f-eeeaae3b8aae> a void:Dataset ;
+    dcterms:description "Animal remains from the Etruscan settlement at Forcello (MN). Excludes fish and molluscs" ;
+    dcterms:issued "2015-10-21" ;
+    dcterms:modified "2015-03-29" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Animal remains from Forcello" ;
+    void:dataDump <http://opencontext.org/pelagios/data/bdc6cb19-e739-404b-8b4f-eeeaae3b8aae> .
+
+<http://opencontext.org/projects/cc9ea1e3-342d-4d94-a5f1-f05de35f4460> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Dog Remains from the Marismas Nacionales'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/cc9ea1e3-342d-4d94-a5f1-f05de35f4460> .
+
+<http://opencontext.org/projects/d1c85af4-c870-488a-865b-b3cf784cfc60> a void:Dataset ;
+    dcterms:description "Data related to documenting pig husbandry strategies in northern Mesopotamia from the 7th through 3rd millennium. " ;
+    dcterms:issued "2016-03-01" ;
+    dcterms:modified "2015-06-11" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Northern Mesopotamian Pig Husbandry (Late Neolithic-EBA)" ;
+    void:dataDump <http://opencontext.org/pelagios/data/d1c85af4-c870-488a-865b-b3cf784cfc60> .
+
+<http://opencontext.org/projects/d3bed915-947d-4c1a-8c9a-b7723f03d21a> a void:Dataset ;
+    dcterms:description "" ;
+    dcterms:issued "2016-05-07" ;
+    dcterms:modified "2016-05-07" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Virtual Valdivia" ;
+    void:dataDump <http://opencontext.org/pelagios/data/d3bed915-947d-4c1a-8c9a-b7723f03d21a> .
+
+<http://opencontext.org/projects/d69293e8-c8a7-4fc0-b3e3-4c2ff23486e6> a void:Dataset ;
+    dcterms:description """Data from faunal and stable isotope analyses from the archaeological site of Ceibal, Guatemala
+""" ;
+    dcterms:modified "2016-02-16" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Animals of the First Maya States: Zooarchaeological and Stable Isotopic Analyses from Ceibal, Guatemala" ;
+    void:dataDump <http://opencontext.org/pelagios/data/d69293e8-c8a7-4fc0-b3e3-4c2ff23486e6> .
+
+<http://opencontext.org/projects/d9f52a5f-ff53-49a9-9b29-6e199b49797a> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-14" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'Archaeofauna at Isla Cilvituk, Campeche, Mexico: Residential Site Structure and Taphonomy in Postclassic Mesoamerica'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/d9f52a5f-ff53-49a9-9b29-6e199b49797a> .
+
+<http://opencontext.org/projects/eddedde7-d654-41b3-a14d-73d0fd673a51> a void:Dataset ;
+    dcterms:description "Content related to a chapter in 'The Archaeology of Mesoamerican Animals'" ;
+    dcterms:modified "2015-09-10" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Digital Companion to 'The Use of Animals by the Pre-Hispanic Maya of the Northern Lowlands'" ;
+    void:dataDump <http://opencontext.org/pelagios/data/eddedde7-d654-41b3-a14d-73d0fd673a51> .
+
+<http://opencontext.org/projects/fab0532a-2953-4f13-aa97-8a9d7e992dbe> a void:Dataset ;
+    dcterms:description """Objects from the Short Barracks of Fort Snelling, at the confluence of the Mississippi and Minnesota Rivers
+""" ;
+    dcterms:issued "2016-06-23" ;
+    dcterms:modified "2016-05-18" ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Historic Fort Snelling" ;
+    void:dataDump <http://opencontext.org/pelagios/data/fab0532a-2953-4f13-aa97-8a9d7e992dbe> .
 
