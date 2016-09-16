@@ -4,11 +4,7 @@ from rdflib.namespace import RDF, RDFS, SKOS, OWL
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.apps.ldata.pelagios.models import PelagiosData
-from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+from opencontext_py.apps.ldata.pelagios.projects import PelagiosProjects
 
 
 class PelagiosVoid():
@@ -46,7 +42,32 @@ class PelagiosVoid():
     def make_graph(self):
         """ makes a graph of assertions for the void file """
         lang_obj = Languages()
-        self.get_projects()
+        # get a list of project manifest + projects objects
+        # these are filtered for publicly available projects only
+        pprojs = PelagiosProjects()
+        pprojs.request = self.request
+        self.man_proj_objs = pprojs.get_projects()
+        # first make assertions about Open Context
+        oc_projs_uri = settings.CANONICAL_HOST + '/projects/'
+        self.make_add_triple(oc_projs_uri,
+                             RDF.type,
+                             self.make_full_uri('void', 'Dataset'))
+        self.make_add_triple(oc_projs_uri,
+                             self.make_full_uri('dcterms', 'title'),
+                             None,
+                             settings.CANONICAL_SITENAME)
+        self.make_add_triple(oc_projs_uri,
+                             self.make_full_uri('foaf', 'homepage'),
+                             settings.CANONICAL_HOST)
+        # now add the projects as subsets of data
+        for proj_dict in self.man_proj_objs:
+            man = proj_dict['man']
+            uri = URImanagement.make_oc_uri(man.uuid,
+                                            man.item_type)
+            self.make_add_triple(oc_projs_uri,
+                                 self.make_full_uri('void', 'subset'),
+                                 uri)
+        # now add assertions about each project, esp. datadump uri
         for proj_dict in self.man_proj_objs:
             man = proj_dict['man']
             proj = proj_dict['proj']
@@ -55,13 +76,15 @@ class PelagiosVoid():
             data_uri = self.base_uri + man.uuid
             self.make_add_triple(uri,
                                  RDF.type,
-                                'void:Dataset')
+                                 self.make_full_uri('void', 'Dataset'))
             self.make_add_triple(uri,
                                  self.make_full_uri('void', 'dataDump'),
                                  data_uri)
+            """
             self.make_add_triple(uri,
                                  self.make_full_uri('foaf', 'homepage'),
-                                 settings.CANONICAL_HOST)
+                                 uri)
+            """
             self.make_add_triple(uri,
                                  self.make_full_uri('dcterms', 'publisher'),
                                  None,

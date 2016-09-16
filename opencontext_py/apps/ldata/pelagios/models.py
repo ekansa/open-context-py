@@ -14,6 +14,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
@@ -94,8 +95,8 @@ class PelagiosData():
                     oa_item.prep_item_dc_metadata()
                     oa_item.prep_assocated_dc_metadata()
                     self.mem_cache_entities = oa_item.mem_cache_entities
-                    print(oa_item.manifest.label)
-                    print('Number associated: ' + str(len(oa_item.associated)))
+                    # print(oa_item.manifest.label)
+                    # print('Number associated: ' + str(len(oa_item.associated)))
                     valid_cnt += 1
                 else:
                     invalid_cnt += 1
@@ -235,6 +236,7 @@ class OaItem():
         self.is_valid = None
         self.title = None
         self.description = None
+        self.depiction = None
         self.class_label = None
         self.class_slug = None
         self.uri = None
@@ -414,6 +416,19 @@ class OaItem():
                     ass_sets.append(ass)
                 else:
                     pass
+            if self.manifest.item_type == 'projects':
+                # we have a project so get the hero image (if exists) directly
+                # for the depiction (note: returns None if not found)
+                self.depiction = self.get_depiction_image_file(self.uuid)
+            else:
+                # we have another item_type, so the self.depiction comes
+                # from the list of associated items
+                for ass in ass_items:
+                    if isinstance(ass['depiction'], str):
+                        # the item depiction file is the first one we find
+                        # from the associated item list
+                        self.depiction = ass['depiction']
+                        break      
             self.associated = ass_items + ass_sets
     
     def add_description_item_class_project(self, description, project_ent):
@@ -528,6 +543,7 @@ class OaItem():
             key_fields = []
             key_fields.append(cat['item_type'])
             key_fields.append(cat['class_uri'])
+            cat['depiction'] = None
             if 'media_class_uri' in cat:
                 key_fields.append(cat['media_class_uri'])
             else:
@@ -537,6 +553,10 @@ class OaItem():
                 cat['label'] = False
             if 'uuid' not in cat:
                 cat['uuid'] = False
+            else:
+                if cat['media_class_uri'] == 'oc-gen:image':
+                    # we have an image, get the preview of it
+                    cat['depiction'] = self.get_depiction_image_file(cat['uuid'])
             cat['title'] = None
             cat['description'] = None
             cat['class_label'] = None
@@ -547,7 +567,25 @@ class OaItem():
             if key not in self.raw_associated:
                 # adds the category to the dict of raw_associated
                 self.raw_associated[key] = cat
-                            
+    
+    def get_depiction_image_file(self, uuid):
+        """ gets the file for the media depiction """
+        man_files = []
+        output = None
+        if uuid == self.uuid and \
+            self.manifest.item_type == 'projects':
+                # get a project hero image
+                man_files = Mediafile.objects\
+                                     .filter(uuid=uuid,
+                                             file_type='oc-gen:hero')[:1]
+        else:
+            man_files = Mediafile.objects\
+                                 .filter(uuid=uuid,
+                                         file_type='oc-gen:preview')[:1]
+        if len(man_files) > 0:
+            output = man_files[0].file_uri
+        return output
+            
     def get_distinct_categories_from_uuids(self, uuid_list):
         """ gets distinct categories in a list of uuids """
         if self.contents_cnt > 1:

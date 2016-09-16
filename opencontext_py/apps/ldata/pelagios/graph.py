@@ -23,7 +23,6 @@ class PelagiosGraph():
 from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph
 pelagios = PelagiosGraph()
 pelagios.project_uuids = ['3']
-pelagios.test_limit = 10
 pelagios.make_graph()
 pelagios.g.serialize(format='turtle')
     """
@@ -69,20 +68,28 @@ pelagios.g.serialize(format='turtle')
                     # gazetteer uris
                     self.make_add_triple(oa_item.uri,
                                          RDF.type,
-                                         'pelagios:AnnotatedThing')
+                                         self.make_full_uri('pelagios', 'AnnotatedThing'))
                     self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('dcterms', 'title'),
                                          None,
                                          oa_item.title)
+                    """
+                    # commented out, don't need it
                     self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('foaf', 'homepage'),
                                          oa_item.uri)
+                    """
                     if isinstance(oa_item.description, str):
                         # add description
                         self.make_add_triple(oa_item.uri,
                                              self.make_full_uri('dcterms', 'description'),
                                              None,
                                              oa_item.description)
+                    if isinstance(oa_item.depiction, str):
+                        # in response to issue https://github.com/ekansa/open-context-py/issues/480
+                        self.make_add_triple(oa_item.uri,
+                                             self.make_full_uri('foaf', 'depiction'),
+                                             oa_item.depiction)
                     # add language assertion
                     self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('dcterms', 'language'),
@@ -104,14 +111,22 @@ pelagios.g.serialize(format='turtle')
                         for ass in oa_item.associated:
                             self.make_add_triple(ass['uri'],
                                                  RDF.type,
-                                                 'pelagios:AnnotatedThing')
+                                                 self.make_full_uri('pelagios', 'AnnotatedThing'))
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('dcterms', 'title'),
                                                  None,
                                                  ass['title'])
+                            """
+                            # commented out, don't need it
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('foaf', 'homepage'),
                                                  ass['uri'])
+                            """
+                            if isinstance(ass['depiction'], str):
+                                # in response to issue https://github.com/ekansa/open-context-py/issues/480
+                                self.make_add_triple(ass['uri'],
+                                                     self.make_full_uri('foaf', 'depiction'),
+                                                     ass['depiction'])
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('dcterms', 'description'),
                                                  None,
