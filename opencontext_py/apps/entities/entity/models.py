@@ -49,88 +49,90 @@ class Entity():
             if, not a URI, then looks in the OC manifest for the item
         """
         output = False
-        try_manifest = True
-        identifier = URImanagement.convert_prefix_to_full_uri(identifier)
-        if (settings.CANONICAL_HOST + '/tables/') in identifier:
-            identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
-        if(link_entity_slug or (len(identifier) > 8)):
-            if(link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
-                try:
-                    try_manifest = False
-                    ld_entity = LinkEntity.objects.get(Q(uri=identifier) | Q(slug=identifier))
-                except LinkEntity.DoesNotExist:
-                    ld_entity = False
-                if(ld_entity is not False):
-                    output = True
-                    self.uri = ld_entity.uri
-                    self.slug = ld_entity.slug
-                    self.label = ld_entity.label
-                    self.item_type = 'uri'
-                    self.alt_label = ld_entity.alt_label
-                    self.entity_type = ld_entity.ent_type
-                    self.vocab_uri = ld_entity.vocab_uri
-                    self.ld_object_ok = True
+        if isinstance(identifier, str):
+            # only try to dereference if the identifier is a string.
+            try_manifest = True
+            identifier = URImanagement.convert_prefix_to_full_uri(identifier)
+            if (settings.CANONICAL_HOST + '/tables/') in identifier:
+                identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
+            if link_entity_slug or (len(identifier) > 8):
+                if(link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
                     try:
-                        vocab_entity = LinkEntity.objects.get(uri=self.vocab_uri)
+                        try_manifest = False
+                        ld_entity = LinkEntity.objects.get(Q(uri=identifier) | Q(slug=identifier))
                     except LinkEntity.DoesNotExist:
-                        vocab_entity = False
-                    if(vocab_entity is not False):
-                        self.vocabulary = vocab_entity.label
-                    if self.get_icon:
-                        prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
-                        icon_anno = LinkAnnotation.objects\
-                                                  .filter(Q(subject=ld_entity.uri)
-                                                          | Q(subject=identifier)
-                                                          | Q(subject=prefix_uri),
-                                                          predicate_uri='oc-gen:hasIcon')[:1]
-                        if len(icon_anno) > 0:
-                            self.icon = icon_anno[0].object_uri
-                else:
-                    try_manifest = True
-                    # couldn't find the item in the linked entities table
-                    identifier = URImanagement.get_uuid_from_oc_uri(identifier)
-        if(try_manifest):
-            try:
-                manifest_item = Manifest.objects.get(Q(uuid=identifier) | Q(slug=identifier))
-            except Manifest.DoesNotExist:
-                manifest_item = False
-            if(manifest_item is not False):
-                output = True
-                self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
-                self.uuid = manifest_item.uuid
-                self.slug = manifest_item.slug
-                self.label = manifest_item.label
-                self.item_type = manifest_item.item_type
-                self.class_uri = manifest_item.class_uri
-                self.project_uuid = manifest_item.project_uuid
-                if(manifest_item.item_type == 'media' and self.get_thumbnail):
-                    # a media item. get information about its thumbnail.
-                    try:
-                        thumb_obj = Mediafile.objects.get(uuid=manifest_item.uuid, file_type='oc-gen:thumbnail')
-                    except Mediafile.DoesNotExist:
-                        thumb_obj = False
-                    if thumb_obj is not False:
-                        self.thumbnail_media = thumb_obj
-                        self.thumbnail_uri = thumb_obj.file_uri
-                elif(manifest_item.item_type == 'types'):
-                    tl = TypeLookup()
-                    tl.get_octype_without_manifest(identifier)
-                    self.content = tl.content
-                elif(manifest_item.item_type == 'predicates'):
-                    try:
-                        oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
-                    except Predicate.DoesNotExist:
-                        oc_pred = False
-                    if oc_pred is not False:
-                        self.data_type = oc_pred.data_type
-                        self.sort = oc_pred.sort
-                elif(manifest_item.item_type == 'subjects' and self.get_context):
-                    try:
-                        subj = Subject.objects.get(uuid=manifest_item.uuid)
-                    except Subject.DoesNotExist:
-                        subj = False
-                    if subj is not False:
-                        self.context = subj.context
+                        ld_entity = False
+                    if(ld_entity is not False):
+                        output = True
+                        self.uri = ld_entity.uri
+                        self.slug = ld_entity.slug
+                        self.label = ld_entity.label
+                        self.item_type = 'uri'
+                        self.alt_label = ld_entity.alt_label
+                        self.entity_type = ld_entity.ent_type
+                        self.vocab_uri = ld_entity.vocab_uri
+                        self.ld_object_ok = True
+                        try:
+                            vocab_entity = LinkEntity.objects.get(uri=self.vocab_uri)
+                        except LinkEntity.DoesNotExist:
+                            vocab_entity = False
+                        if(vocab_entity is not False):
+                            self.vocabulary = vocab_entity.label
+                        if self.get_icon:
+                            prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
+                            icon_anno = LinkAnnotation.objects\
+                                                      .filter(Q(subject=ld_entity.uri)
+                                                              | Q(subject=identifier)
+                                                              | Q(subject=prefix_uri),
+                                                              predicate_uri='oc-gen:hasIcon')[:1]
+                            if len(icon_anno) > 0:
+                                self.icon = icon_anno[0].object_uri
+                    else:
+                        try_manifest = True
+                        # couldn't find the item in the linked entities table
+                        identifier = URImanagement.get_uuid_from_oc_uri(identifier)
+            if try_manifest:
+                try:
+                    manifest_item = Manifest.objects.get(Q(uuid=identifier) | Q(slug=identifier))
+                except Manifest.DoesNotExist:
+                    manifest_item = False
+                if(manifest_item is not False):
+                    output = True
+                    self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
+                    self.uuid = manifest_item.uuid
+                    self.slug = manifest_item.slug
+                    self.label = manifest_item.label
+                    self.item_type = manifest_item.item_type
+                    self.class_uri = manifest_item.class_uri
+                    self.project_uuid = manifest_item.project_uuid
+                    if(manifest_item.item_type == 'media' and self.get_thumbnail):
+                        # a media item. get information about its thumbnail.
+                        try:
+                            thumb_obj = Mediafile.objects.get(uuid=manifest_item.uuid, file_type='oc-gen:thumbnail')
+                        except Mediafile.DoesNotExist:
+                            thumb_obj = False
+                        if thumb_obj is not False:
+                            self.thumbnail_media = thumb_obj
+                            self.thumbnail_uri = thumb_obj.file_uri
+                    elif(manifest_item.item_type == 'types'):
+                        tl = TypeLookup()
+                        tl.get_octype_without_manifest(identifier)
+                        self.content = tl.content
+                    elif(manifest_item.item_type == 'predicates'):
+                        try:
+                            oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
+                        except Predicate.DoesNotExist:
+                            oc_pred = False
+                        if oc_pred is not False:
+                            self.data_type = oc_pred.data_type
+                            self.sort = oc_pred.sort
+                    elif(manifest_item.item_type == 'subjects' and self.get_context):
+                        try:
+                            subj = Subject.objects.get(uuid=manifest_item.uuid)
+                        except Subject.DoesNotExist:
+                            subj = False
+                        if subj is not False:
+                            self.context = subj.context
         return output
 
     def context_dereference(self, context):
