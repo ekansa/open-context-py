@@ -44,6 +44,7 @@ pelagios.g.serialize(format='turtle')
         self.g = None
         self.prep_graph()
         self.base_uri = settings.CANONICAL_HOST + '/pelagios/data/'
+        self.annoations_uri_part = '#annotations/'
         self.anno_index = 0
         self.request = False
         self.refresh_cache = False
@@ -102,7 +103,7 @@ pelagios.g.serialize(format='turtle')
                                              oa_item.project_uri)
                     # now add gazetteer annotations to the item
                     base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
-                    base_anno_uri += '/annotations/'
+                    base_anno_uri += self.annoations_uri_part
                     self.make_gazetteer_annotations(oa_item.uri,
                                                     oa_item.gazetteer_uris,
                                                     base_anno_uri)
