@@ -85,7 +85,7 @@ pelagios.g.serialize(format='turtle')
                                              self.make_full_uri('dcterms', 'description'),
                                              None,
                                              oa_item.description)
-                    if isinstance(oa_item.depiction, str):
+                    if self.check_valid_uri(oa_item.depiction):
                         # in response to issue https://github.com/ekansa/open-context-py/issues/480
                         self.make_add_triple(oa_item.uri,
                                              self.make_full_uri('foaf', 'depiction'),
@@ -122,7 +122,7 @@ pelagios.g.serialize(format='turtle')
                                                  self.make_full_uri('foaf', 'homepage'),
                                                  ass['uri'])
                             """
-                            if isinstance(ass['depiction'], str):
+                            if self.check_valid_uri(ass['depiction']):
                                 # in response to issue https://github.com/ekansa/open-context-py/issues/480
                                 self.make_add_triple(ass['uri'],
                                                      self.make_full_uri('foaf', 'depiction'),
@@ -141,7 +141,21 @@ pelagios.g.serialize(format='turtle')
                             self.make_gazetteer_annotations(ass['uri'],
                                                             oa_item.gazetteer_uris,
                                                             base_anno_uri)
-                            
+    
+    def check_valid_uri(self, uri):
+        """ checks to see if a uri is valid """
+        valid = False
+        if isinstance(uri, str):
+            uri_out = False
+            try:
+                uri_test = URIRef(uri)
+                uri_out = uri_test.n3()
+            except:
+                # some sort of error thrown, so not valid
+                valid = False
+            if isinstance(uri_out, str):
+                valid = True
+        return valid
                                  
     def make_gazetteer_annotations(self, target_uri, gazetteer_uris, base_anno_uri):
         """ makes annotations for a target_uri from from a list of gazetteer_uris """
