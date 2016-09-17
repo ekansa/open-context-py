@@ -10,748 +10,748 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/1> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/EEB70BEE-C207-4D40-13AD-5178B5A88E59> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/10> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/100> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/101> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/102> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/103> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/104> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/105> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/106> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/107> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/108> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/109> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/11> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/110> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/111> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/112> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/113> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/114> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/115> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/116> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/117> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/118> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/119> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/12> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/120> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/121> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/122> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/123> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/124> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/125> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/126> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/127> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/128> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/129> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/13> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/130> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/131> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/132> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/133> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/134> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/135> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/136> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/137> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/138> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/139> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/14> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/140> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/141> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/142> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/143> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/144> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/145> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/146> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/subjects/E3C74EFE-FB61-40A7-125D-A34DDD37943A> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/147> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/media/C438D396-62CA-4ED9-3699-05762292B3D8> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/148> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/subjects/543E8999-02F8-416F-5B48-24D2A89EFD8D> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/149> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/media/95B83E7E-7784-439E-41FA-070618491CF4> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/15> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/150> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/0721BD50-2A00-4CA5-1BD3-F59DB747D5F9> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/151> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/8DFAD424-784E-4E9C-B484-01941960EBA5> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/152> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/6C3A37C2-5F76-475D-C3C5-3751B2A677A1> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/153> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/EB0A4BCF-0586-4039-75DD-9AEE4BD9C468> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/154> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/678073> ;
-    oa:hasTarget <http://opencontext.org/subjects/7B055004-176D-4AA2-57B8-5CEA1EF48D85> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/155> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/678073> ;
-    oa:hasTarget <http://opencontext.org/media/1E087909-B49D-4678-AE48-582165C76425> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/156> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/17604E97-7688-41EC-1C7A-0925A36C307C> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/157> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/57E865BC-B041-4546-E09B-CDADD410C4D8> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/158> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/61CEA3BC-232B-49D5-C66D-3C53D3F4E3D7> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/159> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/1029A31A-0699-43C8-B39A-DA019CDC958A> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/16> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/160> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/520985> ;
-    oa:hasTarget <http://opencontext.org/subjects/25C7E88B-79F1-4647-2B07-19D5B685E940> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/161> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/520985> ;
-    oa:hasTarget <http://opencontext.org/media/4E0D966F-1446-4564-316C-A79B84111E92> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/162> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects/89FD0FBC-B3F2-443F-40D1-30C9B74BC703> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/163> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/subjects/3A92F4B5-E587-4F98-CBA0-8C2E7C7EA297> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/164> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/media/8290F31F-9BD8-49B5-B5D1-E3760432DE5C> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/165> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/86511BD0-3E07-402B-BC00-5E43DBC90050> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/166> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/08C37B1D-A6DA-4C15-413D-8F98753AF1A1> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/167> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/668197> ;
-    oa:hasTarget <http://opencontext.org/subjects/3BF833F1-DD4A-419D-21BA-506907413F28> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/168> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/668197> ;
-    oa:hasTarget <http://opencontext.org/media/1A79038B-A60C-4A5A-9ABD-F9D51FD44A08> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/169> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/B78D2F83-2969-4D0A-32E4-56196E2A9087> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/17> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/170> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/1F36088E-2028-4E57-8C0C-B4F66C0CEAE7> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/171> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/17F5966B-80BF-4A45-0194-0C0D8C573DF1> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/172> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/FD73FCC1-0A1A-4A21-A36E-E180B21A5288> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/173> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/subjects/C58D9A72-8238-4069-9A83-0896FC22B701> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/174> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/media/68907308-3AE8-4E3F-42C7-08560863BE9B> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/175> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/6CC68163-3348-4AFA-C8D8-7D55E54160D3> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/176> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/5E091973-B454-4317-6336-9456FA03F582> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/177> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/5846CE3C-F338-4148-6FB1-F356947572AA> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/178> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/A8681DAF-0A9F-47AD-B025-F8740678AD69> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/179> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects/28761825-5947-4E1B-E26F-A0BDF900C11C> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/18> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/180> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media/4D5C0C69-3BB2-4D29-0864-A43C3160F20F> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/181> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/subjects/06DB04E7-B18B-4799-8CC0-CB697B69C428> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/182> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/media/C2023639-EA61-4D1E-3DD8-BE7B4AA38C30> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/183> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/C067FEC3-AB2A-4368-DBCE-026CA1E8C9AE> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/184> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/ADEB3BC5-F114-45DF-E85F-6A3B6E3720DB> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/185> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
-    oa:hasTarget <http://opencontext.org/subjects/11A13570-BD52-494E-9007-5D66CA0305AE> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/186> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
-    oa:hasTarget <http://opencontext.org/media/894356CC-56E3-4F27-BAA0-286F10B3E862> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/19> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/2> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/7B7DB39F-A46E-4AAA-F4BF-DC5E57269BD9> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/20> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/21> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/22> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/23> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/24> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/25> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
-    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/26> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
-    oa:hasTarget <http://opencontext.org/subjects/528E77C1-16ED-4876-C8C8-A866F31BD8E1> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/27> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
-    oa:hasTarget <http://opencontext.org/media/7F856300-BF35-4436-D406-E81C50F489D5> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/28> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/2457CB31-B8B4-4EAA-8F8A-434BB5F88E11> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/29> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/A3C52A61-3069-444D-A404-BA7CC5FE62E6> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/3> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/subjects/DDC73B12-397E-4DA6-B39B-60A8F5111C2E> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/30> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/subjects/A5DCF4E6-083B-47CD-B8C2-BBCCC015A91F> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/31> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/media/FD69FE15-9DFE-45BE-20F1-D4E19F161FED> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/32> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/F41DF37D-20CF-460C-AFAD-D562EC61CDA5> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/33> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/B8E0079E-C5F4-43E1-4195-77FF6E14BE1E> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/34> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects/6F89FC2D-446E-453C-A860-0839E269F30C> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/35> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media/99331B5A-D355-4495-BCDD-57E9DE87A215> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/36> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/1> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/658381> ;
     oa:hasTarget <http://opencontext.org/subjects/97CF19D5-70DB-45B6-7272-DFAD5EC20668> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/37> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/0EBA13D8-927A-423A-5E07-69D9BBA1E1C7> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/10> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
+    oa:hasTarget <http://opencontext.org/media/894356CC-56E3-4F27-BAA0-286F10B3E862> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/38> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/64DC2853-8587-48C5-ED56-8354526D538E> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/100> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/39> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/F54406FA-5ABA-45EC-F265-E94BD0A5DA7D> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/4> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
-    oa:hasTarget <http://opencontext.org/media/9174AF6C-F16E-472E-AEB1-03BC10C9E39B> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/40> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/101> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects/3596649D-6265-409D-863B-3891A7C3FB50> .
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/41> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/102> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/103> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/104> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/105> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media/5993271B-D034-4BAB-C61B-EDB7FB922B2E> .
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/42> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/79574> ;
-    oa:hasTarget <http://opencontext.org/subjects/3DC88706-3581-475F-7A25-2CC0ED31CBE9> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/106> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/43> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/79574> ;
-    oa:hasTarget <http://opencontext.org/media/EF9A92E6-B064-4E63-AFC6-530990B40CF2> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/107> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/44> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/108> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/109> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/11> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects/6F89FC2D-446E-453C-A860-0839E269F30C> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/110> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/111> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/112> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/113> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/114> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/115> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/116> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-image&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/117> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/118> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/119> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/12> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media/99331B5A-D355-4495-BCDD-57E9DE87A215> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/120> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/121> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/122> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/123> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/124> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/125> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/126> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/127> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/128> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/129> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/13> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/C067FEC3-AB2A-4368-DBCE-026CA1E8C9AE> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/130> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/131> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/132> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/133> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/134> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/135> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/136> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/137> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/138> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/139> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/14> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/ADEB3BC5-F114-45DF-E85F-6A3B6E3720DB> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/140> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/141> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/142> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/143> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/144> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-site&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/145> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/subjects/7755FE04-A312-491F-0603-6F7FF8A6EA2C> .
+    oa:hasTarget <http://opencontext.org/subjects/C58D9A72-8238-4069-9A83-0896FC22B701> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/45> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/146> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/727070> ;
-    oa:hasTarget <http://opencontext.org/media/97072E3B-CE14-4197-6342-9D2C36CE9D85> .
+    oa:hasTarget <http://opencontext.org/media/68907308-3AE8-4E3F-42C7-08560863BE9B> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/46> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/147> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/511218> ;
     oa:hasTarget <http://opencontext.org/subjects/44927BAF-BE36-466B-DBC6-BE7B84262E06> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/47> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/148> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/511218> ;
     oa:hasTarget <http://opencontext.org/media/ABDC0158-07B2-4A65-39B7-BCE8FA2F27D0> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/48> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/F623C364-2A01-48CD-A29E-02702C90045B> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/49> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/81528F61-BEF5-4FCB-E5EB-DFB260E3582A> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/5> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/149> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/658381> ;
     oa:hasTarget <http://opencontext.org/subjects/68E983BB-E47E-4866-1FC1-DD1F3F1BB639> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/50> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/15> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/F88F6EBB-8557-4DEA-E30C-BA473E764B95> .
+    oa:hasTarget <http://opencontext.org/subjects/64DC2853-8587-48C5-ED56-8354526D538E> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/51> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/13718B91-02B8-47C5-6542-9755ED93AFE4> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/52> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511337> ;
-    oa:hasTarget <http://opencontext.org/subjects/5585F5EC-FE9C-487C-5A13-4E277746069D> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/53> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/511337> ;
-    oa:hasTarget <http://opencontext.org/media/9EDC10A1-C0EB-43A1-ED7D-3F0DDF34B40A> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/54> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/subjects/16717FC7-FFEA-4C5C-653D-C8417A28742D> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/55> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
-    oa:hasTarget <http://opencontext.org/media/5C5D8BB4-ABD8-46CB-3F4A-2F17928BFD10> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/56> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/subjects/2AC2DA2D-1B7C-4A8C-D9E6-A2E5EDE59916> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/57> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
-    oa:hasTarget <http://opencontext.org/media/5651DB30-35B4-470D-85BE-FB77658F27DD> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/58> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/59> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/6> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/150> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/658381> ;
     oa:hasTarget <http://opencontext.org/media/E640F4BF-541F-47DD-3753-C999AF399AE2> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/60> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/151> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
+    oa:hasTarget <http://opencontext.org/subjects/528E77C1-16ED-4876-C8C8-A866F31BD8E1> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/61> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/152> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
+    oa:hasTarget <http://opencontext.org/media/7F856300-BF35-4436-D406-E81C50F489D5> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/62> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/153> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/17F5966B-80BF-4A45-0194-0C0D8C573DF1> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/154> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/FD73FCC1-0A1A-4A21-A36E-E180B21A5288> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/155> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/86511BD0-3E07-402B-BC00-5E43DBC90050> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/156> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/08C37B1D-A6DA-4C15-413D-8F98753AF1A1> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/157> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/subjects/2AC2DA2D-1B7C-4A8C-D9E6-A2E5EDE59916> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/158> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/media/5651DB30-35B4-470D-85BE-FB77658F27DD> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/159> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/6C3A37C2-5F76-475D-C3C5-3751B2A677A1> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/16> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/F54406FA-5ABA-45EC-F265-E94BD0A5DA7D> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/160> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/EB0A4BCF-0586-4039-75DD-9AEE4BD9C468> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/161> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/subjects/E3C74EFE-FB61-40A7-125D-A34DDD37943A> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/162> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/media/C438D396-62CA-4ED9-3699-05762292B3D8> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/163> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+    oa:hasTarget <http://opencontext.org/subjects/3596649D-6265-409D-863B-3891A7C3FB50> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/63> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/64> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/65> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/66> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/164> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+    oa:hasTarget <http://opencontext.org/media/5993271B-D034-4BAB-C61B-EDB7FB922B2E> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/67> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/165> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/2457CB31-B8B4-4EAA-8F8A-434BB5F88E11> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/68> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/166> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/A3C52A61-3069-444D-A404-BA7CC5FE62E6> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/69> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/167> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/F41DF37D-20CF-460C-AFAD-D562EC61CDA5> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/7> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/168> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/B8E0079E-C5F4-43E1-4195-77FF6E14BE1E> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/169> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/668197> ;
+    oa:hasTarget <http://opencontext.org/subjects/3BF833F1-DD4A-419D-21BA-506907413F28> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/17> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/F623C364-2A01-48CD-A29E-02702C90045B> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/170> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/668197> ;
+    oa:hasTarget <http://opencontext.org/media/1A79038B-A60C-4A5A-9ABD-F9D51FD44A08> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/171> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/subjects/06DB04E7-B18B-4799-8CC0-CB697B69C428> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/172> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/media/C2023639-EA61-4D1E-3DD8-BE7B4AA38C30> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/173> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/61CEA3BC-232B-49D5-C66D-3C53D3F4E3D7> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/174> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/1029A31A-0699-43C8-B39A-DA019CDC958A> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/175> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
+    oa:hasTarget <http://opencontext.org/subjects/7755FE04-A312-491F-0603-6F7FF8A6EA2C> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/176> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
+    oa:hasTarget <http://opencontext.org/media/97072E3B-CE14-4197-6342-9D2C36CE9D85> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/177> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/6CC68163-3348-4AFA-C8D8-7D55E54160D3> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/178> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/5E091973-B454-4317-6336-9456FA03F582> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/179> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/subjects/543E8999-02F8-416F-5B48-24D2A89EFD8D> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/18> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/81528F61-BEF5-4FCB-E5EB-DFB260E3582A> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/180> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/491741> ;
+    oa:hasTarget <http://opencontext.org/media/95B83E7E-7784-439E-41FA-070618491CF4> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/181> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/678073> ;
+    oa:hasTarget <http://opencontext.org/subjects/7B055004-176D-4AA2-57B8-5CEA1EF48D85> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/182> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/678073> ;
+    oa:hasTarget <http://opencontext.org/media/1E087909-B49D-4678-AE48-582165C76425> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/183> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/79574> ;
+    oa:hasTarget <http://opencontext.org/subjects/3DC88706-3581-475F-7A25-2CC0ED31CBE9> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/184> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/79574> ;
+    oa:hasTarget <http://opencontext.org/media/EF9A92E6-B064-4E63-AFC6-530990B40CF2> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/185> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511337> ;
+    oa:hasTarget <http://opencontext.org/subjects/5585F5EC-FE9C-487C-5A13-4E277746069D> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/186> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511337> ;
+    oa:hasTarget <http://opencontext.org/media/9EDC10A1-C0EB-43A1-ED7D-3F0DDF34B40A> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/19> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/5846CE3C-F338-4148-6FB1-F356947572AA> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/2> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/0EBA13D8-927A-423A-5E07-69D9BBA1E1C7> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/20> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/A8681DAF-0A9F-47AD-B025-F8740678AD69> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/21> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/subjects/A5DCF4E6-083B-47CD-B8C2-BBCCC015A91F> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/22> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/media/FD69FE15-9DFE-45BE-20F1-D4E19F161FED> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/23> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects/89FD0FBC-B3F2-443F-40D1-30C9B74BC703> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/24> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/B78D2F83-2969-4D0A-32E4-56196E2A9087> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/25> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/1F36088E-2028-4E57-8C0C-B4F66C0CEAE7> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/26> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects/28761825-5947-4E1B-E26F-A0BDF900C11C> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/27> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media/4D5C0C69-3BB2-4D29-0864-A43C3160F20F> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/28> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
+    oa:hasTarget <http://opencontext.org/subjects/3A92F4B5-E587-4F98-CBA0-8C2E7C7EA297> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/29> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/727070> ;
+    oa:hasTarget <http://opencontext.org/media/8290F31F-9BD8-49B5-B5D1-E3760432DE5C> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/3> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/520985> ;
+    oa:hasTarget <http://opencontext.org/subjects/25C7E88B-79F1-4647-2B07-19D5B685E940> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/30> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/0721BD50-2A00-4CA5-1BD3-F59DB747D5F9> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/31> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/8DFAD424-784E-4E9C-B484-01941960EBA5> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/32> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/EEB70BEE-C207-4D40-13AD-5178B5A88E59> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/33> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/7B7DB39F-A46E-4AAA-F4BF-DC5E57269BD9> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/34> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/16717FC7-FFEA-4C5C-653D-C8417A28742D> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/35> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/5C5D8BB4-ABD8-46CB-3F4A-2F17928BFD10> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/36> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
     oa:hasTarget <http://opencontext.org/subjects/D9AE02E5-C3F1-41D0-EB3A-39798F63F6C4> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/70> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/71> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/72> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/73> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/74> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/75> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/76> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/77> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/78> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/79> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/8> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/37> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
     oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/80> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/81> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/82> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/83> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/84> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/85> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/86> a oa:Annotation ;
-    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/87> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/8354456> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/88> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/248816> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/89> a oa:Annotation ;
-    oa:hasBody <http://www.geonames.org/250745> ;
-    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
-
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/9> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/38> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
     oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/90> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/39> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/4> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/520985> ;
+    oa:hasTarget <http://opencontext.org/media/4E0D966F-1446-4564-316C-A79B84111E92> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/40> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/41> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/42> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/43> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/44> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/45> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/46> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-trench&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/47> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-sequence&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/48> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-locus&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/49> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-locus&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/5> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/subjects/DDC73B12-397E-4DA6-B39B-60A8F5111C2E> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/50> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-coin&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/51> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-glass&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/52> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-arch-element&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/53> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/Jordan/Petra+Great+Temple?prop=oc-gen-cat-pottery&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/54> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/777218559> ;
+    oa:hasTarget <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-pottery&prop=oc-gen%3Adocument-file&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/55> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/17604E97-7688-41EC-1C7A-0925A36C307C> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/56> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/57E865BC-B041-4546-E09B-CDADD410C4D8> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/57> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/58> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/59> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/6> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/423025> ;
+    oa:hasTarget <http://opencontext.org/media/9174AF6C-F16E-472E-AEB1-03BC10C9E39B> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/60> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/projects/A5DDBEA2-B3C8-43F9-8151-33343CBDC857> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/61> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/62> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/63> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/64> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-pottery&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/65> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/66> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/67> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/68> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-site&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/69> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/7> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/subjects/F88F6EBB-8557-4DEA-E30C-BA473E764B95> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/70> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/71> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/72> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-animal-bone&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/73> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/74> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/75> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/76> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-object&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/77> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/78> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/79> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/8> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/658381> ;
+    oa:hasTarget <http://opencontext.org/media/13718B91-02B8-47C5-6542-9755ED93AFE4> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/80> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-area&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/81> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/82> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/83> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/84> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/subjects-search/?prop=oc-gen-cat-trench&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/85> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/697725> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/86> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/87> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/88> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/250745> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/89> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/91> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/9> a oa:Annotation ;
+    oa:hasBody <http://pleiades.stoa.org/places/511218> ;
+    oa:hasTarget <http://opencontext.org/subjects/11A13570-BD52-494E-9007-5D66CA0305AE> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/90> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/8354456> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/92> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/91> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/248816> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/93> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/92> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/250745> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-object&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/94> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/93> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/95> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/94> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/8354456> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/96> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/95> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/248816> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/97> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/96> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/250745> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-coin&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/98> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/97> a oa:Annotation ;
     oa:hasBody <http://pleiades.stoa.org/places/697725> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
-<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857/annotations/99> a oa:Annotation ;
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/98> a oa:Annotation ;
     oa:hasBody <http://www.geonames.org/8354456> ;
+    oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
+
+<http://opencontext.org/pelagios/data/A5DDBEA2-B3C8-43F9-8151-33343CBDC857#annotations/99> a oa:Annotation ;
+    oa:hasBody <http://www.geonames.org/248816> ;
     oa:hasTarget <http://opencontext.org/media-search/?prop=rel--oc-gen-cat-area&prop=oc-gen-image&proj=10-petra-great-temple-excavations> .
 
 <http://opencontext.org/media-search/Jordan/Petra+Great+Temple?prop=rel--oc-gen-cat-animal-bone&prop=oc-gen-image&proj=10-petra-great-temple-excavations> a pelagios:AnnotatedThing ;
