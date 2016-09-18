@@ -3,6 +3,7 @@ import json
 import django.utils.http as http
 from datetime import datetime
 from django.conf import settings
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.contexts.models import SearchContext
@@ -67,6 +68,15 @@ class MakeJsonLd():
             self.json_ld['dcmi:modified'] = self.get_modified_datetime(solr_json)
             self.json_ld['dcmi:created'] = self.get_created_datetime(solr_json)
             self.json_ld['oai-pmh:earliestDatestamp'] = self.get_earliest_created_datetime(solr_json)
+            self.json_ld['start'] = self.get_earliest_form_use_time(solr_json)
+            self.json_ld['stop'] = self.get_latest_form_use_time(solr_json)
+            if  self.json_ld['start'] is not None and self.json_ld['stop'] is not None:
+                if self.json_ld['start'] != self.json_ld['stop']:
+                    self.json_ld['dc-terms:temporal'] = self.json_ld['start'] + '/' + self.json_ld['stop']
+                else:
+                    self.json_ld['dc-terms:temporal'] = self.json_ld['start']
+            else:
+                self.json_ld['dc-terms:temporal'] = None
             self.add_paging_json(solr_json)
             self.add_sorting_json()
             self.add_filters_json()
@@ -329,6 +339,38 @@ class MakeJsonLd():
         if earliest_created is False:
             earliest_created = time.strftime('%Y-%m-%dT%H:%M:%S') + 'Z'
         return earliest_created
+
+    def get_earliest_form_use_time(self, solr_json, iso=True):
+        """ Makes the last modified time in ISO 8601 format
+            Solr already defaults to that format
+        """
+        earliest_f_u_l = self.get_path_in_dict(['stats',
+                                                'stats_fields',
+                                                'form_use_life_chrono_earliest',
+                                                'min'],
+                                               solr_json)
+        if earliest_f_u_l is False:
+            earliest_f_u_l = None
+        else:
+            if iso:
+                earliest_f_u_l = ISOyears().make_iso_from_float(earliest_f_u_l)
+        return earliest_f_u_l
+
+    def get_latest_form_use_time(self, solr_json, iso=True):
+        """ Makes the last modified time in ISO 8601 format
+            Solr already defaults to that format
+        """
+        latest_f_u_l = self.get_path_in_dict(['stats',
+                                              'stats_fields',
+                                              'form_use_life_chrono_latest',
+                                              'max'],
+                                             solr_json)
+        if latest_f_u_l is False:
+            latest_f_u_l = None
+        else:
+            if iso:
+                latest_f_u_l = ISOyears().make_iso_from_float(latest_f_u_l)
+        return latest_f_u_l
 
     def add_text_fields(self):
         """ adds text fields with query options """

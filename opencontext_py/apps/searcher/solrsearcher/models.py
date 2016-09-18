@@ -45,7 +45,10 @@ class SolrSearch():
                        'oc_gen_persons___pred_id']
 
     REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
-    GENERAL_STATS_FIELDS = ['updated', 'published']
+    GENERAL_STATS_FIELDS = ['updated',
+                            'published']
+    CHRONO_STATS_FIELDS =  ['form_use_life_chrono_earliest',
+                            'form_use_life_chrono_latest']
     MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
 
     def __init__(self):
@@ -75,6 +78,9 @@ class SolrSearch():
         # Start building solr query
         if self.item_type_limit == 'projects':
             self.facet_fields = self.PROJECT_FACET_FIELDS
+        else:
+            # add chronology stats fields, because its not just for projects
+            self.stats_fields += self.CHRONO_STATS_FIELDS
         request_dict = json.loads(request_dict_json)
         query = self.compose_query(request_dict)
         if 'fq' in query:
