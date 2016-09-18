@@ -57,6 +57,10 @@ class PelagiosVoid():
                              None,
                              settings.CANONICAL_SITENAME)
         self.make_add_triple(oc_projs_uri,
+                             self.make_full_uri('dcterms', 'description'),
+                             None,
+                             settings.HOST_TAGLINE)
+        self.make_add_triple(oc_projs_uri,
                              self.make_full_uri('foaf', 'homepage'),
                              settings.CANONICAL_HOST)
         # now add the projects as subsets of data
