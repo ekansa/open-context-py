@@ -322,6 +322,11 @@ else:
 CANONICAL_HOST = 'http://opencontext.org'
 CANONICAL_SITENAME = 'Open Context'
 TWITTER_SITE = '@opencontext'
+if 'HOST_TAGLINE' in secrets:
+    HOST_TAGLINE = get_secret('HOST_TAGLINE')
+else:
+    HOST_TAGLINE = 'Publication and exhibition of open research data '\
+                    + 'and media from archaeology and related fields'
 
 # useful hack to allow presence of a 'debug.json' file to
 # toggle debug mode
