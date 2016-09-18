@@ -11,3 +11,15 @@ $(document).ready(function() {
     });
 
 });
+
+function change_tab(tab_id){
+    // change the tab
+    $('.nav-tabs a[href=' + tab_id + ']').tab('show');
+
+    $('.nav-tabs a').on('shown.bs.tab', function(e) {
+        var prefix = "tab_";
+        window.location.hash = e.target.hash.replace("#", "#" + prefix);
+    });
+
+    
+}
