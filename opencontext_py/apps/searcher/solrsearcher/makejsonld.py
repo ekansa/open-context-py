@@ -352,7 +352,7 @@ class MakeJsonLd():
         if earliest_f_u_l is False:
             earliest_f_u_l = None
         else:
-            if iso:
+            if iso and earliest_f_u_l is not None:
                 earliest_f_u_l = ISOyears().make_iso_from_float(earliest_f_u_l)
         return earliest_f_u_l
 
@@ -368,7 +368,7 @@ class MakeJsonLd():
         if latest_f_u_l is False:
             latest_f_u_l = None
         else:
-            if iso:
+            if iso and latest_f_u_l is not None: 
                 latest_f_u_l = ISOyears().make_iso_from_float(latest_f_u_l)
         return latest_f_u_l
 
