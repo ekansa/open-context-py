@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -18,6 +19,7 @@ from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
+from opencontext_py.apps.searcher.solrsearcher.complete import CompleteQuery
 
 
 class PelagiosData():
@@ -90,6 +92,7 @@ class PelagiosData():
             if do_loop:
                 oa_item.validate()
                 if oa_item.is_valid:
+                    oa_item.get_geo_event_metadata()
                     oa_item.get_associated_categories()
                     oa_item.mem_cache_entities = self.mem_cache_entities
                     oa_item.prep_item_dc_metadata()
@@ -237,6 +240,7 @@ class OaItem():
         self.title = None
         self.description = None
         self.depiction = None
+        self.temporal = None
         self.class_label = None
         self.class_slug = None
         self.uri = None
@@ -354,6 +358,8 @@ class OaItem():
                         description += ' ' + PelagiosData.ITEM_TYPE_DESCRIPTIONS[ass['item_type']]
                     ass['description'] = self.add_description_item_class_project(description,
                                                                                  project_ent)
+                    if ass['temporal'] is None:
+                        ass['temporal'] = self.temporal
                     ass_items.append(ass)
                 elif self.contents_cnt > 1 or self.manifest.item_type == 'projects':
                     # the associated item is for a result set, not an individual item
@@ -383,6 +389,11 @@ class OaItem():
                     ass['description'] = self.add_description_item_class_project(description,
                                                                                  project_ent)
                     param_sep = '?'
+                    # payload is for querying for temporal data
+                    payload = {
+                        'response': 'metadata',
+                        'type': ass['item_type'],
+                        'prop': []}
                     if ass['item_type'] == 'media': 
                         ass['uri'] = settings.CANONICAL_HOST + '/media-search/'
                         if isinstance(self.context, str):
@@ -390,11 +401,14 @@ class OaItem():
                         if cat_ent is not False:
                             ass['uri'] += param_sep + 'prop=rel--' + cat_ent.slug
                             param_sep = '&'
+                            payload['prop'].append('rel--' + cat_ent.slug)
                         if rel_media_cat_ent is not False:
                             ass['uri'] += param_sep + 'prop=' + rel_media_cat_ent.slug
                             param_sep = '&'
+                            payload['prop'].append(rel_media_cat_ent.slug)
                         elif isinstance(ass['media_class_uri'], str):
                             ass['uri'] += param_sep + 'prop=' + quote_plus(ass['media_class_uri'])
+                            payload['prop'].append(ass['media_class_uri'])
                     elif ass['item_type'] == 'subjects':
                         ass['uri'] = settings.CANONICAL_HOST + '/subjects-search/'
                         if isinstance(self.context, str):
@@ -402,6 +416,7 @@ class OaItem():
                         if cat_ent is not False:
                             ass['uri'] += param_sep + 'prop=' + cat_ent.slug
                             param_sep = '&'
+                            payload['prop'].append(cat_ent.slug)
                     else:
                         ass['uri'] = settings.CANONICAL_HOST + '/search/'
                         if isinstance(self.context, str):
@@ -409,10 +424,20 @@ class OaItem():
                         if cat_ent is not False:
                             ass['uri'] += param_sep + 'prop=rel--' + cat_ent.slug
                             param_sep = '&'
+                            payload['prop'].append('rel--' + cat_ent.slug)
                         ass['uri'] += param_sep + 'type=' + ass['item_type']
                         param_sep = '&'
                     if project_ent is not False:
                         ass['uri'] += param_sep + 'proj=' + project_ent.slug
+                        payload['proj'] = project_ent.slug
+                    # now query Solr for temporal data
+                    cq = CompleteQuery()
+                    spatial_context = None
+                    if isinstance(self.context, str):
+                        spatial_context = self.context
+                    ass_metadata = cq.get_json_query(payload, spatial_context)
+                    if 'dc-terms:temporal' in ass_metadata:
+                        ass['temporal'] = ass_metadata['dc-terms:temporal']
                     ass_sets.append(ass)
                 else:
                     pass
@@ -502,7 +527,36 @@ class OaItem():
                 self.event_meta = act_contain.get_related_geochron(self.manifest.uuid,
                                                                    self.manifest.item_type,
                                                                    'event')
-    
+            if self.event_meta is not False and self.event_meta is not None:
+                start = None
+                stop = None
+                for event in self.event_meta:
+                    if start is None:
+                        start = event.start
+                    if stop is None:
+                        stop = event.stop
+                    if start < event.start:
+                        start = event.start
+                    if stop > event.stop:
+                        stop = event.stop
+                if stop is None:
+                    stop = start
+                if start is not None:
+                    # we have a start year, so make a temporal value in ISON 8601 format
+                    self.temporal = ISOyears().make_iso_from_float(start)
+                    if stop != start:
+                        # stop year different from start, so add a / sep and the stop
+                        # year in ISO 8601 format
+                        self.temporal += '/' + ISOyears().make_iso_from_float(stop)
+            if self.temporal is None and self.manifest.item_type == 'projects':
+                # get project teporal metadata via solr
+                # now query Solr for temporal data
+                cq = CompleteQuery()
+                payload = {'proj': self.manifest.slug}
+                ass_metadata = cq.get_json_query(payload, None)
+                if 'dc-terms:temporal' in ass_metadata:
+                     self.temporal = ass_metadata['dc-terms:temporal']
+
     def get_associated_categories(self):
         """ get categories of items related to the current
             annotated item
@@ -559,6 +613,7 @@ class OaItem():
                     cat['depiction'] = self.get_depiction_image_file(cat['uuid'])
             cat['title'] = None
             cat['description'] = None
+            cat['temporal'] = None  # for temporal metadata
             cat['class_label'] = None
             cat['class_slug'] = None
             cat['uri'] = None
