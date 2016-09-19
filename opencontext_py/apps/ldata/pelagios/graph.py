@@ -91,6 +91,12 @@ pelagios.g.serialize(format='turtle')
                         self.make_add_triple(oa_item.uri,
                                              self.make_full_uri('foaf', 'depiction'),
                                              oa_item.depiction)
+                    if isinstance(oa_item.temporal, str):
+                        # temporal metadata, as string of ISO 8601 '/' seperated intervals 
+                        self.make_add_triple(oa_item.uri,
+                                             self.make_full_uri('dcterms', 'temporal'),
+                                             None,
+                                             oa_item.temporal)
                     # add language assertion
                     self.make_add_triple(oa_item.uri,
                                          self.make_full_uri('dcterms', 'language'),
@@ -132,6 +138,12 @@ pelagios.g.serialize(format='turtle')
                                                  self.make_full_uri('dcterms', 'description'),
                                                  None,
                                                  ass['description'])
+                            if isinstance(ass['temporal'], str):
+                                # temporal metadata, as string of ISO 8601 '/' seperated intervals 
+                                self.make_add_triple(ass['uri'],
+                                                     self.make_full_uri('dcterms', 'temporal'),
+                                                     None,
+                                                     ass['temporal'])
                             self.make_add_triple(ass['uri'],
                                                  self.make_full_uri('dcterms', 'language'),
                                                  None,
