@@ -167,6 +167,15 @@ class ActiveFilters():
                             if label_dict['entities'][0].vocabulary is not False\
                                and label_dict['entities'][0].vocabulary != label_dict['label']:
                                 act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
+                    elif param_key == 'obj':
+                        act_filter['oc-api:filter'] = 'Links (in some manner) to object'
+                        label_dict = self.make_filter_label_dict(all_vals[-1])
+                        if len(label_dict['label']) > 0:
+                            act_filter['label'] = label_dict['label']
+                        if len(label_dict['entities']) == 1:
+                            act_filter['rdfs:isDefinedBy'] = label_dict['entities'][0].uri
+                            if label_dict['entities'][0].vocabulary is not False:
+                                act_filter['label'] += ' in ' + label_dict['entities'][0].vocabulary
                     elif param_key == 'dc-isReferencedBy':
                         act_filter['oc-api:filter'] = 'Is referenced by'
                         label_dict = self.make_filter_label_dict(all_vals[-1])
