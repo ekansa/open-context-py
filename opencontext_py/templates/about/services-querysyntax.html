@@ -40,11 +40,26 @@
     <tbody>
         <tr>
             <th>
-                <samp>q={url encoded search term}</samp>
+                <samp>q={URL encoded search term}</samp>
             </th>
             <td>
                 <p>Adding this query parameter with a URL encoded search term requests a full-text search. This works similarly to familiar text searches elsewhere on the Web, and can be combined
                 with other search parameters. Here is an example text search for the term "<a href="{{ base_url }}/subjects-search/?q=bucchero" title="Request a full-text search for the term 'bucchero'">bucchero</a>".</p>
+            </td>
+        </tr>
+        <tr>
+            <th>
+                <samp>obj={URL encoded URI}</samp>
+            </th>
+            <td>
+                <p>Adding this query parameter with a URL encoded URI requests records that link (via any attribute or relation predicate) to a URI-indentified entity defined by a data source, vocabulary or ontology outside of Open Context.</p>
+                <p>For example, this search, <a href="{{ base_url }}/subjects-search/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979" target="_blank" title="Find records related to UBERON tibia">{{ base_url }}/subjects-search/?obj=http%3A%2F%2Fpurl.obolibrary.org%2Fobo%2FUBERON_0000979</a>, finds all records associated with the UBERON concept for the bone element tibia, identified by this URI: <a href="http://purl.obolibrary.org/obo/UBERON_0000979" target="_blank" title="UBERON tibia concept">http://purl.obolibrary.org/obo/UBERON_0000979</a>. This example works similarly to a SPARQL query formulated like:</p>
+                <samp>
+                    SELECT ?s <br/>
+                    { <br/>
+                    ?s ?p &lt;http://purl.obolibrary.org/obo/UBERON_0000979&gt; <br/>
+                    } <br/>
+                </samp>
             </td>
         </tr>
         <tr>
