@@ -83,7 +83,8 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site', False)
             # look for superior items in the objects of the assertion
             superobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
                                                            predicate_uri__in=preds_for_superobjs)\
-                                                   .exclude(object_uri__in=identifiers)[:1]
+                                                   .exclude(object_uri__in=identifiers)\
+                                                   .order_by('sort', 'object_uri')[:1]
             if(len(superobjs_anno) < 1):
                 superobjs_anno = False
         except LinkAnnotation.DoesNotExist:
@@ -104,7 +105,8 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site', False)
             """
             supersubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
                                                            predicate_uri__in=preds_for_subobjs)\
-                                                   .exclude(subject__in=identifiers)[:1]
+                                                   .exclude(subject__in=identifiers)\
+                                                   .order_by('sort', 'subject')[:1]
             if(len(supersubj_anno) < 1):
                 supersubj_anno = False
         except LinkAnnotation.DoesNotExist:
