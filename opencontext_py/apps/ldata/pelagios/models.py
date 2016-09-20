@@ -435,6 +435,9 @@ class OaItem():
                     spatial_context = None
                     if isinstance(self.context, str):
                         spatial_context = self.context
+                    if len(payload['prop']) < 1:
+                        # remove unused property key
+                        payload.pop('prop', None)
                     ass_metadata = cq.get_json_query(payload, spatial_context)
                     if 'dc-terms:temporal' in ass_metadata:
                         ass['temporal'] = ass_metadata['dc-terms:temporal']
