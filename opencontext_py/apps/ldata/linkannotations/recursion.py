@@ -81,6 +81,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site', False)
         preds_for_subobjs = lequiv.get_identifier_list_variants(p_for_subobjs)
         try:
             # look for superior items in the objects of the assertion
+            # sorting by sort so we can privelage a certain hierarchy path
             superobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
                                                            predicate_uri__in=preds_for_superobjs)\
                                                    .exclude(object_uri__in=identifiers)\
@@ -102,6 +103,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-site', False)
         try:
             """
             Now look for superior entities in the subject, not the object
+            sorting by sort so we can privelage a certain hierarchy path
             """
             supersubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
                                                            predicate_uri__in=preds_for_subobjs)\
