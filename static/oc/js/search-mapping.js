@@ -258,7 +258,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			);
 			//now add a box-zoom
 			var zoom_control = L.control.zoomBox({modal: true});
-			map.addControl(zoom_control);
+			// map.addControl(zoom_control);
 			
 		}
 		else{
