@@ -28,7 +28,7 @@ L.Control.ZoomBox = L.Control.extend({
             var container_point = new L.Point();
             container_point.x = e.layerX;
             container_point.y = e.layerY;
-            //console.log(e);
+            console.log(e);
             var box_point = map.containerPointToLatLng(container_point);
             if (typeof map.boxZoom.b_points !== 'undefined') {
                 map.boxZoom.b_points.push(box_point);
@@ -36,6 +36,7 @@ L.Control.ZoomBox = L.Control.extend({
             else{
                 map.boxZoom.b_points = [box_point];
             }
+            console.log(box_point);
         };
         var _origMouseDown = map.boxZoom._onMouseDown;
         map.boxZoom._onMouseDown = function(e){
@@ -97,6 +98,7 @@ L.Control.ZoomBox = L.Control.extend({
                 }
                 
                 var bbox_query = [min_lng, min_lat, max_lng, max_lat].join(',');
+                
                 if (map.getZoom() == map.getMaxZoom()){
                     L.DomUtil.addClass(link, 'leaflet-disabled');
                 }
@@ -113,7 +115,7 @@ L.Control.ZoomBox = L.Control.extend({
                 }
                 url = replaceURLparameter(url, 'geodeep', new_zoom);
                 url = replaceURLparameter(url, 'disc-bbox', bbox_query);
-                //console.log(url);
+                
                 map.show_region_loading();
                 window.location = url; //load the page with the zoom query
             }
