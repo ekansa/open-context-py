@@ -910,7 +910,7 @@ class MakeJsonLd():
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-context'
             facet['label'] = 'Context'
             facet['data-type'] = 'id'
-        if solr_facet_key == SolrDocument.ROOT_PROJECT_SOLR:
+        elif solr_facet_key == SolrDocument.ROOT_PROJECT_SOLR:
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-project'
             facet['label'] = 'Project'
@@ -968,6 +968,8 @@ class MakeJsonLd():
                     facet['label'] =  '(Related) ' + entity.label
                 else:
                     facet['label'] = entity.label
+                    if id_prefix == '#facet-context':
+                        facet['label'] += ' (Context)'
                 facet['slug'] = slug
             facet['data-type'] = fsuffix_list[-1]
         facet['type'] = ftype
