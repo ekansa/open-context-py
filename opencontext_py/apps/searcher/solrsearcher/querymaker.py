@@ -366,17 +366,24 @@ class QueryMaker():
                                 lr = LinkRecursion()
                                 parents = lr.get_jsonldish_entity_parents(entity.uri)
                                 if len(parents) > 1:
-                                    p_slug = parents[-2]['slug']
-                                    act_field_fq = p_slug.replace('-', '_') + '___pred_id'
-                                    act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
+                                    try:
+                                        p_slug = parents[-2]['slug']
+                                        act_field_fq = p_slug.replace('-', '_') + '___pred_id'
+                                        act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
+                                    except:
+                                        pass
                             elif entity.item_type == 'uri':
                                 act_field_fq = SolrDocument.ROOT_LINK_DATA_SOLR
                             elif entity.item_type == 'predicates':
                                 temp_field_fq = self.get_parent_item_type_facet_field(entity.uri)
                                 parents = self.mem_cache_obj.get_jsonldish_entity_parents(entity.uri)
                                 if len(parents) > 1:
-                                    p_slug = parents[-2]['slug']
-                                    temp_field_fq = p_slug.replace('-', '_') + '___pred_id'
+                                    try:
+                                        p_slug = parents[-2]['slug']
+                                        temp_field_fq = p_slug.replace('-', '_') + '___pred_id'
+                                    except:
+                                        print('Predicate Parent exception: '+ str(parents))
+                                        temp_field_fq = False
                                 if temp_field_fq is not False:
                                     act_field_fq = temp_field_fq
                                 else:
