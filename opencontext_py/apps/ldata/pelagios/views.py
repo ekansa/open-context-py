@@ -68,6 +68,7 @@ def void(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def gazetteer_ttl(request):
     """ Returns RDF void data describing different datasets for
         Pelagios, in turtle
@@ -81,6 +82,7 @@ def gazetteer_ttl(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def gazetteer(request):
     """ Returns RDF void data describing different datasets for
         Pelagious
