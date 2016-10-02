@@ -309,6 +309,8 @@ urlpatterns = patterns('',
                        #----------------------------
                        url(r'^pelagios/void', PelagiosViews.void, name='pelagios_void'),
                        url(r'^pelagios/void.ttl', PelagiosViews.void_ttl, name='pelagios_void_ttl'),
+                       url(r'^pelagios/gazetteer', PelagiosViews.gazetteer, name='pelagios_gaz'),
+                       url(r'^pelagios/gazetteer.ttl', PelagiosViews.gazetteer_ttl, name='pelagios_gaz_ttl'),
                        url(r'^pelagios/data/(?P<identifier>\S+)?.ttl',
                            PelagiosViews.project_annotations_ttl,
                            name='pelagios_proj_ttl'),

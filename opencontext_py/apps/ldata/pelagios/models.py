@@ -545,6 +545,10 @@ class OaItem():
                 if stop is None:
                     stop = start
                 if start is not None:
+                    if stop < start:
+                        stop_temp = start
+                        start = stop
+                        stop = stop_temp
                     # we have a start year, so make a temporal value in ISON 8601 format
                     self.temporal = ISOyears().make_iso_from_float(start)
                     if stop != start:
