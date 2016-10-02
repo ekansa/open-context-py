@@ -41,7 +41,7 @@ class PelagiosGazetteerGraph():
         self.prep_graph()
         self.base_uri = settings.CANONICAL_HOST + '/pelagios/data/'
         self.request = False
-        self.refresh_cache = True
+        self.refresh_cache = False
         self.print_caching = False
         self.cache_ok = True
         self.cache_timeout = None  # None means forever

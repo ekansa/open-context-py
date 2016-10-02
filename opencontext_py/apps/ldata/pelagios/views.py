@@ -75,6 +75,9 @@ def gazetteer_ttl(request):
     """
     p_gg = PelagiosGazetteerGraph()
     p_gg.request = request
+    if 'refresh' in request.GET:
+        # we're going to refresh the cache
+        p_gg.refresh_cache = True
     p_gg.make_graph()
     output = p_void.g.serialize(format='turtle')
     return HttpResponse(output,
@@ -89,6 +92,9 @@ def gazetteer(request):
     """
     p_gg = PelagiosGazetteerGraph()
     p_gg.request = request
+    if 'refresh' in request.GET:
+        # we're going to refresh the cache
+        p_gg.refresh_cache = True
     p_gg.make_graph()
     req_neg = RequestNegotiation('text/turtle')
     req_neg.supported_types = ['application/rdf+xml',
