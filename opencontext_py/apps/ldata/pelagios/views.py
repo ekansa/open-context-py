@@ -68,12 +68,16 @@ def void(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def gazetteer_ttl(request):
     """ Returns RDF void data describing different datasets for
         Pelagios, in turtle
     """
     p_gg = PelagiosGazetteerGraph()
     p_gg.request = request
+    if 'refresh' in request.GET:
+        # we're going to refresh the cache
+        p_gg.refresh_cache = True
     p_gg.make_graph()
     output = p_void.g.serialize(format='turtle')
     return HttpResponse(output,
@@ -81,12 +85,16 @@ def gazetteer_ttl(request):
 
 
 @cache_control(no_cache=True)
+@never_cache
 def gazetteer(request):
     """ Returns RDF void data describing different datasets for
         Pelagious
     """
     p_gg = PelagiosGazetteerGraph()
     p_gg.request = request
+    if 'refresh' in request.GET:
+        # we're going to refresh the cache
+        p_gg.refresh_cache = True
     p_gg.make_graph()
     req_neg = RequestNegotiation('text/turtle')
     req_neg.supported_types = ['application/rdf+xml',
