@@ -135,3 +135,28 @@ class dinaaLink():
                         print('HTTP requests resumed OK, will continue.')
                         self.error_wait = 0
         return found_matches
+
+    def cache_db_tdar_refs(self, overwrite=True):
+        """ caches in the database items in tDAR that cross-reference
+            with Open Context plances.
+            
+            Calls the tDAR API to do so
+        """
+        if overwrite:
+            tdar_annos = LinkAnnotation.objects\
+                                       .filter(subject_type='subjects',
+                                               object_uri__contains=tdarAPI.BASE_URI)
+        else:
+            tdar_annos = LinkAnnotation.objects\
+                                       .filter(subject_type='subjects',
+                                               object_uri__contains=tdarAPI.BASE_URI,
+                                               obj_extra=None)
+        for tdar_anno in tdar_annos:
+            print('Checking: ' + str(tdar_anno.object_uri))
+            tdar = tdarAPI()
+            tdar.pause_request()
+            tdar_items = tdar.search_by_site_keyword_uris(tdar_anno.object_uri)
+            if isinstance(tdar_items, list):
+                print('Found: ' + str(len(tdar_items)) + ' items')
+                tdar_anno.obj_extra = {'dc-terms:isReferencedBy': tdar_items}
+                tdar_anno.save()

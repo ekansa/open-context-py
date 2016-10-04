@@ -126,6 +126,7 @@ class tdarAPI():
                 self.html_url += act_param
                 i += 1
             feed = feedparser.parse(feed_url)
+            # print(feed_url)
             if feed.bozo == 1 \
                or feed.status >= 400:
                 feed = False
@@ -144,3 +145,6 @@ class tdarAPI():
                     output.append(item)
         return output
 
+    def pause_request(self):
+        """ pauses between requests """
+        sleep(self.delay_before_request)
