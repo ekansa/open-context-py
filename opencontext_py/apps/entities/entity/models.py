@@ -24,6 +24,7 @@ class Entity():
         self.label = False
         self.item_type = False
         self.project_uuid = False
+        self.parent_project_uuid = False
         self.class_uri = False
         self.entity_type = False
         self.data_type = False

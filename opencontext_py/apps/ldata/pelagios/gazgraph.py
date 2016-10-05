@@ -75,6 +75,9 @@ class PelagiosGazetteerGraph():
                                          self.make_full_uri('dcterms', 'description'),
                                          None,
                                          gaz_item.description)
+                    self.make_add_triple(gaz_item.uri,
+                                         self.make_full_uri('dcterms', 'isPartOf'),
+                                         gaz_item.project_uri)
                     if isinstance(gaz_item.temporal, str):
                         self.make_add_triple(gaz_item.uri,
                                              self.make_full_uri('dcterms', 'temporal'),
