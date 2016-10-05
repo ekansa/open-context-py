@@ -15,6 +15,7 @@ from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.pelagios.models import PelagiosData
 from opencontext_py.apps.ldata.pelagios.gazannos import PelagiosGazetteerAnnotations
+from opencontext_py.apps.ldata.pelagios.serialize import SerizializeRDF
 
 
 class PelagiosGraph():
@@ -30,7 +31,7 @@ pelagios.g.serialize(format='turtle')
 from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph
 pelagios = PelagiosGraph()
 pelagios.do_web_annotations = True
-pelagios.make_graph()
+pelagios.get_graph()
 pelagios.g.serialize(format='turtle')
     """
     NAMESPACES = {
@@ -59,6 +60,26 @@ pelagios.g.serialize(format='turtle')
         self.print_caching = False
         self.cache_ok = True
         self.cache_timeout = None  # None means forever
+    
+    def get_graph(self):
+        """ get graph """
+        if self.refresh_cache:
+            g = None
+        else:
+            if self.do_web_annotations:
+                key = 'pelagios-web'
+            else:
+                key = self.make_cache_key('pelagios',
+                                          '-'.join(self.project_uuids))
+            s_rdf = SerizializeRDF()
+            g = s_rdf.get_graph_from_file(key)
+        if g is None:
+            # make graph based on data from the database
+            self.make_graph()
+            s_rdf.save_serialized_graph(key, self.g)
+        else:
+            # we have graph data!
+            self.g = g
     
     def prep_graph(self):
         """ prepares a graph for Pelagios """

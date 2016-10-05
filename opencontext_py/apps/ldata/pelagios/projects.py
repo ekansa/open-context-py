@@ -43,7 +43,7 @@ p_projs.cache_project_graph('3')
         pelagios = PelagiosGraph()
         pelagios.refresh_cache = refresh
         pelagios.project_uuids = [project_uuid]
-        pelagios.make_graph()
+        pelagios.get_graph()
      
     def get_projects(self):
         """ gets the manfest and project objects needed to make the void """
