@@ -23,7 +23,6 @@ class SerizializeRDF():
         ok = self.check_exists(file_name)
         if ok:
             path = self.prep_directory(self.pelagios_dir)
-            print('Looking in: ' + path)
             dir_file = path + file_name
             g = Graph()
             str_data = codecs.open(dir_file,
@@ -46,8 +45,8 @@ class SerizializeRDF():
         """ saves a data in the appropriate path + file """
         file_name = key + '.ttl'
         path = self.prep_directory(self.pelagios_dir)
-        print('save to path: ' + path)
         dir_file = path + file_name
+        print('save to path: ' + dir_file)
         g.serialize(destination=dir_file, format=use_format)
 
     def prep_directory(self, act_dir):
