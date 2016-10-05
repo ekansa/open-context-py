@@ -22,9 +22,9 @@ In the example Turtle file, notice that some of the annotated resources are not 
 The other matter centers on choosing a vocabulary to explicitly note "coin", "animal bone", "pottery" etc. Should we use dcterms:subject to indicate type / classification information for these data records? If so, would people prefer us to use the Getty AAT or another vocabulary like the LoC subjects headings? Thoughts?
 
 
-NOTES ABOUT GAZETTEER INTERCONNECTIO ASSERTIONS
+NOTES ABOUT GAZETTEER INTERCONNECTION ASSERTIONS
 -----------------------------------------------
 In addition, some Open Context data can be used as gazetteer data, especially site file records published
 with the Digital Index of North American Archaeology (DINAA) project. The Pelagios project includes guidelines for publishing RDF assertions about gazetteer records (see: https://github.com/pelagios/pelagios-cookbook/wiki/Pelagios-Gazetteer-Interconnection-Format). The draft Turtle format file (pelagios-gazetteer.ttl) attempts to conform to Pelagios recommendations for publishing gazetteer data. The places listed and described in that file represent a sub-set of sites in Open Context that relate to data published on services other than Open Context. The same data can be retrieved directly from Open Context here (https://opencontext.org/pelagios/gazetteer).
 
-In the near future, we will also publish Pelagios annotations that relate Open Context gazetteer places to data published on services outside of Open Context.
+Open Context also publishes Pelagios annotations that relate Open Context gazetteer places to data published on services outside of Open Context (see: https://opencontext.org/pelagios/data/web). These annotations mainly come from software processes that reconciled and cross-referenced site identifiers (especially Smithsonian Trinomials documented with the DINAA project).

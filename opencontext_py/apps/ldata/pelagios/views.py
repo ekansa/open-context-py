@@ -144,7 +144,7 @@ def project_annotations(request, identifier):
                 pelagios.do_web_annotations = True
                 permitted = True
             if permitted:
-                pelagios.make_graph()
+                pelagios.get_graph()
                 req_neg = RequestNegotiation('text/turtle')
                 req_neg.supported_types = ['application/rdf+xml',
                                            'text/n3',

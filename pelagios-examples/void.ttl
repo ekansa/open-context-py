@@ -7,7 +7,15 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
+<http://opencontext.org/about/> a void:Dataset ;
+    dcterms:description "This dataset relates archaeological site records published by Open Context to content published elsewhere on the Web. In some cases, Open Context contributors and/or editors manually identified these relationships. In other cases, software processes followed by editorial checks identified linkages expressed in this dataset." ;
+    dcterms:publisher "Open Context" ;
+    dcterms:title "Web Resources Related to Open Context Published Places" ;
+    void:dataDump <http://opencontext.org/pelagios/data/web> ;
+    foaf:homepage <http://opencontext.org/about/recipes> .
+
 <http://opencontext.org/projects/> a void:Dataset ;
+    dcterms:description "Publication and exhibition of open research data and media from archaeology and related fields" ;
     dcterms:title "Open Context" ;
     void:subset <http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574>,
         <http://opencontext.org/projects/02062F0F-7C5D-4754-2B42-4EAC8A37F5DC>,
@@ -38,17 +46,12 @@
         <http://opencontext.org/projects/4B16F48E-6F5D-41E0-F568-FCE64BE6D3FA>,
         <http://opencontext.org/projects/4B5721E9-2BB3-423F-5D04-1B948FA65FAB>,
         <http://opencontext.org/projects/4c9d2f6b-98d5-46bf-8871-85b106b96d5d>,
-        <http://opencontext.org/projects/56110B30-3C18-49F9-BDA9-550FE8E28450>,
         <http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D>,
-        <http://opencontext.org/projects/5A6DDB94-70BE-43B4-2D5D-35D983B21515>,
-        <http://opencontext.org/projects/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D>,
         <http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49>,
         <http://opencontext.org/projects/646b7034-07b7-4971-8d89-ebe37dda4cd2>,
         <http://opencontext.org/projects/6eebf118-1c43-409e-8a47-307380d5d261>,
         <http://opencontext.org/projects/731B0670-CE2A-414A-8EF6-9C050A1C60F5>,
-        <http://opencontext.org/projects/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7>,
         <http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E>,
-        <http://opencontext.org/projects/766698E3-2E79-4A78-B0BC-245FF435BBBD>,
         <http://opencontext.org/projects/766d9fd5-2175-41e3-b7c9-7eba6777f1f0>,
         <http://opencontext.org/projects/77a8ecc1-25ba-4b5e-9783-d667d008538b>,
         <http://opencontext.org/projects/781abb20-45c7-4213-8cd3-596a29457346>,
@@ -81,10 +84,8 @@
         <http://opencontext.org/projects/DF043419-F23B-41DA-7E4D-EE52AF22F92F>,
         <http://opencontext.org/projects/DTrev1PRJ0000000014>,
         <http://opencontext.org/projects/E10CD7DB-C567-4F97-A8B0-605D31A1F919>,
-        <http://opencontext.org/projects/EDDA846F-7225-495E-AB77-7314C256449A>,
         <http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7>,
         <http://opencontext.org/projects/F905BD53-C843-4349-0A46-48FF32B5F1BE>,
-        <http://opencontext.org/projects/F9970276-8636-478D-A3F0-08CC7EFEAD4F>,
         <http://opencontext.org/projects/GBHayPRJ0000000005>,
         <http://opencontext.org/projects/GHF1PRJ0000000025>,
         <http://opencontext.org/projects/HPeaZooPRJ0000000012>,
@@ -164,13 +165,7 @@
 
 <http://opencontext.org/pelagios/data/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
-<http://opencontext.org/pelagios/data/56110B30-3C18-49F9-BDA9-550FE8E28450> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
 <http://opencontext.org/pelagios/data/59E7BFBC-2557-4FE4-FC14-284ED10D903D> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
-<http://opencontext.org/pelagios/data/5A6DDB94-70BE-43B4-2D5D-35D983B21515> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
-<http://opencontext.org/pelagios/data/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/64013C33-4039-46C9-609A-A758CE51CA49> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -180,11 +175,7 @@
 
 <http://opencontext.org/pelagios/data/731B0670-CE2A-414A-8EF6-9C050A1C60F5> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
-<http://opencontext.org/pelagios/data/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
 <http://opencontext.org/pelagios/data/74749949-4FD4-4C3E-C830-5AA75703E08E> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
-<http://opencontext.org/pelagios/data/766698E3-2E79-4A78-B0BC-245FF435BBBD> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -250,13 +241,9 @@
 
 <http://opencontext.org/pelagios/data/E10CD7DB-C567-4F97-A8B0-605D31A1F919> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
-<http://opencontext.org/pelagios/data/EDDA846F-7225-495E-AB77-7314C256449A> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
 <http://opencontext.org/pelagios/data/F05ACE4F-9B55-48A0-D640-5276B8B899C7> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/F905BD53-C843-4349-0A46-48FF32B5F1BE> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
-
-<http://opencontext.org/pelagios/data/F9970276-8636-478D-A3F0-08CC7EFEAD4F> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/GBHayPRJ0000000005> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
@@ -295,6 +282,8 @@
 <http://opencontext.org/pelagios/data/eddedde7-d654-41b3-a14d-73d0fd673a51> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/pelagios/data/fab0532a-2953-4f13-aa97-8a9d7e992dbe> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
+
+<http://opencontext.org/pelagios/data/web> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/> .
 
 <http://opencontext.org/projects/01D080DF-2F6B-4F59-BCF0-87543AC89574> a void:Dataset ;
     dcterms:description "Archaeology of an Early Bronze through Islamic settlement south of Amman, Jordan" ;
@@ -524,13 +513,6 @@
     dcterms:title "Digital Companion to 'Pre-Columbian Exploitation of Birds Around Panama Bay'" ;
     void:dataDump <http://opencontext.org/pelagios/data/4c9d2f6b-98d5-46bf-8871-85b106b96d5d> .
 
-<http://opencontext.org/projects/56110B30-3C18-49F9-BDA9-550FE8E28450> a void:Dataset ;
-    dcterms:description "Louisiana State Archaeological Site Files" ;
-    dcterms:modified "2015-04-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Louisiana Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/56110B30-3C18-49F9-BDA9-550FE8E28450> .
-
 <http://opencontext.org/projects/59E7BFBC-2557-4FE4-FC14-284ED10D903D> a void:Dataset ;
     dcterms:description "West Stow, Suffolk County, UK Rescue excavations conducted at the site in advance of the construction of a new Visitor Centre" ;
     dcterms:issued "2013-02-23" ;
@@ -538,22 +520,6 @@
     dcterms:publisher "Open Context" ;
     dcterms:title "West Stow West Zooarchaeology" ;
     void:dataDump <http://opencontext.org/pelagios/data/59E7BFBC-2557-4FE4-FC14-284ED10D903D> .
-
-<http://opencontext.org/projects/5A6DDB94-70BE-43B4-2D5D-35D983B21515> a void:Dataset ;
-    dcterms:description """Excavations at the settlements of the Old Kingdom pyramid builders
-
-""" ;
-    dcterms:modified "2015-10-06" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Giza AERA Project" ;
-    void:dataDump <http://opencontext.org/pelagios/data/5A6DDB94-70BE-43B4-2D5D-35D983B21515> .
-
-<http://opencontext.org/projects/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> a void:Dataset ;
-    dcterms:description "North Carolina State Archaeological Site Files" ;
-    dcterms:modified "2015-04-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "North Carolina Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/5F2D4172-D823-4F7F-D3A8-4BD68ED1369D> .
 
 <http://opencontext.org/projects/64013C33-4039-46C9-609A-A758CE51CA49> a void:Dataset ;
     dcterms:description "Georgia State Archaeological Site Files published as part of the DINAA Project" ;
@@ -586,14 +552,6 @@
     dcterms:title "Zooarchaeology of Karain Cave B" ;
     void:dataDump <http://opencontext.org/pelagios/data/731B0670-CE2A-414A-8EF6-9C050A1C60F5> .
 
-<http://opencontext.org/projects/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> a void:Dataset ;
-    dcterms:description "Tracing the Spread and Development of Oracle Bone Divination in Ancient East Asia [In Prep]" ;
-    dcterms:issued "2016-04-04" ;
-    dcterms:modified "2016-04-03" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Oracle Bones in East Asia [In Prep]" ;
-    void:dataDump <http://opencontext.org/pelagios/data/73e7b6d8-ec23-4ccb-be3a-8f49eece9ad7> .
-
 <http://opencontext.org/projects/74749949-4FD4-4C3E-C830-5AA75703E08E> a void:Dataset ;
     dcterms:description "Zooarchaeology of Neolithic Phases at Barçın Höyük, Turkey" ;
     dcterms:issued "2013-02-25" ;
@@ -601,13 +559,6 @@
     dcterms:publisher "Open Context" ;
     dcterms:title "Barçın Höyük Zooarchaeology" ;
     void:dataDump <http://opencontext.org/pelagios/data/74749949-4FD4-4C3E-C830-5AA75703E08E> .
-
-<http://opencontext.org/projects/766698E3-2E79-4A78-B0BC-245FF435BBBD> a void:Dataset ;
-    dcterms:description "Pennsylvania State Archaeological Site Files" ;
-    dcterms:modified "2015-04-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Pennsylvania Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/766698E3-2E79-4A78-B0BC-245FF435BBBD> .
 
 <http://opencontext.org/projects/766d9fd5-2175-41e3-b7c9-7eba6777f1f0> a void:Dataset ;
     dcterms:description "" ;
@@ -859,13 +810,6 @@ Environment and Economy in the Aegean""" ;
     dcterms:title "Zooarchaeology and Cultural Ecology of Puesteros in Southern Mendoza,   Argentina" ;
     void:dataDump <http://opencontext.org/pelagios/data/E10CD7DB-C567-4F97-A8B0-605D31A1F919> .
 
-<http://opencontext.org/projects/EDDA846F-7225-495E-AB77-7314C256449A> a void:Dataset ;
-    dcterms:description "Ohio State Archaeological Site Files" ;
-    dcterms:modified "2015-04-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Ohio Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/EDDA846F-7225-495E-AB77-7314C256449A> .
-
 <http://opencontext.org/projects/F05ACE4F-9B55-48A0-D640-5276B8B899C7> a void:Dataset ;
     dcterms:description "Archaeological site files maintained by the Kentucky Office of State Archaeology (KOSA)" ;
     dcterms:issued "2014-03-06" ;
@@ -881,13 +825,6 @@ Environment and Economy in the Aegean""" ;
     dcterms:publisher "Open Context" ;
     dcterms:title "Alabama Site Files" ;
     void:dataDump <http://opencontext.org/pelagios/data/F905BD53-C843-4349-0A46-48FF32B5F1BE> .
-
-<http://opencontext.org/projects/F9970276-8636-478D-A3F0-08CC7EFEAD4F> a void:Dataset ;
-    dcterms:description "Maryland State Archaeological Site Files" ;
-    dcterms:modified "2015-04-10" ;
-    dcterms:publisher "Open Context" ;
-    dcterms:title "Maryland Site Files" ;
-    void:dataDump <http://opencontext.org/pelagios/data/F9970276-8636-478D-A3F0-08CC7EFEAD4F> .
 
 <http://opencontext.org/projects/GBHayPRJ0000000005> a void:Dataset ;
     dcterms:description "Micromorphology samples from Mousterian, Kebaran, Natufian, and Byzantine contexts at Hayonim, Israel" ;
