@@ -14,15 +14,22 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ldata.pelagios.models import PelagiosData
+from opencontext_py.apps.ldata.pelagios.gazannos import PelagiosGazetteerAnnotations
 
 
 class PelagiosGraph():
     """ Uses the PelagiosData object to 
         to make Pelagios compliant open annotations
-        
+
 from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph
 pelagios = PelagiosGraph()
 pelagios.project_uuids = ['3']
+pelagios.make_graph()
+pelagios.g.serialize(format='turtle')
+     
+from opencontext_py.apps.ldata.pelagios.graph import PelagiosGraph
+pelagios = PelagiosGraph()
+pelagios.do_web_annotations = True
 pelagios.make_graph()
 pelagios.g.serialize(format='turtle')
     """
@@ -40,6 +47,7 @@ pelagios.g.serialize(format='turtle')
     def __init__(self):
         self.data_obj = PelagiosData()
         self.project_uuids = []
+        self.do_web_annotations = False
         self.test_limit = None
         self.g = None
         self.prep_graph()
@@ -61,7 +69,11 @@ pelagios.g.serialize(format='turtle')
     
     def make_graph(self):
         associated_uris = []
-        self.get_db_data()
+        if self.do_web_annotations:
+            self.data_obj = PelagiosGazetteerAnnotations()
+            self.data_obj.make_annotations()
+        else:  
+            self.get_db_data()
         if len(self.data_obj.oa_items) > 0:
             for uuid, oa_item in self.data_obj.oa_items.items():
                 if oa_item.is_valid and len(oa_item.gazetteer_uris) > 0:
@@ -108,7 +120,10 @@ pelagios.g.serialize(format='turtle')
                                              self.make_full_uri('dcterms', 'isPartOf'),
                                              oa_item.project_uri)
                     # now add gazetteer annotations to the item
-                    base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
+                    if oa_item.manifest is not None:
+                        base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
+                    else:
+                        base_anno_uri =  self.base_uri + 'web'
                     base_anno_uri += self.annoations_uri_part
                     self.make_gazetteer_annotations(oa_item.uri,
                                                     oa_item.gazetteer_uris,

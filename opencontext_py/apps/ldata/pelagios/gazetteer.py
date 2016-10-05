@@ -11,6 +11,7 @@ from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
@@ -157,6 +158,7 @@ class GazetteerItem():
         self.title = None
         self.project_uri = None
         self.class_label = 'Site'
+        self.parent_project_uri = None
         self.geo_meta = None
         self.event_meta = None
         self.temporal = None
@@ -184,6 +186,8 @@ class GazetteerItem():
             if isinstance(context, str):
                 self.description += ' from: ' + context
             if project_ent is not False:
+                self.parent_project_uri = URImanagement.make_oc_uri(project_ent.parent_project_uuid,
+                                                                    'projects')
                 self.description += '; part of the "' + project_ent.label
                 self.description += '" data publication.'
             if self.geo_meta is not None and self.geo_meta is not False:
@@ -271,5 +275,12 @@ class GazetteerItem():
             found = ent.dereference(identifier)
             if found:
                 output = ent
+                if ent.item_type == 'projects':
+                    try:
+                        proj_obj = Project.objects.get(uuid=ent.uuid)
+                    except Project.DoesNotExist:
+                        proj_obj = False
+                    if proj_obj is not False:
+                        ent.parent_project_uuid = proj_obj.project_uuid
                 self.mem_cache_entities[identifier] = ent
         return output
