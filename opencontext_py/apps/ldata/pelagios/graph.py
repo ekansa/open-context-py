@@ -63,6 +63,7 @@ pelagios.g.serialize(format='turtle')
     
     def get_graph(self):
         """ get graph """
+        s_rdf = SerizializeRDF()
         if self.refresh_cache:
             g = None
         else:
@@ -71,7 +72,6 @@ pelagios.g.serialize(format='turtle')
             else:
                 key = self.make_cache_key('pelagios',
                                           '-'.join(self.project_uuids))
-            s_rdf = SerizializeRDF()
             g = s_rdf.get_graph_from_file(key)
         if g is None:
             # make graph based on data from the database
