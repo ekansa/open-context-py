@@ -46,7 +46,7 @@ class SerizializeRDF():
         """ saves a data in the appropriate path + file """
         file_name = key + '.ttl'
         path = self.prep_directory(self.pelagios_dir)
-        print('path: ' + path)
+        print('save to path: ' + path)
         dir_file = path + file_name
         g.serialize(destination=dir_file, format=use_format)
 
