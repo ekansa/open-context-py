@@ -64,14 +64,14 @@ pelagios.g.serialize(format='turtle')
     def get_graph(self):
         """ get graph """
         s_rdf = SerizializeRDF()
+        if self.do_web_annotations:
+            key = 'pelagios-web'
+        else:
+            key = self.make_cache_key('pelagios',
+                                      '-'.join(self.project_uuids))
         if self.refresh_cache:
             g = None
         else:
-            if self.do_web_annotations:
-                key = 'pelagios-web'
-            else:
-                key = self.make_cache_key('pelagios',
-                                          '-'.join(self.project_uuids))
             g = s_rdf.get_graph_from_file(key)
         if g is None:
             # make graph based on data from the database
