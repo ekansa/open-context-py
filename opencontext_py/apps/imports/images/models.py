@@ -14,7 +14,7 @@ class ImageImport():
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.project_uuid = '8859aa10-c0c4-42ad-993b-cc9d79800d8e'
-ii.make_image_versions('valdivia')
+ii.make_image_versions('kuthodaw-pagoda')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -25,7 +25,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.source_id = False
         self.class_uri = False
         self.thumbnail_width_height = 150
-        self.preview_width = 500
+        self.preview_width = 650
         self.full_dir = 'full'
         self.preview_dir = 'preview'
         self.thumbs_dir = 'thumbs'

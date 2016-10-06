@@ -84,7 +84,7 @@ class PelagiosGazetteerGraph():
                                              None,
                                              gaz_item.temporal)
                     if gaz_item.geo_meta is not None and gaz_item.geo_meta is not False:
-                        print('ok! geo-meta: ' + str(gaz_item.geo_meta))
+                        # print('ok! geo-meta: ' + str(gaz_item.geo_meta))
                         if len(gaz_item.geo_meta) > 0:
                             geo = gaz_item.geo_meta[0]
                             geo_node = BNode()
