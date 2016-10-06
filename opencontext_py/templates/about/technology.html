@@ -1,0 +1,128 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>Open Context's Technology</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/digital-noun-27662.png" alt="Digital icon"/>
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context integrates 100% open-source technologies to publish archaeological data via
+								the Web. These technologies inlcude:</p>
+                                <ul>
+									<li><a href="https://www.djangoproject.com/" title="Django Project">Django (Python)</a>: Web application framework</li>
+									<li><a href="https://www.postgresql.org/" title="Postgre SQL database">PostgreSQL</a>: primary database</li>
+									<li><a href="http://lucene.apache.org/solr/" title="Solr faceted search">Apache Solr</a>: for fast faceted search and querying</li>
+									<li><a href="http://lucene.apache.org/solr/" title="Redis memory cache">Redis</a>: memory cache for performance</li>
+									<li><a href="https://www.nginx.com/resources/wiki/" title="Nginx server">Nginx</a>: Web server</li>
+								</ul>
+								<p>This page provides an initial introduction to Open Context's technology stack and how you can use it and contribute to it.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+        
+		<style type="text/css">
+			img.uses-icon {
+				height: 100px;
+				text-align: center;
+				margin-left: auto;
+				margin-right: auto;
+				margin-top: 20px;
+			}
+			div.uses-rows {
+				margin-top: 40px;
+			}
+		</style>
+		
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/database-noun-175016.png" alt="Database icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Data Organization</h3>
+				<p>Internally, Open Context has a highly abstract and generalized global schema for representing data. This general approach has its inspiration from the data structured developed by the <a href="https://ochre.uchicago.edu/" title="OCHRE data service" target="_blank">OCHRE</a> project (originally called "ArchaeoML"). However, to reduce development and maintenance costs, we opted to implement simplified versions of these generalized models in common and easily deployed relational database systems (in our case PostgreSQL).</p>
+				
+				<p>Over the years, Open Context has evolved from ArchaeoML and moved toward Linked Open Data approaches toward organizing data. In essense, the current internal data model of Open Context largely looks like a graph-database structure commonly used for RDF triple-stores. However, we do not actually use a triple-store. Based on over 10 years of experience managing data contributed from many sources, we often need additional attributes describing data provenance, context, etc. We decided that our day-to-day reliance on these additional attributes would make RDF only triple stores a bit more awkward and cumbersome for our typical information management needs. Thus, Open Context mainly emphasizes RDF and Linked Open Data to relate the data it publishes with the data curated by external sources.</p>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/pull-request-noun-368568.png" alt="Pull-request icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Source Code and Version Control</h3>
+				<p>Open Context is a Python 3 application built on the Django project. Where feasible, we try to keep to "plain-vanilla" coding patterns and use of Django components. Because Open Context emphasizes Web interoperability, Open Context uses its own APIs to generate views of individual item records and search results. As described <a href="{{ base_url }}/about/services">here</a> most of Open Context's APIs provide JSON-LD formatted data.</p>
+				<p>The source code for Open Context carries a <a href="http://www.gnu.org/licenses/quick-guide-gplv3">GNU General Public License (Version 3)</a>. We use GitHub for software version control, issue tracking, documentation and collaboration. Relevant code repostories are:</p>
+				<ul>
+					<li><a href="https://github.com/ekansa/open-context-py" title="Open Context source code">Open Context Python Application</a>: the primary software code repository for Open Context. This has source code, deployment instructions, and additional documentation.</li>
+					<li><a href="https://github.com/ekansa/oc-ontologies" title="Open Context contologies">Open Context Ontologies / Controlled Vocabularies</a>: Open Context uses a variety of ontologies and controlled vocabularies described in OWL and SKOS. While still incompletely documented, these versions for these vocabularies are tracked in this repository.</li>
+					<li><a href="https://github.com/ekansa/ekansa.github.io" title="Open Context javascript clients">Open Context API Client Demos</a>: Open Context provides a variety of powerful Web APIs that others can use for independent data analysis, visualization, or other projects. This repository provides public domain (no copyright) sample javascript and demos illustrating use of these APIs.</li>
+					<li><a href="https://github.com/opencontext" title="Open Context data">Open Context Data Repositories</a>: Open Context has used GitHub for version control of datasets. Currently these repositories provide access to older legacy versions of Open Context data in XML format. We will be updating these shorting to add current data in JSON-LD format once we've finished GitHub API integration.</li>
+				</ul>
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+        
+        <h5 style="margin-top: 120px;">Icon Credits</h5>
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Information icon by <a target="_blank" href="https://thenounproject.com/term/information/118049/">Jürgen Bauer</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Digital icon by <a target="_blank" href="https://thenounproject.com/term/gears/27662/">Ajándi Endre</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Database icon by <a target="_blank" href="https://thenounproject.com/term/database/175016/">Creative Stall</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Pull-request icon by <a target="_blank" href="https://thenounproject.com/term/git/368568/">Nick Bluth</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        
+    </div>
+    
+{% endblock %} 
