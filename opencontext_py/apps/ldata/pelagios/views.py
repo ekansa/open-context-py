@@ -185,15 +185,23 @@ def project_annotations_ttl(request, identifier):
     """
     ent = Entity()
     found = ent.dereference(identifier)
-    if found:
-        if ent.item_type == 'projects':
-            pp = ProjectPermissions(ent.uuid)
-            permitted = pp.view_allowed(request)
-            if permitted:
-                pelagios = PelagiosGraph()
+    if found or identifier == 'web':
+        if ent.item_type == 'projects' or identifier == 'web':
+            pelagios = PelagiosGraph()
+            pelagios.test_limit = None
+            if 'refresh' in request.GET:
+                # we're going to refresh the cache
+                pelagios.refresh_cache = True
+            if identifier != 'web':
+                pp = ProjectPermissions(ent.uuid)
+                permitted = pp.view_allowed(request)
                 pelagios.project_uuids = [ent.uuid]
-                pelagios.test_limit = None
-                pelagios.make_graph()
+            else:
+                # we're doing web annotations
+                pelagios.do_web_annotations = True
+                permitted = True
+            if permitted:
+                pelagios.get_graph()
                 # default to outputting in turtle
                 output = pelagios.g.serialize(format='turtle')
                 return HttpResponse(output,
