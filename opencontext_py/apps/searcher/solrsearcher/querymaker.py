@@ -372,6 +372,7 @@ class QueryMaker():
                                         act_field_fq = self.correct_solr_prefix_for_fq(solr_f_prefix, act_field_fq)
                                     except:
                                         pass
+                                        print('Predicate Parent exception: '+ str(parents))
                             elif entity.item_type == 'uri':
                                 act_field_fq = SolrDocument.ROOT_LINK_DATA_SOLR
                             elif entity.item_type == 'predicates':

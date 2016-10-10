@@ -94,10 +94,19 @@ def html_view(request, spatial_context=None):
         db_cache = DatabaseCache()
         cache_key = db_cache.make_cache_key('search',
                                             request_dict_json)
+        mem_key = mem_cache_obj.make_memory_cache_key('search-json',
+                                                      request_dict_json)
         # print('Cache key: ' + cache_key)
+        geo_proj = False
+        json_ld = None
         if rd.refresh_cache:
             # the request wanted to refresh the cache
             db_cache.remove_cache_object(cache_key)
+            mem_cache_obj.remove_cache_object(mem_key)
+        if 'response' in request.GET:
+            if 'geo-project' in request.GET['response']:
+                geo_proj = True
+                json_ld = mem_cache_obj.get_cache_object(mem_key)
         # get the search result JSON-LD, if it exists in cache
         json_ld = db_cache.get_cache_object(cache_key)
         if json_ld is None:
@@ -118,6 +127,8 @@ def html_view(request, spatial_context=None):
                 json_ld = m_json_ld.convert_solr_json(response.raw_content)
                 # now cache the resulting JSON-LD
                 db_cache.save_cache_object(cache_key, json_ld)
+                if geo_proj:
+                    mem_cache_obj.save_cache_object(mem_key)
         if json_ld is not None:
             req_neg = RequestNegotiation('text/html')
             req_neg.supported_types = ['application/json',
