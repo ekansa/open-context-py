@@ -6,6 +6,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.lookup import TypeLookup
@@ -25,6 +26,7 @@ class Entity():
         self.item_type = False
         self.project_uuid = False
         self.parent_project_uuid = False
+        self.par_proj_man_obj = False
         self.class_uri = False
         self.entity_type = False
         self.data_type = False
@@ -115,11 +117,11 @@ class Entity():
                         if thumb_obj is not False:
                             self.thumbnail_media = thumb_obj
                             self.thumbnail_uri = thumb_obj.file_uri
-                    elif(manifest_item.item_type == 'types'):
+                    elif manifest_item.item_type == 'types':
                         tl = TypeLookup()
                         tl.get_octype_without_manifest(identifier)
                         self.content = tl.content
-                    elif(manifest_item.item_type == 'predicates'):
+                    elif manifest_item.item_type == 'predicates':
                         try:
                             oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
                         except Predicate.DoesNotExist:
@@ -127,7 +129,19 @@ class Entity():
                         if oc_pred is not False:
                             self.data_type = oc_pred.data_type
                             self.sort = oc_pred.sort
-                    elif(manifest_item.item_type == 'subjects' and self.get_context):
+                    elif manifest_item.item_type == 'projects':
+                        # get a manifest object for the parent of a project, if it exists
+                        ch_tab = '"oc_projects" AS "child"'
+                        filters = 'child.project_uuid=oc_manifest.uuid '\
+                                  ' AND child.uuid=\'' + self.uuid + '\' ' \
+                                  ' AND child.project_uuid != \'' + self.uuid + '\' '
+                        par_rows = Manifest.objects\
+                                           .filter(item_type='projects')\
+                                           .exclude(uuid=self.uuid)\
+                                           .extra(tables=[ch_tab], where=[filters])[:1]
+                        if len(par_rows) > 0:
+                            self.par_proj_man_obj = par_rows[0]
+                    elif manifest_item.item_type == 'subjects' and self.get_context:
                         try:
                             subj = Subject.objects.get(uuid=manifest_item.uuid)
                         except Subject.DoesNotExist:

@@ -1053,6 +1053,7 @@ class Project():
         self.uuid = False
         self.slug = False
         self.label = False
+        self.parent_project_uuid = False
         self.edit_status = False
         self.item_type = False
         self.view_authorized = False
@@ -1071,6 +1072,7 @@ class Project():
                             # but from the database
                             project = ModProject.objects.get(uuid=self.uuid)
                             self.edit_status = project.edit_status
+                            self.parent_project_uuid = project.project_uuid
                         except ModProject.DoesNotExist:
                             project = False
                         break
