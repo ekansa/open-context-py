@@ -178,6 +178,13 @@ class QueryMaker():
                     # as with ___pred_ to query just the slug. But this works for now
                     proj_slug = entity.slug
                     fq_path_term = fq_field + ':' + proj_slug + '*'
+                    if entity.par_proj_man_obj is not False and \
+                       fq_field == SolrDocument.ROOT_PROJECT_SOLR:
+                        # this entity has a parent object, so make sure to look for it as a child of
+                        # that parent project
+                        alt_fq_field = entity.par_proj_man_obj.slug.replace('-', '_') + '___project_id'
+                        alt_fq_term = alt_fq_field + ':' + proj_slug + '*'
+                        fq_path_term = ' (' + fq_path_term + ' OR ' + alt_fq_term + ' ) '
                 else:
                     fq_path_term = fq_field + ':' + proj_slug
                 fq_path_terms.append(fq_path_term)
