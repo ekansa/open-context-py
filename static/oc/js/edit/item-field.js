@@ -1703,6 +1703,15 @@ function edit_field(){
 			}
 			else{
 				is_valid = false;
+				if (this.predicate_uuid == this.context_pred_uuid){
+					// we've got a containment item. check to see if it is a root item
+					if (item_id == 'ROOT'){
+						if (document.getElementById(dom_ids.label)) {
+							document.getElementById(dom_ids.label).value = 'Global Root';
+						}
+						is_valid = true;
+					}
+				}
 			}
 		}
 		return is_valid;

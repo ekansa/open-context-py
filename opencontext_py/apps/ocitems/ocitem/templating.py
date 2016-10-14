@@ -1206,6 +1206,7 @@ class LinkedData():
                            'skos:related',
                            'skos:broader',
                            'dc-terms:references',
+                           'dc-terms:hasVersion',
                            'http://nomisma.org/ontology#hasTypeSeriesItem']
 
     def __init__(self):
