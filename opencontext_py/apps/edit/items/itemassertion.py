@@ -223,20 +223,21 @@ class ItemAssertion():
                             for field_value_dict in field['values']:
                                 if 'id' in field_value_dict:
                                     parent_uuid = field_value_dict['id']
-                                    parent = self.get_manifest_item(parent_uuid)
-                                    if parent is not False:
-                                        if parent.item_type != 'subjects':
-                                            parent_uuid = False
-                                            self.ok = False
-                                            self.errors[field_key] = 'Parent must be a "subjects" item.'
+                                    if parent_uuid != 'ROOT':
+                                        parent = self.get_manifest_item(parent_uuid)
+                                        if parent is not False:
+                                            if parent.item_type != 'subjects':
+                                                parent_uuid = False
+                                                self.ok = False
+                                                self.errors[field_key] = 'Parent must be a "subjects" item.'
+                                            else:
+                                                self.ok = True
                                         else:
-                                            self.ok = True
-                                    else:
-                                        parent_uuid = False
-                                    if parent_uuid is False:
-                                        self.ok = False
-                                        note = 'Could not find parent'
-                                        self.errors[field_key] = 'Missing the parent_uuid in manifest'
+                                            parent_uuid = False
+                                        if parent_uuid is False:
+                                            self.ok = False
+                                            note = 'Could not find parent'
+                                            self.errors[field_key] = 'Missing the parent_uuid in manifest'
                                 else:
                                     self.errors[field_key] = 'Missing a "id" for parent_uuid'
                         if self.ok and parent_uuid is not False:
@@ -256,25 +257,26 @@ class ItemAssertion():
                                 drev.assertion_keys.append(del_obj.hash_id)
                                 del_obj.delete()
                             drev.save_delete_revision(rev_label, '')
-                            # now add the new containment relationship
-                            new_ass = Assertion()
-                            new_ass.uuid = parent_uuid
-                            new_ass.subject_type = 'subjects'
-                            new_ass.project_uuid = item_man.project_uuid
-                            new_ass.source_id = 'web-form'
-                            new_ass.obs_node = '#contents-' + str(1)
-                            new_ass.obs_num = 1
-                            new_ass.sort = 1
-                            new_ass.visibility = 1
-                            new_ass.predicate_uuid = pred_uuid
-                            new_ass.object_type = item_man.item_type
-                            new_ass.object_uuid = item_man.uuid
-                            try:
-                                new_ass.save()
-                            except:
-                                self.ok = False
-                                self.errors[error_key] = 'Same containment assertion '
-                                self.errors[error_key] += 'already exists.'
+                            if parent_uuid != 'ROOT':
+                                # now add the new containment relationship
+                                new_ass = Assertion()
+                                new_ass.uuid = parent_uuid
+                                new_ass.subject_type = 'subjects'
+                                new_ass.project_uuid = item_man.project_uuid
+                                new_ass.source_id = 'web-form'
+                                new_ass.obs_node = '#contents-' + str(1)
+                                new_ass.obs_num = 1
+                                new_ass.sort = 1
+                                new_ass.visibility = 1
+                                new_ass.predicate_uuid = pred_uuid
+                                new_ass.object_type = item_man.item_type
+                                new_ass.object_uuid = item_man.uuid
+                                try:
+                                    new_ass.save()
+                                except:
+                                    self.ok = False
+                                    self.errors[error_key] = 'Same containment assertion '
+                                    self.errors[error_key] += 'already exists.'
                             if self.ok:
                                 # now change the path information for the Subjects
                                 sg = SubjectGeneration()
