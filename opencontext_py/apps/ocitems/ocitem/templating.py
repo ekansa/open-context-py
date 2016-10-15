@@ -496,6 +496,8 @@ class TemplateItem():
         """ creates opengraph metadata to facilitate snippets for
             social media sites
         """
+        rp = RootPath()
+        base_url = rp.get_baseurl()
         if isinstance(self.project_hero_uri, str):
             self.og_image = self.project_hero_uri
         else:
@@ -532,9 +534,13 @@ class TemplateItem():
                 base_url = rp.get_baseurl()
                 self.og_image = base_url + self.OPEN_CONTEXT_ICON
             # do this anyway, since small pictures do not work.
-            rp = RootPath()
-            base_url = rp.get_baseurl()
             self.og_image = base_url + self.OPEN_CONTEXT_ICON
+        if isinstance(self.og_image, str):
+            # if the base URL is not in the sting, we need to use a proxy
+            if base_url not in self.og_image:
+                proxy_url = base_url + '/entities/proxy/'
+                proxy_url += urlquote_plus(self.og_image)
+                self.og_image = proxy_url
         self.og_title = self.citation.cite_title
         if not isinstance(self.og_description, str):
             self.og_description = ''
