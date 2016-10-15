@@ -16,7 +16,7 @@ def index(request):
         'type': 'website',
         'url': base_url,
         'site_name': settings.CANONICAL_SITENAME,
-        'description': 'Home page for Open Context, an open access service for publishign, '\
+        'description': 'Home page for Open Context, an open access service for publishing, '\
                        'preserving, exploring and analyzing archaeological '\
                        'research data',
         'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',

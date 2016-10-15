@@ -310,7 +310,7 @@ def recipes_view(request):
             'type': 'website',
             'url': base_url + '/about/recipes',
             'site_name': settings.CANONICAL_SITENAME,
-            'description': 'Specific guidance on the use Open Context APIs '\
+            'description': 'Specific guidance on the use of Open Context APIs '\
                            '(machine-readable data) to meet certain data '\
                            'management needs',
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
