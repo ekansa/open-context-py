@@ -30,7 +30,7 @@ def index_view(request):
             'description': 'Video and introduction to Open Context, an open-access '
                            'data publication service for archaeology ',
             'image': False,
-            'video': 'https://www.youtube.com/v/qqoPhTZDG04'
+            'video': 'https://opencontext.wistia.com/medias/s0g0fsyqkz'
         }
         template = loader.get_template('about/index.html')
         context = RequestContext(request,
