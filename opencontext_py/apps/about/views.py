@@ -29,7 +29,7 @@ def index_view(request):
             'site_name': settings.CANONICAL_SITENAME,
             'description': 'Video and introduction to Open Context, an open-access '
                            'data publication service for archaeology ',
-            'image': False,
+            'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': 'https://opencontext.wistia.com/medias/s0g0fsyqkz'
         }
         template = loader.get_template('about/index.html')
