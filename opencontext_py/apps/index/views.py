@@ -11,11 +11,23 @@ def index(request):
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
     old_view = False
+    open_graph = {
+        'twitter_site': settings.TWITTER_SITE,
+        'type': 'website',
+        'url': base_url,
+        'site_name': settings.CANONICAL_SITENAME,
+        'description': 'Home page for Open Context, an open access service for publishign, '\
+                       'preserving, exploring and analyzing archaeological '\
+                       'research data',
+        'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
+        'video': False
+    }
     template = loader.get_template('index/view.html')
     context = RequestContext(request,
                              {'base_url': base_url,
                               'old_view': old_view,
                               'page_title': 'Open Context: Publisher of Research Data',
+                              'og': open_graph,
                               'act_nav': 'home',
                               'nav_items': settings.NAV_ITEMS})
     if 'HTTP_ACCEPT' in request.META:
