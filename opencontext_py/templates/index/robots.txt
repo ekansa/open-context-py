@@ -24,7 +24,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 5
 
 
 User-agent: CCBot
@@ -53,7 +53,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: coccoc
@@ -82,7 +82,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 
@@ -112,7 +112,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: duckduckbot
@@ -141,7 +141,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: EtaoSpider
@@ -170,7 +170,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: ia_archiver
@@ -199,7 +199,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: Mail.RU_Bot
@@ -228,7 +228,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: msnbot
@@ -257,7 +257,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: Slurp
@@ -286,7 +286,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 User-agent: Yandex
@@ -315,7 +315,7 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
 
 
@@ -350,5 +350,5 @@ Allow: /subjects-search/
 Allow: /search/
 Allow: /subjects-search/?start=*
 Allow: /search/?start=*
-Crawl-delay: 25
+Crawl-delay: 20
 
