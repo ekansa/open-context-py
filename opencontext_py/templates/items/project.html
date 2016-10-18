@@ -1,6 +1,6 @@
 {% block project %}
     <div class="row">
-    {% if item.project.label = False and item.project.edit_status != False %}
+    {% if item.project.label is False and item.project.edit_status != False %}
         <div class="col-sm-12">
             {% include 'items/editorial-status.html' %}
         </div>

@@ -1,6 +1,6 @@
     <ul class="pagination navbar-nav navbar-right" >
         
-        {% if st.paging.first = False %}
+        {% if st.paging.first is False %}
         <li class="disabled">
             <span>
             <span class="glyphicon glyphicon-step-backward"></span>
@@ -16,7 +16,7 @@
         </li>
         {%endif%}
         
-        {% if st.paging.previous = False %}
+        {% if st.paging.previous is False %}
         <li class="disabled">
             <span>
             <span class="glyphicon glyphicon-backward"></span>
@@ -32,7 +32,7 @@
         </li>
         {%endif%}
     
-        {% if st.paging.next = False %}
+        {% if st.paging.next is False %}
         <li class="disabled">
             <span>
             <span class="glyphicon glyphicon-forward"></span>
@@ -48,7 +48,7 @@
         </li>
         {%endif%}
     
-        {% if st.paging.last = False or st.paging.next = False %}
+        {% if st.paging.last is False or st.paging.next is False %}
         <li class="disabled">
             <span>
             <span class="glyphicon glyphicon-step-forward"></span>
