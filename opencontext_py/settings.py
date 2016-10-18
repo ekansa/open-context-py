@@ -13,9 +13,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
-TEMPLATE_DIRS = (
-    os.path.join(PROJECT_PATH, 'templates'),
-)
+
 
 # The following reads secret settings from a JSON file called 'secrets.json'
 import json
@@ -54,12 +52,37 @@ SOLR_COLLECTION = get_secret('SOLR_COLLECTION')
 # SECURITY WARNING: don't run with debug turned on in production!
 if get_secret('DEBUG') == 1:
     DEBUG = True
-    TEMPLATE_DEBUG = True
+    # TEMPLATE_DEBUG = True
 else:
     DEBUG = False
-    TEMPLATE_DEBUG = False
+    # TEMPLATE_DEBUG = False
 
-
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            os.path.join(PROJECT_PATH, 'templates')
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
+                # list if you haven't customized them:
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.tz',
+                'django.contrib.messages.context_processors.messages',
+            ],
+            'debug': DEBUG,
+            # 'DEBUG': DEBUG,
+            # 'TEMPLATE_DEBUG': DEBUG
+        },
+    
+    },
+]
 
 
 ALLOWED_HOSTS = ['.opencontext.org']
