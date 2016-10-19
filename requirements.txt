@@ -4,13 +4,13 @@ coverage==4.0.3
 
 coveralls==1.1
 
-Django==1.8.6
+Django==1.10.2
 
-django-debug-toolbar==1.4
+django-debug-toolbar==1.6
 
-django-redis-cache==1.6.5
+django-redis-cache==1.7.0
 
-django-reversion==1.9.3
+django-reversion==2.0.6
 
 django-user-agents==0.3.0
 
