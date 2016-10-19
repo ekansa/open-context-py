@@ -97,6 +97,13 @@ class ItemGeoTime():
                 coordinates = output['coordinates']
                 if output['type'] is not False:
                     ftype = output['type']
+                if coordinates is False and latitude is not False\
+                   and longitude is not False:
+                    # no coordinates input in GeoJSON so make them
+                    ftype = 'Point'
+                    coordinates = json.dumps([longitude, latitude],
+                                             indent=4,
+                                             ensure_ascii=False)
             if latitude is False or longitude is False \
                or feature_id is False or coordinates is False \
                or specificity is False:
