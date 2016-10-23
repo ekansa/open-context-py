@@ -303,7 +303,9 @@ class OCitem():
         return output
 
     def get_link_anotations(self):
-        self.link_annotations = LinkAnnotation.objects.filter(subject=self.uuid)
+        self.link_annotations = LinkAnnotation.objects\
+                                              .filter(subject=self.uuid)\
+                                              .order_by('predicate_uri', 'sort')
 
     def get_project_hero_images(self):
         """ gets hero images if a project """
