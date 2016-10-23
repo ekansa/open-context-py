@@ -47,13 +47,15 @@ class Authorship():
         l_tables = 'link_annotations'
         creator_assertions = Assertion.objects\
                                       .filter(uuid=uuid)\
-                                      .extra(tables=[l_tables], where=[filter_creators])
+                                      .extra(tables=[l_tables], where=[filter_creators])\
+                                      .order_by('sort')
         for creator in creator_assertions:
             if creator.object_uuid not in self.creators:
                 self.creators.append(creator.object_uuid)
         contrib_assertions = Assertion.objects\
                                       .filter(uuid=uuid)\
-                                      .extra(tables=[l_tables], where=[filter_contribs])
+                                      .extra(tables=[l_tables], where=[filter_contribs])\
+                                      .order_by('sort')
         for contrib in contrib_assertions:
             if contrib.object_uuid not in self.contributors:
                 if contrib.object_uuid not in self.creators \
@@ -72,7 +74,8 @@ class Authorship():
         creator_links = LinkAnnotation.objects\
                                       .filter(Q(subject=project_uuid),
                                               Q(predicate_uri=self.URI_DC_CREATE)
-                                              | Q(predicate_uri=self.PRF_DC_CREATE))
+                                              | Q(predicate_uri=self.PRF_DC_CREATE))\
+                                      .order_by('sort')
         if len(creator_links) < 1:
             # look for creators from the parent project
             par_proj = Project.objects\
@@ -82,7 +85,8 @@ class Authorship():
                 creator_links = LinkAnnotation.objects\
                                               .filter(Q(subject=par_proj[0].project_uuid),
                                                       Q(predicate_uri=self.URI_DC_CREATE)
-                                                      | Q(predicate_uri=self.PRF_DC_CREATE))
+                                                      | Q(predicate_uri=self.PRF_DC_CREATE))\
+                                              .order_by('sort')
         if len(creator_links) > 0:
             for creator in creator_links:
                 pid = URImanagement.get_uuid_from_oc_uri(creator.object_uri)
@@ -93,7 +97,8 @@ class Authorship():
         contrib_links = LinkAnnotation.objects\
                                       .filter(Q(subject=project_uuid),
                                               Q(predicate_uri=self.URI_DC_CONTRIB)
-                                              | Q(predicate_uri=self.PRF_DC_CONTRIB))
+                                              | Q(predicate_uri=self.PRF_DC_CONTRIB))\
+                                      .order_by('sort')
         for contrib in contrib_links:
             pid = URImanagement.get_uuid_from_oc_uri(contrib.object_uri)
             if pid is False:
