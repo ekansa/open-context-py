@@ -140,6 +140,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
     'opencontext_py.apps.entities.redirects',
+    'opencontext_py.apps.entities.httpmetrics',
     'opencontext_py.apps.ocitems.namespaces',
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
@@ -173,6 +174,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.searcher.search',
     'django.contrib.staticfiles',
     'debug_toolbar',
+    'django_user_agents',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -188,7 +190,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     # Adding security
-    'django.middleware.security.SecurityMiddleware'
+    'django.middleware.security.SecurityMiddleware',
+    # User agent
+    'django_user_agents.middleware.UserAgentMiddleware',
+    # Record requests
+    'opencontext_py.middleware.requestmiddleware.RequestMiddleware',
 )
 
 
@@ -196,6 +202,7 @@ ROOT_URLCONF = 'opencontext_py.urls'
 
 WSGI_APPLICATION = 'opencontext_py.wsgi.application'
 
+SESSION_ENGINE = ('django.contrib.sessions.backends.db')
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
@@ -259,6 +266,8 @@ else:
         }
     }
 
+# user agents cache, memory cache for speed
+USER_AGENTS_CACHE = 'redis'
 
 # -----------------------
 # EMAIL settings
@@ -350,6 +359,11 @@ if 'HOST_TAGLINE' in secrets:
 else:
     HOST_TAGLINE = 'Publication and exhibition of open research data '\
                     + 'and media from archaeology and related fields'
+
+GEOIP_PATH = None
+if 'GEOIP_PATH' in secrets:
+    # we have a GeoIP path for geo data of IP addresses
+    GEOIP_PATH = get_secret('GEOIP_PATH')
 
 # useful hack to allow presence of a 'debug.json' file to
 # toggle debug mode

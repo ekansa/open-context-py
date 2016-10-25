@@ -48,7 +48,7 @@ def index_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def uses_view(request):
-    """ Get the search context JSON-LD """
+    """ Get uses page """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -84,7 +84,7 @@ def uses_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def pub_view(request):
-    """ Get the search context JSON-LD """
+    """ Get publishing overview page """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -119,7 +119,7 @@ def pub_view(request):
 # @cache_control(no_cache=True)
 # @never_cache
 def people_view(request):
-    """ Get the search context JSON-LD """
+    """ Get people page """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -156,7 +156,7 @@ def people_view(request):
 # @cache_control(no_cache=True)
 # @never_cache
 def estimate_view(request):
-    """ Get the search context JSON-LD """
+    """ Get page with publication project cost estimation """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -192,7 +192,7 @@ def estimate_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def process_estimate(request):
-    """ Finalizes an import """
+    """ process an estimate """
     if request.method == 'POST':
         cost = CostEstimator()
         output = cost.process_estimate(request.POST)
@@ -206,7 +206,7 @@ def process_estimate(request):
 
 
 def concepts_view(request):
-    """ Get the search context JSON-LD """
+    """ Get concepts overview """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -263,7 +263,7 @@ def tech_view(request):
 
 
 def services_view(request):
-    """ Get the search context JSON-LD """
+    """ Get page documenting the API """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -297,7 +297,7 @@ def services_view(request):
 
 
 def recipes_view(request):
-    """ Get the search context JSON-LD """
+    """ Get page about recipes using the API """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -332,7 +332,7 @@ def recipes_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def bibliography_view(request):
-    """ Get the search context JSON-LD """
+    """ Get page about bibliography / publications """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -368,7 +368,7 @@ def bibliography_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def ip_view(request):
-    """ Get the search context JSON-LD """
+    """ Get page about IP policies """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -404,7 +404,7 @@ def ip_view(request):
 @cache_control(no_cache=True)
 @never_cache
 def sponsors_view(request):
-    """ Get the search context JSON-LD """
+    """ Get the page about sponsors """
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
