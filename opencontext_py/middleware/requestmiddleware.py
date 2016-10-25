@@ -16,13 +16,12 @@ class RequestMiddleware(object):
         # One-time configuration and initialization.
     
     def process_request(self, request):
-        request.time_start = time.time()
+        self.start_time = time.time()
         request.content_type = 'text/html'  # default, unless changed elsewhere
-        return request
     
     def process_response(self, request, response):
         r_metric = RequestHttpMetric(request)
-        r_metric.time_start = request.time_start
+        r_metric.time_start = self.start_time
         r_metric.mime_type = request.content_type
         r_metric.record()
         return response
