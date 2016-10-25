@@ -13,13 +13,19 @@ from django.template import RequestContext, loader
 # The main dependency for this app is for OCitems, which are used to generate
 # Every type of item in Open Context, including subjects
 def index(request):
-    return HttpResponse("Hello, world. You're at the types index.")
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    new_url = base_url + '/search/?type=types'
+    return redirect(new_url, permanent=True)
 
 
 def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         rp = RootPath()
         base_url = rp.get_baseurl()
         ts = TypeSupplement(ocitem.json_ld)
@@ -65,7 +71,10 @@ def json_view(request, uuid):
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         ts = TypeSupplement(ocitem.json_ld)
         ocitem.json_ld = ts.get_arachne_comparanda()
         req_neg = RequestNegotiation('application/json')
