@@ -124,7 +124,10 @@ class BotHerder():
         'Exabot',
         'YandexBot',
         'Sogou',
-        'Qwantify'
+        'Qwantify',
+        'SemrushBot',
+        'ltx71',
+        'MJ12bot',
     ]
 
     def __init__(self):
