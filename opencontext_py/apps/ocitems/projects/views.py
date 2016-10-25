@@ -36,6 +36,9 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid, True)
     if ocitem.manifest is not False:
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         rp = RootPath()
         base_url = rp.get_baseurl()
         proj_content = ProjectContent(ocitem.manifest.uuid,
@@ -77,7 +80,10 @@ def json_view(request, uuid):
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True
     ocitem.get_item(uuid, True)
-    if(ocitem.manifest is not False):
+    if ocitem.manifest is not False:
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         req_neg = RequestNegotiation('application/json')
         req_neg.supported_types = ['application/ld+json',
                                    'application/vnd.geo+json']

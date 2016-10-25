@@ -41,6 +41,9 @@ def html_view(request, uuid):
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:
         # check to see if there's related data via API calls. Add if so.
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         subj_s = SubjectSupplement(ocitem.json_ld)
         ocitem.json_ld = subj_s.get_catal_related()
         rp = RootPath()
@@ -88,6 +91,9 @@ def json_view(request, uuid):
         ocitem.assertion_hashes = True
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:
+        request.uuid = ocitem.manifest.uuid
+        request.project_uuid = ocitem.manifest.project_uuid
+        request.item_type = ocitem.manifest.item_type
         req_neg = RequestNegotiation('application/json')
         req_neg.supported_types = ['application/ld+json',
                                    'application/vnd.geo+json']
