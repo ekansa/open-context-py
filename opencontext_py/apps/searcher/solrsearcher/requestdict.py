@@ -128,6 +128,7 @@ class BotHerder():
         'SemrushBot',
         'ltx71',
         'MJ12bot',
+        'spbot',
     ]
 
     def __init__(self):

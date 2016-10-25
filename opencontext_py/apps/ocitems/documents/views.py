@@ -42,6 +42,7 @@ def html_view(request, uuid):
             if req_neg.supported:
                 if 'json' in req_neg.use_response_type:
                     # content negotiation requested JSON or JSON-LD
+                    request.content_type = req_neg.use_response_type
                     return HttpResponse(json.dumps(ocitem.json_ld,
                                         ensure_ascii=False, indent=4),
                                         content_type=req_neg.use_response_type + "; charset=utf8")
@@ -75,6 +76,7 @@ def json_view(request, uuid):
         if 'HTTP_ACCEPT' in request.META:
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
+            request.content_type = req_neg.use_response_type
             json_output = json.dumps(ocitem.json_ld,
                                      indent=4,
                                      ensure_ascii=False)

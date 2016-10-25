@@ -141,6 +141,7 @@ def html_view(request, spatial_context=None):
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
+                request.content_type = req_neg.use_response_type
                 return HttpResponse(json.dumps(json_ld,
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
@@ -229,6 +230,7 @@ def json_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
                 # requester wanted a mimetype we DO support
+                request.content_type = req_neg.use_response_type
                 if 'callback' in request.GET:
                     funct = request.GET['callback']
                     json_str = json.dumps(json_ld,
@@ -331,6 +333,7 @@ def subjects_html_view(request, spatial_context=None):
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
+                request.content_type = req_neg.use_response_type
                 return HttpResponse(json.dumps(json_ld,
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
@@ -431,6 +434,7 @@ def subjects_json_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
                 # requester wanted a mimetype we DO support
+                request.content_type = req_neg.use_response_type
                 if 'callback' in request.GET:
                     funct = request.GET['callback']
                     json_str = json.dumps(json_ld,
@@ -527,6 +531,7 @@ def media_html_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
                 # content negotiation requested JSON or JSON-LD
+                request.content_type = req_neg.use_response_type
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
@@ -622,6 +627,7 @@ def media_json_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
                 # requester wanted a mimetype we DO support
+                request.content_type = req_neg.use_response_type
                 if 'callback' in request.GET:
                     funct = request.GET['callback']
                     json_str = json.dumps(json_ld,
@@ -715,6 +721,7 @@ def projects_html_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if 'json' in req_neg.use_response_type:
                 # content negotiation requested JSON or JSON-LD
+                request.content_type = req_neg.use_response_type
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
@@ -806,6 +813,7 @@ def projects_json_view(request, spatial_context=None):
                 req_neg.check_request_support(request.META['HTTP_ACCEPT'])
             if req_neg.supported:
                 # requester wanted a mimetype we DO support
+                request.content_type = req_neg.use_response_type
                 if 'callback' in request.GET:
                     funct = request.GET['callback']
                     json_str = json.dumps(json_ld,
