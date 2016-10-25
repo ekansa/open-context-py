@@ -18,6 +18,7 @@ class RequestMiddleware(object):
     def process_request(self, request):
         request.time_start = time.time()
         request.content_type = 'text/html'  # default, unless changed elsewhere
+        return request
     
     def process_response(self, request, response):
         r_metric = RequestHttpMetric(request)
