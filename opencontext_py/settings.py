@@ -140,7 +140,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
     'opencontext_py.apps.entities.redirects',
-    'opencontext_py.apps.entities.httpmetrics',
+    # 'opencontext_py.apps.entities.httpmetrics',
     'opencontext_py.apps.ocitems.namespaces',
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
@@ -194,7 +194,7 @@ MIDDLEWARE_CLASSES = (
     # User agent
     'django_user_agents.middleware.UserAgentMiddleware',
     # Record requests
-    'opencontext_py.middleware.requestmiddleware.RequestMiddleware',
+    # 'opencontext_py.middleware.requestmiddleware.RequestMiddleware',
 )
 
 
