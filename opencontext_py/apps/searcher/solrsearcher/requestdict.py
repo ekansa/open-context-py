@@ -126,6 +126,7 @@ class BotHerder():
         'Sogou',
         'Qwantify',
         'SemrushBot',
+        'semrush',
         'ltx71',
         'MJ12bot',
         'spbot',
