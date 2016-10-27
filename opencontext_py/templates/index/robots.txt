@@ -324,6 +324,13 @@ Disallow: /oai/*
 
 
 
+
+User-agent: MJ12bot
+Disallow: /
+
+
+
+
 User-agent: *
 Disallow: /*?prop=*
 Disallow: /*?proj=*
