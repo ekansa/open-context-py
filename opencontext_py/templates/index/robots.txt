@@ -330,6 +330,11 @@ Disallow: /
 
 
 
+User-agent: SemrushBot
+Disallow: /
+
+
+
 
 User-agent: *
 Disallow: /*?prop=*
