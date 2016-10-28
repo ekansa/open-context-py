@@ -9,6 +9,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.libs.databasecache import DatabaseCache
+from opencontext_py.libs.filecache import FileCacheJSON
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
@@ -395,6 +396,8 @@ def subjects_json_view(request, spatial_context=None):
         # see if search results are cached. this is not done
         # with a view decorator, because we want to handle bots differently
         db_cache = DatabaseCache()
+        filecache = FileCacheJSON()
+        file_cache_key = False
         cache_key = db_cache.make_cache_key('subjects-search',
                                             request_dict_json)
         if rd.refresh_cache:
@@ -402,6 +405,11 @@ def subjects_json_view(request, spatial_context=None):
             db_cache.remove_cache_object(cache_key)
         # get the search result JSON-LD, if it exists in cache
         json_ld = db_cache.get_cache_object(cache_key)
+        # print(request.get_full_path())
+        if request.get_full_path() == '/subjects-search/.json?response=geo-project':
+            file_cache_key = 'geo-project'
+            if json_ld is None:
+                json_ld = filecache.get_dict_from_file(file_cache_key)
         if json_ld is None:
             # cached result is not found, so make it with a new search
             solr_s = SolrSearch()
@@ -422,6 +430,9 @@ def subjects_json_view(request, spatial_context=None):
                 mem_cache_obj = m_json_ld.mem_cache_obj
                 # now cache the resulting JSON-LD
                 db_cache.save_cache_object(cache_key, json_ld)
+                if isinstance(file_cache_key, str):
+                    # cache a file for the project home screen
+                    filecache.save_serialized_json(file_cache_key, json_ld)
         if json_ld is not None:
             req_neg = RequestNegotiation('application/json')
             req_neg.supported_types = ['application/ld+json',
