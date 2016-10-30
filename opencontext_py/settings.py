@@ -75,6 +75,8 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                # for some reason, I can't get the following to work
+                # 'opencontext_py.templates.context_processors.piwik_settings',  
             ],
             'debug': DEBUG,
             # 'DEBUG': DEBUG,
@@ -83,6 +85,7 @@ TEMPLATES = [
     
     },
 ]
+
 
 
 ALLOWED_HOSTS = ['.opencontext.org']
@@ -422,6 +425,8 @@ NAV_ITEMS = [{'key': 'about',
               'link': None,
               'display': 'About',
               'always': True,
+              'PIWIK_SITE_ID': PIWIK_SITE_ID,  # HACK! not a good way to pass this, but works
+              'PIWIK_DOMAIN_PATH': PIWIK_DOMAIN_PATH,
               'urls': [{'display': 'About Open Context',
                         'link': '/about/'},
                        {'display': 'Uses',
