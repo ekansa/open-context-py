@@ -380,6 +380,16 @@ else:
     # do nothing, no debug file flag
     pass
 
+# PIWIK tracking, if enabled
+PIWIK_SITE_ID = 0
+PIWIK_DOMAIN_PATH = False
+if DEBUG is False:
+    if 'PIWIK_SITE_ID' in secrets:
+        # site id for PIWIK tracking
+        PIWIK_SITE_ID = get_secret('PIWIK_SITE_ID')
+    if 'PIWIK_DOMAIN_PATH' in secrets:
+        PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')
+
 
 ITEM_TYPES = (
     ('subjects', 'subjects'),
