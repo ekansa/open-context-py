@@ -1,0 +1,21 @@
+{% block piwik %}
+    {% if settings.PIWIK_SITE_ID > 0 %}
+        {% if settings.PIWIK_DOMAIN_PATH is not False %}
+		<!-- Piwik -->
+		<script type="text/javascript">
+		  var _paq = _paq || [];
+		  _paq.push(['trackPageView']);
+		  _paq.push(['enableLinkTracking']);
+		  (function() {
+			var u="//{{ settings.PIWIK_DOMAIN_PATH }}/";
+			_paq.push(['setTrackerUrl', u+'piwik.php']);
+			_paq.push(['setSiteId', '{{ settings.PIWIK_SITE_ID }}']);
+			var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+			g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+		  })();
+		</script>
+		<noscript><p><img src="//{{ settings.PIWIK_DOMAIN_PATH }}/piwik.php?idsite={{ settings.PIWIK_SITE_ID }}" style="border:0;" alt="" /></p></noscript>
+		<!-- End Piwik Code -->	
+		{%endif%} 
+    {%endif%}
+{% endblock %}
