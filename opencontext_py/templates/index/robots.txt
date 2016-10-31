@@ -335,6 +335,11 @@ Disallow: /
 
 
 
+User-agent: JamesBOT
+Disallow: /
+
+
+
 
 User-agent: *
 Disallow: /*?prop=*
