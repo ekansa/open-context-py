@@ -435,3 +435,38 @@ def sponsors_view(request):
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
                             status=415)
+
+
+@cache_control(no_cache=True)
+@never_cache
+def terms_view(request):
+    """ Get the page about Terms """
+    rp = RootPath()
+    base_url = rp.get_baseurl()
+    req_neg = RequestNegotiation('text/html')
+    if 'HTTP_ACCEPT' in request.META:
+        req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+    if req_neg.supported:
+        # requester wanted a mimetype we DO support
+        open_graph = {
+            'twitter_site': settings.TWITTER_SITE,
+            'type': 'website',
+            'url': base_url + '/about/terms',
+            'site_name': settings.CANONICAL_SITENAME,
+            'description': 'Terms and Conditions of Use, and '\
+                           'Privacy Policies for Open Context',
+            'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
+            'video': False
+        }
+        template = loader.get_template('about/terms.html')
+        context = RequestContext(request,
+                                 {'base_url': base_url,
+                                  'page_title': 'Open Context: About - Terms of Use and Privacy Policies',
+                                  'og': open_graph,
+                                  'act_nav': 'about',
+                                  'nav_items': settings.NAV_ITEMS})
+        return HttpResponse(template.render(context))
+    else:
+        # client wanted a mimetype we don't support
+        return HttpResponse(req_neg.error_message,
+                            status=415)

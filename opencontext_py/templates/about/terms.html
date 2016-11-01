@@ -1,0 +1,158 @@
+{% extends 'about/outer-page.html' %}
+
+{% block pagecontent %}
+    <style type="text/css">
+        div.about-tab-all {
+            min-height: 600px;
+        }
+        div.about-tab-all samp {
+            font-weight: 700;
+        }
+        ul.code-samp {
+            list-style-type: none;
+        }
+    </style>
+    
+    <div class="jumbotron" id="overview">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12">
+                    <h1>DRAFT: Terms of Use and Privacy Policies</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="media">
+                        <div class="media-left media-top">
+							<img style="margin-top: 10px; width: 160px; margin-left: 50px;" src="{{ base_url }}/static/oc/images/about/legal-noun-643699.png" alt="Legal icon"/>
+                        </div>
+                        <div class="media-body">
+                            <div style="padding-left: 4%;">
+                                <p>Open Context publishes open research data for different public communities to access and use. We require that users of Open Context work with the content and services offered here with respect according to the terms and conditions of service specified below.</p>
+                                
+								<p>In addition, Open Context data collection policies try to reduce user privacy risks. We use Piwik to track use we only collect and retain information of low-risk to the confidentiality and identity of specific users. Read more below to learn more about our privacy policies.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container-fluid">
+        
+		<style type="text/css">
+			img.uses-icon {
+				height: 100px;
+				text-align: center;
+				margin-left: auto;
+				margin-right: auto;
+				margin-top: 20px;
+			}
+			div.uses-rows {
+				margin-top: 40px;
+			}
+		</style>
+		
+		<div id="terms-and-conditions"></div>
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/agreement-noun-681897.png" alt="Agreement icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Terms and Conditions of Use</h3>
+				<p>Open Context publishes open access, open licensed research data on the Web. It is free of charge for users. Most of these data document archaeological research from projects and collections across the world. To use Open Context and the content it publishes, you must agree to the following Terms and Conditions of Service:</p>
+				<ul>
+					<li><strong>Respect Applicable Laws and Communities</strong>: Open Context publishes research materials relevant to many different public communities all with different histories, cultures, and expectations. We expect Open Context users to act civily and lawfully. We also require that Open Context users treat different publics with dignity, decency, and respect in their use of Open Context published content. 
+					</li>
+					<li><strong>Cite Contributors</strong>: The data and other documentation published by Open Context required dedication, expertise, and professionalism, and sometimes extraordinary effort in difficult circumstances. Users of Open Context must respect these contributors by clearly and properly citing and attributing data creators and contributors. Citations need to include appropriate Web identifiers (URIs) in order to help maintain the intellectual integrity of these works. 
+					</li>
+					<li><strong>Adhere to Archaeological Ethics</strong>: Most of the content published by Open Context documents archaeological research. Members of the publish wishing to access and use this documentation need to use these materials responsibly in accordance with ethical principles advocated by archaeology's professional societies, especially the <a href="http://www.saa.org/AbouttheSociety/PrinciplesofArchaeologicalEthics/tabid/203/Default.aspx">Society for American Archaeology's Principles of Archaeological Ethics</a>. 
+					</li>
+					<li><strong>Respect Human Remains Documentation</strong>: Open Context requires that researchers understand and respect the ethical context of their research environment. In some cases, this may preclude publication of human remains or other sensitive content on an open access venue like this, but in other cases, Open Context does publish documentation about human remains. Users working with human remains documentation need to treat these materials with care and respect.
+					</li>
+					<li><strong>Act as a "Good Citizen" in Using our Services</strong>: Open Context provides multiple human and machine interfaces (APIs, web services) for accessing and querying the content it publishes. Be reasonable in your use Open Context and its APIs so that your use does not adversely impact the accessibility of Open Context for others. We require all users, including their software agents, to use reasonable limits in making requests. This includes limiting the rate of requests (including API calls) to less than 3 requests / second and <a href="mailto:publishing@opencontext.org">contacting us</a> to make arrangements for more extensive and continual use of our APIs.
+					</li>
+					<li><strong>Respect Copyright</strong>: Open Context respects your intellectual property and the intellectual property of others, and we require that our users do as well. If you believe another person has copied your work and has made it accessible on this site in a way that constitutes copyright infringement, or has violated your intellectual property rights in some other way, please <a href="mailto:publishing@opencontext.org">contact us</a>.</li>
+					<li><strong>Understand Changes</strong>: Open Context reserves the right to change these terms of service at any time without prior notice, but only if such changes are consistent with applicable laws and principles of ethics endorsed by archaeology's professional societies and the American Library Association (ALA).
+					</li>
+				</ul>    
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+		<div id="privacy"></div>
+		
+		<div class="row uses-rows">
+            <div class="col-sm-1">
+            </div>
+            <div class="col-sm-2">
+                <img class="img-responsive img-rounded uses-icon" src="{{ base_url }}/static/oc/images/about/tracking-noun-408583.png" alt="Tracking icon"/>
+            </div>
+            <div class="col-sm-8 step-text">
+                <h3>Privacy Policies and Tracking</h3>
+				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primary deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>, and mirrored by the German Archaeological Institute at <a href="http://opencontext.dainst.org">http://opencontext.dainst.org</a>, which does not use encyption. Please be aware that third-parties may monitor your interactions with the unencypted mirror site. Use the encrypted site for more secure and more private access to Open Context. User privacy policies are:</p>
+				
+				
+				<ul>
+					<li><strong>Annonymous Open Access</strong>: To protect user privacy and maximize accessibility, Open Context does not require a login to access published content. Only content in preparation prior to publication lies behind a user login barrier.</li>
+					
+					<li><p><strong>Piwik User-Tracking and Privacy Protections</strong>: Open Context collects use statistics using an instance of <a href="https://piwik.org/">Piwik</a>, an open-source Web analytics application. We use Piwik to limit the amount of user data collected by third-parties, as would be the case with Google Analytics (<a href="http://piwik.org/privacy/">see more</a>). We also use the recommended <a href="http://piwik.org/docs/privacy/">privacy default</a> settings for Piwik to limit the specificity of data collected about users.</p>
+						<p>The data we collect and record include:</p>
+						<ul>
+							<li>Annonymized User IP Addresses (we mask 2 bytes of IP address information)</li>
+							<li>General (city-level) / low-precision geospatial information, inferred from user IP addresses</li>
+							<li>Client Software (Operating systems, browser software)</li>
+							<li>Client Devices (Device manufacturer, screen resolution)</li>
+							<li>Request Metrics (Referring links, resources retrieved, time of requests)</li>
+						</ul>
+						<br/>
+						<p>We do not collect or retain:</p>
+						<ul>
+							<li>Specific IP Addresses</li>
+							<li>User names, login status</li>
+							<li>Keyword search strings</li>
+							<li>Specific / high-precision geospatial information of a user's device (as from GPS or other source)</li>
+						</ul>
+						<br/>
+						<br/>
+					</li>
+					<li><p><strong>Uses of Web Analytics Data</strong>: Our goal is to limit risks associated with data collection and will only collect and retain the low-sensitivity data described above. These data will be used to help guide improvements to Open Context, and may be made available, on a limited basis, to qualified researchers conducting not-for-profit Institutional Review Board (IRB) approved studies.</p>
+					</li>
+					<li><p><strong>Opting Out of Tracking</strong>: Open Context respects <em>Do Not Track Directives</em>. If you do not want to be tracked in the manner described above, please select an applicable "Do Not Track" option on your Web browser.</p>
+					</li>
+					<li><strong>Changes</strong>: Open Context reserves the right to change privacy policies and user tracking policies at any time without notice, but only if such changes comply with the
+					<a href="http://www.ala.org/advocacy/intfreedom/librarybill/interpretations/qa-accesstodigital">American Library Association's recommendations for patron privacy</a> protections.						
+					</li>
+				</ul>
+			</div>
+            <div class="col-sm-1">
+            </div>
+        </div>
+		
+        
+        <h5 style="margin-top: 120px;">Icon Credits</h5>
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Legal icon by <a target="_blank" href="https://thenounproject.com/term/legal/643699/">Andrejs Kirma</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+		<div class="row">
+            <div class="col-sm-12">
+                <small>Agreement icon by <a target="_blank" href="https://thenounproject.com/term/agreement/681897/">Gregor Črešnar</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <small>Tracking icon by <a target="_blank" href="https://thenounproject.com/term/tracking/408583/">Mark S Waterhouse</a> via the <a target="_blank" href="http://thenounproject.com/">NounProject.com</a></small>
+            </div>
+        </div>
+        
+    </div>
+    
+{% endblock %} 
