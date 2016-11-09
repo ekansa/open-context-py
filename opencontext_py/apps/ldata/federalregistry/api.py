@@ -1,7 +1,11 @@
 import json
+import os
+import codecs
 import requests
 import feedparser
+import hashlib
 from time import sleep
+from django.conf import settings
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
@@ -11,6 +15,11 @@ class FederalRegistryAPI():
     """ Interacts with the Federal Registry API
         Fo relate DINAA trinomials with
         Federal Registry documents
+        
+from opencontext_py.apps.ldata.federalregistry.api import FederalRegistryAPI
+fed_api = FederalRegistryAPI()
+fed_api.get_cache_keyword_searches()
+
     """
     API_BASE_URL = 'http://www.federalregister.gov/api/v1/documents.json'
     SLEEP_TIME = .5
@@ -21,50 +30,107 @@ class FederalRegistryAPI():
         self.results = False
         self.best_match = False
         self.html_url = False
+        self.cache_batch_prefix = '2016-11-08'
         self.delay_before_request = self.SLEEP_TIME
+        self.root_act_dir = settings.STATIC_IMPORTS_ROOT
+        self.working_search_dir = 'federal-reg-search'
+        self.recs_per_page = 500
+        self.json_url_list = []
+        self.raw_text_url_list = []
+        self.keyword_a_list = [
+            'archeology',
+            'archeological',
+            'archaeology',
+            'archaeological',
+            'NAGPRA'
+        ]
+        self.keyword_b_list = [
+            'Illinois',
+            'Georgia',
+            'Virginia',
+            'Indiana',
+            'Florida',
+            'Missouri',
+            'South Carolina',
+            'Alabama',
+            'Iowa',
+            'Louisiana',
+            'Kentucky'
+        ]
 
-    def get_site_keyword(self, site_keyword):
-        """ get a key word for a site """
-        results = False
-        json_r = self.get_keyword_search_json(site_keyword,
-                                              'SiteNameKeyword')
+    def get_cache_keyword_searches(self):
+        """ gets search results and caches them based on
+            literating though two list of key words
+        """
+        for keyword_a in self.keyword_a_list:
+            for keyword_b in self.keyword_b_list:
+                act_keywords = [
+                    keyword_a,
+                    keyword_b
+                ]
+                print('------------------------')
+                print('Working on: ' + str(act_keywords))
+                print('------------------------')
+                url = self.make_search_json_url(act_keywords)
+                json_r = self.get_cache_keyword_search_json(url)
+        docs = LastUpdatedOrderedDict()
+        docs['raw'] = self.raw_text_url_list
+        docs['json'] = self.json_url_list
+        key = 'all-document-list'
+        self.save_serialized_json(key, docs)
+    
+    def add_to_doc_lists(self, json_r):
+        """ adds to lists of json and raw document urls """
         if isinstance(json_r, dict):
-            if 'items' in json_r:
-                if len(json_r['items']) > 0:
-                    results = []
-                    for item in json_r['items']:
-                        result = {'label': False,
-                                  'id': False,
-                                  'tdar': item}
-                        if 'label' in item:
-                            # get the item label
-                            result['label'] = item['label']
-                        if 'detailUrl' in item:
-                            # make a full URI for the keyword
-                            result['id'] = self.BASE_URI + item['detailUrl']
-                        if result['id'] is not False \
-                           and result['label'] is not False:
-                            # Data is complete, so we can use it. Append to results
-                            results.append(result)
-        if results is not False:
-            self.best_match = results[0]
-        return results
+            if 'results' in json_r:
+                for result in json_r['results']:
+                    if 'json_url' in result:
+                        json_url = result['json_url']
+                        if json_url not in self.json_url_list:
+                            self.json_url_list.append(json_url)
+                    if 'raw_text_url' in result:
+                        raw_text_url = result['raw_text_url']
+                        if raw_text_url not in self.raw_text_url_list:
+                            self.raw_text_url_list.append(raw_text_url)
+    
+    def make_search_json_url(self, keyword_list):
+        """ makes a search url from a keyword list """
+        url_key_words = ' '.join(keyword_list)
+        url = self.API_BASE_URL
+        url += '?fields%5B%5D=agencies&fields%5B%5D=json_url&fields%5B%5D=raw_text_url'
+        url += '&fields%5B%5D=document_number&fields%5B%5D=html_url&fields%5B%5D=title'
+        url += '&order=relevance'
+        url += '&per_page=' + str(self.recs_per_page)
+        url += '&conditions%5Bterm%5D=' + urlquote_plus(url_key_words)
+        return url
 
-    def get_keyword_search_json(self, keyword, keyword_type):
+    def get_cache_keyword_search_json(self, url, recursive=True):
         """
-        gets json data from tDAR in response to a keyword search
+        gets json data from API in response to a keyword search
         """
+        key =  self.make_cache_key(self.cache_batch_prefix, url)
+        json_r = self.get_dict_from_file(key)
+        if not isinstance(json_r, dict):
+            json_r = self.get_remote_json_from_url(url)
+            self.save_serialized_json(key, json_r)
+        # add to the list of documents in the search results
+        self.add_to_doc_lists(json_r)
+        if recursive and isinstance(json_r, dict):
+            if 'next_page_url' in json_r:
+                next_url = json_r['next_page_url']
+                print('Getting next page of results: ' + str(next_url))
+                json_r = self.get_cache_keyword_search_json(next_url, recursive)
+        return json_r
+    
+    def get_remote_json_from_url(self, url):
+        """ gets remote data from a URL """
         if self.delay_before_request > 0:
             # default to sleep BEFORE a request is sent, to
             # give the remote service a break.
             sleep(self.delay_before_request)
-        payload = {'term': keyword,
-                   'keywordType': keyword_type}
-        url = self.KEYWORD_API_BASE_URL
         try:
             gapi = GeneralAPI()
             r = requests.get(url,
-                             params=payload,
                              timeout=240,
                              headers=gapi.client_headers)
             self.request_url = r.url
@@ -75,72 +141,69 @@ class FederalRegistryAPI():
             json_r = False
         return json_r
 
-    def get_tdar_items_by_site_keyword_objs(self, keyword_objs):
-        """ gets site information by tdar keyword objects """
+    def get_dict_from_file(self, key):
+        """ gets the file string
+            if the file exists,
+        """
+        file_name = key + '.json'
+        json_obj = None
+        ok = self.check_exists(file_name, self.working_search_dir)
+        if ok:
+            path = self.prep_directory(self.working_search_dir)
+            dir_file = path + file_name
+            try:
+                json_obj = json.load(codecs.open(dir_file,
+                                                 'r',
+                                                 'utf-8-sig'))
+            except:
+                print('Cannot parse as JSON: ' + dir_file)
+                json_obj = False
+        return json_obj
+    
+    def check_exists(self, file_name, act_dir):
+        """ checks to see if a file exists """
+        path = self.prep_directory(act_dir)
+        dir_file = path + file_name
+        if os.path.exists(dir_file):
+            output = True
+        else:
+            print('Cannot find: ' + dir_file)
+            output = False
+        return output
+    
+    def save_serialized_json(self, key, dict_obj):
+        """ saves a data in the appropriate path + file """
+        file_name = key + '.json'
+        path = self.prep_directory(self.working_search_dir)
+        dir_file = path + file_name
+        print('save to path: ' + dir_file)
+        json_output = json.dumps(dict_obj,
+                                 indent=4,
+                                 ensure_ascii=False)
+        file = codecs.open(dir_file, 'w', 'utf-8')
+        file.write(json_output)
+        file.close()
+
+    def prep_directory(self, act_dir):
+        """ Prepares a directory to receive export files """
         output = False
-        keyword_uris = []
-        if isinstance(keyword_objs, list):
-            for keyword_obj in keyword_objs:
-                if isinstance(keyword_obj, dict):
-                    if 'id' in keyword_obj:
-                        keyword_uris.append(keyword_obj['id'])
-        if len(keyword_uris) > 0:
-            output = self.search_by_site_keyword_uris(keyword_uris,
-                                                      True)
+        full_dir = self.root_act_dir + act_dir + '/'
+        full_dir.replace('//', '/')
+        if not os.path.exists(full_dir):
+            print('Prepared directory: ' + str(full_dir))
+            os.makedirs(full_dir)
+        if os.path.exists(full_dir):
+            output = full_dir
+        if output[-1] != '/':
+            output += '/'
         return output
 
-    def search_by_site_keyword_uris(self,
-                                    keyword_uris,
-                                    add_templating_keys=False):
-        """
-        sets an Atom feed (sorta) from tDAR related to site
-        keywords
-        """
-        output = False
-        site_names = []
-        if not isinstance(keyword_uris, list):
-            keyword_uris = [keyword_uris]
-        for keyword_uri in keyword_uris:
-            if self.BASE_URI in keyword_uri \
-               and 'site-name' in keyword_uri:
-                # is a tDAR site-name URI
-                uri_ex = keyword_uri.split('/')
-                site_name = uri_ex[-1]  # last part of URI is the site-name
-                site_names.append(site_name)
-        if len(site_names) > 0:
-            feed_url = self.SITE_SEARCH_FEED_BASE_URL
-            self.html_url = self.SITE_SEARCH_HTML_BASE_URL
-            # Add a bunch of query parameters
-            params = '?_tdar.searchType=advanced&sortField=RELEVANCE&groups%5B0%5D'
-            params += '.operator=AND&groups%5B0%5D.fieldTypes%5B0%5D=FFK_SITE'
-            feed_url += params
-            self.html_url += params
-            i = 0
-            for site_name in site_names:
-                act_param = '&groups%5B0%5D.siteNames%5B' + str(i) + '%5D='
-                act_param += urlquote(site_name)
-                feed_url += act_param
-                self.html_url += act_param
-                i += 1
-            feed = feedparser.parse(feed_url)
-            # print(feed_url)
-            if feed.bozo == 1 \
-               or feed.status >= 400:
-                feed = False
-            else:
-                output = []
-                for entry in feed.entries:
-                    item = LastUpdatedOrderedDict()
-                    item['id'] = entry.id
-                    item['label'] = entry.title
-                    if add_templating_keys:
-                        # keys useful for templating the tDAR content
-                        item['vocabulary'] = 'tDAR archived content'
-                        item['vocab_uri'] = 'http://tdar.org/'
-                        item['vocabulary'] = False
-                        item['vocab_uri'] = False
-                    output.append(item)
-        return output
+    def make_cache_key(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        hash_obj = hashlib.sha1()
+        concat_string = str(prefix) + " " + str(identifier)
+        hash_obj.update(concat_string.encode('utf-8'))
+        return hash_obj.hexdigest()
 
     def pause_request(self):
         """ pauses between requests """
