@@ -1,8 +1,7 @@
 {% load partition %}
 {% if media_list|length > 0 %}
-    {% for row in media_list|columns:col_num %}    
     <div class="row media-list-row">
-        {% for media in row %}
+    {% for media in media_list %}    
         <div class="col-xs-6 col-md-3 media-thumb">
             {% if media.uuid == None or media.uuid == False %}   
             <a target="_blank" class="thumbnail" title="{{ media.val }}" href="{{  media.uri }}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
@@ -10,7 +9,10 @@
             <a class="thumbnail" title="{{ media.val }}" href="{% url 'media_html'  media.uuid %}"><img src="{{  media.thumbnail }}" class="img-rounded" alt="Thumbnail for {{ media.val }}"/></a>
             {% endif %}
         </div>
-        {% endfor %}
-    </div>
+        {% if forloop.counter|divisibleby:4 %}
+    </div>    
+    <div class="row media-list-row">
+        {%endif%}
     {% endfor %}
+    </div>
 {%endif%}
