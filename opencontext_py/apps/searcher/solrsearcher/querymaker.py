@@ -256,7 +256,8 @@ class QueryMaker():
                             # the below is a bit of a hack. We should have a query field
                             # as with ___pred_ to query just the slug. But this works for now
                             entity = self.mem_cache_obj.get_entity(dc_term, False)
-                            fq_path_term = fq_field + '_fq:' + entity.slug
+                            fq_path_term = '(' + fq_field + '_fq:' + entity.slug + ')'
+                            fq_path_term += ' OR (' + fq_field + ':' + entity.slug + '*)'
                             if dc_param == 'dc-temporal' \
                                and entity.entity_type == 'vocabulary' \
                                and 'periodo' in entity.slug:
