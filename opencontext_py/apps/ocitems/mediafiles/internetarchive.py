@@ -22,10 +22,12 @@ class InternetArchiveMedia():
     media files, particularly putting items into the
     Internet Archive
 
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchiveMedia
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
+ia_m.save_db = True
 ia_m.project_uuids.append('b6de18c6-bba8-4b53-9d9e-3eea4b794268')
 ia_m.archive_image_media_items()
 ia_m.errors
@@ -48,13 +50,14 @@ ia_m.errors
         self.mem_cache_entities = {}
         self.delay_before_request = self.SLEEP_TIME
         self.noindex = True
+        self.save_db = False
         self.errors = []
     
     def archive_image_media_items(self):
         """ archives a list of media items """
         image_manifest_list = self.get_image_media_items()
         for man_obj in image_manifest_list:
-            print('Working on: ' + man_obj.slug)
+            print('Working on: ' + man_obj.slug + ' uuid: ' + man_obj.uuid)
             # self.update_image_metadata(man_obj)
             self.archive_image(man_obj)
     
@@ -65,11 +68,11 @@ ia_m.errors
             man_images = Manifest.objects\
                                  .filter(item_type='media',
                                          class_uri='oc-gen:image',
-                                         project_uuid__in=self.project_uuids)[:1]
+                                         project_uuid__in=self.project_uuids)
         else:
             man_images = Manifest.objects\
                                  .filter(item_type='media',
-                                         class_uri='oc-gen:image')[:1]
+                                         class_uri='oc-gen:image')
         for man_obj in man_images:
             ch_iiif = Mediafile.objects\
                                .filter(uuid=man_obj.uuid,
@@ -92,8 +95,6 @@ ia_m.errors
                 # get or make an item
                 item = get_item(item_id,
                                 archive_session=s,
-                                collection=self.ia_collection,
-                                mediatype='image',
                                 debug=True)
             # now add the metadata
             print('Update metadata for ' + item_id)
@@ -129,27 +130,22 @@ ia_m.errors
                 # get or make an item
                 item = get_item(item_id,
                                 archive_session=s,
-                                collection=self.ia_collection,
-                                mediatype='image',
                                 debug=True)
+                # now make some metadata for the first item to be uploaded
                 metadata = self.make_metadata_dict(json_ld, man_obj)
+                metadata['collection'] = self.ia_collection
+                metadata['mediatype'] = 'image'
                 # now upload the image file
                 dir = self.set_check_directory(self.cach_file_dir)
                 path = os.path.join(dir, file_name)
                 r = item.upload_file(path,
                                      key=file_name,
-                                     collection=self.ia_collection,
-                                     mediatype='image',
-                                     metadata=metadata)
+                                     metadata=metadata,
+                                     debug=True)
                 # set the uri for the media item just uploaded
-                ia_file_uri = self.make_ia_image_uri(item_id, file_name)
-                iiif_file_uri = self.make_ia_iiif_image_uri(item_id, file_name)
-                # now add the metadata
-                meta_ok = self.update_item_metadata(json_ld,
-                                                    man_obj,
-                                                    item_id,
-                                                    item)
-                if meta_ok:
+                if r.status_code == requests.codes.ok or self.save_db:
+                    ia_file_uri = self.make_ia_image_uri(item_id, file_name)
+                    iiif_file_uri = self.make_ia_iiif_image_uri(item_id, file_name)
                     # now save the link to the IA full file
                     mf = Mediafile()
                     mf.uuid = man_obj.uuid
@@ -220,8 +216,6 @@ ia_m.errors
             s = self.start_ia_session()
             item = get_item(item_id,
                             archive_session=s,
-                            collection=self.ia_collection,
-                            mediatype='image',
                             debug=True)
         r = item.modify_metadata(metadata)
         print(str(r))
