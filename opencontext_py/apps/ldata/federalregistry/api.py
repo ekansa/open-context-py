@@ -34,6 +34,7 @@ fed_api.get_cache_keyword_searches()
         self.delay_before_request = self.SLEEP_TIME
         self.root_act_dir = settings.STATIC_IMPORTS_ROOT
         self.working_search_dir = 'federal-reg-search'
+        self.working_doc_dir = 'federal-reg-docs'
         self.recs_per_page = 500
         self.json_url_list = []
         self.raw_text_url_list = []
@@ -58,6 +59,20 @@ fed_api.get_cache_keyword_searches()
             'Kentucky'
         ]
 
+    def get_list_cached_keyword_searches(self):
+        """ makes a list of search results from keyword searches """
+        file_list = []
+        for keyword_a in self.keyword_a_list:
+            for keyword_b in self.keyword_b_list:
+                act_keywords = [
+                    keyword_a,
+                    keyword_b
+                ]
+                url = self.make_search_json_url(act_keywords)
+                key =  self.make_cache_key(self.cache_batch_prefix, url)
+                file_list.append(key)
+        return file_list       
+
     def get_cache_keyword_searches(self):
         """ gets search results and caches them based on
             literating though two list of key words
@@ -78,6 +93,24 @@ fed_api.get_cache_keyword_searches()
         docs['json'] = self.json_url_list
         key = 'all-document-list'
         self.save_serialized_json(key, docs)
+        # now iterate through the raw_text_urls to save these docs
+        for raw_text_url in self.raw_text_url_list:
+            self.get_cache_raw_doc_text(raw_text_url)
+    
+    def get_cache_raw_doc_text(self, url):
+        """ gets and caches raw text for found documents """
+        url_ex = url.split('/')
+        file_name = url_ex[-1]
+        exists = self.check_exists(file_name, self.working_doc_dir)
+        if exists is False:
+            text = self.get_remote_text_from_url(url)
+            if isinstance(text, str):
+                path = self.prep_directory(self.working_doc_dir)
+                dir_file = path + file_name
+                print('save to path: ' + dir_file)
+                file = codecs.open(dir_file, 'w', 'utf-8')
+                file.write(text)
+                file.close()
     
     def add_to_doc_lists(self, json_r):
         """ adds to lists of json and raw document urls """
@@ -140,12 +173,32 @@ fed_api.get_cache_keyword_searches()
             self.request_error = True
             json_r = False
         return json_r
-
+    
+    def get_remote_text_from_url(self, url):
+        """ gets remote text content from a URL """
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        try:
+            gapi = GeneralAPI()
+            r = requests.get(url,
+                             timeout=240,
+                             headers=gapi.client_headers)
+            self.request_url = r.url
+            r.raise_for_status()
+            text = r.text
+        except:
+            self.request_error = True
+            text = False
+        return text
+    
     def get_dict_from_file(self, key):
         """ gets the file string
             if the file exists,
         """
-        file_name = key + '.json'
+        if '.json' not in key:
+            file_name = key + '.json'
         json_obj = None
         ok = self.check_exists(file_name, self.working_search_dir)
         if ok:
@@ -159,6 +212,18 @@ fed_api.get_cache_keyword_searches()
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False
         return json_obj
+    
+    def get_string_from_file(self, file_name, act_dir):
+        """ gets the file string
+            if the file exists,
+        """
+        text = None
+        ok = self.check_exists(file_name, act_dir)
+        if ok:
+            path = self.prep_directory(act_dir)
+            dir_file = path + file_name
+            text = open(dir_file, 'r').read()
+        return text
     
     def check_exists(self, file_name, act_dir):
         """ checks to see if a file exists """
