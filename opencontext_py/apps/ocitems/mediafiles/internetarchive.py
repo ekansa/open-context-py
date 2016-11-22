@@ -191,7 +191,7 @@ ia_m.errors
         if '.' in file_name:
             ex_f = file_name.split('.')
             suffix = ex_f[-1]
-        uri = self.iiif_uri_prefix + item_id + '/full/full/!0/default.' + suffix
+        uri = self.iiif_uri_prefix + item_id + '/info.json'
         return uri
 
     def make_metadata_dict(self, json_ld, man_obj):
