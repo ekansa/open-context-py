@@ -17,7 +17,8 @@ static/fontawesome/
 static/fonts/
 static/exports/
 static/imports/
-static /d3/
+static/d3/
+static/openseadragon/
 static/robots/robots.txt
 *.pyc
 solr-config/schema.xml.old

@@ -1,0 +1,18 @@
+{% block iiif %}
+<script src="{{ base_url }}/static/openseadragon/openseadragon.min.js" type="text/javascript"></script>
+<div class="full-image" id="iiif-zone" style="height: 1000px;">
+     
+
+</div>
+<script type="text/javascript">
+     OpenSeadragon({
+         id:            "iiif-zone",
+         prefixUrl:     "/static/openseadragon/images/",
+         sequenceMode:  true,
+         showNavigator:  true,
+         tileSources:   [
+             "{{ item.iiif_json }}"
+         ]
+     });
+</script>
+{% endblock %} 

@@ -29,9 +29,13 @@
                {% endwith %}
                {% endwith %}
                {% endwith %}
+               {% if item.iiif_json %}
+                    {% include 'media/iiif.html' %}
+               {% else %}
                <div class="full-image">
                     <img class="img-responsive" src="{{ item.content.fullfile }}" alt="Full of {{ item.label }}" />
                </div>
+               {%endif%}
                {% include 'items/plain-panel-end.html' %}
           {%endif%}
           {%endif%}

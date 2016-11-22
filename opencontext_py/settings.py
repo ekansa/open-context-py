@@ -391,7 +391,20 @@ if DEBUG is False:
         # site id for PIWIK tracking
         PIWIK_SITE_ID = get_secret('PIWIK_SITE_ID')
     if 'PIWIK_DOMAIN_PATH' in secrets:
-        PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')
+        PIWIK_DOMAIN_PATH = get_secret('PIWIK_DOMAIN_PATH')        
+
+# Internet Archive Credentials
+# generate keys at: https://archive.org/account/s3.php
+if 'INTERNET_ARCHIVE_ACCESS_KEY' in secrets:
+    # S3 access key fr the internet archive.
+    INTERNET_ARCHIVE_ACCESS_KEY = get_secret('INTERNET_ARCHIVE_ACCESS_KEY')
+else:
+    INTERNET_ARCHIVE_ACCESS_KEY = None
+if 'INTERNET_ARCHIVE_SECRET_KEY' in secrets:
+    # password for the internet archive
+    INTERNET_ARCHIVE_SECRET_KEY = get_secret('INTERNET_ARCHIVE_SECRET_KEY')
+else:
+    INTERNET_ARCHIVE_SECRET_KEY = None  
 
 
 ITEM_TYPES = (

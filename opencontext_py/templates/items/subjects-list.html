@@ -1,15 +1,19 @@
 {% load partition %}
 {% if subjects_list|length > 0 %}
-    {% for row in subjects_list|columns:col_num %}    
     <div class="row subject-list-row">
-        {% for sub in row %}
+    {% for sub in subjects_list %}    
+        
         <div class="col-sm-{{ icon_grid_with }}">
             <a href="{% url 'subjects_html' sub.uuid %}"><img src="{{ sub.icon }}" alt="Icon for {{ sub.typelabel }}"/></a>
         </div>    
         <div class="col-sm-{{ text_grid_with }}">
             <div class="subject-list-text"><a href="{% url 'subjects_html' sub.uuid %}">{{ sub.label }}</a></div>
         </div>
-        {% endfor %}
-    </div>
+        {% if forloop.counter|divisibleby:col_num %}
+    </div>    
+    <div class="row subject-list-row">
+        {%endif%}
+        
     {% endfor %}
+    </div>
 {%endif%}

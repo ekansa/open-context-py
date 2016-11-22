@@ -43,7 +43,8 @@ class LinkEntity(models.Model):
         saves a manifest item with a good slug
         """
         self.uri = self.clean_uri(self.uri)
-        self.slug = self.make_slug()
+        if self.slug is None:
+            self.slug = self.make_slug()
         if self.sort is None:
             self.sort = ''
         self.sort = self.sort[:60]
