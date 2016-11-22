@@ -73,6 +73,7 @@ ia_m.errors
             man_images = Manifest.objects\
                                  .filter(item_type='media',
                                          class_uri='oc-gen:image')
+        print('Checking media items: ' + str(len(man_images)))
         for man_obj in man_images:
             ch_iiif = Mediafile.objects\
                                .filter(uuid=man_obj.uuid,
@@ -140,8 +141,7 @@ ia_m.errors
                 path = os.path.join(dir, file_name)
                 r = item.upload_file(path,
                                      key=file_name,
-                                     metadata=metadata,
-                                     debug=True)
+                                     metadata=metadata)
                 # set the uri for the media item just uploaded
                 if r.status_code == requests.codes.ok or self.save_db:
                     ia_file_uri = self.make_ia_image_uri(item_id, file_name)
