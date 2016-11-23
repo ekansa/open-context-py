@@ -74,6 +74,7 @@ class TemplateItem():
         self.full_doc_file = False  # a pdf, word, or other file for Javascript preview
         self.fulldownload = False
         self.iiif_json = False
+        self.iiif_server = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -338,6 +339,7 @@ class TemplateItem():
                     self.content['thumbnail'] = rp.convert_to_https(file_item['id'])
                 elif file_item['type'] == 'oc-gen:iiif':
                     self.iiif_json = rp.convert_to_https(file_item['id'])
+                    self.iiif_server = self.iiif_json.replace('/info.json', '')
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:
