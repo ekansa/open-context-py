@@ -67,8 +67,8 @@ imp_sj.load_data_in_directory('65-c4')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
-imp_sj.act_import_dir = '/home/dainst_ekansa'
-imp_sj.load_data_in_directory('85-traces')
+imp_sj.act_import_dir = '/home/ekansa'
+imp_sj.load_data_in_directory('97-kp-media')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
@@ -117,7 +117,10 @@ imp_sj.load_data_in_directory('86-oracle-bones')
                 for obj in serializers.deserialize("json", json_obj):
                     # this just saves the object, so as to
                     # synch different instances of open contex
-                    obj.save()
+                    try:
+                        obj.save()
+                    except Exception as e:
+                        print('Note: ' + str(e))
         except Exception as e:
             print('Problem: ' + str(e))
             all_ok = False
