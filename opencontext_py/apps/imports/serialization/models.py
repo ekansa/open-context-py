@@ -117,10 +117,8 @@ imp_sj.load_data_in_directory('86-oracle-bones')
                 for obj in serializers.deserialize("json", json_obj):
                     # this just saves the object, so as to
                     # synch different instances of open contex
-                    try:
+                    if obj.validate_unique():
                         obj.save()
-                    except Exception as e:
-                        print('Note: ' + str(e))
         except Exception as e:
             print('Problem: ' + str(e))
             all_ok = False
