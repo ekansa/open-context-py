@@ -8,11 +8,14 @@
      OpenSeadragon({
          id:            "iiif-zone",
          prefixUrl:     "/static/openseadragon/images/",
-         sequenceMode:  true,
+         sequenceMode:  false,
          showNavigator:  true,
          tileSources:   [
              "{{ item.iiif_json }}"
          ]
      });
 </script>
+<div>
+     <p class="small text-center">The Open Context team gratefully thanks the <a href="https://archive.org/" target="_blank">Internet Archive</a>'s <a href="https://www.archivelab.org/" target="_blank">Archive Lab</a> for enabling these dynamic image features via their International Image Interoperability Framework (<a href="http://iiif.io/" target="_blank">IIIF</a>) service.</p>
+</div>
 {% endblock %} 
