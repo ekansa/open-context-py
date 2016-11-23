@@ -28,6 +28,8 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
+ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/kuthodaw-pagoda/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/kuthodaw-pagoda/'
 ia_m.project_uuids.append('b6de18c6-bba8-4b53-9d9e-3eea4b794268')
 ia_m.archive_image_media_items()
 ia_m.errors
@@ -51,6 +53,8 @@ ia_m.errors
         self.delay_before_request = self.SLEEP_TIME
         self.noindex = True
         self.save_db = False
+        self.remote_uri_sub = None  # substitution for a remote uri
+        self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.errors = []
     
     def archive_image_media_items(self):
@@ -232,6 +236,9 @@ ia_m.errors
         """ gets and caches the fill file, saving temporarily to a local directory """
         slug = man_obj.slug
         file_uri = self.get_full_fileuri(json_ld)
+        if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
+            # get a local copy of the file, not a remote copy
+            file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
         file_name = None
         if isinstance(file_uri, str):
             # we have a file
