@@ -43,6 +43,7 @@ class ProcessDescriptions():
         self.field_valueofs = {}
         self.count_active_fields = 0
         self.count_new_assertions = 0
+        self.label_preds = {}
 
     def clear_source(self):
         """ Clears a prior import if the start_row is 1.
@@ -118,6 +119,7 @@ class ProcessDescriptions():
                                         object_val['record'] = val_rec['imp_cell_obj'].record
                                         object_val['id'] = val_rec['rows'][0]
                                         des_item['objects'].append(object_val)
+                                    entity['descriptions'].append(des_item)
                                 elif des_field_obj.field_type == 'variable':
                                     # need to get the predicate from the imported cells
                                     pc = ProcessCells(self.source_id,
@@ -126,26 +128,33 @@ class ProcessDescriptions():
                                                                     example_rows)
                                     pg = ProcessGeneral(self.source_id)
                                     val_rec = pg.get_first_distinct_record(val_recs)
-                                    if var_rec is not False:
-                                        des_item['predicate']['label'] = var_rec['imp_cell_obj'].record
-                                        pid = str(des_field_obj.field_num) + '-' + str(var_rec['rows'][0])
-                                        des_item['predicate']['id'] = pid
-                                        # now need to get fields that have object values for the predicate
-                                        valueof_fields = self.get_variable_valueof(des_field_obj)
-                                        for val_field_obj in valueof_fields:
-                                            pc = ProcessCells(self.source_id,
-                                                              self.start_row)
-                                            val_recs = pc.get_field_records(val_field_obj.field_num,
-                                                                            example_rows)
-                                            pg = ProcessGeneral(self.source_id)
-                                            val_rec = pg.get_first_distinct_record(val_recs)
-                                            if val_rec is not False:
-                                                object_val = LastUpdatedOrderedDict()
-                                                object_val['record'] = val_rec['imp_cell_obj'].record
-                                                oid = str(val_field_obj.field_num) + '-' + str(val_rec['rows'][0])
-                                                object_val['id'] = oid
-                                                des_item['objects'].append(object_val)
-                                entity['descriptions'].append(des_item)
+                                    if var_recs is not False:
+                                        for key, var_rec in var_recs.items():
+                                            des_item['predicate']['label'] = var_rec['imp_cell_obj'].record
+                                            if len(des_item['predicate']['label']) > 0:
+                                                # only add the description item the variable exists
+                                                add_des_item = True
+                                            else:
+                                                add_des_item = False
+                                            pid = str(des_field_obj.field_num) + '-' + str(var_rec['rows'][0])
+                                            des_item['predicate']['id'] = pid
+                                            # now need to get fields that have object values for the predicate
+                                            valueof_fields = self.get_variable_valueof(des_field_obj)
+                                            for val_field_obj in valueof_fields:
+                                                pc = ProcessCells(self.source_id,
+                                                                  self.start_row)
+                                                val_recs = pc.get_field_records(val_field_obj.field_num,
+                                                                                example_rows)
+                                                pg = ProcessGeneral(self.source_id)
+                                                val_rec = pg.get_first_distinct_record(val_recs)
+                                                if val_rec is not False:
+                                                    object_val = LastUpdatedOrderedDict()
+                                                    object_val['record'] = val_rec['imp_cell_obj'].record
+                                                    oid = str(val_field_obj.field_num) + '-' + str(val_rec['rows'][0])
+                                                    object_val['id'] = oid
+                                                    des_item['objects'].append(object_val)
+                                            if add_des_item:
+                                                entity['descriptions'].append(des_item)
                             example_entities.append(entity)
         return example_entities
 
@@ -193,6 +202,9 @@ class ProcessDescriptions():
                                 # 'variable' field_nums may make multiple 'value-of' import_cell_objs
                                 object_imp_cell_objs = self.get_assertion_object_values(des_field_num,
                                                                                         dist_rec['rows'])
+                                if des_field_obj.field_type == 'variable':
+                                    # print('Num var-vals: ' + str(len(object_imp_cell_objs)))
+                                    pass
                                 for imp_cell_obj in object_imp_cell_objs:
                                     row_num = imp_cell_obj.row_num
                                     predicate = self.look_up_predicate(des_field_num,
@@ -259,8 +271,8 @@ class ProcessDescriptions():
                                                  .filter(source_id=self.source_id,
                                                          predicate=ImportFieldAnnotation.PRED_VALUE_OF,
                                                          object_field_num=des_field_obj.field_num)\
-                                                 .order_by(field_num)
-                if len(val_annos) > 1:
+                                                 .order_by('field_num')
+                if len(val_annos) > 0:
                     for val_anno in val_annos:
                         pg = ProcessGeneral(self.source_id)
                         val_obj = pg.get_field_obj(val_anno.field_num)
@@ -293,15 +305,16 @@ class ProcessDescriptions():
                                                             False)
                     for row_key, dist_rec in distinct_records.items():
                         pred_rows = {}
-                        cdp = CandidateDescriptivePredicate()
                         # checks to see if we need to use even a blank label
                         # beccause of dependencies with value-of fields
+                        cdp = CandidateDescriptivePredicate()
                         cdp.label = self.make_var_label_evenif_blank(des_field_obj,
                                                                      dist_rec)
                         cdp.des_import_cell = dist_rec['imp_cell_obj']
+                        cdp.data_type = des_field_obj.field_data_type
                         cdp.reconcile_predicate_var(des_field_obj)
                         for imp_cell_row in dist_rec['rows']:
-                            pred_rows[imp_cell_row] = cpd.predicate
+                            pred_rows[imp_cell_row] = cdp.predicate
                         recon_predicate['rows'] = pred_rows
                 self.reconciled_predicates[des_field_obj.field_num] = recon_predicate
 
@@ -311,13 +324,14 @@ class ProcessDescriptions():
            that are used for labeling predicate-variables are blank.
            We need a "blank" predicate-variable when 
         """
+        # print('Check var-label-even-blank: ' + str(dist_rec['rows']))
         label = dist_rec['imp_cell_obj'].record
         if len(label) < 1:
             valueof_fields = self.get_variable_valueof(des_field_obj)
             for valueof_field in valueof_fields:
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
-                distinct_records = pc.get_field_records(valueof_field,
+                distinct_records = pc.get_field_records(valueof_field.field_num,
                                                         dist_rec['rows'])
                 for row_key, val_dist_rec in distinct_records.items():
                     if len(val_dist_rec['imp_cell_obj'].record) > 0:
@@ -400,12 +414,18 @@ class ProcessDescriptions():
         if field_num in self.field_valueofs:
             valueof_fields = self.field_valueofs[field_num]
             for valueof_field in valueof_fields:
+                if isinstance(valueof_field, ImportField):
+                    # it is not an integer, but an ImportField object
+                    valueof_field = valueof_field.field_num
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 cells = pc.get_field_row_records(valueof_field,
                                                  in_rows)
                 for cell in cells:
                     object_imp_cell_objs.append(cell)
+        else:
+            print('cannot find field_valueofs for ' + str(field_num))
+            pass
         return object_imp_cell_objs
 
 
@@ -679,10 +699,12 @@ class CandidateDescriptivePredicate():
             if self.label is False:
                 self.label = des_field_obj.label
         elif des_field_obj.field_type == 'variable':
+            # print('Variable Datatype: ' + str(self.data_type))
             if self.des_import_cell is not False:
-                self.candidate_uuid = des_field_obj.fl_uuid
+                self.candidate_uuid = self.des_import_cell.fl_uuid
                 if self.label is False:
                     self.label = self.des_import_cell.record
+            # print('Variable Label: ' + self.label)
         if self.project_uuid is False:
             self.project_uuid = des_field_obj.project_uuid
         if self.source_id is False:

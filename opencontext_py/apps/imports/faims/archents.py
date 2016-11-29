@@ -16,6 +16,15 @@ from opencontext_py.apps.imports.faims.archents import ArchEntsImport
 faims_ents = ArchEntsImport()
 faims_ents.get_entity_types('PAZC2015', 'archents.xml')
 tree = faims_ents.load_xml_file('PAZC2015', 'archents.xml')
+
+
+Note: in the element <freetext> a user enters an annotation
+on an observation.
+
+<formattedIdentifierformattedIdentifier> is best to use for a label,
+but the faims-uuid for the entity is the locally unique id 
+
+
     """
 
     def __init__(self):
