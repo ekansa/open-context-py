@@ -45,6 +45,8 @@ class LinkEntity(models.Model):
         self.uri = self.clean_uri(self.uri)
         if self.slug is None:
             self.slug = self.make_slug()
+        elif self.slug == '':
+            self.slug = self.make_slug()
         if self.sort is None:
             self.sort = ''
         self.sort = self.sort[:60]
