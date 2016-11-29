@@ -127,7 +127,7 @@ class ProcessDescriptions():
                                     var_recs = pc.get_field_records(des_field_obj.field_num,
                                                                     example_rows)
                                     pg = ProcessGeneral(self.source_id)
-                                    val_rec = pg.get_first_distinct_record(val_recs)
+                                    val_rec = pg.get_first_distinct_record(var_recs)
                                     if var_recs is not False:
                                         for key, var_rec in var_recs.items():
                                             des_item['predicate']['label'] = var_rec['imp_cell_obj'].record
@@ -313,6 +313,7 @@ class ProcessDescriptions():
                         cdp.des_import_cell = dist_rec['imp_cell_obj']
                         cdp.data_type = des_field_obj.field_data_type
                         cdp.reconcile_predicate_var(des_field_obj)
+                        # print('Check: ' + cdp.label)
                         for imp_cell_row in dist_rec['rows']:
                             pred_rows[imp_cell_row] = cdp.predicate
                         recon_predicate['rows'] = pred_rows
@@ -353,6 +354,23 @@ class ProcessDescriptions():
             if predicate is False:
                 if row_num in act_field['rows']:
                     predicate = act_field['rows'][row_num]
+                else:
+                    # look up the predicate the hard way
+                    # we don't have a predicate for this row, so
+                    # look it up through reconciliation
+                    des_field_obj = act_field['field_obj']
+                    pc = ProcessCells(self.source_id,
+                                      row_num)
+                    distinct_records = pc.get_field_records(field_num,
+                                                            [row_num])
+                    for row_key, var_dist_rec in distinct_records.items():
+                        if len(var_dist_rec['imp_cell_obj'].record) > 0:
+                            cdp = CandidateDescriptivePredicate()
+                            cdp.label = var_dist_rec['imp_cell_obj'].record
+                            cdp.des_import_cell = var_dist_rec['imp_cell_obj']
+                            cdp.data_type = des_field_obj.field_data_type
+                            cdp.reconcile_predicate_var(des_field_obj)
+                            predicate = cdp.predicate
         return predicate
 
     def reconcile_types_strings(self):
@@ -417,6 +435,7 @@ class ProcessDescriptions():
                 if isinstance(valueof_field, ImportField):
                     # it is not an integer, but an ImportField object
                     valueof_field = valueof_field.field_num
+                # print('Value of field: ' + str(valueof_field))
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 cells = pc.get_field_row_records(valueof_field,
