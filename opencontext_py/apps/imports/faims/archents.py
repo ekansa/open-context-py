@@ -86,6 +86,10 @@ but the faims-uuid for the entity is the locally unique id
                             dt_class_obj.check_record_datatype(record)
                             dt_class_obj.data_type = dt_class_obj.classify_data_type()
                             self.attributes[prop_id] = dt_class_obj
+    
+    
+    def review_attribute_data_types(self):
+        """ review data types for attributes """
         for prop_id, dt_class_obj in self.attributes.items():
             print('-------------------------')
             print('Prop: ' + dt_class_obj.label)
@@ -96,11 +100,8 @@ but the faims-uuid for the entity is the locally unique id
             print('Float: ' + str(dt_class_obj.float_count))
             print('Datetime: ' + str(dt_class_obj.datetime_count))
             print('Uniques: ' + str(len(dt_class_obj.uniqe_str_hashes)))
-            print('-------------------------')
+            print(' ')
                         
-                            
-                            
-
     def process_entity(self, entity):
         """processes each entity """
         faims_uuid = entity.xpath('uuid')[0].text
