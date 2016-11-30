@@ -28,13 +28,13 @@ class FedDinaaLink():
         
 from opencontext_py.apps.ldata.federalregistry.dinaalink import FedDinaaLink
 fed_link = FedDinaaLink()
-# fed_link.add_parent_links()
+fed_link.add_parent_links()
 # fed_link.make_dinaa_link_assertions()
 fed_link.index_linked_dinaa_sites()
 
     """
 
-    FEDERAL_REG_URI = 'https://www.federalregister.gov/'
+    FEDERAL_REG_URI = 'http://www.federalregister.gov/'
     FEDERAL_REG_LABEL = 'Federal Register'
     DC_TERMS_REF_BY = 'dc-terms:isReferencedBy'
     
@@ -60,6 +60,7 @@ fed_link.index_linked_dinaa_sites()
             lam = LinkAnnoManagement()
             parent_uri = 'http://www.federalregister.gov/'
             child_uri = le.uri
+            print('Make hiearchy: ' + child_uri)
             lam.add_skos_hierarachy(parent_uri, child_uri)
     
     def index_linked_dinaa_sites(self):

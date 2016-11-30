@@ -258,6 +258,14 @@ class QueryMaker():
                             entity = self.mem_cache_obj.get_entity(dc_term, False)
                             fq_path_term = '(' + fq_field + '_fq:' + entity.slug + ')'
                             fq_path_term += ' OR (' + fq_field + ':' + entity.slug + '*)'
+                            fq_path_term += ' OR (obj_all___' + fq_field + ':' + entity.slug + '___*)'
+                            fq_path_term += '(' + fq_path_term + ')'
+                            print('vocab: ' + str(entity.vocabulary))
+                            if entity.vocabulary == entity.label:
+                                par_slug_part = entity.slug.replace('-', '_')
+                                child_facet_field = par_slug_part + '___' + fq_field
+                                print('adding: ' + child_facet_field)
+                                query_dict['facet.field'].append(child_facet_field)
                             if dc_param == 'dc-temporal' \
                                and entity.entity_type == 'vocabulary' \
                                and 'periodo' in entity.slug:
@@ -274,7 +282,7 @@ class QueryMaker():
                 final_path_term = ' AND '.join(fq_path_terms)
                 final_path_term = '(' + final_path_term + ')'
                 fq_terms.append(final_path_term)
-            fq_final = ' OR '.join(fq_terms)
+            fq_final = ' AND '.join(fq_terms)
             fq_final = '(' + fq_final + ')'
             if add_to_fq:
                 query_dict['fq'].append(fq_final)

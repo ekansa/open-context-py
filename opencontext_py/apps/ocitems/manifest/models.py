@@ -37,6 +37,9 @@ class Manifest(models.Model):
     localized_json = JSONField(default={},
                                load_kwargs={'object_pairs_hook': collections.OrderedDict},
                                blank=True)
+    sup_json = JSONField(default={},
+                         load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                         blank=True)
 
     def validate_label(self):
         if(len(self.label) > 175):

@@ -70,3 +70,12 @@ class DCterms():
         for dc_param_key, dc_solr_key in self.DC_AUTHOR_FIELDS.items():
             dc_params.append(dc_param_key)
         return dc_params
+    
+    def get_dc_slug_from_field(self, dc_field):
+        """ returns a dc terms slug from a dc-terms field """
+        output = None
+        for dc_slug, dc_act_field in self.DC_SLUG_TO_FIELDS.items():
+            if dc_field == dc_act_field:
+                output = dc_slug
+                break
+        return output

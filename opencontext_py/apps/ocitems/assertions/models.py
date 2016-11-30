@@ -1,5 +1,7 @@
 import hashlib
 import reversion  # version control object
+import collections
+from jsonfield import JSONField  # json field for complex objects
 from datetime import datetime
 from django.utils import timezone
 from django.conf import settings
@@ -40,6 +42,9 @@ class Assertion(models.Model):
     data_date = models.DateTimeField(blank=True)
     created = models.DateTimeField()
     updated = models.DateTimeField(auto_now=True)
+    sup_json = JSONField(default={},
+                         load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                         blank=True)
 
     def make_hash_id(self):
         """

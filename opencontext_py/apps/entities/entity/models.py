@@ -65,7 +65,7 @@ class Entity():
                         ld_entity = LinkEntity.objects.get(Q(uri=identifier) | Q(slug=identifier))
                     except LinkEntity.DoesNotExist:
                         ld_entity = False
-                    if(ld_entity is not False):
+                    if ld_entity is not False:
                         output = True
                         self.uri = ld_entity.uri
                         self.slug = ld_entity.slug
@@ -76,10 +76,14 @@ class Entity():
                         self.vocab_uri = ld_entity.vocab_uri
                         self.ld_object_ok = True
                         try:
-                            vocab_entity = LinkEntity.objects.get(uri=self.vocab_uri)
+                            if 'https://' in self.vocab_uri:
+                                alt_vocab_uri = self.vocab_uri.replace('https://', 'http://')
+                            else:
+                                alt_vocab_uri = self.vocab_uri.replace('http://', 'https://')
+                            vocab_entity = LinkEntity.objects.get(Q(uri=self.vocab_uri) | Q(uri=alt_vocab_uri))
                         except LinkEntity.DoesNotExist:
                             vocab_entity = False
-                        if(vocab_entity is not False):
+                        if vocab_entity is not False:
                             self.vocabulary = vocab_entity.label
                         if self.get_icon:
                             prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
