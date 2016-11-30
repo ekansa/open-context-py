@@ -774,6 +774,18 @@ class MakeJsonLd():
             if 'document_count' in solr_facet_fields:
                 # remove document count facet
                 solr_facet_fields.pop('document_count', None)
+            # do this to consolidate facet fields for dcterms is referenced by
+            consolidated_solr_facet_fields = LastUpdatedOrderedDict()
+            for solr_facet_key, solr_facet_values in solr_facet_fields.items():
+                if 'dc_terms_isreferencedby___pred_id' in solr_facet_key:
+                    solr_facet_key = 'dc_terms_isreferencedby___pred_id'
+                    if solr_facet_key in consolidated_solr_facet_fields:
+                        consolidated_solr_facet_fields[solr_facet_key] += solr_facet_values
+                    else:
+                        consolidated_solr_facet_fields[solr_facet_key] = solr_facet_values
+                else:
+                    consolidated_solr_facet_fields[solr_facet_key] = solr_facet_values        
+            solr_facet_fields = consolidated_solr_facet_fields
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
                 facet = self.get_facet_meta(solr_facet_key)
                 count_raw_values = len(solr_facet_values)
@@ -930,15 +942,15 @@ class MakeJsonLd():
             facet['rdfs:isDefinedBy'] = 'oc-api:facet-item-type'
             facet['label'] = 'Open Context Type'
             facet['data-type'] = 'id'
-        elif solr_facet_key == 'dc_terms_isreferencedby___pred_id':
-            facet['id'] = id_prefix
-            facet['rdfs:isDefinedBy'] = 'dc-terms:isReferencedBy'
-            facet['label'] = 'Is referenced by'
-            facet['data-type'] = 'id'
         elif solr_facet_key == 'obj_all___biol_term_hastaxonomy___pred_id':
             facet['id'] = id_prefix
             facet['rdfs:isDefinedBy'] = 'http://purl.org/NET/biol/ns#term_hasTaxonomy'
             facet['label'] = 'Has Biological Taxonomy'
+            facet['data-type'] = 'id'
+        elif solr_facet_key == 'dc_terms_isreferencedby___pred_id':
+            facet['id'] = id_prefix
+            facet['rdfs:isDefinedBy'] = 'dc-terms:isReferencedBy'
+            facet['label'] = 'Is referenced by'
             facet['data-type'] = 'id'
         else:
             # ------------------------

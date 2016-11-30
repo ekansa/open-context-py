@@ -448,6 +448,7 @@ sd_b = sd_obj.fields
                     self.fields['text'] += meta['id'] + '\n'
                     if 'opencontext.org/tables/' not in meta['id']:
                         # do not index table references in this way
+                        """
                         item = self._concat_solr_string_value(
                             meta['slug'],
                             'id',
@@ -455,6 +456,10 @@ sd_b = sd_obj.fields
                             meta['label'])
                         self.fields[fname].append(item)
                         self.process_object_uri(meta['id'])
+                        """
+                        self.process_ld_predicate_objects(dc_predicate,
+                                                          '@id',
+                                                          [meta])
 
     def _process_dc_authorship(self):
         """
