@@ -4,6 +4,7 @@ import hashlib
 from unidecode import unidecode
 from dateutil.parser import parse
 from django.conf import settings
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class DescriptionDataType():
@@ -49,6 +50,40 @@ class DescriptionDataType():
             else:
                 data_type = 'xsd:string'
         return data_type
+    
+    def make_dict_obj(self):
+        """ makes a dict object of this class instance """
+        dict_obj = LastUpdatedOrderedDict()
+        dict_obj['id'] = self.id
+        dict_obj['label'] = self.label
+        dict_obj['data_type'] = self.data_type
+        dict_obj['total_count'] = self.total_count
+        dict_obj['datetime_count'] = self.datetime_count
+        dict_obj['int_count'] = self.int_count
+        dict_obj['float_count'] = self.float_count
+        dict_obj['boolean_count'] = self.boolean_count
+        dict_obj['uniqe_str_hashes'] = self.uniqe_str_hashes
+        return dict_obj
+    
+    def read_dict_obj(self, dict_obj):
+        """ reads a dict object for the class instance """
+        ok = False
+        if isinstance(dict_obj, dict):
+            try:
+                ok = True
+                self.id = dict_obj['id']
+                self.label = dict_obj['label']
+                self.data_type = dict_obj['data_type']
+                self.total_count = dict_obj['total_count']
+                self.datetime_count = dict_obj['datetime_count']
+                self.int_count = dict_obj['int_count']
+                self.float_count = dict_obj['float_count']
+                self.boolean_count = dict_obj['boolean_count']
+                self.uniqe_str_hashes = dict_obj['uniqe_str_hashes']
+            except:
+                print('Something bad happened!')
+                ok = False
+        return ok
     
     def check_record_datatype(self, record):
         """ checks the record for conformance to 1 or more
