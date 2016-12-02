@@ -68,7 +68,10 @@ TEMPLATES = [
             'context_processors': [
                 # Insert your TEMPLATE_CONTEXT_PROCESSORS here or use this
                 # list if you haven't customized them:
+                'django.template.context_processors.request',
+                'django.core.context_processors.auth',
                 'django.contrib.auth.context_processors.auth',
+                'django.contrib.auth.context_processors.PermWrapper',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
@@ -88,7 +91,10 @@ TEMPLATES = [
 
 
 
-ALLOWED_HOSTS = ['.opencontext.org']
+ALLOWED_HOSTS = [
+    '.opencontext.org',
+    '127.0.0.1'
+]
 
 # saves configuration problems
 # settings.py can be updated without upsetting
