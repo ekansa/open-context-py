@@ -57,6 +57,10 @@ sj.after_date = '2016-02-28'
 sj.limit_item_types = ['tables']
 sj.dump_serialized_data('0')
 
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+sj = SerizializeJSON()
+sj.dump_serialized_annotations('fed-reg-api-lookup')
+
 projects = Project.objects.filter(updated__gte="2015-06-01")
 
     """
@@ -169,6 +173,41 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                         # now save the remaining batch
                         self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
 
+    def dump_serialized_annotations(self, source_ids=None):
+        """ dumps serialized data for a given source """
+        if not isinstance(source_ids, list):
+            if isinstance(source_ids, str):
+                source_ids = [source_ids]
+        proj_dir = self.prepare_dump_directory('0')
+        if proj_dir is not False:
+            # we're good to go to dump data
+            table_list = ['link_annotations']
+            for table_name in table_list:
+                print('Working on ' + table_name + ' for ' + str(source_ids))
+                batch = 1
+                args = {}
+                if isinstance(source_ids, list):
+                    args['source_id__in'] = source_ids
+                if self.after_date is not False:
+                    args['updated__gte'] = self.after_date
+                if len(args) > 0:
+                    query_set = LinkAnnotation.objects\
+                                              .filter(**args)
+                else:
+                    query_set = LinkAnnotation.objects.all()
+                if query_set is not False and query_set is not None:
+                    act_set = []
+                    for obj in query_set.iterator():
+                        if len(act_set) < self.chunk_size:
+                            act_set.append(obj)
+                        if len(act_set) >= self.chunk_size:
+                            self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
+                            batch = batch + 1
+                            act_set = []  # start the act set from scratch again
+                    if len(act_set) > 0:
+                        # now save the remaining batch
+                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
+    
     def save_serialized_json_batch(self, proj_dir, table_name, batch, act_set):
         """ saves a batch of data, serialized as JSON """
         JSONserializer = serializers.get_serializer('json')

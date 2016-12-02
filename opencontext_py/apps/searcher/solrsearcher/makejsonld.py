@@ -776,13 +776,20 @@ class MakeJsonLd():
                 solr_facet_fields.pop('document_count', None)
             # do this to consolidate facet fields for dcterms is referenced by
             consolidated_solr_facet_fields = LastUpdatedOrderedDict()
+            dc_ref_field = 'dc_terms_isreferencedby___pred_id'
+            root_dc_ref_field_exists = False
+            if dc_ref_field in solr_facet_fields:
+                root_dc_ref_field_exists = True    
             for solr_facet_key, solr_facet_values in solr_facet_fields.items():
-                if 'dc_terms_isreferencedby___pred_id' in solr_facet_key:
-                    solr_facet_key = 'dc_terms_isreferencedby___pred_id'
-                    if solr_facet_key in consolidated_solr_facet_fields:
-                        consolidated_solr_facet_fields[solr_facet_key] += solr_facet_values
-                    else:
+                if dc_ref_field == solr_facet_key:
+                    if solr_facet_key not in consolidated_solr_facet_fields:
+                        # only add facet values for the root if they aren't added yet
                         consolidated_solr_facet_fields[solr_facet_key] = solr_facet_values
+                elif (dc_ref_field in solr_facet_key) and (dc_ref_field != solr_facet_key):
+                    # OK, we have a dc_ref_field deeper in the hierarchy, replace any
+                    # root facets with the child facets
+                    solr_facet_key = dc_ref_field
+                    consolidated_solr_facet_fields[solr_facet_key] = solr_facet_values
                 else:
                     consolidated_solr_facet_fields[solr_facet_key] = solr_facet_values        
             solr_facet_fields = consolidated_solr_facet_fields
