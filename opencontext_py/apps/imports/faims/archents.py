@@ -55,7 +55,7 @@ but the faims-uuid for the entity is the locally unique id
 
     def load_or_get_entity_types(self, act_dir):
         """ loads or classifies attributes in a tree """
-        key = 'entity-types'
+        key = 'oc-entity-types'
         json_obj = self.get_dict_from_file(key, act_dir)
         if json_obj is None:
             # need to read the XML and get entity types
@@ -79,11 +79,12 @@ but the faims-uuid for the entity is the locally unique id
                 ent_type_obj['id'] = faims_id
                 ent_type_obj['item_type'] = None
                 ent_type_obj['class_uri'] = None
+                ent_type_obj['add_type_attribute'] = True
                 self.entity_types[faims_id] = ent_type_obj
 
     def load_or_classify_attributes(self, act_dir):
         """ loads or classifies attributes in a tree """
-        key = 'attributes'
+        key = 'oc-attributes'
         json_obj = self.get_dict_from_file(key, act_dir)
         if json_obj is None:
             # need to read the XML and make the classifications from scratch
