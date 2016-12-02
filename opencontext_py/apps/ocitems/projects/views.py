@@ -64,7 +64,8 @@ def html_view(request, uuid):
             else:
                 context = RequestContext(request,
                                          {'item': temp_item,
-                                          'base_url': base_url})
+                                          'base_url': base_url,
+                                          'user': request.user})
                 return HttpResponse(template.render(context))
         else:
                 # client wanted a mimetype we don't support

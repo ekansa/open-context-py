@@ -51,7 +51,8 @@ def html_view(request, uuid):
                     context = RequestContext(request,
                                              {'item': temp_item,
                                               'fullview': False,
-                                              'base_url': base_url})
+                                              'base_url': base_url,
+                                              'user': request.user})
                     return HttpResponse(template.render(context))
             else:
                 # client wanted a mimetype we don't support
@@ -100,7 +101,8 @@ def html_full(request, uuid):
                     context = RequestContext(request,
                                              {'item': temp_item,
                                               'fullview': True,
-                                              'base_url': base_url})
+                                              'base_url': base_url,
+                                              'user': request.user})
                     return HttpResponse(template.render(context))
             else:
                 # client wanted a mimetype we don't support
@@ -111,7 +113,8 @@ def html_full(request, uuid):
             template = loader.get_template('items/view401.html')
             context = RequestContext(request,
                                      {'item': temp_item,
-                                      'base_url': base_url})
+                                      'base_url': base_url,
+                                      'user': request.user})
             return HttpResponse(template.render(context), status=401)
     else:
         raise Http404
