@@ -21,7 +21,7 @@ class RelationsImport():
 
 from opencontext_py.apps.imports.faims.relations import RelationsImport
 faims_rels = RelationsImport()
-faims_rels.process_relns('faims-survey')
+faims_rels.gen_config('faims-survey')
 
     """
 
@@ -30,9 +30,10 @@ faims_rels.process_relns('faims-survey')
         self.project_uuid = False
         self.source_id = False
         self.relation_types = LastUpdatedOrderedDict()
+        self.oc_config_relation_types = 'oc-relation-types'
         self.fm = FileManage()
 
-    def process_relns(self, act_dir, filename='relns.xml'):
+    def gen_config(self, act_dir, filename='relns.xml'):
         """ processes the relns file """
         self.tree = self.fm.load_xml_file(act_dir, filename)
         if self.tree is not False:
@@ -40,7 +41,7 @@ faims_rels.process_relns('faims-survey')
             
     def load_or_classify_relation_types(self, act_dir):
         """ loads or classifies attributes in a tree """
-        key = 'oc-relation-types'
+        key = self.oc_config_relation_types
         json_obj = self.fm.get_dict_from_file(key, act_dir)
         if json_obj is None:
             # need to read the XML and make the classifications from scratch
