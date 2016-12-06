@@ -21,12 +21,7 @@ class ArchEntsImport():
 
 from opencontext_py.apps.imports.faims.archents import ArchEntsImport
 faims_ents = ArchEntsImport()
-faims_ents.get_entity_types('PAZC2015', 'archents.xml')
-tree = faims_ents.load_xml_file('PAZC2015', 'archents.xml')
-
-from opencontext_py.apps.imports.faims.archents import ArchEntsImport
-faims_ents = ArchEntsImport()
-faims_ents.process_archents('faims-survey', 'archents.xml')
+faims_ents.gen_config('faims-survey')
 
 Note: in the element <freetext> a user enters an annotation
 on an observation.
@@ -45,9 +40,11 @@ but the faims-uuid for the entity is the locally unique id
         self.load_into_importer = False
         self.attributes = LastUpdatedOrderedDict()
         self.entity_types = LastUpdatedOrderedDict()
+        self.oc_config_entity_types = 'oc-entity-types'
+        self.oc_config_attributes = 'oc-attributes'
         self.fm = FileManage()
 
-    def process_archents(self, act_dir, filename='archents.xml'):
+    def gen_config(self, act_dir, filename='archents.xml'):
         """ processes the archents file """
         self.tree = self.fm.load_xml_file(act_dir, filename)
         if self.tree is not False:
@@ -56,7 +53,7 @@ but the faims-uuid for the entity is the locally unique id
 
     def load_or_get_entity_types(self, act_dir):
         """ loads or classifies attributes in a tree """
-        key = 'oc-entity-types'
+        key = self.oc_config_entity_types
         json_obj = self.fm.get_dict_from_file(key, act_dir)
         if json_obj is None:
             # need to read the XML and get entity types
@@ -85,7 +82,7 @@ but the faims-uuid for the entity is the locally unique id
 
     def load_or_classify_attributes(self, act_dir):
         """ loads or classifies attributes in a tree """
-        key = 'oc-attributes'
+        key = self.oc_config_attributes
         json_obj = self.fm.get_dict_from_file(key, act_dir)
         if json_obj is None:
             # need to read the XML and make the classifications from scratch
