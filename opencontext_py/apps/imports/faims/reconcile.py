@@ -10,30 +10,11 @@ from django.db import models
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
-from opencontext_py.apps.ocitems.events.models import Event
-from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
-from opencontext_py.apps.imports.faims.files import FileManage
-from opencontext_py.apps.imports.faims.archents import ArchEntsImport
-from opencontext_py.apps.imports.faims.relations import RelationsImport
-from opencontext_py.apps.imports.faims.attributes import AttributesImport
+from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 
 
-class FaimsImport():
-    """ Loads FAIMS xml files in the proper order for import
-        (1) First generates oc_config_* files that store
-            configurations in JSON. These configurations can be
-            edited to customize how the import will be processed.
-            Configuration files need to be generated in the proper
-            order, starting with relation types, then entity types,
-            then attributes.
-        (2) Once configurations are created, the entities will be
-            imported if they have a proper spatial containment
-            path.
-            
-from opencontext_py.apps.imports.faims.main import FaimsImport
-faims_imp = FaimsImport()
-faims_imp.gen_configs('faims-test')
+class FaimsReconcile():
+    """ Reconciling FAIMS data with the Open Context database
             
     """
 
@@ -43,6 +24,7 @@ faims_imp.gen_configs('faims-test')
         self.oc_config_relation_types = 'oc-relation-types'
         self.oc_config_entity_types = 'oc-entity-types'
         self.oc_config_attributes = 'oc-attributes'
+        self.oc_config_types = 'oc-types'
 
     def gen_configs(self, act_dir):
         """ read xml files, generate JSON configuration files  """
@@ -67,5 +49,6 @@ faims_imp.gen_configs('faims-test')
         """ make configurations from the attributes file """
         faims_attribs = AttributesImport()
         faims_attribs.oc_config_attributes = self.oc_config_attributes
+        faims_attribs.oc_config_types = self.oc_config_types
         faims_attribs.gen_config(act_dir)
         

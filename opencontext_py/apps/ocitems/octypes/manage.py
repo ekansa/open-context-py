@@ -19,8 +19,14 @@ class TypeManagement():
         self.content = False
         self.suggested_uuid = False  # make sure this is not already used!
         self.suggested_content_uuid = False  # make sure this is not already used!
+        self.sup_dict = None
+        self.sup_reconcile_key = None  # key to check for reconciling sup_json
+        self.sup_reconcile_value = None  # value for key to check in sup_json
 
-    def get_make_type_within_pred_uuid(self, predicate_uuid, content):
+    def get_make_type_within_pred_uuid(self,
+                                       predicate_uuid,
+                                       content,
+                                       content_suffix_num=1):
         """
         gets a type, filtered by a given predicate_uuid and content string
         if a type does not exist, this function creates it, then returns the type
@@ -30,9 +36,33 @@ class TypeManagement():
         str_manage.source_id = self.source_id
         str_manage.suggested_uuid = self.suggested_content_uuid
         # get an existing or create a new string object
+        if content_suffix_num > 1:
+            # add a numeric suffix for content, in case we need to
+            # increment up to in rare cases when different types have the same string content
+            content += ' [' + str(content_suffix_num) + ']'
         oc_string = str_manage.get_make_string(content)
         self.content = content
         self.get_make_type_pred_uuid_content_uuid(predicate_uuid, oc_string.uuid)
+        if self.sup_reconcile_key is not None and\
+           self.sup_reconcile_value is not None:
+            # checks to see if the manifest supplemental JSON has a matching key, value pair
+            # this lets us further constrain reconciliation, say with FAIMS attributes (types) 
+            man_obj = False
+            try:
+                man_obj = Manifest.object.get(uuid=self.oc_type.uuid)
+            except Manifest.DoesNotExist:
+                man_obj = False
+            if man_obj is not False:
+                match_ok = check_sup_json_key_value(self.sup_reconcile_key,
+                                                    self.sup_reconcile_value)
+                if match_ok is False:
+                    self.oc_type = False
+                    content_suffix_num += 1
+                    if content_suffix_num <= 5:
+                        # so we don't get into endless loops
+                        self.oc_type = self.get_make_type_within_pred_uuid(predicate_uuid,
+                                                                           content,
+                                                                           content_suffix_num)
         return self.oc_type
 
     def get_make_type_pred_uuid_content_uuid(self, predicate_uuid, content_uuid):
@@ -41,7 +71,7 @@ class TypeManagement():
         if a type does not exist, this function creates it, then returns the type
         """
         found = self.check_exists_pred_uuid_content_uuid(predicate_uuid, content_uuid)
-        if(found is False):
+        if found is False:
             if self.content is False:
                 try:
                     oc_string = OCstring.objects.get(uuid=content_uuid)
@@ -75,6 +105,7 @@ class TypeManagement():
                 newman.label = self.content
                 newman.des_predicate_uuid = ''
                 newman.views = 0
+                newman.sup_json = self.sup_dict
                 newman.revised = datetime.datetime.now()
                 newman.save()
         return self.oc_type
@@ -116,7 +147,7 @@ class TypeManagement():
                                               content_uuid=content_uuid)
         except OCtype.DoesNotExist:
             self.oc_type = False
-        if(self.oc_type is not False):
+        if self.oc_type is not False:
             found = True
             if show_uuid:
                 found = self.oc_type.uuid
