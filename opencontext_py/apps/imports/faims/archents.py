@@ -38,6 +38,7 @@ but the faims-uuid for the entity is the locally unique id
         self.source_id = False
         self.import_persons = {}
         self.load_into_importer = False
+        self.dt_attribute_objs = LastUpdatedOrderedDict()
         self.attributes = LastUpdatedOrderedDict()
         self.entity_types = LastUpdatedOrderedDict()
         self.oc_config_entity_types = 'oc-entity-types'
@@ -77,7 +78,9 @@ but the faims-uuid for the entity is the locally unique id
                 ent_type_obj['label'] = ent_type.get('aentTypeName')
                 ent_type_obj['item_type'] = None
                 ent_type_obj['class_uri'] = None
-                ent_type_obj['add_type_attribute'] = True
+                # add the type label as an attribute
+                ent_type_obj['add_type_as_attribute'] = True
+                ent_type_obj['space_context_rank'] = 0
                 self.entity_types[faims_id] = ent_type_obj
 
     def load_or_classify_attributes(self, act_dir):
@@ -88,20 +91,35 @@ but the faims-uuid for the entity is the locally unique id
             # need to read the XML and make the classifications from scratch
             self.classify_xml_tree_attributes()
             # now make dictionary objects to save as JSON
-            attribs_dict = LastUpdatedOrderedDict()
-            for prop_id, dt_class_obj in self.attributes.items():
+            self.attributes = LastUpdatedOrderedDict()
+            for prop_id, dt_class_obj in self.dt_attribute_objs.items():
                 attrib_dict = dt_class_obj.make_dict_obj()
-                attribs_dict[prop_id] = attrib_dict
+                attrib_dict['predicate_type'] = 'variable'
+                if prop_id not in self.attributes:
+                    self.attributes[prop_id] = attrib_dict
             self.fm.save_serialized_json(key,
                                          act_dir,
-                                         attribs_dict)
+                                         self.attributes)
         else:
             # we have JSON with dictionary objects to read into the classes
-            for prop_id, attrib_dict in json_obj.items():
+            self.attributes = json_obj
+            for prop_id, attrib_dict in self.attributes.items():
                 dt_class_obj = DescriptionDataType()
                 ok = dt_class_obj.read_dict_obj(attrib_dict)
                 if ok:
-                    self.attributes[prop_id] = dt_class_obj
+                    self.dt_attribute_objs[prop_id] = dt_class_obj
+            # now update if new attributes where found
+            save_update = False
+            for prop_id, dt_class_obj in self.dt_attribute_objs.items():
+                attrib_dict = dt_class_obj.make_dict_obj()
+                attrib_dict['predicate_type'] = 'variable'
+                if prop_id not in self.attributes:
+                    save_update = True
+                    self.attributes[prop_id] = attrib_dict
+            if save_update:
+                self.fm.save_serialized_json(key,
+                                             act_dir,
+                                             self.attributes)
 
     def classify_xml_tree_attributes(self):
         """ classifies attributes in a tree """
@@ -124,11 +142,11 @@ but the faims-uuid for the entity is the locally unique id
                         if record is not None:
                             dt_class_obj.check_record_datatype(record)
                             dt_class_obj.data_type = dt_class_obj.classify_data_type()
-                            self.attributes[prop_id] = dt_class_obj
+                            self.dt_attribute_objs[prop_id] = dt_class_obj
     
     def review_attribute_data_types(self):
         """ review data types for attributes """
-        for prop_id, dt_class_obj in self.attributes.items():
+        for prop_id, dt_class_obj in self.dt_attribute_objs.items():
             print('-------------------------')
             print('Prop: ' + dt_class_obj.label)
             print('Data-type: ' + str(dt_class_obj.data_type))

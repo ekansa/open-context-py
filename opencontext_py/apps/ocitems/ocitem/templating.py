@@ -1005,6 +1005,7 @@ class PropValue():
         self.uuid = False
         self.type = False
         self.thumbnail = False
+        self.show_thumb_label = False
         self.oc_item = True
         self.localizations = False
 
@@ -1034,6 +1035,8 @@ class PropValue():
                 self.thumbnail = rp.convert_to_https(self.thumbnail)
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
+                if 'icons/pdf' in self.thumbnail:
+                    self.show_thumb_label = self.val
             if 'xsd:string' in val_item:
                 self.set_string_val_and_localizations(val_item['xsd:string'])
         else:

@@ -168,6 +168,15 @@ class Manifest(models.Model):
         # print(str(unidecode(self.label)) + ' has sort: ' + str(self.sort))
         super(Manifest, self).save(update_fields=['sort'])
 
+    def check_sup_json_key_value(self, key, check_val):
+        """ checks to see if a key and value are in the sup_json dict """
+        matched = False
+        if isinstance(self.sup_json, dict):
+            if key in self.sup_json:
+                if self.sup_json[key] == check_val:
+                    matched = True
+        return matched
+
     class Meta:
         db_table = 'oc_manifest'
         unique_together = (("item_type", "slug"),)

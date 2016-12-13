@@ -64,5 +64,8 @@ faims_rels.gen_config('faims-survey')
                 rel_type_obj['label'] = rel_type.get('relntypename')
                 rel_type_obj['oc-equiv'] = None
                 rel_type_obj['order'] = None
+                rel_type_obj['predicate_uuid'] = None
+                rel_type_obj['data_type'] = 'id'
+                rel_type_obj['predicate_type'] = 'link'
                 self.relation_types[faims_id] = rel_type_obj
     
