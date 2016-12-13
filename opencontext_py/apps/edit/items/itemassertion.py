@@ -613,7 +613,7 @@ class ItemAssertion():
                     # so let's check to make sure it is OK to associate
                     object_type = val_man.item_type
                     object_uuid = val_man.uuid
-                    if pred_man.class_uri == 'variable' \
+                    if val_man.class_uri == 'variable' \
                        and val_man.item_type != 'types':
                         # we've got a variable that does not link to a type!
                         self.errors[error_key] = 'Problem with: ' + field['label'] + '; '
