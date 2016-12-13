@@ -105,8 +105,9 @@ class Authorship():
                 pid = contrib.object_uri
             if pid not in self.contributors:
                 if pid not in self.creators \
-                   or self.consolidate_authorship is False:
-                    self.contributors.append(pid)  # add to contrib if not a creator
+                   or self.consolidate_authorship is False\
+                   or contrib.sort > 0:
+                    self.contributors.append(pid)  # add to contrib if not a creator    
         if len(self.contributors) > 0 or len(self.creators) > 0:
             output = True
         return output
