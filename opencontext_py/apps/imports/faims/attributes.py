@@ -113,7 +113,7 @@ faims_attribs.gen_config('faims-survey')
         """ saves predicates and type items to the
             Open Context database, and / or reconciles these
             items with previously saved items from the same project
-        """"
+        """
         key = self.oc_config_attributes
         json_obj = self.fm.get_dict_from_file(key, act_dir)
         if json_obj is None:
@@ -137,7 +137,7 @@ faims_attribs.gen_config('faims-survey')
                                                  attrib_dict['data_type'])
                 if pred_obj is not False:
                     # we reconciled the predicate!
-                    self.attributes[faims_id_pred]['predicate_uuid'] = pred_obj.uuid
+                    self.attributes[faims_id_pred]['predicate_uuid'] = str(pred_obj.uuid)
                     if 'oc_types' in attrib_dict:
                         for faims_id_type, type_dict in attrib_dict['oc_types'].items():
                             sup_dict = LastUpdatedOrderedDict()
@@ -152,8 +152,8 @@ faims_attribs.gen_config('faims-survey')
                                                                          type_dict['label'])
                             if type_obj is not False:
                                 # we have reconciled the type!
-                                type_dict['uuid'] = type_obj.uuid
-                                type_dict['predicate_uuid'] = pred_obj.uuid
+                                type_dict['uuid'] = str(type_obj.uuid)
+                                type_dict['predicate_uuid'] = str(pred_obj.uuid)
                                 self.attributes[faims_id_pred]['oc_types'][faims_id_type] = type_dict
             # now save the results
             self.fm.save_serialized_json(key,

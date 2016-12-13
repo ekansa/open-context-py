@@ -34,6 +34,13 @@ class FaimsImport():
 from opencontext_py.apps.imports.faims.main import FaimsImport
 faims_imp = FaimsImport()
 faims_imp.gen_configs('faims-test')
+
+from opencontext_py.apps.imports.faims.main import FaimsImport
+faims_imp = FaimsImport()
+faims_imp.project_uuid = 'faims-test'
+faims_imp.source_id = 'faims-test'
+faims_imp.save_reconcile_preds_types('faims-test')
+
             
     """
 
@@ -68,4 +75,11 @@ faims_imp.gen_configs('faims-test')
         faims_attribs = AttributesImport()
         faims_attribs.oc_config_attributes = self.oc_config_attributes
         faims_attribs.gen_config(act_dir)
-        
+    
+    def save_reconcile_preds_types(self, act_dir):
+        """ make configurations from the attributes file """
+        faims_attribs = AttributesImport()
+        faims_attribs.oc_config_attributes = self.oc_config_attributes
+        faims_attribs.project_uuid = self.project_uuid
+        faims_attribs.source_id = self.source_id
+        faims_attribs.db_save_reconcile_predicates_types(act_dir)

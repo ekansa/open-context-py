@@ -31,6 +31,7 @@ class TypeManagement():
         gets a type, filtered by a given predicate_uuid and content string
         if a type does not exist, this function creates it, then returns the type
         """
+        original_content = content
         str_manage = StringManagement()
         str_manage.project_uuid = self.project_uuid
         str_manage.source_id = self.source_id
@@ -49,19 +50,19 @@ class TypeManagement():
             # this lets us further constrain reconciliation, say with FAIMS attributes (types) 
             man_obj = False
             try:
-                man_obj = Manifest.object.get(uuid=self.oc_type.uuid)
+                man_obj = Manifest.objects.get(uuid=self.oc_type.uuid)
             except Manifest.DoesNotExist:
                 man_obj = False
             if man_obj is not False:
-                match_ok = check_sup_json_key_value(self.sup_reconcile_key,
-                                                    self.sup_reconcile_value)
+                match_ok = man_obj.check_sup_json_key_value(self.sup_reconcile_key,
+                                                            self.sup_reconcile_value)
                 if match_ok is False:
                     self.oc_type = False
                     content_suffix_num += 1
                     if content_suffix_num <= 5:
                         # so we don't get into endless loops
                         self.oc_type = self.get_make_type_within_pred_uuid(predicate_uuid,
-                                                                           content,
+                                                                           original_content,
                                                                            content_suffix_num)
         return self.oc_type
 
