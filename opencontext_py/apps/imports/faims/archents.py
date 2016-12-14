@@ -10,8 +10,10 @@ from django.db import models
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from opencontext_py.apps.imports.faims.files import FileManage
 
@@ -41,6 +43,8 @@ but the faims-uuid for the entity is the locally unique id
         self.dt_attribute_objs = LastUpdatedOrderedDict()
         self.attributes = LastUpdatedOrderedDict()
         self.entity_types = LastUpdatedOrderedDict()
+        self.relation_types = LastUpdatedOrderedDict()
+        self.oc_config_relation_types = 'oc-relation-types'
         self.oc_config_entity_types = 'oc-entity-types'
         self.oc_config_attributes = 'oc-attributes'
         self.fm = FileManage()
@@ -51,6 +55,7 @@ but the faims-uuid for the entity is the locally unique id
         if self.tree is not False:
             self.load_or_classify_attributes(act_dir)
             self.load_or_get_entity_types(act_dir)
+            self.check_update_relations_types(act_dir)
 
     def load_or_get_entity_types(self, act_dir):
         """ loads or classifies attributes in a tree """
@@ -95,6 +100,10 @@ but the faims-uuid for the entity is the locally unique id
             for prop_id, dt_class_obj in self.dt_attribute_objs.items():
                 attrib_dict = dt_class_obj.make_dict_obj()
                 attrib_dict['predicate_type'] = 'variable'
+                attrib_dict['predicate_type'] = 'variable'  # default type
+                attrib_dict['oc-equiv'] = None  # default to no equivalence
+                attrib_dict = self.check_attribute_as_identifier(attrib_dict,
+                                                                 ImportFieldAnnotation.PRED_CONTAINED_IN)
                 if prop_id not in self.attributes:
                     self.attributes[prop_id] = attrib_dict
             self.fm.save_serialized_json(key,
@@ -112,7 +121,10 @@ but the faims-uuid for the entity is the locally unique id
             save_update = False
             for prop_id, dt_class_obj in self.dt_attribute_objs.items():
                 attrib_dict = dt_class_obj.make_dict_obj()
-                attrib_dict['predicate_type'] = 'variable'
+                attrib_dict['predicate_type'] = 'variable'  # default type
+                attrib_dict['oc-equiv'] = None  # default to no equivalence
+                attrib_dict = self.check_attribute_as_identifier(attrib_dict,
+                                                                 ImportFieldAnnotation.PRED_CONTAINED_IN)
                 if prop_id not in self.attributes:
                     save_update = True
                     self.attributes[prop_id] = attrib_dict
@@ -120,6 +132,41 @@ but the faims-uuid for the entity is the locally unique id
                 self.fm.save_serialized_json(key,
                                              act_dir,
                                              self.attributes)
+
+    def check_update_relations_types(self, act_dir):
+        """ checks to see if different relation types are used in
+            identifiers, updates accordingly
+        """
+        key = self.oc_config_relation_types
+        json_obj = self.fm.get_dict_from_file(key, act_dir)
+        if json_obj is not None:
+            self.relation_types = json_obj
+            for faims_id_pred, rel_dict in json_obj.items():
+                rel_dict = self.check_attribute_as_identifier(rel_dict,
+                                                              Assertion.PREDICATES_CONTAINS)
+                self.relation_types[faims_id_pred] = rel_dict
+            self.fm.save_serialized_json(key,
+                                         act_dir,
+                                         self.relation_types) 
+
+    def check_attribute_as_identifier(self, attrib_dict, oc_equiv):
+        """ checks to see if the attribute is used as an identifier
+            if so, then it is likely part of a spatial context
+        """
+        if self.tree is not False:
+            idents = self.tree.xpath('//identifiers/identifier')
+            for ident in idents:
+                if not isinstance(attrib_dict['oc-equiv'], str):
+                    # check to see if we've got a matching attribute label
+                    ident_names = ident.xpath('attributename')
+                    for ident_name in ident_names:
+                        if ident_name.text == attrib_dict['label']:
+                            attrib_dict['oc-equiv'] = ImportFieldAnnotation.PRED_CONTAINED_IN
+                            break
+                else:
+                    # we've got an equivalent so no need to loop
+                    break
+        return attrib_dict
 
     def classify_xml_tree_attributes(self):
         """ classifies attributes in a tree """

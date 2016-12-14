@@ -39,6 +39,7 @@ from opencontext_py.apps.imports.faims.main import FaimsImport
 faims_imp = FaimsImport()
 faims_imp.project_uuid = 'faims-test'
 faims_imp.source_id = 'faims-test'
+faims_imp.gen_configs('faims-test')
 faims_imp.save_reconcile_preds_types('faims-test')
 
             
@@ -66,7 +67,8 @@ faims_imp.save_reconcile_preds_types('faims-test')
     def gen_config_archents(self, act_dir):
         """ make configurations from the arch ents file """
         faims_ents = ArchEntsImport()
-        faims_ents.oc_config_entity_types = self.oc_config_relation_types
+        faims_ents.oc_config_relation_types = self.oc_config_relation_types
+        faims_ents.oc_config_entity_types = self.oc_config_entity_types
         faims_ents.oc_config_attributes = self.oc_config_attributes
         faims_ents.gen_config(act_dir)
     

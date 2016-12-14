@@ -13,6 +13,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
 from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from opencontext_py.apps.imports.faims.files import FileManage
 
@@ -67,6 +68,9 @@ faims_attribs.gen_config('faims-survey')
                 prop_name = attrib.xpath('AttributeName')[0].text
                 prop_id = attrib.xpath('AttributeID')[0].text
                 if prop_id in self.attributes:
+                    self.attributes[prop_id]['predicate_type'] = 'variable'  # default type
+                    if 'oc-equiv' not in self.attributes[prop_id]:
+                        self.attributes[prop_id]['oc-equiv'] = None  # default to no equivalence
                     if 'predicate_uuid' not in self.attributes[prop_id]:
                         # only do the next part if the predicate_uuid is not assigned yet
                         self.attributes[prop_id]['predicate_uuid'] = None
@@ -74,40 +78,46 @@ faims_attribs.gen_config('faims-survey')
                         if len(cont_vocabs) > 0: 
                             self.attributes[prop_id]['data_type'] = 'id'
                             self.attributes[prop_id]['vocabs_count'] = len(cont_vocabs)
-                            oc_types = self.classify_xml_attributes_to_types(cont_vocabs)
-                            self.attributes[prop_id]['oc_types'] = oc_types
+                            self.attributes[prop_id]['context_parent_uuid'] = None
+                            self.attributes[prop_id]['context_parent_path'] = None
+                            objects_dict = self.classify_xml_attributes_to_objects(cont_vocabs)
+                            self.attributes[prop_id]['objects'] = objects_dict
     
-    def classify_xml_attributes_to_types(self, cont_vocabs, predicate_uuid=None):
+    def classify_xml_attributes_to_objects(self, cont_vocabs, predicate_uuid=None):
         """ classifies open context types used with each attribute """
-        oc_types = LastUpdatedOrderedDict()
+        objects_dict = LastUpdatedOrderedDict()
         for vocab in cont_vocabs:
             vocab_id = vocab.xpath('VocabID')[0].text
-            oc_type = LastUpdatedOrderedDict()
-            oc_type['id'] = vocab_id
+            obj_dict = LastUpdatedOrderedDict()
+            obj_dict['id'] = vocab_id
             if len(vocab.xpath('Arch16n')) > 0:
-                oc_type['label'] = vocab.xpath('Arch16n')[0].text
+                obj_dict['label'] = vocab.xpath('Arch16n')[0].text
             else:
-                oc_type['label'] = vocab.xpath('VocabName')[0].text
-            oc_type['uuid'] = None
-            oc_type['predicate_uuid'] = predicate_uuid
-            oc_type['faims_attrib_id'] = vocab.xpath('AttributeID')[0].text
-            oc_type['faims_internal_str'] = vocab.xpath('VocabName')[0].text
+                obj_dict['label'] = vocab.xpath('VocabName')[0].text
+            obj_dict['type_uuid'] = None
+            obj_dict['subjects_uuid'] = None
+            obj_dict['persons_uuid'] = None
+            obj_dict['predicate_uuid'] = predicate_uuid
+            obj_dict['context_parent_uuid'] = None
+            obj_dict['context_path'] = None
+            obj_dict['faims_attrib_id'] = vocab.xpath('AttributeID')[0].text
+            obj_dict['faims_internal_str'] = vocab.xpath('VocabName')[0].text
             sort_str = vocab.xpath('VocabCountOrder')[0].text
             try:
-                oc_type['sort'] = float(sort_str)
+                obj_dict['sort'] = float(sort_str)
             except:
-                oc_type['sort'] = 0
-            oc_type['note'] = None
+                obj_dict['sort'] = 0
+            obj_dict['note'] = None
             notes = vocab.xpath('VocabDescription')
             for act_note_node in notes:
                 act_note = act_note_node.text
                 if '&lt;' in act_note and '&gt;' in act_note:
                     # has escaped HTML, unescape it
-                    oc_type['note'] = act_note.unescape(act_note)
+                    obj_dict['note'] = act_note.unescape(act_note)
                 else:
-                    oc_type['note'] = act_note
-            oc_types[vocab_id] = oc_type
-        return oc_types
+                    obj_dict['note'] = act_note
+            objects_dict[vocab_id] = obj_dict
+        return objects_dict
     
     def db_save_reconcile_predicates_types(self, act_dir):
         """ saves predicates and type items to the
@@ -124,6 +134,8 @@ faims_attribs.gen_config('faims-survey')
             ok = True
             self.attributes = json_obj
             for faims_id_pred, attrib_dict in json_obj.items():
+                objects_as_subjects = False
+                # default to always making a predicate and a type for attributes    
                 sup_dict = LastUpdatedOrderedDict()
                 sup_dict[self.reconcile_key] = faims_id_pred
                 pm = PredicateManagement()
@@ -138,8 +150,8 @@ faims_attribs.gen_config('faims-survey')
                 if pred_obj is not False:
                     # we reconciled the predicate!
                     self.attributes[faims_id_pred]['predicate_uuid'] = str(pred_obj.uuid)
-                    if 'oc_types' in attrib_dict:
-                        for faims_id_type, type_dict in attrib_dict['oc_types'].items():
+                    if 'objects' in attrib_dict:
+                        for faims_id_type, type_dict in attrib_dict['objects'].items():
                             sup_dict = LastUpdatedOrderedDict()
                             sup_dict[self.reconcile_key] = faims_id_type
                             tm = TypeManagement()
@@ -152,9 +164,19 @@ faims_attribs.gen_config('faims-survey')
                                                                          type_dict['label'])
                             if type_obj is not False:
                                 # we have reconciled the type!
-                                type_dict['uuid'] = str(type_obj.uuid)
+                                type_dict['type_uuid'] = str(type_obj.uuid)
                                 type_dict['predicate_uuid'] = str(pred_obj.uuid)
-                                self.attributes[faims_id_pred]['oc_types'][faims_id_type] = type_dict
+                                self.attributes[faims_id_pred]['objects'][faims_id_type] = type_dict
+                if 'oc-equiv' in attrib_dict:
+                    if attrib_dict['oc-equiv'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
+                        # we have an equivalent so the objects are subjects (spatial entitites)
+                        objects_as_subjects = True
+                if 'objects_type' in attrib_dict:
+                    if attrib_dict['objects_type'] == 'subjects':
+                        # we're asking to make spatial entities of the objects in addition to types
+                        objects_as_subjects = True
+                if objects_as_subjects:
+                    pass
             # now save the results
             self.fm.save_serialized_json(key,
                                          act_dir,
