@@ -94,12 +94,7 @@ faims_attribs.gen_config('faims-survey')
                 obj_dict['label'] = vocab.xpath('Arch16n')[0].text
             else:
                 obj_dict['label'] = vocab.xpath('VocabName')[0].text
-            obj_dict['type_uuid'] = None
-            obj_dict['subjects_uuid'] = None
-            obj_dict['persons_uuid'] = None
             obj_dict['predicate_uuid'] = predicate_uuid
-            obj_dict['context_parent_uuid'] = None
-            obj_dict['context_path'] = None
             obj_dict['faims_attrib_id'] = vocab.xpath('AttributeID')[0].text
             obj_dict['faims_internal_str'] = vocab.xpath('VocabName')[0].text
             sort_str = vocab.xpath('VocabCountOrder')[0].text

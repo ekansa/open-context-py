@@ -17,6 +17,8 @@ from opencontext_py.apps.imports.faims.files import FileManage
 from opencontext_py.apps.imports.faims.archents import ArchEntsImport
 from opencontext_py.apps.imports.faims.relations import RelationsImport
 from opencontext_py.apps.imports.faims.attributes import AttributesImport
+from opencontext_py.apps.imports.sources.models import ImportSource
+from opencontext_py.apps.imports.sources.unimport import UnImport
 
 
 class FaimsImport():
@@ -30,10 +32,15 @@ class FaimsImport():
         (2) Once configurations are created, the entities will be
             imported if they have a proper spatial containment
             path.
-            
+
 from opencontext_py.apps.imports.faims.main import FaimsImport
 faims_imp = FaimsImport()
 faims_imp.gen_configs('faims-test')
+
+from opencontext_py.apps.imports.sources.unimport import UnImport
+unimp = UnImport('faims-test', 'faims-test')
+unimp.delete_ok = True
+unimp.delete_all()
 
 from opencontext_py.apps.imports.faims.main import FaimsImport
 faims_imp = FaimsImport()
@@ -51,6 +58,7 @@ faims_imp.save_reconcile_preds_types('faims-test')
         self.oc_config_relation_types = 'oc-relation-types'
         self.oc_config_entity_types = 'oc-entity-types'
         self.oc_config_attributes = 'oc-attributes'
+        self.oc_config_entities = 'oc-entities'
 
     def gen_configs(self, act_dir):
         """ read xml files, generate JSON configuration files  """
@@ -85,3 +93,29 @@ faims_imp.save_reconcile_preds_types('faims-test')
         faims_attribs.project_uuid = self.project_uuid
         faims_attribs.source_id = self.source_id
         faims_attribs.db_save_reconcile_predicates_types(act_dir)
+    
+    def save_reconcile_preds_relations(self, act_dir):
+        """ make configurations from the attributes file """
+        faims_rels = RelationsImport()
+        faims_rels.oc_config_relation_types = self.oc_config_relation_types
+        faims_rels.project_uuid = self.project_uuid
+        faims_rels.source_id = self.source_id
+        faims_rels.db_save_reconcile_predicates(act_dir)
+    
+    
+    
+    
+    def prep_importer_sources(self, act_dir, source_suffix=''):
+        """ make an importer source object in preparation for running an import """
+        self.source_id = 'faims:' + act_dir + source_suffix
+        imp_s = ImportSource()
+        imp_s.source_id = self.source_id
+        imp_s.project_uuid = self.project_uuid
+        imp_s.label = 'FAIMS import from "' + act_dir + '"'
+        imp_s.field_count = 0
+        imp_s.row_count = 0
+        imp_s.source_type = 'faims'
+        imp_s.is_current = True
+        imp_s.imp_status = 'loading'
+        imp_s.save()
+    
