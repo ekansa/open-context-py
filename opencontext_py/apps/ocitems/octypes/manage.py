@@ -59,7 +59,7 @@ class TypeManagement():
                 if match_ok is False:
                     self.oc_type = False
                     content_suffix_num += 1
-                    if content_suffix_num <= 5:
+                    if content_suffix_num <= 10:
                         # so we don't get into endless loops
                         self.oc_type = self.get_make_type_within_pred_uuid(predicate_uuid,
                                                                            original_content,
