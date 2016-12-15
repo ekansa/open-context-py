@@ -27,7 +27,7 @@ class UnImport():
         # now clear the cache a change was made
         cache.clear()
 
-    def detete_all(self):
+    def delete_all(self):
         """ deletes all from an import """
         self.delete_containment_assertions()
         self.delete_geospaces()
