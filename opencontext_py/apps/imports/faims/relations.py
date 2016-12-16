@@ -38,6 +38,7 @@ faims_rels.gen_config('faims-survey')
         self.entities = LastUpdatedOrderedDict()
         self.oc_config_relation_types = 'oc-relation-types'
         self.oc_config_entities = 'oc-entities'
+        self.reconcile_key = 'faims_id'
         self.fm = FileManage()
 
     def gen_config(self, act_dir, filename='relns.xml'):
@@ -130,14 +131,15 @@ faims_rels.gen_config('faims-survey')
         if self.tree is None:
             # we have not imported the XML yet
             self.tree = self.fm.load_xml_file(act_dir, filename)
-        if len(self.entities) < 0:
+        if len(self.entities) < 1:
             self.entities = self.fm.get_dict_from_file(self.oc_config_entities,
                                                        act_dir)
-        if len(self.relation_types) < 0:
+        if len(self.relation_types) < 1:
             self.relation_types = self.fm.get_dict_from_file(self.oc_config_relation_types,
                                                              act_dir)
         if self.tree is not False and self.entities is not None and self.relation_types is not None:
             # we've loaded the data we need!
+            print('Have all data needed to make relations')
             rel_types = self.tree.xpath('/relationships/relationshipType')
             sort_num = 1
             for rel_type in rel_types:

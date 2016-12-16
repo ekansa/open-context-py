@@ -11,6 +11,8 @@ from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.predicates.manage import PredicateManagement
+from opencontext_py.apps.ocitems.octypes.manage import TypeManagement
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.geospace.models import Geospace
@@ -20,6 +22,7 @@ from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
+from opencontext_py.apps.imports.faims.description import FaimsDescription
 from opencontext_py.apps.imports.faims.files import FileManage
 
 
@@ -43,6 +46,8 @@ but the faims-uuid for the entity is the locally unique id
 
     """
 
+    FAIMS_ENTITY_TYPE_PREDICATE_LABEL = 'Entity Record Type'
+    
     def __init__(self):
         self.tree = None
         self.project_uuid = False
@@ -64,6 +69,7 @@ but the faims-uuid for the entity is the locally unique id
         self.oc_config_attributes = 'oc-attributes'
         self.oc_config_entities = 'oc-entities'
         self.reconcile_key = 'faims_id'
+        self.ent_type_pred_sup_id = 'auto-entity-type'
         self.fm = FileManage()
 
     def gen_config(self, act_dir, filename='archents.xml'):
@@ -102,7 +108,11 @@ but the faims-uuid for the entity is the locally unique id
                 ent_type_obj['class_uri'] = None
                 # add the type label as an attribute
                 ent_type_obj['add_type_as_attribute'] = True
-                ent_type_obj['space_context_rank'] = 0
+                ent_type_obj['predicate_uuid'] = None
+                ent_type_obj['type_uuid'] = None
+                # counts ranking
+                xml_entities = ent_type.xpath('archentity')
+                ent_type_obj['count'] = len(xml_entities)
                 self.entity_types[faims_id] = ent_type_obj
 
     def load_or_classify_attributes(self, act_dir):
@@ -189,7 +199,7 @@ but the faims-uuid for the entity is the locally unique id
         """ classifies attributes in a tree """
         if self.tree is not False:
             ent_types = self.tree.xpath('/archents/aenttype')
-            for ent_type in ent_types:
+            for ent_type in ent_types: 
                 ents = ent_type.xpath('archentity')
                 for entity in ents:
                     props = entity.xpath('properties/property')
@@ -416,21 +426,137 @@ but the faims-uuid for the entity is the locally unique id
                 new_man.views = 0
                 new_man.sup_json = sup_dict
                 new_man.save()
+    
+    def db_save_reconcile_entity_predicates_types(self, act_dir):
+        """ saves predicates and type items to the
+            Open Context database, and / or reconciles these
+            items with previously saved items from the same project
+        """
+        key = self.oc_config_entity_types
+        json_obj = self.fm.get_dict_from_file(key, act_dir)
+        if json_obj is None:
+            print('Need to 1st generate an attributes file from the ArchEnts!')
+            ok = False
+        else:
+            # we have JSON with dictionary for the entity_types
+            self.entity_types = json_obj
+            make_entity_types_assertions = False
+            for faims_ent_type_id, ent_dict in json_obj.items():
+                if isinstance(ent_dict['item_type'], str) \
+                   and ent_dict['add_type_as_attribute']:
+                    # OK we have some items that need entity types made as
+                    # a descriptive attribute
+                    make_entity_types_assertions = True
+                    break
+            if make_entity_types_assertions:
+                # we have entity_types that need to have a descriptive
+                # predicate, so create a new predicate in Open Context
+                # to describe entity_types for this project
+                sup_dict = LastUpdatedOrderedDict()
+                sup_dict[self.reconcile_key] = self.ent_type_pred_sup_id
+                pm = PredicateManagement()
+                pm.project_uuid = self.project_uuid
+                pm.source_id = self.source_id
+                pm.sup_dict = sup_dict
+                pm.sup_reconcile_key = self.reconcile_key
+                pm.sup_reconcile_value = self.ent_type_pred_sup_id
+                pred_obj = pm.get_make_predicate(self.FAIMS_ENTITY_TYPE_PREDICATE_LABEL,
+                                                 'variable',
+                                                 'id')
+                if pred_obj is not False:
+                    # we reconciled or created the predicate!
+                    # now we mint oc_types for all the entity_types
+                    predicate_uuid = str(pred_obj.uuid)
+                    for faims_ent_type_id, ent_dict in json_obj.items():
+                        if isinstance(ent_dict['item_type'], str) \
+                           and ent_dict['add_type_as_attribute']:
+                            # OK, we have an item entity type to be used as a description
+                            sup_dict = LastUpdatedOrderedDict()
+                            sup_dict[self.reconcile_key] = faims_ent_type_id
+                            tm = TypeManagement()
+                            tm.project_uuid = self.project_uuid
+                            tm.source_id = self.source_id
+                            tm.sup_dict = sup_dict
+                            tm.sup_reconcile_key = self.reconcile_key
+                            tm.sup_reconcile_value = faims_ent_type_id
+                            type_obj = tm.get_make_type_within_pred_uuid(predicate_uuid,
+                                                                         ent_dict['label'])
+                            if type_obj is not False:
+                                # we have reconciled the type!
+                                ent_dict['type_uuid'] = str(type_obj.uuid)
+                                ent_dict['predicate_uuid'] = predicate_uuid
+                                self.entity_types[faims_ent_type_id] = ent_dict
+                # now save the results
+                self.fm.save_serialized_json(key,
+                                             act_dir,
+                                             self.entity_types)
         
-    def review_attribute_data_types(self):
-        """ review data types for attributes """
-        for prop_id, dt_class_obj in self.dt_attribute_objs.items():
-            print('-------------------------')
-            print('Prop: ' + dt_class_obj.label)
-            print('Data-type: ' + str(dt_class_obj.data_type))
-            print('TOTAL: ' + str(dt_class_obj.total_count))
-            print('Boolean: ' + str(dt_class_obj.boolean_count))
-            print('Int: ' + str(dt_class_obj.int_count))
-            print('Float: ' + str(dt_class_obj.float_count))
-            print('Datetime: ' + str(dt_class_obj.datetime_count))
-            print('Uniques: ' + str(len(dt_class_obj.uniqe_str_hashes)))
-            print(' ')
-                        
+    def db_save_entity_attributes(self, act_dir, filename='archents.xml'):
+        """ saves descriptive attributes for an entity """
+        if self.tree is None:
+            # we have not imported the XML yet
+            self.tree = self.fm.load_xml_file(act_dir, filename)
+        if len(self.entities) < 1:
+            self.entities = self.fm.get_dict_from_file(self.oc_config_entities,
+                                                       act_dir)
+        if len(self.entity_types) < 1:
+            self.entity_types = self.fm.get_dict_from_file(self.oc_config_entity_types,
+                                                           act_dir)
+        if len(self.attributes) < 1:
+            self.attributes = self.fm.get_dict_from_file(self.oc_config_attributes,
+                                                         act_dir)
+        if self.tree is not False \
+           and self.entities is not None \
+           and self.entity_types is not None \
+           and self.attributes is not None:
+            # we've loaded the data we need!
+            print('Have all data needed to make entity descriptions....')
+            ent_types = self.tree.xpath('/archents/aenttype')
+            for ent_type in ent_types:
+                faims_ent_type_id = ent_type.get('aentTypeID')
+                faims_ent_type_id = str(faims_ent_type_id)
+                if faims_ent_type_id in self.entity_types:
+                    # we found the entity type in our configuration
+                    ent_type_dict = self.entity_types[faims_ent_type_id]
+                    # check if we should make entity type assertions?
+                    record_entity_type = self.check_make_entity_type_assertion(ent_type_dict) 
+                    xml_entities = ent_type.xpath('archentity')
+                    for xml_ent in xml_entities:
+                        faims_item_id = xml_ent.xpath('uuid')[0].text
+                        if faims_item_id in self.entities:
+                            # we found the entity in our saved, reconciled entities
+                            subject_uuid = self.entities[faims_item_id]['uuid']
+                            subject_type = self.entities[faims_item_id]['item_type']
+                            sort_num = 10
+                            if record_entity_type: 
+                                # make assertion about the entity type
+                                fd = FaimsDescription()
+                                fd.project_uuid = self.project_uuid
+                                fd.soure_id = self.source_id
+                                fd.subject_uuid = subject_uuid
+                                fd.subject_type = subject_type
+                                fd.sort_num = sort_num
+                                fd.add_type_description(ent_type_dict['predicate_uuid'],
+                                                        ent_type_dict['type_uuid'])
+                            props = xml_ent.xpath('properties/property')
+                            for prop in props:
+                                sort_num += 1
+                                prop_id = prop.xpath('attributeid')[0].text
+                                if prop_id in self.attributes:
+                                    # we found the property attribute
+                                    fd = FaimsDescription()
+                                    fd.project_uuid = self.project_uuid
+                                    fd.soure_id = self.source_id
+                                    fd.subject_uuid = subject_uuid
+                                    fd.subject_type = subject_type
+                                    fd.sort_num = sort_num
+                                    fd.attrib_dict = self.attributes[prop_id]
+                                    fd.faims_record = self.get_property_record(prop)
+                                    vocab_ids = prop.xpath('vocabid')
+                                    for vocab_id in vocab_ids:
+                                       fd.faims_record_id = vocab_id.text
+                                    fd.add_description()
+                       
     def process_entity(self, entity):
         """processes each entity """
         faims_uuid = entity.xpath('uuid')[0].text
@@ -448,21 +574,27 @@ but the faims-uuid for the entity is the locally unique id
     
     def get_property_record(self, prop):
         record = None
-        vocabs = prop.xpath('vocabname')
-        for vocab in vocabs:
-            record = vocab.text
+        rvocabs = prop.xpath('resolvedvocabname')
+        for rvocab in rvocabs:
+            record = rvocab.text
+        if record is None:
+            vocabs = prop.xpath('vocabname')
+            for vocab in vocabs:
+                record = vocab.text
         if record is None:
             measures = prop.xpath('measure')
             for measure in measures:
                 record = measure.text
         return record
 
-    def get_make_person_uuid(self, person_name):
-        """ gets or makes uuid for a person """
-        if person_name in self.import_persons:
-            uuid = self.import_persons[person_name]
-        else:
-            uuid = GenUUID.uuid4()
-            uuid = str(uuid)
-            self.import_persons[person_name] = uuid
-        return uuid
+    def check_make_entity_type_assertion(self, ent_type_dict):
+        """ make an entity type assertion ? """
+        make_assertion = False
+        if ent_type_dict['add_type_as_attribute']:
+            if 'predicate_uuid' in ent_type_dict \
+                and 'type_uuid' in ent_type_dict:
+                if isinstance(ent_type_dict['predicate_uuid'], str) \
+                    and isinstance(ent_type_dict['type_uuid'], str):
+                    # we have data we need to make the assertion
+                    make_assertion = True
+        return make_assertion

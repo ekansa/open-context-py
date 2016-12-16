@@ -23,7 +23,7 @@ class AttributesImport():
 
 from opencontext_py.apps.imports.faims.attributes import AttributesImport
 faims_attribs = AttributesImport()
-faims_attribs.gen_config('faims-survey')
+faims_attribs.gen_config('faims-test')
 
 
     """
@@ -78,12 +78,10 @@ faims_attribs.gen_config('faims-survey')
                         if len(cont_vocabs) > 0: 
                             self.attributes[prop_id]['data_type'] = 'id'
                             self.attributes[prop_id]['vocabs_count'] = len(cont_vocabs)
-                            self.attributes[prop_id]['context_parent_uuid'] = None
-                            self.attributes[prop_id]['context_parent_path'] = None
                             objects_dict = self.classify_xml_attributes_to_objects(cont_vocabs)
                             self.attributes[prop_id]['objects'] = objects_dict
     
-    def classify_xml_attributes_to_objects(self, cont_vocabs, predicate_uuid=None):
+    def classify_xml_attributes_to_objects(self, cont_vocabs):
         """ classifies open context types used with each attribute """
         objects_dict = LastUpdatedOrderedDict()
         for vocab in cont_vocabs:
@@ -94,7 +92,6 @@ faims_attribs.gen_config('faims-survey')
                 obj_dict['label'] = vocab.xpath('Arch16n')[0].text
             else:
                 obj_dict['label'] = vocab.xpath('VocabName')[0].text
-            obj_dict['predicate_uuid'] = predicate_uuid
             obj_dict['faims_attrib_id'] = vocab.xpath('AttributeID')[0].text
             obj_dict['faims_internal_str'] = vocab.xpath('VocabName')[0].text
             sort_str = vocab.xpath('VocabCountOrder')[0].text
@@ -129,7 +126,6 @@ faims_attribs.gen_config('faims-survey')
             ok = True
             self.attributes = json_obj
             for faims_id_pred, attrib_dict in json_obj.items():
-                objects_as_subjects = False
                 # default to always making a predicate and a type for attributes    
                 sup_dict = LastUpdatedOrderedDict()
                 sup_dict[self.reconcile_key] = faims_id_pred
@@ -162,16 +158,6 @@ faims_attribs.gen_config('faims-survey')
                                 type_dict['type_uuid'] = str(type_obj.uuid)
                                 type_dict['predicate_uuid'] = str(pred_obj.uuid)
                                 self.attributes[faims_id_pred]['objects'][faims_id_type] = type_dict
-                if 'oc-equiv' in attrib_dict:
-                    if attrib_dict['oc-equiv'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
-                        # we have an equivalent so the objects are subjects (spatial entitites)
-                        objects_as_subjects = True
-                if 'objects_type' in attrib_dict:
-                    if attrib_dict['objects_type'] == 'subjects':
-                        # we're asking to make spatial entities of the objects in addition to types
-                        objects_as_subjects = True
-                if objects_as_subjects:
-                    pass
             # now save the results
             self.fm.save_serialized_json(key,
                                          act_dir,

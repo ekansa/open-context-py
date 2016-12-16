@@ -125,7 +125,30 @@ class DescriptionDataType():
         rec_str = str(record)
         hash_obj.update(rec_str.encode('utf-8'))
         return hash_obj.hexdigest()    
-        
+    
+    def validate_literal_by_data_type(self, data_type, record):
+        """ validates the value's data type
+            if the data type differs from the
+            expected data type,
+            return none
+        """
+        validated_record = None
+        # validate the faims record against its expected data type
+        # the validated_record will be None if not valid
+        if data_type == 'xsd:boolean':
+            validated_record = self.validate_convert_boolean(record)
+        elif data_type == 'xsd:date':
+            validated_record = self.validate_datetime(record)
+        elif data_type == 'xsd:integer':
+            validated_record = self.validate_integer(record)
+        elif data_type == 'xsd:double':
+            validated_record = self.validate_numeric(record)
+        elif data_type == 'xsd:string':
+            validated_record = str(record)
+        else:
+            validated_record = None
+        return validated_record
+    
     def validate_datetime(self, record):
         """validates as a datetime. returns a date_obj
            if valid, none if not
@@ -165,10 +188,12 @@ class DescriptionDataType():
         """ validates a string to be a number
             returns None if not
         """
-        try:
-            output = float(record)
-        except ValueError:
-            output = None
+        output = None
+        if record is not None:
+            try:
+                output = float(record)
+            except ValueError:
+                output = None
         return output
 
     def validate_convert_boolean(self, record):
