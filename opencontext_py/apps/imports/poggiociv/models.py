@@ -78,7 +78,7 @@ pc.scrape_content_from_index(pc.pc_directory, True)
         self.best_match = False
         self.html_url = False
         self.delay_before_request = self.SLEEP_TIME
-        self.root_import_dir = settings.STATIC_EXPORTS_ROOT
+        self.root_import_dir = settings.STATIC_IMPORTS_ROOT
         self.act_import_dir = False
         self.pc_directory = 'mag-data'
         self.use_cached_tb_index = True
