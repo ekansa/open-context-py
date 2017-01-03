@@ -12,6 +12,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 
@@ -28,16 +29,69 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/kuthodaw-pagoda/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/kuthodaw-pagoda/'
-ia_m.project_uuids.append('b6de18c6-bba8-4b53-9d9e-3eea4b794268')
+# ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/kuthodaw-pagoda/'
+# ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/kuthodaw-pagoda/'
+ia_m.project_uuids.append('fab0532a-2953-4f13-aa97-8a9d7e992dbe')
 ia_m.archive_image_media_items()
 ia_m.errors
+
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchiveMedia
+ia_m = InternetArchiveMedia()
+ia_m.noindex = False
+ia_m.save_db = True
+ia_m.remote_uri_sub = 'http://artiraq.org/static/opencontext/poggio-civitate/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/images-artiraq/poggio-civitate/'
+# ims = ia_m.get_public_image_uuids_by_size(1000000)
+ims = ia_m.get_public_image_uuids_by_size_temp(0)
+len(ia_m.image_uuids)
+ia_m.archive_image_media_items()
+
+med_files = Mediafile.objects\
+                     .filter(file_type='oc-gen:archive',
+                             file_uri__startswith='http://artiraq')\
+                     .exclude(file_uri__contains='merritt.cdlib.org')\
+                     .order_by('-filesize')
+for med_full in med_files:
+    med_ia_files = Mediafile.objects.filter(uuid=med_full.uuid, file_type='oc-gen:ia-fullfile')
+    for med_ia_file in med_ia_files:
+        print('Make ' + med_full.file_uri + ' now ' + med_ia_file.file_uri)
+        med_full.file_uri = med_ia_file.file_uri
+        med_full.save()
+        
+        
+med_files = Mediafile.objects\
+                     .filter(file_type='oc-gen:fullfile',
+                             file_uri__startswith='http://artiraq')\
+                     .exclude(file_uri__contains='merritt.cdlib.org')\
+                     .order_by('-filesize')
+for med_full in med_files:
+    med_ia_files = Mediafile.objects.filter(uuid=med_full.uuid, file_type='oc-gen:ia-fullfile')
+    for med_ia_file in med_ia_files:
+        print('Make ' + med_full.file_uri + ' now ' + med_ia_file.file_uri)
+        med_full.file_uri = med_ia_file.file_uri
+        med_full.save()
+
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+med_files = Mediafile.objects\
+                     .filter(file_type='oc-gen:preview',
+                             file_uri__startswith='http://www.')\
+                     .exclude(file_uri__contains='merritt.cdlib.org')\
+                     .order_by('-filesize')
+for med_full in med_files:
+    med_ia_files = Mediafile.objects.filter(uuid=med_full.uuid, file_type='oc-gen:iiif')
+    for med_ia_file in med_ia_files:
+        size_uri =  med_ia_file.file_uri.replace('/info.json', '/full/650,/0/default.jpg')
+        print('Make ' + med_full.file_uri + ' now ' + size_uri)
+        med_full.file_uri = size_uri
+        med_full.save()
+
     """
 
     IA_FILE_TYPE = 'oc-gen:ia-fullfile'
     IIIF_FILE_TYPE = 'oc-gen:iiif'
-    SLEEP_TIME = .5
+    SLEEP_TIME = 1
     
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
@@ -48,6 +102,7 @@ ia_m.errors
         self.iiif_uri_prefix = 'https://iiif.archivelab.org/iiif/'
         self.session = None
         self.project_uuids = []
+        self.image_uuids = []
         self.proj_licenses = {}
         self.mem_cache_entities = {}
         self.delay_before_request = self.SLEEP_TIME
@@ -55,6 +110,7 @@ ia_m.errors
         self.save_db = False
         self.remote_uri_sub = None  # substitution for a remote uri
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
+        self.pref_tiff_archive = True
         self.errors = []
     
     def archive_image_media_items(self):
@@ -65,13 +121,94 @@ ia_m.errors
             # self.update_image_metadata(man_obj)
             self.archive_image(man_obj)
     
+    def get_public_image_uuids_by_size_temp(self, file_size):
+        """ gets uuids for full-files over a certain size """
+        file_types = ['oc-gen:fullfile',
+                      'oc-gen:archive']
+        ok_uuid_list = []
+        public_project_uuids = self.get_public_projects()
+        if isinstance(self.remote_uri_sub, str):
+            if file_size > 0:
+                med_files = Mediafile.objects\
+                                     .filter(file_type__in=file_types,
+                                             project_uuid__in=public_project_uuids,
+                                             file_uri__startswith=self.remote_uri_sub,
+                                             filesize__gt=file_size)\
+                                      .exclude(file_uri__contains='merritt.cdlib.org')\
+                                      .order_by('-filesize')
+            else:
+                 med_files = Mediafile.objects\
+                                     .filter(file_type__in=file_types,
+                                             project_uuid__in=public_project_uuids,
+                                             file_uri__startswith=self.remote_uri_sub)\
+                                      .exclude(file_uri__contains='merritt.cdlib.org')\
+                                      .order_by('-filesize')
+        else:
+            if file_size > 0:
+                med_files = Mediafile.objects\
+                                     .filter(file_type__in=file_types,
+                                             project_uuid__in=public_project_uuids,
+                                             filesize__gt=file_size)\
+                                      .exclude(file_uri__contains='merritt.cdlib.org')\
+                                      .order_by('-filesize')
+            else:
+                 med_files = Mediafile.objects\
+                                     .filter(file_type__in=file_types,
+                                             project_uuid__in=public_project_uuids)\
+                                      .exclude(file_uri__contains='merritt.cdlib.org')\
+                                      .order_by('-filesize')
+        for med_file in med_files:
+            ch_iiif = Mediafile.objects\
+                               .filter(uuid=med_file.uuid,
+                                       file_type=self.IIIF_FILE_TYPE)[:1]
+            if len(ch_iiif) < 1:
+                # OK! we're good to make a IIIF file type for this item
+                self.image_uuids.append(med_file.uuid)
+        return self.image_uuids
+    
+    def get_public_image_uuids_by_size(self, file_size):
+        """ gets uuids for full-files over a certain size """
+        ok_uuid_list = []
+        public_project_uuids = self.get_public_projects()
+        med_files = Mediafile.objects\
+                             .filter(file_type='oc-gen:fullfile',
+                                     project_uuid__in=public_project_uuids,
+                                     filesize__gt=file_size)\
+                             .order_by('-filesize')
+        for med_file in med_files:
+            ch_iiif = Mediafile.objects\
+                               .filter(uuid=med_file.uuid,
+                                       file_type=self.IIIF_FILE_TYPE)[:1]
+            if len(ch_iiif) < 1:
+                # OK! we're good to make a IIIF file type for this item
+                self.image_uuids.append(med_file.uuid)
+        return self.image_uuids
+    
+    def get_public_projects(self):
+        """ makes a list of project_uuids for public projects """
+        public_project_uuids = []
+        projs = Project.objects.all()
+        for proj in projs:
+            public = True
+            if proj.view_group_id is not None:
+                if proj.view_group_id > 0:
+                    public = False
+            if public:
+                public_project_uuids.append(proj.uuid)
+        return public_project_uuids
+    
     def get_image_media_items(self):
         """ gets list of image media not yet in the Internet Archive """
         image_manifest_list = []
-        if len(self.project_uuids) > 0: 
+        if len(self.image_uuids) > 0: 
             man_images = Manifest.objects\
                                  .filter(item_type='media',
                                          class_uri='oc-gen:image',
+                                         uuid__in=self.image_uuids)
+        elif len(self.project_uuids) > 0: 
+            man_images = Manifest.objects\
+                                 .filter(item_type='media',
+                                         # class_uri='oc-gen:image',
                                          project_uuid__in=self.project_uuids)
         else:
             man_images = Manifest.objects\
@@ -129,6 +266,7 @@ ia_m.errors
             if not isinstance(file_name, str):
                 print('Failed to cache file!')
             else:
+                sleep(self.delay_before_request)
                 print('Ready to upload: ' + file_name)
                 # start an internet archive session
                 s = self.start_ia_session()
@@ -235,7 +373,7 @@ ia_m.errors
     def get_cache_full_file(self, json_ld, man_obj):
         """ gets and caches the fill file, saving temporarily to a local directory """
         slug = man_obj.slug
-        file_uri = self.get_full_fileuri(json_ld)
+        file_uri = self.get_archive_fileuri(json_ld)
         if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
             # get a local copy of the file, not a remote copy
             file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
@@ -264,22 +402,68 @@ ia_m.errors
                     file_uri = f_obj['id']
                     break
         return file_uri
+    
+    def get_archive_fileuri(self, json_ld):
+        """ gets the full file uri """
+        file_uri = None
+        if 'oc-gen:has-files' in json_ld:
+            for f_obj in json_ld['oc-gen:has-files']:
+                if self.pref_tiff_archive:
+                    if f_obj['type'] == 'oc-gen:archive':
+                        file_uri = f_obj['id']
+                        break
+            if file_uri is None:
+                # no TIFF archive file found, so use the full-file
+                for f_obj in json_ld['oc-gen:has-files']:
+                    if f_obj['type'] == 'oc-gen:fullfile':
+                        file_uri = f_obj['id']
+                        break
+        return file_uri
                 
     def get_cache_remote_file_content(self, file_name, file_uri):
         """ gets the content of a remote file,
             saves it to cache with the filename 'file_name'
         """
         ok = False
-        sleep(self.delay_before_request)
-        r = requests.get(file_uri, stream=True)
-        if r.status_code == 200:
-            dir = self.set_check_directory(self.cach_file_dir)
-            path = os.path.join(dir, file_name)
-            with open(path, 'wb') as f:
-                for chunk in r.iter_content(1024):
-                    f.write(chunk)
-            f.close()
+        dir = self.set_check_directory(self.cach_file_dir)
+        path = os.path.join(dir, file_name)
+        if os.path.exists(path):
+            # the file already exists, no need to download it again
+            print('Already cached: ' + path)
             ok = True
+        else:
+            print('Cannot find: ' + path)
+            print('Need to download: ' + file_uri)
+            if not isinstance(self.local_uri_sub, str):
+                # only delay if we're not looking locally for the file
+                sleep(self.delay_before_request)
+            r = requests.get(file_uri, stream=True)
+            if r.status_code == 200:
+                with open(path, 'wb') as f:
+                    for chunk in r.iter_content(1024):
+                        f.write(chunk)
+                f.close()
+                ok = True
+            else:
+                # try with different capitalization
+                if '.JPG' in file_uri:
+                    new_file_uri = file_uri.replace('.JPG', '.jpg')
+                elif '.jpg' in file_uri:
+                    new_file_uri = file_uri.replace('.jpg', '.JPG')
+                else:
+                    new_file_uri = None
+                if new_file_uri is not None:
+                    print('Now trying with different capitalization: ' + new_file_uri)
+                    if not isinstance(self.local_uri_sub, str):
+                        # only delay if we're not looking locally for the file
+                        sleep(self.delay_before_request)
+                    r = requests.get(new_file_uri, stream=True)
+                    if r.status_code == 200:
+                        with open(path, 'wb') as f:
+                            for chunk in r.iter_content(1024):
+                                f.write(chunk)
+                        f.close()
+                        ok = True
         return ok
     
     def make_oc_item(self, man_obj):
@@ -381,6 +565,17 @@ ia_m.errors
                 self.mem_cache_entities[identifier] = ent
         return output
     
+    def check_exists(self, file_name, act_dir):
+        """ checks to see if a file exists """
+        path = self.prep_directory(act_dir)
+        dir_file = path + file_name
+        if os.path.exists(dir_file):
+            output = True
+        else:
+            # print('Cannot find: ' + dir_file)
+            output = False
+        return output
+
     def set_check_directory(self, act_dir):
         """ Prepares a directory to find import GeoJSON files """
         output = False

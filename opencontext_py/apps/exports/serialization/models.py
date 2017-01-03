@@ -53,12 +53,13 @@ sj.dump_serialized_data("3885b0b6-2ba8-4d19-b597-7f445367c5c0")
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
-sj.after_date = '2016-02-28'
-sj.limit_item_types = ['tables']
-sj.dump_serialized_data('0')
+sj.after_date = '2016-12-25'
+sj.limit_file_types = ['oc-gen:ia-fullfile', 'oc-gen:iiif']
+sj.dump_project_table('0', 'oc_mediafiles')
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
+sj.after_date = '2016-12-10'
 sj.dump_serialized_annotations('fed-reg-api-lookup')
 
 projects = Project.objects.filter(updated__gte="2015-06-01")
@@ -71,6 +72,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.chunk_size = 5000
         self.act_export_dir = False
         self.limit_item_types = False
+        self.limit_file_types = False  # limit media export to a few file_types
         self.all_models = ['link_entities']
         self.project_models = ['oc_assertions',
                                'oc_documents',
@@ -172,6 +174,29 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                     if len(act_set) > 0:
                         # now save the remaining batch
                         self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
+
+    def dump_project_table(self, project_uuid, table_name):
+        """ dumps a specific table for a given project """
+        proj_dir = self.prepare_dump_directory(project_uuid)
+        if proj_dir is not False:
+            # we're good to go to dump data
+            if project_uuid == '0':
+                self.project_uuid = False
+            print('Working on ' + table_name + ' for ' + project_uuid)
+            batch = 1
+            query_set = self.get_queryset(table_name)
+            if query_set is not False and query_set is not None:
+                act_set = []
+                for obj in query_set.iterator():
+                    if len(act_set) < self.chunk_size:
+                        act_set.append(obj)
+                    if len(act_set) >= self.chunk_size:
+                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
+                        batch = batch + 1
+                        act_set = []  # start the act set from scratch again
+                if len(act_set) > 0:
+                    # now save the remaining batch
+                    self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
 
     def dump_serialized_annotations(self, source_ids=None):
         """ dumps serialized data for a given source """
@@ -276,6 +301,9 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                 query_set = Manifest.objects\
                                     .filter(**args)
             elif table_name == 'oc_mediafiles':
+                if isinstance(self.limit_file_types, list):
+                    # we want to limit the export to only certain file_types
+                    args['file_type__in'] = self.limit_file_types
                 query_set = Mediafile.objects\
                                      .filter(**args)
             elif table_name == 'oc_obsmetadata':
