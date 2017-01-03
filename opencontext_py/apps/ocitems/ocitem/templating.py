@@ -331,6 +331,7 @@ class TemplateItem():
                             target_url = rp.convert_to_https(file_item['id'])
                             # if 'https:' in target_url:
                                 # target_url = target_url.replace('https:', 'http:')
+                            # PDF viewer installed, but only works if PDF at same domain, so make a proxy link
                             self.full_doc_file = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
                             # self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':

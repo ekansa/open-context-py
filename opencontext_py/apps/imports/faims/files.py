@@ -2,6 +2,7 @@ import os
 import codecs
 import re
 import json
+from collections import OrderedDict
 from lxml import etree
 from django.conf import settings
 
@@ -44,7 +45,8 @@ class FileManage():
         try:
             json_obj = json.load(codecs.open(dir_file,
                                              'r',
-                                             'utf-8-sig'))
+                                             'utf-8-sig'),
+                                 object_pairs_hook=OrderedDict)
         except:
             # print('Cannot parse as JSON: ' + dir_file)
             json_obj = None

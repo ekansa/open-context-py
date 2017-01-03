@@ -28,6 +28,7 @@ class FedDinaaLink():
         
 from opencontext_py.apps.ldata.federalregistry.dinaalink import FedDinaaLink
 fed_link = FedDinaaLink()
+fed_link.get_save_dinaa_linked_docs()
 fed_link.add_parent_links()
 # fed_link.make_dinaa_link_assertions()
 fed_link.index_linked_dinaa_sites()
@@ -45,6 +46,7 @@ fed_link.index_linked_dinaa_sites()
         self.source_id = 'fed-reg-api-lookup'
         self.all_docs_lists_key = 'all-document-list'
         self.dinaa_matches_key = 'dinaa-matches'
+        self.checked_docs_key = 'all-docs-checked'
         self.tri_predicate = 'a5c308c3-52f8-4076-b315-d3258d485572'
         self.matched_trinomials = []
     
@@ -151,25 +153,45 @@ fed_link.index_linked_dinaa_sites()
     def get_save_dinaa_linked_docs(self):
         """ finds DINAA trinomials in cached federal documents """
         fed_api = FederalRegistryAPI()
+        checked_docs = fed_api.get_dict_from_file(self.checked_docs_key)
+        if not isinstance(checked_docs, list):
+            checked_docs = []
         lists = fed_api.get_dict_from_file(self.all_docs_lists_key)
         trinomials = self.get_dinaa_trinomials()
         print('Reviewing ' + str(len(trinomials)) + ' trinomials.')
-        for raw_url in lists['raw']:
+        i = 0
+        doc_cnt = len(lists['raw'])
+        url_list = lists['raw']
+        url_list.sort()
+        for raw_url in url_list:
+            i += 1
             text = None
             url_ex = raw_url.split('/')
             file_name = url_ex[-1]
-            exists = fed_api.check_exists(file_name, fed_api.working_doc_dir)
-            if exists:
-                text = fed_api.get_string_from_file(file_name, fed_api.working_doc_dir)
-            if isinstance(text, str):
-                print('Checking: ' + file_name)
-                for row in trinomials:
-                    if row['trinomial'] in text:
-                        row['doc'] = file_name.replace('.txt', '')
-                        self.matched_trinomials.append(row)
-                        print('Found matches: ' + str(len(self.matched_trinomials)))
-                        fed_api.save_serialized_json(self.dinaa_matches_key,
-                                                     self.matched_trinomials)
+            if file_name not in checked_docs:
+                # have not looked at this yet
+                exists = fed_api.check_exists(file_name, fed_api.working_doc_dir)
+                if exists:
+                    text = fed_api.get_string_from_file(file_name, fed_api.working_doc_dir)
+                else:
+                    # try to get it remotely again
+                    # print('Try again for remote file: ' + raw_url)
+                    exists = fed_api.get_cache_raw_doc_text(raw_url)
+                    if exists:
+                        text = fed_api.get_string_from_file(file_name, fed_api.working_doc_dir)
+                if isinstance(text, str):
+                    print('Checking [' + str(i) + ' of ' + str(doc_cnt) + ']: ' + file_name)
+                    for row in trinomials:
+                        if row['trinomial'] in text:
+                            row['doc'] = file_name.replace('.txt', '')
+                            self.matched_trinomials.append(row)
+                            print('Found matches: ' + str(len(self.matched_trinomials)))
+                            fed_api.save_serialized_json(self.dinaa_matches_key,
+                                                         self.matched_trinomials)
+                    # save a record we checked this document
+                    checked_docs.append(file_name)
+                    fed_api.save_serialized_json(self.checked_docs_key,
+                                                 checked_docs)
     
     def get_dinaa_trinomials(self):
         """ gets trinomials for DINAA """

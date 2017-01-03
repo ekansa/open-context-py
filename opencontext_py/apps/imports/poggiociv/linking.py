@@ -37,8 +37,19 @@ from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
 class PoggioCivLinking():
     """ Class for getting data from the legacy Poggio Civitate server
 
+To do:
+- Fix associations between trench books and trenches.
+- trench-books-index.json has the links between trench books and trenches.
+- What needs to change first is the link between the Tr and the parent trench.
+- For example Tr-105 should be in Tesoro 21
+- several other trench-book associations are also wrong and need to be
+- updated using trench-books-index.json
+
+
 from opencontext_py.apps.imports.poggiociv.linking import PoggioCivLinking
 pcl = PoggioCivLinking()
+pcl.update_trench_book_links()
+
 
     """
 
@@ -48,29 +59,33 @@ pcl = PoggioCivLinking()
         self.pc_directory = 'mag-data'
         self.trench_book_index_json = 'trench-books-index.json'
         self.root_index = []
+        self.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
     
     def load_root_index(self):
         """ loads the trench book index, scrapes
             content recursively
         """
-        items = self.pc.load_json_file_os_obj(pc.pc_directory
-                                              self.pc.trench_book_index_json)
-        if isinstance(items, list):
-            self.root_index = items
+        if len(self.root_index) < 1:
+            items = self.pc.load_json_file_os_obj(self.pc.pc_directory,
+                                                  self.pc.trench_book_index_json)
+            if isinstance(items, list):
+                self.root_index = items
     
-    def process_root_items(self):
+    def update_trench_book_links(self):
         """ iterate through root items """
+        self.load_root_index() 
         for item in self.root_index:
-            # make a link so as to get the first item's filename
-            link = item['page']
-            param_sep = '?'
-            param_keys = []
-            for param_key, param_val in item['params'].items():
-                param_keys.append(param_key)
-            param_keys.sort()
-            for param_key in param_keys:
-                param_val = item['params'][param_key]
-                link += param_sep + str(param_key) + '=' + str(param_val)
-                param_sep = '&'
-            filename = self.pc.compose_filename_from_link(link)
+            if 'tbtid' in item:
+                tr_id = item['tbtid']
+                tr_label = 'Tr-ID ' + str(tr_id)
+                man_objs = Manifest.objects\
+                                   .filter(label=tr_label,
+                                           project_uuid=self.project_uuid,
+                                           class_uri='oc-gen:cat-exc-unit')[:1]
+                if len(man_objs) > 0:
+                    tr_man = man_objs[0]
+                    print('Found: ' + tr_man.label + ' ' + tr_man.uuid)
+                else:
+                    print('------------------------')
+                    print('CANNOT FIND: ' + tr_label)
    
