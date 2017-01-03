@@ -30,7 +30,7 @@ fed_api.get_cache_keyword_searches()
         self.results = False
         self.best_match = False
         self.html_url = False
-        self.cache_batch_prefix = '2016-11-08'
+        self.cache_batch_prefix = '2016-12-12'
         self.delay_before_request = self.SLEEP_TIME
         self.root_act_dir = settings.STATIC_IMPORTS_ROOT
         self.working_search_dir = 'federal-reg-search'
@@ -45,7 +45,7 @@ fed_api.get_cache_keyword_searches()
             'archaeological',
             'NAGPRA'
         ]
-        self.keyword_b_list = [
+        self.keyword_bb_list = [
             'Illinois',
             'Georgia',
             'Virginia',
@@ -57,6 +57,10 @@ fed_api.get_cache_keyword_searches()
             'Iowa',
             'Louisiana',
             'Kentucky'
+        ]
+        self.keyword_b_list = [
+           'site',
+           'sites'
         ]
 
     def get_list_cached_keyword_searches(self):
@@ -99,6 +103,7 @@ fed_api.get_cache_keyword_searches()
     
     def get_cache_raw_doc_text(self, url):
         """ gets and caches raw text for found documents """
+        ok = False
         url_ex = url.split('/')
         file_name = url_ex[-1]
         exists = self.check_exists(file_name, self.working_doc_dir)
@@ -111,6 +116,11 @@ fed_api.get_cache_keyword_searches()
                 file = codecs.open(dir_file, 'w', 'utf-8')
                 file.write(text)
                 file.close()
+                ok = True
+        else:
+            # found it already
+            ok = True
+        return ok
     
     def add_to_doc_lists(self, json_r):
         """ adds to lists of json and raw document urls """
@@ -232,7 +242,7 @@ fed_api.get_cache_keyword_searches()
         if os.path.exists(dir_file):
             output = True
         else:
-            print('Cannot find: ' + dir_file)
+            # print('Cannot find: ' + dir_file)
             output = False
         return output
     
