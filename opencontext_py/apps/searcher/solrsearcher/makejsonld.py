@@ -61,7 +61,8 @@ class MakeJsonLd():
            or 'geo-project' in self.act_responses \
            or 'geo-record' in self.act_responses:
             search_context_obj = SearchContext()
-            self.json_ld['@context'] = search_context_obj.id
+            self.json_ld['@context'] = [search_context_obj.id,
+                                        search_context_obj.geo_json_context]
         if 'metadata' in self.act_responses:
             self.json_ld['id'] = self.make_id()
             self.json_ld['label'] = self.label

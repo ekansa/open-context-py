@@ -188,8 +188,8 @@ class TemplateItem():
             act_obs.make_type_obs(json_ld)
             if act_obs.properties is not False:
                 self.observations.append(act_obs)
-        if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
-            context = json_ld['@context'][1]
+        if OCitem.PREDICATES_OCGEN_HASOBS in json_ld:
+            context = json_ld['@context'][2]  # this context, after the item and the GeoJSON
             if self.observations is False:
                 self.observations = []
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:

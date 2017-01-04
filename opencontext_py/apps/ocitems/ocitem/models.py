@@ -498,6 +498,7 @@ class ItemConstruction():
         context = []
         item_context_obj = ItemContext()
         context.append(item_context_obj.id)  # add the URI for the general item context
+        context.append(item_context_obj.geo_json_context)  # add the URI for GeoJSON context
         local_context = LastUpdatedOrderedDict()  # make an object for the local context
         raw_pred_list = list()
         pred_types = {}
