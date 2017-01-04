@@ -9,7 +9,12 @@ class GeneralContext():
     General namespaces used for JSON-LD
     for project contexts and for items
     """
+    
+    GEO_JSON_CONTEXT_URI = 'http://geojson.org/geojson-ld/geojson-context.jsonld'
+    
     def __init__(self, id_href=True):
+        # for geo_json_context
+        self.geo_json_context = self.GEO_JSON_CONTEXT_URI
         context = LastUpdatedOrderedDict()
         context['rdf'] = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
         context['rdfs'] = 'http://www.w3.org/2000/01/rdf-schema#'
@@ -22,7 +27,7 @@ class GeneralContext():
         context['foaf'] = 'http://xmlns.com/foaf/0.1/'
         context['cidoc-crm'] = 'http://erlangen-crm.org/current/'
         context['dcat'] = 'http://www.w3.org/ns/dcat#'
-        context['geojson'] = 'http://ld.geojson.org/vocab#'
+        context['geojson'] = 'https://purl.org/geojson/vocab#'
         context['cc'] = 'http://creativecommons.org/ns#'
         context['nmo'] = 'http://nomisma.org/ontology#'
         context['oc-gen'] = 'http://opencontext.org/vocabularies/oc-general/'
@@ -59,15 +64,16 @@ class ItemContext():
             self.id = self.href
         gen_context = GeneralContext()
         context = gen_context.context
+        self.geo_json_context = GeneralContext.GEO_JSON_CONTEXT_URI
         context['oc-gen:has-path-items'] = {'@container': '@list'}  # order of containment semantically important
         context['dc-terms:creator'] = {'@container': '@list'}  # order of authorship semantically important
         context['dc-terms:contributor'] = {'@container': '@list'}  # order of authorship semantically important
         context['oc-gen:has-path-items'] = {'@container': '@list'}
+        # below are GeoJSON-LD context declarations, commented out to
+        """
         context['Feature'] = 'geojson:Feature'
         context['FeatureCollection'] = 'geojson:FeatureCollection'
         context['GeometryCollection'] = 'geojson:GeometryCollection'
-        context['Instant'] = 'http://www.w3.org/2006/time#Instant'
-        context['Interval'] = 'http://www.w3.org/2006/time#Interval'
         context['LineString'] = 'geojson:LineString'
         context['MultiLineString'] = 'geojson:MultiLineString'
         context['MultiPoint'] = 'geojson:MultiPoint'
@@ -75,16 +81,19 @@ class ItemContext():
         context['Point'] = 'geojson:Point'
         context['Polygon'] = 'geojson:Polygon'
         context['bbox'] = {'@id': 'geojson:bbox', '@container': '@list'}
-        context['circa'] = 'geojson:circa'
         context['coordinates'] = 'geojson:coordinates'
-        context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
         context['features'] = {'@id': 'geojson:features', '@container': '@set'}
         context['geometry'] = 'geojson:geometry'
         context['properties'] = 'geojson:properties'
+        """
+        context['Instant'] = 'http://www.w3.org/2006/time#Instant'
+        context['Interval'] = 'http://www.w3.org/2006/time#Interval'
+        context['datetime'] = 'http://www.w3.org/2006/time#inXSDDateTime'
+        context['circa'] = 'geojson:circa'
         context['start'] = 'http://www.w3.org/2006/time#hasBeginning'
         context['stop'] = 'http://www.w3.org/2006/time#hasEnding'
-        context['title'] = 'dc-terms:title'
         context['when'] = 'geojson:when'
+        context['title'] = 'dc-terms:title'
         context['reference-type'] = {'@id': 'oc-gen:reference-type', '@type': '@id'}
         context['inferred'] = 'oc-gen:inferred'
         context['specified'] = 'oc-gen:specified'
@@ -112,6 +121,7 @@ class SearchContext():
             self.id = self.href
         item_context_obj = ItemContext()
         context = item_context_obj.context
+        self.geo_json_context = GeneralContext.GEO_JSON_CONTEXT_URI # link to geojson
         context['opensearch'] = 'http://a9.com/-/spec/opensearch/1.1/'
         context['totalResults'] = {'@id': 'opensearch:totalResults', '@type': 'xsd:integer'}
         context['startIndex'] = {'@id': 'opensearch:startIndex', '@type': 'xsd:integer'}

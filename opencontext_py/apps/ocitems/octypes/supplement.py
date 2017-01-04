@@ -40,8 +40,8 @@ class TypeSupplement():
             example_pred['label'] = 'Comparanda in Arachne'
             example_pred['oc-gen:predType'] = 'link'
             example_pred['type'] = '@id'
-            self.item_json['@context'][1]['skos:editorialNote'] = editorial_pred
-            self.item_json['@context'][1]['skos:example'] = example_pred
+            self.item_json['@context'][2]['skos:editorialNote'] = editorial_pred
+            self.item_json['@context'][2]['skos:example'] = example_pred
             self.add_arachne_observation(a_api)
         return self.item_json
 

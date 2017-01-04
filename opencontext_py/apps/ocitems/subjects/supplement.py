@@ -45,11 +45,11 @@ class SubjectSupplement():
                 finds_pred['label'] = 'Çatalhöyük Living Archive: Unit Finds'
                 finds_pred['oc-gen:predType'] = 'variable'
                 finds_pred['type'] = 'xsd:string'
-                self.item_json['@context'][1]['skos:editorialNote'] = editorial_pred
+                self.item_json['@context'][2]['skos:editorialNote'] = editorial_pred
                 if catal_api.props_count > 0:
-                    self.item_json['@context'][1]['skos:definition'] = props_pred
+                    self.item_json['@context'][2]['skos:definition'] = props_pred
                 if catal_api.finds_count > 0:
-                    self.item_json['@context'][1]['skos:note'] = finds_pred
+                    self.item_json['@context'][2]['skos:note'] = finds_pred
                 self.add_catal_observation(catal_api)
         return self.item_json
 

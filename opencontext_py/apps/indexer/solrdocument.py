@@ -242,7 +242,7 @@ sd_b = sd_obj.fields
     def _process_predicates(self):
         # Get list of predicates
         predicates = (item for item in self.oc_item.json_ld[
-            '@context'][1].items() if item[0].startswith('oc-pred:'))
+            '@context'][2].items() if item[0].startswith('oc-pred:'))
         # We need a list for "root___pred_id" because it is multi-valued
         self.fields[self.ROOT_PREDICATE_SOLR] = []
         for predicate in predicates:
@@ -983,7 +983,7 @@ sd_b = sd_obj.fields
         """
         output = False
         if '@context' in self.oc_item.json_ld:
-            for act_entity_id, entity in self.oc_item.json_ld['@context'][1].items():
+            for act_entity_id, entity in self.oc_item.json_ld['@context'][2].items():
                 if act_entity_id == predicate_slug_id and 'type' in entity:
                     output = entity['type']
                     break
