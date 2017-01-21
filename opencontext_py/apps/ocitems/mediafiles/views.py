@@ -2,6 +2,7 @@ import json
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.apps.entities.redirects.manage import RedirectURL
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
@@ -66,7 +67,15 @@ def html_view(request, uuid):
                                       'base_url': base_url})
             return HttpResponse(template.render(context), status=401)
     else:
-        raise Http404
+        # did not find a record for the table, check for redirects
+        r_url = RedirectURL()
+        r_ok = r_url.get_direct_by_type_id('media', uuid)
+        if r_ok:
+            # found a redirect!!
+            return redirect(r_url.redirect, permanent=r_url.permanent)
+        else:
+            # raise Http404
+            raise Http404
 
 
 def html_full(request, uuid):
@@ -117,7 +126,15 @@ def html_full(request, uuid):
                                       'user': request.user})
             return HttpResponse(template.render(context), status=401)
     else:
-        raise Http404
+        # did not find a record for the table, check for redirects
+        r_url = RedirectURL()
+        r_ok = r_url.get_direct_by_type_id('media', uuid)
+        if r_ok:
+            # found a redirect!!
+            return redirect(r_url.redirect, permanent=r_url.permanent)
+        else:
+            # raise Http404
+            raise Http404
 
 
 def json_view(request, uuid):

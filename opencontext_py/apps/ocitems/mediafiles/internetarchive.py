@@ -41,10 +41,10 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'http://artiraq.org/static/opencontext/poggio-civitate/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/images-artiraq/poggio-civitate/'
-# ims = ia_m.get_public_image_uuids_by_size(1000000)
-ims = ia_m.get_public_image_uuids_by_size_temp(0)
+# ia_m.remote_uri_sub = 'http://artiraq.org/static/opencontext/poggio-civitate/'
+# ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/images-artiraq/poggio-civitate/'
+ims = ia_m.get_public_image_uuids_by_size(0)
+# ims = ia_m.get_public_image_uuids_by_size_temp(0)
 len(ia_m.image_uuids)
 ia_m.archive_image_media_items()
 
@@ -96,7 +96,8 @@ for med_full in med_files:
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.cach_file_dir = 'internet-archive'
-        self.ia_collection = 'opensource_media'
+        # self.ia_collection = 'opensource_media'
+        self.ia_collection = 'opencontext'
         self.id_prefix = 'opencontext'
         self.ia_uri_prefix = 'https://archive.org/download/'
         self.iiif_uri_prefix = 'https://iiif.archivelab.org/iiif/'
@@ -174,6 +175,7 @@ for med_full in med_files:
                              .filter(file_type='oc-gen:fullfile',
                                      project_uuid__in=public_project_uuids,
                                      filesize__gt=file_size)\
+                             .exclude(file_uri__contains='/www.alexandriaarchive.org/')\
                              .order_by('-filesize')
         for med_file in med_files:
             ch_iiif = Mediafile.objects\
