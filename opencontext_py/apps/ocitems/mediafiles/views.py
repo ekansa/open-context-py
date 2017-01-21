@@ -126,7 +126,6 @@ def html_full(request, uuid):
                                       'user': request.user})
             return HttpResponse(template.render(context), status=401)
     else:
-        else:
         # did not find a record for the table, check for redirects
         r_url = RedirectURL()
         r_ok = r_url.get_direct_by_type_id('media', uuid)
