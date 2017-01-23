@@ -11,8 +11,9 @@ class WaybackUp():
     
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
+# urls is a list of urls you want to archive
 wb.urls = urls
-wb.check_url_available(url)
+wb.archive_urls()
 
     '''
     CLIENT_HEADERS = {
