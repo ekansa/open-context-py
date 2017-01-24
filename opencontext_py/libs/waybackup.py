@@ -1,7 +1,10 @@
+import re
 import json
 import requests
 from time import sleep
+from bs4 import BeautifulSoup
 from urllib.parse import quote
+from urllib.parse import urljoin
 
 
 class WaybackUp():
@@ -11,10 +14,14 @@ class WaybackUp():
     
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
+wb.delay_before_request = 5
+path = 'https://www.usgs.gov/centers/norock'
+url = 'https://www.usgs.gov/centers/norock/science'
+urls = wb.scrape_urls(url, path, 5)
 # urls is a list of urls you want to archive
 wb.urls = urls
 wb.archive_urls()
-
+wb.check_available_urls()
     '''
     CLIENT_HEADERS = {
         'User-Agent': 'Python Wayback Backup API-Client'
@@ -36,7 +43,7 @@ wb.archive_urls()
         self.wb_available_api_url = 'https://archive.org/wayback/available'
         self.wb_save_url = 'https://web.archive.org/save/'
         # Time (in seconds) to pause between requests
-        self.delay_before_request = .5
+        self.delay_before_request = 1.5
         # User Agent for this code, so we self-identify to the Internet
         # Archive when we use their APIs
         self.client_headers = self.CLIENT_HEADERS
@@ -74,8 +81,16 @@ wb.archive_urls()
                     print('Archived: ' + url)
                     self.archived_urls.append(url)
                 else:
-                    print('Problem saving:' + url)
-                    self.failed_urls.append(url)
+                    # try again after a longish wait
+                    print('2nd attempt after pause...')
+                    sleep(2.5 + self.delay_before_request*2)
+                    ok = self.archive_url(url)
+                    if ok:
+                        print('Archived: ' + url)
+                        self.archived_urls.append(url)
+                    else:
+                        print('Problem saving:' + url)
+                        self.failed_urls.append(url)
             else:
                 print('Skipping: ' + url)
 
@@ -93,15 +108,93 @@ wb.archive_urls()
             r = requests.get(s_url,
                              timeout=240,
                              headers=self.client_headers)
-            request_url = r.url
             r.raise_for_status()
             ok = True
         except:
             ok = False
             error = 'Snapshot request failed for url: ' + str(url)
-            error += ' request: ' + request_url
             self.errors.append(error)
         return ok
+    
+    def scrape_urls(self,
+                    url,
+                    path_limit=None,
+                    max_depth=1,
+                    current_depth=0):
+        """ downloads a web page and extracts URLs,
+            works recursively
+        """
+        urls = []
+        html = None
+        if current_depth < max_depth:
+            # only get the page if we're not at maximum crawl depth
+            if self.delay_before_request > 0:
+                # default to sleep BEFORE a request is sent, to
+                # give the remote service a break.
+                sleep(self.delay_before_request)
+            try:
+                r = requests.get(url,
+                                 timeout=240,
+                                 headers=self.client_headers)
+                r.raise_for_status()
+                html = str(r.content)
+            except:
+                html = False
+                error = 'Get request failed for url: ' + str(url)
+                self.errors.append(error)
+        if isinstance(html, str):
+            print('Getting urls from: ' + url)
+            soup = BeautifulSoup(html, 'lxml')
+            for link in soup.find_all('a'):
+                raw_url = link.get('href')
+                if isinstance(raw_url, str):
+                    raw_url = raw_url.strip() # remove whitespaces, etc.
+                    if raw_url[0:7] == 'http://' or \
+                       raw_url[0:8] == 'https://':
+                        # we have an absolute URL
+                        if raw_url not in urls:
+                            urls.append(raw_url)
+                    else:
+                        # we have a relative URL, make it absolute
+                        new_url = urljoin(url, raw_url)
+                        if new_url not in urls:
+                            urls.append(new_url)
+        if len(urls) > 0:
+            current_depth += 1
+            if current_depth < max_depth:
+                current_page_urls = urls
+                for page_url in current_page_urls:
+                    if isinstance(path_limit, str):
+                        # limit to URLs with a certain path
+                        if path_limit in page_url:
+                            ok_new = True
+                        else:
+                            ok_new = False
+                    else:
+                        ok_new = True
+                    if ok_new:
+                        new_page_urls = self.scrape_urls(page_url,
+                                                         max_depth,
+                                                         current_depth)
+                        for new_url in new_page_urls:
+                            # add new urls we don't already have
+                            if new_url not in urls:
+                                urls.append(new_url)
+        return urls               
+    
+    def check_available_urls(self):
+        """ Checks a list of URLs to make sure they have been entered
+            into the Wayback Machine as an available resource
+        """
+        for url in self.urls:
+            archive_ok = True
+            available = self.check_url_available(url,
+                                                 self.check_timestamp)
+            if available:
+                self.archived_urls.append(url)
+            else:
+                self.failed_urls.append(url)
+        return self.archived_urls
     
     def check_url_ok(self, url):
         """ checks to see if a URL gives an OK status
