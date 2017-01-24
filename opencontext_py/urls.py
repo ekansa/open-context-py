@@ -322,6 +322,8 @@ urlpatterns = [
     # BELOW ARE UTILITIES REQUESTS (UtilitiesViews)
     #----------------------------
     url(r'^utilities/meters-to-lat-lon', UtilitiesViews.meters_to_lat_lon, name='meters_to_lat_lon'),
+    url(r'^utilities/lat-lon-to-quadtree', UtilitiesViews.lat_lon_to_quadtree, name='lat_lon_to_quadtree'),
+    url(r'^utilities/quadtree-to-lat-lon', UtilitiesViews.quadtree_to_lat_lon, name='quadtree_to_lat_lon'),
     #----------------------------
     # BELOW ARE INDEX REQUESTS
     #----------------------------

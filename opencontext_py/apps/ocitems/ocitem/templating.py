@@ -91,6 +91,7 @@ class TemplateItem():
         self.predicate_query_json = False  # link for querying json with a predicate
         self.type_query_link = False  # link for querying with a type
         self.type_query_json = False  # link for querying json with a type
+        self.children_query = False  # link for querying children of this
         self.proj_content = False
 
     def read_jsonld_dict(self, json_ld):
@@ -430,7 +431,15 @@ class TemplateItem():
     def create_query_links(self, json_ld):
         """ makes links for querying with the item
         """
-        if self.act_nav == 'predicates':
+        if self.act_nav == 'subjects':
+            if isinstance(self.children, list):
+                if len(self.children) > 0:
+                    self.children_query = '/search/?prop=' + self.slug 
+                    if self.project is not False:
+                        if self.project.slug is not False:
+                            self.children_query += '&proj=' + self.project.slug
+                            self.children_query += '&proj=' + self.project.slug
+        elif self.act_nav == 'predicates':
             self.predicate_query_link = '/search/?prop=' + self.slug
             self.predicate_query_json = '/search/.json?prop=' + self.slug
             if self.project is not False:

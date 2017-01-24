@@ -332,6 +332,24 @@ class GlobalMercator(object):
         coords.append(outer_coords)
         return coords
 
+    def validate_geo_coordinate(self, coordinate, coord_type):
+        """ validates a geo-spatial coordinate """
+        is_valid = False
+        try:
+            fl_coord = float(coordinate)
+        except ValueError:
+            fl_coord = False
+        if fl_coord is not False:
+            if 'lat' in coord_type:
+                if fl_coord <= 90 and\
+                   fl_coord >= -90:
+                    is_valid = True
+            elif 'lon' in coord_type:
+                if fl_coord <= 180 and\
+                   fl_coord >= -180:
+                    is_valid = True
+        return is_valid
+
     def distance_on_unit_sphere(self, lat1, long1, lat2, long2):
         """ computes KM distances on a sphere
             From: http://gis.stackexchange.com/questions/163785/

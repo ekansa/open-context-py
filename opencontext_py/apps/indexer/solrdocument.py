@@ -529,8 +529,8 @@ sd_b = sd_obj.fields
                         # indexing with coordinates seperated by a space is in
                         # lat-lon order, the reverse of GeoJSON because
                         # solr spatial fields expect a lat-lon order
-                        lat_ok = self.validate_geo_coordinate(coords[1], 'lat')
-                        lon_ok = self.validate_geo_coordinate(coords[0], 'lon')
+                        lat_ok = gm.validate_geo_coordinate(coords[1], 'lat')
+                        lon_ok = gm.validate_geo_coordinate(coords[0], 'lon')
                         if lat_ok and lon_ok:
                             self.fields['discovery_geolocation'] = \
                                 str(coords[1]) + ',' + str(coords[0])
