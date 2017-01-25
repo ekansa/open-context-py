@@ -15,13 +15,27 @@ class WaybackUp():
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 5
-path = 'https://www.nps.gov/subjects/climatechange'
-url = 'https://www.nps.gov/subjects/climatechange/culturalresourcesstrategy.htm'
+path = 'https://www.epa.gov/energy'
+url = 'https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator'
 urls = wb.scrape_urls(url, path, 5)
 # urls is a list of urls you want to archive
 wb.urls = urls
 wb.archive_urls()
 wb.check_available_urls()
+
+urls = []
+for e in wb.errors:
+    url = e.replace('Snapshot request failed for url: ', '')
+    urls.append(url)
+new_urls = []
+for url in urls:
+    url = url.replace('\'', '')
+    url = url.replace('\\', '')
+    url = url.replace('https://', 'https:||')
+    url = url.replace('//', '/')
+    url = url.replace('https:||', 'https://')
+    new_urls.append(url)
+    
     '''
     CLIENT_HEADERS = {
         'User-Agent': 'Python Wayback Backup API-Client'
@@ -138,6 +152,12 @@ wb.check_available_urls()
             '.tif',
             '.gif'
         ]
+        skip_domains = [
+            'plus.google.com',
+            'twitter.com',
+            'www.facebook.com',
+            'pinterest.com'
+        ]
         l_url = url.lower()
         for skip_ex in skip_extensions:
             if skip_ex in l_url:
@@ -164,30 +184,41 @@ wb.check_available_urls()
         if self.archive_in_scrape and do_download is False:
             # we should try to archive it, even if we haven't downloaded it
             print('Try to archive media from: ' + url)
-            self.archive_url(url) 
+            ok = self.archive_url(url)
+            if ok is False:
+                print('PROBLEM ARCHIVING!')
+                if url not in self.failed_urls:
+                    self.failed_urls.append(url)
         if isinstance(html, str):
             if self.archive_in_scrape:
                 print('Try to archive page: ' + url)
                 self.archive_url(url)
-            print('Getting urls from: ' + url)
+            print('> Getting urls from: ' + url)
             soup = BeautifulSoup(html, 'lxml')
             for link in soup.find_all('a'):
+                do_raw_url = True
                 raw_url = link.get('href')
                 if isinstance(raw_url, str):
                     raw_url = raw_url.strip() # remove whitespaces, etc.
                     if '#' in raw_url:
                         url_ex = raw_url.split('#')
                         raw_url = url_ex[0]
-                    if raw_url[0:7] == 'http://' or \
-                       raw_url[0:8] == 'https://':
-                        # we have an absolute URL
-                        if raw_url not in urls:
-                            urls.append(raw_url)
-                    else:
-                        # we have a relative URL, make it absolute
-                        new_url = urljoin(url, raw_url)
-                        if new_url not in urls:
-                            urls.append(new_url)
+                    for skip_domain in skip_domains:
+                        if skip_domain in raw_url:
+                            # skip it, it's for a social media site
+                            do_raw_url = False
+                    if do_raw_url:
+                        # do it
+                        if raw_url[0:7] == 'http://' or \
+                           raw_url[0:8] == 'https://':
+                            # we have an absolute URL
+                            if raw_url not in urls:
+                                urls.append(raw_url)
+                        else:
+                            # we have a relative URL, make it absolute
+                            new_url = urljoin(url, raw_url)
+                            if new_url not in urls:
+                                urls.append(new_url)
         if len(urls) > 0:
             current_depth += 1
             if current_depth < max_depth:
