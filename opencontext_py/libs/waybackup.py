@@ -44,6 +44,8 @@ wb.check_available_urls()
         self.wb_save_url = 'https://web.archive.org/save/'
         # Time (in seconds) to pause between requests
         self.delay_before_request = 1.5
+        # Archive while scrapping URLs
+        self.archive_in_scrape = True
         # User Agent for this code, so we self-identify to the Internet
         # Archive when we use their APIs
         self.client_headers = self.CLIENT_HEADERS
@@ -143,6 +145,8 @@ wb.check_available_urls()
                 error = 'Get request failed for url: ' + str(url)
                 self.errors.append(error)
         if isinstance(html, str):
+            if self.archive_in_scrape:
+                self.archive_url(url)
             print('Getting urls from: ' + url)
             soup = BeautifulSoup(html, 'lxml')
             for link in soup.find_all('a'):
