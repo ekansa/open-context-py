@@ -135,7 +135,8 @@ wb.check_available_urls()
             '.xls',
             '.jpg',
             '.png',
-            '.tif'
+            '.tif',
+            '.gif'
         ]
         l_url = url.lower()
         for skip_ex in skip_extensions:
