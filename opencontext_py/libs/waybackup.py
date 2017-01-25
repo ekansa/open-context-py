@@ -15,8 +15,8 @@ class WaybackUp():
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 5
-path = 'https://www.usgs.gov/centers/norock'
-url = 'https://www.usgs.gov/centers/norock/science'
+path = 'https://www.nps.gov/subjects/climatechange'
+url = 'https://www.nps.gov/subjects/climatechange/culturalresourcesstrategy.htm'
 urls = wb.scrape_urls(url, path, 5)
 # urls is a list of urls you want to archive
 wb.urls = urls
@@ -126,9 +126,25 @@ wb.check_available_urls()
         """ downloads a web page and extracts URLs,
             works recursively
         """
+        do_download = True
+        skip_extensions = [
+            # common files we don't want to download
+            '.pdf',
+            '.ppt',
+            '.doc',
+            '.xls',
+            '.jpg',
+            '.png',
+            '.tif'
+        ]
+        l_url = url.lower()
+        for skip_ex in skip_extensions:
+            if skip_ex in l_url:
+                do_download = False
+                break
         urls = []
         html = None
-        if current_depth < max_depth:
+        if current_depth < max_depth and do_download:
             # only get the page if we're not at maximum crawl depth
             if self.delay_before_request > 0:
                 # default to sleep BEFORE a request is sent, to
@@ -144,8 +160,13 @@ wb.check_available_urls()
                 html = False
                 error = 'Get request failed for url: ' + str(url)
                 self.errors.append(error)
+        if self.archive_in_scrape and do_download is False:
+            # we should try to archive it, even if we haven't downloaded it
+            print('Try to archive media from: ' + url)
+            self.archive_url(url) 
         if isinstance(html, str):
             if self.archive_in_scrape:
+                print('Try to archive page: ' + url)
                 self.archive_url(url)
             print('Getting urls from: ' + url)
             soup = BeautifulSoup(html, 'lxml')
@@ -153,6 +174,9 @@ wb.check_available_urls()
                 raw_url = link.get('href')
                 if isinstance(raw_url, str):
                     raw_url = raw_url.strip() # remove whitespaces, etc.
+                    if '#' in raw_url:
+                        url_ex = raw_url.split('#')
+                        raw_url = url_ex[0]
                     if raw_url[0:7] == 'http://' or \
                        raw_url[0:8] == 'https://':
                         # we have an absolute URL
