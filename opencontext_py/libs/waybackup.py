@@ -14,9 +14,9 @@ class WaybackUp():
     
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
-wb.delay_before_request = 5
-path = 'https://www.epa.gov/energy'
-url = 'https://www.epa.gov/energy/greenhouse-gas-equivalencies-calculator'
+wb.delay_before_request = 3
+path = ['https://www.nps.gov/articles', 'https://www.nps.gov/media/', 'https://www.nps.gov/places/', 'https://www.nps.gov/people/']
+url = 'https://www.nps.gov/articles/lgbtqtheme-intro.htm'
 urls = wb.scrape_urls(url, path, 5)
 # urls is a list of urls you want to archive
 wb.urls = urls
@@ -230,6 +230,12 @@ for url in urls:
                             ok_new = True
                         else:
                             ok_new = False
+                    elif isinstance(path_limit, list):
+                        # we have a list of OK paths to crawl
+                        ok_new = False
+                        for pl in path_limit:
+                            if pl in page_url:
+                                ok_new = True
                     else:
                         ok_new = True
                     if ok_new:
