@@ -15,9 +15,9 @@ class WaybackUp():
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 3
-path = ['https://www.nps.gov/articles', 'https://www.nps.gov/media/', 'https://www.nps.gov/places/', 'https://www.nps.gov/people/']
-url = 'https://www.nps.gov/articles/lgbtqtheme-intro.htm'
-urls = wb.scrape_urls(url, path, 5)
+path = ['nature.nps.gov', 'irma.nps.gov']
+url = 'https://www.nature.nps.gov/geology/inventory/gre_publications.cfm'
+urls = wb.scrape_urls(url, path, 6)
 # urls is a list of urls you want to archive
 wb.urls = urls
 wb.archive_urls()
@@ -150,7 +150,9 @@ for url in urls:
             '.jpg',
             '.png',
             '.tif',
-            '.gif'
+            '.gif',
+            '.zip',
+            '.tgz'
         ]
         skip_domains = [
             'plus.google.com',
