@@ -121,6 +121,13 @@ sd_b = sd_obj.fields
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
+        bad_pred_types = [
+            False,
+            None,
+            '',
+            'None',
+            'False'
+        ]
         solr_field_name = self._convert_slug_to_solr(
             predicate_slug +
             self._get_predicate_type_string(
@@ -140,6 +147,9 @@ sd_b = sd_obj.fields
             if predicate_key in obs_list:
                 predicate_values = obs_list[predicate_key]
                 for value in predicate_values:
+                    if predicate_type in bad_pred_types:
+                        # if missing a predicate type index as a string
+                        predicate_type = 'xsd:string'
                     if predicate_type == '@id':
                         if make_join_ids and 'subjects' in value['id']:
                             # case where we want to make a join field to link
