@@ -199,6 +199,11 @@
 	<field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
 	<field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
 
+    <!-- link to a thumbnail, if present -->
+    <field name="thumbnail_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
+    <!-- link to a iiif info json resource, if present -->
+    <field name="iiif_json_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
+    
     <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
 	a prefix defined by the slug of its parent levels. For example, consider the type Taxon::Mammal.
 	It will be useful to have facet values for the next level down available. To do this, use the database

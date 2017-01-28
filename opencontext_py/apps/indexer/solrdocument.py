@@ -58,6 +58,14 @@ sd_b = sd_obj.fields
     FILE_SIZE_SOLR = 'filesize___pred_numeric'
     FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
     RELATED_SOLR_FIELD_PREFIX = 'rel--'
+    
+    MISSING_PREDICATE_TYPES = [
+        False,
+        None,
+        '',
+        'None',
+        'False'
+    ]
 
     def __init__(self, uuid):
         '''
@@ -121,13 +129,8 @@ sd_b = sd_obj.fields
 
     def _process_predicate_values(self, predicate_slug, predicate_type):
         # First generate the solr field name
-        bad_pred_types = [
-            False,
-            None,
-            '',
-            'None',
-            'False'
-        ]
+        thumbnail_uri = None
+        iiif_json_uri = None
         solr_field_name = self._convert_slug_to_solr(
             predicate_slug +
             self._get_predicate_type_string(
@@ -147,7 +150,7 @@ sd_b = sd_obj.fields
             if predicate_key in obs_list:
                 predicate_values = obs_list[predicate_key]
                 for value in predicate_values:
-                    if predicate_type in bad_pred_types:
+                    if predicate_type in predicate_type in self.MISSING_PREDICATE_TYPES:
                         # if missing a predicate type index as a string
                         predicate_type = 'xsd:string'
                     if predicate_type == '@id':
@@ -211,6 +214,14 @@ sd_b = sd_obj.fields
                                     self.fields['other_binary_media_count'] += 1
                                 elif 'documents' in value['id']:
                                     self.fields['document_count'] += 1
+                                if 'oc-gen:thumbnail-uri' in value and thumbnail_uri is None:
+                                    # we only do this once, get the first thumbnail to store as a thumbail in solr
+                                    thumbnail_uri = value['oc-gen:thumbnail-uri']
+                                    self.fields['thumbnail_uri'] = thumbnail_uri
+                                if 'oc-gen:iiif-json-uri' in value and iiif_json_uri is None:
+                                    # we only do this once, get the first iiif-json in solr
+                                    iiif_json_uri = value['oc-gen:iiif-json-uri']
+                                    self.fields['iiif_json_uri'] = iiif_json_uri
                             self.fields['text'] += str(value['label']) + ' '
                     elif predicate_type in [
                         'xsd:integer', 'xsd:double', 'xsd:boolean'
@@ -246,6 +257,8 @@ sd_b = sd_obj.fields
             return prefix + 'string'
         elif predicate_type == 'xsd:date':
             return prefix + 'date'
+        elif predicate_type in self.MISSING_PREDICATE_TYPES:
+            return prefix + 'string'
         else:
             raise Exception("Error: Unknown predicate type: " + str(predicate_type))
 
@@ -441,10 +454,13 @@ sd_b = sd_obj.fields
                 self._convert_slug_to_solr(parent['slug'])\
                 + '___project_id'
 
+    
     def _process_dc_terms(self):
         """
         Finds dublin-core metadata about an item (other than authorship)
         """
+        thumbnail_uri = None
+        iiif_json_uri = None
         for dc_predicate, fname in DCterms.DC_META_PREDICATES.items():
             if dc_predicate in self.oc_item.json_ld:
                 self.fields[fname] = []
@@ -456,7 +472,17 @@ sd_b = sd_obj.fields
                         meta['id'] = meta['rdfs:isDefinedBy']
                     self.fields['text'] += str(meta['label']) + '\n'
                     self.fields['text'] += meta['id'] + '\n'
-                    if 'opencontext.org/tables/' not in meta['id']:
+                    if dc_predicate == 'foaf:depection':
+                        if 'type' in meta:
+                            if meta['type'] == 'oc-gen:hero' and thumbnail_uri is None:
+                                # we only do this once, get the first hero to store as a thumbail in solr
+                                thumbnail_uri = meta['id']
+                                self.fields['thumbnail_uri'] = thumbnail_uri
+                        if 'oc-gen:iiif-json-uri' in meta and iiif_json_uri is None:
+                            # we only do this once, get the first iiif-json in solr
+                            iiif_json_uri = meta['oc-gen:iiif-json-uri']
+                            self.fields['iiif_json_uri'] = iiif_json_uri
+                    elif 'opencontext.org/tables/' not in meta['id']:
                         # do not index table references in this way
                         """
                         item = self._concat_solr_string_value(
@@ -1015,10 +1041,18 @@ sd_b = sd_obj.fields
             self.fields[self.FILE_MIMETYPE_SOLR] = []
             self.fields[self.FILE_SIZE_SOLR] = []
             if 'oc-gen:has-files' in self.oc_item.json_ld:
+                thumbnail_uri = None
+                iiif_json_uri = None
                 for file_item in self.oc_item.json_ld['oc-gen:has-files']:
                     if 'type' in file_item and 'dc-terms:hasFormat' in file_item:
                         if file_item['type'] == 'oc-gen:fullfile':
                             self.fields[self.FILE_MIMETYPE_SOLR].append(file_item['dc-terms:hasFormat'])
+                        elif file_item['type'] == 'oc-gen:thumbnail' and thumbnail_uri is None:
+                            thumbnail_uri = file_item['id']
+                            self.fields['thumbnail_uri'] = thumbnail_uri
+                        elif file_item['type'] == 'oc-gen:iiif' and iiif_json_uri is None:
+                            iiif_json_uri = file_item['id']
+                            self.fields['iiif_json_uri'] = iiif_json_uri
                     if 'dcat:size' in file_item:
                         size = float(file_item['dcat:size'])
                         if size > self.max_file_size:
