@@ -15,8 +15,8 @@ class WaybackUp():
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 3
-path = ['nature.nps.gov', 'irma.nps.gov']
-url = 'https://www.nature.nps.gov/geology/inventory/gre_publications.cfm'
+path = ['https://www.nps.gov/chcu']
+url = 'https://www.nps.gov/chcu/index.htm'
 urls = wb.scrape_urls(url, path, 6)
 # urls is a list of urls you want to archive
 wb.urls = urls
@@ -191,10 +191,21 @@ for url in urls:
                 print('PROBLEM ARCHIVING!')
                 if url not in self.failed_urls:
                     self.failed_urls.append(url)
+            else:
+                if url not in self.archive_urls:
+                    self.archived_urls.append(url)
         if isinstance(html, str):
             if self.archive_in_scrape:
                 print('Try to archive page: ' + url)
-                self.archive_url(url)
+                ok = self.archive_url(url)
+                if ok is False:
+                    if url not in self.failed_urls:
+                        self.failed_urls.append(url)
+                else:
+                   self.archived_urls.append(url)
+            print('Archived: ' + str(len(self.archived_urls)) \
+                  + ', failed '  + str(len(self.failed_urls)) \
+                  + ' level: ' + str(current_depth))
             print('> Getting urls from: ' + url)
             soup = BeautifulSoup(html, 'lxml')
             for link in soup.find_all('a'):
