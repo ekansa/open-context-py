@@ -26,10 +26,10 @@ class WaybackUp():
     
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
-wb.delay_before_request = 7.5
-path = ['.nps.gov/chcu/']  # only follow links in these paths
-url = 'https://www.nps.gov/chcu/index.htm'
-wb.scrape_urls(url, path, 6)  # archive pages discovered from the url, going 6 steps away
+wb.delay_before_request = 5
+path = ['cfpub.epa.gov/surf/', '.epa.gov/apex/', '.epa.gov/water/', 'iaspub.epa.gov', 'water.usgs.gov']  # only follow links in these paths
+url = 'https://cfpub.epa.gov/surf/huc.cfm?huc_code=14080106'
+wb.scrape_urls(url, path, 8)  # archive pages discovered from the url, going 6 steps away
 wb.urls = wb.failed_urls
 # archive the previous failures
 wb.archive_urls()
