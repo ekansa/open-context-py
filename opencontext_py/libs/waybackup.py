@@ -12,13 +12,32 @@ class WaybackUp():
     Utilities to accession URLs into the Internet
     Archive's Wayback machine for preservation.
     
+    
+    This does not require using all of Open Context. It
+    is meant to be a stand alone class.
+    
+    To run this, you will need to install (via pip or easy_install):
+    (1) beautifulsoup4
+    (2) requests
+    
+    
+    To use this, you'll need to adapt the following for your Python
+    setup:
+    
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
-wb.delay_before_request = 3
-path = ['https://www.nps.gov/chcu']
+wb.delay_before_request = 7.5
+path = ['.nps.gov/chcu/']  # only follow links in these paths
 url = 'https://www.nps.gov/chcu/index.htm'
-urls = wb.scrape_urls(url, path, 6)
-# urls is a list of urls you want to archive
+wb.scrape_urls(url, path, 6)  # archive pages discovered from the url, going 6 steps away
+wb.urls = wb.failed_urls
+# archive the previous failures
+wb.archive_urls()
+
+from opencontext_py.libs.waybackup import WaybackUp
+urls = [] # your list of URLs to archive
+wb = WaybackUp()
+wb.delay_before_request = 3
 wb.urls = urls
 wb.archive_urls()
 wb.check_available_urls()
@@ -89,7 +108,7 @@ for url in urls:
                 archive_ok = self.check_url_ok(url)
                 if archive_ok is False:
                     print('Problem with: ' + url)
-                    self.broken_urls.append(url)
+                    self.failed_urls.append(url)
             if archive_ok:
                 # archive the URL
                 ok = self.archive_url(url)
@@ -152,7 +171,9 @@ for url in urls:
             '.tif',
             '.gif',
             '.zip',
-            '.tgz'
+            '.tgz',
+            '.exe',
+            '.EXE'
         ]
         skip_domains = [
             'plus.google.com',
@@ -192,7 +213,7 @@ for url in urls:
                 if url not in self.failed_urls:
                     self.failed_urls.append(url)
             else:
-                if url not in self.archive_urls:
+                if url not in self.archived_urls:
                     self.archived_urls.append(url)
         if isinstance(html, str):
             if self.archive_in_scrape:
