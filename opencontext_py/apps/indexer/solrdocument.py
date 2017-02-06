@@ -168,15 +168,14 @@ sd_b = sd_obj.fields
                             # append to the solr field for joins
                             self.fields['join___pred_id'].append(sub_uuid)
                         if predicate_slug != 'link':
-                            active_solr_field = solr_field_name
+                            act_solr_field = solr_field_name
                             parents = LinkRecursion(
                                 ).get_jsonldish_entity_parents(
                                 value['id']
                                 )
-                            all_obj_solr_field = 'obj_all___' + active_solr_field
+                            all_obj_solr_field = 'obj_all___' + act_solr_field
                             for parent in parents:
-                                act_slug = parent['slug']
-                                active_solr_value = \
+                                act_solr_value = \
                                     self._concat_solr_string_value(
                                         parent['slug'],
                                         self._get_predicate_type_string(
@@ -184,18 +183,20 @@ sd_b = sd_obj.fields
                                         parent['id'],
                                         parent['label']
                                     )
+                                act_slug = parent['slug']
                                 self.fields['text'] += ' ' + \
                                     str(parent['label']) + ' '
                                 # add the solr id field value and fq field slug
-                                self.add_id_field_fq_field_values(active_solr_field,
-                                                                  active_solr_value,
+                                self.add_id_field_fq_field_values(act_solr_field,
+                                                                  act_solr_value,
                                                                   act_slug)
                                 # so all items in the hiearchy are present in the
                                 # and can be queried, even if you don't know the parent
                                 self.add_id_field_fq_field_values(all_obj_solr_field,
-                                                                  active_solr_value,
+                                                                  act_solr_value,
                                                                   act_slug)
-                                active_solr_field = self._convert_slug_to_solr(
+                                # make the next solr field for the next iteration through the loop
+                                act_solr_field = self._convert_slug_to_solr(
                                     parent['slug']) + '___' + solr_field_name
                         else:
                             # case of a linking relation, don't bother looking
@@ -481,7 +482,7 @@ sd_b = sd_obj.fields
             self.add_id_field_fq_field_values(solr_field_name,
                                               act_solr_value,
                                               act_slug)
-            # make the noew solr_field_name for the next iteration of the loop
+            # make the new solr_field_name for the next iteration of the loop
             solr_field_name = \
                 self._convert_slug_to_solr(parent['slug'])\
                 + '___project_id'
