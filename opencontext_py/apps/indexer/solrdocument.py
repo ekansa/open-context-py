@@ -21,7 +21,7 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = 'dd9112bc-1cd1-482d-a2c2-6b123a2aa6ec'
+uuid = 'ed14302d-2a69-423a-9545-0b4b6c672bc0'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
@@ -174,11 +174,18 @@ sd_b = sd_obj.fields
                                 value['id']
                                 )
                             all_obj_solr_field = 'obj_all___' + active_solr_field
+                            all_obj_solr_field_fq = all_obj_solr_field + '_fq'
                             if all_obj_solr_field not in self.fields:
                                 self.fields[all_obj_solr_field] = []
+                            if all_obj_solr_field_fq not in self.fields:
+                                self.fields[all_obj_solr_field_fq] = []
                             for parent in parents:
+                                act_slug = parent['slug']
+                                active_solr_field_fq = active_solr_field + '_fq'
                                 if active_solr_field not in self.fields:
                                     self.fields[active_solr_field] = []
+                                if active_solr_field_fq not in self.fields:
+                                    self.fields[active_solr_field_fq] = []
                                 active_solr_value = \
                                     self._concat_solr_string_value(
                                         parent['slug'],
@@ -192,11 +199,15 @@ sd_b = sd_obj.fields
                                 self.fields[active_solr_field].append(
                                     active_solr_value
                                 )
+                                # add the slug to the active field facet query
+                                self.fields[active_solr_field_fq].append(act_slug)
                                 # so all items in the hiearchy are present in the
                                 # and can be queried, even if you don't know the parent
                                 self.fields[all_obj_solr_field].append(
                                     active_solr_value
                                 )
+                                # add the slug to the all objects facet query
+                                self.fields[all_obj_solr_field_fq].append(act_slug)
                                 active_solr_field = self._convert_slug_to_solr(
                                     parent['slug']) + '___' + solr_field_name
                         else:
@@ -232,10 +243,12 @@ sd_b = sd_obj.fields
                                                             'T00:00:00Z')
                     elif predicate_type == 'xsd:string':
                         if isinstance(value, dict):
-                            lang_obj = Languages()
-                            act_str = lang_obj.get_all_value_str(value['xsd:string'])
-                            self.fields['text'] += str(act_str) + ' \n'
-                            self.fields[solr_field_name].append(act_str)
+                            if 'xsd:string' in value:
+                                # only do this if we see the string key
+                                lang_obj = Languages()
+                                act_str = lang_obj.get_all_value_str(value['xsd:string'])
+                                self.fields['text'] += str(act_str) + ' \n'
+                                self.fields[solr_field_name].append(act_str)
                         else:
                             self.fields['text'] += str(value) + ' \n'
                             self.fields[solr_field_name].append(str(value))
@@ -412,6 +425,8 @@ sd_b = sd_obj.fields
             self.fields[self.ALL_CONTEXT_SOLR] = []
             for index, context in enumerate(self.context_path):
                 # treat the root in its own special way
+                fq_field_name = None
+                act_slug = self.context_path[index]['slug']
                 context_item = \
                     self._concat_solr_string_value(
                         self.context_path[index]['slug'],
@@ -423,6 +438,7 @@ sd_b = sd_obj.fields
                     self.fields[self.ALL_CONTEXT_SOLR].append(context_item)
                 if index == 0:
                     self.fields[self.ROOT_CONTEXT_SOLR] = context_item
+                    fq_field_name = self.ROOT_CONTEXT_SOLR + '_fq'
                 else:
                 # for others, get the parent slug and generate a
                 # dynamic field name
@@ -434,6 +450,10 @@ sd_b = sd_obj.fields
                         )
                     # add field name and values
                     self.fields[solr_field_name] = context_item
+                    fq_field_name = solr_field_name + '_fq'
+                if isinstance(fq_field_name, str):
+                    # just the slug for the facet query
+                    self.fields[solr_field_name] = act_slug
 
     def _process_projects(self):
         """
@@ -443,13 +463,19 @@ sd_b = sd_obj.fields
         proj_rel = ProjectRels()
         parents = proj_rel.get_jsonldish_parents(self.oc_item.project_uuid)
         for index, parent in enumerate(parents):
+            fq_field_name = act_solr_field + '_fq'
+            act_slug = parent['slug']
             solr_value = self._concat_solr_string_value(parent['slug'],
                                                         'id',
                                                         parent['id'],
                                                         parent['label'])
             if act_solr_field not in self.fields:
                 self.fields[act_solr_field] = []
+            if fq_field_name not in self.fields:
+                # make sure we have the solr fq field
+                self.fields[fq_field_name] = []
             self.fields[act_solr_field].append(solr_value)
+            self.fields[fq_field_name].append(act_slug) # add slug to the solr fq field
             act_solr_field = \
                 self._convert_slug_to_solr(parent['slug'])\
                 + '___project_id'
@@ -470,8 +496,9 @@ sd_b = sd_obj.fields
                        and 'rdfs:isDefinedBy' in meta:
                         # special case for inferred relationship
                         meta['id'] = meta['rdfs:isDefinedBy']
-                    self.fields['text'] += str(meta['label']) + '\n'
-                    self.fields['text'] += meta['id'] + '\n'
+                    if 'label' in meta and 'id' in meta:
+                        self.fields['text'] += str(meta['label']) + '\n'
+                        self.fields['text'] += meta['id'] + '\n'
                     if dc_predicate == 'foaf:depection':
                         if 'type' in meta:
                             if meta['type'] == 'oc-gen:hero' and thumbnail_uri is None:
@@ -482,7 +509,7 @@ sd_b = sd_obj.fields
                             # we only do this once, get the first iiif-json in solr
                             iiif_json_uri = meta['oc-gen:iiif-json-uri']
                             self.fields['iiif_json_uri'] = iiif_json_uri
-                    elif 'opencontext.org/tables/' not in meta['id']:
+                    elif 'opencontext.org/tables/' not in meta['id'] and 'label' in meta:
                         # do not index table references in this way
                         """
                         item = self._concat_solr_string_value(
@@ -560,13 +587,18 @@ sd_b = sd_obj.fields
                         coords = False
                     if coords is not False:
                         gm = GlobalMercator()
-                        self.fields['discovery_geotile'] = \
-                            gm.geojson_coords_to_quadtree(coords, zoom)
-                        # indexing with coordinates seperated by a space is in
-                        # lat-lon order, the reverse of GeoJSON because
-                        # solr spatial fields expect a lat-lon order
-                        lat_ok = gm.validate_geo_coordinate(coords[1], 'lat')
-                        lon_ok = gm.validate_geo_coordinate(coords[0], 'lon')
+                        tile = gm.geojson_coords_to_quadtree(coords, zoom)
+                        if len(tile) > (zoom - 2):
+                            self.fields['discovery_geotile'] = \
+                                gm.geojson_coords_to_quadtree(coords, zoom)
+                            # indexing with coordinates seperated by a space is in
+                            # lat-lon order, the reverse of GeoJSON because
+                            # solr spatial fields expect a lat-lon order
+                            lat_ok = gm.validate_geo_coordinate(coords[1], 'lat')
+                            lon_ok = gm.validate_geo_coordinate(coords[0], 'lon')
+                        else:
+                            lat_ok = False
+                            lon_ok = False
                         if lat_ok and lon_ok:
                             self.fields['discovery_geolocation'] = \
                                 str(coords[1]) + ',' + str(coords[0])
@@ -774,9 +806,14 @@ sd_b = sd_obj.fields
                                                         act_solr_datatype,
                                                         parent['id'],
                                                         parent['label'])
+            act_slug = parent['slug']
+            act_solr_field_fq = act_solr_field + '_fq'
             if act_solr_field not in self.fields:
                 self.fields[act_solr_field] = []
+            if act_solr_field_fq not in self.fields:
+                self.fields[act_solr_field_fq] = []
             self.fields[act_solr_field].append(solr_value)
+            self.fields[act_solr_field_fq].append(act_slug)
             last_linked_pred_label = parent['label']
             last_linked_pred_uri = parent['id']
             act_solr_field = \
@@ -786,8 +823,11 @@ sd_b = sd_obj.fields
         # since we ended the loop above by creating a solr field, let's make sure it's added to the solrdoc
         self.fields['text'] += last_linked_pred_label + ': \n'
         act_pred_root_act_solr_field = act_solr_field
+        act_pred_root_act_solr_field_fq = act_pred_root_act_solr_field + '_fq'
         if act_pred_root_act_solr_field not in self.fields:
             self.fields[act_pred_root_act_solr_field] = []
+        if act_pred_root_act_solr_field_fq not in self.fields:
+            self.fields[act_pred_root_act_solr_field_fq] = []
         # --------------------------------
         # Now we handle the objects of this predicate!
         # 1. obs_values come from the item's observations,
@@ -825,12 +865,17 @@ sd_b = sd_obj.fields
                         # Now make a solr field for ALL the objects (parents, childred)
                         # using this predicate
                         all_obj_solr_field = 'obj_all___' + act_pred_root_act_solr_field
+                        all_obj_solr_field_fq = all_obj_solr_field + '_fq'
                         if all_obj_solr_field not in self.fields:
                             self.fields[all_obj_solr_field] = []
+                        if all_obj_solr_field_fq not in self.fields:
+                            self.fields[all_obj_solr_field_fq] = []
                         # URI objects can be in hierarchies, look for these!
                         object_id = self.get_entity_id(use_obj)
                         parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
                         for index, parent in enumerate(parents):
+                            act_slug = parent['slug']
+                            act_solr_field_fq = act_solr_field + '_fq'
                             solr_value = self._concat_solr_string_value(parent['slug'],
                                                                         'id',
                                                                         parent['id'],
@@ -838,10 +883,13 @@ sd_b = sd_obj.fields
                             last_object_uri = parent['id']
                             if act_solr_field not in self.fields:
                                 self.fields[act_solr_field] = []
+                            if act_solr_field_fq not in self.fields:
+                                self.fields[act_solr_field_fq] = []
                             if parent['ld_object_ok']:
                                 # only add this if it's OK for linked data use
                                 # in presenting a facet
                                 self.fields[act_solr_field].append(solr_value)
+                                self.fields[act_solr_field_fq].append(act_slug)
                             #-------------------------------
                             # This way, you don't need to know a parent to search
                             # for a child. Since facets aren't made with this,
@@ -849,6 +897,8 @@ sd_b = sd_obj.fields
                             #-------------------------------
                             if solr_value not in self.fields[all_obj_solr_field]:
                                 self.fields[all_obj_solr_field].append(solr_value)
+                            if act_slug not in self.fields[all_obj_solr_field_fq]:
+                                self.fields[all_obj_solr_field_fq].append(act_slug)
                             if parent['id'] not in self.fields['text']:
                                 self.fields['text'] += parent['id'] + ' '
                                 self.fields['text'] += str(parent['label']) + '\n'
@@ -1066,14 +1116,15 @@ sd_b = sd_obj.fields
             rel_uuids = []
             # get the related subject from a context path
             if isinstance(self.context_path, list):
-                last_context = self.context_path[-1]
-                rel_uri = self.get_entity_id(last_context)
-                if rel_uri is not False:
-                    if '/subjects/' in rel_uri:
-                        rel_uri_ex = rel_uri.split('/')
-                        rel_uuid = rel_uri_ex[-1]
-                        if rel_uuid not in rel_uuids:
-                            rel_uuids.append(rel_uuid)
+                if len(self.context_path) > 0:
+                    last_context = self.context_path[-1]
+                    rel_uri = self.get_entity_id(last_context)
+                    if rel_uri is not False:
+                        if '/subjects/' in rel_uri:
+                            rel_uri_ex = rel_uri.split('/')
+                            rel_uuid = rel_uri_ex[-1]
+                            if rel_uuid not in rel_uuids:
+                                rel_uuids.append(rel_uuid)
             # now get other associated subjects
             if 'oc-gen:has-obs' in self.oc_item.json_ld:
                 for obs in self.oc_item.json_ld['oc-gen:has-obs']:

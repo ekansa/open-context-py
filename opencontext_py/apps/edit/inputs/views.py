@@ -234,7 +234,7 @@ def label_check(request, project_uuid):
         validity of a proposed item label
     """
     proj_inp = ProjectInputs(project_uuid, request)
-    if proj_inp.manifest is not False:
+    if proj_inp.manifest is not False or request.user.is_superuser:
         if proj_inp.edit_permitted or request.user.is_superuser:
             ilab = InputLabeling()
             ilab.project_uuid = project_uuid

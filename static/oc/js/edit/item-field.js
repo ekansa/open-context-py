@@ -436,6 +436,9 @@ function edit_field(){
 				//only allow a single value for boolean fields
 				this.single_value_only = true;
 			}
+			if (this.project_uuid == false){
+				this.project_uuid = '0'; // default project
+			}
 			this.initialized = true;
 		}
 	}
