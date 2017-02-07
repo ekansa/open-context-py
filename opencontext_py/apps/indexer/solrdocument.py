@@ -21,7 +21,7 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = 'ed14302d-2a69-423a-9545-0b4b6c672bc0'
+uuid = '524161DA-386E-4769-040E-74429B8660E9'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
@@ -150,6 +150,8 @@ sd_b = sd_obj.fields
             if predicate_key in obs_list:
                 predicate_values = obs_list[predicate_key]
                 for value in predicate_values:
+                    if solr_field_name not in self.fields:
+                        self.fields[solr_field_name] = []
                     if predicate_type in predicate_type in self.MISSING_PREDICATE_TYPES:
                         # if missing a predicate type index as a string
                         predicate_type = 'xsd:string'
@@ -833,6 +835,8 @@ sd_b = sd_obj.fields
         # --------------------------------
         if pred_datatype != '@id' and isinstance(obs_values, list):
             # objects of this predicate are literals
+            if act_pred_root_act_solr_field not in self.fields:
+                self.fields[act_pred_root_act_solr_field] = []
             for obs_val in obs_values:
                 if isinstance(obs_val, dict):
                     if pred_datatype in obs_val:
