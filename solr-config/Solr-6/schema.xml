@@ -238,7 +238,7 @@
     -->
     <dynamicField name="*___project_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___project_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+    <dynamicField name="*___project_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
     
     
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
@@ -246,7 +246,7 @@
     -->
     <dynamicField name="*___context_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___context_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+    <dynamicField name="*___context_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
 
     <!-- Used for filter queries. Just captures the slug.
     Deprecated for Solr 6, which does not allow copying of dynamic fields
@@ -261,7 +261,7 @@
 
     <dynamicField name="*___pred_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___pred_id_fq" type="oc_id_field" indexed="true" stored="false" required="false" multiValued="true" />
+    <dynamicField name="*___pred_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
 
     <!-- Used for filter queries. Just captures the slug
     Deprecated for Solr 6, which does not allow copying of dynamic fields
