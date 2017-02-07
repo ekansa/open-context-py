@@ -36,7 +36,7 @@ geo_rel.find_related_geonames('ekansa')
         man_objs = Manifest.objects\
                            .filter(project_uuid='0',
                                    class_uri='oc-gen:cat-region',
-                                   item_type='subjects')[:5]
+                                   item_type='subjects')
         for man_obj in man_objs:
             print('Checking slug: ' + man_obj.slug)
             subj_obj = Subject.objects.get(uuid=man_obj.uuid)

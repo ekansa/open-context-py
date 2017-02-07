@@ -106,7 +106,7 @@ class GeonamesAPI():
                                  timeout=10,
                                  headers=gapi.client_headers)
                 r.raise_for_status()
-                print('Checking: ' + r.url)
+                # print('Checking: ' + r.url)
                 json_r = r.json()
             except:
                 json_r = False
