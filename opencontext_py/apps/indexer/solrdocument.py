@@ -433,38 +433,35 @@ sd_b = sd_obj.fields
 
     def _process_context_path(self):
         if self.context_path is not None:
-            self.fields[self.ALL_CONTEXT_SOLR] = []
             for index, context in enumerate(self.context_path):
                 # treat the root in its own special way
-                solr_field_name_fq = None
-                act_slug = self.context_path[index]['slug']
-                context_item = \
+                act_solr_value = \
                     self._concat_solr_string_value(
                         self.context_path[index]['slug'],
                         'id',
                         self.context_path[index]['id'].split('http://opencontext.org')[1],
                         self.context_path[index]['label'])
-                if context_item not in self.fields[self.ALL_CONTEXT_SOLR]:
-                    # so we have a list of all the contexts for a given item
-                    self.fields[self.ALL_CONTEXT_SOLR].append(context_item)
+                act_slug = self.context_path[index]['slug']
+                self.add_id_field_fq_field_values(self.ALL_CONTEXT_SOLR,
+                                                  act_solr_value,
+                                                  act_slug)
                 if index == 0:
-                    self.fields[self.ROOT_CONTEXT_SOLR] = context_item
-                    fq_field_name = self.ROOT_CONTEXT_SOLR + '_fq'
+                    self.add_id_field_fq_field_values(self.ROOT_CONTEXT_SOLR,
+                                                      act_solr_value,
+                                                      act_slug)
                 else:
                     # for others, get the parent slug and generate a
                     # dynamic field name
                     solr_field_name = \
                         self.context_path[index - 1]['slug'] + '___context_id'
                     # replace dashes with underscores because solr requires it
-                    solr_field_name = self._convert_slug_to_solr(
+                    act_solr_field = self._convert_slug_to_solr(
                         solr_field_name
                         )
                     # add field name and values
-                    self.fields[solr_field_name] = context_item
-                    solr_field_name_fq = solr_field_name + '_fq'
-                if isinstance(solr_field_name_fq, str):
-                    # just the slug for the facet query
-                    self.fields[solr_field_name_fq] = act_slug
+                    self.add_id_field_fq_field_values(act_solr_field,
+                                                      act_solr_value,
+                                                      act_slug)
 
     def _process_projects(self):
         """
