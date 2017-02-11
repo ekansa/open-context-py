@@ -1182,11 +1182,15 @@ class ItemConstruction():
             for link_anno in link_annotations:
                 # shorten the predicate uri if it's namespace is defined in the context
                 predicate_uri = URImanagement.prefix_common_uri(link_anno.predicate_uri)
-                object_prefix_uri = URImanagement.prefix_common_uri(link_anno.object_uri)
-                act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
-                                                                     predicate_uri,
-                                                                     link_anno.object_uri,
-                                                                     'uri')
+                object_uri_found = False
+                if isinstance(link_anno.object_uri, str):
+                    if len(link_anno.object_uri) > 0:
+                        object_uri_found = True
+                        object_prefix_uri = URImanagement.prefix_common_uri(link_anno.object_uri)
+                        act_annotation = self.add_json_predicate_list_ocitem(act_annotation,
+                                                                             predicate_uri,
+                                                                             link_anno.object_uri,
+                                                                             'uri')
             graph_list.append(act_annotation)
         return graph_list
 

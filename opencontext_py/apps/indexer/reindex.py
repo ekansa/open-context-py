@@ -25,6 +25,7 @@ print('Items to index: ' + str(len(uuids)))
 sri = SolrReIndex()
 sri.reindex_uuids(uuids)
 
+
     """
 
     def __init__(self):

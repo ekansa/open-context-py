@@ -21,7 +21,7 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = '524161DA-386E-4769-040E-74429B8660E9'
+uuid = '6A1DF80E-617F-493A-D606-10D1CAF116C8'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
@@ -253,19 +253,19 @@ sd_b = sd_obj.fields
         if isinstance(solr_id_field, str):
             # add the main solr id field if not present,
             # then append the concat_val
-            if solr_id_field not in self.fields:
-                self.fields[solr_id_field] = []
             if isinstance(concat_val, str):
-                if concat_val not in self.fields[solr_id_field]:
+                if solr_id_field not in self.fields:
+                    self.fields[solr_id_field] = []
+                if len(concat_val) > 0 and concat_val not in self.fields[solr_id_field]:
                     # only add it if we don't already have it
                     self.fields[solr_id_field].append(concat_val)
             # add the solr id field's _fq field if not present,
             # then append the slug value
             solr_id_field_fq = solr_id_field + '_fq'
-            if solr_id_field_fq not in self.fields:
-                self.fields[solr_id_field_fq] = []
             if isinstance(slug, str):
-                if slug not in self.fields[solr_id_field_fq]:
+                if solr_id_field_fq not in self.fields:
+                    self.fields[solr_id_field_fq] = []
+                if len(slug) > 0 and slug not in self.fields[solr_id_field_fq]:
                     # only add it if we don't already have it
                     self.fields[solr_id_field_fq].append(slug)
 
