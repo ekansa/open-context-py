@@ -23,7 +23,7 @@ class InternetArchiveIrma():
 
 from opencontext_py.apps.ocitems.mediafiles.iairma import InternetArchiveIrma
 ia_irma = InternetArchiveIrma()
-ia_irma.get_cache_archive_records()
+ia_irma.get_cache_archive_records(283)
 
 
     """
@@ -36,7 +36,7 @@ ia_irma.get_cache_archive_records()
         self.cach_file_dir = 'internet-archive-irma'
         # self.ia_collection = 'opensource_media'
         self.ia_collection = 'opencontext'
-        self.id_prefix = 'nps-irma'
+        self.id_prefix = 'oc-rescue-nps-irma-'
         self.ia_uri_prefix = 'https://archive.org/download/'
         self.session = None
         self.delay_before_request = self.SLEEP_TIME
@@ -52,7 +52,7 @@ ia_irma.get_cache_archive_records()
             7: 'title'
         }
     
-    def get_cache_archive_records(self):
+    def get_cache_archive_records(self, skip_upload_before=0):
         """ gets and caches archive record files """
         items = self.get_archive_records()
         # make the column names for the CSV output
@@ -64,33 +64,80 @@ ia_irma.get_cache_archive_records()
         for fkey, fval in file_dict.items():
             first_row.append('File-' + fkey)
         first_row.append('File-Downloaded')
+        first_row.append('File-Archived')
         # now make the rows for the CSV file
         row_items = []
-        for item in items:
+        item_index = -1
+        for item_dict in items:
+            item_index += 1
             i = 0
             pre_row_item = LastUpdatedOrderedDict()
             for key in first_row:
-                if key in item:
-                    pre_row_item[key] = item[key]
+                if key in item_dict:
+                    pre_row_item[key] = item_dict[key]
                 else:
                     pre_row_item[key] = ''
-            if isinstance(item['json_files'], list):
-                for file_dict in item['json_files']:
+            if isinstance(item_dict['json_files'], list):
+                make_item = False
+                item_id = self.id_prefix + str(item_dict['code'])
+                for file_dict in item_dict['json_files']:
                     i += 1
                     file_uri = file_dict['Url']
                     if 'FileDescription' in file_dict:
                         file_name = file_dict['FileDescription']
                     else:
-                        file_name = item['code'] + '-' + str(i)
+                        file_name = item_dict['code'] + '-' + str(i)
                     if not isinstance(file_name, str):
-                        file_name = item['code'] + '-' + str(i)
+                        file_name = item_dict['code'] + '-' + str(i)
                     ok = self.get_cache_remote_file_content(file_name, file_uri)
                     row_item = pre_row_item
                     for fkey, fval in file_dict.items():
                         fkey = 'File-' + fkey
                         row_item[fkey] = fval
                     row_item['File-Downloaded'] = ok
+                    row_item['File-Archived'] = False
                     row_items.append(row_item)
+                    if ok:
+                        make_item = True
+                if item_index < skip_upload_before:
+                    make_item = False
+                if make_item:
+                    # we have at least some of the files needed to make an internet archive item.
+                    s = self.start_ia_session()
+                    # get or make an item
+                    item = get_item(item_id,
+                                    archive_session=s,
+                                    debug=True)
+                    # now make some metadata for the first item to be uploaded
+                    metadata = self.make_metadata_dict(item_dict)
+                    metadata['collection'] = self.ia_collection
+                    metadata['mediatype'] = 'data'
+                    i = 0
+                    # now upload the files
+                    for file_dict in item_dict['json_files']:
+                        i += 1
+                        if 'FileDescription' in file_dict:
+                            file_name = file_dict['FileDescription']
+                        else:
+                            file_name = item_dict['code'] + '-' + str(i)
+                        if not isinstance(file_name, str):
+                            file_name = item_dict['code'] + '-' + str(i)
+                        act_dir = self.set_check_directory(self.cach_file_dir)
+                        path = os.path.join(act_dir, file_name)
+                        if os.path.exists(path):
+                            pr_path = str(unidecode(path))
+                            print('(' + str(item_index) + ') Uploading: ' + pr_path)
+                            try:
+                                r = item.upload_file(path,
+                                                 key=file_name,
+                                                 metadata=metadata)
+                                if r.status_code == requests.codes.ok:
+                                    print('Yeah! Saved item: ' + item_id)
+                                else:
+                                    print('HTTP code: ' + str(r.status_code))
+                                    print('Problem with: ' + item_id)
+                            except:
+                                 print('Bad upload with: ' + item_id)
             if i == 0:
                 # no file rows created, so only add the pre_row_item
                 row_items.append(pre_row_item)
@@ -132,121 +179,37 @@ ia_irma.get_cache_archive_records()
                         item['json_files'] = json.loads(rec)
                 items.append(item)
         return items
-              
-    def update_image_metadata(self, man_obj, json_ld=None, item=None):
-        """ updates an items metadata """
-        meta_ok = False
-        if json_ld is None:
-            json_ld = self.make_oc_item(man_obj)
-        if isinstance(json_ld, dict):
-            # cache the remote file locally to upload it
-            item_id = self.id_prefix + '-' + json_ld['slug']
-            if item is None:
-                s = self.start_ia_session()
-                # get or make an item
-                item = get_item(item_id,
-                                archive_session=s,
-                                debug=True)
-            # now add the metadata
-            print('Update metadata for ' + item_id)
-            meta_ok = self.update_item_metadata(json_ld,
-                                                man_obj,
-                                                item_id,
-                                                item)
-        return meta_ok
     
     def make_item_metadata(self):
         """ makes a dict of item metadata to start the item """
         item_metadata = {'collection': self.ia_collection}
         return item_metadata
 
-    def archive_image(self, man_obj):
-        """ does the work of archiving an image,
-            1. gets the image from a remote server, makes a local file
-            2. makes metadata
-            3. saves the file
-        """
-        ok = False
-        json_ld = self.make_oc_item(man_obj)
-        if isinstance(json_ld, dict):
-            # cache the remote file locally to upload it
-            item_id = self.id_prefix + '-' + json_ld['slug']
-            file_name = self.get_cache_full_file(json_ld, man_obj)
-            if not isinstance(file_name, str):
-                print('Failed to cache file!')
-            else:
-                sleep(self.delay_before_request)
-                print('Ready to upload: ' + file_name)
-                # start an internet archive session
-                s = self.start_ia_session()
-                # get or make an item
-                item = get_item(item_id,
-                                archive_session=s,
-                                debug=True)
-                # now make some metadata for the first item to be uploaded
-                metadata = self.make_metadata_dict(json_ld, man_obj)
-                metadata['collection'] = self.ia_collection
-                metadata['mediatype'] = 'image'
-                # now upload the image file
-                dir = self.set_check_directory(self.cach_file_dir)
-                path = os.path.join(dir, file_name)
-                r = item.upload_file(path,
-                                     key=file_name,
-                                     metadata=metadata)
-                # set the uri for the media item just uploaded
-                if r.status_code == requests.codes.ok or self.save_db:
-                    ia_file_uri = self.make_ia_image_uri(item_id, file_name)
-                    iiif_file_uri = self.make_ia_iiif_image_uri(item_id, file_name)
-                    # now save the link to the IA full file
-                    mf = Mediafile()
-                    mf.uuid = man_obj.uuid
-                    mf.project_uuid = man_obj.project_uuid
-                    mf.source_id = man_obj.source_id
-                    mf.file_type = self.IA_FILE_TYPE
-                    mf.file_uri = ia_file_uri
-                    mf.filesize = 0
-                    try:
-                        mf.save()
-                        ok = True
-                    except:
-                        error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
-                        error_msg += ' Cannot save oc_mediafile for ia-fullfile'
-                        self.errors.append(error_msg)
-                        ok = False
-                    # save the link to the IIIF version
-                    mf_b = Mediafile()
-                    mf_b.uuid = man_obj.uuid
-                    mf_b.project_uuid = man_obj.project_uuid
-                    mf_b.source_id = man_obj.source_id
-                    mf_b.file_type = self.IIIF_FILE_TYPE
-                    mf_b.file_uri = iiif_file_uri
-                    mf_b.filesize = 0
-                    try:
-                        mf_b.save()
-                        ok = True
-                    except:
-                        error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
-                        error_msg += ' Cannot save oc_mediafile for ia-iiif'
-                        self.errors.append(error_msg)
-                        ok = False
-        return ok
 
-
-    def make_metadata_dict(self, item_id, title, cite):
+    def make_metadata_dict(self, item_dict):
         """ makes the metadata dict for the current item """
         metadata = LastUpdatedOrderedDict()
-        metadata['uri'] = json_ld['id']
-        metadata['title'] = self.make_title(json_ld, man_obj)
-        metadata['partof'] = self.make_partof_metadata(json_ld, man_obj)
-        metadata['publisher'] = 'Open Context (http://opencontext.org)'
-        metadata['description'] = self.make_simple_description(json_ld, man_obj)
-        metadata['licenseurl'] = self.get_license_uri(json_ld, man_obj)
+        metadata['url'] = item_dict['page_url']
+        metadata['title'] = item_dict['title']
+        metadata['partof'] = 'Integrated Resource Management Applications (IRMA) https://irma.nps.gov'
+        metadata['publisher'] = 'United States National Parks Service (NPS)'
+        metadata['description'] = self.make_simple_description(item_dict)
+        metadata['licenseurl'] = 'http://creativecommons.org/publicdomain/mark/1.0/'
+        metadata['subject'] = [
+            'Data Rescue',
+            'US National Parks Service',
+            'Climate change',
+            'Climate science',
+            'Global warming',
+            'Global warming--Research',
+            'Global warming--Government policy--United States'
+        ]
         return metadata
     
-    def update_item_metadata(self, json_ld, man_obj, item_id, item=None):
+    def update_item_metadata(self, item_dict, item_id, item=None):
         """ creates and updates the item metadata """
         ok = False
-        metadata = self.make_metadata_dict(json_ld, man_obj)
+        metadata = self.make_metadata_dict(item_dict)
         if item is None:
             s = self.start_ia_session()
             item = get_item(item_id,
@@ -258,7 +221,7 @@ ia_irma.get_cache_archive_records()
             ok = True
         else:
             ok = False
-            error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
+            error_msg = 'IRMA problem: ' + item_dict['title'] + ' item_id: ' + item_id
             error_msg += ' Metadata update error: ' + str(r.status_code)
             self.errors.append(error_msg)
         return ok
@@ -310,30 +273,39 @@ ia_irma.get_cache_archive_records()
                     ok = False
         return ok
 
-    def make_simple_description(self, item):
+    def make_simple_description(self, item_dict):
         """ makes a simple description for metadata documentation of the resource """
         
         des = '<div>'
-        des += '<h2>' + item['title'] + '</h2>'
-        des += '<h4>' + item['type'] + ' (Item ID: ' + item['code'] + ')</h4>'
+        des += '<h2>' + item_dict['title'] + '</h2>'
+        des += '<h4>' + item_dict['type'] + ' (Item ID: ' + item_dict['code'] + ')</h4>'
         des += '<h4>National Parks Service (NPS) - IRMA Resource</h4>'
-        des += '<p>Originally published by the NPS and hosted at: '
-        des += '<a id="nps-irma-item-url" href="' + item['page_url'] + '">' + item['page_url'] + '</a>'
+        des += '<p>Originally published by the NPS and hosted at: <br/>'
+        des += '<a id="nps-irma-item-url" href="' + item_dict['page_url'] + '">' + item_dict['page_url'] + '</a>'
         des += '</p>'
-        if isinstance(item['json_files'], list):
+        des += '<p>Suggested Citation: <br/>'
+        des += item_dict['cite']
+        des += '</p>'
+        des += '<p>Because this content was published and publicly released by the Unitesd States '
+        des += 'federal government, we believe that it is in the Public Domain and have indicated so with the '
+        des += 'appropriate licensing metadata. </p>'
+        if isinstance(item_dict['json_files'], list):
             des += '<p>This item includes the following files, with JSON-formatted metadata obtained from:</p>'
-            des += '<p><a id="nps-irma-json-file-metadata" href="' + item['json_url'] + '">' + item['json_url']  + '</a>'
+            des += '<p><a id="nps-irma-json-file-metadata" href="' + item_dict['json_url'] + '">' + item_dict['json_url']  + '</a>'
             des += '</p><br/>'
-            for file_item in item['json_files']:
-                 des += '<ul style="margin-top: 20px;">'
-                 for key, val in file_item.items():
+            for file_item in item_dict['json_files']:
+                des += '<ul style="margin-top: 20px;">'
+                keys = []
+                for key, val in file_item.items():
+                    keys.append(key)
+                for key in keys:
                     des +=  self.make_file_meta_html(key, file_item)
-                 des += '</ul>'
+                des += '</ul>'
             des += '<br/><br/>'
         des += '</div>'
         return des
     
-    def make_file_meta_html(self, file_item, key):
+    def make_file_meta_html(self, key, file_item):
         """ makes html for file metadata """
         if key in file_item:
             content = str(file_item[key]).strip()
