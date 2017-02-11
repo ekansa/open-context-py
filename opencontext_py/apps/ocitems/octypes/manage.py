@@ -79,6 +79,7 @@ class TypeManagement():
                     self.content = oc_string.content
                 except OCstring.DoesNotExist:
                     self.content = False
+            # print('Content: ' + str(self.content))
             if self.content is not False:
                 # make a new oc_type object!
                 if self.suggested_uuid is not False:
