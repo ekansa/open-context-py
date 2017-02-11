@@ -127,6 +127,7 @@ ia_irma.get_cache_archive_records(283)
                         if os.path.exists(path):
                             pr_path = str(unidecode(path))
                             print('(' + str(item_index) + ') Uploading: ' + pr_path)
+                            sleep(self.delay_before_request)
                             try:
                                 r = item.upload_file(path,
                                                  key=file_name,
