@@ -19,6 +19,14 @@ from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 
 
+"""
+from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
+project_uuid = '5F2D4172-D823-4F7F-D3A8-4BD68ED1369D'
+tri_m = TrinomialManage()
+tri_m.make_trinomial_from_site_labels(project_uuid, 31)
+"""
+
+
 # This class is used to manage trinomial identifiers for DINAA.
 class TrinomialManage():
 
@@ -255,6 +263,11 @@ class TrinomialManage():
                                     class_uri='oc-gen:cat-site')
             for site in sites:
                 trinomial = str(state_prefix) + site.label
+                if '*' in trinomial:
+                    # for North Carolina, only the part before the '*' is a trinomial
+                    tr_ex = trinomial.split('*')
+                    trinomial = tr_ex[0]
+                print('working on (' + site.uuid + '): ' + trinomial)
                 parts = self.parse_trinomial(trinomial)
                 dt = Trinomial()
                 dt.uri = URImanagement.make_oc_uri(site.uuid, site.item_type)
@@ -265,5 +278,8 @@ class TrinomialManage():
                 dt.state = parts['state']
                 dt.county = parts['county']
                 dt.site = parts['site']
-                dt.save()
-                print('Trinomial: ' + trinomial + ', from: ' + site.label)
+                try:
+                    dt.save()
+                    print('Trinomial: ' + trinomial + ', from: ' + site.label)
+                except:
+                    print('Trinomial: ' + trinomial + ' not valid as a trinomial')
