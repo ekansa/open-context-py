@@ -145,6 +145,7 @@ INSTALLED_APPS = (
     'opencontext_py.apps.edit.inputs.inputfields',
     'opencontext_py.apps.edit.inputs.inputrelations',
     'opencontext_py.apps.edit.inputs.rules',
+    'opencontext_py.apps.edit.dinaa.trinomials',
     'opencontext_py.apps.entities.uri',
     'opencontext_py.apps.entities.entity',
     'opencontext_py.apps.entities.redirects',
