@@ -11,6 +11,12 @@ from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 class dinaaLink():
     """ methods to link Smithsonian Trinomials curated by
         DINAA with keywords in tDAR
+        
+from opencontext_py.apps.ldata.tdar.dinaalink import dinaaLink
+dl = dinaaLink()
+dl.match_dinaa_ids()
+
+
     """
     DC_TERMS_SUBJECT = 'dc-terms:subject'
     TDAR_VOCAB = 'http://core.tdar.org/browse/site-name/'
@@ -28,9 +34,11 @@ class dinaaLink():
         found_matches = 0
         if limit is not False:
             tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                            project_label__contains='North Carolina',
                                             tdar_checked__isnull=True)[:limit]
         else:
             tris = Trinomial.objects.filter(trinomial__isnull=False,
+                                            project_label__contains='North Carolina',
                                             tdar_checked__isnull=True)
         len_tris = len(tris)
         i = 1
