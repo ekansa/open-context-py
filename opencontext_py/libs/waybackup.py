@@ -27,8 +27,8 @@ class WaybackUp():
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 5
-path = ['cfpub.epa.gov/surf/', '.epa.gov/apex/', '.epa.gov/water/', 'iaspub.epa.gov', 'water.usgs.gov']  # only follow links in these paths
-url = 'https://cfpub.epa.gov/surf/huc.cfm?huc_code=14080106'
+path = ['edsitement.neh.gov']  # only follow links in these paths
+url = 'https://edsitement.neh.gov'
 wb.scrape_urls(url, path, 8)  # archive pages discovered from the url, going 6 steps away
 wb.urls = wb.failed_urls
 # archive the previous failures
@@ -234,7 +234,10 @@ for url in urls:
                 raw_url = link.get('href')
                 if isinstance(raw_url, str):
                     raw_url = raw_url.strip() # remove whitespaces, etc.
+                    raw_url = raw_url.replace('\\r', '')  # common URL problem
+                    raw_url = raw_url.replace('\\n', '')  # common URL problem
                     if '#' in raw_url:
+                        # skip fragment identifiers in URLs
                         url_ex = raw_url.split('#')
                         raw_url = url_ex[0]
                     for skip_domain in skip_domains:
