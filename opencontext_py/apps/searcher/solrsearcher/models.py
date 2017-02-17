@@ -461,7 +461,14 @@ class SolrSearch():
                     all_fq += ' AND (' + fq + ')'
             all_fq = '(' + all_fq + ')'
             joined_fq = '{!join from=slug_type_uri_label to=obj_all___context_id}' + all_fq 
-            query['fq'] = all_fq + ' OR _query_:"' + joined_fq + '"' 
+            query['fq'] = all_fq + ' OR _query_:"' + joined_fq + '"'
+        # now clean the stats fields to make sure we're not repeading ourselves
+        if len(query['stats.field']) > 0:
+            unique_stats_fields = []
+            for stats_field in query['stats.field']:
+                if stats_field not in unique_stats_fields:
+                    unique_stats_fields.append(stats_field)
+            query['stats.field'] = unique_stats_fields
         return query
 
     def remove_from_default_facet_fields(self, field):
