@@ -157,11 +157,11 @@ class SolrSearch():
                                          False)
         if q_param is not False:
             escaped_terms = qm.prep_string_search_term(q_param)
-            query['q'] = ' '.join(escaped_terms)
+            query['q'] = 'text:' + ' '.join(escaped_terms)
             query['q.op'] = 'AND'
             query['hl'] = 'true'
             query['hl.fl'] = 'text'
-            query['hl.q'] = ' '.join(escaped_terms)
+            query['hl.q'] = 'text:' + ' '.join(escaped_terms)
         start = self.get_request_param(request_dict,
                                        'start',
                                        False,
