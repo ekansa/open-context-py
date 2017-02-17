@@ -14,6 +14,7 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.geospace.models import Geospace
 
 
 # This class is used to delete or merge entities
@@ -23,8 +24,8 @@ class DeleteMerge():
 
 from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
 dm = DeleteMerge()
-delete_uuid = '82a9bac8-af13-4a38-8ace-c8087983df9e'
-merge_into_uuid = '19123788-ba01-459f-b5a3-302a4530d0a1'
+delete_uuid = 'f6d5304c-bf4e-467d-b3c1-afd7a0d88e10'
+merge_into_uuid = '2A1B75E6-8C79-49B9-873A-A2E006669691'
 dm.merge_by_uuid(delete_uuid, merge_into_uuid)
 
     """
@@ -57,6 +58,7 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
         if ok_delete and ok_merge and delete_uuid != merge_into_uuid:
             output['assertions'] = self.alter_assertions(delete_uuid, merge_into_uuid)
             output['annotations'] = self.alter_annotations(delete_uuid, merge_into_uuid)
+            output['geospace'] = self.alter_geospace(delete_uuid, merge_into_uuid)
             self.delete_self_containment(merge_into_uuid)
             # changes oc_subjects path information to reflect new reality
             sg = SubjectGeneration()
@@ -135,6 +137,27 @@ dm.merge_by_uuid(delete_uuid, merge_into_uuid)
                                                           delete_uuid,
                                                           merge_into_uuid)
         return output
+    
+    def alter_geospace(self, delete_uuid, merge_into_uuid=False):
+        """
+        alters the geospace data to change uuids to a new uuid
+        or delete them entirely
+        """
+        old_geos = Geospace.objects\
+                           .filter(uuid=delete_uuid)
+        for old_geo in old_geos:
+            if merge_into_uuid is not False:
+                new_geo = old_geo
+                new_geo.uuid = merge_into_uuid
+                Geospace.objects\
+                        .filter(hash_id=old_geo.hash_id)\
+                        .delete()
+                new_geo.save()
+            else:
+                Geospace.objects\
+                        .filter(uuid=delete_uuid,
+                                hash_id=old_geo.hash_id)\
+                        .delete()
 
     def alter_annotations(self, delete_uuid, merge_into_uuid=False):
         """

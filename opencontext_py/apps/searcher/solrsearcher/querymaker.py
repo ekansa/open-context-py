@@ -87,6 +87,7 @@ class QueryMaker():
                 entity = self.mem_cache_obj.get_entity(context,
                                                        True)
                 valid_context_slugs.append(entity.slug)
+        print('context-slugs: ' + str(valid_context_slugs))
         return valid_context_slugs
 
     def _get_parent_slug(self, slug):

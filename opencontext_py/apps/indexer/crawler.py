@@ -19,11 +19,13 @@ class Crawler():
         '''
         To use, import this library and instantiate a crawler object:
 
-        crawler = Crawler()
 
-        Then crawl as follows:
+from opencontext_py.apps.indexer.crawler import Crawler
+crawler = Crawler()
 
-        crawler.crawl()
+# Then crawl as follows:
+
+crawler.crawl(100)
 
         Crawling a single document is also supported with the
         index_single_document method. Just provide the document's UUID.
@@ -57,6 +59,7 @@ class Crawler():
         while self.uuidlist is not None:
             documents = []
             # Process the UUID list in chunks
+            ok_manifests = []
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
                     sd_obj = SolrDocument(uuid)
@@ -65,7 +68,8 @@ class Crawler():
                     if crawlutil().is_valid_document(solrdocument):
                         try:
                             manifest = Manifest.objects.get(uuid=uuid)
-                            manifest.indexed_save()  # saves the time this was indexed
+                            ok_manifests.append(manifest)
+                            # manifest.indexed_save()  # saves the time this was indexed
                         except Manifest.DoesNotExist:
                             print("Error: {0} Database bizzare error -----> " + uuid)
                             logger.error('[' + datetime.now().strftime('%x %X ') +
@@ -90,6 +94,9 @@ class Crawler():
                 print('--------------------------------------------')
                 print('Crawl Rate: ' + crawlutil().get_crawl_rate_in_seconds(
                     document_count, start_time) + ' documents per second')
+                print('Updating indexed time for ' + str(len(ok_manifests)) + ' manifest objects.')
+                for manifest in ok_manifests:
+                    manifest.indexed_save()  # saves the time this was indexed
                 print('--------------------------------------------')
             else:
                 print('Error: ' + str(self.solr.update(

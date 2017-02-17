@@ -143,6 +143,61 @@ class SubjectGeneration():
                                               'error': 'bad path'}
         return output
 
+    def fix_multiple_context_paths(self, root_uuid, level_limit=1):
+        """ fixes context paths for uuids where there may be more than
+            1 containment assertion
+        """
+        fix_uuids = self.get_fix_multiple_context_paths_uuids(root_uuid, [], level_limit)
+        for uuid in fix_uuids:
+            self.generate_save_context_path_from_uuid(uuid, True)
+        return fix_uuids
+    
+    def get_fix_multiple_context_paths_uuids(self,
+                                             root_uuid,
+                                             fix_uuids=[],
+                                             level_limit=1,
+                                             current_level=0):
+        """ gets a list of uuids for subject items that mistakenly had multiple containment assertions
+            to the same parent.
+            Works recurively upto a certain depth.
+        """
+        if current_level < level_limit:
+            new_level = current_level + 1
+            del_hashes = []
+            asses = Assertion.objects.filter(uuid=root_uuid, predicate_uuid='oc-gen:contains').order_by('project_uuid')
+            for ass in asses:
+                if ass.object_uuid not in fix_uuids and ass.hash_id not in del_hashes:
+                    # get other containment asserions if we don't already have this
+                    # contained object in the fix list
+                    asses_b = Assertion.objects\
+                                       .filter(uuid=root_uuid,
+                                               predicate_uuid='oc-gen:contains',
+                                               object_uuid=ass.object_uuid)\
+                                       .exclude(hash_id=ass.hash_id)
+                    for ass_b in asses_b:
+                        del_hashes.append(ass_b.hash_id)
+                        if ass_b.object_uuid not in fix_uuids:
+                            fix_uuids.append(ass_b.object_uuid)
+                if new_level < level_limit:
+                    new_uuids = self.get_fix_multiple_context_paths_uuids(ass.object_uuid,
+                                                                          fix_uuids,
+                                                                          level_limit,
+                                                                          new_level)
+                    if len(new_uuids) > 0: 
+                        if ass.object_uuid not in fix_uuids:
+                            # while the current contained object is not in the fix list,
+                            # some of its children need fixing, so add them to the fix list
+                            for new_uuid in new_uuids:
+                                if new_uuid not in fix_uuids:
+                                    fix_uuids.append(new_uuid) 
+            # now delete the redundant containment assertions
+            for hash_id in del_hashes:
+                Assertion.objects.filter(hash_id=hash_id).delete()
+        print('At ' + str(current_level) + ' depth, need to fix: ' + str(len(fix_uuids)) + ' items.')
+        return fix_uuids
+
+
+
     def process_manifest_for_subjects(self):
         """
         adds or updates subjects for the oc_subjects table

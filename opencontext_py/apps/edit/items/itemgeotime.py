@@ -187,10 +187,13 @@ class ItemGeoTime():
             errors = output['errors']
             output = self.validate_int_param('feature_id', post_data, errors)
             feature_id = output['integer']
+            if self.manifest.item_type == 'types':
+                # we're adding a date range to a type
+                feature_id = 0
             errors = output['errors']
-            if earliest is False or start is False \
+            if (earliest is False or start is False \
                or stop is False or latest is False \
-               or feature_id is False:
+               or feature_id is False) and self.manifest.item_type != 'types':
                 # 1 or more of the dates are bad
                 ok = False
                 note = '; '.join(errors)

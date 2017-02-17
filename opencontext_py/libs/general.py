@@ -21,7 +21,9 @@ class DCterms():
                           'dc-terms:spatial': 'dc_terms_spatial___pred_id',
                           'dc-terms:coverage': 'dc_terms_coverage___pred_id',
                           'dc-terms:temporal': 'dc_terms_temporal___pred_id',
-                          'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
+                          'dc-terms:isReferencedBy': 'dc_terms_isreferencedby___pred_id',
+                          'bibo:status': 'bibo_status___pred_id',
+                          'foaf:depiction': 'foaf_depection___pred_id'}
 
     DC_AUTHOR_PREDICATES = {'dc-terms:creator': 'dc_terms_creator___pred_id',
                             'dc-terms:contributor': 'dc_terms_contributor___pred_id'}
@@ -30,13 +32,15 @@ class DCterms():
                       'dc-spatial': 'dc_terms_spatial___pred_id',
                       'dc-coverage': 'dc_terms_coverage___pred_id',
                       'dc-temporal': 'dc_terms_temporal___pred_id',
-                      'dc-isReferencedBy': 'dc_terms_isreferencedby___pred_id'}
+                      'dc-isReferencedBy': 'dc_terms_isreferencedby___pred_id',
+                      'bibo-status': 'bibo_status___pred_id'}
 
     DC_SLUG_TO_FIELDS = {'dc-terms-subject': 'dc-subject',
                          'dc-terms-spatial': 'dc-spatial',
                          'dc-terms-coverage': 'dc-coverage',
                          'dc-terms-temporal': 'dc-temporal',
-                         'dc-terms-isreferencedby': 'dc-isReferencedBy'}
+                         'dc-terms-isreferencedby': 'dc-isReferencedBy',
+                         'bibo-status': 'bibo-status'}
 
     DC_AUTHOR_FIELDS = {'dc-creator': 'dc_terms_creator___pred_id',
                         'dc-contributor': 'dc_terms_contributor___pred_id'}
