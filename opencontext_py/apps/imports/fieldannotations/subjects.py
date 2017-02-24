@@ -677,6 +677,9 @@ class ProcessSubjects():
                         if parent_entity_found is False:
                             # field has no containment relations
                             self.non_contain_subjects.append(sub_field.field_num)
+                        else:
+                            # field is contained in a parent
+                            self.root_subject_field = sub_field.field_num
 
     def get_field_parent_entity(self, field_num):
         """ Get's a parent entity named for a given field """
@@ -692,6 +695,7 @@ class ProcessSubjects():
             found = ent.dereference(parent_anno[0].object_uuid)
             if found:
                 self.field_parent_entities[field_num] = ent
+                # print('found: ' + ent.label)
                 parent_entity_found = True
         return parent_entity_found
 
