@@ -9,14 +9,14 @@
                     <h4 class="pull-right panel-title"
                         <img class="or-prep-gifs" alt="loading" style="height:20px;"
                                  src="{{ base_url }}/static/oc/images/ui/waiting.gif" />
-                        <a class="or-options-toggle" style="display:none;" id="opts-show-{{ f_field.id }}-{{ op_type }"
+                        <a class="or-options-toggle" style="display:none;" id="opts-show-{{ f_field.id }}-{{ op_type }}"
                            onclick="oc_facets.show_options('{{ f_field.id }}', '{{ op_type }}');" title="Select multiple options">
-                            <span class="glyphicon glyphicon-option-vertical"></span>
+                            <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
                         </a>
-                        <a style="display:none;" id="opts-do-{{ f_field.id }}-{{ op_type }"
+                        <a style="display:none;" id="opts-do-{{ f_field.id }}-{{ op_type }}"
+                           class="text-primary"
                            onclick="oc_facets.get_options('{{ f_field.id }}', '{{ op_type }}');" title="Search selected options">
-                            <span class="glyphicon glyphicon-ok-sign"></span>
-                            <span class="glyphicon glyphicon-ok-sign"></span>
+                            <span class="glyphicon glyphicon-search text-primary" aria-hidden="true"></span>
                         </a>
                     </h4>
                     <h4 class="panel-title">

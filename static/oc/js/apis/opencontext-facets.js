@@ -108,7 +108,7 @@ function OpenContextFacetsAPI(json_url) {
 				single_opt_dom.style.display = 'none';
 				// show or make the multiple options
 				multi_opt_dom.style.display = 'block';
-				this.make_mult_option_html(f_field_id, op_type);
+				this.make_multi_option_html(f_field_id, op_type);
 			}
 			else{
 				// show the single options
@@ -119,7 +119,8 @@ function OpenContextFacetsAPI(json_url) {
 		}
 	}
 	
-	this.make_mult_option_html = function(f_field_id, op_type){
+	this.make_multi_option_html = function(f_field_id, op_type){
+		// makes the HTLML for the multi-selection tions for a facet field
 		if(f_field_id in this.selected_options){
 			var len_opts = this.selected_options[f_field_id].length;
 		}
@@ -147,6 +148,7 @@ function OpenContextFacetsAPI(json_url) {
 		}
 	}
 	this.make_options_html = function(f_field_id, op_type){
+		// makes the multi-select HTML for the facet options
 		var facet_options = this.get_facet_options(f_field_id, op_type);
 		var in_class = 'm-op-' + f_field_id;
 		var li_class = 'list-group-item f-opt-top';
@@ -159,7 +161,7 @@ function OpenContextFacetsAPI(json_url) {
 					'<div class="row">',
 						'<div class="col-xs-9 f-opt-label">',
 						'<input class="' + in_class + '" type="checkbox" ',
-						'onchange="' + this.obj_name + '.opt_check(\'' + f_field_id + '\');" ',
+						'onchange="' + this.obj_name + '.opt_check(\'' + f_field_id + '\', \'' + op_type + '\');" ',
 						'value="' + opt.id + '" /> ',
 						opt.label,
 					'</div>',
@@ -179,9 +181,46 @@ function OpenContextFacetsAPI(json_url) {
 		// adds commas to numbers for legibility
 		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	}
-	this.opt_check = function(f_field_id){
+	this.search_button_toggle = function(f_field_id, op_type, state){
+		// turns the search button on or off (visible, invisible)
+		var dom_id = 'opts-do-' + f_field_id + '-' + op_type;
+		if(document.getElementById(dom_id)){
+			var act_dom = document.getElementById(dom_id);
+			if(state == 'on'){
+				act_dom.style.display = 'block';
+			}
+			else{
+				act_dom.style.display = 'none';
+			}
+		}
+	}
+	this.single_multi_toggle = function(f_field_id, op_type, state){
+		// turns button on or off (visible, invisible) for switching
+		// between single select links and multi-select check boxes
+		var dom_id = 'opts-show-' + f_field_id + '-' + op_type;
+		if(document.getElementById(dom_id)){
+			var act_dom = document.getElementById(dom_id);
+			if(state == 'on'){
+				act_dom.style.display = 'block';
+			}
+			else{
+				act_dom.style.display = 'none';
+			}
+		}
+	}
+	this.opt_check = function(f_field_id, op_type){
+		// executed when a user checks or unchecks a multi-select option
 		var sel_options = this.get_selected_options(f_field_id);
 		console.log(sel_options);
+		if(sel_options.length > 0){
+			// alert(sel_options.length);
+			this.search_button_toggle(f_field_id, op_type, 'on');
+			this.single_multi_toggle(f_field_id, op_type, 'off');
+		}
+		else{
+			this.search_button_toggle(f_field_id, op_type, 'off');
+			this.single_multi_toggle(f_field_id, op_type, 'on');
+		}
 	}
 	this.get_selected_options = function(f_field_id){
 		var sel_options = [];
