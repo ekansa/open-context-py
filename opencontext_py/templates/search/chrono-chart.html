@@ -16,6 +16,9 @@
     var ctx = document.getElementById("chrono-chart");
     var chrono = new chrono_chart("chrono-chart", "{{ json_url|safe }}");
     chrono.initialize();
+    if(typeof oc_facets != "undefined"){
+        oc_facets.json_data = chrono.json_data;
+    }
 </script>
 
 {% endblock %}
