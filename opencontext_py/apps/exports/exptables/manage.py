@@ -30,6 +30,16 @@ ex_man = ExpManage()
 ex_man.reduce_lat_lon_precision('b5f81371-35db-4644-b353-3f5648eeb222')
 ex_man.reduce_lat_lon_precision('ea16a444-9876-4fe7-8ffb-389b54a7e3a0')
 ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
+
+
+from opencontext_py.apps.exports.exptables.manage import ExpManage
+ex_man = ExpManage()
+table_id = '0c14c4ad-fce9-4291-a605-8c065d347c5d'
+file_uri = 'https://archive.org/download/oc-table-0c14c4ad-fce9-4291-a605-8c065d347c5d/oc-table-0c14c4ad-fce9-4291-a605-8c065d347c5d.zip'
+file_uri = 'https://artiraq.org/static/opencontext/tables/oc-table-0c14c4ad-fce9-4291-a605-8c065d347c5d.zip'
+file_uri = 'https://artiraq.org/static/opencontext/tables/oc-table-0c14c4ad-fce9-4291-a605-8c065d347c5d.csv'
+ex_man.add_table_file_download(table_id, file_uri)
+
     """
 
     SLEEP_TIME = .5
@@ -344,6 +354,41 @@ ex_man.generate_table_metadata('05f2db65ff4faee1290192bd9a1868ed', True)
                         item['count'] = proj_count
                         dc_creators.append(item)
         return dc_creators
+
+    def add_table_file_download(self, table_id, file_uri):
+        """ adds a file_uri for a pre-cached table download """
+        ex_tabs = ExpTable.objects.filter(table_id=table_id)[:1]
+        for ex_tab in ex_tabs:
+            if ExpTable.PREDICATE_DUMP in ex_tab.meta_json:
+                dump_list = ex_tab.meta_json[ExpTable.PREDICATE_DUMP]
+            else:
+                # no predicate for a data dump, so look for it
+                dump_list = []
+            mm = ManageMediafiles()
+            ok = mm.get_head_info(file_uri)
+            if ok:
+                dump_item = LastUpdatedOrderedDict()
+                dump_item['id'] = file_uri
+                dump_item['dc-terms:hasFormat'] = mm.mime_type_uri
+                dump_item['dcat:size'] = float(mm.filesize)
+                print('Found: ' + str(dump_item))
+                dump_list.append(dump_item)
+                ex_tab.meta_json[ExpTable.PREDICATE_DUMP] = dump_list
+                ex_tab.save()
+                man_items = Manifest.objects.filter(uuid=table_id)[:1]
+                if len(man_items) > 0:
+                    man_obj = man_items[0]
+                    new_anno = LinkAnnotation()
+                    new_anno.subject = man_obj.uuid
+                    new_anno.subject_type = man_obj.item_type
+                    new_anno.project_uuid = man_obj.project_uuid
+                    new_anno.source_id = 'download-file-relate'
+                    new_anno.predicate_uri = ExpTable.PREDICATE_DUMP
+                    new_anno.object_uri = file_uri
+                    new_anno.sort = len(dump_list)
+                    new_anno.obj_extra = dump_item
+                    new_anno.save()
+                    
 
     def temp_crawl_csv(self):
         """ add download link to ExpTable metadata """

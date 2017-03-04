@@ -551,6 +551,7 @@ class ItemCreate():
         """ creates a type item into a project
         """
         ok = True
+        label = None
         required_params = ['source_id',
                            'item_type',
                            'label',
