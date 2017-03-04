@@ -211,7 +211,6 @@ function OpenContextFacetsAPI(json_url) {
 	this.opt_check = function(f_field_id, op_type){
 		// executed when a user checks or unchecks a multi-select option
 		var sel_options = this.get_selected_options(f_field_id);
-		console.log(sel_options);
 		if(sel_options.length > 0){
 			// alert(sel_options.length);
 			this.search_button_toggle(f_field_id, op_type, 'on');
@@ -221,6 +220,56 @@ function OpenContextFacetsAPI(json_url) {
 			this.search_button_toggle(f_field_id, op_type, 'off');
 			this.single_multi_toggle(f_field_id, op_type, 'on');
 		}
+	}
+	this.search_options = function(f_field_id, op_type){
+		// executes the actual search
+		var sel_options = this.get_selected_options(f_field_id);
+		if(sel_options.length > 0){
+			var ex_url = sel_options[0];
+			var replace_list = [];
+			var first_opt = this.get_facet_option_by_id(f_field_id, op_type, sel_options[0]);
+			if(first_opt != false){
+				// we've found the object for the first facet option
+				if (f_field_id.lastIndexOf('facet-context-', 0) === 0){
+					// we're looking at a context, so the substution text
+					// is based on the label
+					var search_text = this.get_option_last_context(sel_options[0]);
+					for (var i = 0, l_length = sel_options.length; i < l_length; i++){
+						var id = sel_options[i];
+						var act_context = this.get_option_last_context(id);
+						replace_list.push(act_context);
+					}
+				}
+				else{
+					// we're looking to replace slugs in the URL
+					var search_text = first_opt.slug;
+					for (var i = 0, l_length = sel_options.length; i < l_length; i++){
+						var id = sel_options[i];
+						var f_opt = this.get_facet_option_by_id(f_field_id, op_type, id);
+						if(f_opt != false){
+							replace_list.push(f_opt.slug);
+						}
+					}
+				}
+				var replace_query = replace_list.join('||');
+				var url = ex_url.replace(search_text, replace_query);
+				window.open(url, '_self');
+			}
+		}
+	}
+	this.get_option_last_context = function(url){
+		// gets the last context from an Open Context
+		// opntion search URL
+		var urlparts= url.split('?');   
+		if (urlparts.length>=2) {
+			var act_url = urlparts[0];
+		}
+		else{
+			var act_url = url;
+		}
+		var url_ex = act_url.split('/');
+		var context = url_ex[url_ex.length - 1];
+		return context;
 	}
 	this.get_selected_options = function(f_field_id){
 		var sel_options = [];
@@ -233,5 +282,18 @@ function OpenContextFacetsAPI(json_url) {
 			}
 		}
 		return sel_options;
+	}
+	this.get_facet_option_by_id = function(f_field_id, op_type, id){
+		// prepares facets for retrieval
+		var opt = false;
+		var facet_options = this.get_facet_options(f_field_id, op_type);
+		for (var i = 0, l_length = facet_options.length; i < l_length; i++){
+			var act_opt = facet_options[i];
+			if(act_opt.id == id){
+				var opt = act_opt;
+				break;
+			}
+		}
+		return opt;
 	}
 }
