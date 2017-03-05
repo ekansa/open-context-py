@@ -5,9 +5,20 @@
     {% for f_field in st.facets %}
         {% for op_type in f_field.option_types %}
             <div class="panel panel-default">
-                <div class="panel-heading"> 
+                <div class="panel-heading">
+                    <h4 class="pull-right panel-title" id="opts-control-{{ f_field.id }}-{{ op_type }}">
+                        <a class="or-options-toggle" id="opts-show-{{ f_field.id }}-{{ op_type }}"
+                           onclick="oc_facets.show_options('{{ f_field.id }}', '{{ op_type }}');" title="Select multiple options">
+                            <span class="glyphicon glyphicon-option-vertical" aria-hidden="true"></span>
+                        </a>
+                        <a style="display:none;" id="opts-do-{{ f_field.id }}-{{ op_type }}"
+                           class="text-primary"
+                           onclick="oc_facets.search_options('{{ f_field.id }}', '{{ op_type }}');" title="Search selected options">
+                            <span class="glyphicon glyphicon-search text-primary" aria-hidden="true"></span>
+                        </a>
+                    </h4>
                     <h4 class="panel-title">
-                        <a data-toggle="collapse" data-parent="#acc-facets" href="#panel-{{ f_field.id }}-{{ op_type }}">
+                        <a class="text-left" data-toggle="collapse" data-parent="#acc-facets" href="#panel-{{ f_field.id }}-{{ op_type }}">
                             <span class="glyphicon glyphicon-resize-vertical"></span>
                             {% if op_type == 'numeric' %}
                                 Numeric {{ f_field.label }}
@@ -26,7 +37,8 @@
                 {%else%}
                 <div id="panel-{{ f_field.id }}-{{ op_type }}" class="panel-collapse collapse">
                 {%endif%}
-                    <ul class="list-group f-opt-list">
+                    <div id="all-m-ops-{{ f_field.id }}-{{ op_type }}"></div>
+                    <ul class="list-group f-opt-list" id="s-ops-{{ f_field.id }}-{{ op_type }}">
                     {% if op_type == 'id' and f_field.id_options|length > 0 %} 
                         {% for option in f_field.id_options %}
                             {% with dom_id=option.dom_id %}
@@ -34,8 +46,12 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
-                            {% with l_count=forloop.counter %}    
+                            {% with l_count=forloop.counter %}
+                            {% with field_id=f_field.id %}
+                            {% with op_type=op_type %}
                             {% include 'search/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -50,8 +66,12 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
-                            {% with l_count=forloop.counter %}    
+                            {% with l_count=forloop.counter %}
+                            {% with field_id=f_field.id %}
+                            {% with op_type=op_type %}
                             {% include 'search/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -66,8 +86,12 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
-                            {% with l_count=forloop.counter %}    
+                            {% with l_count=forloop.counter %}
+                            {% with field_id=f_field.id %}
+                            {% with op_type=op_type %}
                             {% include 'search/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -82,8 +106,12 @@
                             {% with label=option.label %}
                             {% with opt_count=option.count %}
                             {% with defined_by=option.defined_by %}
-                            {% with l_count=forloop.counter %}    
+                            {% with l_count=forloop.counter %}
+                            {% with field_id=f_field.id %}
+                            {% with op_type=op_type %}
                             {% include 'search/facet-option.html' %}
+                            {% endwith %}
+                            {% endwith %}
                             {% endwith %}
                             {% endwith %}
                             {% endwith %}
@@ -100,6 +128,13 @@
         {% endfor %}
     {% endfor %}
     </div>
+            
+    <script type="text/javascript" src="{{ base_url }}/static/oc/js/apis/opencontext-facets.js"></script>
+    <script>
+        var oc_facets = new OpenContextFacetsAPI();
+    </script>       
+            
+            
 {%endif%}
 
 

@@ -41,16 +41,7 @@
         <div class="col-sm-4">
             {% include 'search/text-search.html' %}
             {% include 'search/filters.html' %}
-            
-            {% if chart %} 
-            <!-- include or-facets now only in testing -->
-            {% include 'search/facets-or-ready.html' %}
-            
-            {%else%}
-            
             {% include 'search/facets.html' %}
-            
-            {%endif%}
             
         </div>
     
