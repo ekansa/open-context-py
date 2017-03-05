@@ -305,10 +305,14 @@ class Create():
                                       .order_by('sort')
             item_preds = LastUpdatedOrderedDict()
             for pred_uuid in pred_uuids:
-                if pred_uuid not in item_preds:
-                    item_preds[pred_uuid] = 1
-                else:
-                    item_preds[pred_uuid] += 1
+                # make sure we can dereference the predicate
+                pred_label = self.deref_entity_label(pred_uuid)
+                if pred_uuid in self.entities:
+                    # only do this if we succeeded in dereferencing the predicate
+                    if pred_uuid not in item_preds:
+                        item_preds[pred_uuid] = 1
+                    else:
+                        item_preds[pred_uuid] += 1
             for pred_uuid, count in item_preds.items():
                 if pred_uuid not in self.predicate_uuids:
                     pred_label = self.deref_entity_label(pred_uuid)
@@ -394,7 +398,8 @@ class Create():
         """ Processes linked uri equivalents for predicates to
             get linked data for objects assocated with these predicates
         """
-        if self.include_equiv_ld and len(self.ld_predicates) > 0:
+        if (self.boolean_multiple_ld_fields is not False or self.include_equiv_ld) \
+           and len(self.ld_predicates) > 0:
             for pred_ld_equiv_uri, ld_pred in self.ld_predicates.items():
                 self.get_ld_predicate_values(pred_ld_equiv_uri)
 

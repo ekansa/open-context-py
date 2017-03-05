@@ -41,9 +41,11 @@ sj = SerizializeJSON()
 sj.dump_serialized_rel_tables()
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+project_uuid = '416A274C-CF88-4471-3E31-93DB825E9E4A'
 sj = SerizializeJSON()
-sj.after_date = '2016-02-28'
-sj.dump_serialized_data('27e90af3-6bf7-4da1-a1c3-7b2f744e8cf7')
+sj.after_date = '2017-02-25'
+sj.limit_export_table_id = '0c14c4ad-fce9-4291-a605-8c065d347c5d'
+sj.dump_serialized_data(project_uuid)
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
@@ -73,6 +75,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.act_export_dir = False
         self.limit_item_types = False
         self.limit_file_types = False  # limit media export to a few file_types
+        self.limit_export_table_id = False # limit to data related to an export table
         self.all_models = ['link_entities']
         self.project_models = ['oc_assertions',
                                'oc_documents',
@@ -173,8 +176,8 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                             act_set = []  # start the act set from scratch again
                     if len(act_set) > 0:
                         # now save the remaining batch
-                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)
-
+                        self.save_serialized_json_batch(proj_dir, table_name, batch, act_set)  
+    
     def dump_project_table(self, project_uuid, table_name):
         """ dumps a specific table for a given project """
         proj_dir = self.prepare_dump_directory(project_uuid)
@@ -282,6 +285,33 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                    self.limit_item_types[0] == 'tables':
                     if table_name == 'link_annotations':
                         args['object_uri__contains'] = '/tables/'
+            if isinstance(self.limit_export_table_id, str):
+                # limit to records relating to an export table
+                uuid_tabs = [
+                    'oc_manifest',
+                    'oc_identifiers',
+                    'oc_assertions'
+                ]
+                exp_tab_tabs = [
+                    'exp_tables',
+                    'exp_fields',
+                    'exp_records'
+                ]
+                if table_name in exp_tab_tabs:
+                    # get all the records associated with the export table
+                    args = {}
+                    args['table_id'] = self.limit_export_table_id
+                elif table_name in uuid_tabs:
+                    # just get the manifest record for the export table
+                    args = {}
+                    args['uuid'] = self.limit_export_table_id
+                elif table_name == 'link_annotations':
+                    # just get the manifest record for the export table
+                    args = {}
+                    args['subject'] = self.limit_export_table_id
+                else:
+                    # then we don't want any other outputs
+                   table_name = False
             if table_name == 'oc_assertions':
                 query_set = Assertion.objects\
                                      .filter(**args)

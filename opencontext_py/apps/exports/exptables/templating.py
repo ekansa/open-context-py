@@ -48,6 +48,7 @@ class ExpTableTemplating():
         self.doi = False
         self.ark = False
         self.cite_uri = ex_id.uri
+        self.license = False
         self.template_fields = []
         self.sample_rows = []
 
@@ -71,6 +72,7 @@ class ExpTableTemplating():
             self.make_cite_editors(json_ld)
             self.make_cite_time(json_ld)
             self.make_list_cite_projects(json_ld)
+            self.create_license(json_ld)
             self.make_template_field_list(json_ld)
             self.make_sample_records(1, 100)
             if isinstance(self.exp_tab.abstract, str):
@@ -204,6 +206,37 @@ class ExpTableTemplating():
         self.cite_projects = ', '.join(cite_projects_list)
         self.projects_list = projects_list
         return self.cite_projects
+    
+    def create_license(self, json_ld):
+        """ creates a license link
+            and label
+            and type
+        """
+        if 'dc-terms:license' in json_ld:
+            # license information
+            self.license = json_ld['dc-terms:license'][0]
+            license_uri = self.license['id']
+            if license_uri[-1] != '/':
+                # add a last character to the string
+                # to keep a consistent pattern
+                license_uri += '/'
+            lic_ex = license_uri.split('/')
+            i = len(lic_ex)
+            loop = True
+            while loop:
+                i -= 1
+                part = lic_ex[i]
+                if len(part) > 0:
+                    try:
+                        n_p = float(part)
+                    except:
+                        n_p = False
+                    if n_p is False:
+                        # we have a string!
+                        self.license['type'] = part
+                        loop = False
+                if i < 2:
+                    loop = False
 
     def get_field_list(self):
         """ gets a list of fields used with the current table """
