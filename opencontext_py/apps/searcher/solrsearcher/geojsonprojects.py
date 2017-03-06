@@ -99,11 +99,17 @@ class GeoJsonProjects():
                     geometry['coordinates'] = [weighted_mean_lon,
                                                weighted_mean_lat]
                     record['geometry'] = geometry
+                # now make a link to search records for this project
+                fl = FilterLinks()
+                fl.spatial_context = self.spatial_context
+                new_rparams = fl.add_to_request('proj',
+                                                slug)
+                search_link = fl.make_request_url(new_rparams)
                 properties = LastUpdatedOrderedDict()
                 properties['id'] = '#geo-proj-' + slug
                 properties['uri'] = uri
                 properties['href'] = href
-                properties['search'] = record['id']
+                properties['search'] = search_link
                 properties['label'] = label
                 properties['feature-type'] = 'project '
                 properties['count'] = proj['count']
