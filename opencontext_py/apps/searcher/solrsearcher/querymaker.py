@@ -23,7 +23,8 @@ class QueryMaker():
                      'persons': 'oc-gen-persons',
                      'projects': 'oc-gen-projects',
                      'types': 'oc-gen-types',
-                     'predicates': 'oc-gen-predicates'}
+                     'predicates': 'oc-gen-predicates',
+                     'tables': 'oc-gen-tables'}
 
     TYPE_URIS = {'subjects': 'oc-gen:subjects',
                  'media': 'oc-gen:media',
@@ -31,7 +32,8 @@ class QueryMaker():
                  'persons': 'oc-gen:persons',
                  'projects': 'oc-gen:projects',
                  'types': 'oc-gen:types',
-                 'predicates': 'oc-gen:predicates'}
+                 'predicates': 'oc-gen:predicates',
+                 'tables': 'oc-gen:tables'}
 
     def __init__(self):
         self.error = False
