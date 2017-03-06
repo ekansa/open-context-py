@@ -280,7 +280,7 @@ class QueryMaker():
                                 dc_term += '*'
                             fq_path_term = fq_field + ':' + dc_term
                         fq_path_terms.append(fq_path_term)
-                final_path_term = ' AND '.join(fq_path_terms)
+                final_path_term = ' OR '.join(fq_path_terms)
                 final_path_term = '(' + final_path_term + ')'
                 fq_terms.append(final_path_term)
             fq_final = ' AND '.join(fq_terms)
