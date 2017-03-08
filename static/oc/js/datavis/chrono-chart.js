@@ -108,11 +108,13 @@ function chrono_chart(chart_dom_id, json_url) {
 		var	keys_sorted = Object.keys(list).sort(function(a,b){return list[a]-list[b]});
 		keys_sorted.reverse();
 		// keys_sorted.sort();
-		console.log(keys_sorted);
+		// console.log(keys_sorted);
 		
 		// datasets
 		var datasets = [];
 		this.make_current_y_at_x(all_min_year, all_max_year);
+		var all_t_span = Math.abs(all_max_year - all_min_year);
+		var chart_count_year = max_count / all_t_span;
 		for (var i = 0, length = keys_sorted.length; i < length; i++) {
 			var key = keys_sorted[i];
 			var chrono = chrono_objs[key];
@@ -153,7 +155,9 @@ function chrono_chart(chart_dom_id, json_url) {
 			dataset.borderColor = l_gradient;
 			dataset.borderStrokeColor = "#fff";
 			dataset.label = chrono['start'] + ' to ' + chrono['stop'];
-			dataset.data = this.make_data_points(prop_max_c_per_year,
+			dataset.data = this.make_data_points(chart_count_year,
+												 prop_max_c_per_year,
+												 max_c_per_year,
 												 chrono);
 			datasets.push(dataset);
 		} 
@@ -195,24 +199,38 @@ function chrono_chart(chart_dom_id, json_url) {
 			return 0;
 		}
 	}
-	this.make_data_points = function(c_per_year, chrono){
+	this.make_data_points = function(chart_count_year,
+									 c_per_year,
+									 max_c_per_year,
+									 chrono){
+		/* ideas to consider:
 		
+		(1) compute different standard deviations for each chrono,
+		    max time span should have the biggest standard deviation,
+		    shortest should have the smallest standard deviation
+		
+		*/
 		var data_list = [];
 		var start = parseFloat(chrono['start']);
 		var end = parseFloat(chrono['stop']);
 		var median_year = (start + end) / 2;
 		var t_span = Math.abs(end - start);
-		var added = .002;
+		var added = 0;
 		for (var i = 0, length = this.curent_year_keys.length; i < length; i++) {
 			var year = this.curent_year_keys[i];
 			if (year >= start && year <= end) {
 				// we're in the time span of the current dataset
+				var c_per_year = chrono.count / t_span;
+				if(c_per_year < chart_count_year * .25){
+					// makes sure the bumps are minimally visible
+					c_per_year = chart_count_year * .25;
+				}
+				
 				var act_median_year = median_year;
-				var y = this.make_y_value(t_span,
-										  added,
-										  year,
-										  c_per_year,
-										  act_median_year);
+				var sigma = t_span * .15;
+				var y = this.gaussian(year, act_median_year, sigma);
+				y = y * (c_per_year);
+				
 				var data_point = {
 					x: year,
 					y: y};
@@ -227,34 +245,6 @@ function chrono_chart(chart_dom_id, json_url) {
 		// console.log(this.current_y_at_x);
 		console.log(data_list);
 		return data_list;
-	}
-	
-	this.make_y_value = function(t_span,
-								 added,
-								 year,
-								 c_per_year,
-								 mid_year){
-		var half_span = t_span * .5;
-		var mid_year_dif = Math.abs(mid_year - year);
-		var per_span = (half_span - mid_year_dif) / half_span;
-		var sigma = 150;
-		var y_mean = (year + mid_year) / 2;
-		var y_mean = mid_year;
-		var y = this.gaussian(year, y_mean, sigma);
-		y = y * c_per_year;
-		
-		
-		if (y < added){
-			if (per_span <= .15) {
-				// we're at the extreme ends
-				var y = added * ( per_span / .15);
-			}
-			else{
-				var y = added;
-			}
-		}
-		
-		return y
 	}
 	this.gaussian = function(x, mean, sigma) {
 		var gaussianConstant = 1 / Math.sqrt(2 * Math.PI);
