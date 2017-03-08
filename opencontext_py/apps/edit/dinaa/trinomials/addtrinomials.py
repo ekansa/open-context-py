@@ -13,6 +13,11 @@ class AddTrinomials():
     """ methods to add trinomials,
         in different varients
         to DINAA site records
+
+from opencontext_py.apps.edit.dinaa.trinomials.addtrinomials import AddTrinomials
+add_tris = AddTrinomials()
+add_tris.dinaa_projs = ['7f82f3f3-04d2-47c3-b0a9-21aa28294d25']
+add_tris.add_trinomials_to_items()
     """
 
     DINAA_PROJ_UUID = '416A274C-CF88-4471-3E31-93DB825E9E4A'

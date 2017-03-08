@@ -14,7 +14,7 @@ class dinaaLink():
         
 from opencontext_py.apps.ldata.tdar.dinaalink import dinaaLink
 dl = dinaaLink()
-dl.match_dinaa_ids()
+dl.match_dinaa_ids('Tennessee')
 
 
     """
@@ -29,16 +29,16 @@ dl.match_dinaa_ids()
         self.base_wait = 300
         self.max_wait = self.base_wait * 5
 
-    def match_dinaa_ids(self, limit=False):
+    def match_dinaa_ids(self, proj_limit, limit=False):
         """ get a key word for a site """
         found_matches = 0
         if limit is not False:
             tris = Trinomial.objects.filter(trinomial__isnull=False,
-                                            project_label__contains='North Carolina',
+                                            project_label__contains=proj_limit,
                                             tdar_checked__isnull=True)[:limit]
         else:
             tris = Trinomial.objects.filter(trinomial__isnull=False,
-                                            project_label__contains='North Carolina',
+                                            project_label__contains=proj_limit,
                                             tdar_checked__isnull=True)
         len_tris = len(tris)
         i = 1
