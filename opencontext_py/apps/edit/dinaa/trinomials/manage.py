@@ -21,9 +21,10 @@ from opencontext_py.apps.edit.dinaa.trinomials.models import Trinomial
 
 """
 from opencontext_py.apps.edit.dinaa.trinomials.manage import TrinomialManage
-project_uuid = '5F2D4172-D823-4F7F-D3A8-4BD68ED1369D'
+project_uuid = '7f82f3f3-04d2-47c3-b0a9-21aa28294d25'
 tri_m = TrinomialManage()
-tri_m.make_trinomial_from_site_labels(project_uuid, 31)
+tri_m.remove_prepended_zeros = True
+tri_m.make_trinomial_from_site_labels(project_uuid, '')
 """
 
 
@@ -31,6 +32,7 @@ tri_m.make_trinomial_from_site_labels(project_uuid, 31)
 class TrinomialManage():
 
     def __init__(self):
+        self.remove_prepended_zeros = False
         pass
 
     def prepend_qualifier_dash(self):
@@ -71,6 +73,7 @@ class TrinomialManage():
             trinomials for other states. See:
             http://en.wikipedia.org/wiki/Smithsonian_trinomial
         """
+        non_zero_found = False
         tri_len = len(trinomial)
         act_part = 'state'
         parts = {'state': '',
@@ -78,14 +81,23 @@ class TrinomialManage():
                  'site': ''}
         i = 0
         while i < tri_len:
+            act_char = trinomial[i]
             if act_part == 'state':
-                if not trinomial[i].isdigit():
+                if not act_char.isdigit():
                     act_part = 'county'
             if act_part == 'county':
-                if trinomial[i].isdigit():
+                if act_char.isdigit():
                     act_part = 'site'
-            parts[act_part] += trinomial[i]
+            parts[act_part] += act_char
             i += 1
+        if self.remove_prepended_zeros:
+            int_site = False
+            try:
+                int_site = int(float(parts['site']))
+            except:
+                int_site = False
+            if int_site is not False:
+                parts['site'] = int_site
         return parts
 
     def fix_missing_county_site(self):
@@ -269,6 +281,8 @@ class TrinomialManage():
                     trinomial = tr_ex[0]
                 print('working on (' + site.uuid + '): ' + trinomial)
                 parts = self.parse_trinomial(trinomial)
+                if 'Tennessee' in proj_label:
+                    trinomial = parts['state'] + parts['county'] + str(parts['site'])
                 dt = Trinomial()
                 dt.uri = URImanagement.make_oc_uri(site.uuid, site.item_type)
                 dt.uuid = site.uuid

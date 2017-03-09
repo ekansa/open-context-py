@@ -21,7 +21,11 @@ function chrono_chart(chart_dom_id, json_url) {
 		// '#FFFF00',
 		'#B22A00'
 	]; // list of colors for gradients
-	
+	this.obj_name = 'chrono';
+	this.control_dom_id = 'chrono-controls';
+	this.slider_dom_id = 'chrono-slider';
+	this.slider_button_div_dom_id = 'chrono-control-button-div';
+	this.slider = null;
 	this.current_y_at_x = {};
 	this.curent_year_keys = [];
 	this.json_data = null;
@@ -104,20 +108,33 @@ function chrono_chart(chart_dom_id, json_url) {
 			list[id] = t_span;
 			chrono_objs[id] = chrono;
 		}
+		
+		// now make some controls
+		this.make_controls(all_min_year, all_max_year);
+		
+		
 		// now sort the keys, reverse order 
 		var	keys_sorted = Object.keys(list).sort(function(a,b){return list[a]-list[b]});
 		keys_sorted.reverse();
 		// keys_sorted.sort();
-		console.log(keys_sorted);
+		// console.log(keys_sorted);
 		
 		// datasets
 		var datasets = [];
 		this.make_current_y_at_x(all_min_year, all_max_year);
+		var all_t_span = Math.abs(all_max_year - all_min_year);
+		var chart_count_year = max_count / all_t_span;
+		var nearest = 25;
+		if(all_t_span > 2000){
+			nearest = Math.ceil(Math.log10(all_t_span)) * 100 / 2;
+		}
 		for (var i = 0, length = keys_sorted.length; i < length; i++) {
 			var key = keys_sorted[i];
 			var chrono = chrono_objs[key];
 			var t_span = list[key];
 			var c_per_year = chrono.count / t_span;
+			var prop_max_c_per_year = (c_per_year / max_c_per_year) * 100;
+
 			var dataset = this.make_dataset();
 			var style_obj = new numericStyle();
 			style_obj.reset_gradient_colors(this.area_color_list);
@@ -133,17 +150,7 @@ function chrono_chart(chart_dom_id, json_url) {
 			l_style_obj.min_value = 0;
 			l_style_obj.max_value = max_count;
 			l_style_obj.act_value = chrono.count;
-			
-			//l_style_obj.max_value = max_c_per_year;
-			//l_style_obj.act_value = c_per_year;
 			var l_hex_color = l_style_obj.generate_hex_color();
-			
-			var prop_max_c_per_year = (c_per_year / max_c_per_year) * 100;
-			if (prop_max_c_per_year < .05) {
-				// prop_max_c_per_year = .05;
-			}
-			// prop_max_c_per_year = prop_max_c_per_year + (max_c_per_year * .1);
-			
 			var b_gradient = this.make_grandient_object(hex_color);
 			var l_gradient = this.make_grandient_object(l_hex_color);
 			
@@ -152,13 +159,30 @@ function chrono_chart(chart_dom_id, json_url) {
 			// dataset.borderColor = l_hex_color;
 			dataset.borderColor = l_gradient;
 			dataset.borderStrokeColor = "#fff";
+			dataset.url = chrono.id;
+			/*
 			dataset.label = chrono['start'] + ' to ' + chrono['stop'];
-			dataset.data = this.make_data_points(prop_max_c_per_year,
+			dataset.title = this.round_date(nearest, chrono['start'])
+			dataset.title += ' to ';
+			dataset.title += this.round_date(nearest, chrono['stop']);
+			*/
+			dataset.label = this.round_date(nearest, chrono['start']);
+			dataset.label += ' to ';
+			dataset.label += this.round_date(nearest, chrono['stop']);
+			dataset.label += ' (';
+			dataset.label += chrono.count;
+			dataset.label += ' items)';
+			dataset.data = this.make_data_points(chart_count_year,
+												 prop_max_c_per_year,
 												 chrono);
 			datasets.push(dataset);
 		} 
-		
 		return datasets;
+	}
+	this.round_date = function(nearest, date){
+		var n_date = parseFloat(date);
+		var rounded = n_date + nearest/2 - (n_date + nearest/2) % nearest;
+		return rounded;
 	}
 	this.make_grandient_object = function(hex_color){
 		// makes a gradient object for a color hex string
@@ -195,24 +219,37 @@ function chrono_chart(chart_dom_id, json_url) {
 			return 0;
 		}
 	}
-	this.make_data_points = function(c_per_year, chrono){
+	this.make_data_points = function(chart_count_year,
+									 c_per_year,
+									 chrono){
+		/* ideas to consider:
 		
+		(1) compute different standard deviations for each chrono,
+		    max time span should have the biggest standard deviation,
+		    shortest should have the smallest standard deviation
+		
+		*/
 		var data_list = [];
 		var start = parseFloat(chrono['start']);
 		var end = parseFloat(chrono['stop']);
 		var median_year = (start + end) / 2;
 		var t_span = Math.abs(end - start);
-		var added = .002;
+		var added = 0;
 		for (var i = 0, length = this.curent_year_keys.length; i < length; i++) {
 			var year = this.curent_year_keys[i];
 			if (year >= start && year <= end) {
 				// we're in the time span of the current dataset
+				var c_per_year = chrono.count / t_span;
+				if(c_per_year < chart_count_year * .25){
+					// makes sure the bumps are minimally visible
+					c_per_year = chart_count_year * .25;
+				}
+				
 				var act_median_year = median_year;
-				var y = this.make_y_value(t_span,
-										  added,
-										  year,
-										  c_per_year,
-										  act_median_year);
+				var sigma = t_span * .15;
+				var y = this.gaussian(year, act_median_year, sigma);
+				y = y * (c_per_year);
+				
 				var data_point = {
 					x: year,
 					y: y};
@@ -225,36 +262,8 @@ function chrono_chart(chart_dom_id, json_url) {
 			data_list.push(data_point);
 		}
 		// console.log(this.current_y_at_x);
-		console.log(data_list);
+		// console.log(data_list);
 		return data_list;
-	}
-	
-	this.make_y_value = function(t_span,
-								 added,
-								 year,
-								 c_per_year,
-								 mid_year){
-		var half_span = t_span * .5;
-		var mid_year_dif = Math.abs(mid_year - year);
-		var per_span = (half_span - mid_year_dif) / half_span;
-		var sigma = 150;
-		var y_mean = (year + mid_year) / 2;
-		var y_mean = mid_year;
-		var y = this.gaussian(year, y_mean, sigma);
-		y = y * c_per_year;
-		
-		
-		if (y < added){
-			if (per_span <= .15) {
-				// we're at the extreme ends
-				var y = added * ( per_span / .15);
-			}
-			else{
-				var y = added;
-			}
-		}
-		
-		return y
 	}
 	this.gaussian = function(x, mean, sigma) {
 		var gaussianConstant = 1 / Math.sqrt(2 * Math.PI);
@@ -286,9 +295,24 @@ function chrono_chart(chart_dom_id, json_url) {
 			data: {
 				datasets: datasets,
 			},
+			events: [
+				'click'
+			],
 			options: {
 				legend: {
 					display: false,
+				},
+				tooltipEvents: ['mousemove', 'click'],
+				tooltips: {
+					callbacks: {
+						label: function(tooltipItems, data){
+							// console.log(data.datasets[tooltipItems.datasetIndex].label);
+							return data.datasets[tooltipItems.datasetIndex].label;
+						},
+						title: function(){
+							return 'Estimated Time Span';
+						}
+					},
 				},
 				scales: {
 					yAxes: [{
@@ -306,5 +330,75 @@ function chrono_chart(chart_dom_id, json_url) {
 			},
 		});
 		this.chart = act_chart;	
+	}
+	this.make_controls = function(all_min_year, all_max_year){
+		if(document.getElementById(this.control_dom_id)){
+			var all_t_span = Math.abs(all_max_year - all_min_year);
+			var nearest = 25;
+			if(all_t_span > 2000){
+				nearest = Math.ceil(Math.log10(all_t_span)) * 100 / 2;
+			}
+			var mid_year = (all_min_year + all_max_year) / 2;
+			var old_start = (all_min_year + mid_year) / 2;
+			var late_start = (all_max_year + mid_year) / 2;
+			old_start = this.round_date(nearest, all_min_year);
+			late_start = this.round_date(nearest, all_max_year);
+			
+			var act_dom = document.getElementById(this.control_dom_id);
+			var html =[
+			'<div class="row">',
+			'<div class="col-xs-11">',
+			'<input id="' + this.slider_dom_id + '" type="text" ',
+			'style="width: 100%;" value="" ',
+			'data-slider-min="' + all_min_year + '" ',
+			'data-slider-max="' + 2000 + '" ',
+			'data-slider-step="1" ',
+			'data-slider-value="[' + old_start + ',' + late_start  +']" />',
+			'</div>',
+			'<div class="col-xs-1" id="' + this.slider_button_div_dom_id + '">',
+			'<button type="submit" ',
+			'class="btn btn-default btn-sm" ',
+			'title="Use Sliders to search with a time span" ',
+			'onclick="' + this.obj_name + '.chrono_search();">',
+			'<span class="glyphicon glyphicon-search" aria-hidden="true"></span>',
+			'</button>',
+			'</div>',
+			'</div>'
+			].join('\n');
+			act_dom.innerHTML = html;
+			
+			this.slider = new Slider(('#' + this.slider_dom_id), {
+				current_min: all_min_year,
+				current_max: all_max_year,
+				/*
+				formatter: function(value) {
+					console.log(value);
+					var num_vals = [];
+					num_vals.push(parseInt(value[0]));
+					num_vals.push(parseInt(value[1]));			  
+					return 'Search: ' + Math.min(num_vals) + ' to ' + Math.max(num_vals);
+				}
+				*/
+			});
+		}
+	}
+	this.chrono_search = function(){
+		var value = this.slider.getValue();
+		var hashed_part = ''; 
+        var url = window.location.href;
+        if ( url.indexOf('#') > -1) {
+            hashed_part = window.location.hash;
+            url = url.substr(0, url.indexOf('#'));
+        }
+		url = replaceURLparameter(url, 'form-start', value[0]);
+        url = replaceURLparameter(url, 'form-stop', value[1]);
+		var act_dom = document.getElementById(this.slider_button_div_dom_id);
+		var html = [
+			'<img style="margin-top:-4px;" height="16" ',
+			'src="' + base_url + '/static/oc/images/ui/waiting.gif" ',
+			'alt="Loading icon..." />',
+		].join(' ');
+		act_dom.innerHTML = html;
+        window.location = url; //load the page with the time query
 	}
 }

@@ -19,6 +19,8 @@ static/exports/
 static/imports/
 static/d3/
 static/openseadragon/
+static/chart/
+static/bootstrap-slider/
 static/robots/robots.txt
 *.pyc
 solr-config/schema.xml.old

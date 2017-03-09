@@ -106,6 +106,30 @@ class ActiveFilters():
                         if isinstance(dates, dict):
                             act_filter['label'] = 'Time range: ' + str(dates['earliest_bce'])
                             act_filter['label'] += ' to ' + str(dates['latest_bce'])
+                    elif param_key == 'form-start':
+                        act_filter['oc-api:filter'] = 'Earliest formation, use, or life date'
+                        try:
+                            val_date = int(float(all_vals[0]))
+                        except:
+                            val_date = False
+                        if val_date is False:
+                            act_filter['label'] = '[Invalid year]'
+                        elif val_date < 0:
+                            act_filter['label'] = str(val_date * -1) + ' BCE'
+                        else:
+                            act_filter['label'] = str(val_date) + ' CE'
+                    elif param_key == 'form-stop':
+                        act_filter['oc-api:filter'] = 'Latest formation, use, or life date'
+                        try:
+                            val_date = int(float(all_vals[0]))
+                        except:
+                            val_date = False
+                        if val_date is False:
+                            act_filter['label'] = '[Invalid year]'
+                        elif val_date < 0:
+                            act_filter['label'] = str(val_date * -1) + ' BCE'
+                        else:
+                            act_filter['label'] = str(val_date) + ' CE'
                     elif param_key == 'disc-geotile':
                         act_filter['oc-api:filter'] = 'Location of discovery or observation'
                         act_filter['label'] = self.make_geotile_filter_label(all_vals[0])
