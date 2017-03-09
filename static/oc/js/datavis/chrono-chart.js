@@ -357,7 +357,7 @@ function chrono_chart(chart_dom_id, json_url) {
 			'</div>',
 			'<div class="col-xs-1" id="' + this.slider_button_div_dom_id + '">',
 			'<button type="submit" ',
-			'class="btn btn-primary btn-sm" ',
+			'class="btn btn-default btn-sm" ',
 			'title="Use Sliders to search with a time span" ',
 			'onclick="' + this.obj_name + '.chrono_search();">',
 			'<span class="glyphicon glyphicon-search" aria-hidden="true"></span>',
