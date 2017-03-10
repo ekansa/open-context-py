@@ -26,6 +26,8 @@ class JsonLDchronology():
         self.ok_for_suggested_tile_depth = True
         self.min_date = False  # bce / ce
         self.max_date = False  # bce / ce
+        self.exclude_before = False  # bce / ce
+        self.exclude_after = False # bce / ce
         try:
             self.total_found = solr_json['response']['numFound']
         except KeyError:
@@ -66,6 +68,21 @@ class JsonLDchronology():
                     # facets that are OK to add
                     chrono_t = ChronoTile()
                     dates = chrono_t.decode_path_dates(tile_key)
+                    if isinstance(dates, dict):
+                        # chronotupe is valid, now check to make sure we
+                        # actually want it in the results
+                        if self.exclude_before is not False:
+                            if dates['earliest_bce'] < self.exclude_before:
+                                # too early before the exclude before date
+                                ok_to_add = False
+                        if self.exclude_after is not False:
+                            if dates['latest_bce'] > self.exclude_after:
+                                # to late, after the exclude after date
+                                ok_to_add = False
+                    else:
+                        # not valid tile, so don't add
+                        ok_to_add = False
+                if ok_to_add:
                     if isinstance(dates, dict):
                         if self.min_date is False:
                             self.min_date = dates['earliest_bce']
@@ -156,6 +173,23 @@ class JsonLDchronology():
                                                    ensure_ascii=False,
                                                    indent=4)
         return self.aggregation_depth
+
+    def set_date_exclusions_from_request_params(self, request_dict_json):
+        """ sets date exclusions from the request parameters """
+        request_dict = json.loads(request_dict_json)
+        if 'form-start' in request_dict:
+            self.exclude_before = self.validate_request_date(request_dict['form-start'][0])
+        if 'form-stop' in request_dict:
+            self.exclude_after = self.validate_request_date(request_dict['form-stop'][0])
+
+    def validate_request_date(self, date_str):
+        """ validates a date str, converts to integer """
+        val_date = False
+        try:
+            val_date = int(float(date_str))
+        except:
+            val_date = False
+        return val_date
 
     def get_suggested_tile_depth(self, solr_tiles):
         """ gets the suggested tile depth

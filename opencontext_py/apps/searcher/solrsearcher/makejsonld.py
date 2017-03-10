@@ -654,6 +654,7 @@ class MakeJsonLd():
             chrono_tiles = JsonLDchronology(solr_json)
             chrono_tiles.spatial_context = self.spatial_context
             chrono_tiles.set_aggregation_depth(self.request_dict_json)  # also needed for making filter links
+            chrono_tiles.set_date_exclusions_from_request_params(self.request_dict_json)
             chrono_tiles.process_solr_tiles(solr_form_use_life_chono_facets)
             self.min_date = chrono_tiles.min_date
             self.max_date = chrono_tiles.max_date
