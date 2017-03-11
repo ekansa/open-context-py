@@ -67,6 +67,9 @@ def html_view(request, spatial_context=None):
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
+    chart = False # provide a chart, now only experimental
+    if request.GET.get('chart') is not None:
+        chart = True
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
     if rd.security_ok is False:
@@ -147,6 +150,16 @@ def html_view(request, spatial_context=None):
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
+                props = []
+                if 'prop' in request.GET:
+                    props = request.GET.getlist('prop')
+                # check to make sure chrono chart will be ok
+                if 'proj' in request.GET or len(props) > 1 \
+                   or spatial_context is not None:
+                    if 'oc-api:has-form-use-life-ranges' in json_ld:
+                        if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
+                            # print('chrono range: ' + str(len(json_ld['oc-api:has-form-use-life-ranges'])))
+                            chart = True
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
                 st.process_json_ld()
@@ -154,6 +167,7 @@ def html_view(request, spatial_context=None):
                 context = RequestContext(request,
                                          {'st': st,
                                           'item_type': '*',
+                                          'chart': chart,
                                           'base_search_link': m_json_ld.base_search_link,
                                           'url': url,
                                           'json_url': json_url,
@@ -346,6 +360,13 @@ def subjects_html_view(request, spatial_context=None):
                 props = []
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
+                # check to make sure chrono chart will be ok
+                if 'proj' in request.GET or len(props) > 1 \
+                   or spatial_context is not None:
+                    if 'oc-api:has-form-use-life-ranges' in json_ld:
+                        if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
+                            print('chrono range: ' + str(len(json_ld['oc-api:has-form-use-life-ranges'])))
+                            chart = True
                 if len(props) > 1 or st.total_count <= 25000:
                     # allow downloads, multiple props selected
                     # or relatively few records
@@ -481,6 +502,11 @@ def media_html_view(request, spatial_context=None):
     rd = RequestDict()
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
+    chart = False # provide a chart, now only experimental
+    if request.GET.get('chart') is not None:
+        chart = True
+    if spatial_context is not None:
+        chart = True
     if rd.security_ok is False:
         template = loader.get_template('400.html')
         context = RequestContext(request,
@@ -550,6 +576,15 @@ def media_html_view(request, spatial_context=None):
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
+                props = []
+                if 'prop' in request.GET:
+                    props = request.GET.getlist('prop')
+                # check to make sure chrono chart will be ok
+                if 'proj' in request.GET or len(props) > 1 \
+                   or spatial_context is not None:
+                    if 'oc-api:has-form-use-life-ranges' in json_ld:
+                        if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
+                            chart = True
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
                 st.process_json_ld()
@@ -557,6 +592,7 @@ def media_html_view(request, spatial_context=None):
                 context = RequestContext(request,
                                          {'st': st,
                                           'item_type': 'media',
+                                          'chart': chart,
                                           'base_search_link': m_json_ld.base_search_link,
                                           'url': url,
                                           'json_url': json_url,
