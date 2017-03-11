@@ -1,3 +1,4 @@
+import math
 import re
 import json
 import geojson
@@ -132,6 +133,12 @@ class JsonLDchronology():
             record['category'] = 'oc-api:chrono-facet'
             chrono_t = ChronoTile()
             dates = chrono_t.decode_path_dates(tile_key)
+            if self.exclude_before is not False:
+                if dates['earliest_bce'] < self.exclude_before:
+                    dates['earliest_bce'] = self.exclude_before
+            if self.exclude_after is not False:
+                if dates['latest_bce'] > self.exclude_after:
+                    dates['latest_bce'] = self.exclude_after
             # convert numeric to GeoJSON-LD ISO 8601
             record['start'] = ISOyears().make_iso_from_float(dates['earliest_bce'])
             record['stop'] = ISOyears().make_iso_from_float(dates['latest_bce'])
@@ -165,7 +172,7 @@ class JsonLDchronology():
                 self.aggregation_depth = int(float(deep))
         if self.aggregation_depth < 6:
             self.aggregation_depth = 6
-        elif self.aggregation_depth > self.max_depth:
+        if self.aggregation_depth > self.max_depth:
             self.aggregation_depth = self.max_depth
         # now make sure we've got a 'clean' request dict
         # to make filter links
@@ -208,6 +215,7 @@ class JsonLDchronology():
             while keep_looping:
                 t_depth += 1
                 tile_depths[t_depth] = []
+                # print('now' + str(self.min_tile_count + exclude_add))
                 # print('check: ' + str(t_depth) + ' ' + str(len(tile_depths[t_depth])))
                 if t_depth > self.max_depth:
                     keep_looping = False
@@ -222,9 +230,32 @@ class JsonLDchronology():
                                 self.aggregation_depth = t_depth
                                 keep_looping = False
                                 break
+            # add some more to the aggregation depth based on date filters
+            self.set_aggregation_depth_from_exclusion_range()
         else:
             pass
         return self.aggregation_depth
+
+    def set_aggregation_depth_from_exclusion_range(self):
+        """ changes an aggregation depth based on the scale of the
+            time range
+        """
+        if self.exclude_before is not False:
+            latest = 2000
+            if self.exclude_after is not False:
+                latest = self.exclude_after
+            span = abs(latest - self.exclude_before)
+            try:
+                span_mag = round(math.log(span, 10), 0)  
+                span_add = int(span_mag)
+                span_add = 6 - span_add
+                if span_add < 0:
+                    span_add = 0
+            except:
+                span_add = 0
+            print('span-add: ' + str(span_add))
+            self.aggregation_depth += span_add
+            
 
     def make_url_from_val_string(self,
                                  partial_url,

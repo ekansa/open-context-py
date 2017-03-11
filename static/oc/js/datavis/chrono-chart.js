@@ -26,6 +26,8 @@ function chrono_chart(chart_dom_id, json_url) {
 	this.slider_dom_id = 'chrono-slider';
 	this.slider_button_div_dom_id = 'chrono-control-button-div';
 	this.slider = null;
+	this.chrono_facets_min_year = null;
+	this.chrono_facets_max_year = null;
 	this.current_y_at_x = {};
 	this.curent_year_keys = [];
 	this.json_data = null;
@@ -109,9 +111,8 @@ function chrono_chart(chart_dom_id, json_url) {
 			chrono_objs[id] = chrono;
 		}
 		
-		// now make some controls
-		this.make_controls(all_min_year, all_max_year);
-		
+		this.chrono_facets_min_year = all_min_year;
+		this.chrono_facets_max_year = all_max_year;
 		
 		// now sort the keys, reverse order 
 		var	keys_sorted = Object.keys(list).sort(function(a,b){return list[a]-list[b]});
@@ -122,6 +123,7 @@ function chrono_chart(chart_dom_id, json_url) {
 		// datasets
 		var datasets = [];
 		this.make_current_y_at_x(all_min_year, all_max_year);
+		
 		var all_t_span = Math.abs(all_max_year - all_min_year);
 		var chart_count_year = max_count / all_t_span;
 		var nearest = 25;
@@ -234,6 +236,7 @@ function chrono_chart(chart_dom_id, json_url) {
 		var end = parseFloat(chrono['stop']);
 		var median_year = (start + end) / 2;
 		var t_span = Math.abs(end - start);
+		// console.log({start: start, end:end, mean:median_year})
 		var added = 0;
 		for (var i = 0, length = this.curent_year_keys.length; i < length; i++) {
 			var year = this.curent_year_keys[i];
@@ -329,38 +332,42 @@ function chrono_chart(chart_dom_id, json_url) {
 				}
 			},
 		});
-		this.chart = act_chart;	
+		this.chart = act_chart;
+		// now make the contols
+		this.make_controls();
 	}
-	this.make_controls = function(all_min_year, all_max_year){
+	this.make_controls = function(){
 		if(document.getElementById(this.control_dom_id)){
-			var all_t_span = Math.abs(all_max_year - all_min_year);
+			// console.log(this.chart);
+			var slider_min = this.chart.scales['x-axis-0'].start;
+			var slider_max = 2000;
+			var all_t_span = Math.abs(this.chrono_facets_max_year - this.chrono_facets_min_year);
 			var nearest = 25;
 			if(all_t_span > 2000){
 				nearest = Math.ceil(Math.log10(all_t_span)) * 100 / 2;
 			}
-			var mid_year = (all_min_year + all_max_year) / 2;
-			var old_start = (all_min_year + mid_year) / 2;
-			var late_start = (all_max_year + mid_year) / 2;
-			old_start = this.round_date(nearest, all_min_year);
-			late_start = this.round_date(nearest, all_max_year);
+			old_start = this.round_date(nearest, this.chrono_facets_min_year);
+			late_start = this.round_date(nearest, this.chrono_facets_max_year);
 			
 			var act_dom = document.getElementById(this.control_dom_id);
 			var html =[
 			'<div class="row">',
 			'<div class="col-xs-11">',
+			'<div style="margin-left: 2.5%; ">',
 			'<input id="' + this.slider_dom_id + '" type="text" ',
 			'style="width: 100%;" value="" ',
-			'data-slider-min="' + all_min_year + '" ',
-			'data-slider-max="' + 2000 + '" ',
+			'data-slider-min="' + slider_min + '" ',
+			'data-slider-max="' + slider_max + '" ',
 			'data-slider-step="1" ',
 			'data-slider-value="[' + old_start + ',' + late_start  +']" />',
+			'</div>',
 			'</div>',
 			'<div class="col-xs-1" id="' + this.slider_button_div_dom_id + '">',
 			'<button type="submit" ',
 			'class="btn btn-default btn-sm" ',
 			'title="Use Sliders to search with a time span" ',
 			'onclick="' + this.obj_name + '.chrono_search();">',
-			'<span class="glyphicon glyphicon-search" aria-hidden="true"></span>',
+			'<span class="glyphicon glyphicon-filter" aria-hidden="true"></span>',
 			'</button>',
 			'</div>',
 			'</div>'
@@ -368,8 +375,8 @@ function chrono_chart(chart_dom_id, json_url) {
 			act_dom.innerHTML = html;
 			
 			this.slider = new Slider(('#' + this.slider_dom_id), {
-				current_min: all_min_year,
-				current_max: all_max_year,
+				current_min: old_start,
+				current_max: late_start,
 				/*
 				formatter: function(value) {
 					console.log(value);
