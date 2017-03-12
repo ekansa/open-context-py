@@ -150,6 +150,9 @@ def html_view(request, spatial_context=None):
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
+                # now make the JSON-LD into an object suitable for HTML templating
+                st = SearchTemplate(json_ld)
+                st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
@@ -161,9 +164,6 @@ def html_view(request, spatial_context=None):
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
                             chart = True
-                # now make the JSON-LD into an object suitable for HTML templating
-                st = SearchTemplate(json_ld)
-                st.process_json_ld()
                 template = loader.get_template('search/view.html')
                 context = RequestContext(request,
                                          {'st': st,
@@ -578,6 +578,9 @@ def media_html_view(request, spatial_context=None):
                                     ensure_ascii=False, indent=4),
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
+                # now make the JSON-LD into an object suitable for HTML templating
+                st = SearchTemplate(json_ld)
+                st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
@@ -589,9 +592,6 @@ def media_html_view(request, spatial_context=None):
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
                             chart = True
-                # now make the JSON-LD into an object suitable for HTML templating
-                st = SearchTemplate(json_ld)
-                st.process_json_ld()
                 template = loader.get_template('search/view.html')
                 context = RequestContext(request,
                                          {'st': st,
