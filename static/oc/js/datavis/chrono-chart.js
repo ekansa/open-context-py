@@ -22,6 +22,7 @@ function chrono_chart(chart_dom_id, json_url) {
 		'#B22A00'
 	]; // list of colors for gradients
 	this.obj_name = 'chrono';
+	this.response_types = 'chrono-facet'; // initial response type
 	this.control_dom_id = 'chrono-controls';
 	this.slider_dom_id = 'chrono-slider';
 	this.slider_button_div_dom_id = 'chrono-control-button-div';
@@ -33,11 +34,14 @@ function chrono_chart(chart_dom_id, json_url) {
 	this.json_data = null;
 	this.chart = null;
 	this.initialize = function(){
-		this.get_api_data();
+		if(this.json_data == null){
+			this.get_api_data();
+		}
 	}
 	this.get_api_data = function(){
+		this.json_url = this.json_url.replace('&amp;', '&');
 		var url = this.json_url;
-		var params = {};
+		var params = {'response': this.response_types};
 		return $.ajax({
 			type: "GET",
 			url: url,

@@ -19,7 +19,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	else{
 		this.geodeep = 6; // geo-tile zoom level beyond current zoom level
 	}
-	
+	// this.response_types = 'geo-facet,chrono-facet'; // initial response type
+	this.response_types = 'geo-facet'; // initial response type
 	this.set_geodeep = function() {
 		/* We need to set a reasonable size for the geospatial facet
 		 * tiles that we will request. 'geodeep' is the level of 
@@ -49,6 +50,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.map_title_suffix_dom_id = 'map-title-suffix';
 	map.map_menu_dom_id = 'map-menu';
 	map.json_url = this.json_url;
+	map.response_types = this.response_types;
 	map.geodeep = this.set_geodeep();
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
@@ -614,9 +616,12 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			async: true,
 			dataType: "json",
 			data: {
-				response: "geo-facet",
+				response: map.response_types,
 				geodeep: map.geodeep},
 			success: function(data) {
+				// make so we don't ask for chrono-facets after the first load
+				map.response_types = 'geo-facet';
+				
 				map.show_region_loading();
 				if ('oc-api:response-tile-zoom' in data) {
 					map.geodeep = data['oc-api:response-tile-zoom'];
