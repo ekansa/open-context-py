@@ -154,11 +154,12 @@ def html_view(request, spatial_context=None):
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
                 # check to make sure chrono chart will be ok
-                if 'proj' in request.GET or len(props) > 1 \
+                if 'proj' in request.GET \
+                   or len(props) > 1 \
+                   or 'q' in request.GET \ 
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
-                            # print('chrono range: ' + str(len(json_ld['oc-api:has-form-use-life-ranges'])))
                             chart = True
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
@@ -361,11 +362,12 @@ def subjects_html_view(request, spatial_context=None):
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
                 # check to make sure chrono chart will be ok
-                if 'proj' in request.GET or len(props) > 1 \
+                if 'proj' in request.GET \
+                   or len(props) > 1 \
+                   or 'q' in request.GET \ 
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
-                            print('chrono range: ' + str(len(json_ld['oc-api:has-form-use-life-ranges'])))
                             chart = True
                 if len(props) > 1 or st.total_count <= 25000:
                     # allow downloads, multiple props selected
@@ -580,7 +582,9 @@ def media_html_view(request, spatial_context=None):
                 if 'prop' in request.GET:
                     props = request.GET.getlist('prop')
                 # check to make sure chrono chart will be ok
-                if 'proj' in request.GET or len(props) > 1 \
+                if 'proj' in request.GET \
+                   or len(props) > 1 \
+                   or 'q' in request.GET \ 
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
