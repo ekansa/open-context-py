@@ -156,7 +156,7 @@ def html_view(request, spatial_context=None):
                 # check to make sure chrono chart will be ok
                 if 'proj' in request.GET \
                    or len(props) > 1 \
-                   or 'q' in request.GET \ 
+                   or 'q' in request.GET \
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
@@ -364,7 +364,7 @@ def subjects_html_view(request, spatial_context=None):
                 # check to make sure chrono chart will be ok
                 if 'proj' in request.GET \
                    or len(props) > 1 \
-                   or 'q' in request.GET \ 
+                   or 'q' in request.GET \
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
@@ -584,7 +584,7 @@ def media_html_view(request, spatial_context=None):
                 # check to make sure chrono chart will be ok
                 if 'proj' in request.GET \
                    or len(props) > 1 \
-                   or 'q' in request.GET \ 
+                   or 'q' in request.GET \
                    or spatial_context is not None:
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
