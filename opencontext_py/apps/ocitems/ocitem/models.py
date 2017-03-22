@@ -468,7 +468,7 @@ class ItemConstruction():
         self.cannonical_uris = True
         self.direct_assertions = list()  # assertions not in an observation
         self.obs_list = list()
-        self.predicates = {}
+        self.predicates = LastUpdatedOrderedDict()
         self.var_list = list()
         self.link_list = list()
         self.type_list = list()
