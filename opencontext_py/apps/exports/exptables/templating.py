@@ -113,6 +113,14 @@ class ExpTableTemplating():
             if len(stable_ids) > 0:
                 json_ld['owl:sameAs'] = stable_ids
             json_ld['has-fields'] = self.get_field_list()
+            if 'dc-terms:license' not in json_ld:
+                # default to an attribution license.
+                lic_dict = {
+                    'id' : 'http://creativecommons.org/licenses/by/4.0/',
+                    'slug': 'cc-license-by-4-0',
+                    'label': 'Attribution 4.0'
+                }
+                json_ld['dc-terms:license'] = [lic_dict]
             """
             for key, objects in self.exp_tab.meta_json.items():
                 json_ld[key] = objects
