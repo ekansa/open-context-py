@@ -58,9 +58,10 @@ class SpecialSearches():
             query['fq'] = []
         query['hl'] = 'true'
         query['hl.fl'] = 'text'
+        query['q'] = 'text:' + trinomial
         if 'hl.q' not in query:
             query['hl.q'] = ''
-        query['hl.q'] += trinomial
+        query['hl.q'] += 'text:' + trinomial
         # first make sure we're searching in the DINAA project dataset
         proj_field = SolrDocument.ROOT_PROJECT_SOLR
         proj_query = proj_field + ':52-digital-index-of-north-american-archaeology-dinaa*'
