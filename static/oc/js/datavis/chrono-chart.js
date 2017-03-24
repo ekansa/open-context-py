@@ -350,9 +350,20 @@ function chrono_chart(chart_dom_id, json_url) {
 			if(all_t_span > 2000){
 				nearest = Math.ceil(Math.log10(all_t_span)) * 100 / 2;
 			}
-			old_start = this.round_date(nearest, this.chrono_facets_min_year);
-			late_start = this.round_date(nearest, this.chrono_facets_max_year);
-			
+			var old_start = this.round_date(nearest, this.chrono_facets_min_year);
+			if(old_start > this.chrono_facets_min_year){
+				old_start = old_start - nearest;
+			}
+			if(old_start < slider_min){
+				old_start = slider_min;
+			}
+			var late_start = this.round_date(nearest, this.chrono_facets_max_year);
+			if(late_start < this.chrono_facets_max_year){
+				late_start = late_start + nearest;
+			}
+			if(late_start > slider_max){
+				late_start = slider_max;
+			}	
 			var act_dom = document.getElementById(this.control_dom_id);
 			var html =[
 			'<div class="row">',
