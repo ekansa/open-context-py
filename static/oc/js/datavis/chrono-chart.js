@@ -16,10 +16,10 @@ function chrono_chart(chart_dom_id, json_url) {
 		'#B22A29'
 	]; // list of colors for gradients
 	this.line_color_list = [
-		'#166CA5',
-		'#1383C0',
+		'#135F8E',
+		'#1175AA',
 		// '#FFFF00',
-		'#B22A00'
+		'#9B2400'
 	]; // list of colors for gradients
 	this.obj_name = 'chrono';
 	this.response_types = 'chrono-facet'; // initial response type
