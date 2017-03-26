@@ -226,11 +226,16 @@ function chrono_chart(chart_dom_id, json_url) {
 	}
 	this.make_data_points = function(chart_count_year,
 									 chrono){
-		/* ideas to consider:
+		/* methods to the madness:
 		
 		(1) compute different standard deviations for each chrono,
-		    max time span should have the biggest standard deviation,
-		    shortest should have the smallest standard deviation
+		    the shortest time spans should have the smallest standard deviation
+		    
+		(2) the chart_count_year is the total number of records / the whole
+		    time span in the chart. The c_per_year value is the number of records
+		    in the given chrono-facet time span, times the chart_count_year. This
+		    helps make the areas for each chrono-facet curve proportional to the
+		    total number of records for all the chrono-facets retrieved
 		
 		*/
 		var data_list = [];
