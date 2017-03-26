@@ -17,7 +17,7 @@ function chrono_chart(chart_dom_id, json_url) {
 	]; // list of colors for gradients
 	this.line_color_list = [
 		'#166CA5',
-		'#1383C4',
+		'#1383C0',
 		// '#FFFF00',
 		'#B22A00'
 	]; // list of colors for gradients
@@ -130,6 +130,8 @@ function chrono_chart(chart_dom_id, json_url) {
 		
 		var all_t_span = Math.abs(all_max_year - all_min_year);
 		var chart_count_year = max_count / all_t_span;
+		var chart_count_year = total_count / all_t_span;
+
 		var nearest = 25;
 		if(all_t_span > 2000){
 			nearest = Math.ceil(Math.log10(all_t_span)) * 100 / 2;
@@ -138,9 +140,7 @@ function chrono_chart(chart_dom_id, json_url) {
 			var key = keys_sorted[i];
 			var chrono = chrono_objs[key];
 			var t_span = list[key];
-			var c_per_year = chrono.count / t_span;
-			var prop_max_c_per_year = (c_per_year / max_c_per_year) * 100;
-
+			
 			var dataset = this.make_dataset();
 			var style_obj = new numericStyle();
 			style_obj.reset_gradient_colors(this.area_color_list);
@@ -179,7 +179,6 @@ function chrono_chart(chart_dom_id, json_url) {
 			dataset.label += chrono.count;
 			dataset.label += ' items)';
 			dataset.data = this.make_data_points(chart_count_year,
-												 prop_max_c_per_year,
 												 chrono);
 			datasets.push(dataset);
 		} 
@@ -226,7 +225,6 @@ function chrono_chart(chart_dom_id, json_url) {
 		}
 	}
 	this.make_data_points = function(chart_count_year,
-									 c_per_year,
 									 chrono){
 		/* ideas to consider:
 		
@@ -246,11 +244,8 @@ function chrono_chart(chart_dom_id, json_url) {
 			var year = this.curent_year_keys[i];
 			if (year >= start && year <= end) {
 				// we're in the time span of the current dataset
-				var c_per_year = chrono.count / t_span;
-				if(c_per_year < chart_count_year * .25){
-					// makes sure the bumps are minimally visible
-					c_per_year = chart_count_year * .25;
-				}
+				// var c_per_year = chrono.count / t_span;
+				var c_per_year = chrono.count * chart_count_year;
 				
 				var act_median_year = median_year;
 				var sigma = t_span * .15;
