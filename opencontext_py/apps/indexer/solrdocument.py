@@ -263,11 +263,14 @@ sd_b = sd_obj.fields
             # then append the slug value
             solr_id_field_fq = solr_id_field + '_fq'
             if isinstance(slug, str):
-                if solr_id_field_fq not in self.fields:
-                    self.fields[solr_id_field_fq] = []
-                if len(slug) > 0 and slug not in self.fields[solr_id_field_fq]:
-                    # only add it if we don't already have it
-                    self.fields[solr_id_field_fq].append(slug)
+                if len(slug) > 0:
+                    if solr_id_field_fq not in self.fields:
+                        self.fields[solr_id_field_fq] = []
+                    # add the field prefix if needed
+                    slug = self.field_prefix + slug
+                    if slug not in self.fields[solr_id_field_fq]:
+                        # only add it if we don't already have it
+                        self.fields[solr_id_field_fq].append(slug)
 
     def _get_predicate_type_string(self, predicate_type,
                                    prefix=''):
