@@ -65,7 +65,7 @@
     
     <li class="sep-list">
         <h5><strong>After Dowload: Loading GeoJSON into QGIS or ESRI ARCGIS</strong></h5>
-        <p>You can use Excel or similar spreadsheet software, relational databases, GIS, or many other software applications to use the CSV exports from Open Context. Because GeoJSON is a popular open format, most GIS applications can load GeoJSON exports. Here are a few tips for using Open Context's GeoJSON with common desktop GIS applications:</p>
+        <p>You can use Excel or similar spreadsheet software, relational databases, GIS, or many other software applications to work with the CSV exports from Open Context. Because GeoJSON is a popular open format and <a href="https://tools.ietf.org/html/rfc7946" target="_blank">official Internet standard</a>, most GIS applications can load GeoJSON exports. Here are a few tips for using Open Context's GeoJSON with common desktop GIS applications:</p>
         <div class="container-fluid">        
             <div class="row">
                 <div class="col-sm-3 text-right">
@@ -76,10 +76,10 @@
                     <ol>
                         <li>Use the "Add Vector Layer" command, choose GeoJSON format.</li>
                         <li>GeoJSON can be converted to other vector formats e.g., ESRI Shapefile, KML, SpatiaLite, and many others. To save the layer another format, right-click on layer, choose "Save as…" from context menu. Or, you can select the layer and from the menu choose "Layer - Save as…"</li>
-                        <li>GeoJSON comes with attribute data that QGIS puts into an attribute table. You can access these attributes with right-click context menu, or "Layer" on menu bar. Note the following about attribute data from Open Context:
+                        <li>GeoJSON comes with attribute data that QGIS puts into an attribute table. You can access these attributes with right-click context menu, or "Layer" on menu bar. The following details some attribute data you can expect for different types of GeoJSON downloads from Open Context:
                         <br/>
                         <ul>
-                            <li>Summarized geospatial tiles only has count attributes and attribues for the chronological coverage a given geospatial tile</li>
+                            <li>Summarized geospatial tiles only has attributes for record counts and the chronological coverage a given geospatial tile</li>
                             <li>GeoJSON for individual records has many more attributes</li>
                         </ul>
                     </ol>
@@ -92,8 +92,8 @@
                     <p><em>ESRI ArcGIS</em></p>
                 </div>
                 <div class="col-sm-7">
-                    <p>GeoJSON is an <a href="https://tools.ietf.org/html/rfc7946" target="_blank">official internet standard for geospatial data</a>, but you may need to install the "Data Interoperability" extention to ArcGIS in order to directly load a GeoJSON file as a layer. If your subscription does not include this extension, you can quickly and easily convert to shapefile with QGIS (see above) and continue. You can also use a variety of open-source converters (see <a href="https://github.com/Esri/arcgis-to-geojson-utils" target="_blank">example</a>). See also these <a href="http://gis.stackexchange.com/questions/152031/methods-for-importing-geojson-feature-collection-http://opendata.arcgis.com/-arcmap" target="_blank">help recommendations</a>.</p>
-                    <p>If you find it too difficult to use ArcGIS with an open standard like GeoJSON, then consider switching to an open-source alternative like QGIS.</p>
+                    <p>GeoJSON is an <a href="https://tools.ietf.org/html/rfc7946" target="_blank">official Internet standard for geospatial data</a>, but you may need to install the "Data Interoperability" extention to ArcGIS to directly load a GeoJSON file as a layer. If your subscription does not include this extension, you can quickly and easily convert to GeoJSON to a shapefile with QGIS (see above). You can also use a variety of other open source converters (see <a href="https://github.com/Esri/arcgis-to-geojson-utils" target="_blank">example</a>). See also these <a href="http://gis.stackexchange.com/questions/152031/methods-for-importing-geojson-feature-collection-http://opendata.arcgis.com/-arcmap" target="_blank">help recommendations</a>.</p>
+                    <p>If you find it too difficult to use ArcGIS with an open standard like GeoJSON, then consider switching to an open source alternative like QGIS.</p>
                 </div>
                 <div class="col-sm-1">
                 </div>
@@ -108,7 +108,7 @@
     
     <li class="sep-list">
         <h5><strong>Getting More Expressive Data (GeoJSON-LD)</strong></h5>
-        <p>Remember that some data formats and software have limited capabilities for modeling data. The CSV format, though sinple and easy to use in spreadsheet or relational database applications, "flattens" data into a table of rows and columns. While this works for simple data structures, it is hard to transmit nested / "tree-like" structures or even multi-valued attributes using a CSV table. Similarly, many desktop GIS systems also expect attribute data in flat table structures. Open Context data often has richer data structures that require more expressive data formats (like JSON / JSON-LD). If you are a "power user" and need to work with more richly modeled data from Open Context, you should work with Open Context's APIs (<a href="{{ base_url }}/about/services">documented here</a>).</p>
+        <p>Remember that some data formats and software have limited capabilities for modeling data. The CSV format, though simple and easy to use in spreadsheet or relational database applications, "flattens" data into a table of rows and columns. While this works for simple data structures, it is hard to transmit nested ("tree-like") structures or even multi-valued attributes using a CSV table. Similarly, many desktop GIS systems also expect attribute data in flat table structures. Open Context data often has richer data structures that require more expressive data formats (like JSON / JSON-LD). If you are a "power user" and need to work with more richly modeled data from Open Context, you should work with Open Context's APIs (<a href="{{ base_url }}/about/services">documented here</a>).</p>
     </li>
     
 </ul>
