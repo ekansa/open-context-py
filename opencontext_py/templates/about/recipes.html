@@ -17,7 +17,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-sm-12">
-                    <h1>API Recipes</h1>
+                    <h1>Data &amp; API Recipes</h1>
                 </div>
             </div>
 
@@ -43,11 +43,15 @@
             <div class="col-sm-12">
                 <!-- page tabs -->
                 <ul class="nav nav-tabs" id="about-tabs" data-tabs="tabs">
-                    <li class="active"><a data-toggle="tab" href="#dinaa">Linking to DINAA Sites</a></li>
+                    <li class="active"><a data-toggle="tab" href="#gis">Download GIS or CSV Tables</a></li>
+                    <li><a data-toggle="tab" href="#dinaa">Linking to DINAA Sites</a></li>
                     <li><a data-toggle="tab" href="#geo-utilities">Geo Utilities</a></li>
                 </ul>
                 <div class="tab-content about-tab-all">
-                    <div id="dinaa" class="tab-pane fade in active">
+                    <div id="gis" class="tab-pane fade in active">
+                        {% include 'about/recipes-gis.html' %}
+                    </div>
+                    <div id="dinaa" class="tab-pane fade">
                         {% include 'about/recipes-dinaa.html' %}
                     </div>
                     <div id="geo-utilities" class="tab-pane fade">

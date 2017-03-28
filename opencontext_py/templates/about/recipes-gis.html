@@ -1,0 +1,114 @@
+<h3>Getting Search Results as GIS (GeoJSON) or CSV Formats</h3>
+
+<p>Open Context has powerful search functions to browse and filter data records created by many different contributors and projects. You can use Open Context's Web interface to explore these data, find records relevant to your interests, and then download to your own desktop.</p>
+
+<br/>
+<br/>
+
+<h4>Downloading Search Results (CSV or GeoJSON)</h4>
+<p>To download data, start by searching and filtering through the data records published by Open Context at this URL: <a href="{{ base_url }}/subjects-search/" target="_blank">{{ base_url }}/subjects-search/</a>. If you want to download GIS or CSV data from the <a href="{{ base_url }}/projects/416A274C-CF88-4471-3E31-93DB825E9E4A" target="_blank">Digital Index of North American Archaeology (DINAA)</a> project, you can select DINAA as a filter in the "Projects" filter option, and arrive at this URL: <a href="{{ base_url }}/subjects-search/?proj=52-digital-index-of-north-american-archaeology-dinaa" target="_blank">{{ base_url }}/subjects-search/?proj=52-digital-index-of-north-american-archaeology-dinaa</a>. This URL shows a map of DINAA's current coverage and chart summarizing the distribution of records through time. Use the "Filter Options" on the right to filter based on different attributes in the data. Once you have filtered the data to select records relevant to your interests, use one of the download options discussed below. 
+</p>
+
+<style type="text/css">
+    li.sep-list {
+        margin-top: 5%;
+    }
+</style>
+
+<ul>
+    
+    <li class="sep-list">
+        <h5><strong>Summarized Data in Geospatial Tiles (GeoJSON format)</strong></h5>
+        <p>The easiest and fastest way to get data aggregated as counts of records in different square regions. The downward arrow icon saves GeoJSON regions to your desktop. In the case of DINAA, Open Context limits tile resolution to roughly 17km in oder to protect site security. Other projects may have much more high resolution geospatial data.</p>
+        
+        <div class="container-fluid">        
+            <div class="row">
+                <div class="col-sm-3 text-right">
+                    <p><em>Download Summary Geotiles</em></p>
+                </div>
+                <div class="col-sm-7">
+                    <img src="{{ base_url }}/static/oc/images/about/download-instructions-1.png" class="img-responsive img-rounded" alt="Download instructions 1" />
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+        </div>    
+    </li>
+    
+    <li class="sep-list">
+        <h5><strong>Individual Record Data (CSV or GeoJSON formats)</strong></h5>
+        <p>Getting individual data records is slower but offers more analytic flexibility and richer attribute information. The cloud-download button on the right of the search results table opens a dialog box to get CSV or GeoJSON data for each record in your search query results. If you don’t see this button, try to make your query more specific so that it returns 25,000 records or fewer. To protect site security for the DINAA project, point locations come from the centers of ~17km tile regions. In other cases, location information may be more precise.</p>
+        
+        <div class="container-fluid">        
+            <div class="row">
+                <div class="col-sm-3 text-right">
+                    <p><em>1: Individual Record Download Button</em></p>
+                </div>
+                <div class="col-sm-7">
+                    <img src="{{ base_url }}/static/oc/images/about/download-instructions-2.png" class="img-responsive img-rounded" alt="Download instructions 2" />
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+            <div class="row" style="margin-top:8%;">
+                <div class="col-sm-3 text-right">
+                    <p><em>2: Individual Record Download Dialog</em></p>
+                </div>
+                <div class="col-sm-7">
+                    <img src="{{ base_url }}/static/oc/images/about/download-instructions-3.png" class="img-responsive img-rounded" alt="Download instructions 3" />
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+        </div>
+    </li>
+    
+    <li class="sep-list">
+        <h5><strong>After Dowload: Loading GeoJSON into QGIS or ESRI ARCGIS</strong></h5>
+        <p>You can use Excel or similar spreadsheet software, relational databases, GIS, or many other software applications to use the CSV exports from Open Context. Because GeoJSON is a popular open format, most GIS applications can load GeoJSON exports. Here are a few tips for using Open Context's GeoJSON with common desktop GIS applications:</p>
+        <div class="container-fluid">        
+            <div class="row">
+                <div class="col-sm-3 text-right">
+                    <p><em><a href="http://qgis.org/en/site/" target="_blank">QGIS</a></em>
+                    </p>
+                </div>
+                <div class="col-sm-7">
+                    <ol>
+                        <li>Use the "Add Vector Layer" command, choose GeoJSON format.</li>
+                        <li>GeoJSON can be converted to other vector formats e.g., ESRI Shapefile, KML, SpatiaLite, and many others. To save the layer another format, right-click on layer, choose "Save as…" from context menu. Or, you can select the layer and from the menu choose "Layer - Save as…"</li>
+                        <li>GeoJSON comes with attribute data that QGIS puts into an attribute table. You can access these attributes with right-click context menu, or "Layer" on menu bar. Note the following about attribute data from Open Context:
+                        <br/>
+                        <ul>
+                            <li>Summarized geospatial tiles only has count attributes and attribues for the chronological coverage a given geospatial tile</li>
+                            <li>GeoJSON for individual records has many more attributes</li>
+                        </ul>
+                    </ol>
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+            <div class="row" style="margin-top:8%;">
+                <div class="col-sm-3 text-right">
+                    <p><em>ESRI ArcGIS</em></p>
+                </div>
+                <div class="col-sm-7">
+                    <p>GeoJSON is an <a href="https://tools.ietf.org/html/rfc7946" target="_blank">official internet standard for geospatial data</a>, but you may need to install the "Data Interoperability" extention to ArcGIS in order to directly load a GeoJSON file as a layer. If your subscription does not include this extension, you can quickly and easily convert to shapefile with QGIS (see above) and continue. You can also use a variety of open-source converters (see <a href="https://github.com/Esri/arcgis-to-geojson-utils" target="_blank">example</a>). See also these <a href="http://gis.stackexchange.com/questions/152031/methods-for-importing-geojson-feature-collection-http://opendata.arcgis.com/-arcmap" target="_blank">help recommendations</a>.</p>
+                    <p>If you find it too difficult to use ArcGIS with an open standard like GeoJSON, then consider switching to an open-source alternative like QGIS.</p>
+                </div>
+                <div class="col-sm-1">
+                </div>
+            </div>
+        </div>
+    </li>
+    
+    <li class="sep-list">
+        <h5><strong>Bulk Downloads of Prepared CSV Tables</strong></h5>
+        <p>Open Context offers dynamic query and search services across many projects at once. While this offers a great deal of convenience and flexibility, it can be slow for bulk downloads of data. To support more rapid retrieval of large datasets, Open Context also makes downloadable tables available in certain projects. For example, the <a href="{{ base_url }}/projects/8894EEC0-DC96-4304-1EFC-4572FD91717A" target="_blank">Zooarchaeology of Öküzini Cave</a> project links to a variety of tables where you can rapidly download bulk datasets in the CSV format.</p>
+    </li>
+    
+    <li class="sep-list">
+        <h5><strong>Getting More Expressive Data (GeoJSON-LD)</strong></h5>
+        <p>Remember that some data formats and software have limited capabilities for modeling data. The CSV format, though sinple and easy to use in spreadsheet or relational database applications, "flattens" data into a table of rows and columns. While this works for simple data structures, it is hard to transmit nested / "tree-like" structures or even multi-valued attributes using a CSV table. Similarly, many desktop GIS systems also expect attribute data in flat table structures. Open Context data often has richer data structures that require more expressive data formats (like JSON / JSON-LD). If you are a "power user" and need to work with more richly modeled data from Open Context, you should work with Open Context's APIs (<a href="{{ base_url }}/about/services">documented here</a>).</p>
+    </li>
+    
+</ul>
