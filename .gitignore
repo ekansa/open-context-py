@@ -2,6 +2,7 @@
 *.log
 *.pot
 *.py[cod]
+*.djcache
 __pycache__/
 testing.txt
 db-logs/
