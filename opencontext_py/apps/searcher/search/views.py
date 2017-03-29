@@ -19,6 +19,7 @@ from opencontext_py.apps.searcher.solrsearcher.reconciliation import Reconciliat
 from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugment
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import cache_page
 
 
 def index(request, spatial_context=None):
@@ -61,6 +62,7 @@ def lightbox_view(request, spatial_context=''):
 
 # @cache_control(no_cache=True)
 # @never_cache
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def html_view(request, spatial_context=None):
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
@@ -189,6 +191,7 @@ def html_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def json_view(request, spatial_context=None):
     """ API for searching Open Context """
     mem_cache_obj = MemoryCache()
@@ -271,6 +274,7 @@ def json_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def subjects_html_view(request, spatial_context=None):
     """ returns HTML representation of subjects search
     """
@@ -398,6 +402,7 @@ def subjects_html_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def subjects_json_view(request, spatial_context=None):
     """ API for searching Open Context, subjects only """
     mem_cache_obj = MemoryCache()
@@ -494,6 +499,7 @@ def subjects_json_view(request, spatial_context=None):
 
 # @cache_control(no_cache=True)
 # @never_cache
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def media_html_view(request, spatial_context=None):
     """ returns HTML representation of media search
     """
@@ -617,6 +623,7 @@ def media_html_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def media_json_view(request, spatial_context=None):
     """ API for searching Open Context, media only """
     mem_cache_obj = MemoryCache()
@@ -703,6 +710,7 @@ def media_json_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def projects_html_view(request, spatial_context=None):
     """ returns HTML representation of projects search
     """
@@ -810,6 +818,7 @@ def projects_html_view(request, spatial_context=None):
 
 
 # @cache_control(no_cache=True)
+@cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def projects_json_view(request, spatial_context=None):
     """ API for searching Open Context, media only """
     mem_cache_obj = MemoryCache()

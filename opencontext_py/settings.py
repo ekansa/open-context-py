@@ -235,6 +235,7 @@ MANAGERS = (
 
 if DEBUG:
     # Short caching for debugging
+    FILE_CACHE_TIMEOUT = (60 * 5)
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
@@ -251,10 +252,19 @@ if DEBUG:
             'OPTIONS': {
                 'MAX_ENTRIES': 1000
             }
+        },
+        'file': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': get_secret('FILE_CACHE_PATH'),
+            'TIMEOUT': FILE_CACHE_TIMEOUT,
+            'OPTIONS': {
+                'MAX_ENTRIES': 10
+            }
         }
     }
 else:
     # CACHES, Makes things faster
+    FILE_CACHE_TIMEOUT = (1 * 24 * 60 * 60)  # 1 days for cache
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
@@ -271,6 +281,14 @@ else:
             'OPTIONS': {
                 'MAX_ENTRIES': 15000,
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient'
+            }
+        },
+        'file': {
+            'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+            'LOCATION': get_secret('FILE_CACHE_PATH'),
+            'TIMEOUT': FILE_CACHE_TIMEOUT,
+            'OPTIONS': {
+                'MAX_ENTRIES': 1500
             }
         }
     }
