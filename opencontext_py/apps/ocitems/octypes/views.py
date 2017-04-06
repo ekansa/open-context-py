@@ -6,6 +6,7 @@ from opencontext_py.apps.ocitems.octypes.supplement import TypeSupplement
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from django.template import RequestContext, loader
+from django.utils.cache import patch_vary_headers
 
 
 # An octype item is a concept from a controlled vocabulary that originates from
@@ -43,14 +44,18 @@ def html_view(request, uuid):
                 if 'json' in req_neg.use_response_type:
                     # content negotiation requested JSON or JSON-LD
                     request.content_type = req_neg.use_response_type
-                    return HttpResponse(json.dumps(ocitem.json_ld,
-                                        ensure_ascii=False, indent=4),
-                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                    response = HttpResponse(json.dumps(ocitem.json_ld,
+                                            ensure_ascii=False, indent=4),
+                                            content_type=req_neg.use_response_type + "; charset=utf8")
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
                 else:
                     context = RequestContext(request,
                                              {'item': temp_item,
                                               'base_url': base_url})
-                    return HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context))
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
             else:
                 # client wanted a mimetype we don't support
                 return HttpResponse(req_neg.error_message,

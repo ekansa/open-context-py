@@ -23,7 +23,8 @@ class RequestNegotiation():
         if '*/*' in client_accepts:
             # client happy to accept all
             self.use_response_type = self.default_type
-        elif 'text/*' in client_accepts \
+        elif ('text/*' in client_accepts \
+             or 'text/plain' in client_accepts) \
              and 'text/' in self.default_type:
             self.use_response_type = self.default_type
         elif self.default_type in client_accepts:

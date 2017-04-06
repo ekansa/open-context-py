@@ -20,6 +20,7 @@ from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugm
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
 from django.views.decorators.cache import cache_page
+from django.utils.cache import patch_vary_headers
 
 
 def index(request, spatial_context=None):
@@ -59,9 +60,9 @@ def lightbox_view(request, spatial_context=''):
         param_suffix = '?' + url_ex[1]
     return redirect(new_url, permanent=True)
 
-
 # @cache_control(no_cache=True)
 # @never_cache
+# @vary_on_headers('Accept', 'accept', 'content-type')
 @cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def html_view(request, spatial_context=None):
     mem_cache_obj = MemoryCache()
@@ -148,9 +149,11 @@ def html_view(request, spatial_context=None):
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
                 request.content_type = req_neg.use_response_type
-                return HttpResponse(json.dumps(json_ld,
-                                    ensure_ascii=False, indent=4),
-                                    content_type=req_neg.use_response_type + "; charset=utf8")
+                response = HttpResponse(json.dumps(json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
@@ -176,7 +179,9 @@ def html_view(request, spatial_context=None):
                                           'json_url': json_url,
                                           'base_url': base_url})
                 if req_neg.supported:
-                    return HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context))
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
                 else:
                     # client wanted a mimetype we don't support
                     return HttpResponse(req_neg.error_message,
@@ -354,9 +359,11 @@ def subjects_html_view(request, spatial_context=None):
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
                 request.content_type = req_neg.use_response_type
-                return HttpResponse(json.dumps(json_ld,
-                                    ensure_ascii=False, indent=4),
-                                    content_type=req_neg.use_response_type + "; charset=utf8")
+                response = HttpResponse(json.dumps(json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
@@ -373,7 +380,8 @@ def subjects_html_view(request, spatial_context=None):
                     if 'oc-api:has-form-use-life-ranges' in json_ld:
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
                             chart = True
-                if len(props) > 1 or st.total_count <= 25000:
+                if len(props) > 1 or st.total_count <= 25000 \
+                   or ('proj' in request.GET and spatial_context is not None):
                     # allow downloads, multiple props selected
                     # or relatively few records
                     csv_downloader = True
@@ -387,7 +395,9 @@ def subjects_html_view(request, spatial_context=None):
                                           'json_url': json_url,
                                           'base_url': base_url})
                 if req_neg.supported:
-                    return HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context))
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
                 else:
                     # client wanted a mimetype we don't support
                     return HttpResponse(req_neg.error_message,
@@ -580,9 +590,11 @@ def media_html_view(request, spatial_context=None):
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
-                return HttpResponse(json.dumps(json_ld,
-                                    ensure_ascii=False, indent=4),
-                                    content_type=req_neg.use_response_type + "; charset=utf8")
+                response = HttpResponse(json.dumps(json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
@@ -608,7 +620,9 @@ def media_html_view(request, spatial_context=None):
                                           'json_url': json_url,
                                           'base_url': base_url})
                 if req_neg.supported:
-                    return HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context))
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
                 else:
                     # client wanted a mimetype we don't support
                     return HttpResponse(req_neg.error_message,
@@ -784,9 +798,12 @@ def projects_html_view(request, spatial_context=None):
                 recon_obj = Reconciliation()
                 json_ld = recon_obj.process(request.GET,
                                             json_ld)
-                return HttpResponse(json.dumps(json_ld,
-                                    ensure_ascii=False, indent=4),
-                                    content_type=req_neg.use_response_type + "; charset=utf8")
+                response = HttpResponse(json.dumps(json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
@@ -803,7 +820,9 @@ def projects_html_view(request, spatial_context=None):
                                           'json_url': json_url,
                                           'base_url': base_url})
                 if req_neg.supported:
-                    return HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context))
+                    patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                    return response
                 else:
                     # client wanted a mimetype we don't support
                     return HttpResponse(req_neg.error_message,
