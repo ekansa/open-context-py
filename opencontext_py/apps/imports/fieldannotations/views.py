@@ -131,6 +131,11 @@ def create(request, source_id):
             if ip.project_uuid is not False:
                 ifd = ImportFieldDescribe(source_id)
                 ifd.project_uuid = ip.project_uuid
+                if 'predicate_field_num' in request.POST:
+                    try:
+                        predicate_field_num =  int(float(request.POST['predicate_field_num']))
+                    except:
+                        predicate_field_num = None
                 if request.POST['predicate'] == Assertion.PREDICATES_CONTAINS:
                     ifd.update_field_contains(request.POST['field_num'],
                                               request.POST['object_field_num'])
@@ -153,16 +158,23 @@ def create(request, source_id):
                         ifd.update_variable_value(request.POST['field_num'],
                                                   request.POST['object_field_num'])
                 else:
-                    if request.POST['predicate'] == '-1':
-                        # the predicate is not yet reconciled
-                        predicate_id = ifd.make_or_reconcile_link_predicate(request.POST['predicate_label'],
-                                                                            ifd.project_uuid)
+                    if predicate_field_num is None:
+                        # we don't have a field chosen for a predicate relationship
+                        if request.POST['predicate'] == '-1':
+                            # the predicate is not yet reconciled
+                            predicate_id = ifd.make_or_reconcile_link_predicate(request.POST['predicate_label'],
+                                                                                ifd.project_uuid)
+                        else:
+                            predicate_id = request.POST['predicate']
+                        ifd.update_field_custom_predicate(request.POST['field_num'],
+                                                          request.POST['object_field_num'],
+                                                          predicate_id,
+                                                          request.POST['predicate_type'])
                     else:
-                        predicate_id = request.POST['predicate']
-                    ifd.update_field_custom_predicate(request.POST['field_num'],
-                                                      request.POST['object_field_num'],
-                                                      predicate_id,
-                                                      request.POST['predicate_type'])
+                        # we do have a field chosen where its values determine the predicate relationship
+                        ifd.update_field_predicate_infield(request.POST['field_num'],
+                                                           request.POST['object_field_num'],
+                                                           predicate_field_num)
                 ip.get_field_annotations()
                 anno_list = ip.jsonify_field_annotations()
                 json_output = json.dumps(anno_list,

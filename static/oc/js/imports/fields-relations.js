@@ -152,6 +152,8 @@ function deleteAnnotation(annotation_id){
 function deleteAnnotationDone(data){
 	/* Finish delete by showing updated list of annotations */
 	displayAnnotations(data);
+	other_predicate_field_num = '';
+	other_predicate_field_label = '';
 }
 
 
@@ -748,6 +750,9 @@ function addMediaPartOfDone(data){
 var other_predicate_id = '';
 var other_predicate_label = '';
 var other_predicate_type = '';
+var other_predicate_field_num = '';
+var other_predicate_field_label = '';
+
 function generateOtherBody(){
 	var subjectInterfaceHTML = generateFieldListHTML('subject', DEFAULT_SUBJECT_TYPE_FIELDS);
 	var objectInterfaceHTML = generateFieldListHTML('object', DEFAULT_SUBJECT_TYPE_FIELDS);
@@ -787,15 +792,27 @@ function generateOtherLinkPredicateFinalHTML(){
 	if (other_predicate_type == 'import-field') {
 		show_other_pred_label = 'Field: ' +  other_predicate_id;
 	}
+	if (other_predicate_label.length > 0 || other_predicate_id.length > 0){
+		// we've selected something other than a field for the predicate
+		other_predicate_field_num = '';
+		other_predicate_field_label = '';
+	}
 	if (other_predicate_label.length > 0) {
 		if (other_predicate_id == "-1") {
 			show_other_pred_id = "[New / not yet reconciled]";
-		}	
+		}
 	}
 	else{
-		show_other_pred_id = "none selected";
-		show_other_pred_type = "none selected";
+		if(other_predicate_field_num.length > 0 && other_predicate_field_label.length > 0){
+			show_other_pred_id = 'From values in field: ' + other_predicate_field_num;
+			show_other_pred_type = 'Values in ' + other_predicate_field_label;
+		}
+		else{ 
+			show_other_pred_id = "none selected";
+			show_other_pred_type = "none selected";
+		}
 	}
+	
 	
 	if (other_predicate_label.length < 1) {
 		var predicateHTML = "Click button on the right to set-up linking relationships.";
@@ -815,7 +832,7 @@ function checkOtherActionReady(){
 	var obj_num_domID = "object" + "-f-num";
 	var obj_field_num = document.getElementById(obj_num_domID).value;
 	
-	if (field_num > 0 && obj_field_num > 0 && other_predicate_id != "") {
+	if (field_num > 0 && obj_field_num > 0 && (other_predicate_id != "" || other_predicate_field_num != "")) {
 		// We're ready to try to create a 'contained-in' relationship
 		var subj_label_domID = "subject" + "-f-label";
 		var field_label = document.getElementById(subj_label_domID).value;
@@ -826,7 +843,7 @@ function checkOtherActionReady(){
 		var show_other_pred_id = other_predicate_id;
 		var show_other_pred_type = other_predicate_type;
 		if (other_predicate_type == 'import-field') {
-			show_other_pred_label = 'Field: ' +  other_predicate_id;
+			show_other_pred_label = other_predicate_field_label + ' (Field: ' + other_predicate_field_num + ')';
 		}
 		if (other_predicate_id == "-1") {
 			show_other_pred_type = "[New / not yet reconciled]";
@@ -886,6 +903,7 @@ function addOther(){
 			predicate: other_predicate_id,
 			predicate_label: other_predicate_label,
 			predicate_type: other_predicate_type,
+			predicate_field_num: other_predicate_field_num,
 			object_field_num: obj_field_num,
 			csrfmiddlewaretoken: csrftoken},
 		success: addOtherDone
@@ -1076,6 +1094,12 @@ function selectField(sub_obj_type, field_num){
 	document.getElementById(sel_label_domID).value = label;
 	var sel_num_domID = sub_obj_type + "-f-num";
 	document.getElementById(sel_num_domID).value = field_num;
+	if(sub_obj_type == 'linking'){
+		other_predicate_field_num = field_num;
+		other_predicate_field_label = label;
+		other_predicate_type = 'import-field';
+	}
+	
 	checkActionReady()
 }
 

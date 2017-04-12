@@ -1,3 +1,4 @@
+from titlecase import titlecase
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -81,6 +82,17 @@ class ImportFieldDescribe():
                    .filter(source_id=self.source_id,
                            field_num__in=self.field_num_list)\
                    .update(label=label)
+    
+    def update_field_label_titlecase(self, field_num):
+        """ Puts a field lable into Title Case """
+        self.get_field_num_list(field_num)
+        act_fields = ImportField.objects\
+                                .filter(source_id=self.source_id,
+                                        field_num__in=self.field_num_list)
+        for act_field in act_fields:
+            tc_label = titlecase(act_field.label.replace('_', ' '))
+            act_field.label = tc_label
+            act_field.save()
 
     def update_field_value_prefix(self, value_prefix, field_num):
         """ Updates field_prefix for a comma-seperated list of field_nums """
@@ -313,6 +325,41 @@ class ImportFieldDescribe():
             # predicate linking relation is the predicate_id
             ifa.predicate = predicate_id
             ifa.predicate_field_num = 0
+        ifa.object_field_num = object_field_num
+        ifa.object_uuid = ''
+        ifa.save()
+    
+    def update_field_predicate_infield(self,
+                                       field_num,
+                                       object_field_num,
+                                       predicate_field_num):
+        """ Updates a field annotation to make entities in a field_num (subject)
+        have custom relationships defined by the values in a predicate_field_num
+        to entities in the object_field_num
+        """
+        try:
+            # in case we try to pass somthing that's not an integer
+            anno_subjs = ImportFieldAnnotation.objects\
+                                              .filter(source_id=self.source_id,
+                                                      field_num=field_num,
+                                                      object_field_num=object_field_num,
+                                                      predicate_field_num=predicate_field_num)\
+                                              .delete()
+        except:
+            pass
+        anno_subjs = ImportFieldAnnotation.objects\
+                                          .filter(source_id=self.source_id,
+                                                  field_num=field_num,
+                                                  object_field_num=object_field_num,
+                                                  predicate='',
+                                                  predicate_field_num=predicate_field_num)\
+                                          .delete()
+        ifa = ImportFieldAnnotation()
+        ifa.source_id = self.source_id
+        ifa.project_uuid = self.project_uuid
+        ifa.field_num = field_num
+        ifa.predicate = ''
+        ifa.predicate_field_num = predicate_field_num
         ifa.object_field_num = object_field_num
         ifa.object_uuid = ''
         ifa.save()

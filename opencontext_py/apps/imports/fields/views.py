@@ -48,6 +48,32 @@ def field_classify(request, source_id):
 
 @cache_control(no_cache=True)
 @never_cache
+def field_titlecase(request, source_id):
+    """ Classifies one or more fields with posted data """
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
+    else:
+        if request.method == 'POST':
+            ip = ImportProfile(source_id)
+            if ip.project_uuid is not False:
+                ifd = ImportFieldDescribe(source_id)
+                ifd.project_uuid = ip.project_uuid
+                if 'field_num' in request.POST:
+                    ifd.update_field_label_titlecase(request.POST['field_num'])
+                ip.get_fields(ifd.field_num_list)
+                json_output = json.dumps(ip.jsonify_fields(),
+                                         indent=4,
+                                         ensure_ascii=False)
+                return HttpResponse(json_output,
+                                    content_type='application/json; charset=utf8')
+            else:
+                raise Http404
+        else:
+            return HttpResponseForbidden
+
+
+@cache_control(no_cache=True)
+@never_cache
 def field_meta_update(request, source_id):
     """ Classifies one or more fields with posted data """
     if not request.user.is_superuser:

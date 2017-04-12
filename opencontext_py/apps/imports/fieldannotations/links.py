@@ -103,9 +103,9 @@ class ProcessLinks():
                                     # linking predicate is in a field
                                     pc = ProcessCells(self.source_id,
                                                       self.start_row)
-                                    pred_recs = pc.get_field_records(pred_obj['pred_field_obj'].field_num,
-                                                                     in_rows)
-                                    for pred_rec in pred_recs:
+                                    predicate_records= pc.get_field_records(pred_obj['pred_field_obj'].field_num,
+                                                                            in_rows)
+                                    for pred_row_key, pred_rec in predicate_records.items():
                                         pred_item = LastUpdatedOrderedDict()
                                         pred_item['id'] = str(pred_obj['pred_field_obj'].field_num)
                                         pred_item['id'] += '-' + str(pred_rec['rows'][0])
@@ -185,9 +185,9 @@ class ProcessLinks():
                                 sort = pred_obj['pred_field_obj'].field_num
                                 pc = ProcessCells(self.source_id,
                                                   self.start_row)
-                                pred_recs = pc.get_field_records(pred_obj['pred_field_obj'].field_num,
-                                                                 in_rows)
-                                for pred_rec in pred_recs:
+                                predicate_records= pc.get_field_records(pred_obj['pred_field_obj'].field_num,
+                                                                        in_rows)
+                                for pred_row_key, pred_rec in predicate_records.items():
                                     clp = CandidateLinkPredicate()
                                     clp.source_id = self.source_id
                                     clp.project_uuid = self.project_uuid
