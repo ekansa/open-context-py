@@ -162,6 +162,8 @@ urlpatterns = [
         name='imp_field_classify'),
     url(r'^imports/field-meta-update/(?P<source_id>\S+)', Imp_fields.field_meta_update,
         name='imp_field_meta_update'),
+    url(r'^imports/field-titlecase/(?P<source_id>\S+)', Imp_fields.field_titlecase,
+        name='imp_field_titlecase'),
     url(r'^imports/field-list/(?P<source_id>\S+)', Imp_fields.field_list,
         name='imp_field_list'),
     url(r'^imports/field-annotations/(?P<source_id>\S+)', Imp_field_annos.view,

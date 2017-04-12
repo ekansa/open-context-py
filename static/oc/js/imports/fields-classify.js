@@ -107,6 +107,33 @@ function assignFieldLabelDone(data){
 	}
 }
 
+function titleCase() {
+	/* Composes request to change field lables to title case 
+	*/
+	var selected_fields = getSelectedFieldNumbers();
+	url = "../../imports/field-titlecase/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			field_num: selected_fields,
+			csrfmiddlewaretoken: csrftoken},
+		success: titleCaseDone
+	});
+}
+
+function titleCaseDone(data){
+	/* Shows updates to title case */
+	for (var i = 0, length = data.length; i < length; i++) {
+		var field_num = data[i].field_num;
+		var ft_dom_id = 'field-label-' + field_num;
+		var ft_dom = document.getElementById(ft_dom_id);
+		ft_dom.value = data[i].label;
+	}
+}
+
+
 function matchAll() {
 	/* Composes request to add a field_data_type to a selected list of rows 
 	*/

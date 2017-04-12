@@ -328,6 +328,41 @@ class ImportFieldDescribe():
         ifa.object_field_num = object_field_num
         ifa.object_uuid = ''
         ifa.save()
+    
+    def update_field_predicate_infield(self,
+                                       field_num,
+                                       object_field_num,
+                                       predicate_field_num):
+        """ Updates a field annotation to make entities in a field_num (subject)
+        have custom relationships defined by the values in a predicate_field_num
+        to entities in the object_field_num
+        """
+        try:
+            # in case we try to pass somthing that's not an integer
+            anno_subjs = ImportFieldAnnotation.objects\
+                                              .filter(source_id=self.source_id,
+                                                      field_num=field_num,
+                                                      object_field_num=object_field_num,
+                                                      predicate_field_num=predicate_field_num)\
+                                              .delete()
+        except:
+            pass
+        anno_subjs = ImportFieldAnnotation.objects\
+                                          .filter(source_id=self.source_id,
+                                                  field_num=field_num,
+                                                  object_field_num=object_field_num,
+                                                  predicate='',
+                                                  predicate_field_num=predicate_field_num)\
+                                          .delete()
+        ifa = ImportFieldAnnotation()
+        ifa.source_id = self.source_id
+        ifa.project_uuid = self.project_uuid
+        ifa.field_num = field_num
+        ifa.predicate = ''
+        ifa.predicate_field_num = predicate_field_num
+        ifa.object_field_num = object_field_num
+        ifa.object_uuid = ''
+        ifa.save()
 
     def make_or_reconcile_link_predicate(self, label, project_uuid):
         """ gets or makes a linking relationship predicate
