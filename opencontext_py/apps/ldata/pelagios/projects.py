@@ -22,7 +22,7 @@ class PelagiosProjects():
 from opencontext_py.apps.ldata.pelagios.projects import PelagiosProjects
 p_projs = PelagiosProjects()
 p_projs.cache_all_graphs()
-p_projs.cache_project_graph('3')
+p_projs.cache_project_graph('ab9b84d5-ae8a-4d5b-8e45-9f3d260723b1')
     """
 
     def __init__(self):

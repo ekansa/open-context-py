@@ -90,6 +90,7 @@ class PelagiosData():
                 if i >= self.test_limit:
                     do_loop = False
             if do_loop:
+                # print('Check: ' + oa_item.uuid)
                 oa_item.validate()
                 if oa_item.is_valid:
                     oa_item.get_geo_event_metadata()
@@ -146,9 +147,11 @@ class PelagiosData():
                                .filter(uuid__in=man_uuids)
         else:
             # filter by project
+            proj_list = self.project_uuids
+            proj_list.append('0')  # add a project 0 (Open Context to the proj list)
             man_objs = Manifest.objects\
                                .filter(uuid__in=man_uuids,
-                                       project_uuid__in=self.project_uuids)
+                                       project_uuid__in=proj_list)
         for man_obj in man_objs:
             act_uuid = man_obj.uuid
             self.oa_items[act_uuid].manifest = man_obj
@@ -179,9 +182,18 @@ class PelagiosData():
             used_gaz_annos = LinkAnnotation.objects\
                                            .filter(object_uri__in=act_gaz_list)
         else:
+            # Some gazetter references go to items belonging to Open Context, which is project 0
+            # the following does a complicated SQL query to get gazetter references
+            # to items that are in our self.project_uuids list
+            # OR are in project '0' AND contain items in our self.project_uuids list
+            oa_item = OaItem()
+            ok_rows = oa_item.get_project_gaz_rels(self.project_uuids,
+                                                   act_gaz_list)
+            hash_ids = []
+            for ok_row in ok_rows:
+                hash_ids.append(ok_row['hash_id'])
             used_gaz_annos = LinkAnnotation.objects\
-                                           .filter(object_uri__in=act_gaz_list,
-                                                   project_uuid__in=self.project_uuids)
+                                           .filter(hash_id__in=hash_ids)
         for gaz_anno in used_gaz_annos:
             if gaz_anno.subject_type in self.OC_OA_TARGET_TYPES:
                 oa_items = self.update_oa_items(gaz_anno.subject,
@@ -280,10 +292,12 @@ class OaItem():
         """ validates the item """
         if self.manifest is None or self.manifest is False:
             self.is_valid = False
+            # print('Missing manifest for ' + self.uuid)
         else:
             if self.manifest.item_type == 'subjects':
                 if not isinstance(self.context, str):
                     self.is_valid = False
+                    # print('Missing context for ' + self.uuid)
         if self.is_valid is None:
             # since it's not false, and is none
             # it is valid
@@ -492,7 +506,10 @@ class OaItem():
         """ makes a dcterms title, includes context if present """
         if isinstance(context, str):
             context = self.remove_label_from_context(label, context)
-            title = label + ' from ' + context       
+            if not isinstance(context, str):
+                title = label
+            else:
+                title = label + ' from ' + context       
         else:
             title = label
         return title
@@ -745,6 +762,36 @@ class OaItem():
                  'WHERE m.project_uuid IN (' + q_uuids + ') '
                  'AND ass.object_type IN (' + q_obj_types + ') '
                  'GROUP BY mm.item_type, m.class_uri, mm.class_uri; ')
+        cursor = connection.cursor()
+        cursor.execute(query)
+        rows = self.dictfetchall(cursor)
+        return rows
+    
+    def get_project_gaz_rels(self, project_uuids, act_gaz_list):
+        """ gets distinct categories (class_uri)
+            of items in a project associated with media and document
+            resources. This is useful to say
+            we have images or documents related to
+            bones, sites, potttery or other class_uri
+        """
+        con_pred = Assertion.PREDICATES_CONTAINS
+        if not isinstance(act_gaz_list, list):
+            act_gaz_list = [act_gaz_list]
+        q_gazs = self.make_query_list(act_gaz_list)
+        if not isinstance(project_uuids, list):
+            project_uuids = [project_uuids]
+        good_p_uuids = self.make_query_list(project_uuids)
+        project_uuids.append('0')  # now add a project 0 so we get general Open Context items
+        # print('all ps: ' + str(project_uuids))
+        qall_proj_uuids = self.make_query_list(project_uuids)
+        query = ('SELECT la.hash_id AS hash_id '
+                 'FROM link_annotations AS la '
+                 'JOIN oc_assertions AS oa ON la.subject = oa.uuid '
+                 'WHERE la.project_uuid IN (' + qall_proj_uuids + ') '
+                 'AND la.object_uri IN (' + q_gazs + ') '
+                 'AND oa.predicate_uuid = \'' + con_pred + '\' '
+                 'AND oa.project_uuid IN (' + good_p_uuids + ') '
+                 '; ')
         cursor = connection.cursor()
         cursor.execute(query)
         rows = self.dictfetchall(cursor)
