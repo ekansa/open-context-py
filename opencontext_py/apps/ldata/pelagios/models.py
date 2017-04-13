@@ -176,6 +176,7 @@ class PelagiosData():
         """
         oa_items = {}
         rel_oc_types = []
+        hashes_projs = {}
         act_gaz_list = self.get_used_gazetteer_entities()
         # get list of gazetteer vocabularies actually in use
         if len(self.project_uuids) < 1:
@@ -192,13 +193,23 @@ class PelagiosData():
             hash_ids = []
             for ok_row in ok_rows:
                 hash_ids.append(ok_row['hash_id'])
+                hashes_projs[ok_row['hash_id']] = ok_row['project_uuid']
             used_gaz_annos = LinkAnnotation.objects\
                                            .filter(hash_id__in=hash_ids)
         for gaz_anno in used_gaz_annos:
+            contained_project_uuid = None
+            if gaz_anno.hash_id in hashes_projs:
+                # project_uuid for the item contained within a gazeteer id's item
+                contained_project_uuid = hashes_projs[gaz_anno.hash_id]
+            if contained_project_uuid is None \
+               and gaz_anno.project_uuid not in self.project_uuids \
+               and len(self.project_uuids) > 0:
+                contained_project_uuid = self.project_uuids[0]
             if gaz_anno.subject_type in self.OC_OA_TARGET_TYPES:
                 oa_items = self.update_oa_items(gaz_anno.subject,
                                                 gaz_anno.object_uri,
-                                                oa_items)
+                                                oa_items,
+                                                contained_project_uuid)
             elif gaz_anno.subject_type == 'types':
                 rel_asserts = Assertion.objects\
                                        .filter(subject_type__in=self.OC_OA_TARGET_TYPES,
@@ -206,16 +217,18 @@ class PelagiosData():
                 for rel_assert in rel_asserts:
                     oa_items = self.update_oa_items(rel_assert.uuid,
                                                     gaz_anno.object_uri,
-                                                    oa_items)
+                                                    oa_items,
+                                                    contained_project_uuid)
         self.oa_items = oa_items
         return self.oa_items
 
-    def update_oa_items(self, uuid, gazetteer_uri, oa_items):
+    def update_oa_items(self, uuid, gazetteer_uri, oa_items, contained_project_uuid=None):
         """ updates the target_uris object with more data """
         if uuid not in oa_items:
             # created a new open annoation item
             oa_item = OaItem()
             oa_item.uuid = uuid
+            oa_item.contained_project_uuid = contained_project_uuid
         else:
             oa_item = oa_items[uuid]
         if gazetteer_uri not in oa_item.gazetteer_uris:
@@ -258,6 +271,7 @@ class OaItem():
         self.uri = None
         self.project_uri = None
         self.uuid = None
+        self.contained_project_uuid = None
         self.manifest = None
         self.context = None
         self.contents_cnt = 0
@@ -784,13 +798,14 @@ class OaItem():
         project_uuids.append('0')  # now add a project 0 so we get general Open Context items
         # print('all ps: ' + str(project_uuids))
         qall_proj_uuids = self.make_query_list(project_uuids)
-        query = ('SELECT la.hash_id AS hash_id '
+        query = ('SELECT la.hash_id AS hash_id, m.project_uuid AS project_uuid '
                  'FROM link_annotations AS la '
                  'JOIN oc_assertions AS oa ON la.subject = oa.uuid '
+                 'JOIN oc_manifest AS m ON oa.object_uuid = m.uuid '
                  'WHERE la.project_uuid IN (' + qall_proj_uuids + ') '
                  'AND la.object_uri IN (' + q_gazs + ') '
                  'AND oa.predicate_uuid = \'' + con_pred + '\' '
-                 'AND oa.project_uuid IN (' + good_p_uuids + ') '
+                 'AND m.project_uuid IN (' + good_p_uuids + ') '
                  '; ')
         cursor = connection.cursor()
         cursor.execute(query)
