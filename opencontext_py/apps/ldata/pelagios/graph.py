@@ -141,7 +141,9 @@ pelagios.g.serialize(format='turtle')
                                              self.make_full_uri('dcterms', 'isPartOf'),
                                              oa_item.project_uri)
                     # now add gazetteer annotations to the item
-                    if oa_item.manifest is not None:
+                    if oa_item.contained_project_uuid is not None:
+                        base_anno_uri =  self.base_uri + oa_item.contained_project_uuid
+                    elif oa_item.manifest is not None:
                         base_anno_uri =  self.base_uri + oa_item.manifest.project_uuid
                     else:
                         base_anno_uri =  self.base_uri + 'web'
