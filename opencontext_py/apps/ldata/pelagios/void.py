@@ -38,6 +38,8 @@ class PelagiosVoid():
         self.request = False
         self.base_uri = settings.CANONICAL_HOST + '/pelagios/data/'
         self.latest_revised = None
+        # add a file extension to the data dump, make it easier for Pelagios to injest
+        self.data_dump_extension = '.ttl'
         
     def prep_graph(self):
         """ prepares a graph for Pelagios """
@@ -86,7 +88,7 @@ class PelagiosVoid():
             proj = proj_dict['proj']
             uri = URImanagement.make_oc_uri(man.uuid,
                                             man.item_type)
-            data_uri = self.base_uri + man.uuid
+            data_uri = self.base_uri + man.uuid + self.data_dump_extension
             self.make_add_triple(uri,
                                  RDF.type,
                                  self.make_full_uri('void', 'Dataset'))
@@ -131,7 +133,7 @@ class PelagiosVoid():
         """
         uri = settings.CANONICAL_HOST + '/about/'
         described_uri = settings.CANONICAL_HOST + '/about/recipes'
-        data_uri = self.base_uri + 'web'
+        data_uri = self.base_uri + 'web' + self.data_dump_extension
         self.make_add_triple(uri,
                              RDF.type,
                              self.make_full_uri('void', 'Dataset'))
