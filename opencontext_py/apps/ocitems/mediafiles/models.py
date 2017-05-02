@@ -8,10 +8,18 @@ from django.db import models
 # Mediafile has basic metadata about media resources (binary files) associated with a media resource item
 @reversion.register  # records in this model under version control
 class Mediafile(models.Model):
-    FILE_TYPES = ['oc-gen:fullfile',
-                  'oc-gen:preview',
-                  'oc-gen:thumbnail',
-                  'oc-gen:hero']
+    FILE_TYPES = [
+        'oc-gen:fullfile',
+        'oc-gen:preview',
+        'oc-gen:thumbnail',
+        'oc-gen:hero',
+        'oc-gen:iiif',
+        'oc-gen:archive',
+        'oc-gen:ia-fullfille',
+        'oc-gen:archive',
+        'oc-gen:x3dom-model',
+        'oc-gen:x3dom-texture'
+    ]
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
     PDF_DEFAULT_THUMBNAIL = 'http://opencontext.org/static/oc/images/icons/pdf-noun-89522.png'
     uuid = models.CharField(max_length=50, db_index=True)
