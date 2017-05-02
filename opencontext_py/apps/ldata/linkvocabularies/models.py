@@ -31,7 +31,8 @@ lv = LinkVocabulary()
 lv.vocabulary_uri = 'http://opencontext.org/vocabularies/oc-general'
 lv.vocab_file_uri = 'https://raw.githubusercontent.com/ekansa/oc-ontologies/master/vocabularies/oc-general.owl'
 lv.load_parse_vocabulary(lv.vocab_file_uri)
-lv.update_entity_types()
+lv.replace_old = False
+lv.save_entity_labels()
 lv.save_entity_comments()
 
     """
@@ -158,16 +159,18 @@ lv.save_entity_comments()
                                                None)):
                 subject_uri = s.__str__()  # get the URI of the subject as a string
                 label = o.__str__()  # get the Label of from object as a string
-                newr = LinkEntity()
-                newr.uri = subject_uri
-                newr.label = label
-                newr.alt_label = label
-                newr.ent_type = 'class'
-                newr.vocab_uri = self.vocabulary_uri
-                newr.save()
-                act_t = {'s': subject_uri,
-                         'o': label}
-                output.append(act_t)
+                le_ents = LinkEntity.objects.filter(uri=subject_uri)[:1]
+                if len(le_ents) < 1 or self.replace_old:
+                    newr = LinkEntity()
+                    newr.uri = subject_uri
+                    newr.label = label
+                    newr.alt_label = label
+                    newr.ent_type = 'class'
+                    newr.vocab_uri = self.vocabulary_uri
+                    newr.save()
+                    act_t = {'s': subject_uri,
+                             'o': label}
+                    output.append(act_t)
         return output
 
     def save_hierarchy(self, predicate_uri='rdfs:subClassOf'):
