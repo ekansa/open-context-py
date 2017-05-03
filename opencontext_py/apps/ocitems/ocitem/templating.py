@@ -75,6 +75,8 @@ class TemplateItem():
         self.fulldownload = False
         self.iiif_json = False
         self.iiif_server = False
+        self.x3dom_model = False
+        self.x3dom_textures = []
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -313,6 +315,8 @@ class TemplateItem():
                 self.content['fullfile'] = False
                 self.content['preview'] = False
                 self.content['thumbnail'] = False
+                self.content['x3dom_model'] = False
+                self.content['x3dom_textures'] = []
             rp = RootPath()
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
@@ -342,6 +346,17 @@ class TemplateItem():
                 elif file_item['type'] == 'oc-gen:iiif':
                     self.iiif_json = rp.convert_to_https(file_item['id'])
                     self.iiif_server = self.iiif_json.replace('/info.json', '')
+                elif file_item['type'] == 'oc-gen:x3dom-model':
+                    rp = RootPath()
+                    target_url = rp.convert_to_https(file_item['id'])
+                    self.x3dom_model = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
+                    self.content['x3dom_model']  = file_item['id']
+                elif file_item['type'] == 'oc-gen:x3dom-texture':
+                    rp = RootPath()
+                    target_url = rp.convert_to_https(file_item['id'])
+                    texture_url = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
+                    self.x3dom_textures.append(texture_url)
+                    self.content['x3dom_textures'].append(file_item['id'])
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:
