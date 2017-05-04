@@ -17,9 +17,15 @@ function modelOnLoad(){
         var xdom = document.getElementById('x3dom');
         xdom.runtime.ready();
         xdom.runtime.showAll();
+        
+        if(document.getElementById('preview-1-file-panel-title')){
+            // change the title of the panel to show it's a 3D model
+            var act_dom = document.getElementById('preview-1-file-panel-title');
+            act_dom.innerHTML = 'Interactive 3D Model';
+        }
     
         if(document.getElementById('preview-1-file-pttl-l-span')){
-            var div_s = document.getElementById('preview-1-file-pttl-l-span');
+            var act_dom = document.getElementById('preview-1-file-pttl-l-span');
             var html = [
                 //'<button type="button" class="btn btn-default btn-xs" ',
                 // 'style="margin-bottom: 5px;" ',
@@ -29,7 +35,7 @@ function modelOnLoad(){
                 ' Reset + Center View',
                 '</a>'
             ].join('\n');
-            div_s.innerHTML = html;
+            act_dom.innerHTML = html;
         }
         
         if(document.getElementById('x3dviewpoint')){

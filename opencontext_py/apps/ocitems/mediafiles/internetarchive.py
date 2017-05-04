@@ -21,7 +21,8 @@ class InternetArchiveMedia():
     """
     This class has useful methods for updating
     media files, particularly putting items into the
-    Internet Archive
+    Internet Archive           
+
 
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -95,7 +96,7 @@ for med_full in med_files:
     
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
-        self.cach_file_dir = 'internet-archive'
+        self.cache_file_dir = 'internet-archive'
         # self.ia_collection = 'opensource_media'
         self.ia_collection = 'opencontext'
         self.id_prefix = 'opencontext'
@@ -281,7 +282,7 @@ for med_full in med_files:
                 metadata['collection'] = self.ia_collection
                 metadata['mediatype'] = 'image'
                 # now upload the image file
-                dir = self.set_check_directory(self.cach_file_dir)
+                dir = self.set_check_directory(self.cache_file_dir)
                 path = os.path.join(dir, file_name)
                 r = item.upload_file(path,
                                      key=file_name,
@@ -337,6 +338,42 @@ for med_full in med_files:
             suffix = ex_f[-1]
         uri = self.iiif_uri_prefix + item_id + '/info.json'
         return uri
+    
+    def add_file_to_archive(self, man_obj, file_name, cache_dir=None):
+        """ adds another file to an existing archive item. No metadata modification
+        """
+        ia_file_uri = None
+        json_ld = self.make_oc_item(man_obj)
+        if isinstance(json_ld, dict):
+            # cache the remote file locally to upload it
+            item_id = self.id_prefix + '-' + json_ld['slug']
+            if not isinstance(cache_dir, str):
+                cache_dir = self.cache_file_dir
+            dir = self.set_check_directory(cache_dir)
+            path = os.path.join(dir, file_name)
+            if not os.path.exists(path):
+                print('Cannot find the cached file: ' +  path + ' !')
+            else:
+                sleep(self.delay_before_request)
+                print('Ready to upload: ' + file_name)
+                # start an internet archive session
+                s = self.start_ia_session()
+                # get or make an item
+                item = get_item(item_id,
+                                archive_session=s,
+                                debug=True)
+                # now upload file
+                if not isinstance(cache_dir, str):
+                    cache_dir = self.cache_file_dir
+                dir = self.set_check_directory(cache_dir)
+                path = os.path.join(dir, file_name)
+                r = item.upload_file(path,
+                                     key=file_name,
+                                     metadata=metadata)
+                # set the uri for the media item just uploaded
+                if r.status_code == requests.codes.ok or self.save_db:
+                    ia_file_uri = self.make_ia_image_uri(item_id, file_name)
+        return ia_file_uri
 
     def make_metadata_dict(self, json_ld, man_obj):
         """ makes the metadata dict for the current item """
@@ -427,7 +464,7 @@ for med_full in med_files:
             saves it to cache with the filename 'file_name'
         """
         ok = False
-        dir = self.set_check_directory(self.cach_file_dir)
+        dir = self.set_check_directory(self.cache_file_dir)
         path = os.path.join(dir, file_name)
         if os.path.exists(path):
             # the file already exists, no need to download it again
@@ -590,3 +627,14 @@ for med_full in med_files:
         if os.path.exists(full_dir):
             output = full_dir
         return output
+    
+    def get_directory_files(self, act_dir):
+        """ Gets a list of files from a directory """
+        files = False
+        path = self.set_check_directory(act_dir)
+        if os.path.exists(path):
+            for dirpath, dirnames, filenames in os.walk(path):
+                files = sorted(filenames)
+        else:
+            print('Cannot find: ' + path)
+        return files

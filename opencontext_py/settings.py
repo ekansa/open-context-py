@@ -430,6 +430,12 @@ if 'INTERNET_ARCHIVE_SECRET_KEY' in secrets:
 else:
     INTERNET_ARCHIVE_SECRET_KEY = None  
 
+if 'CORS_OK_DOMAINS' in secrets:
+    # password for the internet archive
+    CORS_OK_DOMAINS = get_secret('CORS_OK_DOMAINS')
+else:
+    CORS_OK_DOMAINS = [] 
+
 
 ITEM_TYPES = (
     ('subjects', 'subjects'),

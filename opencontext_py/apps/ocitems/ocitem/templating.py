@@ -337,7 +337,7 @@ class TemplateItem():
                             # if 'https:' in target_url:
                                 # target_url = target_url.replace('https:', 'http:')
                             # PDF viewer installed, but only works if PDF at same domain, so make a proxy link
-                            self.full_doc_file = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
+                            self.full_doc_file = self.make_cors_ok_url(target_url)
                             # self.full_doc_file = False  # comment this out when enabling this feature
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = rp.convert_to_https(file_item['id'])
@@ -349,12 +349,12 @@ class TemplateItem():
                 elif file_item['type'] == 'oc-gen:x3dom-model':
                     rp = RootPath()
                     target_url = rp.convert_to_https(file_item['id'])
-                    self.x3dom_model = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
+                    self.x3dom_model = self.make_cors_ok_url(target_url)
                     self.content['x3dom_model']  = file_item['id']
                 elif file_item['type'] == 'oc-gen:x3dom-texture':
                     rp = RootPath()
                     target_url = rp.convert_to_https(file_item['id'])
-                    texture_url = rp.get_baseurl() + '/entities/proxy/' + urlquote(target_url)
+                    texture_url = self.make_cors_ok_url(target_url)
                     self.x3dom_textures.append(texture_url)
                     self.content['x3dom_textures'].append(file_item['id'])
         elif 'rdf:HTML' in json_ld:
@@ -584,6 +584,19 @@ class TemplateItem():
                 self.og_description += '; part of the ' + self.project.label
                 self.og_description += ' data publication.'
 
+    def make_cors_ok_url(self, url):
+        """ checks to see if the url is on the CORS ok
+            list. If not, make a proxy URL
+        """
+        make_proxy = True  # default to making a proxy
+        for cors_ok_domain in settings.CORS_OK_DOMAINS:
+            if cors_ok_domain in url:
+                make_proxy = False
+                break
+        if make_proxy:
+            rp = RootPath()
+            url = rp.get_baseurl() + '/entities/proxy/' + urlquote(url)
+        return url
 
 class ItemMetadata():
     """ Class has some methods to add metadata to items """
