@@ -30,7 +30,13 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
-                        {% if item.full_doc_file != False %}
+                        {% if item.x3dom_model != False %}
+                        <div class="preview-image">
+                         
+                         {% include 'media/x3dom.html' %}
+                             
+                        </div>
+                        {% elif item.full_doc_file != False %}
                         <div class="preview-image">
                               <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"
                                      width="90%" height="800" allowfullscreen webkitallowfullscreen></iframe>
@@ -59,7 +65,29 @@
                         {% endwith %}
                         {% endwith %}
                         {% endwith %}
-                        {% if item.full_doc_file != False %}
+                        {% if item.x3dom_model != False %}
+                        <div class="preview-image">
+                         
+                         <script type='text/javascript' src='https://x3dom.org/download/1.7.2/x3dom.js'> </script> 
+                         <link rel='stylesheet' type='text/css' href='https://x3dom.org/download/1.7.2/x3dom.css'></link>
+                         
+                         <script type='text/javascript' src='https://artiraq.org/static/opencontext/gabii/gabii-3d/3d-view-translate.js'> </script>
+                         
+                              <div id="show-div"></div>
+                              <x3d id='x3dom' style="min-width:600px; width:100%; min-height:600px;"
+                                    showStat='false' showLog='false' x='0px' y='0px' >
+                                <scene id='x3dScene'>
+                                <navigationInfo type='"examine" "any"' id="navType"></navigationInfo>
+                                 
+                                 <Viewpoint id='x3dviewpoint'> </Viewpoint>
+                               
+                                 <inline id="x3dInline" onload='modelOnLoad();' url="{{ item.x3dom_model }}" >  </inline>
+                                </scene>
+                               </x3d>
+                             
+                             
+                        </div>
+                        {% elif item.full_doc_file != False %}
                         <div class="preview-image">
                              <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"
                                      width="90%" height="800" allowfullscreen webkitallowfullscreen></iframe>
