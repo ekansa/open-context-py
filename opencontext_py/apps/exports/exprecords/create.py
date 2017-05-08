@@ -297,12 +297,12 @@ class Create():
                                       .values_list('predicate_uuid', flat=True)\
                                       .filter(uuid=uuid,
                                               obs_num__in=self.obs_limits)\
-                                      .order_by('sort')
+                                      .order_by('obs_num', 'sort')
             else:
                 pred_uuids = Assertion.objects\
                                       .values_list('predicate_uuid', flat=True)\
                                       .filter(uuid=uuid)\
-                                      .order_by('sort')
+                                      .order_by('obs_num', 'sort')
             item_preds = LastUpdatedOrderedDict()
             for pred_uuid in pred_uuids:
                 # make sure we can dereference the predicate
