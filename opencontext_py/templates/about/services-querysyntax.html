@@ -81,6 +81,28 @@
         </tr>
         <tr>
             <th>
+                <samp>form-start</samp>
+                <br/>
+                <samp>form-stop</samp>
+            </th>
+            <td>
+                <p>These parameters filter a request by the general date ranges of the formation, use, and/or life of items described in the search results. The <samp>form-start</samp> parameter defines the ealiest date to include in search results, while the <samp>form-stop</samp> defines the latest date to include in search results. With these parameters, use integer dates (negative values for dates BCE) and positive values for dates CE.</p>
+                
+                <p>Some items, such as archaeological sites, may have multiple date ranges (a site may have multiple episodes of occupation and use). In these cases, Open Context's query results will include records that have date ranges falling within the <samp>form-start</samp> and <samp>form-stop</samp> limits, even if the records also have date ranges that fall outside of these limits.</p>
+                
+                <p>Date range search examples include:</p>
+                <ol>
+                    <li>
+                        Filtering for sites in the United States that have an occupation / use component dating to before 7500 BCE: <samp><a title="Date filter looking for records older than 7500 BCE" target="_blank" href="{{ base_url }}/subjects-search/United+States?prop=oc-gen-cat-loc-or-context---oc-gen-cat-site&prop=dinaa-00001&proj=52-digital-index-of-north-american-archaeology-dinaa&form-stop=-7500">form-stop=-7500</a></samp>
+                    </li>
+                    <li>
+                        Filtering for cattle bones dating between 15000 BCE and 4000 BCE: <samp><a title="Query for records that fall within a date range" target="_blank" href="{{ base_url }}/subjects-search/?prop=oc-gen-cat-bio-subj-ecofact---oc-gen-cat-animal-bone&prop=biol-term-hastaxonomy---eol-p-34548&form-start=-12000&form-stop=-4000">form-start=-12000&form-stop=-4000</a></samp>
+                    </li>
+                </ol>
+            </td>
+        </tr>
+        <tr>
+            <th>
                 <samp>linked=dinaa-cross-ref</samp>
             </th>
             <td>
