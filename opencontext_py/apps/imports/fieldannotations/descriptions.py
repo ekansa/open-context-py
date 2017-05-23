@@ -190,6 +190,7 @@ class ProcessDescriptions():
                             subject_uuid = dist_rec['imp_cell_obj'].fl_uuid
                             # the subject record is OK to use for creating
                             # description records
+                            # print('subject_uuid: ' + subject_uuid)
                             for des_field_obj in ent_obj['des_by_fields']:
                                 des_field_num = des_field_obj.field_num
                                 if des_field_obj.obs_num < 1:
@@ -267,19 +268,25 @@ class ProcessDescriptions():
                 valueof_fields = self.field_valueofs[des_field_obj.field_num]
             else:
                 # get list of field_nums that have the des_by_field as their object
-                val_annos = ImportFieldAnnotation.objects\
-                                                 .filter(source_id=self.source_id,
-                                                         predicate=ImportFieldAnnotation.PRED_VALUE_OF,
-                                                         object_field_num=des_field_obj.field_num)\
-                                                 .order_by('field_num')
-                if len(val_annos) > 0:
-                    for val_anno in val_annos:
-                        pg = ProcessGeneral(self.source_id)
-                        val_obj = pg.get_field_obj(val_anno.field_num)
-                        if val_obj is not False:
-                            if val_obj.field_type == 'value':
-                                valueof_fields.append(val_obj)
-                self.field_valueofs[des_field_obj.field_num] = valueof_fields
+                valueof_fields = self.get_field_valueofs(des_field_obj.field_num)
+        return valueof_fields
+    
+    def get_field_valueofs(self, variable_field_num):
+        """ gets the field_valueofs for a variable field_num """
+        valueof_fields = []
+        val_annos = ImportFieldAnnotation.objects\
+                                         .filter(source_id=self.source_id,
+                                                 predicate=ImportFieldAnnotation.PRED_VALUE_OF,
+                                                 object_field_num=variable_field_num)\
+                                         .order_by('field_num')
+        if len(val_annos) > 0:
+            for val_anno in val_annos:
+                pg = ProcessGeneral(self.source_id)
+                val_obj = pg.get_field_obj(val_anno.field_num)
+                if val_obj is not False:
+                    if val_obj.field_type == 'value':
+                        valueof_fields.append(val_obj)
+        self.field_valueofs[variable_field_num] = valueof_fields
         return valueof_fields
 
     def reconcile_descriptive_predicates(self, des_by_fields):
@@ -382,7 +389,13 @@ class ProcessDescriptions():
             if data_type == 'id' or data_type == 'xsd:string':
                 # we have a field with an id data_type, which becomes a types entity
                 if recon_predicate['rows'] is not False:
-                    valueof_fields = self.get_variable_valueof(recon_predicate['field_obj'])
+                    valueof_fields = []
+                    valueof_fields_objs = self.get_variable_valueof(recon_predicate['field_obj'])
+                    for valueof_field in valueof_fields_objs:
+                        if isinstance(valueof_field, ImportField):
+                            valueof_fields.append(valueof_field.field_num)
+                        elif isinstance(valueof_field, int):
+                            valueof_fields.append(valueof_field)
                 elif recon_predicate['predicate'] is not False:
                     valueof_fields = [field_num]
                 else:
@@ -390,6 +403,7 @@ class ProcessDescriptions():
                 for valueof_field in valueof_fields:
                     pc = ProcessCells(self.source_id,
                                       self.start_row)
+                    # print('Check value of field: ' + str(valueof_field))
                     distinct_records = pc.get_field_records(valueof_field,
                                                             False)
                     if distinct_records is not False:
@@ -429,13 +443,16 @@ class ProcessDescriptions():
     def get_assertion_object_values(self, field_num, in_rows):
         """ Gets the import_cell_objects for a given field and row constraint """
         object_imp_cell_objs = []
+        if field_num not in self.field_valueofs:
+            # for some reason we don't have the value of fields yet
+            self.get_field_valueofs(field_num)
         if field_num in self.field_valueofs:
             valueof_fields = self.field_valueofs[field_num]
             for valueof_field in valueof_fields:
                 if isinstance(valueof_field, ImportField):
                     # it is not an integer, but an ImportField object
                     valueof_field = valueof_field.field_num
-                # print('Value of field: ' + str(valueof_field))
+                print('Value of field: ' + str(valueof_field))
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
                 cells = pc.get_field_row_records(valueof_field,

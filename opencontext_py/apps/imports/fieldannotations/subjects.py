@@ -743,6 +743,7 @@ class CandidateSubject():
                 self.context = self.parent_context + Subject.HIEARCHY_DELIM + self.label
             else:
                 self.context = self.label
+            # print('Reconcile context: ' + self.context)
             match_found = self.match_against_subjects(self.context)
             if match_found is False:
                 # create new subject, manifest objects. Need new UUID, since we can't assume
