@@ -243,6 +243,12 @@ function relationInterface(type){
 		this.title = "Add <strong>Contained in</strong> [a subject entity] Relation";
 		this.body = generateContainedInBody();
 	}
+	else if (type == "contains-draft") {
+		this.predicate_id = PRED_DRAFT_CONTAINS;
+		this.predicate_label = "Containment (Partial Hierarchy)";
+		this.title = "Add <strong>Containment</strong> Relation in partial hierarchy";
+		this.body = generateContainsBody();
+	}
 	else if (type == "links-field") {
 		this.predicate_id = PREDICATE_LINK;
 		this.predicate_label = "Links with";
@@ -301,7 +307,7 @@ function addRelInterface(type){
 function checkActionReady(){
 	/* Checks if an annoation is ready to go, depending on the type of annotation */
 	if (act_interface_type == "contains") {
-		checkContainsActionReady();
+		checkContainsActionReady(PREDICATE_CONTAINS);
 	}
 	else if (act_interface_type == "contained-in") {
 		checkContainmentInActionReady();
@@ -311,6 +317,9 @@ function checkActionReady(){
 	}
 	else if (act_interface_type == "media-part-of") {
 		checkMediaPartOfActionReady();
+	}
+	else if (act_interface_type == "contains-draft") {
+		checkContainsActionReady(PRED_DRAFT_CONTAINS);
 	}
 	else if (act_interface_type == "links-entity") {
 		//code
@@ -323,7 +332,7 @@ function checkActionReady(){
 
 
 /* --------------------------------------------------------------
- * Interface For "Contains" Relations
+ * Interface For "Contains" Relations, or DRAFT CONTAINS relations
  * --------------------------------------------------------------
  */
 function generateContainsBody(){
@@ -346,7 +355,7 @@ function generateContainsBody(){
 	return bodyString;
 }
 
-function checkContainsActionReady(){
+function checkContainsActionReady(act_contains_predicate){
 	// Check to see if there's a selected subject field.
 	var subj_num_domID = "subject" + "-f-num";
 	var field_num = document.getElementById(subj_num_domID).value;
@@ -378,7 +387,8 @@ function checkContainsActionReady(){
 				object_label,
 			"</div>",
 			"<div class=\"col-xs-2\" id=\"action-botton-div\">",
-				"<button onclick=\"javascript:addContains();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
+				"<button onclick=\"javascript:addContains('" + act_contains_predicate + "');\" ",
+				"type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
 					"<span class=\"glyphicon glyphicon-cloud-upload\" ></span> Save",
 				"</button>",
 			"</div>"
@@ -387,7 +397,7 @@ function checkContainsActionReady(){
 	}
 }
 
-function addContains(){
+function addContains(act_contains_predicate){
 	/* AJAX call to search entities filtered by a search-string */
 	var subj_num_domID = "subject" + "-f-num";
 	var field_num = document.getElementById(subj_num_domID).value;
@@ -406,7 +416,7 @@ function addContains(){
 		dataType: "json",
 		data: {
 			field_num: field_num,
-			predicate: PREDICATE_CONTAINS,
+			predicate: act_contains_predicate,
 			object_field_num: obj_field_num,
 			csrfmiddlewaretoken: csrftoken},
 		success: addContainsDone

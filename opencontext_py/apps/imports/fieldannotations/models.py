@@ -5,6 +5,7 @@ from django.db import models
 class ImportFieldAnnotation(models.Model):
 
     PRED_CONTAINED_IN = 'oc-gen:contained-in'
+    PRED_DRAFT_CONTAINS = 'oc-gen:contains-draft'
     PRED_DESCRIBES = 'oc-gen:describes'
     PRED_VALUE_OF = 'oc-gen:value-of'
     PRED_MEDIA_PART_OF = 'oc-gen:media-part-of'

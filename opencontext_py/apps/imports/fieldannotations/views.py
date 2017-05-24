@@ -142,6 +142,10 @@ def create(request, source_id):
                 elif request.POST['predicate'] == ImportFieldAnnotation.PRED_CONTAINED_IN:
                     ifd.update_field_containedin_entity(request.POST['field_num'],
                                                         request.POST['object_uuid'])
+                elif request.POST['predicate'] == ImportFieldAnnotation.PRED_DRAFT_CONTAINS:
+                    ifd.update_field_contains(request.POST['field_num'],
+                                              request.POST['object_field_num'],
+                                              ImportFieldAnnotation.PRED_DRAFT_CONTAINS)
                 elif request.POST['predicate'] == ImportFieldAnnotation.PRED_MEDIA_PART_OF:
                     ifd.update_field_media_part_of_entity(request.POST['field_num'],
                                                           request.POST['object_field_num'])
