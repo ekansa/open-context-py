@@ -26,7 +26,8 @@ class ProcessLinks():
     DEFAULT_EXCLUSION_PREDS = [Assertion.PREDICATES_CONTAINS,
                                ImportFieldAnnotation.PRED_CONTAINED_IN,
                                ImportFieldAnnotation.PRED_DESCRIBES,
-                               ImportFieldAnnotation.PRED_MEDIA_PART_OF]
+                               ImportFieldAnnotation.PRED_MEDIA_PART_OF,
+                               ImportFieldAnnotation.PRED_DRAFT_CONTAINS]
 
     def __init__(self, source_id):
         self.source_id = source_id
