@@ -137,7 +137,8 @@ class LinkEntityGeneration():
                         'http://nomisma.org/ontology': 'nmo',
                         'http://numismatics.org/ocre/id': 'ocre',
                         'http://portal.vertnet.org': 'vertnet-rec',
-                        'http://vocab.getty.edu/tgn': 'getty-tgn'
+                        'http://vocab.getty.edu/tgn': 'getty-tgn',
+                        'http://purl.org/heritagedata/schemes/mda_obj/concepts': 'fish'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
