@@ -1280,7 +1280,7 @@ class LinkedData():
         """
         output = False
         ld_found = self.make_linked_data_lists(json_ld)
-        if ld_found:
+        if ld_found and self.linked_predicates is not False:
             # using an ordered dict to make sure we can more easily have unique combos of preds and objects
             temp_annotations = LastUpdatedOrderedDict()
             if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):

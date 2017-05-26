@@ -122,21 +122,24 @@ class ImportFieldDescribe():
             self.field_num_list = [field_num]
         return self.field_num_list
 
-    def update_field_contains(self, field_num, object_field_num):
+    def update_field_contains(self, field_num, object_field_num, pred_contains=None):
         """ Updates a field annotation to make entities in a field_num (subject)
         contain entities in an object_ield_num
         """
+        if pred_contains is None:
+            pred_contains = Assertion.PREDICATES_CONTAINS
         # delete cases where the object_field_num is contained by another field
+        del_preds = [Assertion.PREDICATES_CONTAINS, ImportFieldAnnotation.PRED_DRAFT_CONTAINS]
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
-                                                 predicate=Assertion.PREDICATES_CONTAINS,
+                                                 predicate__in=del_preds,
                                                  object_field_num=object_field_num)\
                                          .delete()
         ifa = ImportFieldAnnotation()
         ifa.source_id = self.source_id
         ifa.project_uuid = self.project_uuid
         ifa.field_num = field_num
-        ifa.predicate = Assertion.PREDICATES_CONTAINS
+        ifa.predicate = pred_contains
         ifa.predicate_field_num = 0
         ifa.object_field_num = object_field_num
         ifa.object_uuid = ''

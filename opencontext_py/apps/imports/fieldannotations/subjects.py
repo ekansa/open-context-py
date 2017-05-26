@@ -35,6 +35,8 @@ class ProcessSubjects():
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
         self.field_parent_entities = {}  # Parent entities named for a given field
+        self.draft_contain_parent_field = False
+        self.draft_contain_children_fields = False
         self.start_row = 1
         self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
@@ -153,6 +155,8 @@ class ProcessSubjects():
         self.get_date_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
+        elif self.draft_contain_parent_field is not False:
+            self.process_draft_field_hierarchy()
         self.process_non_contain_subjects()
 
     def process_field_hierarchy(self,
@@ -229,6 +233,29 @@ class ProcessSubjects():
                     bad_id = str(dist_rec['imp_cell_obj'].field_num) + '-' + str(dist_rec['imp_cell_obj'].row_num)
                     self.not_reconciled_entities.append({'id': str(bad_id),
                                                          'label': dist_rec['imp_cell_obj'].record})
+                    
+    def process_draft_field_hierarchy(self):
+        """ processes subject from a "DRAFT CONTAINMENT" relationship
+            this happens when the parent subject entities field has
+            already been imported, and we want to add children to it.
+            This allows us to add items to a hierarchy without having to
+            have the entire hierarchy in the given imported table
+        """
+        if self.draft_contain_parent_field is not False:
+            nc_subs = self.process_non_contain_subject_field(self.draft_contain_parent_field)
+            if isinstance(nc_subs, dict):
+                for rec_hash, nc_sub in nc_subs.items():
+                    dist_rec = nc_sub['dist_rec']
+                    cs = nc_sub['cs']
+                    if cs.uuid is not False:
+                        sub_objs = Subject.objects.filter(uuid=cs.uuid)[:1]
+                        if len(sub_objs) > 0:
+                            sub_obj = sub_objs[0]
+                            for child_field in self.draft_contain_children_fields:
+                                self.process_field_hierarchy(child_field,
+                                                             cs.uuid,
+                                                             sub_obj.context,
+                                                             dist_rec['rows'])
 
     def process_non_contain_subjects(self):
         """ processes subject entitites that are not in
@@ -242,42 +269,60 @@ class ProcessSubjects():
         if len(self.non_contain_subjects) > 0:
             print('Non-contain process')
             for field_num in self.non_contain_subjects:
-                pc = ProcessCells(self.source_id,
+                self.process_non_contain_subject_field(field_num)
+    
+    def process_non_contain_subject_field(self, field_num):
+        """ processes a field for subject entitites that are not in
+            containment relations.
+            This only allows reconciliation based
+            on subject labels, it does not allow
+            creation of new subjects.
+            Subjects can only be created if they are
+            defined in a spatial hierarchy
+        """
+        output = None
+        pc = ProcessCells(self.source_id,
                                   self.start_row)
-                distinct_records = pc.get_field_records(field_num,
-                                                        False)
-                if distinct_records is not False:
-                    field_obj = self.subjects_fields[field_num]
-                    for rec_hash, dist_rec in distinct_records.items():
-                        cs = CandidateSubject()
-                        cs.project_uuid = self.project_uuid
-                        cs.source_id = self.source_id
-                        cs.obs_node = 'obs-' + str(field_obj.obs_num)
-                        cs.obs_num = field_obj.obs_num
-                        cs.parent_context = False
-                        cs.parent_uuid = False
-                        cs.label_prefix = field_obj.value_prefix
-                        cs.allow_new = False  # do not allow new, not in a hierarchy
-                        cs.class_uri = field_obj.field_value_cat
-                        cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
-                        cs.reconcile_item(dist_rec['imp_cell_obj'])
-                        if cs.uuid is not False:
-                            self.process_geospace_item(field_num,
-                                                       cs.import_rows,
-                                                       cs.uuid)
-                            self.process_geojson_item(field_num,
-                                                      cs.import_rows,
-                                                      cs.uuid)
-                            self.process_date_item(field_num,
-                                                   cs.import_rows,
-                                                   cs.uuid)
-                            self.reconciled_entities.append({'id': cs.uuid,
-                                                             'label': cs.label})
-                        else:
-                            bad_id = str(dist_rec['imp_cell_obj'].field_num)
-                            bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
-                            self.not_reconciled_entities.append({'id': bad_id,
-                                                                 'label': dist_rec['imp_cell_obj'].record})
+        distinct_records = pc.get_field_records(field_num,
+                                                False)
+        if distinct_records is not False:
+            output = {}
+            field_obj = self.subjects_fields[field_num]
+            for rec_hash, dist_rec in distinct_records.items():
+                cs = CandidateSubject()
+                cs.project_uuid = self.project_uuid
+                cs.source_id = self.source_id
+                cs.obs_node = 'obs-' + str(field_obj.obs_num)
+                cs.obs_num = field_obj.obs_num
+                cs.parent_context = False
+                cs.parent_uuid = False
+                cs.label_prefix = field_obj.value_prefix
+                cs.allow_new = False  # do not allow new, not in a hierarchy
+                cs.class_uri = field_obj.field_value_cat
+                cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                cs.reconcile_item(dist_rec['imp_cell_obj'])
+                output[rec_hash] = {
+                    'dist_rec': dist_rec,
+                    'cs': cs
+                }
+                if cs.uuid is not False:
+                    self.process_geospace_item(field_num,
+                                               cs.import_rows,
+                                               cs.uuid)
+                    self.process_geojson_item(field_num,
+                                              cs.import_rows,
+                                              cs.uuid)
+                    self.process_date_item(field_num,
+                                           cs.import_rows,
+                                           cs.uuid)
+                    self.reconciled_entities.append({'id': cs.uuid,
+                                                     'label': cs.label})
+                else:
+                    bad_id = str(dist_rec['imp_cell_obj'].field_num)
+                    bad_id += '-' + str(dist_rec['imp_cell_obj'].row_num)
+                    self.not_reconciled_entities.append({'id': bad_id,
+                                                         'label': dist_rec['imp_cell_obj'].record})
+        return output
 
     def process_geospace_item(self,
                               subject_field_num,
@@ -658,6 +703,10 @@ class ProcessSubjects():
                                                   .filter(source_id=self.source_id,
                                                           field_num=sub_field.field_num,
                                                           predicate=Assertion.PREDICATES_CONTAINS)
+                draft_child_anno = ImportFieldAnnotation.objects\
+                                                        .filter(source_id=self.source_id,
+                                                                field_num=sub_field.field_num,
+                                                                predicate=ImportFieldAnnotation.PRED_DRAFT_CONTAINS)
                 if len(child_anno) > 0:
                     self.contain_ordered_subjects[sub_field.field_num] = []
                     for child in child_anno:
@@ -667,6 +716,13 @@ class ProcessSubjects():
                         self.root_subject_field = sub_field.field_num
                         # check to see if the root field has a parent entity
                         self.get_field_parent_entity(sub_field.field_num)
+                elif len(draft_child_anno) > 0:
+                    # we have a case of draft containment, meaning there is only 1 parent and child found
+                    # and the parent item is already imported (it will not be created otherwise)
+                    self.draft_contain_children_fields = []
+                    for child in draft_child_anno:
+                        self.draft_contain_parent_field = child.field_num
+                        self.draft_contain_children_fields.append(child.object_field_num)
                 else:
                     if len(parent_anno) > 0:
                         # field has no child fields.

@@ -58,6 +58,7 @@ class ImportProfile():
         self.PRED_MEDIA_PART_OF = ImportFieldAnnotation.PRED_MEDIA_PART_OF
         self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
         self.PRED_DATE_EVENT = ImportFieldAnnotation.PRED_DATE_EVENT
+        self.PRED_DRAFT_CONTAINS = ImportFieldAnnotation.PRED_DRAFT_CONTAINS
         self.nav = False
 
     def get_fields(self, field_num_list=False):
@@ -197,6 +198,8 @@ class ImportProfile():
                 anno_dict['predicate']['label'] = 'Value of'
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_MEDIA_PART_OF:
                 anno_dict['predicate']['label'] = 'Media part of'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_DRAFT_CONTAINS:
+                anno_dict['predicate']['label'] = 'Contains (part. hierarchy)'
             else:
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False

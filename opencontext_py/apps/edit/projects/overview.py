@@ -42,6 +42,7 @@ class ProjectOverview():
             self.manifest = False
             self.errors['uuid'] = 'No project ' + project_uuid + ' not in manifest'
         self.manifest_summary = False
+        self.project_persons = []
         self.class_summary = LastUpdatedOrderedDict()
         self.data_type_summary = []  # summary datatype
         self.blank_items = LastUpdatedOrderedDict()  # items with no description
@@ -88,6 +89,19 @@ class ProjectOverview():
             output.append(res_item)
         self.class_summary[item_type] = output
         return output
+    
+    def get_person_list(self):
+        """ gets a summary of the different class_uris
+            used in a project
+        """
+        output = []
+        man_sum = Manifest.objects\
+                          .filter(project_uuid=self.project_uuid,
+                                  item_type='persons')\
+                          .order_by('sort')
+        for man_pers in man_sum:
+            self.project_persons.append(man_pers)
+        return self.project_persons
 
     def get_data_type_summary(self):
         """ gets a summary for

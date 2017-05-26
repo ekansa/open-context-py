@@ -12,7 +12,16 @@
         </div>
     </div>
     <div class="panel-body">
-        Useful summary information will go here
+        {% if status.project_persons|length > 0 %}
+        <h5>Persons and Organizations in the Project</h5>
+        <ul>
+        {% for man_pers in status.project_persons %}
+            <li>
+               <a href="{{ base_url }}/edit/items/{{ man_pers.uuid }}" target="_blank">{{ man_pers.label }}</a>
+            </li>
+        {% endfor %}
+        </ul>
+        {% endif %}
     </div>
 </div>
 

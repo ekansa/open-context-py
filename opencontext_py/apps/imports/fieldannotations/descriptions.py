@@ -41,6 +41,7 @@ class ProcessDescriptions():
         self.reconciled_predicates = {}
         self.reconciled_types = {}
         self.field_valueofs = {}
+        self.subject_predicate_counts = {}
         self.count_active_fields = 0
         self.count_new_assertions = 0
         self.label_preds = {}
@@ -210,7 +211,13 @@ class ProcessDescriptions():
                                     row_num = imp_cell_obj.row_num
                                     predicate = self.look_up_predicate(des_field_num,
                                                                        row_num)
+                                    if predicate.sort != 0:
+                                        pred_sort = predicate.sort
+                                    else:
+                                        pred_sort = des_field_num
                                     if predicate is not False:
+                                        val_sort = self.get_multivalue_sort_val(subject_uuid,
+                                                                                str(predicate.uuid))
                                         cd = CandidateDescription()
                                         cd.source_id = self.source_id
                                         cd.project_uuid = self.project_uuid
@@ -218,7 +225,7 @@ class ProcessDescriptions():
                                         cd.subject_type = subj_field_type
                                         cd.obs_num = obs_num
                                         cd.obs_node = obs_node
-                                        cd.sort = des_field_num
+                                        cd.sort = float(pred_sort) + float(val_sort)
                                         cd.predicate_uuid = str(predicate.uuid)
                                         cd.data_type = predicate.data_type
                                         cd.record = str(imp_cell_obj.record)
@@ -227,6 +234,19 @@ class ProcessDescriptions():
                                         cd.create_description()
                                         if cd.is_valid:
                                             self.count_new_assertions += 1
+
+    def get_multivalue_sort_val(self, subject_uuid, predicate_uuid):
+        """ gets a value to add to the sort based on if the
+            subject_uuid and predicate_uuid have been added before
+        """
+        s_val = 0
+        key_s_p = subject_uuid + '-' + predicate_uuid
+        if key_s_p in self.subject_predicate_counts:
+            self.subject_predicate_counts[key_s_p] += 1.0
+            s_val = float(self.subject_predicate_counts[key_s_p]) * .01
+        else:
+            self.subject_predicate_counts[key_s_p] = 1.0
+        return s_val
 
     def get_description_annotations(self):
         """ Gets descriptive annotations, and a 
@@ -766,6 +786,7 @@ class CandidateDescriptivePredicate():
                                               self.data_type)
             self.uuid = predicate.uuid
             self.predicate = predicate
+            self.sort = predicate.sort
             if predicate.uuid != self.candidate_uuid:
                 if self.des_import_cell is False:
                     # update the reconcilted UUID with for the import field object
