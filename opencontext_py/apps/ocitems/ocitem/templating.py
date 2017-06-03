@@ -77,6 +77,7 @@ class TemplateItem():
         self.iiif_server = False
         self.x3dom_model = False
         self.x3dom_textures = []
+        self.geojson_file = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
         self.use_accordions = False
@@ -317,6 +318,7 @@ class TemplateItem():
                 self.content['thumbnail'] = False
                 self.content['x3dom_model'] = False
                 self.content['x3dom_textures'] = []
+                self.content['gis_file'] = False
             rp = RootPath()
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
@@ -339,6 +341,12 @@ class TemplateItem():
                             # PDF viewer installed, but only works if PDF at same domain, so make a proxy link
                             self.full_doc_file = self.make_cors_ok_url(target_url)
                             # self.full_doc_file = False  # comment this out when enabling this feature
+                        elif 'vnd.geo+json' in file_item['dc-terms:hasFormat']:
+                            # this is a geojson file that can be previewed
+                            rp = RootPath()
+                            target_url = rp.convert_to_https(file_item['id'])
+                            self.geojson_file = self.make_cors_ok_url(target_url)
+                            self.content['gis_file']  = file_item['id']
                 elif file_item['type'] == 'oc-gen:preview':
                     self.content['preview'] = rp.convert_to_https(file_item['id'])
                 elif file_item['type'] == 'oc-gen:thumbnail':
