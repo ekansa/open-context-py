@@ -36,6 +36,10 @@
                          {% include 'media/x3dom.html' %}
                              
                         </div>
+                        {% elif item.geojson_file != False %}
+                        
+                        {% include 'media/geojson.html' %}
+                        
                         {% elif item.full_doc_file != False %}
                         <div class="preview-image">
                               <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"
@@ -87,6 +91,10 @@
                              
                              
                         </div>
+                        {% elif item.geojson_file != False %}
+                        
+                        {% include 'media/geojson.html' %}
+                        
                         {% elif item.full_doc_file != False %}
                         <div class="preview-image">
                              <iframe src="{{ base_url }}/static/viewerjs/index.html#{{ item.full_doc_file }}"

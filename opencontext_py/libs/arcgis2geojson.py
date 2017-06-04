@@ -27,7 +27,7 @@ arc_geojson = Arcgis2geojson()
 class_uri = 'oc-gen:cat-unit'
 project_uuid = '3585b372-8d2d-436c-9a4c-b5c10fce3ccd'
 arc_geojson.act_export_dir = 'gabii-gis'
-geojson = arc_geojson.get_dict_from_file('gabii_areaB_published')
+geojson = arc_geojson.get_dict_from_file('gabii_areaB_published_reproj')
 new_geojson = LastUpdatedOrderedDict()
 new_geojson['type'] = 'FeatureCollection'
 new_geojson['features'] = []
@@ -46,25 +46,14 @@ for feat in geojson['features']:
         coords = geometry['coordinates']
         new_coord_rings = []
         for ring in coords:
-            r_new_ring = ring[::-1]
-            new_coord_rings.append(r_new_ring)
-        if object_id in no_reverse_object_ids:
-            n_ring_a = new_coord_rings[0]
-            n_ring_b = new_coord_rings[1]
-            n_ring_a_rev = n_ring_a[::-1]
-            n_ring_b_rev = n_ring_b[::-1]
-            new_n_ring_a = []
-            for ring_in_ring in n_ring_a_rev:
-                rev_ring_in_ring = ring_in_ring[::-1]
-                new_n_ring_a.append(rev_ring_in_ring)
-            new_n_ring_b = []
-            for ring_in_ring in n_ring_b_rev:
-                rev_ring_in_ring = ring_in_ring[::-1]
-                new_n_ring_b.append(rev_ring_in_ring)
-            new_coord_rings = [
-                new_n_ring_a,
-                new_n_ring_b
-            ]
+            n_sub_rings = []
+            for sub_ring in ring:
+                if object_id in no_reverse_object_ids:
+                    r_n_sub_ring = sub_ring[::-1]
+                else:
+                    r_n_sub_ring = sub_ring[::-1]
+                n_sub_rings.append(r_n_sub_ring)
+            new_coord_rings.append(n_sub_rings)
         if man_obj.uuid not in uuid_geos:
             uuid_dict = {
                 'man_obj': man_obj,
@@ -85,7 +74,7 @@ for feat in geojson['features']:
             # print(label + ' is ' + man_obj.uuid + ', found: ' + str(uuid_dict['cnt']))
     else:
         print(label + ' is NOT FOUND!! ')
-# arc_geojson.save_serialized_json('gabii-areaB-published-oc-linked', new_geojson)
+arc_geojson.save_serialized_json('gabii-areaB-published-reproj-oc-linked', new_geojson)
 for uuid, uuid_dict in uuid_geos.items():
     man_obj = uuid_dict['man_obj']
     f_num = 0

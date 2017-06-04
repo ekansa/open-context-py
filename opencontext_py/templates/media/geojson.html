@@ -1,0 +1,20 @@
+{% block geojson %}
+
+<script src="{{ base_url }}/static/oc/js/datavis/item-file-map.js" type="text/javascript"></script>     
+     <div id="preview-map" style="height:600px;">
+     
+     </div>
+     
+          
+     
+
+     <script type="text/javascript">
+        <!--
+          var item_file_map = new item_file_map("{{ item.geojson_file }}");
+          item_file_map.pmap.get_geojson();
+          
+        -->
+     </script>
+
+
+{% endblock %} 

@@ -93,6 +93,19 @@ class ItemAssertion():
                                 additions = []
                                 new_data = resp
                                 note = 'Item Label updated to ' + label
+                elif field['predicate_uuid'] == 'oc-gen:class_uri':
+                    # special case of updating an item label
+                    if 'values' in field:
+                        if 'id' in field['values'][0]:
+                            class_uri = field['values'][0]['id']
+                            i_basic = ItemBasicEdit(self.uuid)
+                            i_basic.edit_permitted = True
+                            resp = i_basic.update_class_uri(class_uri)
+                            if resp['ok']:
+                                self.ok = True
+                                additions = []
+                                new_data = resp
+                                note = 'Item class_uri updated to ' + class_uri
                 else:
                     predicate_uuid = field['predicate_uuid']
                     data_type = False
