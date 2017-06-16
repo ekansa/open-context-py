@@ -26,10 +26,32 @@ class WaybackUp():
     
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
-wb.delay_before_request = 5
-path = ['edsitement.neh.gov']  # only follow links in these paths
-url = 'https://edsitement.neh.gov'
-wb.scrape_urls(url, path, 8)  # archive pages discovered from the url, going 6 steps away
+wb.delay_before_request = 1.5
+wb.do_img_src = True
+wb.skip_parameters = [
+    't=publication',
+    't=report',
+    't=letter',
+    't=monument',
+    't=drawing',
+    't=image',
+    't=object',
+    't=coin',
+    't=deposit',
+    't=notebook',
+    'v=icons',
+    'v=table',
+    'v=map',
+    '&details=',
+    'p=4',
+    'p=8',
+    'p=20',
+    'p=40',
+    'http://ascsa.net/help',
+]
+path = ['ascsa.net']  # only follow links in these paths
+url = 'http://ascsa.net/research?q=&t=&v=list&s=9&sort=&p=100'
+wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
 wb.urls = wb.failed_urls
 # archive the previous failures
 wb.archive_urls()
@@ -61,8 +83,14 @@ for url in urls:
     }
     
     def __init__(self):
+        # skip parameters
+        self.skip_parameters = []
         # list of URLs to archive in the way back machine
         self.urls = []
+        # image url root
+        self.img_src_root = ''
+        # get src for images
+        self.do_img_src = True
         # True or False to check URLs prior to archive attempt
         self.check_urls = True
         # True or False, archive only new URLs, if True, then we first
@@ -181,6 +209,7 @@ for url in urls:
             'www.facebook.com',
             'pinterest.com'
         ]
+        skip_domains += self.skip_parameters
         l_url = url.lower()
         for skip_ex in skip_extensions:
             if skip_ex in l_url:
@@ -256,6 +285,51 @@ for url in urls:
                             new_url = urljoin(url, raw_url)
                             if new_url not in urls:
                                 urls.append(new_url)
+            if self.do_img_src:
+                print('Searching for image URLs...')
+                img_src_urls = []
+                for img in soup.find_all('img'):
+                    do_raw_url = True
+                    raw_url = img.get('src')
+                    if isinstance(raw_url, str):
+                        raw_url = raw_url.strip() # remove whitespaces, etc.
+                        raw_url = raw_url.replace('\\r', '')  # common URL problem
+                        raw_url = raw_url.replace('\\n', '')  # common URL problem
+                        if '#' in raw_url:
+                            # skip fragment identifiers in URLs
+                            url_ex = raw_url.split('#')
+                            raw_url = url_ex[0]
+                        for skip_domain in skip_domains:
+                            if skip_domain in raw_url:
+                                # skip it, it's for a social media site
+                                do_raw_url = False
+                        if do_raw_url:
+                            # do it
+                            if raw_url[0:7] == 'http://' or \
+                               raw_url[0:8] == 'https://':
+                                # we have an absolute URL
+                                if raw_url not in img_src_urls:
+                                    img_src_urls.append(raw_url)
+                            else:
+                                # we have a relative URL, make it absolute
+                                new_url = urljoin(url, raw_url)
+                                if new_url not in img_src_urls:
+                                    img_src_urls.append(new_url)
+                print('Found image URLs: ' + str(len(img_src_urls)))
+                for src_url in img_src_urls:
+                    if src_url not in self.failed_urls \
+                       and src_url not in self.archived_urls:
+                        print('Try to archive image: ' + src_url)
+                        ok = self.archive_url(src_url)
+                        if ok is False:
+                            print('PROBLEM ARCHIVING IMAGE!')
+                            if src_url not in self.failed_urls:
+                                self.failed_urls.append(src_url)
+                        else:
+                            if src_url not in self.archived_urls:
+                                self.archived_urls.append(src_url)
+                    else:
+                        pass               
         if len(urls) > 0:
             current_depth += 1
             if current_depth < max_depth:
