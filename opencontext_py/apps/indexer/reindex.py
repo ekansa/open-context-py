@@ -17,8 +17,8 @@ class SolrReIndex():
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
 uuids = []
-media_items = Manifest.objects.filter(item_type='media').exclude(indexed__gt='2016-04-12')
-for item in media_items:
+items = Manifest.objects.filter(item_type='media').exclude(indexed__gt='2016-04-12')
+for item in items:
     uuids.append(item.uuid)
     
 print('Items to index: ' + str(len(uuids)))
