@@ -1,5 +1,6 @@
 import re
 import os
+import csv
 import json
 import codecs
 import requests
@@ -540,6 +541,26 @@ pc.scrape_content_from_index(pc.pc_directory, True)
         # file.write(codecs.BOM_UTF8)
         file.write(json_output)
         file.close()
+    
+    def save_as_csv_file(self, act_dir, filename, field_list, data):
+        """ saves an object as a json formatted file """
+        file_path = self.define_import_directory_file(act_dir,
+                                                      filename)
+        f = codecs.open(file_path, 'w', encoding='utf-8')
+        writer = csv.writer(f, dialect=csv.excel, quoting=csv.QUOTE_ALL)
+        writer.writerow(field_list)  # write the field labels in first row
+        for data_rec in data:
+            row = []
+            for field in field_list:
+                if field in data_rec:
+                    cell = data_rec[field]
+                else:
+                    cell = ''
+                if cell is None:
+                    cell = ''
+                row.append(cell)
+            writer.writerow(row)
+        f.closed
 
     def load_json_file_os_obj(self, act_dir, filename):
         """ load a json file as an object """
@@ -567,8 +588,7 @@ pc.scrape_content_from_index(pc.pc_directory, True)
             print('Cannot find: ' + full_dir)
         return files
 
-    def load_file(self, dir_file):
-        """ Loads a file and parse it into a
+    def load_file(self, dir_file):        """ Loads a file and parse it into a
             json object
         """
         data = None
