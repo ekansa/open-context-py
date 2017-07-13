@@ -148,6 +148,7 @@
                         </button>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="javascript:addRelInterface('media-part-of');">Media Part linking</a></li>
+                            <li><a href="javascript:addRelInterface('document-text');">Document Text linking</a></li>
                             <li><a href="javascript:addRelInterface('links-field');">Link fields</a></li>
                             <li><a href="javascript:addRelInterface('links-entity');">Link to entity</a></li>
                             <li><a href="javascript:addRelInterface('links-in-field');">Linking Rel in Field</a></li>
@@ -223,6 +224,7 @@
         var DEFAULT_SUBJECT_TYPE_FIELDS = {{ ip.DEFAULT_SUBJECT_TYPE_FIELDS|safe }};
         var PREDICATE_CONTAINED_IN = "{{ ip.PREDICATE_CONTAINED_IN }}";
         var PRED_MEDIA_PART_OF = "{{ ip.PRED_MEDIA_PART_OF }}";
+        var PRED_DOC_Text = "{{ ip.PRED_DOC_Text }}";
         var PRED_DRAFT_CONTAINS = "{{ ip.PRED_DRAFT_CONTAINS }}";
          
     </script>

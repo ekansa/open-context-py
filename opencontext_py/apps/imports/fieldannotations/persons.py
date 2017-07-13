@@ -124,15 +124,16 @@ class CandidatePerson():
             if self.evenif_blank:
                 self.combined_name = self.DEFAULT_BLANK
                 self.label = self.DEFAULT_BLANK
-        if self.label is not False:
-            match_found = self.match_against_persons(self.combined_name)
-            if match_found is False:
-                # create new subject, manifest objects. Need new UUID, since we can't assume
-                # the fl_uuid for the ImportCell reflects unique entities in a field, since
-                # uniqueness depends on context (values in other cells)
-                self.new_entity = True
-                self.uuid = GenUUID.uuid4()
-                self.create_person_item()
+        if isinstance(self.label, str):
+            if len(self.label) > 0:
+                match_found = self.match_against_persons(self.combined_name)
+                if match_found is False:
+                    # create new subject, manifest objects. Need new UUID, since we can't assume
+                    # the fl_uuid for the ImportCell reflects unique entities in a field, since
+                    # uniqueness depends on context (values in other cells)
+                    self.new_entity = True
+                    self.uuid = GenUUID.uuid4()
+                    self.create_person_item()
         self.update_import_cell_uuid()
 
     def create_person_item(self):

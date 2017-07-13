@@ -23,7 +23,7 @@ class WaybackUp():
     
     To use this, you'll need to adapt the following for your Python
     setup:
-    
+from opencontext_py.libs.filecache import FileCacheJSON
 from opencontext_py.libs.waybackup import WaybackUp
 wb = WaybackUp()
 wb.delay_before_request = 1.5

@@ -224,6 +224,7 @@ var interfaces = {
 	"links-field": false,
 	"links-entity": false,
 	"media-part-of": false,
+	"document-text": false,
 	"other": false
 	};
 var field_data = [];
@@ -266,6 +267,12 @@ function relationInterface(type){
 		this.predicate_label = "Media part of";
 		this.title = "Add <strong>Media part of</strong> [a Media Enity] Relation";
 		this.body = generateMediaPartOfBody();
+	}
+	else if (type == "document-text") {
+		this.predicate_id = PRED_DOC_Text;
+		this.predicate_label = "Has Document Text";
+		this.title = "Add <strong>Document Text</strong> [a Document Enity] Relation";
+		this.body = generateDocumentTextBody();
 	}
 	else{
 		this.predicate_id = false;
@@ -317,6 +324,9 @@ function checkActionReady(){
 	}
 	else if (act_interface_type == "media-part-of") {
 		checkMediaPartOfActionReady();
+	}
+	else if (act_interface_type == "document-text") {
+		checkDocumentTextReady();
 	}
 	else if (act_interface_type == "contains-draft") {
 		checkContainsActionReady(PRED_DRAFT_CONTAINS);
@@ -746,6 +756,105 @@ function addMediaPartOf(){
 }
 
 function addMediaPartOfDone(data){
+	/* Finish new relation by showing updated list of annotations */
+	$("#myModal").modal("hide");
+	displayAnnotations(data);
+}
+
+
+
+/* --------------------------------------------------------------
+ * Interface For "Document Text" Relations
+ * --------------------------------------------------------------
+ */
+function generateDocumentTextBody(){
+	var subjectInterfaceHTML = generateFieldListHTML('subject', ['documents']);
+	var objectInterfaceHTML = generateFieldListHTML('object', ['documents']);
+	var bodyString = [
+		"<div class=\"container-fluid\">",
+			"<div id=\"action-div\">",	
+			"</div>",
+			"<div class=\"row\">",	
+				"<div class=\"col-xs-6\">",
+					subjectInterfaceHTML,
+				"</div>",
+				"<div class=\"col-xs-6\">",
+					objectInterfaceHTML,
+				"</div>",
+			"</div>",
+		"</div>"
+	].join("\n");
+	return bodyString;
+}
+
+function checkDocumentTextReady(){
+	// Check to see if there's a selected subject field.
+	var subj_num_domID = "subject" + "-f-num";
+	var field_num = document.getElementById(subj_num_domID).value;
+	
+	// Check to see if there's a selected parent entity.
+	var obj_num_domID = "object" + "-f-num";
+	var obj_field_num = document.getElementById(obj_num_domID).value;
+	
+	if (field_num > 0 && obj_field_num > 0) {
+		// We're ready to try to create a 'contained-in' relationship
+		var subj_label_domID = "subject" + "-f-label";
+		var field_label = document.getElementById(subj_label_domID).value;
+		var obj_label_domID = "object" + "-f-label";
+		var obj_label_dom = document.getElementById(obj_label_domID);
+		var object_label = obj_label_dom.value;
+		
+		var button_row = document.getElementById("action-div");
+		button_row.className = "row alert alert-success";
+		var rowHTML = [
+			"<div class=\"col-xs-3\">",
+				field_label,
+			"</div>",
+			"<div class=\"col-xs-4\">",
+				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
+				" <strong>Has Document Text</strong> ",
+				"<span class=\"glyphicon glyphicon-chevron-right\"></span>",
+			"</div>",
+			"<div class=\"col-xs-3\">",
+				object_label,
+			"</div>",
+			"<div class=\"col-xs-2\" id=\"action-botton-div\">",
+				"<button onclick=\"javascript:addDocumentText();\" type=\"button\" class=\"btn btn-primary\" style=\"margin:1%;\">",
+					"<span class=\"glyphicon glyphicon-cloud-upload\" ></span> Save",
+				"</button>",
+			"</div>"
+		].join("\n");
+		button_row.innerHTML = rowHTML;
+	}
+}
+
+function addDocumentText(){
+	/* AJAX call to search entities filtered by a search-string */
+	var subj_num_domID = "subject" + "-f-num";
+	var field_num = document.getElementById(subj_num_domID).value;
+	
+	var obj_num_domID = "object" + "-f-num";
+	var obj_field_num = document.getElementById(obj_num_domID).value;
+	
+	//Replace action button with an "updating" message
+	var act_dom = document.getElementById("action-botton-div");
+	act_dom.innerHTML = "Saving 'document text' relation...";
+	
+	var url = "../../imports/field-annotation-create/" + encodeURIComponent(source_id);
+	var req = $.ajax({
+		type: "POST",
+		url: url,
+		dataType: "json",
+		data: {
+			field_num: field_num,
+			predicate: PRED_DOC_Text,
+			object_field_num: obj_field_num,
+			csrfmiddlewaretoken: csrftoken},
+		success: addDocumentTextDone
+	});
+}
+
+function addDocumentTextDone(data){
 	/* Finish new relation by showing updated list of annotations */
 	$("#myModal").modal("hide");
 	displayAnnotations(data);
