@@ -1088,6 +1088,7 @@ class PropValue():
         else:
             if self.vartype == 'xsd:integer':
                 self.val = str(int(float(val_item)))
+                self.val = self.val.replace('.0', '')
             elif self.vartype == 'xsd:boolean':
                 if val_item == 1:
                     self.val = 'True'
