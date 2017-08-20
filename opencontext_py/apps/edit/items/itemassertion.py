@@ -359,14 +359,14 @@ class ItemAssertion():
                                      .filter(uuid=uuid,
                                              obs_num=obs_num,
                                              predicate_uuid=predicate_uuid)
-                max_sort = 0
-                min_sort = 0
+                max_sort = None
+                min_sort = None
                 for rel_ass in rel_asses:
                     if rel_ass.sort is None:
                         rel_ass.sort = 0
-                    if rel_ass.sort > max_sort:
+                    if max_sort is None or rel_ass.sort > max_sort:
                         max_sort = rel_ass.sort
-                    if rel_ass.sort < min_sort:
+                    if min_sort is None or rel_ass.sort < min_sort:
                         min_sort = rel_ass.sort
                 pseudo_sort = 0  # used to make a sort value if none was given
                 i = -1
@@ -378,7 +378,11 @@ class ItemAssertion():
                         rel_ass.sort = 0
                     if max_sort == min_sort \
                        and rel_ass.sort == 0:
-                        rel_ass.sort += pseudo_sort
+                        rel_ass.sort = float(rel_ass.sort) + pseudo_sort
+                        rel_ass.save()
+                    elif max_sort == min_sort \
+                       and rel_ass.sort > 0:
+                        rel_ass.sort = float(rel_ass.sort) + pseudo_sort
                         rel_ass.save()
                     if rel_ass.hash_id == hash_id:
                         current_hash_index = i
@@ -387,11 +391,11 @@ class ItemAssertion():
                     if item_b_index >= 0 and item_b_index < len(rel_asses):
                         rec_a = rel_asses[current_hash_index]
                         rec_b = rel_asses[item_b_index]
-                        new_sort_rec_b = rec_a.sort
-                        new_sort_rec_a = rec_b.sort
+                        new_sort_rec_b = float(rec_a.sort)
+                        new_sort_rec_a = float(rec_b.sort)
                         if new_sort_rec_a == new_sort_rec_b:
                             # so we don't have exactly the same values
-                            new_sort_rec_a += (sort_change / 1000)
+                            new_sort_rec_a += float((float(sort_change) / 1000))
                         rec_a.sort = new_sort_rec_a
                         rec_a.save()
                         rec_b.sort = new_sort_rec_b

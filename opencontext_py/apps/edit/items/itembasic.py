@@ -163,7 +163,7 @@ class ItemBasicEdit():
                     cobj.save()
                     ok = True
                 except Person.DoesNotExist:
-                    self.errors['uuid'] = self.manifest.uuid + ' not in projects'
+                    self.errors['uuid'] = self.manifest.uuid + ' not in persons'
                     ok = False
         # now reindex for solr, including child items impacted by the changes
         if self.manifest.item_type != 'tables' and self.edit_status > 0:
