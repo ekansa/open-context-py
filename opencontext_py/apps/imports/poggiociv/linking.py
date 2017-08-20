@@ -106,7 +106,7 @@ pcl.update_existing_trench_book_links()
         unlinked_items = []
         for item in self.root_index:
             tb_man = None
-            tb_label = 'Trench Book ' + item['label']
+            tb_label = item['label']
             if item['trench_book_uuid'] is None:
                 tb_man_objs = Manifest.objects\
                                       .filter(label=tb_label,
@@ -134,7 +134,10 @@ pcl.update_existing_trench_book_links()
                 else:
                     tb_man = None
             else:
-                tb_man = Manifest.objects.get(uuid=item['trench_book_uuid'])
+                try:
+                    tb_man = Manifest.objects.get(uuid=item['trench_book_uuid'])
+                except:
+                    tb_man = None
             if tb_man is not None:
                 if len(item['trenches']) > 0:
                     new_trenches = []
@@ -171,8 +174,10 @@ pcl.update_existing_trench_book_links()
                             if tr_item['unit_year_uuid'] not in unit_uuids:
                                 unit_uuids.append(tr_item['unit_year_uuid'])
                     if len(unit_uuids) > 0:
+                        """
                         self.change_diary_unit_links(tb_man.uuid,
                                                      unit_uuids)
+                        """
                     else:
                         # we have an unlinked item!
                         unlinked_items.append(item)

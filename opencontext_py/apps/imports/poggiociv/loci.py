@@ -24,6 +24,7 @@ from opencontext_py.apps.ocitems.persons.models import Person as Person
 from opencontext_py.apps.ocitems.projects.models import Project as Project
 from opencontext_py.apps.ocitems.documents.models import OCdocument as OCdocument
 from opencontext_py.apps.ocitems.strings.models import OCstring as OCstring
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
 from opencontext_py.apps.ocitems.octypes.models import OCtype as OCtype
 from opencontext_py.apps.ocitems.predicates.models import Predicate as Predicate
 from opencontext_py.apps.ocitems.projects.models import Project as Project
@@ -33,6 +34,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
+from opencontext_py.apps.imports.records.models import ImportCell
 
 
 class PoggioCivLoci():
@@ -49,7 +51,7 @@ To do:
 
 from opencontext_py.apps.imports.poggiociv.loci import PoggioCivLoci
 pcl = PoggioCivLoci()
-all_data = pcl.scrape_locus_pages()
+pcl.add_locus_year()
 
 
 
@@ -65,6 +67,9 @@ all_data = pcl.scrape_locus_pages()
         self.locus_data_csv = 'all-locus-data.csv'
         self.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
         self.part_of_pred_uuid = '0BB889F9-54DD-4F70-5B63-F5D82425F0DB'
+        self.pred_uuid_open = '229a2e04-a817-420b-9488-d8761fd912ff'
+        self.pred_uuid_close = '1fb984e1-a777-4679-8329-5ed076b19e5c'
+        self.coord_imp_src = 'ref:1843293265107'
         self.tb_index = None
         self.locus_files = None
         self.field_keys = [
@@ -167,6 +172,189 @@ all_data = pcl.scrape_locus_pages()
                 'sub': None
             }
         }
+    
+    def add_locus_year(self):
+        """ adds year information to a locus that is missing it """
+        source_id = 'pc-locus-missing-year'
+        full_date_pred_uuid = '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa'
+        year_pred_uuid = '37e30449-43fa-45e0-8142-8e3f6a70441b'
+        date_asses = Assertion.objects\
+                              .filter(predicate_uuid=full_date_pred_uuid)
+        for date_ass in date_asses:
+            year_asses = Assertion.objects\
+                                  .filter(uuid=date_ass.uuid,
+                                          predicate_uuid=year_pred_uuid)[:1]
+            if len(year_asses) < 1:
+                # we need to add the year assertion
+                act_year = date_ass.data_date.strftime('%Y')
+                act_year = int(float(act_year))
+                print(date_ass.uuid + ' has year: ' + str(act_year))
+                new_ass = date_ass
+                new_ass.hash_id = None
+                new_ass.sort = float(new_ass.sort) + .1
+                new_ass.predicate_uuid = year_pred_uuid
+                new_ass.data_date = None
+                new_ass.data_num = act_year
+                new_ass.save()
+    
+    def add_locus_coordinates(self):
+        """ adds coordinate html to the loci """
+        source_id = 'pc-locus-coord-html'
+        Assertion.objects.filter(source_id=source_id,
+                                 predicate_uuid=self.pred_uuid_open)\
+                         .delete()
+        Assertion.objects.filter(source_id=source_id,
+                                 predicate_uuid=self.pred_uuid_close)\
+                         .delete()
+        OCstring.objects.filter(source_id=source_id).delete()
+        open_fields = [3, 4, 5, 6]
+        close_fields = [7, 8, 9, 10]
+        l_id_objs = self.get_locus_objs_for_coordinates()
+        for l_id_obj in l_id_objs:
+            act_locus = l_id_obj['locus_obj']
+            rows = l_id_obj['rows']
+            open_html = self.make_coordinate_html(rows,
+                                                  open_fields)
+            close_html = self.make_coordinate_html(rows,
+                                                   close_fields)
+            str_m = StringManagement()
+            str_m.source_id = source_id
+            str_m.project_uuid = act_locus.project_uuid
+            open_str_obj = str_m.get_make_string(open_html)
+            str_m = StringManagement()
+            str_m.source_id = source_id
+            str_m.project_uuid = act_locus.project_uuid
+            close_str_obj = str_m.get_make_string(close_html)
+            # now make the assertions
+            print('Add coordinates to: ' + act_locus.uuid)
+            try:
+                new_ass = Assertion()
+                new_ass.uuid = act_locus.uuid
+                new_ass.subject_type = act_locus.item_type
+                new_ass.project_uuid = act_locus.project_uuid
+                new_ass.source_id = source_id
+                new_ass.obs_node = '#obs-2'
+                new_ass.obs_num = 2
+                new_ass.sort = 100
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = self.pred_uuid_open
+                new_ass.object_uuid = open_str_obj.uuid
+                new_ass.object_type = 'xsd:string'
+                new_ass.save()
+                new_add = True
+            except:
+                new_add = False
+            try:
+                new_ass = Assertion()
+                new_ass.uuid = act_locus.uuid
+                new_ass.subject_type = act_locus.item_type
+                new_ass.project_uuid = act_locus.project_uuid
+                new_ass.source_id = source_id
+                new_ass.obs_node = '#obs-2'
+                new_ass.obs_num = 2
+                new_ass.sort = 101
+                new_ass.visibility = 1
+                new_ass.predicate_uuid = self.pred_uuid_close
+                new_ass.object_uuid = close_str_obj.uuid
+                new_ass.object_type = 'xsd:string'
+                new_ass.save()
+                new_add = True
+            except:
+                new_add = False
+            
+    def make_coordinate_html(self, rows, fields):
+        """ makes the coordinate html for a set of rows
+            and fields
+        """
+        root = etree.Element('div')
+        root.set('class', 'table-responsive')
+        tab = etree.SubElement(root, 'table')
+        tab.set('class', 'table table-condensed')
+        thead = etree.SubElement(tab, 'thead')
+        tr_thead = etree.SubElement(thead, 'tr')
+        th_x = etree.SubElement(tr_thead, 'th')
+        th_x.text = 'EW (x)'
+        th_y = etree.SubElement(tr_thead, 'th')
+        th_y.text = 'NS (y)'
+        th_z = etree.SubElement(tr_thead, 'th')
+        th_z.text = 'Elevation (z)'
+        th_r = etree.SubElement(tr_thead, 'th')
+        th_r.text = 'Rotation Order'
+        tbody = etree.SubElement(tab, 'tbody')
+        row_reorder = ImportCell.objects\
+                                .filter(source_id=self.coord_imp_src,
+                                        row_num__in=rows,
+                                        field_num=fields[-1])\
+                                .order_by('record', 'row_num')
+        ordered_rows = []
+        for o_row in row_reorder:
+            ordered_rows.append(o_row.row_num)
+        for act_row in rows:
+            if act_row not in ordered_rows:
+                ordered_rows.append(act_row)
+        for act_row in ordered_rows:
+            add_row = False
+            field_values = []
+            for act_field in fields:
+                act_val = ''
+                coord_recs = ImportCell.objects\
+                               .filter(source_id=self.coord_imp_src,
+                                       row_num=act_row,
+                                       field_num=act_field)[:1]
+                if len(coord_recs) > 0:
+                    if len(coord_recs[0].record) > 0:
+                        add_row = True
+                        act_val = coord_recs[0].record
+                field_values.append(act_val)
+            if add_row:
+                tr = etree.SubElement(tbody, 'tr')
+                for val in field_values:
+                    td = etree.SubElement(tr, 'td')
+                    td.text = val
+        coord_html = etree.tostring(root, pretty_print=True).decode()
+        return coord_html
+            
+    
+    def get_locus_objs_for_coordinates(self):
+        """ gets locus objects, and their coordinate data rows """
+        pred_uuid_l_id = '60b9e12f-9c3a-492d-8a22-29f15ea147d4'
+        lid_rows = ImportCell.objects\
+                             .filter(field_num=2,
+                                     source_id=self.coord_imp_src)\
+                             .order_by('record', 'row_num')
+        last_l_id = None
+        l_id_objs = []
+        l_id_obj = None
+        for lid_row in lid_rows:
+            act_l_id = int(float(lid_row.record))
+            if act_l_id != last_l_id:
+                if l_id_obj is not None:
+                    l_id_objs.append(l_id_obj)
+                act_locus = None
+                lid_asses = Assertion.objects\
+                                     .filter(predicate_uuid=pred_uuid_l_id,
+                                             data_num=act_l_id)[:1]
+                if len(lid_asses) > 0:
+                    try:
+                        act_locus = Manifest.objects.get(uuid=lid_asses[0].uuid)
+                    except:
+                        act_locus = None
+                else:
+                    act_locus = None
+                if act_locus is not None:
+                    l_id_obj = {
+                        'locus_obj': act_locus,
+                        'l_id': act_l_id,
+                        'rows': []
+                    }
+                else:
+                    l_id_obj = None
+            last_l_id = act_l_id
+            if l_id_obj is not None:
+                l_id_obj['rows'].append(lid_row.row_num)
+        if l_id_obj is not None:
+            l_id_objs.append(l_id_obj)
+        return l_id_objs
     
     def scrape_locus_pages(self):
         """ scrape data from locus pages """

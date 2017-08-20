@@ -516,6 +516,24 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                 self.save_as_json_file(act_dir, self.fail_url_file, self.fail_urls)
         return ok
 
+    def save_file(self, content, act_dir, filename):
+        """ saves content to a file """
+        if isinstance(content, str):
+            file_path = self.define_import_directory_file(act_dir,
+                                                          filename)
+            content = unidecode(content)
+            try:
+                f = open(file_path, 'w', encoding='utf-8')
+                f.write(content)
+                f.close()
+                saved = True
+            except Exception as e:
+                print('Save fail attempt 2: ' + str(e))
+                saved = False
+        else:
+            saved = False
+        return saved
+
     def valid_as_html(self, check_str):
         """ checks to see if a string is OK as HTML """
         ok = True
