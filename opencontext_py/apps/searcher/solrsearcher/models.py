@@ -491,7 +491,7 @@ class SolrSearch():
             elif SolrDocument.ROOT_PROJECT_SOLR not in query['facet.field']:
                 if self.item_type_limit != 'projects':
                     query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
-            if 'proj' not in request_dict:
+            if 'proj' not in request_dict and isinstance(self.item_type_limit, str):
                 """ -----------------------------------------
                     In cases where no project parameter was chosen,
                     add project descriptive fields, by checking if
