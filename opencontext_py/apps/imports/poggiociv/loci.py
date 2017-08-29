@@ -19,6 +19,7 @@ from opencontext_py.apps.ldata.linkentities.models import LinkEntity as LinkEnti
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest as Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile as Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person as Person
 from opencontext_py.apps.ocitems.projects.models import Project as Project
@@ -51,7 +52,7 @@ To do:
 
 from opencontext_py.apps.imports.poggiociv.loci import PoggioCivLoci
 pcl = PoggioCivLoci()
-pcl.add_locus_year()
+pcl.fix_trench_year_labels()
 
 
 
@@ -172,6 +173,27 @@ pcl.add_locus_year()
                 'sub': None
             }
         }
+    
+    def fix_trench_year_labels(self):
+        """ make trench year labels with the year in the label """
+        unit_objs = Manifest.objects\
+                            .filter(item_type='subjects',
+                                    class_uri='oc-gen:cat-exc-unit')
+        for unit_obj in unit_objs:
+            y_asses = Assertion.objects\
+                               .filter(uuid=unit_obj.uuid,
+                                       predicate_uuid='2C7FE888-C431-4FBD-39F4-38B7D969A811')\
+                               .order_by('data_num')[:1]
+            if len(y_asses) > 0:
+                year = int(float(y_asses[0].data_num))
+                if str(year) not in unit_obj.label:
+                    new_label = str(year) + ', ' + unit_obj.label
+                    unit_obj.label = new_label
+                unit_obj.label = unit_obj.label.replace(', Tr-ID ', ', ID:')
+                unit_obj.save()
+                subj_gen = SubjectGeneration()
+                subj_gen.generate_save_context_path_from_uuid(unit_obj.uuid)
+                
     
     def add_locus_year(self):
         """ adds year information to a locus that is missing it """

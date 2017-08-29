@@ -21,6 +21,28 @@ pctbi.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 pctbi.process_tb_roots_and_parts()
 pctbi.make_image_versions('pc-mag-photos')
 
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+tb_asses = Assertion.objects\
+                    .filter(item_type='documents',
+                            source_id='ref:2273537509089',
+                            object_type='media')
+for tb_ass in tb_asses:
+    tb_ppl = Assertion.objects\
+                      .filter(uuid=tb_ass.uuid,
+                              object_type='persons')
+    for tb_p in tb_ppl:
+        m_p = tb_p
+        m_p.hash_id = None
+        m_p.source_id = 'ref:2273537509089'
+        m_p.uuid = tb_ass.object_uuid
+        m_p.subject_type = tb_ass.object_type
+        try:
+            m_p.save()
+        except:
+            pass
+
+
     """
 
     def __init__(self):
