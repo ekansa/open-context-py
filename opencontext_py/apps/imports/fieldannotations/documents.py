@@ -9,6 +9,7 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
+from opencontext_py.apps.imports.fieldannotations.metadata import ManifestMetadata
 from opencontext_py.apps.imports.sources.unimport import UnImport
 
 
@@ -20,6 +21,9 @@ class ProcessDocuments():
         pg = ProcessGeneral(source_id)
         pg.get_source()
         self.project_uuid = pg.project_uuid
+        # object for associated metadata to new manifest objects
+        self.metadata_obj = ManifestMetadata(self.source_id,
+                                             self.project_uuid)
         self.documents_fields = []
         self.start_row = 1
         self.batch_size = settings.IMPORT_BATCH_SIZE
@@ -49,6 +53,7 @@ class ProcessDocuments():
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
         self.get_documents_fields()
+        self.get_metadata_fields()
         if len(self.documents_fields) > 0:
             print('Number of Document Fields: ' + str(len(self.documents_fields)))
             for field_obj in self.documents_fields:
@@ -78,6 +83,7 @@ class ProcessDocuments():
                             # we found content to add to the document.
                             cd.content = content
                         cd.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                        cd.metadata_obj = self.metadata_obj
                         cd.reconcile_item(dist_rec['imp_cell_obj'])
                         if cd.uuid is not False:
                             if cd.new_entity:
@@ -123,6 +129,16 @@ class ProcessDocuments():
         self.count_active_fields = len(self.documents_fields)
         return self.documents_fields
 
+    def get_metadata_fields(self):
+        """ finds metadata fields that get added to the the sup_json
+            field of new manifest objects
+        """
+        # first make a list of subject field numbers
+        if len(self.documents_fields) > 0:
+            doc_field_nums = []
+            for field_obj in self.documents_fields:
+                doc_field_nums.append(field_obj.field_num)
+            self.metadata_obj.get_metadata_fields_for_field_list(doc_field_nums)
 
 class CandidateDocument():
 
@@ -137,6 +153,7 @@ class CandidateDocument():
         self.imp_cell_obj = False  # ImportCell object
         self.import_rows = False
         self.new_entity = False
+        self.metadata_obj = None
 
     def reconcile_item(self, imp_cell_obj):
         """ Checks to see if the item exists """
@@ -154,8 +171,16 @@ class CandidateDocument():
             if match_found is False:
                 # create new document, manifest objects.
                 self.new_entity = True
+                sup_metadata = None
                 self.uuid = GenUUID.uuid4()
-                self.create_document_item()
+                if self.metadata_obj is not None:
+                    sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                                  imp_cell_obj.row_num)
+                    meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                    if isinstance(meta_uuid, str):
+                        # use the uuid in the metadata!
+                        self.uuid = meta_uuid
+                self.create_document_item(sup_metadata)
             else:
                 act_doc = None
                 exist_docs = OCdocument.objects\
@@ -178,7 +203,7 @@ class CandidateDocument():
                         act_doc.save()
         self.update_import_cell_uuid()
 
-    def create_document_item(self):
+    def create_document_item(self, sup_metadata=None):
         """ Create and save a new subject object"""
         new_doc = OCdocument()
         new_doc.uuid = self.uuid  # use the previously assigned temporary UUID
@@ -196,6 +221,8 @@ class CandidateDocument():
         new_man.label = self.label
         new_man.des_predicate_uuid = ''
         new_man.views = 0
+        if isinstance(sup_metadata, dict):
+            new_man.sup_json = sup_metadata
         new_man.save()
 
     def update_import_cell_uuid(self):

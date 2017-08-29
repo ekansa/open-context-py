@@ -206,7 +206,7 @@ class ProcessLinks():
                                 if sort < 1:
                                     sort = obj_field_obj.field_num
                                 for hash_key, obj_rec in obj_recs.items():
-                                    # print('Worry about: ' + str(obj_rec['imp_cell_obj'].record))
+                                    print('Worry about: ' + str(obj_rec['imp_cell_obj'].record))
                                     object_uuid = obj_rec['imp_cell_obj'].fl_uuid
                                     object_type = obj_field_obj.field_type
                                     object_ok = obj_rec['imp_cell_obj'].cell_ok
@@ -226,7 +226,7 @@ class ProcessLinks():
                                     cla.object_uuid = object_uuid
                                     cla.object_type = object_type
                                     if (subject_ok and object_ok) and predicate_uuid is not False:
-                                        # print('Link ok: ' + str(obj_rec['imp_cell_obj'].record))
+                                        print('Link ok: ' + str(obj_rec['imp_cell_obj'].record))
                                         cla.create_link()
                                         if cla.is_valid:
                                             self.count_new_assertions += 1

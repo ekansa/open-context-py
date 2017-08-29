@@ -16,8 +16,27 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
+from opencontext_py.apps.imports.fieldannotations.metadata import ManifestMetadata
 from opencontext_py.apps.imports.sources.unimport import UnImport
 
+
+"""
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
+sub_field_num = 8
+min_obj = 47
+max_obj = 65
+i = min_obj
+while i <= max_obj:
+     ifa = ImportFieldAnnotation()
+     ifa.source_id = 'ref:2046567069357'
+     ifa.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+     ifa.field_num = sub_field_num
+     ifa.predicate = 'oc-gen:contains'
+     ifa.predicate_field_num = 0
+     ifa.object_field_num = i
+     ifa.save()
+     i += 1
+"""
 
 # Processes to generate subjects items for an import
 class ProcessSubjects():
@@ -31,6 +50,9 @@ class ProcessSubjects():
         self.geospace_fields = {}  # subject field num is key, dict has valid lat + lon fields
         self.date_fields = {}  # subject field num is key, dict has early late fields
         self.geojson_rels = {}  # subject field_num is key, integer value is geojson field_num
+        # object for associated metadata to new manifest objects
+        self.metadata_obj = ManifestMetadata(self.source_id,
+                                             self.project_uuid)
         self.contain_ordered_subjects = {}
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
@@ -150,6 +172,7 @@ class ProcessSubjects():
         self.clear_source()  # clear prior import for this source
         self.end_row = self.start_row + self.batch_size
         self.get_subject_fields()
+        self.get_metadata_fields()
         self.get_geospace_fields()
         self.get_geojson_fields()
         self.get_date_fields()
@@ -200,6 +223,7 @@ class ProcessSubjects():
                 cs.allow_new = True  # allow new because it is a hierarchic field
                 cs.class_uri = field_obj.field_value_cat
                 cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                cs.metadata_obj = self.metadata_obj
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 # show_item = str(unidecode(dist_rec['imp_cell_obj'].record))
                 # print('Reconciled item: ' + show_item)
@@ -282,7 +306,7 @@ class ProcessSubjects():
         """
         output = None
         pc = ProcessCells(self.source_id,
-                                  self.start_row)
+                          self.start_row)
         distinct_records = pc.get_field_records(field_num,
                                                 False)
         if distinct_records is not False:
@@ -300,6 +324,7 @@ class ProcessSubjects():
                 cs.allow_new = False  # do not allow new, not in a hierarchy
                 cs.class_uri = field_obj.field_value_cat
                 cs.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                cs.metadata_obj = self.metadata_obj
                 cs.reconcile_item(dist_rec['imp_cell_obj'])
                 output[rec_hash] = {
                     'dist_rec': dist_rec,
@@ -669,6 +694,17 @@ class ProcessSubjects():
                         # making date data
                         self.date_fields[subject_field_num] = {'early': act_earlies_lates['earlys'][0],
                                                                'late': act_earlies_lates['lates'][0]}
+    
+    def get_metadata_fields(self):
+        """ finds metadata fields that get added to the the sup_json
+            field of new manifest objects
+        """
+        # first make a list of subject field numbers
+        if self.subjects_fields is not False:
+            sub_field_list = []
+            for sub_field_num, sub_field in self.subjects_fields.items():
+                sub_field_list.append(sub_field_num)
+            self.metadata_obj.get_metadata_fields_for_field_list(sub_field_list)
 
     def validate_date_value(self, date_str):
         """ validates a date value as a float value """
@@ -777,10 +813,12 @@ class CandidateSubject():
         self.allow_new = False  # only allow new if item is imported in a hierachy, otherwise match with manifest
         self.import_rows = False  # if a list, then changes to uuids are saved for all rows in this list
         self.is_new = False
+        self.metadata_obj = None
 
     def reconcile_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the subjects table """
         self.imp_cell_obj = imp_cell_obj
+        self.item_field_num = imp_cell_obj.field_num
         if len(imp_cell_obj.record) > 0:
             self.label = self.label_prefix + imp_cell_obj.record
         else:
@@ -791,6 +829,7 @@ class CandidateSubject():
                 check_list = [imp_cell_obj.row_num]
             self.evenif_blank = pg.check_blank_required(imp_cell_obj.field_num,
                                                         check_list)
+            self.evenif_blank = False
             if self.evenif_blank:
                 self.label = self.label_prefix + self.DEFAULT_BLANK
         if self.allow_new and self.label is not False:
@@ -805,8 +844,16 @@ class CandidateSubject():
                 # create new subject, manifest objects. Need new UUID, since we can't assume
                 # the fl_uuid for the ImportCell reflects unique entities in a field, since
                 # uniqueness depends on context (values in other cells)
+                sup_metadata = None
                 self.uuid = GenUUID.uuid4()
-                self.create_subject_item()
+                if self.metadata_obj is not None:
+                    sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                                  imp_cell_obj.row_num)
+                    meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                    if isinstance(meta_uuid, str):
+                        # use the uuid in the metadata!
+                        self.uuid = meta_uuid
+                self.create_subject_item(sup_metadata)
                 self.is_new = True
         else:
             if self.label is not False:
@@ -849,7 +896,7 @@ class CandidateSubject():
         else:
             print('No attempt at Containment: ' + str(self.parent_uuid) + ' ' + str(self.uuid))
 
-    def create_subject_item(self):
+    def create_subject_item(self, sup_metadata=None):
         """ Create and save a new subject object"""
         new_sub = Subject()
         new_sub.uuid = self.uuid  # use the previously assigned temporary UUID
@@ -867,6 +914,8 @@ class CandidateSubject():
         new_man.label = self.label
         new_man.des_predicate_uuid = ''
         new_man.views = 0
+        if isinstance(sup_metadata, dict):
+            new_man.sup_json = sup_metadata
         new_man.save()
 
     def update_import_cell_uuid(self):
@@ -926,11 +975,22 @@ class CandidateSubject():
 
     def match_against_manifest(self, label, class_uri):
         """ Checks to see if the item exists in the manifest """
+        class_list = [class_uri]
+        label_list = [label]
+        if class_uri == 'oc-gen:cat-object' \
+           and self.project_uuid == 'DF043419-F23B-41DA-7E4D-EE52AF22F92F':
+            # Poggio Civitate object reconciliation kludge
+            label_list.append(label.replace('PC', 'PC '))
+            label_list.append(label.replace('PC ', 'PC'))
+            class_list.append('oc-gen:cat-arch-element')
+            class_list.append('oc-gen:cat-glass')
+            class_list.append('oc-gen:cat-pottery')
+            class_list.append('oc-gen:cat-coin')
         match_found = False
         manifest_match = Manifest.objects\
                                  .filter(project_uuid__in=[self.project_uuid, '0'],
-                                         label=label,
-                                         class_uri=class_uri)[:1]
+                                         label__in=label_list,
+                                         class_uri__in=class_list)[:1]
         if len(manifest_match) > 0:
             match_found = True
             self.uuid = manifest_match[0].uuid

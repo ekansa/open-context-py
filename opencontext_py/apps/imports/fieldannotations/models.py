@@ -12,6 +12,8 @@ class ImportFieldAnnotation(models.Model):
     PRED_DOC_Text = 'oc-gen:document-text'
     PRED_GEO_LOCATION = 'oc-gen:discovey-location'
     PRED_DATE_EVENT = 'oc-gen:formation-use-life'
+    PRED_METADATA = 'oc-gen:metadata'
+    PRED_COMPLEX_DES = 'oc-gen:has-complex-description'
 
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

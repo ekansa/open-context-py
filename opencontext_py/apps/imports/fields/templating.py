@@ -30,7 +30,8 @@ class ImportProfile():
                                     'lon',
                                     'geojson',
                                     'early',
-                                    'late']
+                                    'late',
+                                    'metadata']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -60,7 +61,9 @@ class ImportProfile():
         self.PRED_DOC_Text = ImportFieldAnnotation.PRED_DOC_Text
         self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
         self.PRED_DATE_EVENT = ImportFieldAnnotation.PRED_DATE_EVENT
+        self.PRED_METADATA = ImportFieldAnnotation.PRED_METADATA
         self.PRED_DRAFT_CONTAINS = ImportFieldAnnotation.PRED_DRAFT_CONTAINS
+        self.PRED_COMPLEX_DES = ImportFieldAnnotation.PRED_COMPLEX_DES
         self.nav = False
 
     def get_fields(self, field_num_list=False):
@@ -206,6 +209,8 @@ class ImportProfile():
                 anno_dict['predicate']['label'] = 'Has document text'
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_DRAFT_CONTAINS:
                 anno_dict['predicate']['label'] = 'Contains (part. hierarchy)'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_COMPLEX_DES:
+                anno_dict['predicate']['label'] = 'Has Complex Description'
             else:
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False

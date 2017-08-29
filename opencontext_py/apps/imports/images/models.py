@@ -14,7 +14,7 @@ class ImageImport():
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-ii.make_image_versions('pc-mag-photos')
+ii.make_image_versions('revised-2017-media')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
