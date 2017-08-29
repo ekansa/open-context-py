@@ -174,7 +174,8 @@ class ImportFieldDescribe():
         # delete cases where the field_num is already used
         del_preds = [ImportFieldAnnotation.PRED_DESCRIBES,
                      ImportFieldAnnotation.PRED_GEO_LOCATION,
-                     ImportFieldAnnotation.PRED_DATE_EVENT]
+                     ImportFieldAnnotation.PRED_DATE_EVENT,
+                     ImportFieldAnnotation.PRED_METADATA]
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
                                                  predicate__in=del_preds,
@@ -191,6 +192,7 @@ class ImportFieldDescribe():
                                                        'geojson'])
             date_ok = self.check_field_type(field_num, ['early',
                                                         'late'])
+            meta_ok =  self.check_field_type(field_num, ['metadata'])
             if des_ok and entity_ok:
                 # only make the annotation if the subject is a value, object is a variable
                 ifa = ImportFieldAnnotation()
@@ -220,6 +222,17 @@ class ImportFieldDescribe():
                 ifa.project_uuid = self.project_uuid
                 ifa.field_num = field_num
                 ifa.predicate = ImportFieldAnnotation.PRED_DATE_EVENT
+                ifa.predicate_field_num = 0
+                ifa.object_field_num = object_field_num
+                ifa.object_uuid = ''
+                ifa.save()
+            elif meta_ok:
+                # we have metadata annotations
+                ifa = ImportFieldAnnotation()
+                ifa.source_id = self.source_id
+                ifa.project_uuid = self.project_uuid
+                ifa.field_num = field_num
+                ifa.predicate = ImportFieldAnnotation.PRED_METADATA
                 ifa.predicate_field_num = 0
                 ifa.object_field_num = object_field_num
                 ifa.object_uuid = ''
@@ -286,6 +299,26 @@ class ImportFieldDescribe():
         ifa.project_uuid = self.project_uuid
         ifa.field_num = field_num
         ifa.predicate = ImportFieldAnnotation.PRED_MEDIA_PART_OF
+        ifa.predicate_field_num = 0
+        ifa.object_field_num = object_field_num
+        ifa.object_uuid = ''
+        ifa.save()
+    
+    def update_field_document_text_entity(self, field_num, object_field_num):
+        """ Updates a field annotation to make document entities in a field_num (subject)
+        have document text in an object_ield_num
+        """
+        # delete cases where the (subject) field_num is a media part of another field
+        anno_objs = ImportFieldAnnotation.objects\
+                                         .filter(source_id=self.source_id,
+                                                 predicate=ImportFieldAnnotation.PRED_DOC_Text,
+                                                 field_num=field_num)\
+                                         .delete()
+        ifa = ImportFieldAnnotation()
+        ifa.source_id = self.source_id
+        ifa.project_uuid = self.project_uuid
+        ifa.field_num = field_num
+        ifa.predicate = ImportFieldAnnotation.PRED_DOC_Text
         ifa.predicate_field_num = 0
         ifa.object_field_num = object_field_num
         ifa.object_uuid = ''

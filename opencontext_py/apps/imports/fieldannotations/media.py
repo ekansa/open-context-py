@@ -10,6 +10,7 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
+from opencontext_py.apps.imports.fieldannotations.metadata import ManifestMetadata
 from opencontext_py.apps.imports.sources.unimport import UnImport
 
 
@@ -21,6 +22,9 @@ class ProcessMedia():
         pg = ProcessGeneral(source_id)
         pg.get_source()
         self.project_uuid = pg.project_uuid
+        # object for associated metadata to new manifest objects
+        self.metadata_obj = ManifestMetadata(self.source_id,
+                                             self.project_uuid)
         self.media_fields = []
         self.start_row = 1
         self.batch_size = settings.IMPORT_BATCH_SIZE
@@ -54,6 +58,7 @@ class ProcessMedia():
     def process_multiple_media_fields(self):
         """ processes multiple media fields, if they exist """
         self.get_media_fields()
+        self.get_metadata_fields()
         if len(self.media_fields) > 0:
             print('yes we have media')
             for field_obj in self.media_fields:
@@ -70,6 +75,7 @@ class ProcessMedia():
                         cm.source_id = self.source_id
                         cm.class_uri = field_obj.field_value_cat
                         cm.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                        cm.metadata_obj = self.metadata_obj
                         cm.reconcile_manifest_item(dist_rec['imp_cell_obj'])
                         if cm.uuid is not False:
                             if cm.new_entity:
@@ -118,6 +124,9 @@ class ProcessMedia():
             single_media_field = True
             print('yes we have 1 media field')
             field_obj = media_fields[0]
+            # make the metadata fields for this one media field
+            media_field_nums = [field_obj.field_num]
+            self.get_metadata_fields(media_field_nums)
             pc = ProcessCells(self.source_id,
                               self.start_row)
             distinct_records = pc.get_field_records(field_obj.field_num,
@@ -132,6 +141,7 @@ class ProcessMedia():
                     cm.source_id = self.source_id
                     cm.class_uri = field_obj.field_value_cat
                     cm.import_rows = dist_rec['rows']  # list of rows where this record value is found
+                    cm.metadata_obj = self.metadata_obj
                     cm.reconcile_manifest_item(dist_rec['imp_cell_obj'])
                     if cm.uuid is not False:
                         self.reconciled_entities.append({'id': str(cm.uuid),
@@ -173,6 +183,15 @@ class ProcessMedia():
             self.media_fields = media_fields
         return self.media_fields
 
+    def get_metadata_fields(self, media_field_nums=[]):
+        """ finds metadata fields that get added to the the sup_json
+            field of new manifest objects
+        """
+        if len(media_field_nums) < 1 and len(self.media_fields) > 0:
+            media_field_nums = []
+            for field_obj in self.media_fields:
+                media_field_nums.append(field_obj.field_num)
+        self.metadata_obj.get_metadata_fields_for_field_list(media_field_nums)
 
 class CandidateMedia():
 
@@ -186,6 +205,7 @@ class CandidateMedia():
         self.import_rows = False
         self.new_entity = False
         self.mint_new_entity_ok = True
+        self.metadata_obj = None
 
     def reconcile_manifest_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the manifest """
@@ -200,11 +220,19 @@ class CandidateMedia():
                 # uniqueness depends on context (values in other cells)
                 if self.mint_new_entity_ok:
                     self.new_entity = True
+                    sup_metadata = None
                     self.uuid = GenUUID.uuid4()
-                    self.create_media_item()
+                    if self.metadata_obj is not None:
+                        sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                                      imp_cell_obj.row_num)
+                        meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                        if isinstance(meta_uuid, str):
+                            # use the uuid in the metadata!
+                            self.uuid = meta_uuid
+                    self.create_media_item(sup_metadata)
         self.update_import_cell_uuid()
 
-    def create_media_item(self):
+    def create_media_item(self, sup_metadata=None):
         """ Create and save a new subject object"""
         new_man = Manifest()
         new_man.uuid = self.uuid
@@ -216,6 +244,8 @@ class CandidateMedia():
         new_man.label = self.label
         new_man.des_predicate_uuid = ''
         new_man.views = 0
+        if isinstance(sup_metadata, dict):
+            new_man.sup_json = sup_metadata
         new_man.save()
 
     def update_import_cell_uuid(self):

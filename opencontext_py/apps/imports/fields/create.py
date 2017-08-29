@@ -5,6 +5,7 @@ from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
 from opencontext_py.apps.imports.refine.api import RefineAPI
+from opencontext_py.apps.imports.kobotoolbox.kobofields import KoboFields
 
 
 # Imports records, doing the appropriate lookups for uuids
@@ -32,6 +33,7 @@ class ImportFields():
         """ Loads a schema from refine, saves it in the database """
         output = False
         schema_ok = self.get_refine_schema(refine_project)
+        kobo_fields = KoboFields()
         if schema_ok:
             # print('Refine schema is OK')
             new_fields = []
@@ -49,6 +51,7 @@ class ImportFields():
                 imp_f = self.check_for_updated_field(imp_f,
                                                      col['name'],
                                                      col['originalName'])
+                imp_f = kobo_fields.classify_if_kobofield(imp_f)
                 new_fields.append(imp_f)
             # Now that we've got likely related UUIDs, let's delete the old
             ImportField.objects.filter(source_id=self.source_id).delete()

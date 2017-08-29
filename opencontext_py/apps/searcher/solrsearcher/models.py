@@ -13,7 +13,7 @@ from opencontext_py.apps.searcher.solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.specialized import SpecialSearches
 from opencontext_py.apps.searcher.solrsearcher.statsquery import StatsQuery
-
+from opencontext_py.apps.searcher.solrsearcher.projquery import ProjectsQuery
 
 # This class is used to dereference URIs or prefixed URIs
 # to get useful information about the entity
@@ -486,10 +486,23 @@ class SolrSearch():
                 if default_field not in query['facet.field']:
                     query['facet.field'].append(default_field)
             if 'proj' in request_dict:
-                query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
+                if SolrDocument.ROOT_PREDICATE_SOLR not in query['facet.field']:
+                    query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
             elif SolrDocument.ROOT_PROJECT_SOLR not in query['facet.field']:
                 if self.item_type_limit != 'projects':
                     query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
+            if 'proj' not in request_dict:
+                """ -----------------------------------------
+                    In cases where no project parameter was chosen,
+                    add project descriptive fields, by checking if
+                    we have only 1 project in a result
+                    -----------------------------------------
+                """
+                pq_obj = ProjectsQuery()
+                single_project_ok = pq_obj.check_single_project(query)
+                if single_project_ok:
+                    if SolrDocument.ROOT_PREDICATE_SOLR not in query['facet.field']:
+                        query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
         return query
 
     def add_root_discovery_geo(self,

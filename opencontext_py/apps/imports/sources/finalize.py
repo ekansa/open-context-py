@@ -10,6 +10,7 @@ from opencontext_py.apps.imports.records.process import ProcessCells
 from opencontext_py.apps.imports.fieldannotations.general import ProcessGeneral
 from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubjects
 from opencontext_py.apps.imports.fieldannotations.media import ProcessMedia
+from opencontext_py.apps.imports.fieldannotations.documents import ProcessDocuments
 from opencontext_py.apps.imports.fieldannotations.persons import ProcessPersons
 from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 from opencontext_py.apps.imports.fieldannotations.links import ProcessLinks
@@ -21,6 +22,7 @@ class FinalizeImport():
     # list of processes to run, in order, to complete the import of data
     DEFAULT_PROCESS_STAGES = ['subjects',
                               'media',
+                              'documents',
                               'persons',
                               'links',
                               'descriptions']
@@ -115,6 +117,16 @@ class FinalizeImport():
             p_act.start_row = self.start_row
             p_act.batch_size = self.batch_size
             p_act.process_media_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = p_act.new_entities
+            p_outcome['reconciled_entities'] = p_act.reconciled_entities
+            p_outcome['not_reconciled_entities'] = p_act.not_reconciled_entities
+            p_outcome['count_new_assertions'] = 0
+        elif p_label == 'documents':
+            p_act = ProcessDocuments(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_documents_batch()
             p_outcome['count_active_fields'] = p_act.count_active_fields
             p_outcome['new_entities'] = p_act.new_entities
             p_outcome['reconciled_entities'] = p_act.reconciled_entities

@@ -30,7 +30,8 @@ class ImportProfile():
                                     'lon',
                                     'geojson',
                                     'early',
-                                    'late']
+                                    'late',
+                                    'metadata']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -44,7 +45,8 @@ class ImportProfile():
         pg.get_source()
         self.project_uuid = pg.project_uuid
         self.fields = []
-        self.has_media_field = False
+        c = False
+        self.has_doc_field = False
         self.raw_field_annotations = []
         self.label = False
         self.has_subjects = False
@@ -56,9 +58,12 @@ class ImportProfile():
         self.PRED_DESCRIBES = ImportFieldAnnotation.PRED_DESCRIBES
         self.PRED_VALUE_OF = ImportFieldAnnotation.PRED_VALUE_OF
         self.PRED_MEDIA_PART_OF = ImportFieldAnnotation.PRED_MEDIA_PART_OF
+        self.PRED_DOC_Text = ImportFieldAnnotation.PRED_DOC_Text
         self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
         self.PRED_DATE_EVENT = ImportFieldAnnotation.PRED_DATE_EVENT
+        self.PRED_METADATA = ImportFieldAnnotation.PRED_METADATA
         self.PRED_DRAFT_CONTAINS = ImportFieldAnnotation.PRED_DRAFT_CONTAINS
+        self.PRED_COMPLEX_DES = ImportFieldAnnotation.PRED_COMPLEX_DES
         self.nav = False
 
     def get_fields(self, field_num_list=False):
@@ -89,6 +94,8 @@ class ImportProfile():
         for field_obj in imp_fields:
             if field_obj.field_type == 'media':
                 self.has_media_field = True
+            if field_obj.field_type == 'documents':
+                self.has_doc_field = True
             field_obj.examples = self.get_example_entities(field_obj.field_num,
                                                            field_obj.value_prefix)
             field_obj.ex_csv = ', '.join(field_obj.examples)
@@ -198,8 +205,12 @@ class ImportProfile():
                 anno_dict['predicate']['label'] = 'Value of'
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_MEDIA_PART_OF:
                 anno_dict['predicate']['label'] = 'Media part of'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_DOC_Text:
+                anno_dict['predicate']['label'] = 'Has document text'
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_DRAFT_CONTAINS:
                 anno_dict['predicate']['label'] = 'Contains (part. hierarchy)'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_COMPLEX_DES:
+                anno_dict['predicate']['label'] = 'Has Complex Description'
             else:
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False

@@ -9,6 +9,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.persons.models import Person
+from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
@@ -38,6 +39,7 @@ class UnImport():
         self.delete_predicate_links()
         self.delete_subjects_entities()
         self.delete_person_entities()
+        self.delete_document_entities()
         self.delete_media_entities()
         self.delete_types_entities()
         self.delete_strings()
@@ -193,6 +195,23 @@ class UnImport():
                                 .filter(source_id=self.source_id,
                                         project_uuid=self.project_uuid)\
                                 .delete()
+
+    def delete_document_entities(self):
+        """ Deletes document entities
+            import
+        """
+        if self.delete_ok:
+            # get rid of "documents" manifest records from this source
+            rem_manifest = Manifest.objects\
+                                   .filter(source_id=self.source_id,
+                                           project_uuid=self.project_uuid,
+                                           item_type='documents')\
+                                   .delete()
+            # get rid of person records from this source
+            rem_documents = OCdocument.objects\
+                                      .filter(source_id=self.source_id,
+                                              project_uuid=self.project_uuid)\
+                                      .delete()
 
     def delete_media_entities(self):
         """ Deletes media entities

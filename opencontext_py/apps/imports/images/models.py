@@ -13,8 +13,8 @@ class ImageImport():
 
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
-ii.project_uuid = '8859aa10-c0c4-42ad-993b-cc9d79800d8e'
-ii.make_image_versions('kuthodaw-pagoda')
+ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+ii.make_image_versions('revised-2017-media')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -36,6 +36,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
             and makes thumbnail and preview files
         """
         src_dir = self.set_check_directory(src)
+        print('Working on :' + src_dir)
         new_root_dir = self.set_check_directory('copy-' + src)
         new_dirs = [self.full_dir,
                     self.preview_dir,

@@ -300,6 +300,41 @@ def field_entity_relations(request, source_id):
 @ensure_csrf_cookie
 @cache_control(no_cache=True)
 @never_cache
+def field_complex_descriptions(request, source_id):
+    """ Show HTML form to change group descriptive
+        properties together into groups of
+        complex descriptions
+    """
+    if not request.user.is_superuser:
+        return HttpResponse('Unauthorized', status=401)
+    else:
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        ip = ImportProfile(source_id)
+        if ip.project_uuid is not False:
+            ip.get_fields()
+            if len(ip.fields) > 0:
+                ip.get_field_annotations()
+                ip.jsonify_field_annotations()
+                imnav = ImportNavigation()
+                ip.nav = imnav.set_nav('field-entity-relations',
+                                       ip.project_uuid,
+                                       source_id)
+                template = loader.get_template('imports/field-entity-relations.html')
+                context = RequestContext(request,
+                                         {'ip': ip,
+                                          'base_url': base_url})
+                return HttpResponse(template.render(context))
+            else:
+                redirect = '../../imports/field-types/' + source_id
+                return HttpResponseRedirect(redirect)
+        else:
+            raise Http404
+
+
+@ensure_csrf_cookie
+@cache_control(no_cache=True)
+@never_cache
 def field_descriptions(request, source_id):
     """ Show HTML form to change relationships for entities
         to be created / or updated from an import table

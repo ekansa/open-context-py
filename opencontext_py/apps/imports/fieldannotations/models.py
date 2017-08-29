@@ -9,8 +9,11 @@ class ImportFieldAnnotation(models.Model):
     PRED_DESCRIBES = 'oc-gen:describes'
     PRED_VALUE_OF = 'oc-gen:value-of'
     PRED_MEDIA_PART_OF = 'oc-gen:media-part-of'
+    PRED_DOC_Text = 'oc-gen:document-text'
     PRED_GEO_LOCATION = 'oc-gen:discovey-location'
     PRED_DATE_EVENT = 'oc-gen:formation-use-life'
+    PRED_METADATA = 'oc-gen:metadata'
+    PRED_COMPLEX_DES = 'oc-gen:has-complex-description'
 
     source_id = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

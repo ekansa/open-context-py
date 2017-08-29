@@ -41,11 +41,26 @@ item_del = ItemDelete()
     """
 
     def __init__(self, manifest=None):
-        self.manifest = manifest 
+        self.manifest = manifest
+        self.pred_object_uuids = None
         if self.manifest is not None:
             self.uuid = manifest.uuid
             self.project_uuid = manifest.project_uuid
             self.item_type = manifest.item_type
+            if self.item_type == 'predicates':
+                pred = None
+                try:
+                    pred = Predicate.objects.get(uuid=self.uuid)
+                except:
+                    pred = None
+                if pred is not None:
+                    if pred.data_type == 'id':
+                        self.pred_object_uuids = []
+                        rel_types = OCtype.objects\
+                                          .filter(project_uuid=self.project_uuid,
+                                                  predicate_uuid=self.uuid)
+                        for rel_type in rel_types:
+                            self.pred_object_uuids.append(rel_type.uuid)
         else:
             self.uuid = None
             self.project_uuid = None
@@ -89,7 +104,11 @@ item_del = ItemDelete()
             # save a copy of data, as a JSON serialization string
             # of the data to editorial event, the item itself,
             # relationships to the item, and attributes of the item
-            saved_query_sets = ed_act.save_editorial_and_pre_redaction_data(self.uuid)
+            if isinstance(self.pred_object_uuids, list):
+                uuid_list = [self.uuid] + self.pred_object_uuids
+                saved_query_sets = ed_act.save_editorial_and_pre_redaction_data(self.uuid)
+            else:
+                saved_query_sets = ed_act.save_editorial_and_pre_redaction_data(self.uuid)
             if isinstance(saved_query_sets, list):
                 # success in saving the item's data, now alter hierarchies for the item
                 # and deleted the data related ot the item. Deleted records can be restored later

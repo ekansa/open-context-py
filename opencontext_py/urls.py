@@ -140,6 +140,8 @@ urlpatterns = [
         name='field_types_more'),
     url(r'^imports/field-entity-relations/(?P<source_id>\S+)', Imp_sources.field_entity_relations,
         name='field_entity_relations'),
+    url(r'^imports/field-complex-desciptions/(?P<source_id>\S+)', Imp_sources.field_complex_descriptions,
+        name='field_complex_descriptions'),
     url(r'^imports/field-descriptions/(?P<source_id>\S+)', Imp_sources.field_descriptions,
         name='field_descriptions'),
     url(r'^imports/finalize/(?P<source_id>\S+)', Imp_sources.finalize,

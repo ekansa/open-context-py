@@ -520,7 +520,7 @@ class ItemConstruction():
         # prepares dictionary objects for each predicate
         for pred_uuid in raw_pred_list:
             pmeta = self.get_entity_metadata(pred_uuid)
-            if(pmeta is not False):
+            if pmeta is not False:
                 p_data = LastUpdatedOrderedDict()
                 p_data['owl:sameAs'] = pmeta.uri
                 p_data['label'] = str(pmeta.label)
@@ -528,9 +528,9 @@ class ItemConstruction():
                 p_data['uuid'] = str(pmeta.uuid)
                 p_data[OCitem.PREDICATES_OCGEN_PREDICATETYPE] = str(pmeta.class_uri)
                 p_data['type'] = pred_types[pred_uuid]
-                if(pmeta.class_uri == 'variable'):
+                if pmeta.class_uri == 'variable':
                     self.var_list.append(p_data)
-                elif(pmeta.class_uri == 'link'):
+                elif pmeta.class_uri == 'link':
                     self.link_list.append(p_data)
                 else:
                     self.link_list.append(p_data)
