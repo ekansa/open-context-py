@@ -40,7 +40,18 @@
                     <div id="all-m-ops-{{ f_field.id }}-{{ op_type }}"></div>
                     <ul class="list-group f-opt-list" id="s-ops-{{ f_field.id }}-{{ op_type }}">
                     {% if op_type == 'id' and f_field.id_options|length > 0 %} 
-                        {% for option in f_field.id_options %}
+                    {% for group_label, options in f_field.fg_id_options.items %}
+                    {% if options|length > 0 %}
+                        {% if f_field.show_group_labels %}
+                        {% if forloop.counter == 1 %}
+                        <li class="list-group-item list-group-item-info f-sub-group">
+                        {%else%}
+                        <li class="list-group-item list-group-item-info f-sub-group">
+                        {%endif%}
+                            <small><strong>{{ group_label }}</strong></small>
+                        </li>
+                        {% endif %}
+                        {% for option in options %}
                             {% with dom_id=option.dom_id %}
                             {% with href=option.id %}
                             {% with label=option.label %}
@@ -59,6 +70,8 @@
                             {% endwith %}
                             {% endwith %}
                         {% endfor %}
+                    {% endif %}
+                    {% endfor %}
                     {% elif op_type == 'numeric' and f_field.numeric_options|length > 0 %} 
                         {% for option in f_field.numeric_options %}
                             {% with dom_id=option.dom_id %}

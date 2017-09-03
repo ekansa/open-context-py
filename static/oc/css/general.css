@@ -204,6 +204,9 @@ ul.f-opt-list {
 	border-top: 1px solid #ddd;
 	margin-bottom: -1px;
 }
+li.f-sub-group {
+	margin-top: -5px;
+}
 li.f-opt-top {
 	border-top-left-radius: 0px;
 	border-top-right-radius: 0px;
