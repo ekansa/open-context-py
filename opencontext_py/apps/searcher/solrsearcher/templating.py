@@ -27,6 +27,8 @@ class SearchTemplate():
         self.end_num = 0
         self.items_per_page = 0
         self.response_tile_zoom = 0
+        # is the item_type_limit is in effect?
+        self.item_type_limited = False
         self.filters = []
         self.paging = {}
         self.num_facets = []
