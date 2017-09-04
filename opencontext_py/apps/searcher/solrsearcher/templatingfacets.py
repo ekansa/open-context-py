@@ -36,7 +36,10 @@ class FacetSearchTemplate():
     HIDE_URI_MAPS = [
         'http://www.w3.org/2004/02/skos/core#closeMatch',
         'http://purl.org/dc/terms/subject',
-        'http://www.wikidata.org/wiki/Q247204'
+        'http://www.wikidata.org/wiki/Q247204',
+        'http://www.w3.org/2004/02/skos/core#related',
+        'http://purl.org/dc/terms/isPartOf',
+        'http://purl.org/dc/terms/hasPart'
     ]
     HIDE_URI_PREFIX_MAPS = [
                
