@@ -65,6 +65,7 @@ class SolrSearch():
         self.max_rows = 10000
         self.prequery_stats = []
         self.item_type_limit = False  # limit searches to a specific item type
+        self.item_type_limited = False  # is an item_type_limit selected?
         self.do_context_paths = True  # make sure context paths are in the query
         self.is_bot = False
         self.do_bot_limit = False
@@ -247,6 +248,8 @@ class SolrSearch():
         if item_type is not False:
             # remove the facet field, since we're already filtering with it
             self.remove_from_default_facet_fields('item_type')
+            # indicate that the item_type_limit is in effect
+            self.item_type_limited = True
             it_query = qm.process_item_type(item_type)
             query['fq'] += it_query['fq']
             query['facet.field'] += it_query['facet.field']
@@ -255,6 +258,8 @@ class SolrSearch():
         that looks only for a certain item_type.
         """
         if self.item_type_limit is not False:
+            # indicate that the item_type_limit is in effect
+            self.item_type_limited = True
             query['fq'].append('item_type:' + self.item_type_limit)
             if self.item_type_limit in self.ITEM_TYPE_ROWS:
                 query['rows'] = self.ITEM_TYPE_ROWS[self.item_type_limit]

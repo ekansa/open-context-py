@@ -21,7 +21,7 @@ class FacetSearchTemplate():
         'Standard Biological',
         'Standard Cultural (CIDOC-CRM)',
         'Cross-References',
-        SUB_HEADING_DEFAULT
+        SUB_HEADING_DEFAULT,
     ]
     SUB_HEADING_URI_MAPS = {
         'http://purl.org/NET/biol/ns#term_hasTaxonomy': 'Standard Biological',
@@ -47,6 +47,8 @@ class FacetSearchTemplate():
         self.num_facets = []
         self.date_facets = []
         self.facets = []
+        # is the item_type_limit is in effect?
+        self.item_type_limited = False
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
@@ -57,6 +59,7 @@ class FacetSearchTemplate():
             for json_facet in self.json_ld['oc-api:has-facets']:
                 i += 1
                 ff = FacetField()
+                ff.item_type_limited = self.item_type_limited
                 ff.facet_field_index = i
                 first_facet_field = False
                 ff.dom_id_prefix = dom_id_prefix + str(i)
@@ -92,6 +95,8 @@ class FacetField():
         self.defined_by = False
         self.label = False
         self.type = False
+        # is the item_type_limit is in effect?
+        self.item_type_limited = False
         self.fg_id_options = LastUpdatedOrderedDict()
         self.fg_num_options = LastUpdatedOrderedDict()
         self.fg_date_options = LastUpdatedOrderedDict()
@@ -148,6 +153,7 @@ class FacetField():
             for json_option in json_facet['oc-api:has-id-options']:
                 i += 1
                 fo = FacetOption()
+                fo.item_type_limited = self.item_type_limited
                 fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
@@ -159,6 +165,7 @@ class FacetField():
             for json_option in json_facet['oc-api:has-rel-media-options']:
                 i += 1
                 fo = FacetOption()
+                fo.item_type_limited = self.item_type_limited
                 fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
@@ -170,6 +177,7 @@ class FacetField():
             for json_option in json_facet['oc-api:has-numeric-options']:
                 i += 1
                 fo = FacetOption()
+                fo.item_type_limited = self.item_type_limited
                 fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
@@ -181,6 +189,7 @@ class FacetField():
             for json_option in json_facet['oc-api:has-date-options']:
                 i += 1
                 fo = FacetOption()
+                fo.item_type_limited = self.item_type_limited
                 fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
@@ -192,6 +201,7 @@ class FacetField():
             for json_option in json_facet['oc-api:has-string-options']:
                 i += 1
                 fo = FacetOption()
+                fo.item_type_limited = self.item_type_limited
                 fo.dom_id_prefix = self.dom_id_prefix + '-' + str(i)
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
@@ -225,6 +235,8 @@ class FacetOption():
         self.slug = False
         self.group_label = FacetSearchTemplate.SUB_HEADING_DEFAULT
         self.show = True
+        # is the item_type_limit is in effect?
+        self.item_type_limited = False
 
     def parse_json_option(self, json_option):
         """ parses json option to populate
@@ -248,6 +260,9 @@ class FacetOption():
                 rp = RootPath()
                 self.defined_by = rp.convert_local_url(json_option['rdfs:isDefinedBy'])
         self.dom_id = self.dom_id_prefix + '---' + str(self.slug)
+        # check to see if we should show this, based in if this is a related property
+        # and if self.item_type_limited is False
+        self.check_show_related_options()
     
     def set_sub_heading(self, defined_by_uri):
         """ checkes a 'rdfs:isDefinedBy' to assign the
@@ -285,3 +300,18 @@ class FacetOption():
                     if prefix in def_uri:
                         # a non-exact match with URIs that need to be hidden
                         self.show = False
+
+    def check_show_related_options(self):
+        """ checks if related options should be shown.
+            It the self.item_type_limited is True, then
+            we are filtering for item_type, so it is OK
+            to show related options. Otherwise, it would
+            be confusing to the user, so we should hide
+            the facet optio
+        """
+        if self.item_type_limited is False and isinstance(self.slug, str):
+            if 'rel--' == self.slug[0:5]:
+                # this is a related property, so confusing
+                # to show in the faceted search list if the user
+                # hasn't first limited the search by item_type
+                self.show = False

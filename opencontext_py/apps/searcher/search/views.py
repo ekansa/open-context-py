@@ -65,6 +65,7 @@ def lightbox_view(request, spatial_context=''):
 # @vary_on_headers('Accept', 'accept', 'content-type')
 @cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def html_view(request, spatial_context=None):
+    item_type_limited = False
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
     rp = RootPath()
@@ -125,6 +126,8 @@ def html_view(request, spatial_context=None):
             if solr_s.solr is not False:
                 response = solr_s.search_solr(request_dict_json)
                 mem_cache_obj = solr_s.mem_cache_obj  # reused cached memory items
+                # are we filtering for item_types?
+                item_type_limited = solr_s.item_type_limited
                 m_json_ld = MakeJsonLd(request_dict_json)
                 m_json_ld.base_search_link = '/search/'
                 # share entities already looked up. Saves database queries
@@ -157,6 +160,7 @@ def html_view(request, spatial_context=None):
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
+                st.item_type_limited = item_type_limited
                 st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
@@ -283,6 +287,7 @@ def json_view(request, spatial_context=None):
 def subjects_html_view(request, spatial_context=None):
     """ returns HTML representation of subjects search
     """
+    item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
     csv_downloader = False  # provide CSV downloader interface
@@ -367,6 +372,7 @@ def subjects_html_view(request, spatial_context=None):
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
+                st.item_type_limited = item_type_limited
                 st.process_json_ld()
                 template = loader.get_template('search/view.html')
                 props = []
@@ -513,6 +519,7 @@ def subjects_json_view(request, spatial_context=None):
 def media_html_view(request, spatial_context=None):
     """ returns HTML representation of media search
     """
+    item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
     rp = RootPath()
@@ -598,6 +605,7 @@ def media_html_view(request, spatial_context=None):
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
+                st.item_type_limited = item_type_limited
                 st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
@@ -728,6 +736,7 @@ def media_json_view(request, spatial_context=None):
 def projects_html_view(request, spatial_context=None):
     """ returns HTML representation of projects search
     """
+    item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
     rp = RootPath()
@@ -807,6 +816,7 @@ def projects_html_view(request, spatial_context=None):
             else:
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
+                st.item_type_limited = item_type_limited
                 st.process_json_ld()
                 p_aug = ProjectAugment(json_ld)
                 p_aug.process_json_ld()
