@@ -485,9 +485,14 @@ function addEntityObj() {
 						"</div>",
 						buttonGroupHTML,
 						"<div class=\"form-group form-group-sm\">",
-							"<div class=\"col-xs-12\">",
+							"<div class=\"col-xs-6\">",
 								'<button class="btn btn-primary" onclick="',
 								this.name + '.addUpdateLD();">Add or Update</button>',
+							"</div>",
+							"<div class=\"col-xs-6\">",
+							    '<small>Do HTTP (not HTTPS) URIs</small></br/>',
+								'<input type="checkbox" name="new-ent-http" id="' + this.name + '-ent-http-uri" ',
+					            'class="' + this.name + '-new-ent-uri" value="true" checked />',
 							"</div>",
 						"</div>",
 					"</div>",
@@ -524,6 +529,11 @@ function addEntityObj() {
 		var alt_label = document.getElementById(this.name + "-add-entity-altlabel").value;
 		var vocab_uri = document.getElementById(this.name + "-add-entity-vocab-uri").value;
 		var e_types = document.getElementsByClassName(this.name + "-new-ent-type");
+		var http_uri = document.getElementById(this.name + "-ent-http-uri").checked;
+		if (http_uri){
+			uri = uri.replace('https://', 'http://');
+			vocab_uri = vocab_uri.replace('https://', 'http://');
+		}
 		for (var i = 0, length = e_types.length; i < length; i++) {
 			if (e_types[i].checked) {
 				var ent_type = e_types[i].value;
