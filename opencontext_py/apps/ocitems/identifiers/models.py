@@ -7,9 +7,9 @@ from django.db import models
 @reversion.register  # records in this model under version control
 class StableIdentifer(models.Model):
 
-    ID_TYPE_PREFIXES = {'ark': 'http://n2t.net/ark:/',
-                        'doi': 'http://dx.doi.org/',
-                        'orcid': 'http://orcid.org/'}
+    ID_TYPE_PREFIXES = {'ark': 'https://n2t.net/ark:/',
+                        'doi': 'https://doi.org/',
+                        'orcid': 'https://orcid.org/'}
 
     hash_id = models.CharField(max_length=50, primary_key=True)
     stable_id = models.CharField(max_length=200, db_index=True)
