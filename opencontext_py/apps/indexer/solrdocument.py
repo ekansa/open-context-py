@@ -23,6 +23,7 @@ class SolrDocument:
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 uuid = '70554607-439a-4684-9b58-6f1de54ef403'
+uuid = 'AF4DFB9E-9E5F-45F7-891F-ADBE5A9AA0C4'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
@@ -1088,22 +1089,24 @@ sd_b = sd_obj.fields
                     pred_uuid = URImanagement.get_uuid_from_oc_uri(
                                 entity['owl:sameAs']
                                 )
-                    self.fields['text'] += str(entity['label']) + '\n'
-                    self.fields['text'] += entity['id'] + '\n'
-                    act_solr_value = self._concat_solr_string_value(
-                        entity['slug'],
-                        'id',
-                        '/predicates/' + pred_uuid,
-                        entity['label']
-                    )
-                    act_slug = entity['slug']
-                    self.add_id_field_fq_field_values(solr_field_name,
-                                                      act_solr_value,
-                                                      act_slug)
-                    # add the all_solr_field name values
-                    self.add_id_field_fq_field_values(all_solr_field_name,
-                                                      act_solr_value,
-                                                      act_slug)
+                    if isinstance(pred_uuid, str) \
+                       and isinstance(entity['slug'], str):
+                        self.fields['text'] += str(entity['label']) + '\n'
+                        self.fields['text'] += entity['id'] + '\n'
+                        act_solr_value = self._concat_solr_string_value(
+                            entity['slug'],
+                            'id',
+                            '/predicates/' + pred_uuid,
+                            entity['label']
+                        )
+                        act_slug = entity['slug']
+                        self.add_id_field_fq_field_values(solr_field_name,
+                                                          act_solr_value,
+                                                          act_slug)
+                        # add the all_solr_field name values
+                        self.add_id_field_fq_field_values(all_solr_field_name,
+                                                          act_solr_value,
+                                                          act_slug)
 
     def process_direct_linked_data(self):
         """ Sometimes items have linked data directly asserted
