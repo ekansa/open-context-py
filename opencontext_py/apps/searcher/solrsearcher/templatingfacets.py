@@ -21,6 +21,13 @@ class FacetSearchTemplate():
         'Standard Biological',
         'Standard Cultural (CIDOC-CRM)',
         'Cross-References',
+        'Library of Congress (LoC)',
+        'Getty Art and Architecture Thesaurus',
+        'British Museum Terms',
+        'Geonames (Gazetteer)',
+        'Pleiades (Ancient Places Gazetteer)',
+        'Levantine Ceramics Wares',
+        'Wikipedia Topics',
         SUB_HEADING_DEFAULT,
     ]
     SUB_HEADING_URI_MAPS = {
@@ -29,9 +36,16 @@ class FacetSearchTemplate():
         'http://purl.org/dc/terms/isReferencedBy': 'Cross-References',
     }
     SUB_HEADING_URI_PREFIX_MAPS = {
-        'https://opencontext.org/vocabularies/dinaa/': 'N. American Site (DINAA)',
-        'https://opencontext.org/vocabularies/open-context-zooarch/': 'Standard Biological',
-        'http://erlangen-crm.org/': 'Standard Cultural (CIDOC-CRM)'
+        'opencontext.org/vocabularies/dinaa/': 'N. American Site (DINAA)',
+        'opencontext.org/vocabularies/open-context-zooarch/': 'Standard Biological',
+        'erlangen-crm.org/': 'Standard Cultural (CIDOC-CRM)',
+        'id.loc.gov/authorities/subjects/': 'Library of Congress (LoC)',
+        'wikipedia.org/': 'Wikipedia Topics',
+        'geonames.org/': 'Geonames (Gazetteer)',
+        'pleiades.stoa.org/': 'Pleiades (Ancient Places Gazetteer)',
+        'collection.britishmuseum.org': 'British Museum Terms',
+        'vocab.getty.edu/aat/': 'Getty Art and Architecture Thesaurus',
+        'levantineceramics.org/wares/': 'Levantine Ceramics Wares' 
     }
     HIDE_URI_MAPS = [
         'http://www.w3.org/2004/02/skos/core#closeMatch',
@@ -161,9 +175,14 @@ class FacetField():
                 fo.parse_json_option(json_option)
                 if fo.id is not False and fo.show:
                     self.id_options.append(fo)
-                    self.fg_id_options[fo.group_label].append(fo)
-                    if fo.group_label not in self.group_labels:
-                        self.group_labels.append(fo.group_label)
+                    if fo.group_label in self.fg_id_options:
+                        # only add if we can match keys OK
+                        self.fg_id_options[fo.group_label].append(fo)
+                        if fo.group_label not in self.group_labels:
+                            self.group_labels.append(fo.group_label)
+                    else:
+                        self.fg_id_options[FacetSearchTemplate.SUB_HEADING_DEFAULT]\
+                            .append(fo)
         elif 'oc-api:has-rel-media-options' in json_facet:
             for json_option in json_facet['oc-api:has-rel-media-options']:
                 i += 1
