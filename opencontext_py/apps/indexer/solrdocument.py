@@ -10,6 +10,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
+from opencontext_py.apps.ocitems.queries.geochrono import GeoChronoQueries
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -21,10 +22,13 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = '6A1DF80E-617F-493A-D606-10D1CAF116C8'
+uuid = '70554607-439a-4684-9b58-6f1de54ef403'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
+sd_a['text']
+sd_a['discovery_geotile']
+sd_a['form_use_life_chrono_earliest']
 uuid = 'f266d43c-cdea-465c-9135-8c39b7ba6cd9'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
@@ -46,7 +50,7 @@ sd_b = sd_obj.fields
                             'http://erlangen-crm.org/current/P2_has_type',
                             'cidoc-crm:P2_has_type']
 
-    PERSISTENT_ID_ROOTS = ['dx.doi.org',
+    PERSISTENT_ID_ROOTS = ['doi.org',
                            'n2t.net/ark:/',
                            'orcid.org']
 
@@ -86,6 +90,8 @@ sd_b = sd_obj.fields
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
+        self.geo_specified = False
+        self.chrono_specified = False
 
     def process_item(self):
         # Start processing and adding values...
@@ -564,6 +570,42 @@ sd_b = sd_obj.fields
         Finds geospatial point coordinates in GeoJSON features for indexing.
         Only 1 location of a given location type is allowed.
         """
+        if self.oc_item.item_type in ['types', 'predicates']:
+            # get geospatial data inferred from the project
+            self.geo_specified = False
+            gcq = GeoChronoQueries()
+            geo_meta = gcq.get_project_geo_meta(self.oc_item.project_uuid)
+            if isinstance(geo_meta, list):
+                if len(geo_meta) > 0:
+                    geo = geo_meta[0]
+                    gm = GlobalMercator()
+                    lat_ok = gm.validate_geo_coordinate(geo.latitude, 'lat')
+                    lon_ok = gm.validate_geo_coordinate(geo.longitude, 'lon')
+                    if lat_ok and lon_ok:
+                        self.geo_specified = True
+                        coords = str(geo.latitude) + ',' + str(geo.longitude)
+                        if geo.specificity < 0:
+                            zoom = geo.specificity * -1
+                        elif geo.specificity > 0:
+                            zoom = geo.specificity
+                        else:
+                            zoom = False
+                        gm = GlobalMercator()
+                        tile = gm.lat_lon_to_quadtree(geo.latitude,
+                                                      geo.longitude,
+                                                      zoom)
+                        if len(tile) > (zoom - 2):
+                            self.fields['discovery_geotile'] = tile
+                        self.fields['discovery_geolocation'] = coords
+        else:
+            # get the geospatial data from the geojson feature
+            self.process_geo_from_json()
+
+    def process_geo_from_json(self):
+        """ abstraction for just getting the geo-coodinates from JSON,
+            enables use of project GeoJSON for indexing 'types' and 'predicates'
+            items
+        """
         self.geo_specified = False
         if 'features' in self.oc_item.json_ld:
             discovery_done = False
@@ -643,6 +685,43 @@ sd_b = sd_obj.fields
         """ Finds chronological / date ranges in GeoJSON features for indexing.
         More than 1 date range per item is OK.
         """
+        if self.oc_item.item_type in ['types', 'predicates']:
+            # get geospatial data inferred from the project
+            self.geo_specified = False
+            gcq = GeoChronoQueries()
+            if self.oc_item.item_type  == 'types':
+                # get a date range dict, using a method for types
+                date_range = gcq.get_type_date_range(self.oc_item.uuid,
+                                                     self.oc_item.project_uuid)
+            else:
+                # get a date range dict, using the method for the project
+                date_range = gcq.get_project_date_range(self.oc_item.project_uuid)
+            if isinstance(date_range, dict):
+                # we have date information we can index!!
+                self.chrono_specified = True
+                chrono_tile = ChronoTile()
+                if 'form_use_life_chrono_tile' not in self.fields:
+                    self.fields['form_use_life_chrono_tile'] = []
+                if 'form_use_life_chrono_earliest' not in self.fields:
+                        self.fields['form_use_life_chrono_earliest'] = []
+                if 'form_use_life_chrono_latest' not in self.fields:
+                    self.fields['form_use_life_chrono_latest'] = []
+                self.fields['form_use_life_chrono_tile'].append(
+                        chrono_tile.encode_path_from_bce_ce(
+                            date_range['start'], date_range['stop'], '10M-'
+                            )
+                        )
+                self.fields['form_use_life_chrono_earliest'].append(date_range['start'])
+                self.fields['form_use_life_chrono_latest'].append(date_range['stop'])
+        else:
+            # look for the chronological information in the GeoJSON
+            self.process_chrono_from_json()
+            chrono_tile = ChronoTile()
+        
+    def process_chrono_from_json(self):
+        """ Finds chronological / date ranges in GeoJSON features for indexing.
+            More than 1 date range per item is OK.
+        """
         self.chrono_specified = False
         if 'features' in self.oc_item.json_ld:
             for feature in self.oc_item.json_ld['features']:
@@ -686,6 +765,12 @@ sd_b = sd_obj.fields
                         )
                     self.fields['form_use_life_chrono_earliest'].append(start)
                     self.fields['form_use_life_chrono_latest'].append(stop)
+    
+    def process_chrono_from_rel_events(self):
+        """ get chronological metadata for 'predicate' and 'type' items
+        
+        """
+        pass
 
     def _process_category(self):
         """ Finds category / type data ('class_uri' n the manifest table)
@@ -953,6 +1038,17 @@ sd_b = sd_obj.fields
                                                               act_slug)
                             # add to the general list of object entities
                             self.process_object_uri(entity['id'])
+                            if self.oc_item.item_type == 'types' \
+                               or self.oc_item.item_type == 'predicates':
+                                # we to make the hierarchy of broader concepts indexed for
+                                # keyword searches.
+                                parents = LinkRecursion().get_jsonldish_entity_parents(entity['id'])
+                                if len(parents) > 1:
+                                    for parent in parents[0:-1]:
+                                        self.fields['text'] += ' Broader concept: ' + \
+                                            str(parent['label']) + ' '
+                                        self.fields['text'] += ' ' + \
+                                            str(parent['id']) + '\n'
         if 'skos:related' in self.oc_item.json_ld:
             solr_field_name = 'skos_related___pred_id'
             all_solr_field_name = 'obj_all___skos_related___pred_id'

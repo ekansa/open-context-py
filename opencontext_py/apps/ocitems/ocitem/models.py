@@ -1222,7 +1222,7 @@ class ItemConstruction():
                     geo_props['reference-type'] = 'inferred'
                     geo_props['reference-uri'] = URImanagement.make_oc_uri(geo.uuid, 'subjects', self.cannonical_uris)
                     rel_meta = self.get_entity_metadata(geo.uuid)
-                    if(rel_meta is not False):
+                    if rel_meta is not False:
                         geo_props['reference-label'] = rel_meta.label
                 else:
                     geo_props['reference-type'] = 'specified'
