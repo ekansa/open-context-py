@@ -1201,7 +1201,7 @@ class ItemConstruction():
         """
         features_dict = False  # dict of all features to be added
         feature_events = False  # mappings between features and time periods
-        if(geo_meta is not False):
+        if geo_meta is not False:
             features_dict = LastUpdatedOrderedDict()
             feature_events = LastUpdatedOrderedDict()
             for geo in geo_meta:
@@ -1218,7 +1218,7 @@ class ItemConstruction():
                 geo_props['type'] = geo.meta_type
                 if len(geo.note) > 0:
                     geo_props['note'] = geo.note
-                if(uuid != geo.uuid):
+                if uuid != geo.uuid:
                     geo_props['reference-type'] = 'inferred'
                     geo_props['reference-uri'] = URImanagement.make_oc_uri(geo.uuid, 'subjects', self.cannonical_uris)
                     rel_meta = self.get_entity_metadata(geo.uuid)
@@ -1229,7 +1229,7 @@ class ItemConstruction():
                     if self.assertion_hashes:
                         geo_props['hash_id'] = geo.hash_id
                         geo_props['feature_id'] = geo.feature_id
-                if(geo.specificity < 0):
+                if geo.specificity < 0:
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
                     geo_props['location-precision'] = abs(geo.specificity)
@@ -1260,14 +1260,14 @@ class ItemConstruction():
                                                                'region approximating the location for this item'
                     item_f_point.properties['id'] = geo_node_props
                     features_dict[geo_node] = item_f_point
-                elif(len(geo.coordinates) > 1):
+                elif len(geo.coordinates) > 1:
                     # here we have geo_json expressed features and geometries to use
                     geo_props['location-precision-note'] = 'Location data available with no '\
                                                            'intentional reduction in precision'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
                     item_f_point.properties.update(geo_props)
-                    if(uuid == geo.uuid):
+                    if uuid == geo.uuid:
                         #the item itself has the polygon as it's feature
                         item_db = Point((float(geo.longitude), float(geo.latitude)))
                         if(geo.ftype == 'Polygon'):
@@ -1309,7 +1309,7 @@ class ItemConstruction():
                     item_f_point.properties.update(geo_props)
                     item_f_point.properties['id'] = geo_node_props
                     features_dict[geo_node] = item_f_point
-            if(event_meta is not False):
+            if event_meta is not False:
                 # events provide chrological information, tied to geo features
                 # sometimes there are more than 1 time period for each geo feature
                 # in such cases, we duplicate geo features and add the different time event
@@ -1317,19 +1317,19 @@ class ItemConstruction():
                 for event in event_meta:
                     rel_feature_num = 1  # default to the first geospatial feature for where the event happened
                     rel_feature_node = False
-                    if(event.feature_id > 0):
+                    if event.feature_id > 0:
                         rel_feature_num = event.feature_id
-                    if(rel_feature_num >= 1):
+                    if rel_feature_num >= 1:
                         rel_feature_node = '#geo-' + str(rel_feature_num)
                     act_event_obj = LastUpdatedOrderedDict()
                     act_event_obj = self.add_when_json(act_event_obj, uuid, item_type, event)
-                    if(rel_feature_node is not False and feature_events is not False):
+                    if rel_feature_node is not False and feature_events is not False:
                         feature_events[rel_feature_node].append(act_event_obj)
-            if(features_dict is not False):
-                if(feature_events is not False):
+            if features_dict is not False :
+                if feature_events is not False:
                     for node_key, event_list in feature_events.items():
                         # update the feature with the first event "when" information
-                        if(len(event_list) > 0):
+                        if len(event_list) > 0:
                             features_dict[node_key].update(event_list[0])
                             event_i = 1
                             for event in event_list:
@@ -1351,7 +1351,7 @@ class ItemConstruction():
                                     del(act_feature)
                                 event_i += 1
                 feature_keys = list(features_dict.keys())
-                if(len(feature_keys) < 1):
+                if len(feature_keys) < 1:
                     del features_dict[feature_keys[0]]['id']  # remove the conflicting id
                     # only 1 feature, so item is not a feature collection
                     act_dict.update(features_dict[feature_keys[0]])
