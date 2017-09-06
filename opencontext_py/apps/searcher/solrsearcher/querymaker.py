@@ -759,18 +759,37 @@ class QueryMaker():
         query_dict = {'fq': [],
                       'facet.field': []}
         fq_terms = []
-        escape_id = self.escape_solr_arg(identifier)
-        fq_terms.append('persistent_uri:' + escape_id)
-        # now make a DOI URI in case this is just a naked DOI
-        doi_uri = self.escape_solr_arg('http://dx.doi.org/' + identifier)
-        fq_terms.append('persistent_uri:' + doi_uri)
-        # now make an ARK URI in case this is just a naked ARK
-        ark_uri = self.escape_solr_arg('http://n2t.net/' + identifier)
-        fq_terms.append('persistent_uri:' + ark_uri)
-        # now make an ORCID URI in case this is just a naked ORCID
-        orcid_uri = self.escape_solr_arg('http://orcid.org/' + identifier)
-        fq_terms.append('persistent_uri:' + orcid_uri)
-        fq_terms.append('uuid:' + escape_id)
+        id_list = [identifier]
+        id_list = self.make_http_https_options(id_list)
+        for act_id in id_list:
+            escape_id = self.escape_solr_arg(act_id)
+            fq_terms.append('persistent_uri:' + escape_id)
+            fq_terms.append('uuid:' + escape_id)
+         # now make URIs in case we have a naked identifier
+        prefix_removes = [
+            'doi:',
+            'orcid:',
+            'http://dx.doi.org/',
+            'https://dx.doi.org/',
+            'http://doi.org/',
+            'https://doi.org/'
+        ]
+        for prefix in prefix_removes:
+            # strip ID prefixes, case insensitive
+            re_gone = re.compile(re.escape(prefix), re.IGNORECASE)
+            identifier = re_gone.sub('', identifier)
+        uris = [
+            'http://dx.doi.org/' + identifier,  # DOI (old)
+            'http://doi.org/' + identifier,  # DOI (new)
+            'http://n2t.net/' + identifier,  # ARK (CDL / Merritt)
+            'http://orcid.org/' + identifier # Orcid (people)
+        ]
+        # now make https http varients of the URIs
+        uris = self.make_http_https_options(uris)
+        for uri in uris:
+            # now make a DOI URI in case this is just a naked DOI
+            escaped_uri = self.escape_solr_arg(uri)
+            fq_terms.append('persistent_uri:' + escaped_uri)
         tcheck = URImanagement.get_uuid_from_oc_uri(identifier, True)
         if tcheck is not False:
             uuid = tcheck['uuid']
@@ -979,6 +998,29 @@ class QueryMaker():
             terms = []
             terms.append(self.escape_solr_arg(raw_term))
         return terms
+    
+    def make_http_https_options(self, terms):
+        """ checks a list of terms for http:// or https://
+            strings, if those exist, then add the alternative
+            to the list
+        """
+        output_terms = terms
+        if isinstance(terms, list):
+            output_terms = []
+            for term in terms:
+                output_terms.append(term)
+                if isinstance(term, str):
+                    if 'http://' in term:
+                        new_term = term.replace('http://', 'https://')
+                    elif 'https://' in term:
+                        new_term = term.replace('https://', 'http://')
+                    else:
+                        new_term = None
+                    if new_term is not None:
+                        output_terms.append(new_term)
+        else:
+            output_terms = terms
+        return output_terms
 
     def escaped_seq(self, term):
         """ Yield the next string based on the

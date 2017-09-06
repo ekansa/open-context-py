@@ -15,6 +15,7 @@ from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
 from opencontext_py.apps.ldata.orcid.api import orcidAPI
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -1154,6 +1155,7 @@ class Citation():
         self.item_editors = []
         self.raw_doi = False
         self.doi = False
+        self.raw_ark = False
         self.ark = False
         self.project = False
         self.context = False
@@ -1178,12 +1180,28 @@ class Citation():
                     if p_item['label'] not in self.item_editors:
                         self.item_editors.append(p_item['label'])
             if 'owl:sameAs' in json_ld:
+                id_prefixes = StableIdentifer.ID_TYPE_PREFIXES
                 for s_item in json_ld['owl:sameAs']:
-                    if 'dx.doi.org' in s_item['id']:
+                    if 'doi.org' in s_item['id']:
                         self.raw_doi = s_item['id'].replace('http://dx.doi.org/', '')
-                        self.doi = s_item['id']
+                        self.raw_doi = self.raw_doi.replace('https://doi.org/', '')
+                        self.raw_doi = self.raw_doi.replace('http://doi.org/', '')
+                        self.raw_doi = self.raw_doi.replace('https://doi.org/', '')
+                        if id_prefixes['doi'] not in s_item['id']:
+                            # replace the DOI with the current best URL from the
+                            # StableIdentifer.ID_TYPE_PREFIXES
+                            self.doi = id_prefixes['doi'] + self.raw_doi
+                        else:
+                            self.doi = s_item['id']
                     elif 'n2t.net/ark:' in s_item['id']:
-                        self.ark = s_item['id']
+                        self.raw_ark = s_item['id'].replace('http://n2t.net/ark:', '')
+                        self.raw_ark = self.raw_ark.replace('https://n2t.net/ark:', '')
+                        if id_prefixes['ark'] not in s_item['id']:
+                            # replace the DOI with the current best URL from the
+                            # StableIdentifer.ID_TYPE_PREFIXES
+                            self.ark = id_prefixes['ark'] + self.raw_ark 
+                        else:
+                            self.ark = s_item['id']
             if len(self.item_authors) < 1:
                 self.item_authors = self.item_editors
             if 'dc-terms:issued' in json_ld:
@@ -1269,6 +1287,9 @@ class LinkedData():
                            'dc-terms:references',
                            'dc-terms:hasVersion',
                            'http://nomisma.org/ontology#hasTypeSeriesItem']
+    HIDE_PREDICATES = [
+        'foaf:depiction'
+    ]
 
     def __init__(self):
         self.linked_predicates = False
@@ -1292,7 +1313,7 @@ class LinkedData():
         if ld_found and self.linked_predicates is not False:
             # using an ordered dict to make sure we can more easily have unique combos of preds and objects
             temp_annotations = LastUpdatedOrderedDict()
-            if(OCitem.PREDICATES_OCGEN_HASOBS in json_ld):
+            if OCitem.PREDICATES_OCGEN_HASOBS in json_ld:
                 for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                     for link_pred in self.linked_predicates:
                         if link_pred['subject'] in obs_item:
@@ -1436,7 +1457,10 @@ class LinkedData():
         if isinstance(json_ld, dict):
             preds = self.ITEM_REL_PREDICATES + self.REL_MEASUREMENTS
             for act_pred in preds:
-                if act_pred in json_ld:
+                if act_pred in self.HIDE_PREDICATES:
+                    # we need to hide this predicate, so skip it.
+                    pass
+                elif act_pred in json_ld:
                     add_annotation = True
                     p_uri = act_pred
                     p_label = act_pred
@@ -1507,7 +1531,10 @@ class LinkedData():
         if isinstance(json_ld, dict):
             for act_pred in self.ITEM_DC_METADATA_PREDICATES:
                 # print(act_pred)
-                if act_pred in json_ld:
+                if act_pred in self.HIDE_PREDICATES:
+                    # we need to hide this predicate, so skip it.
+                    pass
+                elif act_pred in json_ld:
                     add_annotation = True
                     p_uri = act_pred
                     p_label = act_pred

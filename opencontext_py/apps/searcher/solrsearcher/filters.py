@@ -99,6 +99,9 @@ class ActiveFilters():
                     elif param_key == 'q':
                         act_filter['oc-api:filter'] = 'General Keyword Search'
                         act_filter['label'] = 'Search Term: \'' + all_vals[0] + '\''
+                    elif param_key == 'id':
+                        act_filter['oc-api:filter'] = 'Identifier Lookup'
+                        act_filter['label'] = 'Identifier: \'' + all_vals[0] + '\''
                     elif param_key == 'form-chronotile':
                         act_filter['oc-api:filter'] = 'Time of formation, use, or life'
                         chrono = ChronoTile()

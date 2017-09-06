@@ -95,6 +95,7 @@ class ProjectMeta():
         self.event_ents = False
         self.geo_range = False  # dict object of min, max longitude, latitudes
         self.print_progress = False
+        self.project_specificity = 0
 
     def make_geo_meta(self, project_uuid):
         output = False
@@ -102,14 +103,20 @@ class ProjectMeta():
         pr = ProjectRels()
         sub_projs = pr.get_sub_projects(project_uuid)
         if sub_projs is False:
-            uuids = project_uuid
+            uuids = [project_uuid]
         else:
             uuids = []
             for sub_proj in sub_projs:
                 uuids.append(sub_proj.uuid)
             uuids.append(project_uuid)
         self.get_geo_range(uuids)
-        if self.geo_range is not False:
+        if self.geo_range is False:
+            pass
+            if self.print_progress:
+                print('Range fail: ' + str(self.geo_range) )
+        else:
+            if self.print_progress:
+                print('Working on range: ' + str(self.geo_range) )
             min_lon_lat = [self.geo_range['longitude__min'],
                            self.geo_range['latitude__min']]
             max_lon_lat = [self.geo_range['longitude__max'],
@@ -178,7 +185,7 @@ class ProjectMeta():
             geo_obj.coordinates = json.dumps(coords, ensure_ascii=False)
         geo_obj.latitude = lat
         geo_obj.longitude = lon
-        geo_obj.specificity = 0
+        geo_obj.specificity = self.project_specificity
         geo_obj.note = 'Project geographic coverage \
                         summarized from geospatial data \
                         describing subjects published \
@@ -346,20 +353,28 @@ class ProjectMeta():
         """
         uuids = self.make_uuids_list(uuids)
         if self.print_progress:
-            print('Geo range for ' + str(uuids))
+            print('Get geo range for ' + str(uuids))
         proj_geo = Geospace.objects.filter(project_uuid__in=uuids)\
                            .exclude(latitude=0, longitude=0)\
                            .aggregate(Max('latitude'),
                                       Max('longitude'),
                                       Min('latitude'),
-                                      Min('longitude'))
-        if(proj_geo['latitude__max'] is not None):
+                                      Min('longitude'),
+                                      Avg('specificity'))
+        if proj_geo['latitude__max'] is not None:
             self.geo_range = proj_geo
+            act_specificity = round(float(proj_geo['specificity__avg']), 0)
+            try:
+                self.project_specificity = int(act_specificity)
+            except:
+                pass
+        elif self.print_progress:
+            print('Problem with: ' + str(proj_geo))
         return self.geo_range
 
     def make_uuids_list(self, uuids):
         """ Makes a list of UUIDS if only passed a string """
-        if uuids is not list:
+        if not isinstance(uuids, list):
             uuids = [uuids]  # make a list
         return uuids
 

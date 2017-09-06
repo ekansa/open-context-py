@@ -109,5 +109,21 @@
                 <p>Adding this query parameter and value adds a special filter for interacting with data in the Digital Index of North American Archaeology (DINAA) project. The query filters for DINAA records cross-referenced with URI identified resources curated by other online collections. <a href="{{ base_url }}/subjects-search/United+States?proj=52-digital-index-of-north-american-archaeology-dinaa&linked=dinaa-cross-ref" title="Filter for DINAA records cross-referenced with Linked Data">Click here</a> to view cross-referenced records in DINAA.</p>
             </td>
         </tr>
+        <tr>
+            <th>
+                <samp>id={Identifier string}</samp>
+            </th>
+            <td>
+                <p>Adding this query parameter and value filters records for different types of identifiers, including <a href="https://en.wikipedia.org/wiki/Digital_object_identifier" target="_blank">DOIs</a>, <a href="https://en.wikipedia.org/wiki/Archival_Resource_Key" target="_blank">ARKs</a>, <a href="https://en.wikipedia.org/wiki/ORCID" target="_blank">ORCIDs</a>, and Open Context URIs and UUIDs. Open Context will evaluate query with different variants of expressing an identifer. For example, the identifier "doi:10.6078/M77P8W98" can be expressed as:</p>
+                <ul>
+                    <li><a href="{{ base_url }}/search/?id=doi%3A10.6078%2FM77P8W98">doi:10.6078/M77P8W98</a></li>
+                    <li><a href="{{ base_url }}/search/?id=https%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">https://doi.org/10.6078/M77P8W98</a>, the current preferred URL expression for a DOI.</li>
+                    <li><a href="{{ base_url }}/search/?id=http%3A%2F%2Fdoi.org%2F10.6078%2FM77P8W98">http://doi.org/10.6078/M77P8W98</a>, not secured (not preferred) URL expression for a DOI.</li>
+                    <li><a href="{{ base_url }}/search/?id=https%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">https://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI.</li>
+                    <li><a href="{{ base_url }}/search/?id=http%3A%2F%2Fdx.doi.org%2F10.6078%2FM77P8W98">http://dx.doi.org/10.6078/M77P8W98</a>, an older URL expression for a DOI, without an encrypted request.</li>
+                </ul>
+                <p>A search for any one of the above ID varients will retrieve the same record.</p>
+            </td>
+        </tr>
     </tbody>
 </table>
