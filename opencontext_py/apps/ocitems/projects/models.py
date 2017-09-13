@@ -23,6 +23,7 @@ class Project(models.Model):
     view_group_id = models.IntegerField()
     edit_group_id = models.IntegerField()
     edit_status = models.IntegerField()
+    default_geozoom = models.IntegerField(default=0)
     label = models.CharField(max_length=200)
     short_des = models.CharField(max_length=200)
     content = models.TextField()
