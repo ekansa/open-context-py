@@ -21,7 +21,7 @@ class JsonLDchronology():
         self.spatial_context = False
         self.min_tile_depth = 12
         self.aggregation_depth = 16
-        self.min_tile_count = 12
+        self.min_tile_count = 14
         self.max_depth = ChronoTile.MAX_TILE_DEPTH
         self.limiting_tile = False
         self.ok_for_suggested_tile_depth = True
@@ -44,7 +44,7 @@ class JsonLDchronology():
         aggregate_tiles = LastUpdatedOrderedDict()
         i = -1
         t = 0
-        if len(solr_tiles) * .5 <= self.min_tile_count:
+        if len(solr_tiles) <= self.min_tile_count:
             # it's half of the solr_tile list, because the first item is the key
             # 2nd item is the count.
             # don't aggregate if there's not much to aggregate
