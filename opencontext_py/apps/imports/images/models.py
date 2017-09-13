@@ -13,8 +13,9 @@ class ImageImport():
 
 from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
+ii.force_dashes = True
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-ii.make_image_versions('revised-2017-media')
+ii.make_image_versions('sardis-sherds')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -29,6 +30,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.full_dir = 'full'
         self.preview_dir = 'preview'
         self.thumbs_dir = 'thumbs'
+        self.force_dashes = False  # make sure the new filenames have dashes, not spaces or underscores
         self.errors = []
 
     def make_image_versions(self, src):
@@ -57,6 +59,10 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     os.mkdir(act_dir)
                     for filename in filenames:
                         src_file = os.path.join(dirpath, filename)
+                        if self.force_dashes:
+                            # make sure the new filenames have dashes, not spaces or underscores
+                            filename = filename.replace(' ', '-')
+                            filename = filename.replace('_', '-')
                         if new_dir == self.full_dir:
                             new_file = os.path.join(act_dir, filename)
                             # its the full size file, just copy it without modification
