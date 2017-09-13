@@ -44,7 +44,9 @@ class JsonLDchronology():
         aggregate_tiles = LastUpdatedOrderedDict()
         i = -1
         t = 0
-        if len(solr_tiles) <= self.min_tile_count:
+        if len(solr_tiles) * .5 <= self.min_tile_count:
+            # it's half of the solr_tile list, because the first item is the key
+            # 2nd item is the count.
             # don't aggregate if there's not much to aggregate
             self.aggregation_depth = self.max_depth
         else:
