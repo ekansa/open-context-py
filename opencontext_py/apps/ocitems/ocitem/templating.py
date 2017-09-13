@@ -1294,7 +1294,11 @@ class GeoMap():
                                 item_f_poly = Feature(geometry=item_polygon)
                                 item_f_poly.properties.update(geo_props)
                                 if 'location-note' in item_f_poly.properties:
-                                    item_f_poly.properties['location-note'] += ' ' + sec_note
+                                    if 'no intentional reduction' in item_f_poly.properties['location-note']:
+                                        # so we don't confuse messages.
+                                        item_f_poly.properties['location-note'] = sec_note
+                                    else:
+                                        item_f_poly.properties['location-note'] += sec_note
                                 if 'location-region-note' in item_f_poly.properties:
                                     if 'center' in  item_f_poly.properties['location-region-note']:
                                         item_f_poly.properties['location-region-note'] = 'This location approximates the '\
