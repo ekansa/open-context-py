@@ -1298,7 +1298,7 @@ class GeoMap():
                                         # so we don't confuse messages.
                                         item_f_poly.properties['location-note'] = sec_note
                                     else:
-                                        item_f_poly.properties['location-note'] += sec_note
+                                        item_f_poly.properties['location-note'] += ' ' + sec_note
                                 if 'location-region-note' in item_f_poly.properties:
                                     if 'center' in  item_f_poly.properties['location-region-note']:
                                         item_f_poly.properties['location-region-note'] = 'This location approximates the '\
