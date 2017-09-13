@@ -1296,7 +1296,7 @@ class GeoMap():
                                 if 'location-note' in item_f_poly.properties:
                                     if 'no intentional reduction' in item_f_poly.properties['location-note']:
                                         # so we don't confuse messages.
-                                        item_f_poly.properties['location-note'] = sec_note
+                                        item_f_poly.properties['location-note'] = 'This location information is inferred. ' + sec_note
                                     else:
                                         item_f_poly.properties['location-note'] += ' ' + sec_note
                                 if 'location-region-note' in item_f_poly.properties:
