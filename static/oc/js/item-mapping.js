@@ -73,12 +73,12 @@ function initmap() {
 						var uri = localize_oc_uri(props['reference-uri']);
 						loc_note_html = [
 							'<dl>',
-							'<dt>Location Inferred From</dt>',
+							'<dt>Location Inferred From:</dt>',
 							'<dd>',
 							'<a href="' + uri + '" target="_blank">',
 							props['reference-label'] + '</a>',
 							'</dd>',
-							'<dt>Location Note</dt>',
+							'<dt>Location Note:</dt>',
 							'<dd>',
 							loc_note,
 							'</dd>',
@@ -91,11 +91,11 @@ function initmap() {
 					}
 					loc_note_html = [
 						'<dl>',
-						'<dt>Location</dt>',
+						'<dt>Location:</dt>',
 						'<dd>',
 						'This item has its own location data.',
 						'</dd>',
-						'<dt>Location Note</dt>',
+						'<dt>Location Note:</dt>',
 						'<dd>',
 						loc_note,
 						'</dd>',
@@ -122,4 +122,5 @@ function initmap() {
 		onEachFeature: on_each_feature
 		}
 	).addTo(map);
+
 }
