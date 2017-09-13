@@ -1233,7 +1233,7 @@ class ItemConstruction():
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
                     geo_props['location-precision'] = abs(geo.specificity)
-                    geo_props['location-precision-note'] = 'Location data approximated as a security precaution'
+                    geo_props['location-precision-note'] = 'Location data approximated as a security precaution.'
                     gmt = GlobalMercator()
                     geotile = gmt.lat_lon_to_quadtree(geo.latitude, geo.longitude, abs(geo.specificity))
                     tile_bounds = gmt.quadtree_to_lat_lon(geotile)
@@ -1248,7 +1248,7 @@ class ItemConstruction():
                     item_f_poly.geometry.id = geo_node_derived_geom
                     item_f_poly.properties.update(geo_props)
                     item_f_poly.properties['location-note'] = 'This region defines the '\
-                                                              'approximate location for this item'
+                                                              'approximate location for this item.'
                     item_f_poly.properties['id'] = geo_node_derived_props
                     features_dict[geo_node_derived] = item_f_poly
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
@@ -1257,13 +1257,13 @@ class ItemConstruction():
                     item_f_point.geometry.id = geo_node_geom
                     item_f_point.properties.update(geo_props)
                     item_f_point.properties['location-note'] = 'This point defines the center of the '\
-                                                               'region approximating the location for this item'
+                                                               'region approximating the location for this item.'
                     item_f_point.properties['id'] = geo_node_props
                     features_dict[geo_node] = item_f_point
                 elif len(geo.coordinates) > 1:
                     # here we have geo_json expressed features and geometries to use
                     geo_props['location-precision-note'] = 'Location data available with no '\
-                                                           'intentional reduction in precision'
+                                                           'intentional reduction in precision.'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
                     item_f_point.properties.update(geo_props)
@@ -1288,7 +1288,7 @@ class ItemConstruction():
                         item_f_point.id = geo_node_derived
                         item_f_point.geometry.id = geo_node_derived_geom
                         item_f_point.properties['location-region-note'] = 'This point represents the center of the '\
-                                                                          'region defining the location of this item'
+                                                                          'region defining the location of this item.'
                         item_f_point.properties['id'] = geo_node_derived_props
                         features_dict[geo_node_derived] = item_f_point
                     else:
@@ -1297,11 +1297,11 @@ class ItemConstruction():
                         item_f_point.geometry.id = geo_node_geom
                         item_f_point.properties['id'] = geo_node_props
                         item_f_point.properties['location-region-note'] = 'This point represents the center of the '\
-                                                                          'region containing this item'
+                                                                          'region containing this item.'
                         features_dict[geo_node] = item_f_point
                 else:
                     # case where the item only has a point for geo-spatial reference
-                    geo_props['location-note'] = 'Location data available with no intentional reduction in precision'
+                    geo_props['location-note'] = 'Location data available with no intentional reduction in precision.'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
                     item_f_point.id = geo_node

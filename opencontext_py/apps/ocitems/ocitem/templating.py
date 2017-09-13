@@ -2,6 +2,8 @@ import json
 import copy
 import datetime
 from random import randint
+from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
+from geojson import MultiPoint, MultiLineString, LineString
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
 from django.utils.http import urlquote, quote_plus, urlquote_plus
@@ -291,6 +293,9 @@ class TemplateItem():
         """ Makes an instance of a GeoMap class, with data from the JSON_LD
         """
         geo = GeoMap()
+        if self.project is not False:
+            # add default geozoom to update how mapping happens
+            geo.default_geozoom = self.project.default_geozoom
         geo.make_geomap(json_ld)
         self.geo = geo
 
@@ -1119,6 +1124,7 @@ class Project():
         self.edit_status = False
         self.item_type = False
         self.view_authorized = False
+        self.default_geozoom = 0
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -1135,6 +1141,7 @@ class Project():
                             project = ModProject.objects.get(uuid=self.uuid)
                             self.edit_status = project.edit_status
                             self.parent_project_uuid = project.project_uuid
+                            self.default_geozoom = project.default_geozoom
                         except ModProject.DoesNotExist:
                             project = False
                         break
@@ -1239,6 +1246,7 @@ class GeoMap():
         self.start_lat = 0
         self.start_lon = 0
         self.start_zoom = 7
+        self.default_geozoom = 0
 
     def make_geomap(self, json_ld):
         """ Makes an ordered dict for saving geojson data as json
@@ -1261,6 +1269,38 @@ class GeoMap():
                         if 'security' in feature['properties']['location-precision-note'] \
                            and feature['geometry']['type'] == 'Point':
                             show_feature = False
+                    if 'reference-type' in feature['properties']:
+                        if feature['properties']['reference-type'] == 'inferred':
+                            if self.default_geozoom < 0:
+                                # we have a case with an inferred location
+                                # but a project that generally obscures location
+                                # So, make a new polygon feature and hide this point
+                                show_feature = False  # don't show the inferred location item, instead show a polygon region for it
+                                sec_note = 'All project location data approximated as a security precaution.'
+                                geo_props = feature['properties']
+                                geo_props['location-precision'] = abs(self.default_geozoom)
+                                geo_props['location-precision-note'] = sec_note
+                                gmt = GlobalMercator()
+                                geotile = gmt.lat_lon_to_quadtree(feature['geometry']['coordinates'][1],
+                                                                  feature['geometry']['coordinates'][0],
+                                                                  abs( self.default_geozoom))
+                                tile_bounds = gmt.quadtree_to_lat_lon(geotile)
+                                item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
+                                                         (tile_bounds[1], tile_bounds[2]),
+                                                         (tile_bounds[3], tile_bounds[2]),
+                                                         (tile_bounds[3], tile_bounds[0]),
+                                                         (tile_bounds[1], tile_bounds[0])
+                                                         ]])
+                                item_f_poly = Feature(geometry=item_polygon)
+                                item_f_poly.properties.update(geo_props)
+                                if 'location-note' in item_f_poly.properties:
+                                    item_f_poly.properties['location-note'] += ' ' + sec_note
+                                if 'location-region-note' in item_f_poly.properties:
+                                    if 'center' in  item_f_poly.properties['location-region-note']:
+                                        item_f_poly.properties['location-region-note'] = 'This location approximates the '\
+                                                                                         'location of the record containing this item.'
+                                    item_f_poly.properties['location-region-note'] += ' ' + sec_note
+                                use_features.append(item_f_poly)
                     if show_feature:
                         use_features.append(feature)
                 self.start_lat = sum(lats) / float(len(lats))

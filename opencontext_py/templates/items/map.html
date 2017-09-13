@@ -4,6 +4,12 @@
 <div id="map-outer">
     <h4>Mapping Data</h4>
     <div id="map"></div>
+	{% if item.geo.default_geozoom < 0 %}
+	<div class="alert alert-warning" role="alert">
+		<strong>Note:</strong> Unless otherwise specified,
+	    this project approximates all location data as a security measure.
+	</div>
+	{%endif%}
     <script type="text/javascript">
         <!--
         var geojson = {% autoescape off %}{{ item.geo.geojson }}{% endautoescape %};

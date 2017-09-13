@@ -8,6 +8,17 @@ var polyStyle = {
 	"fillOpacity": 0.5
  };
 
+function localize_oc_uri(uri){
+	var output = uri;
+	if(typeof base_url != 'undefined'){
+		if(uri.indexOf('http://opencontext.org') === 0){
+			len_uri = uri.length;
+			output = base_url + uri.substring(22, len_uri);
+		}
+	}
+	return output;
+}
+
 function initmap() {
      
 	map = L.map('map').setView([start_lat, start_lon], start_zoom); //map the map
@@ -39,9 +50,76 @@ function initmap() {
 		"OpenStreetMap": osmTiles,
 		"MapBox": mapboxTiles,
 	};
-  
+    
+	
+	function on_each_feature(feature, layer){
+		// map popup function
+		console.log(feature);
+		if (feature.properties) {
+			var props = feature.properties;
+			var loc_note = '';
+			var loc_note_html = '';
+			if('location-note' in props){
+				loc_note += props['location-note']+ ' ';
+			}
+			else{
+				if('location-region-note' in props){
+					loc_note += props['location-region-note'] + ' ';
+				}
+			}
+			if('reference-type' in props){
+				if (props['reference-type'] == 'inferred'){
+					if('reference-label' in props && 'reference-uri' in props){
+						var uri = localize_oc_uri(props['reference-uri']);
+						loc_note_html = [
+							'<dl>',
+							'<dt>Location Inferred From</dt>',
+							'<dd>',
+							'<a href="' + uri + '" target="_blank">',
+							props['reference-label'] + '</a>',
+							'</dd>',
+							'<dt>Location Note</dt>',
+							'<dd>',
+							loc_note,
+							'</dd>',
+						].join("\n");
+					}
+				}
+				else{
+					if('location-precision-note' in props){
+						loc_note += props['location-precision-note'] + ' ';
+					}
+					loc_note_html = [
+						'<dl>',
+						'<dt>Location</dt>',
+						'<dd>',
+						'This item has its own location data.',
+						'</dd>',
+						'<dt>Location Note</dt>',
+						'<dd>',
+						loc_note,
+						'</dd>',
+					].join("\n");
+				}
+			}
+			
+			
+			var popupContent = [
+			'<div>',
+			loc_note_html,
+			'</div>'].join("\n");
+			layer.bindPopup(popupContent);
+		}
+	}
+	
+	
+	
 	map.addLayer(gmapSat);
 	map._layersMaxZoom = 30;
 	L.control.layers(baseMaps).addTo(map);
-	L.geoJson(geojson, {style: polyStyle}).addTo(map)
+	L.geoJson(geojson, {
+		style: polyStyle,
+		onEachFeature: on_each_feature
+		}
+	).addTo(map);
 }
