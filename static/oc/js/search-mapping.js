@@ -58,6 +58,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.rows = rows;
 	map.fit_bounds = false;
 	map.max_tile_zoom = 20;
+	map.max_disc_tile_zoom = 20;  // the tile zoom level indexed by OC. Will be less than 20 to protect site security
 	map.default_overlay_layer = 'any';
 	map.layer_limit = false;
 	map.button_ready = true;
@@ -618,42 +619,52 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			data: {
 				response: map.response_types,
 				geodeep: map.geodeep},
-			success: function(data) {
-				// make so we don't ask for chrono-facets after the first load
-				map.response_types = 'geo-facet';
-				
-				map.show_region_loading();
-				if ('oc-api:response-tile-zoom' in data) {
-					map.geodeep = data['oc-api:response-tile-zoom'];
-				}
-				map.geojson_facets[map.geodeep] = data;
-				if (map.layer_limit == false) {
-					//code
-					if (map.req_hash_layer == 'circle') {
-						// initial hash request wants a circle
-						map.circle_regions();
+				success: function(data) {
+					// make so we don't ask for chrono-facets after the first load
+					map.response_types = 'geo-facet';
+					// console.log(data);
+					map.show_region_loading();
+					if ('oc-api:response-tile-zoom' in data) {
+						map.geodeep = data['oc-api:response-tile-zoom'];
 					}
-					else if (map.req_hash_layer == 'tile') {
-						// initial hash request wants a tile
-						map.render_region_layer();
+					if ('oc-api:max-disc-tile-zoom' in data){
+						// check for limits on the specificity of indexing locations
+						// important for DINAA
+						map.max_disc_tile_zoom = data['oc-api:max-disc-tile-zoom'];
 					}
-					else{
-						// intital has request did not specify circle or tile
-						if (data.features.length > map.min_tile_count_display
-						    || map.default_overlay_layer == 'tile') {
+					if (map.max_disc_tile_zoom < map.geodeep){
+						// only show tiles if we've got a limit on the specificity of loctions
+						// important for DINAA to not show cicles.
+						map.layer_limit = 'tile';
+					}
+					map.geojson_facets[map.geodeep] = data;
+					if (map.layer_limit == false) {
+						//code
+						if (map.req_hash_layer == 'circle') {
+							// initial hash request wants a circle
+							map.circle_regions();
+						}
+						else if (map.req_hash_layer == 'tile') {
+							// initial hash request wants a tile
 							map.render_region_layer();
 						}
 						else{
-							map.circle_regions();
+							// intital has request did not specify circle or tile
+							if (data.features.length > map.min_tile_count_display
+								|| map.default_overlay_layer == 'tile') {
+								map.render_region_layer();
+							}
+							else{
+								map.circle_regions();
+							}
 						}
 					}
-				}
-				else if(map.layer_limit == 'circle'){
-					map.circle_regions();
-				}
-				else{
-					map.render_region_layer();
-				}
+					else if(map.layer_limit == 'circle'){
+						map.circle_regions();
+					}
+					else{
+						map.render_region_layer();
+					}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
 				var scale = L.control.scale().addTo(map); 
