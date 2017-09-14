@@ -93,7 +93,7 @@ function initmap() {
 					var loc_info = 'This item has its own location data.';
 					if(typeof item_type != 'undefined'){
 						if(item_type == 'projects'){
-							loc_info = 'This summarizes of all locations in this project.';
+							loc_info = 'This summarizes all locations in this project.';
 						}
 					}
 					loc_note_html = [
