@@ -225,7 +225,8 @@ class OCitem():
             pm = ProjectMeta()
             self.sub_projects = pr.get_sub_projects(self.uuid)
             if self.geo_meta is False:
-                pm.make_geo_meta(self.uuid)
+                pm.print_progress = True
+                pm.make_geo_meta(self.uuid, self.sub_projects)
                 self.geo_meta = pm.geo_objs
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
@@ -329,6 +330,7 @@ class OCitem():
         item_con = ItemConstruction()
         item_con.uuid = self.uuid
         item_con.project_uuid = self.project_uuid
+        item_con.item_type = self.item_type
         item_con.cache_entities = self.cache_entities
         if self.assertion_hashes:
             # case to show hashs of observation values, useful for editing
@@ -461,6 +463,7 @@ class ItemConstruction():
     def __init__(self):
         self.uuid = False
         self.project_uuid = False
+        self.item_type = False
         self.assertion_hashes = False
         self.add_item_labels = True
         self.add_linked_data_labels = True
@@ -1229,7 +1232,7 @@ class ItemConstruction():
                     if self.assertion_hashes:
                         geo_props['hash_id'] = geo.hash_id
                         geo_props['feature_id'] = geo.feature_id
-                if geo.specificity < 0:
+                if geo.specificity < 0 and self.item_type != 'projects':
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
                     geo_props['location-precision'] = abs(geo.specificity)
@@ -1262,8 +1265,11 @@ class ItemConstruction():
                     features_dict[geo_node] = item_f_point
                 elif len(geo.coordinates) > 1:
                     # here we have geo_json expressed features and geometries to use
-                    geo_props['location-precision-note'] = 'Location data available with no '\
-                                                           'intentional reduction in precision.'
+                    if geo.specificity < 0:
+                        geo_props['location-precision-note'] = 'Location data approximated as a security precaution.'
+                    else:
+                        geo_props['location-precision-note'] = 'Location data available with no '\
+                                                               'intentional reduction in precision.'
                     item_point = Point((float(geo.longitude), float(geo.latitude)))
                     item_f_point = Feature(geometry=item_point)
                     item_f_point.properties.update(geo_props)
