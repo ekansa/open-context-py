@@ -52,10 +52,17 @@ function initmap() {
 		"MapBox": mapboxTiles,
 	};
     
+	// useful for seeting zooms. If only points, then we want to zoom
+	// further away
+	var point_features_only = true;
 	
 	function on_each_feature(feature, layer){
 		// map popup function
 		console.log(feature);
+		if(feature.geometry.type != 'Point' && feature.geometry.type != 'point'){
+			// we have features that aren't point, so do not do a big zoom out
+			point_features_only = false;
+		}
 		if (feature.properties) {
 			var props = feature.properties;
 			var loc_note = '';
@@ -129,5 +136,10 @@ function initmap() {
 	);
 	map.fitBounds(act_layer.getBounds());
 	map.zoomOut(2);
+	var current_zoom = map.getZoom();
+	if (current_zoom > start_zoom && point_features_only){
+		// we are zoomed into far, so go out
+		map.setZoom(start_zoom);
+	}
 	act_layer.addTo(map);
 }
