@@ -227,6 +227,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			deep_tile_control.id = 'test-control';
 			deep_tile_control.link.id = 'tile-more-precision';
 			big_tile_control.link.id = 'tile-less-precision';
+			circle_control.link.id = 'map-circle-control-link';
 			region_controls = true;
 			
 			var download_control = L.easyButton('glyphicon-download', 
@@ -268,6 +269,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			// toggle map controls based on map.geodeep
 			map.toggle_tile_controls();
 		}
+		
+		map.check_hide_circle_control();
 	}
 	
 	map.toggle_tile_controls = function(){
@@ -294,6 +297,19 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			link.title = 'Lower resolution Open Context regions';
 			link.className = '';
 			link.style = '';
+		}
+		
+		map.check_hide_circle_control();
+	}
+	
+	map.check_hide_circle_control = function(){
+		// checks to see if we should hide the cricle control from view
+		if (map.max_disc_tile_zoom < map.geodeep){
+			// we have low precision data, so hide the circle control
+			act_dom_id = 'map-circle-control-link';
+			link = document.getElementById(act_dom_id);
+			link.className = 'diabled-map-button';
+			link.title = 'At maximum spatial resolution for these data';
 		}
 	}
 	
