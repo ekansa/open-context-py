@@ -324,10 +324,11 @@ class GlobalMercator(object):
         coords = []
         outer_coords = []
         bounds = self.quadtree_to_lat_lon(quadtree)
+        # right hand rule, counter clockwise outside
         outer_coords.append([bounds[1], bounds[0]])
-        outer_coords.append([bounds[1], bounds[2]])
-        outer_coords.append([bounds[3], bounds[2]])
         outer_coords.append([bounds[3], bounds[0]])
+        outer_coords.append([bounds[3], bounds[2]])
+        outer_coords.append([bounds[1], bounds[2]])
         outer_coords.append([bounds[1], bounds[0]])
         coords.append(outer_coords)
         return coords
