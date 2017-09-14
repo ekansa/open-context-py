@@ -1299,12 +1299,12 @@ class GeoMap():
                                 show_feature = False  # don't show the inferred location item, instead show a polygon region for it
                                 sec_note = 'All project location data approximated as a security precaution.'
                                 geo_props = feature['properties']
-                                geo_props['location-precision'] = abs(self.default_geozoom)
+                                geo_props['location-precision'] = abs(self.proj_geo_specificity)
                                 geo_props['location-precision-note'] = sec_note
                                 gmt = GlobalMercator()
                                 geotile = gmt.lat_lon_to_quadtree(feature['geometry']['coordinates'][1],
                                                                   feature['geometry']['coordinates'][0],
-                                                                  abs( self.default_geozoom))
+                                                                  abs(self.proj_geo_specificity))
                                 tile_bounds = gmt.quadtree_to_lat_lon(geotile)
                                 item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
                                                          (tile_bounds[1], tile_bounds[2]),
