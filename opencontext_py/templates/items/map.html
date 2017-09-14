@@ -4,11 +4,25 @@
 <div id="map-outer">
     <h4>Mapping Data</h4>
     <div id="map"></div>
-	{% if item.geo.default_geozoom < 0 %}
+	{% if item.geo.proj_geo_specificity < 0 %}
 	<div class="alert alert-warning" role="alert">
+		{% if item.geo.proj_geo_note %}
+		
+		<strong>Note:</strong> {{ item.geo.proj_geo_note }}
+		
+		{%else%}
+		
 		<strong>Note:</strong> Unless otherwise specified,
 	    this project approximates all location data as a security measure.
+		
+		{%endif%}
 	</div>
+	{%else%}
+	{% if item.geo.proj_geo_note %}
+	<div class="alert alert-info" role="alert">
+		<strong>Note:</strong> {{ item.geo.proj_geo_note }}
+	</div>
+	{%endif%}
 	{%endif%}
     <script type="text/javascript">
         <!--

@@ -221,17 +221,23 @@ class OCitem():
             except Person.DoesNotExist:
                 self.person = False
         elif(self.item_type == 'projects'):
+            try:
+                self.project = Project.objects.get(uuid=self.uuid)
+            except Project.DoesNotExist:
+                self.project = False
             pr = ProjectRels()
             pm = ProjectMeta()
+            if self.project is not False:
+                if isinstance(self.project.meta_json, dict):
+                    if Project.META_KEY_GEO_SPECIFICITY in self.project.meta_json:
+                        # the project has some default geographic specificity noted
+                        # use this value when making geo_meta
+                        pm.project_specificity = self.project.meta_json[Project.META_KEY_GEO_SPECIFICITY]
             self.sub_projects = pr.get_sub_projects(self.uuid)
             if self.geo_meta is False:
                 pm.print_progress = True
                 pm.make_geo_meta(self.uuid, self.sub_projects)
                 self.geo_meta = pm.geo_objs
-            try:
-                self.project = Project.objects.get(uuid=self.uuid)
-            except Project.DoesNotExist:
-                self.project = False
         elif(self.item_type == 'predicates'):
             try:
                 self.predicate = Predicate.objects.get(uuid=self.uuid)
