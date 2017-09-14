@@ -223,15 +223,11 @@ class OCitem():
         elif(self.item_type == 'projects'):
             pr = ProjectRels()
             pm = ProjectMeta()
-            self.geo_meta = False
             self.sub_projects = pr.get_sub_projects(self.uuid)
             if self.geo_meta is False:
                 pm.print_progress = True
                 pm.make_geo_meta(self.uuid, self.sub_projects)
                 self.geo_meta = pm.geo_objs
-                for geo in self.geo_meta:
-                    pass
-                    print('Geo: ' + str(geo.__dict__))
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
             except Project.DoesNotExist:
