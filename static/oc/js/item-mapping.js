@@ -22,6 +22,7 @@ function localize_oc_uri(uri){
 function initmap() {
      
 	map = L.map('map').setView([start_lat, start_lon], start_zoom); //map the map
+	map.fit_bounds = false;
 	bounds = new L.LatLngBounds();
 	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 	    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
@@ -73,7 +74,7 @@ function initmap() {
 						var uri = localize_oc_uri(props['reference-uri']);
 						loc_note_html = [
 							'<dl>',
-							'<dt>Location Inferred From:</dt>',
+							'<dt>Location Inferred from:</dt>',
 							'<dd>',
 							'<a href="' + uri + '" target="_blank">',
 							props['reference-label'] + '</a>',
@@ -89,11 +90,17 @@ function initmap() {
 					if('location-precision-note' in props){
 						loc_note += props['location-precision-note'] + ' ';
 					}
+					var loc_info = 'This item has its own location data.';
+					if(typeof item_type != 'undefined'){
+						if(item_type == 'projects'){
+							loc_info = 'This summarizes of all locations in this project.';
+						}
+					}
 					loc_note_html = [
 						'<dl>',
 						'<dt>Location:</dt>',
 						'<dd>',
-						'This item has its own location data.',
+						loc_info,
 						'</dd>',
 						'<dt>Location Note:</dt>',
 						'<dd>',
@@ -112,15 +119,14 @@ function initmap() {
 		}
 	}
 	
-	
-	
 	map.addLayer(gmapSat);
 	map._layersMaxZoom = 30;
 	L.control.layers(baseMaps).addTo(map);
-	L.geoJson(geojson, {
+	var act_layer = L.geoJson(geojson, {
 		style: polyStyle,
 		onEachFeature: on_each_feature
 		}
-	).addTo(map);
-
+	);
+	map.fitBounds(act_layer.getBounds());
+	act_layer.addTo(map);
 }
