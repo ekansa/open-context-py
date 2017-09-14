@@ -377,10 +377,11 @@ class ProjectMeta():
         if proj_geo['latitude__max'] is not None:
             self.geo_range = proj_geo
             act_specificity = round(float(proj_geo['specificity__avg']), 0)
-            try:
-                self.project_specificity = int(act_specificity)
-            except:
-                pass
+            if self.project_specificity == 0:
+                try:
+                    self.project_specificity = int(act_specificity)
+                except:
+                    pass
         elif self.print_progress:
             print('Problem with: ' + str(proj_geo))
         return self.geo_range

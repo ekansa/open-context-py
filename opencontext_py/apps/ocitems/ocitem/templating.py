@@ -295,7 +295,8 @@ class TemplateItem():
         geo = GeoMap()
         if self.project is not False:
             # add default geozoom to update how mapping happens
-            geo.default_geozoom = self.project.default_geozoom
+            geo.proj_geo_specificity = self.project.proj_geo_specificity
+            geo.proj_geo_note = self.project.proj_geo_note
         geo.make_geomap(json_ld)
         self.geo = geo
 
@@ -1124,7 +1125,8 @@ class Project():
         self.edit_status = False
         self.item_type = False
         self.view_authorized = False
-        self.default_geozoom = 0
+        self.proj_geo_specificity = 0
+        self.proj_geo_note = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -1141,7 +1143,7 @@ class Project():
                             project = ModProject.objects.get(uuid=self.uuid)
                             self.edit_status = project.edit_status
                             self.parent_project_uuid = project.project_uuid
-                            self.default_geozoom = project.default_geozoom
+                            self.get_proj_geo_metadata(project)
                         except ModProject.DoesNotExist:
                             project = False
                         break
@@ -1150,7 +1152,7 @@ class Project():
                     # now get the edit status for the project, not in the JSON-LD
                     # but from the database
                     project = ModProject.objects.get(uuid=self.uuid)
-                    self.default_geozoom = project.default_geozoom
+                    self.get_proj_geo_metadata(project) 
                 except ModProject.DoesNotExist:
                     pass
                 for bibo_status in json_ld['bibo:status']:
@@ -1158,6 +1160,17 @@ class Project():
                         # get the number at the end of edit-level
                         self.edit_status = float(bibo_status['id'].split('-')[-1])
                         break
+        
+    def get_proj_geo_metadata(self, project):
+        """ gets project geospatial metadata if stored in a project object """
+        if isinstance(project.meta_json, dict):
+            # the project has some metadata in a dict (stored in db as JSON)
+            if ModProject.META_KEY_GEO_SPECIFICITY in project.meta_json:
+                # the project has some default geographic specificity noted
+                self.proj_geo_specificity = project.meta_json[ModProject.META_KEY_GEO_SPECIFICITY]
+            if ModProject.META_KEY_GEO_NOTE in project.meta_json:
+                # the project has a note about its geospatial data
+                self.proj_geo_note = project.meta_json[ModProject.META_KEY_GEO_NOTE]
 
 
 class Citation():
@@ -1253,7 +1266,8 @@ class GeoMap():
         self.start_lat = 0
         self.start_lon = 0
         self.start_zoom = 7
-        self.default_geozoom = 0
+        self.proj_geo_specificity = 0
+        self.proj_geo_note = False
 
     def make_geomap(self, json_ld):
         """ Makes an ordered dict for saving geojson data as json
@@ -1278,7 +1292,7 @@ class GeoMap():
                             show_feature = False
                     if 'reference-type' in feature['properties']:
                         if feature['properties']['reference-type'] == 'inferred':
-                            if self.default_geozoom < 0:
+                            if self.proj_geo_specificity < 0:
                                 # we have a case with an inferred location
                                 # but a project that generally obscures location
                                 # So, make a new polygon feature and hide this point

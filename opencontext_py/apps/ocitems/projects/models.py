@@ -9,6 +9,10 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 # Project stores the content of a project resource (structured text)
 @reversion.register  # records in this model under version control
 class Project(models.Model):
+    
+    META_KEY_GEO_SPECIFICITY = 'geo_specificity'  # metadata key for geospatial specificity for a project
+    META_KEY_GEO_NOTE = 'geo_note'  # metadata key for geospatial note associated with a project
+    
     uuid = models.CharField(max_length=50, primary_key=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)
@@ -17,7 +21,6 @@ class Project(models.Model):
     view_group_id = models.IntegerField()
     edit_group_id = models.IntegerField()
     edit_status = models.IntegerField()
-    default_geozoom = models.IntegerField(default=0)
     label = models.CharField(max_length=200)
     short_des = models.CharField(max_length=200)
     content = models.TextField()
@@ -27,6 +30,9 @@ class Project(models.Model):
     lg_localized_json = JSONField(default={},
                                   load_kwargs={'object_pairs_hook': collections.OrderedDict},
                                   blank=True)
+    meta_json = JSONField(default={},
+                          load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                          blank=True)
 
     def save(self, *args, **kwargs):
         """
