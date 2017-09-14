@@ -2,6 +2,7 @@ import json
 import numpy as np
 from numpy import vstack, array
 from scipy.cluster.vq import kmeans,vq
+from math import radians, cos, sin, asin, sqrt
 from django.db import models
 from django.db.models import Avg, Max, Min
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -84,7 +85,7 @@ class ProjectMeta():
     """
 
     MAX_CLUSTERS = 15
-    MIN_CLUSTER_SIZE = .05  # of the diagonal length between min(lat/lon) and max(lat/lon)
+    MIN_CLUSTER_SIZE_KM = 5  # diagonal length in KM between min(lat/lon) and max(lat/lon)
     LENGTH_CENTOID_FACTOR = .75  # for comparing cluster diagonal length with centoid distances
 
     def __init__(self):
@@ -97,11 +98,13 @@ class ProjectMeta():
         self.print_progress = False
         self.project_specificity = 0
 
-    def make_geo_meta(self, project_uuid):
+    def make_geo_meta(self, project_uuid, sub_projs=False):
         output = False
         self.project_uuid = project_uuid
-        pr = ProjectRels()
-        sub_projs = pr.get_sub_projects(project_uuid)
+        if sub_projs is False:
+            # check if there are subjects in this project
+            pr = ProjectRels()
+            sub_projs = pr.get_sub_projects(project_uuid)
         if sub_projs is False:
             uuids = [project_uuid]
         else:
@@ -127,7 +130,8 @@ class ProjectMeta():
                                                          min_point[1],
                                                          max_point[0],
                                                          max_point[1])
-            print(str(self.max_geo_range))
+            if self.print_progress:
+                print('Max geo range: ' + str(self.max_geo_range))
             if self.max_geo_range == 0:
                 # only 1 geopoint known for the project
                 lon_lat = [self.geo_range['longitude__min'],
@@ -137,6 +141,8 @@ class ProjectMeta():
             else:
                 # need to cluster geo data
                 clusts = self.cluster_geo(uuids)
+                if self.print_progress:
+                    print('finished clusters: ' + str(clusts))
             self.make_geo_objs(clusts)
             output = True
         return output
@@ -247,10 +253,6 @@ class ProjectMeta():
                                            + ' has too few members')
                 box = self.make_box(min_lon, min_lat, max_lon, max_lat)
                 boxes.append(box)
-                max_dist = self.get_point_distance(min_lon,
-                                                   min_lat,
-                                                   max_lon,
-                                                   max_lat)
                 jj = 0
                 for ch_box in ch_boxes:
                     if jj != i:
@@ -277,7 +279,8 @@ class ProjectMeta():
                                                             o_lat,
                                                             cent_lon,
                                                             cent_lat)
-                        if cent_dist < (self.MIN_CLUSTER_SIZE * self.max_geo_range):
+                        if cent_dist < self.MIN_CLUSTER_SIZE_KM \
+                           or cent_dist < (self.max_geo_range * .05):
                             resonable_clusters = False
                             if self.print_progress:
                                 print('Loop (' + str(number_clusters) + ') cluster size: ' \
@@ -294,23 +297,33 @@ class ProjectMeta():
         overlap = False
         overlap_lon = False
         overlap_lat = False
-        dist = self.get_point_distance(min_lon, min_lat, max_lon, max_lat)
-        blur = dist * .025
-        if (min_lon + blur >= ch_box['min_lon'] and min_lon - blur <= ch_box['max_lon'])\
-           or (max_lon + blur >= ch_box['min_lon'] and max_lon - blur <= ch_box['max_lon']):
+        if (min_lon >= ch_box['min_lon'] and min_lon <= ch_box['max_lon'])\
+           or (max_lon >= ch_box['min_lon'] and max_lon <= ch_box['max_lon']):
             overlap_lon = True
-        if (min_lat + blur >= ch_box['min_lat'] and min_lat - blur <= ch_box['max_lat'])\
-           or (max_lat + blur >= ch_box['min_lat'] and max_lat - blur <= ch_box['max_lat']):
+        if (min_lat >= ch_box['min_lat'] and min_lat <= ch_box['max_lat'])\
+           or (max_lat >= ch_box['min_lat'] and max_lat <= ch_box['max_lat']):
             overlap_lat = True
         if overlap_lon and overlap_lat:
             overlap = True
+        else:
+            ave_lon = (min_lon + max_lon) * .5
+            ave_lat = (min_lat + max_lat) * .5
         return overlap
 
-    def get_point_distance(self, x, y, xx, yy):
-        """ calculates the distance btween two points """
-        sqrd = ((x - xx) * (x - xx)) + ((y - yy) * (y - yy))
-        dist = np.sqrt([sqrd])
-        return dist[0]
+    def get_point_distance(self, lon1, lat1, lon2, lat2):
+        """
+        Calculate the great circle distance between two points 
+        on the earth (specified in decimal degrees)
+        """
+        # convert decimal degrees to radians 
+        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+        # haversine formula 
+        dlon = lon2 - lon1 
+        dlat = lat2 - lat1 
+        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+        c = 2 * asin(sqrt(a)) 
+        km = 6367 * c
+        return km
 
     def make_box(self, min_lon, min_lat, max_lon, max_lat):
         """ Makes geojson coordinates list for a bounding feature """
