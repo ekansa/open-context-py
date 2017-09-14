@@ -1146,6 +1146,13 @@ class Project():
                             project = False
                         break
             if self.item_type == 'projects' and 'bibo:status' in json_ld:
+                try:
+                    # now get the edit status for the project, not in the JSON-LD
+                    # but from the database
+                    project = ModProject.objects.get(uuid=self.uuid)
+                    self.default_geozoom = project.default_geozoom
+                except ModProject.DoesNotExist:
+                    pass
                 for bibo_status in json_ld['bibo:status']:
                     if 'edit-level' in bibo_status['id']:
                         # get the number at the end of edit-level

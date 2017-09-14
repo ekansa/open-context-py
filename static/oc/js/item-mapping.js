@@ -128,5 +128,6 @@ function initmap() {
 		}
 	);
 	map.fitBounds(act_layer.getBounds());
+	map.zoomOut(2);
 	act_layer.addTo(map);
 }
