@@ -134,44 +134,36 @@ class ProjectMeta():
                 print('Max geo range: ' + str(self.max_geo_range))
             if self.max_geo_range == 0:
                 # only 1 geopoint known for the project
-                lon_lat = [self.geo_range['longitude__min'],
-                           self.geo_range['latitude__max']]
-                clusts = {'centroids': [lon_lat],
-                          'boxes': []}
+                proc_centroids = []
+                proc_centroid = {}
+                proc_centroid['index'] = 0
+                proc_centroid['id'] = 1
+                proc_centroid['num_points'] = 1
+                proc_centroid['cent_lon'] = self.geo_range['longitude__min']
+                proc_centroid['cent_lat'] = self.geo_range['latitude__max']
+                proc_centroid['box'] = False
+                proc_centroids.append(proc_centroid)
             else:
                 # need to cluster geo data
-                clusts = self.cluster_geo(uuids)
-                if self.print_progress:
-                    print('finished clusters: ' + str(clusts))
-            self.make_geo_objs(clusts)
+                proc_centroids = self.cluster_geo(uuids)
+            self.make_geo_objs(proc_centroids)
             output = True
         return output
 
-    def make_geo_objs(self, clusts):
+    def make_geo_objs(self, proc_centroids):
         geo_objs = []
-        if len(clusts['boxes']) == 0:
-            # no bounding box polygons, just a simple point to add
-            if self.print_progress:
-                print(str(clusts))
-            geo_obj = self.make_geo_obj(1,
-                                        clusts['centroids'][0][0],
-                                        clusts['centroids'][0][1]
-                                        )
+        if self.print_progress:
+            print('number centroids: ' + str(len(proc_centroids)))
+        for proc_centroid in proc_centroids:
+            if self.print_progress and 'cluster_loop' in proc_centroid:
+                message = 'Cluster Loop: ' + str(proc_centroid['cluster_loop']) + ', cluster: ' + str(proc_centroid['index']) +  ' '
+                message += ' geospace object creation.'
+                print(message)
+            geo_obj = self.make_geo_obj(proc_centroid['id'],
+                                        proc_centroid['cent_lon'],
+                                        proc_centroid['cent_lat'],
+                                        proc_centroid['box'])
             geo_objs.append(geo_obj)
-        else:
-            # has 1 or more bounding box polygons
-            i = 0
-            for box in clusts['boxes']:
-                act_cent = clusts['centroids'][i]
-                i += 1
-                geo_obj = self.make_geo_obj(i,
-                                            act_cent[0],
-                                            act_cent[1],
-                                            box
-                                            )
-                if(box[0][0][0] != box[0][2][0] and box[0][0][1] != box[0][2][1]):
-                    # only add a box if the cluster has more than 1 item
-                    geo_objs.append(geo_obj)
         self.geo_objs = geo_objs
         return geo_objs
 
@@ -212,102 +204,130 @@ class ProjectMeta():
         data = array(lon_lats)
         resonable_clusters = False
         number_clusters = self.MAX_CLUSTERS
+        proc_centroids = []
+        cluster_loop = 0
         while resonable_clusters is False:
-            ch_boxes = []
-            boxes = []
+            cluster_loop += 1
             resonable_clusters = True
             centroids, _ = kmeans(data, number_clusters)
             idx, _ = vq(data, centroids)
+            # first make check boxes, which will be used to
+            # see if there is an overlap with another cluster
+            check_boxes = []
             i = 0
             for centroid in centroids:
-                cent_lon = centroid[0]
-                cent_lat = centroid[1]
-                max_lon = max(data[idx == i, 0])
-                max_lat = max(data[idx == i, 1])
-                min_lon = min(data[idx == i, 0])
-                min_lat = min(data[idx == i, 1])
-                ch_box = {'max_lon': max_lon,
-                          'max_lat': max_lat,
-                          'min_lon': min_lon,
-                          'min_lat': min_lat}
-                ch_boxes.append(ch_box)
+                check_box = {}
+                check_box['index'] = i
+                check_box['id'] = i + 1
+                check_box['cent_lon'] = centroid[0]
+                check_box['cent_lat'] = centroid[1]
+                check_box['max_lon'] = max(data[idx == i, 0])
+                check_box['max_lat'] = max(data[idx == i, 1])
+                check_box['min_lon'] = min(data[idx == i, 0])
+                check_box['min_lat'] = min(data[idx == i, 1])
+                check_boxes.append(check_box)
                 i += 1
+            # now make a list of the "processed" centroids
+            # that have useful data about them.
             i = 0
+            proc_centroids = []
             for centroid in centroids:
-                cent_lon = centroid[0]
-                cent_lat = centroid[1]
-                max_lon = max(data[idx == i, 0])
-                max_lat = max(data[idx == i, 1])
-                min_lon = min(data[idx == i, 0])
-                min_lat = min(data[idx == i, 1])
-                if(len(data[idx == i]) < 2):
-                    # the cluster has only 1 point, meaning it may be too small
-                    cluster_ok = self.check_ok_cluster_for_lone_point(uuids,
-                                                                      max_lon,
-                                                                      max_lat)
-                    if cluster_ok is False:
-                        resonable_clusters = False
-                        if self.print_progress:
-                            print('Loop (' + str(number_clusters) + '), cluster '
-                                           + str(i)
-                                           + ' has too few members')
-                box = self.make_box(min_lon, min_lat, max_lon, max_lat)
-                boxes.append(box)
-                jj = 0
-                for ch_box in ch_boxes:
-                    if jj != i:
-                        # different box then
-                        overlap = self.check_overlap(min_lon,
-                                                     min_lat,
-                                                     max_lon,
-                                                     max_lat,
-                                                     ch_box)
-                        if overlap:
-                            resonable_clusters = False
-                            if self.print_progress:
-                                print('Loop (' + str(number_clusters) + '), cluster '
-                                      + str(i)
-                                      + ' overlaps with ' + str(jj))
-                    jj += 1
+                proc_centroid = {}
+                proc_centroid['index'] = i
+                proc_centroid['id'] = i + 1
+                proc_centroid['cluster_loop'] = cluster_loop
+                proc_centroid['num_points'] = len(data[idx == i])
+                proc_centroid['cent_lon'] = centroid[0]
+                proc_centroid['cent_lat'] = centroid[1]
+                proc_centroid['max_lon'] = max(data[idx == i, 0])
+                proc_centroid['max_lat'] = max(data[idx == i, 1])
+                proc_centroid['min_lon'] = min(data[idx == i, 0])
+                proc_centroid['min_lat'] = min(data[idx == i, 1])
+                proc_centroid['box'] = self.make_box(proc_centroid['min_lon'],
+                                                     proc_centroid['min_lat'],
+                                                     proc_centroid['max_lon'],
+                                                     proc_centroid['max_lat'])
+                proc_centroid['ok_cluster'] = self.check_ok_cluster(proc_centroid,
+                                                                    centroids,
+                                                                    uuids)
+                proc_centroid['overlaps'] = self.check_overlaps(proc_centroid,
+                                                                check_boxes)
+                if proc_centroid['ok_cluster'] is False \
+                   or proc_centroid['overlaps']:
+                    resonable_clusters = False
+                proc_centroids.append(proc_centroid)
                 i += 1
-                for o_centroid in centroids:
-                    o_lon = o_centroid[0]
-                    o_lat = o_centroid[1]
-                    if o_lon != cent_lon and o_lat != cent_lat:
-                        # not the same centroid, so check distance
-                        cent_dist = self.get_point_distance(o_lon,
-                                                            o_lat,
-                                                            cent_lon,
-                                                            cent_lat)
-                        if cent_dist < self.MIN_CLUSTER_SIZE_KM \
-                           or cent_dist < (self.max_geo_range * .05):
-                            resonable_clusters = False
-                            if self.print_progress:
-                                print('Loop (' + str(number_clusters) + ') cluster size: ' \
-                                      + str(cent_dist) + ' too small to ' + str(self.max_geo_range))
+            # OK done with looping through centroids to check on them.
             if resonable_clusters is False:
                 number_clusters = number_clusters - 1
             if number_clusters < 1:
                 resonable_clusters = True
-        return {'centroids': centroids,
-                'boxes': boxes}
+        return proc_centroids
 
-    def check_overlap(self, min_lon, min_lat, max_lon, max_lat, ch_box):
+    def check_ok_cluster(self, proc_centroid, centroids, uuids):
+        """ checks to see if the proc_centroid is an OK
+            cluster, based on the number of items it
+            contains or if it is far from all other centroids
+        """
+        ok_cluster = True  # default to this being a good cluster
+        if proc_centroid['num_points'] < 2:
+            # the cluster has only 1 point, meaning it may be too small
+            db_multiple = self.check_ok_cluster_for_lone_point(uuids,
+                                                               proc_centroid['max_lon'],
+                                                               proc_centroid['max_lat'])
+            if db_multiple is False:
+                # not many records, 
+                # OK now check if it is far from other points
+                single_far = True
+                for o_centroid in centroids:
+                    o_lon = o_centroid[0]
+                    o_lat = o_centroid[1]
+                    if o_lon != proc_centroid['cent_lon'] \
+                       and o_lat != proc_centroid['cent_lat']:
+                        # not the same centroid, so check distance
+                        cent_dist = self.get_point_distance(o_lon,
+                                                            o_lat,
+                                                            proc_centroid['cent_lon'],
+                                                            proc_centroid['cent_lat'])
+                        if cent_dist < 1000:
+                            if cent_dist < self.MIN_CLUSTER_SIZE_KM \
+                               or cent_dist < (self.max_geo_range * .1):
+                                # we found a case where this point is close
+                                # to another centroid
+                                single_far = False
+                if single_far is False:
+                    ok_cluster = False
+        if self.print_progress and ok_cluster is False:
+            message = 'Cluster Loop: ' + str(proc_centroid['cluster_loop']) + ', cluster: ' + str(proc_centroid['index']) +  ' '
+            message += ' has few items, too close with other centroids.'
+            print(message)
+        return ok_cluster
+
+    def check_overlaps(self, proc_centroid, check_boxes):
         """ Checkes to see if a box is inside the coordinates of another box """
         overlap = False
-        overlap_lon = False
-        overlap_lat = False
-        if (min_lon >= ch_box['min_lon'] and min_lon <= ch_box['max_lon'])\
-           or (max_lon >= ch_box['min_lon'] and max_lon <= ch_box['max_lon']):
-            overlap_lon = True
-        if (min_lat >= ch_box['min_lat'] and min_lat <= ch_box['max_lat'])\
-           or (max_lat >= ch_box['min_lat'] and max_lat <= ch_box['max_lat']):
-            overlap_lat = True
-        if overlap_lon and overlap_lat:
-            overlap = True
-        else:
-            ave_lon = (min_lon + max_lon) * .5
-            ave_lat = (min_lat + max_lat) * .5
+        for check_box in check_boxes:
+            overlap_lon = False
+            overlap_lat = False
+            if proc_centroid['index'] != check_box['index']:
+                # only do this check if we are not looking in same cluster
+                if (proc_centroid['min_lon'] >= check_box['min_lon'] \
+                    and proc_centroid['min_lon'] <= check_box['max_lon'])\
+                   or ( proc_centroid['max_lon'] >= check_box['min_lon'] \
+                    and proc_centroid['max_lon'] <= check_box['max_lon']):
+                    overlap_lon = True
+                if (proc_centroid['min_lat'] >= check_box['min_lat'] \
+                    and proc_centroid['min_lat'] <= check_box['max_lat'])\
+                   or ( proc_centroid['max_lat'] >= check_box['min_lat'] \
+                    and proc_centroid['max_lat'] <= check_box['max_lat']):
+                    overlap_lat = True
+                if overlap_lon and overlap_lat:
+                    overlap = True
+                    break
+        if self.print_progress and overlap:
+            message = 'Cluster Loop: ' + str(proc_centroid['cluster_loop']) + ', cluster: ' + str(proc_centroid['index']) +  ' '
+            message += ' has overlaps with other clusters.'
+            print(message)
         return overlap
 
     def get_point_distance(self, lon1, lat1, lon2, lat2):
@@ -324,15 +344,36 @@ class ProjectMeta():
         c = 2 * asin(sqrt(a)) 
         km = 6367 * c
         return km
+    
+    def widen_coordinate_pair(self, min_val, max_val):
+        """ widens a coordinate pair based on maximum distance
+            between points
+        """
+        degree_dif = (self.max_geo_range * 0.025) / 60
+        if (min_val + degree_dif) > max_val:
+            min_val = min_val - (degree_dif * 0.5)
+            max_val = max_val + (degree_dif * 0.5)
+        return {'min_val': min_val, 'max_val': max_val}
 
     def make_box(self, min_lon, min_lat, max_lon, max_lat):
         """ Makes geojson coordinates list for a bounding feature """
-        coordinates = [[[min_lon, min_lat],
-                       [min_lon, max_lat],
-                       [max_lon, max_lat],
-                       [max_lon, min_lat],
-                       [min_lon, min_lat]]]
-        return coordinates
+        # assume 60 km / degree
+        lons = self.widen_coordinate_pair(min_lon, max_lon)
+        lats = self.widen_coordinate_pair(min_lat, max_lat)
+        min_lon = lons['min_val']
+        max_lon = lons['max_val']
+        min_lat = lats['min_val']
+        max_lat = lats['max_val']
+        coords = []
+        outer_coords = []
+        # right hand rule, counter clockwise outside
+        outer_coords.append([min_lon, min_lat])
+        outer_coords.append([max_lon, min_lat])
+        outer_coords.append([max_lon, max_lat])
+        outer_coords.append([min_lon, max_lat])
+        outer_coords.append([min_lon, min_lat])
+        coords.append(outer_coords)
+        return coords
 
     def check_ok_cluster_for_lone_point(self, uuids, lon, lat):
         """ Checks to see if a lone point has enough items
