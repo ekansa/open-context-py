@@ -43,20 +43,6 @@ class Project(models.Model):
             p_short_id = ProjectShortID()
             self.short_id = p_short_id.get_make_short_id(self.uuid,
                                                          self.short_id)
-        if self.default_geozoom is None:
-            proj_geo = Geospace.objects.filter(project_uuid=self.uuid)\
-                               .exclude(latitude=0, longitude=0)\
-                               .aggregate(Avg('specificity'))
-        if proj_geo['specificity__avg'] is not None:
-            try:
-                act_specificity = round(float(proj_geo['specificity__avg']), 0)
-                self.default_geozoom = int(act_specificity)
-            except:
-                # not a good integer, so default to 0
-                self.default_geozoom = 0
-        else:
-            # no result, so default to 0
-            self.default_geozoom = 0
         super(Project, self).save(*args, **kwargs)
 
     class Meta:

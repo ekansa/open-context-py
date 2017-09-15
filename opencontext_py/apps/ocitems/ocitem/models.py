@@ -170,6 +170,10 @@ class OCitem():
         """
         gets item geo and chronological metadata
         """
+        if self.geo_meta is False and self.item_type == 'projects':
+            # get project metadata objects directly
+            pm = ProjectMeta()
+            self.geo_meta = pm.get_project_geo_from_db(self.uuid)
         if self.geo_meta is False\
            or self.event_meta is False\
            or self.temporal_meta is False:
@@ -208,19 +212,19 @@ class OCitem():
         """
         gets information specific to different item types
         """
-        if(self.item_type == 'media'):
+        if self.item_type == 'media':
             self.media = Mediafile.objects.filter(uuid=self.uuid)
-        elif(self.item_type == 'documents'):
+        elif self.item_type == 'documents':
             try:
                 self.document = OCdocument.objects.get(uuid=self.uuid)
             except Document.DoesNotExist:
                 self.document = False
-        elif(self.item_type == 'persons'):
+        elif self.item_type == 'persons':
             try:
                 self.person = Person.objects.get(uuid=self.uuid)
             except Person.DoesNotExist:
                 self.person = False
-        elif(self.item_type == 'projects'):
+        elif self.item_type == 'projects':
             try:
                 self.project = Project.objects.get(uuid=self.uuid)
             except Project.DoesNotExist:
@@ -238,12 +242,12 @@ class OCitem():
                 pm.print_progress = True
                 pm.make_geo_meta(self.uuid, self.sub_projects)
                 self.geo_meta = pm.geo_objs
-        elif(self.item_type == 'predicates'):
+        elif self.item_type == 'predicates':
             try:
                 self.predicate = Predicate.objects.get(uuid=self.uuid)
             except Predicate.DoesNotExist:
                 self.predicate = False
-        elif(self.item_type == 'types'):
+        elif self.item_type == 'types':
             try:
                 self.octype = OCtype.objects.get(uuid=self.uuid)
             except OCtype.DoesNotExist:
@@ -1273,6 +1277,8 @@ class ItemConstruction():
                     # here we have geo_json expressed features and geometries to use
                     if geo.specificity < 0:
                         geo_props['location-precision-note'] = 'Location data approximated as a security precaution.'
+                    elif geo.specificity > 0:
+                        geo_props['location-precision-note'] = 'Location data has uncertainty.'
                     else:
                         geo_props['location-precision-note'] = 'Location data available with no '\
                                                                'intentional reduction in precision.'

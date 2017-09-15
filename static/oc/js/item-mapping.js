@@ -100,7 +100,7 @@ function initmap() {
 					var loc_info = 'This item has its own location data.';
 					if(typeof item_type != 'undefined'){
 						if(item_type == 'projects'){
-							loc_info = 'This summarizes all locations in this project.';
+							loc_info = 'Summarizing locations in this project';
 						}
 					}
 					loc_note_html = [
@@ -140,6 +140,9 @@ function initmap() {
 	if (current_zoom > start_zoom && point_features_only){
 		// we are zoomed into far, so go out
 		map.setZoom(start_zoom);
+	}
+	if (current_zoom < 1){
+		map.setZoom(1);
 	}
 	act_layer.addTo(map);
 }

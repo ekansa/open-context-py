@@ -236,6 +236,8 @@ urlpatterns = [
         name='add_update_ld_entity'),
     url(r'^edit/add-update-geo-data/(?P<uuid>\S+)', EditItemViews.add_update_geo_data,
         name='add_update_geo_data'),
+    url(r'^edit/add-update-project-geo/(?P<uuid>\S+)', EditItemViews.add_update_project_geo,
+        name='add_update_project_geo'),
     url(r'^edit/add-update-date-range/(?P<uuid>\S+)', EditItemViews.add_update_date_range,
         name='add_update_date_range'),
     url(r'^edit/delete-date-range/(?P<uuid>\S+)', EditItemViews.delete_date_range,
