@@ -45,7 +45,12 @@ class ArachneAPI():
                     oc_obj = LastUpdatedOrderedDict()
                     oc_obj['id'] = self.generate_entity_url(entity['entityId'])
                     oc_obj['slug'] = oc_obj['id']
-                    oc_obj['label'] = entity['title']
+                    if 'title' in entity:
+                        oc_obj['label'] = entity['title']
+                    elif 'subtitle' in entity:
+                        oc_obj['label'] = entity['subtitle']
+                    else:
+                        oc_obj['label'] = '[No Arachne Label]'
                     oc_obj['oc-gen:thumbnail-uri'] = self.generate_thumbnail_image_src(entity['thumbnailId'])
                     oc_obj['type'] = 'oc-gen:image'
                     self.results.append(oc_obj)
