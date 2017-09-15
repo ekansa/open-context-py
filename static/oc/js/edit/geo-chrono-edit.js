@@ -41,6 +41,10 @@ function geoChronoEdit(item_type, item_uuid){
 				}
 			}
 		}
+		if (this.item_type == 'projects'){
+			// make the form for editing project-wide geospatial metadata
+			this.make_edit_project_html();
+		}
 	}
 	this.get_edit_features = function(features){
 		// gets a list of unique geospatial features, with when_lists
@@ -570,6 +574,134 @@ function geoChronoEdit(item_type, item_uuid){
 	}
 	
 	
+	/*
+	 * Project geo-metadata form
+	 */
+	this.make_edit_project_html = function(){
+		var new_button_icon = 'glyphicon glyphicon-edit';
+		var submit_html = [
+			'<button title="Submit Project Geospatial Data" ',
+			'class="btn btn-primary btn-xs btn-block" ',
+			'onclick="' + this.name + '.submitGeoProject();">',
+			'<span class="' + new_button_icon + '"></span>' ,
+			'Project Geospatial',
+			'</button>',
+		].join(' ');
+		
+		var html = [
+			'<div class="well">',
+				'<div class="row">',
+					'<div class="col-xs-4">',
+						'<label>(Re)generate Cluster Regions?</label>',
+						'<ul class="list-unstyled">',
+						'<li>',
+						'<input type="radio" name="proj-do-clusters" id="proj-do-clusters-1" ',
+						'class="proj-do-clusters" value="yes" />',
+						'Yes</li>',
+						'<li>',
+						'<input type="radio" name="proj-do-clusters" id="proj-do-clusters-2" ',
+						'class="proj-do-clusters" value="no" />',
+						'No</li>',
+						'</ul>',
+					'</div>',
+					'<div class="col-xs-8">',
+						'<label>Set Project Zoom Precision</label>',
+						'<input id="proj_geo_specificity" name="proj_geo_specificity" ',
+						'value="" type="text" placeholder="(Integer values)"/>',
+						'<span class="help-block">',
+						'Use negative integers to indicate a security measure. For example DINAA limits location precision zoom level 11 (so "-11").',
+						'</span>',
+					'</div>',
+				'</div>',
+				'<div class="row">',
+					'<div class="col-xs-4" id="proj-geo-message">',
+					' ',
+					'</div>',
+					'<div class="col-xs-8">',
+						'<label>Project Geospatial Note</label><br/>',
+						'<textarea class="form-control input-sm" ',
+						'rows="4" ',
+						'id="proj_geo_note" >',
+					    '',
+						'</textarea>',
+						'<span class="help-block">',
+						'A message shown with maps of all records in this project.',
+						'</span>',
+					'</div>',
+				'</div>',
+				'<div class="row">',
+					'<div class="col-xs-4">',
+					submit_html,
+					'</div>',
+					'<div class="col-xs-8">',
+					'</div>',
+				'</div>',
+			'</div>'
+		].join('\n');
+		if (document.getElementById('project-geo-features')) {
+			document.getElementById('project-geo-features').innerHTML = html;
+		}
+		return html;
+	}
+	this.submitGeoProject = function(){
+		var do_cluster = false;
+		var act_doms = document.getElementsByClassName('proj-do-clusters');
+		for (var i = 0, length = act_doms.length; i < length; i++) {
+			if (act_doms[i].checked) {
+				do_cluster = act_doms[i].value;
+			}
+		}
+		if (document.getElementById('proj_geo_specificity')) {
+			var proj_geo_specificity = document.getElementById('proj_geo_specificity').value;
+		}
+		else{
+			var proj_geo_specificity = '';
+		}
+		if (document.getElementById('proj_geo_note')) {
+			var proj_geo_note = document.getElementById('proj_geo_note').value;
+		}
+		else{
+			var proj_geo_note = '';
+		}
+		var url = this.make_url("/edit/add-update-project-geo/") + encodeURIComponent(this.item_uuid);
+		var req = $.ajax({
+			type: "POST",
+			url: url,
+			dataType: "json",
+			data: {
+				do_cluster: do_cluster,
+				proj_geo_specificity: proj_geo_specificity,
+				proj_geo_note: proj_geo_note,
+				csrfmiddlewaretoken: csrftoken},
+			context: this,
+			success: this.submitGeoProjectDone,
+			error: function (request, status, error) {
+				alert('Problem updating / adding geo-data: ' + status);
+			}
+		});
+		return req;
+	}
+	
+	this.submitGeoProjectDone = function(data){
+		if (document.getElementById('proj-geo-messages')) {
+			if(data.ok){
+				var html = [
+					'<div class="alert alert-info" role="alert">',
+					data.change.note,
+					'</div>'
+				].join('\n');
+			}
+			else{
+				var html = [
+					'<div class="alert alert-warning" role="alert">',
+					'<strong>Problem!</strong><br/>',
+					data.change.note,
+					'</div>'
+				].join('\n');
+			}
+			document.getElementById('proj-geo-message').innerHTML = html;
+		}
+	}
 	
 	/*
 	 * Validation related functions

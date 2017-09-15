@@ -15,6 +15,8 @@ from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
+from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta, ProjectRels
 
 
 class ItemGeoTime():
@@ -140,7 +142,93 @@ class ItemGeoTime():
         if ok:
             # now clear the cache a change was made
             cache.clear()
+        else:
+            self.errors = errors
         self.response = {'action': 'add-update-geo-data',
+                         'ok': ok,
+                         'change': {'note': note}}
+        return self.response
+
+    def add_update_project_geo(self, post_data):
+        """ Updates a project geospatial data and metadata """
+        ok = True
+        do_cluster = False
+        errors = []
+        note = ''
+        required_params = ['do_cluster',
+                           'proj_geo_specificity',
+                           'proj_geo_note']
+        for r_param in required_params:
+            if r_param not in post_data:
+                # we're missing some required data
+                # don't create the item
+                ok = False
+                message = 'Missing paramater: ' + r_param + ''
+                errors.append(message)
+                note = '; '.join(errors)
+        try:
+            proj_obj = Project.objects.get(uuid=self.uuid)
+        except Project.DoesNotExist:
+            message = 'Missing project database object / record for uuid: ' + str(self.uuid)
+            errors.append(message)
+            ok = False
+        if ok:
+            proj_geo_specificity = None
+            output = self.validate_int_param('proj_geo_specificity', post_data, errors)
+            proj_geo_specificity = output['integer']
+            errors = output['errors']
+            if isinstance(proj_geo_specificity, int):
+                if proj_geo_specificity < -20 or proj_geo_specificity > 20:
+                    proj_geo_specificity = None
+                    message = 'Geo specificity must range between -20 and 20'
+                    errors.append(message)
+                    ok = False
+            proj_geo_note = post_data['proj_geo_note']
+            if post_data['do_cluster'] == 'yes':
+                # request to make geospatial regions based on clustering locations?
+                do_cluster = True
+        if ok:
+            if do_cluster:
+                # delete older geospace records
+                Geospace.objects.filter(uuid=self.uuid, item_type='projects').delete()
+                pr = ProjectRels()
+                pm = ProjectMeta()
+                if isinstance(proj_geo_specificity, int):
+                    pm.project_specificity = proj_geo_specificity
+                elif isinstance(proj_obj.meta_json, dict):
+                    if Project.META_KEY_GEO_SPECIFICITY in proj_obj.meta_json:
+                        # the project has some default geographic specificity noted
+                        # use this value when making geo_meta
+                        pm.project_specificity = proj_obj.meta_json[Project.META_KEY_GEO_SPECIFICITY]
+                sub_projects = pr.get_sub_projects(self.uuid)
+                pm.print_progress = True
+                pm.make_geo_meta(self.uuid, sub_projects)
+                for geo_obj in pm.geo_objs:
+                    try:
+                        geo_obj.save()
+                    except:
+                        pass
+                note += 'Added ' + str(len(pm.geo_objs)) + ' cluster-defined geospatial features as project metadata.'
+            if isinstance(proj_geo_specificity, int) or len(proj_geo_note) > 1:
+                # we are adding geospatial metatada
+                if not isinstance(proj_obj.meta_json, dict):
+                    proj_obj.meta_json = LastUpdatedOrderedDict()
+                if isinstance(proj_geo_specificity, int):
+                    proj_obj.meta_json[Project.META_KEY_GEO_SPECIFICITY] = proj_geo_specificity
+                if len(proj_geo_note) > 1:
+                    proj_obj.meta_json[Project.META_KEY_GEO_NOTE] = proj_geo_note
+                else:
+                    if Project.META_KEY_GEO_NOTE in proj_obj.meta_json:
+                        # remove the note
+                        proj_obj.meta_json.pop(Project.META_KEY_GEO_NOTE)
+                proj_obj.save()
+        if ok:
+            # now clear the cache a change was made
+            cache.clear()
+        else:
+            self.errors = errors
+            note = '; '.join(errors)
+        self.response = {'action': 'add-update-project-geo',
                          'ok': ok,
                          'change': {'note': note}}
         return self.response

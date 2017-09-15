@@ -293,6 +293,7 @@ class TemplateItem():
         """ Makes an instance of a GeoMap class, with data from the JSON_LD
         """
         geo = GeoMap()
+        geo.item_type = self.act_nav
         if self.project is not False:
             # add default geozoom to update how mapping happens
             geo.proj_geo_specificity = self.project.proj_geo_specificity
@@ -1262,6 +1263,7 @@ class Citation():
 
 class GeoMap():
     def __init__(self):
+        self.item_type = False
         self.geojson = False
         self.start_lat = 0
         self.start_lon = 0
@@ -1279,6 +1281,12 @@ class GeoMap():
                 lats = []
                 lons = []
                 use_features = []
+                hide_points = False
+                if self.item_type == 'projects':
+                    # we can hide points from projects with polygons
+                    for feature in json_ld['features']:
+                        if 'Polygon' in feature['geometry']['type']:
+                            hide_points = True
                 for feature in json_ld['features']:
                     show_feature = True
                     if 'Polygon' in feature['geometry']['type']:
@@ -1286,6 +1294,8 @@ class GeoMap():
                     elif feature['geometry']['type'] == 'Point':
                         lats.append(feature['geometry']['coordinates'][1])
                         lons.append(feature['geometry']['coordinates'][0])
+                        if hide_points:
+                            show_feature = False # hide this, because we've got a project
                     if 'location-precision-note' in feature['properties']:
                         if 'security' in feature['properties']['location-precision-note'] \
                            and feature['geometry']['type'] == 'Point':

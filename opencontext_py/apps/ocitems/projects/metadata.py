@@ -97,6 +97,16 @@ class ProjectMeta():
         self.geo_range = False  # dict object of min, max longitude, latitudes
         self.print_progress = False
         self.project_specificity = 0
+    
+    def get_project_geo_from_db(self, project_uuid):
+        """ gets project geospatial information from the database
+        """
+        self.geo_objs = Geospace.objects\
+                                .filter(uuid=project_uuid)\
+                                .order_by('feature_id')
+        if len(self.geo_objs) < 1:
+            self.geo_objs = False
+        return self.geo_objs
 
     def make_geo_meta(self, project_uuid, sub_projs=False):
         output = False
@@ -126,10 +136,11 @@ class ProjectMeta():
                            self.geo_range['latitude__max']]
             min_point = np.fromiter(min_lon_lat, np.dtype('float'))
             max_point = np.fromiter(max_lon_lat, np.dtype('float'))
-            self.max_geo_range = self.get_point_distance(min_point[0],
-                                                         min_point[1],
-                                                         max_point[0],
-                                                         max_point[1])
+            gm = GlobalMercator()
+            self.max_geo_range = gm.distance_on_unit_sphere(min_point[1],
+                                                            min_point[0],
+                                                            max_point[1],
+                                                            max_point[0])
             if self.print_progress:
                 print('Max geo range: ' + str(self.max_geo_range))
             if self.max_geo_range == 0:
@@ -225,6 +236,8 @@ class ProjectMeta():
                 check_box['max_lat'] = max(data[idx == i, 1])
                 check_box['min_lon'] = min(data[idx == i, 0])
                 check_box['min_lat'] = min(data[idx == i, 1])
+                # ensure a minimum sized region
+                check_box = self.make_min_size_region(check_box)
                 check_boxes.append(check_box)
                 i += 1
             # now make a list of the "processed" centroids
@@ -243,6 +256,8 @@ class ProjectMeta():
                 proc_centroid['max_lat'] = max(data[idx == i, 1])
                 proc_centroid['min_lon'] = min(data[idx == i, 0])
                 proc_centroid['min_lat'] = min(data[idx == i, 1])
+                # ensure a minimum sized region
+                proc_centroid = self.make_min_size_region(proc_centroid)
                 proc_centroid['box'] = self.make_box(proc_centroid['min_lon'],
                                                      proc_centroid['min_lat'],
                                                      proc_centroid['max_lon'],
@@ -285,10 +300,11 @@ class ProjectMeta():
                     if o_lon != proc_centroid['cent_lon'] \
                        and o_lat != proc_centroid['cent_lat']:
                         # not the same centroid, so check distance
-                        cent_dist = self.get_point_distance(o_lon,
-                                                            o_lat,
-                                                            proc_centroid['cent_lon'],
-                                                            proc_centroid['cent_lat'])
+                        gm = GlobalMercator()
+                        cent_dist = gm.distance_on_unit_sphere(o_lat,
+                                                               o_lon,
+                                                               proc_centroid['cent_lat'],
+                                                               proc_centroid['cent_lon'])
                         if cent_dist < 1000:
                             if cent_dist < self.MIN_CLUSTER_SIZE_KM \
                                or cent_dist < (self.max_geo_range * .1):
@@ -329,41 +345,60 @@ class ProjectMeta():
             message += ' has overlaps with other clusters.'
             print(message)
         return overlap
-
-    def get_point_distance(self, lon1, lat1, lon2, lat2):
-        """
-        Calculate the great circle distance between two points 
-        on the earth (specified in decimal degrees)
-        """
-        # convert decimal degrees to radians 
-        lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-        # haversine formula 
-        dlon = lon2 - lon1 
-        dlat = lat2 - lat1 
-        a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-        c = 2 * asin(sqrt(a)) 
-        km = 6367 * c
-        return km
     
-    def widen_coordinate_pair(self, min_val, max_val):
+    def make_min_size_region(self, region_dict):
         """ widens a coordinate pair based on maximum distance
             between points
+            
+            this makes a square (on a mercator projection) bounding box
+            region. it will have different real-world distances in the
+            east west direction between the northern and southern sides
         """
-        degree_dif = (self.max_geo_range * 0.025) / 60
-        if (min_val + degree_dif) > max_val:
-            min_val = min_val - (degree_dif * 0.5)
-            max_val = max_val + (degree_dif * 0.5)
-        return {'min_val': min_val, 'max_val': max_val}
+        min_distance = self.max_geo_range * 0.05
+        gm = GlobalMercator()
+        # measure the north south distance
+        mid_lat = (region_dict['min_lat'] + region_dict['max_lat']) / 2
+        mid_lon = (region_dict['min_lon'] + region_dict['max_lon']) / 2
+        ns_diag_dist = gm.distance_on_unit_sphere(region_dict['min_lat'],
+                                                  mid_lon,
+                                                  region_dict['max_lat'],
+                                                  mid_lon)
+        ew_diag_dist = gm.distance_on_unit_sphere(mid_lat,
+                                                  region_dict['min_lon'],
+                                                  mid_lat,
+                                                  region_dict['max_lon'])
+        if ns_diag_dist < min_distance:
+            # the north-south distance is too small, so widen it.
+            # first, find a point south of the mid lat, at the right distance
+            new_lat_s = gm.get_point_by_distance_from_point(mid_lat,
+                                                            mid_lon,
+                                                            (min_distance / 2),
+                                                            180)
+            # second, find a point north of the mid lat, at the right distance
+            new_lat_n = gm.get_point_by_distance_from_point(mid_lat,
+                                                            mid_lon,
+                                                            (min_distance / 2),
+                                                            0)
+            region_dict['min_lat'] = new_lat_s['lat']
+            region_dict['max_lat'] = new_lat_n['lat']
+        if ew_diag_dist < min_distance:
+            # the east-west distance is too small, so widen it.
+            # first, find a point south of the mid lat, at the right distance
+            new_lon_w = gm.get_point_by_distance_from_point(mid_lat,
+                                                            mid_lon,
+                                                            (min_distance / 2),
+                                                            270)
+            # second, find a point north of the mid lat, at the right distance
+            new_lon_e = gm.get_point_by_distance_from_point(mid_lat,
+                                                            mid_lon,
+                                                            (min_distance / 2),
+                                                            90)
+            region_dict['min_lon'] = new_lon_w['lon']
+            region_dict['max_lon'] = new_lon_e['lon']
+        return region_dict
 
     def make_box(self, min_lon, min_lat, max_lon, max_lat):
         """ Makes geojson coordinates list for a bounding feature """
-        # assume 60 km / degree
-        lons = self.widen_coordinate_pair(min_lon, max_lon)
-        lats = self.widen_coordinate_pair(min_lat, max_lat)
-        min_lon = lons['min_val']
-        max_lon = lons['max_val']
-        min_lat = lats['min_val']
-        max_lat = lats['max_val']
         coords = []
         outer_coords = []
         # right hand rule, counter clockwise outside

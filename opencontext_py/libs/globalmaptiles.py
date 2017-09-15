@@ -358,18 +358,46 @@ class GlobalMercator(object):
             between-coordinates-lat-long-using-havers
         """
         # Converts lat & long to spherical coordinates in radians.
-        degrees_to_radians = math.pi/180.0
-        # phi = 90 - latitude
-        phi1 = (90.0 - lat1)*degrees_to_radians
-        phi2 = (90.0 - lat2)*degrees_to_radians
-        # theta = longitude
-        theta1 = long1*degrees_to_radians
-        theta2 = long2*degrees_to_radians
-        # Compute the spherical distance from spherical coordinates.
-        # For two locations in spherical coordinates:
-        # (1, theta, phi) and (1, theta', phi')cosine( arc length ) =
-        # sin phi sin phi' cos(theta-theta') + cos phi cos phi' distance = rho * arc    length
-        cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + \
-               math.cos(phi1)*math.cos(phi2))
-        arc = math.acos(cos)*6371  # radius of the earth in km
+        if lat1 != lat2 or long1 != long2:
+            degrees_to_radians = math.pi/180.0
+            # phi = 90 - latitude
+            phi1 = (90.0 - lat1)*degrees_to_radians
+            phi2 = (90.0 - lat2)*degrees_to_radians
+            # theta = longitude
+            theta1 = long1*degrees_to_radians
+            theta2 = long2*degrees_to_radians
+            # Compute the spherical distance from spherical coordinates.
+            # For two locations in spherical coordinates:
+            # (1, theta, phi) and (1, theta', phi')cosine( arc length ) =
+            # sin phi sin phi' cos(theta-theta') + cos phi cos phi' distance = rho * arc    length
+            cos = (math.sin(phi1)*math.sin(phi2)*math.cos(theta1 - theta2) + \
+                   math.cos(phi1)*math.cos(phi2))
+            arc = math.acos(cos)*6371  # radius of the earth in km
+        else:
+            arc = 0
         return arc
+
+    def get_point_by_distance_from_point(self, lat, lon, dist_km, bearing_deg=90):
+        """ finds a lat, lon point (as a dict), givem a lat lon point,
+            a km distance and a bearning
+        """
+        earth_radius = 6371
+        bearing_r = bearing_deg * (math.pi /180.0)
+        lat_r = math.radians(lat)
+        lon_r = math.radians(lon)
+        out_lat_r = math.asin(
+            math.sin(lat_r) * math.cos(dist_km / earth_radius) \
+            + math.cos(lat_r) * math.sin(dist_km / earth_radius) \
+            * math.cos(bearing_r)
+        )
+        out_lon_r = lon_r + (
+            math.atan2(math.sin(bearing_r) * math.sin(dist_km / earth_radius) \
+                * math.cos(lat_r), math.cos(dist_km / earth_radius) \
+                - math.sin(lat_r) * math.sin(out_lat_r)
+            )
+        )
+        output = {
+            'lat': math.degrees(out_lat_r),
+            'lon': math.degrees(out_lon_r)
+        }
+        return output
