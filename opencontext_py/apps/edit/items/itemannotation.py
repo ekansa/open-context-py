@@ -61,6 +61,7 @@ class ItemAnnotation():
                          'owl:sameAs',
                          'skos:broader',
                          'skos:related',
+                         'skos:example',
                          'rdfs:isDefinedBy',
                          'http://www.w3.org/2000/01/rdf-schema#range']
         ok = True

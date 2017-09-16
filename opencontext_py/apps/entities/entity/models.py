@@ -60,10 +60,12 @@ class Entity():
                 identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
             if link_entity_slug or (len(identifier) > 8):
                 if(link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
-                    try:
-                        try_manifest = False
-                        ld_entity = LinkEntity.objects.get(Q(uri=identifier) | Q(slug=identifier))
-                    except LinkEntity.DoesNotExist:
+                    ent_equivs = EntityEquivalents()
+                    uris = ent_equivs.make_uri_variants(identifier)
+                    ld_entities = LinkEntity.objects.filter(Q(uri__in=uris) | Q(slug=identifier))[:1]
+                    if len(ld_entities) > 0:
+                        ld_entity = ld_entities[0]
+                    else:
                         ld_entity = False
                     if ld_entity is not False:
                         output = True
@@ -153,7 +155,7 @@ class Entity():
                         if subj is not False:
                             self.context = subj.context
         return output
-
+ 
     def context_dereference(self, context):
         """ looks up a context, described as a '/' seperated list of labels """
         output = False
@@ -390,6 +392,10 @@ class EntityEquivalents():
                 else:
                     prefix_id = URImanagement.prefix_common_uri(identifier)
                     output_list.append(prefix_id)
+                    variant_uris = self.make_uri_variants(identifier)
+                    for variant_uri in variant_uris:
+                        if variant_uri not in output_list:
+                            output_list.append(variant_uri)
             elif ':' in identifier:
                 full_uri = URImanagement.convert_prefix_to_full_uri(identifier)
                 output_list.append(full_uri)
@@ -404,3 +410,30 @@ class EntityEquivalents():
                     if prefix_uri != full_uri:
                         output_list.append(prefix_uri)
         return output_list
+    
+    def make_uri_variants(self, uri):
+        """ makes alternative uri varients """
+        space_opts = [
+            ' ',
+            '%20',
+            '+'
+        ]
+        variants = [uri]
+        if isinstance(uri, str):
+            if len(uri) > 8:
+                if uri[:7] == 'http://':
+                    variants.append('https://' + uri[7:])
+                elif uri[:8] == 'https://':
+                    variants.append('http://' + uri[8:])
+                space_variants = []
+                for variant in variants:
+                    for space_opt in space_opts:
+                        if space_opt in variant:
+                            for o_opt in space_opts:
+                                new_variant = variant.replace(space_opt, o_opt)
+                                if new_variant not in space_variants:
+                                    space_variants.append(new_variant)
+                for space_variant in space_variants:
+                    if space_variant not in variants:
+                        variants.append(space_variant)
+        return variants
