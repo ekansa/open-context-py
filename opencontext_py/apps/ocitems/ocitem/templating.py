@@ -881,7 +881,7 @@ class Observation():
                 self.label = 'Main Observation'
             else:
                 self.label = 'Obs (' + str(self.obs_num) + ')'
-        if self.source_id == 'http://arachne.dainst.org/data/search':
+        if 'arachne.dainst.org/data/search' in self.source_id:
             self.label = 'Arachne Comparanda'
         self.properties = self.make_properties(obs_dict)
         self.links = self.make_links(obs_dict)
