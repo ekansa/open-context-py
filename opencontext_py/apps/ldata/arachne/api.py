@@ -8,9 +8,9 @@ from opencontext_py.libs.generalapi import GeneralAPI
 class ArachneAPI():
     """ Interacts with Arachne """
     ARACHNE_SEARCH = 'arachne.dainst.org/search'
-    DEFAULT_API_BASE_URL = 'http://arachne.dainst.org/data/search'
+    DEFAULT_API_BASE_URL = 'https://arachne.dainst.org/data/search'
     DEFAULT_HTML_BASE_URL = 'https://arachne.dainst.org/search'
-    DEFAULT_IMAGE_BASE_URL = 'http://arachne.dainst.org/data/image/height/'
+    DEFAULT_IMAGE_BASE_URL = 'https://arachne.dainst.org/data/image/height/'
     DEFAULT_ENTITY_BASE_URL = 'https://arachne.dainst.org/entity/'
     DEFAULT_IMAGE_HEIGHT = 120
 
