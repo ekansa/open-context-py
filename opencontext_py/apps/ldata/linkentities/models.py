@@ -138,7 +138,9 @@ class LinkEntityGeneration():
                         'http://numismatics.org/ocre/id': 'ocre',
                         'http://portal.vertnet.org': 'vertnet-rec',
                         'http://vocab.getty.edu/tgn': 'getty-tgn',
-                        'http://purl.org/heritagedata/schemes/mda_obj/concepts': 'fish'
+                        'http://purl.org/heritagedata/schemes/mda_obj/concepts': 'fish',
+                        'http://arachne.dainst.org/search': 'arachne-search',
+                        'http://arachne.dainst.org/entity/': 'arachne-ent',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
@@ -150,6 +152,8 @@ class LinkEntityGeneration():
         uri = uri.replace('/', '-')
         uri = uri.replace('.', '-')
         uri = uri.replace('#', '-')
+        uri = uri.replace('%20', '-')
+        uri = uri.replace('q=', '-')
         uri = uri.replace('_', ' ')
         raw_slug = slugify(unidecode(uri[:55]))
         raw_slug = raw_slug.replace('---', '--')  # make sure no triple dashes, conflicts with solr

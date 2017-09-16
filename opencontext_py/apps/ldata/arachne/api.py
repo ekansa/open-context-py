@@ -1,15 +1,17 @@
 import json
 import requests
+from urllib.parse import urlparse, parse_qs
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 
 
 class ArachneAPI():
     """ Interacts with Arachne """
+    ARACHNE_SEARCH = 'arachne.dainst.org/search'
     DEFAULT_API_BASE_URL = 'http://arachne.dainst.org/data/search'
-    DEFAULT_HTML_BASE_URL = 'http://arachne.dainst.org/search'
+    DEFAULT_HTML_BASE_URL = 'https://arachne.dainst.org/search'
     DEFAULT_IMAGE_BASE_URL = 'http://arachne.dainst.org/data/image/height/'
-    DEFAULT_ENTITY_BASE_URL = 'http://arachne.dainst.org/entity/'
+    DEFAULT_ENTITY_BASE_URL = 'https://arachne.dainst.org/entity/'
     DEFAULT_IMAGE_HEIGHT = 120
 
     def __init__(self):
@@ -26,6 +28,15 @@ class ArachneAPI():
             search finds entities
         """
         self.get_keyword_search_json(keyword)
+        self.get_result_metadata()
+        self.generate_results_list()
+        return self.results
+    
+    def get_results_from_search_url(self, search_url):
+        """ parses a search URL, then makes a lost of
+            oc_object entities if search finds entities
+        """
+        self.get_json_from_search_url(search_url)
         self.get_result_metadata()
         self.generate_results_list()
         return self.results
@@ -70,24 +81,47 @@ class ArachneAPI():
         url += '?height=' + str(self.image_height)
         return url
 
+    def get_json_from_search_url(self, search_url):
+        """ gets json data from Arachne by first parsing
+            a search url and then converting that into a
+            keyword search
+        """
+        self.arachne_html_url = search_url
+        payload = parse_qs(urlparse(search_url).query)
+        print('payload: ' + str(payload))
+        json_r = self.get_arachne_json(payload)
+        return json_r
+
     def get_keyword_search_json(self, keyword):
         """
         gets json data from Arachne in response to a keyword search
         """
-        payload = {'q': keyword}
-        if self.filter_by_images:
-            payload['fq'] = 'facet_image:"ja"'
-        url = self.DEFAULT_API_BASE_URL
-        try:
-            gapi = GeneralAPI()
-            r = requests.get(url,
-                             params=payload,
-                             timeout=240,
-                             headers=gapi.client_headers)
-            self.set_arachne_search_urls(r.url)
-            r.raise_for_status()
-            json_r = r.json()
-        except:
+        payload = {}
+        payload['q'] = keyword
+        json_r = self.get_arachne_json(payload)
+        return json_r
+    
+    def get_arachne_json(self, payload):
+        """
+        executes a search for json data from arachne
+        """
+        if isinstance(payload, dict):
+            if self.filter_by_images:
+                payload['fq'] = 'facet_image:"ja"'
+            url = self.DEFAULT_API_BASE_URL
+            try:
+                gapi = GeneralAPI()
+                r = requests.get(url,
+                                 params=payload,
+                                 timeout=240,
+                                 headers=gapi.client_headers)
+                print('r url: ' + r.url)
+                self.set_arachne_search_urls(r.url)
+                r.raise_for_status()
+                json_r = r.json()
+            except:
+                json_r = False
+        else:
             json_r = False
         self.arachne_json_r = json_r
         return json_r
@@ -95,5 +129,6 @@ class ArachneAPI():
     def set_arachne_search_urls(self, arachne_json_url):
         """ Sets URLs for Arachne searches, JSON + HTML """
         self.arachne_json_url = arachne_json_url
-        self.arachne_html_url = arachne_json_url.replace(self.DEFAULT_API_BASE_URL,
-                                                         self.DEFAULT_HTML_BASE_URL)
+        if not isinstance(self.arachne_html_url, str):
+            self.arachne_html_url = arachne_json_url.replace(self.DEFAULT_API_BASE_URL,
+                                                             self.DEFAULT_HTML_BASE_URL)
