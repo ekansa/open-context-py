@@ -75,7 +75,9 @@ pctb = PoggioCivTrenchBookEntries()
 # pctb.file_id_limits = ['10667', '11198', '11187', '10528', '7684', '9171']
 pctb.clean_files()
 
-
+from opencontext_py.apps.imports.poggiociv.tbentries import PoggioCivTrenchBookEntries
+pctb = PoggioCivTrenchBookEntries()
+pctb.clean_bad_html_content()
     
 
     """
@@ -676,6 +678,55 @@ pctb.clean_files()
                         .filter(object_uuid=old_doc.uuid)\
                         .delete()
             
+    
+    def clean_bad_html_content(self):
+        """ gets HTML from the old Poggion Civitiate Website
+            for a TB entry, and then cleans it to save locally
+        """
+        url_prefix = 'http://www.poggiocivitate.org/catalog/trenchbooks/viewtrenchbookentry.asp?'
+        url_base = 'http://www.poggiocivitate.org/catalog/trenchbooks/viewtrenchbookentry.asp'
+        oc_docs = OCdocument.objects\
+                            .filter(content__contains='Return to Trench Book Editing')
+        for oc_doc in oc_docs:
+            act_man_obj = Manifest.objects.get(uuid=oc_doc.uuid)
+            clean_html = None
+            data = act_man_obj.sup_json
+            data_changed = False
+            tbtdid = data['tbtdid']
+            tbtid = data['tbtid']
+            if 'url' not in data:
+                tbtdid = data['tbtdid']
+                tbtid = data['tbtid']
+                data['url'] = url_prefix + 'tbtid=' + str(tbtid) + '&tbtdid=' + str(tbtdid)
+                data_changed = True
+            if data_changed:
+                act_man_obj.sup_json = data
+                act_man_obj.save()
+            url = data['url']
+            act_file = self.pc.compose_filename_from_link(url)
+            dir_file = self.pc.define_import_directory_file(self.pc.pc_directory,
+                                                            act_file)
+            page_str = self.pc.load_file(dir_file)
+            if not isinstance(page_str, str):
+                sleep(.5)
+                print('Cache URL: ' + url + ' filename:' + act_file)
+                ok = self.pc.cache_page_locally(url,
+                                                {},
+                                                self.pc_directory,
+                                                act_file)
+            page_str = self.pc.load_file(dir_file)
+            if isinstance(page_str, str):
+                print('Try to clean filename:' + act_file)
+                clean_html = self.clean_html(page_str, act_man_obj)
+                if isinstance(clean_html, str):
+                    clean_html = clean_html.replace('<html>', '')
+                    clean_html = clean_html.replace('</html>', '')
+                    clean_html = clean_html.replace('<body>', '')
+                    clean_html = clean_html.replace('</body>', '')
+                    oc_doc.content = clean_html
+                    oc_doc.save()
+                    print('Updated content for: ' + act_man_obj.label + ' ' + act_man_obj.uuid)
+    
     def get_clean_missing_content(self):
         """ gets HTML from the Poggio Civitate website for a document
             that is missing such content
@@ -795,13 +846,26 @@ pctb.clean_files()
         if not isinstance(page_str, str):
             print('ERROR: the page_str needs to be a string')
         else:
+            if isinstance(page_str, bytes):
+                page_str = page_str.decode('utf-8')
+                print('Convert bytes to string')
+            if page_str[0:2] == "b'":
+                page_str = page_str[2:]
+            page_str = page_str.replace('\\r\\n', '')
+            page_str = str(page_str)
             act_page_part = self.get_str_between_start_end(page_str,
                                                            '<a href="trenchbookdaily.asp">Return to Trench Book Logs</a>',
                                                            '</html>')
             if isinstance(act_page_part, str):
-                act_page_part = self.get_str_between_start_end(act_page_part,
+                mid_page_part = self.get_str_between_start_end(act_page_part,
                                                                '</table><br>',
                                                                '<table width="100%" cellspacing="0" cellpadding="0" border="0">')
+                if not isinstance(mid_page_part, str):
+                    mid_page_part = self.get_str_between_start_end(act_page_part,
+                                                                   '</table><br>',
+                                                                   '>Return to Trench Book Editing</a>')
+                if isinstance(mid_page_part, str):
+                    act_page_part = mid_page_part
             if isinstance(act_page_part, str):
                 first_html = '<html><head></head><body><div id="cleaned-tb-html" class="table-responsive"><p>'
                 act_page_part = first_html + act_page_part + '</div></body></html>'
@@ -1524,6 +1588,10 @@ pctb.clean_files()
                     if end_str in act_part:
                         end_parts = act_part.split(end_str)
                         output = end_parts[0]
+                    else:
+                        print('Cannot find end: ' + end_str + ' in it!')
+            else:
+                print('Cannot find start: ' + start_str + ' in it!')
         if isinstance(output, str):
             output = output.replace('\\r', '')
             output = output.replace('\\n', '')
