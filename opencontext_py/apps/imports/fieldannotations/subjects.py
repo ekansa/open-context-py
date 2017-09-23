@@ -57,8 +57,8 @@ class ProcessSubjects():
         self.non_contain_subjects = []
         self.root_subject_field = False  # field_num for the root subject field
         self.field_parent_entities = {}  # Parent entities named for a given field
-        self.draft_contain_parent_field = False
-        self.draft_contain_children_fields = False
+        self.draft_contain_fields = False
+        self.skip_for_non_contain = []
         self.start_row = 1
         self.batch_size = settings.IMPORT_BATCH_SIZE
         self.end_row = self.batch_size
@@ -178,7 +178,7 @@ class ProcessSubjects():
         self.get_date_fields()
         if self.root_subject_field is not False:
             self.process_field_hierarchy(self.root_subject_field)
-        elif self.draft_contain_parent_field is not False:
+        elif self.draft_contain_fields is not False:
             self.process_draft_field_hierarchy()
         self.process_non_contain_subjects()
 
@@ -265,21 +265,23 @@ class ProcessSubjects():
             This allows us to add items to a hierarchy without having to
             have the entire hierarchy in the given imported table
         """
-        if self.draft_contain_parent_field is not False:
-            nc_subs = self.process_non_contain_subject_field(self.draft_contain_parent_field)
-            if isinstance(nc_subs, dict):
-                for rec_hash, nc_sub in nc_subs.items():
-                    dist_rec = nc_sub['dist_rec']
-                    cs = nc_sub['cs']
-                    if cs.uuid is not False:
-                        sub_objs = Subject.objects.filter(uuid=cs.uuid)[:1]
-                        if len(sub_objs) > 0:
-                            sub_obj = sub_objs[0]
-                            for child_field in self.draft_contain_children_fields:
-                                self.process_field_hierarchy(child_field,
-                                                             cs.uuid,
-                                                             sub_obj.context,
-                                                             dist_rec['rows'])
+        if self.draft_contain_fields is not False:
+            for parent_field_num, draft_contain_children_fields in self.draft_contain_fields.items():
+                nc_subs = self.process_non_contain_subject_field(parent_field_num)
+                if isinstance(nc_subs, dict):
+                    for rec_hash, nc_sub in nc_subs.items():
+                        dist_rec = nc_sub['dist_rec']
+                        cs = nc_sub['cs']
+                        if cs.uuid is not False:
+                            sub_objs = Subject.objects.filter(uuid=cs.uuid)[:1]
+                            if len(sub_objs) > 0:
+                                print('found: ' + sub_objs[0].context)
+                                sub_obj = sub_objs[0]
+                                for child_field in draft_contain_children_fields:
+                                    self.process_field_hierarchy(child_field,
+                                                                 cs.uuid,
+                                                                 sub_obj.context,
+                                                                 dist_rec['rows'])
 
     def process_non_contain_subjects(self):
         """ processes subject entitites that are not in
@@ -296,6 +298,16 @@ class ProcessSubjects():
                 self.process_non_contain_subject_field(field_num)
     
     def process_non_contain_subject_field(self, field_num):
+        """ checks first if we
+            should processes a field for subject entitites that are not in
+            containment relations.
+        """
+        output = None
+        if field_num not in self.skip_for_non_contain:
+            output = self.process_non_contain_subject_field_do(field_num)
+        return output
+    
+    def process_non_contain_subject_field_do(self, field_num):
         """ processes a field for subject entitites that are not in
             containment relations.
             This only allows reconciliation based
@@ -755,10 +767,17 @@ class ProcessSubjects():
                 elif len(draft_child_anno) > 0:
                     # we have a case of draft containment, meaning there is only 1 parent and child found
                     # and the parent item is already imported (it will not be created otherwise)
-                    self.draft_contain_children_fields = []
-                    for child in draft_child_anno:
-                        self.draft_contain_parent_field = child.field_num
-                        self.draft_contain_children_fields.append(child.object_field_num)
+                    self.draft_contain_fields = {}
+                    for anno in draft_child_anno:
+                        if anno.field_num not in self.draft_contain_fields:
+                            # make a list for child fields of this parent
+                            self.draft_contain_fields[anno.field_num] = []
+                        if anno.object_field_num not in self.draft_contain_fields[anno.field_num]:
+                            # add the object field num (child) to list of parent's children
+                            self.draft_contain_fields[anno.field_num].append(anno.object_field_num)
+                        if anno.object_field_num not in self.skip_for_non_contain:
+                            # make sure we don't use this in a non-contain field
+                            self.skip_for_non_contain.append(anno.object_field_num)
                 else:
                     if len(parent_anno) > 0:
                         # field has no child fields.
@@ -928,7 +947,9 @@ class CandidateSubject():
             else:
                 # update all the import cells in the list of rows
                 # to have the relevant uuid
-                # print('Saving import cell uuid for: ' + self.label + ', ' + self.uuid)
+                message = 'Saving import fl_uuid for: ' + self.label + ', ' + self.uuid
+                message += ', field: ' + str(self.imp_cell_obj.field_num) + ', rows: ' + str(len(self.import_rows))
+                # print(message)
                 self.imp_cell_obj.fl_uuid = self.uuid
                 self.imp_cell_obj.save()
                 up_cells = ImportCell.objects\
@@ -991,7 +1012,8 @@ class CandidateSubject():
                                  .filter(project_uuid__in=[self.project_uuid, '0'],
                                          label__in=label_list,
                                          class_uri__in=class_list)[:1]
-        if len(manifest_match) > 0:
+        print('Match ' + str(label_list) + ' ' + str(class_list) + ' ' + str(len(manifest_match)))
+        if len(manifest_match) == 1:
             match_found = True
             self.uuid = manifest_match[0].uuid
             self.imp_cell_obj.fl_uuid = self.uuid
