@@ -95,7 +95,10 @@
 				    {% else %}
 				    <a href="{{ prop.values.0.uri }}" target="_blank">{{ prop.values.0.val }}</a>
 				    {%endif%}
-{% else %}
+					
+					{% elif prop.values.0.vartype == 'xsd:integer' %}
+						{{ prop.values.0.val|floatformat:"0" }}
+					{% else %}
 				    {% autoescape off %}{{ prop.values.0.val }}{% endautoescape %}
                                 {%endif%}
                             {% else %}
@@ -110,7 +113,10 @@
 					{% else %}
 					<a href="{{ propval.uri }}" target="_blank">{{ propval.val }}</a>
 					{%endif%}
-                                    {% else %}
+                                    
+									{% elif propval.vartype == 'xsd:integer' %}
+										{{ propval.val|floatformat:"0" }}
+									{% else %}
                                         {% autoescape off %}{{ propval.val }}{% endautoescape %}
                                     {%endif%}
                                 </li>
