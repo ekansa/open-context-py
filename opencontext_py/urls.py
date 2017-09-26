@@ -59,7 +59,8 @@ urlpatterns = [
     # Contexts for JSON-LD
     url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
     url(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
-    url(r'^contexts/projects/(?P<uuid>\S+).json', ContextViews.projects_json, name='context_proj_json'),
+    url(r'^contexts/projects/(?P<uuid>\S+)?.json', ContextViews.projects_json, name='context_proj_json'),
+    url(r'^contexts/projects/(?P<uuid>\S+)?', ContextViews.projects_json, name='context_proj_gen'),
     url(r'^contexts', AboutViews.index_view, name='about_index'),
     # Sets views
     url(r'^sets/(?P<spatial_context>\S+)?.json', SearchViews.sets_view, name='sets_json'),

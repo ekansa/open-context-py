@@ -212,41 +212,42 @@ class ProcessLinks():
                                                                            act_in_rows)
                                 if sort < 1:
                                     sort = obj_field_obj.field_num
-                                for hash_key, obj_rec in obj_recs.items():
-                                    object_uuid = obj_rec['imp_cell_obj'].fl_uuid
-                                    object_type = obj_field_obj.field_type
-                                    object_ok = obj_rec['imp_cell_obj'].cell_ok
-                                    object_record = obj_rec['imp_cell_obj'].record
-                                    if len(object_record) < 1:
-                                        # blank record, don't make a link
-                                        object_ok = False
-                                    if object_uuid is False or\
-                                        len(object_uuid) < 1:
-                                         object_ok = False
-                                    if object_uuid == 'False':
-                                         object_ok = False
-                                    if object_ok and subject_ok:
-                                        message = 'Attempt link: ' + subject_record + ' ('+ subject_uuid + ') -> '
-                                        message += predicate_uuid + ' -> ' + object_record + ' ('+ object_uuid + ')'
-                                        message += 'in rows: ' + str(act_in_rows)
-                                        print(message)
-                                        cla = CandidateLinkAssertion()
-                                        cla.project_uuid = self.project_uuid
-                                        cla.source_id = self.source_id
-                                        cla.subject_uuid = subject_uuid
-                                        cla.subject_type = subject_type
-                                        cla.obs_node = obs_node
-                                        cla.obs_num = obs_num
-                                        cla.sort = sort
-                                        cla.predicate_uuid = predicate_uuid
-                                        cla.object_uuid = object_uuid
-                                        cla.object_type = object_type
-                                        if (subject_ok and object_ok) and predicate_uuid is not False:
-                                            print('Link ok: ' + str(obj_rec['imp_cell_obj'].record))
-                                            cla.create_link()
-                                            if cla.is_valid:
-                                                self.count_new_assertions += 1
-                                                print('Link Count OK: ' + str(self.count_new_assertions))
+                                if obj_recs is not False:
+                                    for hash_key, obj_rec in obj_recs.items():
+                                        object_uuid = obj_rec['imp_cell_obj'].fl_uuid
+                                        object_type = obj_field_obj.field_type
+                                        object_ok = obj_rec['imp_cell_obj'].cell_ok
+                                        object_record = obj_rec['imp_cell_obj'].record
+                                        if len(object_record) < 1:
+                                            # blank record, don't make a link
+                                            object_ok = False
+                                        if object_uuid is False or\
+                                            len(object_uuid) < 1:
+                                             object_ok = False
+                                        if object_uuid == 'False':
+                                             object_ok = False
+                                        if object_ok and subject_ok:
+                                            message = 'Attempt link: ' + subject_record + ' ('+ subject_uuid + ') -> '
+                                            message += predicate_uuid + ' -> ' + object_record + ' ('+ object_uuid + ')'
+                                            message += 'in rows: ' + str(act_in_rows)
+                                            # print(message)
+                                            cla = CandidateLinkAssertion()
+                                            cla.project_uuid = self.project_uuid
+                                            cla.source_id = self.source_id
+                                            cla.subject_uuid = subject_uuid
+                                            cla.subject_type = subject_type
+                                            cla.obs_node = obs_node
+                                            cla.obs_num = obs_num
+                                            cla.sort = sort
+                                            cla.predicate_uuid = predicate_uuid
+                                            cla.object_uuid = object_uuid
+                                            cla.object_type = object_type
+                                            if (subject_ok and object_ok) and predicate_uuid is not False:
+                                                # print('Link ok: ' + str(obj_rec['imp_cell_obj'].record))
+                                                cla.create_link()
+                                                if cla.is_valid:
+                                                    self.count_new_assertions += 1
+                                                    print('Link Count OK: ' + str(self.count_new_assertions))
 
     def get_link_annotations(self):
         """ Gets descriptive annotations, and a 
