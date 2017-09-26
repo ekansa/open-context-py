@@ -56,6 +56,7 @@ class ProcessDescriptions():
             print('Clearing old description assertions...')
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
+            unimport.COMPLEX_DESCRIPTION_SOURCE_SUFFIX = ProcessGeneral.COMPLEX_DESCRIPTION_SOURCE_SUFFIX
             ok = unimport.delete_describe_assertions()
             if ok:
                 print('Assertions deleted...')

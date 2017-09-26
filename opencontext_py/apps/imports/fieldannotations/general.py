@@ -9,6 +9,8 @@ from opencontext_py.apps.imports.records.models import ImportCell
 # General methods for processing the import
 class ProcessGeneral():
 
+    COMPLEX_DESCRIPTION_SOURCE_SUFFIX = '#cmplx'
+
     def __init__(self, source_id):
         self.source_id = source_id
         self.project_uuid = False

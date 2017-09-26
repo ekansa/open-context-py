@@ -21,7 +21,8 @@ class ImportProfile():
                                    'media',
                                    'documents',
                                    'persons',
-                                   'projects']
+                                   'projects',
+                                   'complex-description']
 
     DEFAULT_DESCRIBE_TYPE_FIELDS = ['description',
                                     'variable',
@@ -31,7 +32,8 @@ class ImportProfile():
                                     'geojson',
                                     'early',
                                     'late',
-                                    'metadata']
+                                    'metadata',
+                                    'complex-description']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -45,7 +47,6 @@ class ImportProfile():
         pg.get_source()
         self.project_uuid = pg.project_uuid
         self.fields = []
-        c = False
         self.has_doc_field = False
         self.raw_field_annotations = []
         self.label = False
@@ -64,7 +65,11 @@ class ImportProfile():
         self.PRED_METADATA = ImportFieldAnnotation.PRED_METADATA
         self.PRED_DRAFT_CONTAINS = ImportFieldAnnotation.PRED_DRAFT_CONTAINS
         self.PRED_COMPLEX_DES = ImportFieldAnnotation.PRED_COMPLEX_DES
+        self.PRED_COMPLEX_LABEL = ImportFieldAnnotation.PRED_COMPLEX_LABEL
         self.nav = False
+        self.has_media_field = False
+        self.has_doc_field = False
+        self.has_complex_des_field = False
 
     def get_fields(self, field_num_list=False):
         """ Gets a list of field objects, limited by a list of field_num if not false """
@@ -96,6 +101,8 @@ class ImportProfile():
                 self.has_media_field = True
             if field_obj.field_type == 'documents':
                 self.has_doc_field = True
+            if field_obj.field_type == 'complex-description':
+                self.has_complex_des_field = True
             field_obj.examples = self.get_example_entities(field_obj.field_num,
                                                            field_obj.value_prefix)
             field_obj.ex_csv = ', '.join(field_obj.examples)

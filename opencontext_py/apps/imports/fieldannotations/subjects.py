@@ -947,7 +947,7 @@ class CandidateSubject():
             else:
                 # update all the import cells in the list of rows
                 # to have the relevant uuid
-                message = 'Saving import fl_uuid for: ' + self.label + ', ' + self.uuid
+                message = 'Saving import fl_uuid for: ' + self.label + ', ' + str(self.uuid)
                 message += ', field: ' + str(self.imp_cell_obj.field_num) + ', rows: ' + str(len(self.import_rows))
                 # print(message)
                 self.imp_cell_obj.fl_uuid = self.uuid
@@ -1012,7 +1012,7 @@ class CandidateSubject():
                                  .filter(project_uuid__in=[self.project_uuid, '0'],
                                          label__in=label_list,
                                          class_uri__in=class_list)[:1]
-        print('Match ' + str(label_list) + ' ' + str(class_list) + ' ' + str(len(manifest_match)))
+        # print('Match ' + str(label_list) + ' ' + str(class_list) + ' ' + str(len(manifest_match)))
         if len(manifest_match) == 1:
             match_found = True
             self.uuid = manifest_match[0].uuid
