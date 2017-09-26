@@ -77,8 +77,8 @@ class ProjectContext():
                 if sql_dict['data_type'] == 'id':
                     act_pred['type'] = '@id'
                 else:
-                    act_pred['type'] = sql_dict['data_type']
-                context_key = 'oc-pred:' + sql_dict['slug']
+                    act_pred['type'] = str(sql_dict['data_type'])
+                context_key = 'oc-pred:' + str(sql_dict['slug'])
                 context[context_key] = act_pred
         return context
 
@@ -91,7 +91,7 @@ class ProjectContext():
         if isinstance(pred_sql_dict_list, list):
             for sql_dict in pred_sql_dict_list:
                 act_pred = LastUpdatedOrderedDict()
-                act_pred['@id'] = 'oc-pred:' + sql_dict['slug']
+                act_pred['@id'] = 'oc-pred:' + str(sql_dict['slug'])
                 act_pred['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['predicate_uuid'],
                                                                    'predicates')
                 act_pred['label'] = sql_dict['label']
@@ -109,6 +109,9 @@ class ProjectContext():
                         if la_pred_uri not in act_pred:
                             act_pred[la_pred_uri] = []
                         la_object_item = self.make_object_dict_item(la_pred.object_uri)
+                        if isinstance(act_pred[la_pred_uri], str):
+                            # we need this as a list!
+                            act_pred[la_pred_uri] = [act_pred[la_pred_uri]]
                         act_pred[la_pred_uri].append(la_object_item)
                     else:
                         if pred_found:
