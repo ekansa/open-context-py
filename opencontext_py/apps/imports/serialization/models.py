@@ -1,9 +1,12 @@
+import pytz
 import os
 import json
 import codecs
 from django.db import models
 from django.db import transaction
 from django.conf import settings
+from datetime import datetime
+from django.utils import timezone
 from django.core import serializers
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -21,6 +24,7 @@ from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.entities.redirects.models import RedirectMapping
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
@@ -63,7 +67,7 @@ imp_sj.load_data_in_directory('64-oracle-bone-test')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
-imp_sj.load_data_in_directory('65-c4')
+imp_sj.load_data_in_directory('24-murlo')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
@@ -117,6 +121,21 @@ imp_sj.load_data_in_directory('86-oracle-bones')
                 for obj in serializers.deserialize("json", json_obj):
                     # this just saves the object, so as to
                     # synch different instances of open contex
+                    if hasattr(obj, 'object'):
+                        # object_dict = obj.object.__dict__
+                        # print(str(object_dict))
+                        if hasattr(obj.object, 'data_date'):
+                            if isinstance(obj.object.data_date, datetime):
+                                if timezone.is_naive(obj.object.data_date):
+                                    obj.object.data_date = pytz.utc.localize(obj.object.data_date)
+                        if hasattr(obj.object, 'created'):
+                            if isinstance(obj.object.created, datetime):
+                                if timezone.is_naive(obj.object.created):
+                                    obj.object.created = pytz.utc.localize(obj.object.created)
+                        if hasattr(obj.object, 'updated'):
+                            if isinstance(obj.object.updated, datetime):
+                                if timezone.is_naive(obj.object.updated):
+                                    obj.object.updated = pytz.utc.localize(obj.object.updated)
                     obj.save()
         except Exception as e:
             print('Problem: ' + str(e))
