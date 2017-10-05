@@ -308,6 +308,8 @@ urlpatterns = [
         name='entity_description_hierarchy'),
     url(r'^entities/proxy/(?P<target_url>\S+)', EntityViews.proxy,
         name='entity_proxy'),
+    url(r'^entities/proxy-header/(?P<target_url>\S+)', EntityViews.proxy_header,
+        name='entity_proxy_header'),
     #----------------------------
     # BELOW ARE OAI REQUESTS (OAIviews)
     #----------------------------

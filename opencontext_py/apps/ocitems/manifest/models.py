@@ -42,7 +42,10 @@ class Manifest(models.Model):
                          blank=True)
 
     def validate_label(self):
-        if(len(self.label) > 175):
+        if self.item_type == 'subjects':
+            # so as not to screw up depth of contexts.
+            self.label = self.label.replace('/', '--')
+        if len(self.label) > 175:
             self.label = self.label[:172] + '...'
         return self.label
 
@@ -131,7 +134,7 @@ class Manifest(models.Model):
 
     def published_save(self, published_datetime_obj=None):
         """
-        Updates with the last indexed time
+        Updates with the published time
         """
         if published_datetime_obj is not None:
             self.published = published_datetime_obj
