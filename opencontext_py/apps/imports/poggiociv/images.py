@@ -44,16 +44,16 @@ pci.associate_files()
     def __init__(self):
         self.act_import_dir = False
         self.pc = PoggioCiv() 
-        self.image_directory = 'to-2017-b'
+        self.image_directory = 'copy-pc-mag-photos/full'
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
-        self.project_uuid = 'False'
-        self.source_id = 'image-link-b'
-        self.source_ids = ['image-link', 'image-link-b']
+        self.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+        self.source_id = 'image-link-b-new'
+        self.source_ids = ['image-link-new', 'image-link-b-new']
         self.class_uri = False
         self.sub_counts = {}
-        self.full_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017-b/full/'
-        self.prev_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017-b/preview/'
-        self.thumb_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017-b/thumbs/'
+        self.full_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017/full/'
+        self.prev_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017/preview/'
+        self.thumb_uri_prefix = 'https://artiraq.org/static/opencontext/poggio-civitate/to-2017/thumbs/'
         self.obs_num = 1
         self.obs_node = '#obs-' + str(self.obs_num)
         self.pred_image_type = 'B8556EAA-CF52-446B-39FA-AE4798C13A6B'
@@ -88,12 +88,13 @@ pci.associate_files()
                                .filter(label=file_label,
                                        source_id=self.source_id,
                                        item_type='media')[:1]
+        filename = filename.replace(' ', '-')
+        filename = filename.replace('_', '-')
         med_files = Mediafile.objects\
                              .filter(file_uri__icontains=filename)[:1]
         # med_man_objs = [1, 2, 3]
         if len(med_man_objs) < 1 and len(med_files) < 1:
             # now make another media item
-            filename = filename.replace(' ', '+')
             media_uuid = str(GenUUID.uuid4())
             print('Making on: ' + file_label + ' (' + media_uuid +')')
             new_man = Manifest()
@@ -206,10 +207,14 @@ pci.associate_files()
         return ok
     
     def get_pc_number(self, filename):
-        """ gets the pc number from a file name """
+        """ gets the pc number from a file name
+            Example: '19660027.jpg'
+        """
         id_str = None
         if isinstance(filename, str):
             f_len = len(filename)
+            if f_len > 8:
+                f_len = 8
             i = 0
             id_part = True
             id_str = 'PC '

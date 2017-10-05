@@ -78,7 +78,7 @@ pctb.clean_files()
 from opencontext_py.apps.imports.poggiociv.tbentries import PoggioCivTrenchBookEntries
 pctb = PoggioCivTrenchBookEntries()
 pctb.clean_bad_html_content()
-    
+
 
     """
 
@@ -829,6 +829,37 @@ pctb.clean_bad_html_content()
             clean_html = None
         else:
             clean_html = self.clean_html(page_str, act_man_obj)
+        return clean_html
+    
+    def clean_file_by_uuid(self, uuid, act_file):
+        """ cleans a file by uuid and filename """
+        page_str = None
+        act_man_obj = None
+        try:
+            act_man_obj = Manifest.objects.get(uuid=uuid)
+            data = self.prep_tb_entry_data(act_file)
+            if isinstance(data, dict):
+                act_man_obj.sup_json = data
+                act_man_obj.save()
+        except:
+            act_man_obj = None
+        dir_file = self.pc.define_import_directory_file(self.pc.pc_directory,
+                                                        act_file)
+        page_str = self.pc.load_file(dir_file)
+        if not isinstance(page_str, str) or act_man_obj is None:
+            print('failed to open ' + dir_file + ' or cannnot find document item in DB')
+            clean_html = None
+        else:
+            clean_html = self.clean_html(page_str, act_man_obj)
+        if isinstance(clean_html, str):
+            oc_doc = OCdocument.objects.get(uuid=uuid)
+            clean_html = clean_html.replace('<html>', '')
+            clean_html = clean_html.replace('</html>', '')
+            clean_html = clean_html.replace('<body>', '')
+            clean_html = clean_html.replace('</body>', '')
+            oc_doc.content = clean_html
+            oc_doc.save()
+            print('Updated content for: ' + act_man_obj.label + ' ' + act_man_obj.uuid)
         return clean_html
     
     def clean_html(self,

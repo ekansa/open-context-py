@@ -47,8 +47,28 @@ print(str(items[-10:]))
 
 from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
 pc = PoggioCiv(True)
-link = 'viewlocus.asp?locus=15&tbtid=439&tbtdid=12186'
-pc.scrape_content(link, pc.pc_directory, False)
+links = [
+'viewtrenchbookentry.asp?tbtid=227&tbtdid=6146', 
+'viewtrenchbookentry.asp?tbtdid=6147&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6149&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6153&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6158&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6159&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6651&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6653&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6654&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6732&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=6735&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7104&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7106&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7107&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7108&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7109&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7110&tbtid=227', 
+'viewtrenchbookentry.asp?tbtdid=7111&tbtid=227'
+]
+for link in links:
+    pc.scrape_content(link, pc.pc_directory, False)
 
 from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
 pc = PoggioCiv(True)
@@ -199,7 +219,7 @@ pc.scrape_content_from_index(pc.pc_directory, True)
                     # new file, we haven't seen this before
                     ok = self.cache_page_locally(url, {}, act_dir, filename)
                     if ok is False:
-                        print('***** FAILED: ' + filename + ' *****')
+                        print('***** FAILED: ' + act_dir + ' ' + url +'*****')
                     else:
                         print('------------------')
                         print('Saved: ' + filename)
