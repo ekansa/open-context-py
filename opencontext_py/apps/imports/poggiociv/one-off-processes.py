@@ -624,6 +624,34 @@ for b_str in b_strs:
     b_str.content = b_str.content.replace(bad_url, good_url)
     b_str.save()
 
+
+
+
+# add images to internet archive for IIIF serving
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchiveMedia
+ia_m = InternetArchiveMedia()
+ia_m.noindex = False
+ia_m.save_db = True
+ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/poggio-civitate/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/poggio-civitate/'
+ia_m.project_uuids.append('DF043419-F23B-41DA-7E4D-EE52AF22F92F')
+ia_m.delay_before_request = .25
+ia_m.archive_image_media_items()
+ia_m.errors
+
+
+
+
+
+
+
+
+
+
+
+
 # reindex
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
