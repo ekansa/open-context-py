@@ -1,3 +1,4 @@
+import pytz
 import time
 import hashlib
 import reversion  # version control object
@@ -66,6 +67,13 @@ class Assertion(models.Model):
             self.created = timezone.now()
         if self.certainty is None:
             self.certainty = 0
+        if isinstance(self.data_date, datetime):
+            if timezone.is_naive(self.data_date):
+                self.data_date = pytz.utc.localize(self.data_date)
+        if timezone.is_naive(self.created):
+            self.created = pytz.utc.localize(self.created)
+        if timezone.is_naive(self.updated):
+            self.updated = pytz.utc.localize(self.updated)
         super(Assertion, self).save(*args, **kwargs)
 
     def sort_save(self):
