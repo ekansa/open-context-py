@@ -23,27 +23,28 @@ def index(request):
         'video': False
     }
     template = loader.get_template('index/view.html')
-    context = RequestContext(request,
-                             {'base_url': base_url,
-                              'old_view': old_view,
-                              'page_title': 'Open Context: Publisher of Research Data',
-                              'og': open_graph,
-                              'act_nav': 'home',
-                              'nav_items': settings.NAV_ITEMS})
+    context = {
+        'base_url': base_url,
+        'old_view': old_view,
+        'page_title': 'Open Context: Publisher of Research Data',
+        'og': open_graph,
+        'act_nav': 'home',
+        'nav_items': settings.NAV_ITEMS
+    }
     if 'HTTP_ACCEPT' in request.META:
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        return HttpResponse(template.render(context))
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
-        return HttpResponse(template.render(context),
+        return HttpResponse(template.render(context, request),
                             status=415)
 
 
 def robots(request):
     """ view for the robots.txt file """
     template = loader.get_template('index/robots.txt')
-    context = RequestContext(request)
-    return HttpResponse(template.render(context),
+    context = {}
+    return HttpResponse(template.render(context, request),
                         content_type="text/plain; charset=utf8")

@@ -29,12 +29,14 @@ def index_view(request, table_id=None):
     if req_neg.supported:
         # requester wanted a mimetype we DO support
         template = loader.get_template('tables/index.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: Tables',
-                                  'act_nav': 'tables',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: Tables',
+            'act_nav': 'tables',
+            'nav_items': settings.NAV_ITEMS,
+            'user': request.user
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -66,11 +68,13 @@ def html_view(request, table_id):
                 elif 'csv' in req_neg.use_response_type:
                     return redirect(exp_tt.csv_url, permanent=False)
                 else:
-                    context = RequestContext(request,
-                                             {'page_title': exp_tt.exp_tab.label,
-                                              'item': exp_tt,
-                                              'base_url': base_url})
-                    return HttpResponse(template.render(context))
+                    context = {
+                        'page_title': exp_tt.exp_tab.label,
+                        'item': exp_tt,
+                        'base_url': base_url,
+                        'user': request.user
+                    }
+                    return HttpResponse(template.render(context, request))
             else:
                 # client wanted a mimetype we don't support
                 return HttpResponse(req_neg.error_message,
@@ -78,10 +82,12 @@ def html_view(request, table_id):
                                     status=415)
         else:
             template = loader.get_template('items/view401.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context), status=401)
+            context = {
+                'item': temp_item,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request), status=401)
     else:
         # did not find a record for the table, check for redirects
         r_url = RedirectURL()
@@ -92,12 +98,14 @@ def html_view(request, table_id):
         else:
             # raise Http404
             template = loader.get_template('tables/index.html')
-            context = RequestContext(request,
-                                     {'base_url': base_url,
-                                      'page_title': 'Open Context: Tables',
-                                      'act_nav': 'tables',
-                                      'nav_items': settings.NAV_ITEMS})
-            return HttpResponse(template.render(context))
+            context = {
+                'base_url': base_url,
+                'page_title': 'Open Context: Tables',
+                'act_nav': 'tables',
+                'nav_items': settings.NAV_ITEMS,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
 
 
 def json_view(request, table_id):

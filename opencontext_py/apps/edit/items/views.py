@@ -60,14 +60,15 @@ def html_view(request, uuid):
                                          indent=4,
                                          ensure_ascii=False)
             template = loader.get_template('edit/item-edit.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'profile': check_profile_use(ocitem.manifest),
-                                      'super_user': request.user.is_superuser,
-                                      'icons': ItemBasicEdit.UI_ICONS,
-                                      'editorial_types': editorial_types,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'item': temp_item,
+                'profile': check_profile_use(ocitem.manifest),
+                'super_user': request.user.is_superuser,
+                'icons': ItemBasicEdit.UI_ICONS,
+                'editorial_types': editorial_types,
+                'base_url': base_url
+            }
+            return HttpResponse(template.render(context, request))
         else:
             template = loader.get_template('edit/view401.html')
             context = RequestContext(request,
@@ -101,18 +102,20 @@ def check_list_view(request, uuid):
             temp_item.read_jsonld_dict(ocitem.json_ld)
             if temp_item.edit_permitted:
                 template = loader.get_template('edit/check-list.html')
-                context = RequestContext(request,
-                                         {'item': temp_item,
-                                          'super_user': request.user.is_superuser,
-                                          'icons': ItemBasicEdit.UI_ICONS,
-                                          'base_url': base_url})
-                return HttpResponse(template.render(context))
+                context = {
+                    'item': temp_item,
+                    'super_user': request.user.is_superuser,
+                    'icons': ItemBasicEdit.UI_ICONS,
+                    'base_url': base_url
+                }
+                return HttpResponse(template.render(context, request))
             else:
                 template = loader.get_template('edit/view401.html')
-                context = RequestContext(request,
-                                         {'item': temp_item,
-                                          'base_url': base_url})
-                return HttpResponse(template.render(context), status=401)
+                context = {
+                    'item': temp_item,
+                    'base_url': base_url
+                }
+                return HttpResponse(template.render(context, request), status=401)
         else:
             raise Http404 
     else:
