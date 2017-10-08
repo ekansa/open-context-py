@@ -118,6 +118,7 @@ for med_full in med_files:
     def archive_image_media_items(self):
         """ archives a list of media items """
         image_manifest_list = self.get_image_media_items()
+        print('Starting upload of: ' + str(len(image_manifest_list)) + ' items...')
         for man_obj in image_manifest_list:
             print('Working on: ' + man_obj.slug + ' uuid: ' + man_obj.uuid)
             # self.update_image_metadata(man_obj)
