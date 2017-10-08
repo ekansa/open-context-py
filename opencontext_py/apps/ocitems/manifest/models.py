@@ -1,3 +1,4 @@
+import pytz
 import time
 import re
 import roman
@@ -119,6 +120,9 @@ class Manifest(models.Model):
         self.make_slug_and_sort()
         if self.revised is None:
             self.revised = timezone.now()
+        elif isinstance(self.revised, datetime):
+            if timezone.is_naive(self.revised):
+                self.revised = pytz.utc.localize(self.revised)
         super(Manifest, self).save(*args, **kwargs)
 
     def indexed_save(self):
