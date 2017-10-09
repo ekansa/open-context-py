@@ -53,11 +53,12 @@ def html_view(request, uuid):
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
                 else:
-                    context = RequestContext(request,
-                                             {'item': temp_item,
-                                              'base_url': base_url,
-                                              'user': request.user})
-                    response = HttpResponse(template.render(context))
+                    context = {
+                        'item': temp_item,
+                        'base_url': base_url,
+                        'user': request.user
+                    }
+                    response = HttpResponse(template.render(context, request))
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
             else:
@@ -67,11 +68,12 @@ def html_view(request, uuid):
                                     status=415)
         else:
             template = loader.get_template('items/view401.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'base_url': base_url,
-                                      'user': request.user})
-            return HttpResponse(template.render(context), status=401)
+            context = {
+                'item': temp_item,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request), status=401)
     else:
         raise Http404
 

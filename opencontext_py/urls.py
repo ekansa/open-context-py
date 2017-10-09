@@ -59,7 +59,8 @@ urlpatterns = [
     # Contexts for JSON-LD
     url(r'^contexts/item.json', ContextViews.item_view, name='context_item'),
     url(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
-    url(r'^contexts/projects/(?P<uuid>\S+).json', ContextViews.projects_json, name='context_proj_json'),
+    url(r'^contexts/projects/(?P<uuid>\S+)?.json', ContextViews.projects_json, name='context_proj_json'),
+    url(r'^contexts/projects/(?P<uuid>\S+)?', ContextViews.projects_json, name='context_proj_gen'),
     url(r'^contexts', AboutViews.index_view, name='about_index'),
     # Sets views
     url(r'^sets/(?P<spatial_context>\S+)?.json', SearchViews.sets_view, name='sets_json'),
@@ -307,6 +308,8 @@ urlpatterns = [
         name='entity_description_hierarchy'),
     url(r'^entities/proxy/(?P<target_url>\S+)', EntityViews.proxy,
         name='entity_proxy'),
+    url(r'^entities/proxy-header/(?P<target_url>\S+)', EntityViews.proxy_header,
+        name='entity_proxy_header'),
     #----------------------------
     # BELOW ARE OAI REQUESTS (OAIviews)
     #----------------------------

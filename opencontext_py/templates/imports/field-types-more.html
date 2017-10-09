@@ -143,11 +143,27 @@
                 </div>
                 <div class="panel-body">
                     <ul>
-                        <li><a href="javascript:assignMediaCategory('oc-gen:document-text');">Document Text</a></li>
+                        <li><a href="javascript:assignMediaCategory('{{ ip.PRED_DOC_Text }}');">Document Text</a></li>
                     </ul>
                 </div>
             </div>
             {% endif %}
+            
+            <!--
+            {% if ip.has_complex_des_field %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Complex Descriptions</h4>
+                </div>
+                <div class="panel-body">
+                    <ul>
+                        <li><a href="javascript:assignMediaCategory('{{ ip.PRED_COMPLEX_LABEL }}');">Label</a></li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+            -->
+            
         </div>
         <script src="../../static/oc/js/imports/fields-classify-more.js"></script>
     </div>

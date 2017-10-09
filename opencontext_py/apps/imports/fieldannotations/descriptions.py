@@ -56,6 +56,7 @@ class ProcessDescriptions():
             print('Clearing old description assertions...')
             unimport = UnImport(self.source_id,
                                 self.project_uuid)
+            unimport.COMPLEX_DESCRIPTION_SOURCE_SUFFIX = ProcessGeneral.COMPLEX_DESCRIPTION_SOURCE_SUFFIX
             ok = unimport.delete_describe_assertions()
             if ok:
                 print('Assertions deleted...')
@@ -211,11 +212,11 @@ class ProcessDescriptions():
                                     row_num = imp_cell_obj.row_num
                                     predicate = self.look_up_predicate(des_field_num,
                                                                        row_num)
-                                    if predicate.sort != 0:
-                                        pred_sort = predicate.sort
-                                    else:
-                                        pred_sort = des_field_num
                                     if predicate is not False:
+                                        if predicate.sort != 0:
+                                            pred_sort = predicate.sort
+                                        else:
+                                            pred_sort = des_field_num
                                         val_sort = self.get_multivalue_sort_val(subject_uuid,
                                                                                 str(predicate.uuid))
                                         cd = CandidateDescription()

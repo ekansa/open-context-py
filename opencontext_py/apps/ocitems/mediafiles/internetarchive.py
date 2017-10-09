@@ -30,9 +30,9 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-# ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/kuthodaw-pagoda/'
-# ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/kuthodaw-pagoda/'
-ia_m.project_uuids.append('fab0532a-2953-4f13-aa97-8a9d7e992dbe')
+ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/poggio-civitate/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/poggio-civitate/'
+ia_m.project_uuids.append('DF043419-F23B-41DA-7E4D-EE52AF22F92F')
 ia_m.archive_image_media_items()
 ia_m.errors
 
@@ -212,11 +212,13 @@ for med_full in med_files:
             man_images = Manifest.objects\
                                  .filter(item_type='media',
                                          # class_uri='oc-gen:image',
-                                         project_uuid__in=self.project_uuids)
+                                         project_uuid__in=self.project_uuids)\
+                                 .order_by('sort')
         else:
             man_images = Manifest.objects\
                                  .filter(item_type='media',
-                                         class_uri='oc-gen:image')
+                                         class_uri='oc-gen:image')\
+                                 .order_by('sort')
         print('Checking media items: ' + str(len(man_images)))
         for man_obj in man_images:
             ch_iiif = Mediafile.objects\
@@ -411,14 +413,18 @@ for med_full in med_files:
     
     def get_cache_full_file(self, json_ld, man_obj):
         """ gets and caches the fill file, saving temporarily to a local directory """
+        file_name = None
         slug = man_obj.slug
         file_uri = self.get_archive_fileuri(json_ld)
-        if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
-            # get a local copy of the file, not a remote copy
-            file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
-        file_name = None
         if isinstance(file_uri, str):
             # we have a file
+            if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
+                # get a local copy of the file, not a remote copy
+                file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
+                if 'https://' in self.remote_uri_sub:
+                    # so we also replace the https or http version of the remote with a local
+                    alt_remote_sub = self.remote_uri_sub.replace('https://', 'http://')
+                    file_uri = file_uri.replace(alt_remote_sub, self.local_uri_sub)
             if '.' in file_uri:
                 file_ex = file_uri.split('.')
                 file_name = slug + '.' + file_ex[-1]

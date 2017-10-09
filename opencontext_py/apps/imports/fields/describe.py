@@ -175,7 +175,8 @@ class ImportFieldDescribe():
         del_preds = [ImportFieldAnnotation.PRED_DESCRIBES,
                      ImportFieldAnnotation.PRED_GEO_LOCATION,
                      ImportFieldAnnotation.PRED_DATE_EVENT,
-                     ImportFieldAnnotation.PRED_METADATA]
+                     ImportFieldAnnotation.PRED_METADATA,
+                     ImportFieldAnnotation.PRED_COMPLEX_DES]            
         anno_objs = ImportFieldAnnotation.objects\
                                          .filter(source_id=self.source_id,
                                                  predicate__in=del_preds,
@@ -193,6 +194,7 @@ class ImportFieldDescribe():
             date_ok = self.check_field_type(field_num, ['early',
                                                         'late'])
             meta_ok =  self.check_field_type(field_num, ['metadata'])
+            complex_des_ok = self.check_field_type(field_num, ['complex-description'])
             if des_ok and entity_ok:
                 # only make the annotation if the subject is a value, object is a variable
                 ifa = ImportFieldAnnotation()
@@ -222,6 +224,17 @@ class ImportFieldDescribe():
                 ifa.project_uuid = self.project_uuid
                 ifa.field_num = field_num
                 ifa.predicate = ImportFieldAnnotation.PRED_DATE_EVENT
+                ifa.predicate_field_num = 0
+                ifa.object_field_num = object_field_num
+                ifa.object_uuid = ''
+                ifa.save()
+            elif complex_des_ok:
+                # we have complex description annotations
+                ifa = ImportFieldAnnotation()
+                ifa.source_id = self.source_id
+                ifa.project_uuid = self.project_uuid
+                ifa.field_num = field_num
+                ifa.predicate = ImportFieldAnnotation.PRED_COMPLEX_DES
                 ifa.predicate_field_num = 0
                 ifa.object_field_num = object_field_num
                 ifa.object_uuid = ''

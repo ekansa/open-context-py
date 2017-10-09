@@ -174,16 +174,17 @@ def html_view(request, spatial_context=None):
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
                             chart = True
                 template = loader.get_template('search/view.html')
-                context = RequestContext(request,
-                                         {'st': st,
-                                          'item_type': '*',
-                                          'chart': chart,
-                                          'base_search_link': m_json_ld.base_search_link,
-                                          'url': url,
-                                          'json_url': json_url,
-                                          'base_url': base_url})
+                context = {
+                    'st': st,
+                    'item_type': '*',
+                    'chart': chart,
+                    'base_search_link': m_json_ld.base_search_link,
+                    'url': url,
+                    'json_url': json_url,
+                    'base_url': base_url
+                }
                 if req_neg.supported:
-                    response = HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context, request))
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
                 else:
@@ -391,17 +392,18 @@ def subjects_html_view(request, spatial_context=None):
                     # allow downloads, multiple props selected
                     # or relatively few records
                     csv_downloader = True
-                context = RequestContext(request,
-                                         {'st': st,
-                                          'csv_downloader': csv_downloader,
-                                          'chart': chart,
-                                          'item_type': 'subjects',
-                                          'base_search_link': m_json_ld.base_search_link,
-                                          'url': url,
-                                          'json_url': json_url,
-                                          'base_url': base_url})
+                context = {
+                    'st': st,
+                    'csv_downloader': csv_downloader,
+                    'chart': chart,
+                    'item_type': 'subjects',
+                    'base_search_link': m_json_ld.base_search_link,
+                    'url': url,
+                    'json_url': json_url,
+                    'base_url': base_url
+                }
                 if req_neg.supported:
-                    response = HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context, request))
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
                 else:
@@ -619,16 +621,17 @@ def media_html_view(request, spatial_context=None):
                         if len(json_ld['oc-api:has-form-use-life-ranges']) > 0 and st.total_count > 0:
                             chart = True
                 template = loader.get_template('search/view.html')
-                context = RequestContext(request,
-                                         {'st': st,
-                                          'item_type': 'media',
-                                          'chart': chart,
-                                          'base_search_link': m_json_ld.base_search_link,
-                                          'url': url,
-                                          'json_url': json_url,
-                                          'base_url': base_url})
+                context = {
+                    'st': st,
+                    'item_type': 'media',
+                    'chart': chart,
+                    'base_search_link': m_json_ld.base_search_link,
+                    'url': url,
+                    'json_url': json_url,
+                    'base_url': base_url
+                }
                 if req_neg.supported:
-                    response = HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context, request))
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
                 else:
@@ -821,16 +824,17 @@ def projects_html_view(request, spatial_context=None):
                 p_aug = ProjectAugment(json_ld)
                 p_aug.process_json_ld()
                 template = loader.get_template('search/view.html')
-                context = RequestContext(request,
-                                         {'st': st,
-                                          'item_type': 'projects',
-                                          'base_search_link': m_json_ld.base_search_link,
-                                          'p_aug': p_aug,
-                                          'url': url,
-                                          'json_url': json_url,
-                                          'base_url': base_url})
+                context = {
+                    'st': st,
+                    'item_type': 'projects',
+                    'base_search_link': m_json_ld.base_search_link,
+                    'p_aug': p_aug,
+                    'url': url,
+                    'json_url': json_url,
+                    'base_url': base_url
+                }
                 if req_neg.supported:
-                    response = HttpResponse(template.render(context))
+                    response = HttpResponse(template.render(context, request))
                     patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                     return response
                 else:

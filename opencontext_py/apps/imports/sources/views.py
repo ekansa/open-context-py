@@ -167,11 +167,13 @@ def index(request):
         proj = {}
         proj['nav'] = imnav.set_nav('index')
         template = loader.get_template('imports/projects.html')
-        context = RequestContext(request,
-                                 {'projs': projs,
-                                  'proj': proj,
-                                  'base_url': base_url})
-        return HttpResponse(template.render(context))
+        context = {
+            'projs': projs,
+            'proj': proj,
+            'base_url': base_url,
+            'user': request.user
+        }
+        return HttpResponse(template.render(context, request))
 
 
 @ensure_csrf_cookie
@@ -192,10 +194,12 @@ def project(request, project_uuid):
                                         project_uuid,
                                         False)
             template = loader.get_template('imports/project.html')
-            context = RequestContext(request,
-                                     {'proj': proj,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'proj': proj,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
         else:
             raise Http404
 
@@ -225,10 +229,12 @@ def field_types(request, source_id):
                                    ip.project_uuid,
                                    source_id)
             template = loader.get_template('imports/field-types.html')
-            context = RequestContext(request,
-                                     {'ip': ip,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'ip': ip,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
         else:
             raise Http404
 
@@ -252,10 +258,12 @@ def field_types_more(request, source_id):
                                    source_id)
             if len(ip.fields) > 0:
                 template = loader.get_template('imports/field-types-more.html')
-                context = RequestContext(request,
-                                         {'ip': ip,
-                                          'base_url': base_url})
-                return HttpResponse(template.render(context))
+                context = {
+                    'ip': ip,
+                    'base_url': base_url,
+                    'user': request.user
+                }
+                return HttpResponse(template.render(context, request))
             else:
                 redirect = '../../imports/field-types/' + source_id
                 return HttpResponseRedirect(redirect)
@@ -286,10 +294,12 @@ def field_entity_relations(request, source_id):
                                        ip.project_uuid,
                                        source_id)
                 template = loader.get_template('imports/field-entity-relations.html')
-                context = RequestContext(request,
-                                         {'ip': ip,
-                                          'base_url': base_url})
-                return HttpResponse(template.render(context))
+                context = {
+                    'ip': ip,
+                    'base_url': base_url,
+                    'user': request.user
+                }
+                return HttpResponse(template.render(context, request))
             else:
                 redirect = '../../imports/field-types/' + source_id
                 return HttpResponseRedirect(redirect)
@@ -321,10 +331,12 @@ def field_complex_descriptions(request, source_id):
                                        ip.project_uuid,
                                        source_id)
                 template = loader.get_template('imports/field-entity-relations.html')
-                context = RequestContext(request,
-                                         {'ip': ip,
-                                          'base_url': base_url})
-                return HttpResponse(template.render(context))
+                context = {
+                    'ip': ip,
+                    'base_url': base_url,
+                    'user': request.user
+                }
+                return HttpResponse(template.render(context, request))
             else:
                 redirect = '../../imports/field-types/' + source_id
                 return HttpResponseRedirect(redirect)
@@ -352,10 +364,12 @@ def field_descriptions(request, source_id):
                                    ip.project_uuid,
                                    source_id)
             template = loader.get_template('imports/field-descriptions.html')
-            context = RequestContext(request,
-                                     {'ip': ip,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'ip': ip,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
         else:
             raise Http404
 
@@ -380,9 +394,11 @@ def finalize(request, source_id):
                                    ip.project_uuid,
                                    source_id)
             template = loader.get_template('imports/finalize.html')
-            context = RequestContext(request,
-                                     {'ip': ip,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'ip': ip,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
         else:
             raise Http404

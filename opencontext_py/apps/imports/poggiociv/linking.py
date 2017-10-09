@@ -33,6 +33,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.imports.poggiociv.models import PoggioCiv
+from opencontext_py.apps.imports.records.models import ImportCell
 
 
 class PoggioCivLinking():

@@ -299,6 +299,14 @@ class Entity():
                 # now just search for a uuid, since we may have a search just for UUIDs
                 manifest_list = Manifest.objects\
                                         .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
+        if len(manifest_list) < 1 and 'media' in item_type:
+            # we're searching for a media item. check to see if we have a file name
+            # print('check for file: ' + qstring)
+            med_files = Mediafile.objects\
+                                 .filter(file_uri__icontains=qstring)[:1]
+            if len(med_files) > 0:
+                manifest_list = Manifest.objects\
+                                        .filter(uuid=med_files[0].uuid)[:1]
         self.ids_meta = {}
         output = []
         for link_entity in entity_list:

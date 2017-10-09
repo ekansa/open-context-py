@@ -33,13 +33,14 @@ def index_view(request):
             'video': 'https://opencontext.wistia.com/medias/s0g0fsyqkz'
         }
         template = loader.get_template('about/index.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About',
-                                  'act_nav': 'about',
-                                  'og': open_graph,
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About',
+            'act_nav': 'about',
+            'og': open_graph,
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -68,13 +69,14 @@ def uses_view(request):
             'image': base_url + '/static/oc/images/index/oc-blue-square-logo.png',
             'video': False
         }
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Uses',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Uses',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -103,13 +105,14 @@ def pub_view(request):
             'video': False
         }
         template = loader.get_template('about/publishing.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Publishing',
-                                  'act_nav': 'about',
-                                  'og': open_graph,
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Publishing',
+            'act_nav': 'about',
+            'og': open_graph,
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -139,13 +142,14 @@ def people_view(request):
             'video': False
         }
         template = loader.get_template('about/people.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - People',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - People',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -176,13 +180,14 @@ def estimate_view(request):
             'video': False
         }
         template = loader.get_template('about/estimate.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Cost Estimate',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Cost Estimate',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -215,11 +220,12 @@ def concepts_view(request):
     if req_neg.supported:
         # requester wanted a mimetype we DO support
         template = loader.get_template('about/temp.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Concepts',
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Concepts',
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
         return HttpResponse(template.render(context))
     else:
         # client wanted a mimetype we don't support
@@ -249,13 +255,14 @@ def tech_view(request):
             'video': False
         }
         template = loader.get_template('about/technology.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Technology',
-                                  'act_nav': 'about',
-                                  'og': open_graph,
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Technology',
+            'act_nav': 'about',
+            'og': open_graph,
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -283,12 +290,13 @@ def services_view(request):
             'video': False
         }
         template = loader.get_template('about/services.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Web Services and APIs',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Web Services and APIs',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
         return HttpResponse(template.render(context))
     else:
         # client wanted a mimetype we don't support
@@ -317,12 +325,13 @@ def recipes_view(request):
             'video': False
         }
         template = loader.get_template('about/recipes.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - API Cookbook',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - API Cookbook',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
         return HttpResponse(template.render(context))
     else:
         # client wanted a mimetype we don't support
@@ -353,13 +362,14 @@ def bibliography_view(request):
             'video': False
         }
         template = loader.get_template('about/bibliography.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Bibliography',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Bibliography',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -388,12 +398,13 @@ def ip_view(request):
             'video': False
         }
         template = loader.get_template('about/intellectual-property.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Intellectual Property',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Intellectual Property',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
         return HttpResponse(template.render(context))
     else:
         # client wanted a mimetype we don't support
@@ -424,21 +435,22 @@ def sponsors_view(request):
             'video': False
         }
         template = loader.get_template('about/sponsors.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Intellectual Property',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Intellectual Property',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
                             status=415)
 
 
-@cache_control(no_cache=True)
-@never_cache
+# @cache_control(no_cache=True)
+# @never_cache
 def terms_view(request):
     """ Get the page about Terms """
     rp = RootPath()
@@ -459,12 +471,13 @@ def terms_view(request):
             'video': False
         }
         template = loader.get_template('about/terms.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: About - Terms of Use and Privacy Policies',
-                                  'og': open_graph,
-                                  'act_nav': 'about',
-                                  'nav_items': settings.NAV_ITEMS})
+        context = {
+            'base_url': base_url,
+            'page_title': 'Open Context: About - Terms of Use and Privacy Policies',
+            'og': open_graph,
+            'act_nav': 'about',
+            'nav_items': settings.NAV_ITEMS
+        }
         return HttpResponse(template.render(context))
     else:
         # client wanted a mimetype we don't support

@@ -315,6 +315,15 @@ class EntityTemplate():
                 item['children'] = self.get_proj_type_classes(project_uuid,
                                                               item_type)
                 output.append(item)
+        complex_preds = self.get_proj_complex_description_preds(project_uuid)
+        if len(complex_preds) > 0:
+            item = LastUpdatedOrderedDict()
+            item['id'] = project_uuid + '/complex-descriptions'
+            item['label'] = 'Descriptions used in Complex Descriptions'
+            item['class_uri'] = ''
+            item['class_label'] = ''
+            item['children'] =  ['']
+            output.append(item)
         return output
 
     def get_proj_type_classes_items(self,
@@ -326,25 +335,28 @@ class EntityTemplate():
             items for easy API use
         """
         output = []
-        classes = self.get_proj_type_classes(project_uuid, item_type)
-        for class_uri in classes:
-            class_ent = self.get_cache_entity(class_uri)
-            if class_ent is not False:
-                class_label = class_ent.label
-            else:
-                class_label = item_type
-            if len(class_label) < 1:
-                class_label = item_type
-            item = LastUpdatedOrderedDict()
-            item['id'] = project_uuid + '/' + item_type + '/' + class_uri
-            item['label'] = 'Properties used with ' + class_label
-            item['class_uri'] = ''
-            item['class_label'] = ''
-            item['children'] = self.get_proj_type_class_preds(project_uuid,
-                                                              item_type,
-                                                              class_uri,
-                                                              False)
-            output.append(item)
+        if item_type != 'complex-descriptions':
+            classes = self.get_proj_type_classes(project_uuid, item_type)
+            for class_uri in classes:
+                class_ent = self.get_cache_entity(class_uri)
+                if class_ent is not False:
+                    class_label = class_ent.label
+                else:
+                    class_label = item_type
+                if len(class_label) < 1:
+                    class_label = item_type
+                item = LastUpdatedOrderedDict()
+                item['id'] = project_uuid + '/' + item_type + '/' + class_uri
+                item['label'] = 'Properties used with ' + class_label
+                item['class_uri'] = ''
+                item['class_label'] = ''
+                item['children'] = self.get_proj_type_class_preds(project_uuid,
+                                                                  item_type,
+                                                                  class_uri,
+                                                                  False)
+                output.append(item)
+        else:
+            output = self.get_proj_complex_description_preds(project_uuid)
         return output
 
     def get_proj_type_classes(self, project_uuid, item_type):
@@ -384,6 +396,7 @@ class EntityTemplate():
         output = []
         ignore_preds = ['oc-gen:has-note',
                         'oc-gen:contains',
+                        'oc-gen:has-complex-description',
                         'oc-3']
         l_tab_p = 'oc_manifest'
         filter_classes = 'oc_assertions.uuid = oc_manifest.uuid \
@@ -394,6 +407,43 @@ class EntityTemplate():
                              .exclude(predicate_uuid__in=ignore_preds)\
                              .extra(tables=[l_tab_p],
                                     where=[filter_classes])\
+                             .order_by('predicate_uuid')\
+                             .distinct('predicate_uuid')
+        for ass_type in ass_types:
+            ent = Entity()
+            found = ent.dereference(ass_type.predicate_uuid)
+            if found:
+                item = LastUpdatedOrderedDict()
+                item['id'] = ass_type.predicate_uuid
+                item['label'] = ent.label
+                item['class_uri'] = ent.data_type
+                if ent.data_type in Predicate.DATA_TYPES_HUMAN:
+                    item['class_label'] = Predicate.DATA_TYPES_HUMAN[ent.data_type]
+                else:
+                    item['class_label'] = ent.data_type
+                if do_children and ent.data_type == 'id':
+                    # get the children for this predicate
+                    item['more'] = True
+                output.append(item)
+        if len(output) > 1:
+            output = self.sort_children_by_label(output)
+        return output
+    
+    def get_proj_complex_description_preds(self,
+                                           project_uuid,
+                                           do_children=True):
+        """ get predicate items for complex descriptions in a
+            project
+        """
+        output = []
+        ignore_preds = ['oc-gen:has-note',
+                        'oc-gen:contains',
+                        'oc-gen:has-complex-description',
+                        'oc-3']
+        ass_types = Assertion.objects\
+                             .filter(subject_type='complex-description',
+                                     project_uuid=project_uuid)\
+                             .exclude(predicate_uuid__in=ignore_preds)\
                              .order_by('predicate_uuid')\
                              .distinct('predicate_uuid')
         for ass_type in ass_types:

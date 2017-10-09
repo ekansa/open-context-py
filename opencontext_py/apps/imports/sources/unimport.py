@@ -13,6 +13,7 @@ from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
+from opencontext_py.apps.ocitems.complexdescriptions.models import ComplexDescription
 from opencontext_py.apps.imports.fields.templating import ImportProfile
 from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.sources.models import ImportSource
@@ -22,6 +23,7 @@ from opencontext_py.apps.imports.sources.models import ImportSource
 class UnImport():
 
     def __init__(self, source_id, project_uuid):
+        self.COMPLEX_DESCRIPTION_SOURCE_SUFFIX = None
         self.source_id = source_id
         self.project_uuid = project_uuid
         self.delete_ok = self.check_unimport_ok()
@@ -34,6 +36,7 @@ class UnImport():
         self.delete_geospaces()
         self.delete_events()
         self.delete_describe_assertions()
+        self.delete_complex_description_assertions()
         self.delete_predicate_vars()
         self.delete_links_assertions()
         self.delete_predicate_links()
@@ -78,10 +81,14 @@ class UnImport():
                              .delete()
 
     def delete_describe_assertions(self):
-        """ Deletes an import of description assertions
+        """ Deletes an import of description assertions,
+            does not delete assertions that link items to complex-description
+            objects.
         """
         if self.delete_ok:
             object_types = ImportProfile.DEFAULT_DESCRIBE_OBJECT_TYPES
+            if 'complex-description' in object_types:
+                object_types.remove('complex-description')
             if 'xsd:string' not in object_types:
                 object_types.append('xsd:string')
             rem_assertions = Assertion.objects\
@@ -89,6 +96,39 @@ class UnImport():
                                               project_uuid=self.project_uuid,
                                               object_type__in=object_types)\
                                       .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)\
+                                      .exclude(predicate_uuid=ComplexDescription.PREDICATE_COMPLEX_DES)\
+                                      .exclude(object_type='complex-description')\
+                                      .delete()
+            self.update_complex_description_assertion_source()
+        return self.delete_ok
+    
+    def update_complex_description_assertion_source(self):
+        """ updates the source id for assertions made on complex-descriptions
+            this is a measure to help make sure assertions about complex-descriptions
+            do not get deleted at the start of importing normal descriptive assertions
+        """
+        if isinstance(self.COMPLEX_DESCRIPTION_SOURCE_SUFFIX, str) and self.delete_ok:
+            source_id_w_suffix = self.source_id + self.COMPLEX_DESCRIPTION_SOURCE_SUFFIX
+            up_asses = Assertion.objects\
+                                .filter(source_id=source_id_w_suffix,
+                                        project_uuid=self.project_uuid)
+            for up_ass in up_asses:
+                up_ass.source_id = self.source_id
+                up_ass.save()
+    
+    def delete_complex_description_assertions(self):
+        """ Deletes an import of complex description assertions
+        """
+        if self.delete_ok:
+            rem_assertions = Assertion.objects\
+                                      .filter(source_id=self.source_id,
+                                              project_uuid=self.project_uuid,
+                                              object_type='complex-description')\
+                                      .delete()
+            rem_assertions = Assertion.objects\
+                                      .filter(source_id=self.source_id,
+                                              project_uuid=self.project_uuid,
+                                              subject_type='complex-description')\
                                       .delete()
         return self.delete_ok
 
@@ -256,6 +296,21 @@ class UnImport():
                                  .filter(source_id=self.source_id,
                                          project_uuid=self.project_uuid)\
                                  .delete()
+            self.update_complex_description_strings_source()
+    
+    def update_complex_description_strings_source(self):
+        """ updates the source id for strings used on assertions made on complex-descriptions
+            this is a measure to help make sure assertions about complex-descriptions
+            do not get deleted at the start of importing normal descriptive assertions
+        """
+        if isinstance(self.COMPLEX_DESCRIPTION_SOURCE_SUFFIX, str) and self.delete_ok:
+            source_id_w_suffix = self.source_id + self.COMPLEX_DESCRIPTION_SOURCE_SUFFIX
+            up_strs =  OCstring.objects\
+                               .filter(source_id=source_id_w_suffix,
+                                       project_uuid=self.project_uuid)
+            for up_str in up_strs:
+                up_str.source_id = self.source_id
+                up_str.save()
 
     def roubust_check_unimport_ok(self):
         """ Checks to see if it is OK to allow an unimport

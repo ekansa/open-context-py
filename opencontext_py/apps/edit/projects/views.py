@@ -24,12 +24,14 @@ def index(request):
         rp = RootPath()
         base_url = rp.get_baseurl()
         template = loader.get_template('edit/index.html')
-        context = RequestContext(request,
-                                 {'projs': projs,
-                                  'super_user': request.user.is_superuser,
-                                  'icons': ItemBasicEdit.UI_ICONS,
-                                  'base_url': base_url})
-        return HttpResponse(template.render(context))
+        context = {
+            'projs': projs,
+            'super_user': request.user.is_superuser,
+            'icons': ItemBasicEdit.UI_ICONS,
+            'base_url': base_url,
+            'user': request.user
+        }
+        return HttpResponse(template.render(context, request))
 
 
 @ensure_csrf_cookie
@@ -53,13 +55,15 @@ def status(request, project_uuid):
             p_o.get_person_list()
             # p_o. get_data_type_summary()
             template = loader.get_template('edit/project-status.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'super_user': request.user.is_superuser,
-                                      'icons': ItemBasicEdit.UI_ICONS,
-                                      'status': p_o,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'item': temp_item,
+                'super_user': request.user.is_superuser,
+                'icons': ItemBasicEdit.UI_ICONS,
+                'status': p_o,
+                'base_url': base_url,
+                'user': request.user
+            }
+            return HttpResponse(template.render(context, request))
         else:
             template = loader.get_template('edit/view401.html')
             context = RequestContext(request,

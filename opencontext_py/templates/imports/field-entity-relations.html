@@ -159,8 +159,6 @@
                             <li><a href="javascript:addRelInterface('contains-draft');">Contains (Part. hierachy)</a></li>
                         </ul>
                     </div>
-                    <br/>
-                    <a href="../../imports/field-complex-descriptions/{{ ip.source_id }}">Group Complex Descriptions</a>
                 </div>
             </div>
             <div class="panel panel-default" ng-app="TreeApp">
@@ -232,6 +230,7 @@
         var PRED_MEDIA_PART_OF = "{{ ip.PRED_MEDIA_PART_OF }}";
         var PRED_DOC_Text = "{{ ip.PRED_DOC_Text }}";
         var PRED_DRAFT_CONTAINS = "{{ ip.PRED_DRAFT_CONTAINS }}";
+        var PRED_HAS_COMPLEX_DES = "{{ ip.PRED_COMPLEX_DES }}";
          
     </script>
     <!-- load up field data in the background, we'll need that to make lists of fields to display -->

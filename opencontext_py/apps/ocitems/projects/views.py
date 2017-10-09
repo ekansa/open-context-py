@@ -65,18 +65,19 @@ def html_view(request, uuid):
                 patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                 return response
             else:
-                context = RequestContext(request,
-                                         {'item': temp_item,
-                                          'base_url': base_url,
-                                          'user': request.user})
-                response = HttpResponse(template.render(context))
+                context = {
+                    'item': temp_item,
+                    'base_url': base_url,
+                    'user': request.user
+                }
+                response = HttpResponse(template.render(context, request))
                 patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
                 return response
         else:
-                # client wanted a mimetype we don't support
-                return HttpResponse(req_neg.error_message,
-                                    content_type=req_neg.use_response_type + "; charset=utf8",
-                                    status=415)
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
     else:
         raise Http404
 

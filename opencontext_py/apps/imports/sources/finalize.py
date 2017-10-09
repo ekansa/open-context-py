@@ -12,8 +12,9 @@ from opencontext_py.apps.imports.fieldannotations.subjects import ProcessSubject
 from opencontext_py.apps.imports.fieldannotations.media import ProcessMedia
 from opencontext_py.apps.imports.fieldannotations.documents import ProcessDocuments
 from opencontext_py.apps.imports.fieldannotations.persons import ProcessPersons
-from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 from opencontext_py.apps.imports.fieldannotations.links import ProcessLinks
+from opencontext_py.apps.imports.fieldannotations.complexdescriptions import ProcessComplexDescriptions
+from opencontext_py.apps.imports.fieldannotations.descriptions import ProcessDescriptions
 
 
 # Finalizes an import by processing data
@@ -24,6 +25,7 @@ class FinalizeImport():
                               'media',
                               'documents',
                               'persons',
+                              'complex-descriptions',
                               'links',
                               'descriptions']
     # prefix to save the state of the import process
@@ -142,6 +144,16 @@ class FinalizeImport():
             p_outcome['reconciled_entities'] = p_act.reconciled_entities
             p_outcome['not_reconciled_entities'] = p_act.not_reconciled_entities
             p_outcome['count_new_assertions'] = 0
+        elif p_label == 'complex-descriptions':
+            p_act = ProcessComplexDescriptions(self.source_id)
+            p_act.start_row = self.start_row
+            p_act.batch_size = self.batch_size
+            p_act.process_complex_batch()
+            p_outcome['count_active_fields'] = p_act.count_active_fields
+            p_outcome['new_entities'] = []
+            p_outcome['reconciled_entities'] = []
+            p_outcome['not_reconciled_entities'] = []
+            p_outcome['count_new_assertions'] = p_act.count_new_assertions
         elif p_label == 'links':
             p_act = ProcessLinks(self.source_id)
             p_act.start_row = self.start_row
@@ -223,7 +235,7 @@ class FinalizeImport():
         """ Resets the state of the import process so we can
             start again from scratch
         """
-        self.imp_source_obj.imp_status = 'recet-import'
+        self.imp_source_obj.imp_status = 'reset-import'
         self.imp_source_obj.save()
         self.get_refine_source_meta()
         self.get_active_stage_row()

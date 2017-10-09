@@ -5,6 +5,8 @@ from itertools import islice
 from django.db import models
 from django.conf import settings
 from django.core import serializers
+from datetime import datetime
+from django.utils import timezone
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.events.models import Event
@@ -21,6 +23,7 @@ from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.entities.redirects.models import RedirectMapping
 from opencontext_py.apps.exports.expfields.models import ExpField
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.exptables.models import ExpTable
@@ -41,10 +44,11 @@ sj = SerizializeJSON()
 sj.dump_serialized_rel_tables()
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
-project_uuid = '416A274C-CF88-4471-3E31-93DB825E9E4A'
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 sj = SerizializeJSON()
-sj.after_date = '2017-02-25'
-sj.limit_export_table_id = '0c14c4ad-fce9-4291-a605-8c065d347c5d'
+sj.export_redirects = True
+# sj.after_date = '2017-02-25'
+# sj.limit_export_table_id = '0c14c4ad-fce9-4291-a605-8c065d347c5d'
 sj.dump_serialized_data(project_uuid)
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
@@ -72,11 +76,15 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.project_uuid = False
         self.after_date = False
         self.chunk_size = 5000
+        self.export_redirects = False
         self.act_export_dir = False
         self.limit_item_types = False
         self.limit_file_types = False  # limit media export to a few file_types
         self.limit_export_table_id = False # limit to data related to an export table
-        self.all_models = ['link_entities']
+        self.all_models = [
+            'link_entities',
+            'oc_redirects'
+        ]
         self.project_models = ['oc_assertions',
                                'oc_documents',
                                'oc_events',
@@ -260,6 +268,8 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         if table_name in self.all_models:
             if table_name == 'link_entities':
                 query_set = LinkEntity.objects.all()
+            elif table_name == 'oc_redirects' and self.export_redirects:
+                query_set = RedirectMapping.objects.all()
             else:
                 query_set = False
         elif table_name in self.project_models or \
