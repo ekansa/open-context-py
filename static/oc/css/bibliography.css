@@ -1,16 +1,16 @@
 /* Open Context Bibliographic Layout */
 
-.authors {
-	
+p.authors {
+	margin-bottom: 5px;
 }
 .pub-date {
-	margin-right:2%;
-	min-width:8%;
+	margin-right:1%;
+	min-width:7%;
 	float:left;
 }
 .ref-title-pub {
 	margin-right:1%;
-	float:right;
+	float:left;
 	width:85%;	
 }
 .collection-title {
@@ -21,7 +21,7 @@
 	width:90%;
 }
 .biblio-item {
-	margin-bottom: 7%;
+	margin-bottom: 5%;
 }
 div.ref-links {
 	padding-left:14%;

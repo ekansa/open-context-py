@@ -5,6 +5,8 @@ from time import sleep
 from bs4 import BeautifulSoup
 from urllib.parse import quote
 from urllib.parse import urljoin
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.filecache import FileCacheJSON
 
 
 class WaybackUp():
@@ -118,6 +120,13 @@ for url in urls:
         self.broken_urls = []
         # list of not archived URLs
         self.failed_urls = []
+        # a special function for transforming javascript hrefs into a URL, if None then skip
+        self.transform_href_obj = None
+        # filecach object, if none don't keep track of urls, if
+        # not none, then keep track and save as JSON on disk
+        self.filecache = None
+        self.working_dir = 'web-archiving'
+        self.cache_filekey = 'web-archive-urls'
     
     def archive_urls(self):
         """ Archives a list of URLs to the Way Back machine,
@@ -137,6 +146,8 @@ for url in urls:
                 if archive_ok is False:
                     print('Problem with: ' + url)
                     self.failed_urls.append(url)
+            if url in self.archived_urls:
+                archive_ok = False    
             if archive_ok:
                 # archive the URL
                 ok = self.archive_url(url)
@@ -156,27 +167,32 @@ for url in urls:
                         self.failed_urls.append(url)
             else:
                 print('Skipping: ' + url)
+        # now update the file cache with the results
+        self.update_url_filecache()
 
     def archive_url(self, url):
         """ Archive the URL with the Wayback Machine """
         ok = False
-        if self.delay_before_request > 0:
-            # default to sleep BEFORE a request is sent, to
-            # give the remote service a break.
-            sleep(self.delay_before_request)
-        try:
-            # now execute the request to the internet archive API
-            # s_url = self.wb_save_url + quote(url, safe='')
-            s_url = self.wb_save_url + url
-            r = requests.get(s_url,
-                             timeout=240,
-                             headers=self.client_headers)
-            r.raise_for_status()
+        if url not in self.archived_urls:
+            if self.delay_before_request > 0:
+                # default to sleep BEFORE a request is sent, to
+                # give the remote service a break.
+                sleep(self.delay_before_request)
+            try:
+                # now execute the request to the internet archive API
+                # s_url = self.wb_save_url + quote(url, safe='')
+                s_url = self.wb_save_url + url
+                r = requests.get(s_url,
+                                 timeout=240,
+                                 headers=self.client_headers)
+                r.raise_for_status()
+                ok = True
+            except:
+                ok = False
+                error = 'Snapshot request failed for url: ' + str(url)
+                self.errors.append(error)
+        else:
             ok = True
-        except:
-            ok = False
-            error = 'Snapshot request failed for url: ' + str(url)
-            self.errors.append(error)
         return ok
     
     def scrape_urls(self,
@@ -244,6 +260,7 @@ for url in urls:
             else:
                 if url not in self.archived_urls:
                     self.archived_urls.append(url)
+            self.update_url_filecache()
         if isinstance(html, str):
             if self.archive_in_scrape:
                 print('Try to archive page: ' + url)
@@ -261,14 +278,8 @@ for url in urls:
             for link in soup.find_all('a'):
                 do_raw_url = True
                 raw_url = link.get('href')
+                raw_url = self.transform_raw_url(raw_url)
                 if isinstance(raw_url, str):
-                    raw_url = raw_url.strip() # remove whitespaces, etc.
-                    raw_url = raw_url.replace('\\r', '')  # common URL problem
-                    raw_url = raw_url.replace('\\n', '')  # common URL problem
-                    if '#' in raw_url:
-                        # skip fragment identifiers in URLs
-                        url_ex = raw_url.split('#')
-                        raw_url = url_ex[0]
                     for skip_domain in skip_domains:
                         if skip_domain in raw_url:
                             # skip it, it's for a social media site
@@ -329,7 +340,10 @@ for url in urls:
                             if src_url not in self.archived_urls:
                                 self.archived_urls.append(src_url)
                     else:
-                        pass               
+                        pass
+        # update our progress!
+        self.update_url_filecache()
+        # now do urls that we found.
         if len(urls) > 0:
             current_depth += 1
             if current_depth < max_depth:
@@ -357,7 +371,58 @@ for url in urls:
                             # add new urls we don't already have
                             if new_url not in urls:
                                 urls.append(new_url)
+                # now update with new urls
+                self.update_url_filecache(urls)
         return urls               
+    
+    def transform_raw_url(self, raw_url):
+        """ code to clean and transform a raw_href into something
+            that looks like a clean URL
+        """
+        if isinstance(raw_url, str):
+            raw_url = raw_url.strip() # remove whitespaces, etc.
+            raw_url = raw_url.replace('\\r', '')  # common URL problem
+            raw_url = raw_url.replace('\\n', '')  # common URL problem
+            if '#' in raw_url:
+                # skip fragment identifiers in URLs
+                url_ex = raw_url.split('#')
+                raw_url = url_ex[0]
+            if self.transform_href_obj is not None:
+                raw_url = self.transform_href_obj.transform_href(raw_url)
+        return raw_url
+    
+    def update_url_filecache(self, new_urls=[]):
+        """ updates the file cache to save the state of a urls """
+        if self.filecache is not None:
+            # print('Cache update !: ' + self.cache_filekey)
+            json_obj = LastUpdatedOrderedDict()
+            self.filecache.working_dir = self.working_dir
+            json_obj['urls'] = self.urls
+            for new_url in new_urls:
+                if new_url not in json_obj['urls']:
+                    json_obj['urls'].append(new_url)
+            json_obj['archived_urls'] = self.archived_urls
+            json_obj['broken_urls'] = self.broken_urls
+            json_obj['failed_urls'] = self.failed_urls
+            self.filecache.save_serialized_json(self.cache_filekey,
+                                                json_obj)
+            
+    def get_state_from_filecache(self):
+        """ gets the current state of the web-crawling process from the file cache"""
+        if self.filecache is not None:
+            print('Look for prior work in file cache: ' + self.cache_filekey)
+            self.filecache.working_dir = self.working_dir
+            json_obj = self.filecache.get_dict_from_file(self.cache_filekey)
+            if isinstance(json_obj, dict):
+                print('Loading prior work from file cache: ' + self.cache_filekey)
+                if 'urls' in json_obj:
+                    self.urls = json_obj['urls']
+                if 'archived_urls' in json_obj:
+                    self.archived_urls = json_obj['archived_urls']
+                if 'broken_urls' in json_obj:
+                    self.broken_urls = json_obj['broken_urls']
+                if 'failed_urls' in json_obj:
+                    self.failed_urls= json_obj['failed_urls']
     
     def check_available_urls(self):
         """ Checks a list of URLs to make sure they have been entered

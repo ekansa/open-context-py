@@ -70,10 +70,12 @@ class Assertion(models.Model):
         if isinstance(self.data_date, datetime):
             if timezone.is_naive(self.data_date):
                 self.data_date = pytz.utc.localize(self.data_date)
-        if timezone.is_naive(self.created):
-            self.created = pytz.utc.localize(self.created)
-        if timezone.is_naive(self.updated):
-            self.updated = pytz.utc.localize(self.updated)
+        if isinstance(self.created, datetime):
+            if timezone.is_naive(self.created):
+                self.created = pytz.utc.localize(self.created)
+        if isinstance(self.updated, datetime):
+            if timezone.is_naive(self.updated):
+                self.updated = pytz.utc.localize(self.updated)
         super(Assertion, self).save(*args, **kwargs)
 
     def sort_save(self):
