@@ -180,6 +180,8 @@ class QueryMaker():
                     # the below is a bit of a hack. We should have a query field
                     # as with ___pred_ to query just the slug. But this works for now
                     proj_slug = entity.slug
+                    if len(proj_slug) > 56:
+                        proj_slug = proj_slug[0:56]
                     fq_path_term = fq_field + ':' + proj_slug + '*'
                     if entity.par_proj_man_obj is not False and \
                        fq_field == SolrDocument.ROOT_PROJECT_SOLR:
