@@ -634,9 +634,9 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/poggio-civitate/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/poggio-civitate/'
-ia_m.project_uuids.append('DF043419-F23B-41DA-7E4D-EE52AF22F92F')
+ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/seyitomer-hoyuk/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/seyitomer-hoyuk/'
+ia_m.project_uuids.append('347286db-b6c6-4fd2-b3bd-b50316b0cb9f')
 ia_m.delay_before_request = .25
 ia_m.archive_image_media_items()
 ia_m.errors
@@ -655,9 +655,9 @@ ia_m.errors
 # reindex
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
-project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+project_uuid = '347286db-b6c6-4fd2-b3bd-b50316b0cb9f'
 uuids = []
-items = Manifest.objects.filter(project_uuid=project_uuid).exclude(indexed__gt='2017-10-03').order_by('sort')
+items = Manifest.objects.filter(project_uuid=project_uuid).order_by('sort')
 for item in items:
     uuids.append(item.uuid)
 
@@ -669,11 +669,31 @@ sri.reindex_uuids(uuids)
 
 from opencontext_py.libs.filecache import FileCacheJSON
 from opencontext_py.libs.waybackup import WaybackUp
+from opencontext_py.apps.imports.poggiociv.tbentries import PoggioCivTrenchBookEntries
+pctb = PoggioCivTrenchBookEntries()
 wb = WaybackUp()
+wb.filecache = FileCacheJSON()
+wb.cache_filekey = 'poggio-civitate-crawl'
 wb.delay_before_request = .5
 wb.do_img_src = True
+wb.transform_href_obj = pctb
 path = ['poggiocivitate.org']  # only follow links in these paths
 url = 'http://www.poggiocivitate.org/catalog/trenchbooks/'
+wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
+wb.urls = wb.failed_urls
+# archive the previous failures
+wb.archive_urls()
+
+
+from opencontext_py.libs.filecache import FileCacheJSON
+from opencontext_py.libs.waybackup import WaybackUp
+wb = WaybackUp()
+wb.filecache = FileCacheJSON()
+wb.cache_filekey = 'ascsa-crawl'
+wb.delay_before_request = 1
+wb.do_img_src = True
+path = ['ascsa.net/']  # only follow links in these paths
+url = 'http://ascsa.net/research?v=default'
 wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
 wb.urls = wb.failed_urls
 # archive the previous failures
@@ -683,9 +703,123 @@ wb.archive_urls()
 
 
 
-
-
 # poggio civitate assertion sorting
 from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 asor = AssertionSorting()
 asor.sort_ranked_manifest_for_project('DF043419-F23B-41DA-7E4D-EE52AF22F92F')
+
+
+
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.models import Subject
+project_uuid = '766698E3-2E79-4A78-B0BC-245FF435BBBD'
+class_uri = 'oc-gen:cat-site'
+bad_source_id = "z_13_41b22b176"
+good_source_id = "ref:2215904997131"
+del_uuids = []
+bad_mans = Manifest.objects.filter(project_uuid=project_uuid,
+                                   class_uri=class_uri,
+                                   source_id=bad_source_id)
+for bad_man in bad_mans:
+    new_asses = Assertion.objects\
+                         .filter(uuid=bad_man.uuid,
+                                 source_id=good_source_id)
+    if len(new_asses) < 1:
+        # item doesn't have a new description, so it is to be removed
+        del_uuids.append(bad_man.uuid)
+
+
+for del_uuid in del_uuids:
+    Assertion.objects.filter(uuid=del_uuid).delete()
+    Assertion.objects.filter(object_uuid=del_uuid).delete()
+    Subject.objects.filter(uuid=del_uuid).delete()
+    Geospace.objects.filter(uuid=del_uuid).delete()
+    Manifest.objects.filter(uuid=del_uuid).delete()
+
+
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.models import Subject
+project_uuid = 'EDDA846F-7225-495E-AB77-7314C256449A'
+class_uri = 'oc-gen:cat-site'
+bad_source_id = "z_12_d23b6cd17"
+good_source_id = "ref:2505863900014"
+del_uuids = []
+bad_mans = Manifest.objects.filter(project_uuid=project_uuid,
+                                   class_uri=class_uri,
+                                   source_id=bad_source_id)
+for bad_man in bad_mans:
+    new_asses = Assertion.objects\
+                         .filter(uuid=bad_man.uuid,
+                                 source_id=good_source_id)
+    if len(new_asses) < 1:
+        # item doesn't have a new description, so it is to be removed
+        del_uuids.append(bad_man.uuid)
+
+
+for del_uuid in del_uuids:
+    Assertion.objects.filter(uuid=del_uuid).delete()
+    Assertion.objects.filter(object_uuid=del_uuid).delete()
+    Subject.objects.filter(uuid=del_uuid).delete()
+    Geospace.objects.filter(uuid=del_uuid).delete()
+    Manifest.objects.filter(uuid=del_uuid).delete()
+
+
+
+# reindex
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.indexer.reindex import SolrReIndex
+project_uuids = [
+    'EDDA846F-7225-495E-AB77-7314C256449A',
+    '766698E3-2E79-4A78-B0BC-245FF435BBBD',
+    'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+]
+uuids = []
+items = Manifest.objects.filter(project_uuid__in=project_uuids).exclude(indexed__gt='2018-10-03').order_by('sort')
+for item in items:
+    uuids.append(item.uuid)
+
+print('Items to index: ' + str(len(uuids)))
+sri = SolrReIndex()
+sri.reindex_uuids(uuids)
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+
+type_uuid = 'a2879621-39eb-49b5-be7b-a4c5a5604dc8'
+uuids = [
+    type_uuid
+]
+l_asses = Assertion.objects.filter(object_uuid=type_uuid)
+for l_ass in l_asses:
+    if l_ass.uuid not in uuids:
+        uuids.append(l_ass.uuid)
+
+
+
+
+from opencontext_py.libs.solrconnection import SolrConnection
+solr = SolrConnection().connection
+# Open Context (Google) Solr Delete
+project_uuids = [
+    'EDDA846F-7225-495E-AB77-7314C256449A',
+    '766698E3-2E79-4A78-B0BC-245FF435BBBD',
+    'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+]
+for project_uuid in project_uuids:
+    q = 'project_uuid:' + project_uuid
+    solr.delete_by_query(q)
+
+
+
+from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+project_uuids = [
+    'EDDA846F-7225-495E-AB77-7314C256449A',
+    '766698E3-2E79-4A78-B0BC-245FF435BBBD'
+]
+for project_uuid in project_uuids:
+    pp = ProjectPermissions()
+    pp.publish_project(project_uuid)

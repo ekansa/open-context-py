@@ -79,7 +79,11 @@ from opencontext_py.apps.imports.poggiociv.tbentries import PoggioCivTrenchBookE
 pctb = PoggioCivTrenchBookEntries()
 pctb.clean_bad_html_content()
 
-
+from opencontext_py.apps.imports.poggiociv.tbentries import PoggioCivTrenchBookEntries
+pctb = PoggioCivTrenchBookEntries()
+href = "javascript:openViewer('/catalog/trenchbooks/trenchbookviewer.asp?searchpage=25&tbID=6')"
+href = pctb.transform_href(href)
+print(href)
     """
 
     def __init__(self):
@@ -1284,6 +1288,62 @@ pctb.clean_bad_html_content()
             else:
                 man_obj = None
         return man_obj
+
+    def transform_href(self, href):
+        """ transforms a href, especially with javascript in it, to a
+            URL that can be crawled
+        """
+        if isinstance(href, str):
+            if 'javascript:' in href:
+                # print('found some javascript')
+                if 'viewPhoto' in href:
+                    # javascript:viewPhoto('19850010bt.jpg');
+                    # http://www.poggiocivitate.org/photos/enlargements/19850010bt.jpg
+                    href_ex = href.split('viewPhoto')
+                    if len(href_ex) > 1:
+                        href = href_ex[1]
+                        href = href.replace("'", '')
+                        href = href.replace(")", '')
+                        href = href.replace("(", '')
+                        href = href.replace(";", '')
+                        href = 'http://www.poggiocivitate.org/photos/enlargements/' + href
+                elif 'viewartifactcatalog.asp?' in href:
+                    href_ex = href.split('viewartifactcatalog.asp?')
+                    if len(href_ex) > 1:
+                        href = href_ex[1]
+                        href = href.replace("'", '')
+                        href = href.replace(")", '')
+                        href = href.replace("(", '')
+                        href = href.replace(";", '')
+                        href = 'http://www.poggiocivitate.org/catalog/viewartifactcatalog.asp?' + href
+                elif 'trenchbookviewer.asp?' in href:
+                    href_ex = href.split('trenchbookviewer.asp?')
+                    if len(href_ex) > 1:
+                        href = href_ex[1]
+                        href = href.replace("'", '')
+                        href = href.replace(")", '')
+                        href = href.replace("(", '')
+                        href = href.replace(";", '')
+                        href = 'http://www.poggiocivitate.org/catalog/trenchbooks/trenchbookviewer.asp?' + href
+                elif 'viewtrenchbookreference.asp?' in href:
+                    href_ex = href.split('viewtrenchbookreference.asp?')
+                    if len(href_ex) > 1:
+                        href = href_ex[1]
+                        href = href.replace("'", '')
+                        href = href.replace(")", '')
+                        href = href.replace("(", '')
+                        href = href.replace(";", '')
+                        href = 'http://www.poggiocivitate.org/catalog/trenchbooks/viewtrenchbookreference.asp?' + href
+                elif 'viewlocus.asp?' in href:
+                    href_ex = href.split('viewlocus.asp?')
+                    if len(href_ex) > 1:
+                        href = href_ex[1]
+                        href = href.replace("'", '')
+                        href = href.replace(")", '')
+                        href = href.replace("(", '')
+                        href = href.replace(";", '')
+                        href = 'http://www.poggiocivitate.org/admin/viewlocus.asp?' + href   
+        return href
     
     def get_related_locus_man_obj(self, href, rel_loci_man_objs):
         """ gets a related locus manifest object in an href
