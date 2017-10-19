@@ -758,6 +758,27 @@ wb.filecache = FileCacheJSON()
 wb.cache_filekey = 'ascsa-crawl'
 wb.delay_before_request = 1
 wb.do_img_src = True
+wb.skip_parameters = [
+    't=publication',
+    't=report',
+    't=letter',
+    't=monument',
+    't=drawing',
+    't=image',
+    't=object',
+    't=coin',
+    't=deposit',
+    't=notebook',
+    'v=icons',
+    'v=table',
+    'v=map',
+    '&details=',
+    'p=4',
+    'p=8',
+    'p=20',
+    'p=40',
+    'http://ascsa.net/help',
+]
 path = ['ascsa.net/']  # only follow links in these paths
 url = 'http://ascsa.net/research?v=default'
 wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
