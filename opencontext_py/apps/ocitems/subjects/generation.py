@@ -148,6 +148,7 @@ class SubjectGeneration():
             1 containment assertion
         """
         fix_uuids = self.get_fix_multiple_context_paths_uuids(root_uuid, [], level_limit)
+        print('Need to fix: ' + str(len(fix_uuids)) + ' items.')
         for uuid in fix_uuids:
             self.generate_save_context_path_from_uuid(uuid, True)
         return fix_uuids
@@ -193,7 +194,6 @@ class SubjectGeneration():
             # now delete the redundant containment assertions
             for hash_id in del_hashes:
                 Assertion.objects.filter(hash_id=hash_id).delete()
-        print('At ' + str(current_level) + ' depth, need to fix: ' + str(len(fix_uuids)) + ' items.')
         return fix_uuids
 
 

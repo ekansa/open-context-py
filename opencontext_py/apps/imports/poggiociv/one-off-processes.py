@@ -841,7 +841,7 @@ from opencontext_py.apps.indexer.reindex import SolrReIndex
 project_uuids = [
     'EDDA846F-7225-495E-AB77-7314C256449A',
     '766698E3-2E79-4A78-B0BC-245FF435BBBD',
-    'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
 ]
 uuids = []
 items = Manifest.objects.filter(project_uuid__in=project_uuids).exclude(indexed__gt='2018-10-03').order_by('sort')
@@ -962,20 +962,81 @@ for man_region in man_regions:
 
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
-asses = Assertion.objects.filter(uuid='2D98D0F0-1658-4A91-0581-8D8B8331DCDB', predicate_uuid=Assertion.PREDICATES_CONTAINS)
-objects = []
-dup_objects = []
-for ass in asses:
-    if ass.object_uuid not in objects:
-        objects.append(ass.object_uuid)
-    else:
-        # duplicate!
-        ass.delete()
-        dup_objects.append(ass.object_uuid)
-for dup_object in dup_objects:
-    sg = SubjectGeneration()
-    sg.generate_save_context_path_from_uuid(dup_object)
+ohio_uuid = 'BDE4389E-F7CB-4236-3F7D-50A6E72C8ACD'
+pa_uuid = '93997F40-7682-4C69-2A06-A95C4B4B7428'
+sg = SubjectGeneration()
+sg.fix_multiple_context_paths(ohio_uuid, 2)
+sg = SubjectGeneration()
+sg.fix_multiple_context_paths(pa_uuid , 2)
 
+
+
+
+
+
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+source_id = 'ref:2411348901826'
+project_uuid = '0cea2f4a-84cb-4083-8c66-5191628abe67'
+ref_pred = 'dc-terms:isReferencedBy'
+imp_tris_cells = ImportCell.objects.filter(source_id=source_id, field_num=11)
+for imp_tri in imp_tris_cells:
+    jstor_uri = None
+    imp_jstors = ImportCell.objects.filter(source_id=source_id, field_num=17, row_num=imp_tri.row_num)[:1]
+    if len(imp_jstors) > 0:
+        jstor_uri = imp_jstors[0].record
+    title = None
+    imp_titles = ImportCell.objects.filter(source_id=source_id, field_num=1, row_num=imp_tri.row_num)[:1]
+    if len(imp_titles) > 0:
+        title = imp_titles[0].record
+    label = imp_tri.record
+    if isinstance(jstor_uri, str) and isinstance(title, str):
+        man_objs = Manifest.objects.filter(project_uuid=project_uuid, label=label)[:1]
+        if len(man_objs) > 0:
+            man_obj = man_objs[0]
+            print('For ' + jstor_uri + ' -> ' + title)
+            print('Found: ' + label + ' ' + man_obj.uuid)
+            le = LinkEntity()
+            le.uri = jstor_uri
+            le.label = title
+            le.alt_label = title
+            le.ent_type = 'class'
+            le.vocab_uri = 'http://www.jstor.org/journal/ameranti'
+            try:
+                le.save()
+            except:
+                pass
+            la = LinkAnnotation()
+            la.subject = man_obj.uuid
+            la.subject_type = 'subjects'
+            la.project_uuid = project_uuid
+            la.source_id = source_id
+            la.predicate_uri = ref_pred
+            la.object_uri = jstor_uri # the parent is the object
+            la.save()
+            try:
+                la.save()
+            except:
+                pass
+        
+
+# reindex
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.indexer.reindex import SolrReIndex
+project_uuids = [
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
+]
+uuids = []
+items = Manifest.objects.filter(project_uuid__in=project_uuids).exclude(indexed__gt='2018-10-03').order_by('sort')
+for item in items:
+    uuids.append(item.uuid)
+
+uuids += project_uuids
+print('Items to index: ' + str(len(uuids)))
+sri = SolrReIndex()
+sri.reindex_uuids(uuids)
 
 
 
