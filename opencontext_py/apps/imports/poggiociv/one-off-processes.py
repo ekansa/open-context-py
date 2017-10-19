@@ -627,6 +627,13 @@ for b_str in b_strs:
 
 
 
+
+
+
+
+
+
+
 # add images to internet archive for IIIF serving
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -634,14 +641,73 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/seyitomer-hoyuk/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/seyitomer-hoyuk/'
-ia_m.project_uuids.append('347286db-b6c6-4fd2-b3bd-b50316b0cb9f')
+ia_m.do_http_request_for_cache = False
+ia_m.remote_uri_sub = 'http://127.0.0.1:8000/static/exports/giza-sphinx/'
+ia_m.local_filesystem_uri_sub = 'C:\\GitHub\\open-context-py/static/exports/giza-sphinx/'
+ia_m.project_uuids.append('141e814a-ba2d-4560-879f-80f1afb019e9')
 ia_m.delay_before_request = .25
 ia_m.archive_image_media_items()
 ia_m.errors
 
 
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.imports.records.models import ImportCell
+source_id = 'ref:2425834516014'
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+man_media = Manifest.objects.filter(item_type='media', project_uuid=project_uuid, source_id=source_id)
+for man_obj in man_media:
+    mf = Mediafile()
+    mf.uuid = man_obj.uuid
+    mf.source_id = source_id
+    mf.project_uuid = project_uuid
+    source_row_num = None
+    full_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:fullfile")[:1]
+    if len(full_files) < 1:
+        print('Missing full media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=6)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                full_mf = mf
+                full_mf.file_type = "oc-gen:fullfile"
+                full_mf.file_uri = file_uri
+                full_mf.save()
+    prev_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:preview")[:1]
+    if len(prev_files) < 1:
+        print('Missing preview media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=7)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                prev_mf = mf
+                prev_mf.file_type = "oc-gen:preview"
+                prev_mf.file_uri = file_uri
+                prev_mf.save()
+    thumb_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:thumbnail")[:1]
+    if len(thumb_files) < 1:
+        print('Missing thumbnail media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=8)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                thumb_mf = mf
+                thumb_mf.file_type = "oc-gen:thumbnail"
+                thumb_mf.file_uri = file_uri
+                thumb_mf.save()
+    
 
 
 
@@ -823,3 +889,93 @@ project_uuids = [
 for project_uuid in project_uuids:
     pp = ProjectPermissions()
     pp.publish_project(project_uuid)
+
+
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+asses = Assertion.objects.filter(uuid='73E7814C-21BB-4120-DC16-8B7DC436031E', object_type='subjects')
+for ass in asses:
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(ass.object_uuid)
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
+from opencontext_py.libs.solrconnection import SolrConnection
+solr = SolrConnection().connection
+project_uuids = [
+    'EDDA846F-7225-495E-AB77-7314C256449A',
+    '766698E3-2E79-4A78-B0BC-245FF435BBBD',
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
+]
+
+man_regions = Manifest.objects.filter(item_type='subjects', class_uri='oc-gen:cat-region', project_uuid__in=project_uuids).order_by('sort')
+changed_uuids = []
+for man_region in man_regions:
+    act_subject = Subject.objects.get(uuid=man_region.uuid)
+    oc_subjects = Subject.objects.filter(context=act_subject.context, project_uuid='0')[:1]
+    if len(oc_subjects) > 0:
+        dm = DeleteMerge()
+        delete_uuid = man_region.uuid
+        merge_into_uuid = oc_subjects[0].uuid
+        print('Merge ' + delete_uuid + ' => into => ' + merge_into_uuid )
+        dm.merge_by_uuid(delete_uuid, merge_into_uuid)
+        q = 'uuid:' + delete_uuid
+        solr.delete_by_query(q)
+        changed_uuids.append(merge_into_uuid)
+        con_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                             object_uuid=merge_into_uuid)
+        if len(con_asses) > 1:
+            del_con_asses = []
+            ok_found = False
+            for con_ass in con_asses:
+                ok_man_objs = Manifest.objects.filter(project_uuid='0', uuid=con_ass.uuid)[:1]
+                if len(ok_man_objs) < 1:
+                    del_con_asses.append(con_ass)
+                else:
+                    ok_found = True
+            if ok_found and len(del_con_asses) > 0:
+                if len(del_con_asses) < len(con_asses):
+                    for del_con in del_con_asses:
+                        del_con.delete()
+        sg = SubjectGeneration()
+        sg.generate_save_context_path_from_uuid(merge_into_uuid)
+    else:
+        print('Make OC project for ' + man_region.uuid )
+        act_subject.project_uuid = '0'
+        act_subject.save()
+        geos = Geospace.objects.filter(uuid=man_region.uuid)
+        for geo in geos:
+            geo.project_uuid = '0'
+            geo.save()
+        man_region.project_uuid = '0'
+        man_region.save()
+        sg = SubjectGeneration()
+        sg.generate_save_context_path_from_uuid(man_region.uuid)
+        changed_uuids.append(man_region.uuid)
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+asses = Assertion.objects.filter(uuid='2D98D0F0-1658-4A91-0581-8D8B8331DCDB', predicate_uuid=Assertion.PREDICATES_CONTAINS)
+objects = []
+dup_objects = []
+for ass in asses:
+    if ass.object_uuid not in objects:
+        objects.append(ass.object_uuid)
+    else:
+        # duplicate!
+        ass.delete()
+        dup_objects.append(ass.object_uuid)
+for dup_object in dup_objects:
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(dup_object)
+
+
+
+
