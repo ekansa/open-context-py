@@ -1,4 +1,5 @@
-import os
+import os, sys, shutil
+import codecs
 import requests
 from io import BytesIO
 from time import sleep
@@ -96,6 +97,7 @@ for med_full in med_files:
     
     def __init__(self):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
+        self.do_http_request_for_cache = True  # use an HTTP request to get a file for local caching and saving with a new filename
         self.cache_file_dir = 'internet-archive'
         # self.ia_collection = 'opensource_media'
         self.ia_collection = 'opencontext'
@@ -112,6 +114,7 @@ for med_full in med_files:
         self.save_db = False
         self.remote_uri_sub = None  # substitution for a remote uri
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
+        self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
         self.pref_tiff_archive = True
         self.errors = []
     
@@ -287,11 +290,18 @@ for med_full in med_files:
                 # now upload the image file
                 dir = self.set_check_directory(self.cache_file_dir)
                 path = os.path.join(dir, file_name)
-                r = item.upload_file(path,
-                                     key=file_name,
-                                     metadata=metadata)
+                save_ia_files = False
+                try:
+                    r = item.upload_file(path,
+                                         key=file_name,
+                                         metadata=metadata)
+                    if r.status_code == requests.codes.ok or self.save_db:
+                        save_ia_files = True
+                except:
+                    print('Problem uploading: ' + file_name)
+                    save_ia_files = False
                 # set the uri for the media item just uploaded
-                if r.status_code == requests.codes.ok or self.save_db:
+                if save_ia_files:
                     ia_file_uri = self.make_ia_image_uri(item_id, file_name)
                     iiif_file_uri = self.make_ia_iiif_image_uri(item_id, file_name)
                     # now save the link to the IA full file
@@ -370,12 +380,18 @@ for med_full in med_files:
                     cache_dir = self.cache_file_dir
                 dir = self.set_check_directory(cache_dir)
                 path = os.path.join(dir, file_name)
-                r = item.upload_file(path,
-                                     key=file_name,
-                                     metadata=metadata)
-                # set the uri for the media item just uploaded
-                if r.status_code == requests.codes.ok or self.save_db:
-                    ia_file_uri = self.make_ia_image_uri(item_id, file_name)
+                try:
+                    # sometimes the connect fails with an uncaught exception, so
+                    # catch it here.
+                    r = item.upload_file(path,
+                                         key=file_name,
+                                         metadata=metadata)
+                    # set the uri for the media item just uploaded
+                    if r.status_code == requests.codes.ok or self.save_db:
+                        ia_file_uri = self.make_ia_image_uri(item_id, file_name)
+                except:
+                    print('Upload failure for:'  + file_name + ' uuid: ' + man_obj.uuid)
+                    ia_file_uri = None
         return ia_file_uri
 
     def make_metadata_dict(self, json_ld, man_obj):
@@ -467,7 +483,48 @@ for med_full in med_files:
         return file_uri
                 
     def get_cache_remote_file_content(self, file_name, file_uri):
-        """ gets the content of a remote file,
+        """ either uses an HTTP request to get a remote file
+            or looks for the file in the file system and copies it within
+            the file system
+        """
+        if self.do_http_request_for_cache:
+            ok = self.get_cache_remote_file_content_http(file_name,
+                                                         file_uri)
+        else:
+            ok = self.get_cache_remote_file_content_filesystem(file_name,
+                                                               file_uri)
+        return ok
+
+    def get_cache_remote_file_content_filesystem(self, file_name, file_uri):
+        """ use the file system to get the file for caching
+            and saving with a new filename
+        """
+        ok = False
+        dir = self.set_check_directory(self.cache_file_dir)
+        path = os.path.join(dir, file_name)
+        if os.path.exists(path):
+            # the file already exists, no need to download it again
+            print('Already cached: ' + path)
+            ok = True
+        else:
+            print('Cannot find: ' + path)
+            print('Need to copy with file-system: ' + file_uri)
+            if isinstance(self.remote_uri_sub, str) and isinstance(self.local_filesystem_uri_sub, str):
+                original_path = file_uri.replace(self.remote_uri_sub,
+                                                 self.local_filesystem_uri_sub)
+                if os.path.exists(original_path):
+                    try:
+                        shutil.copy2(original_path, path)
+                        ok = True
+                    except:
+                        print('Problem copying to: ' + path)
+                        ok = False
+                else:
+                    print('CANNOT FIND ORIGINAL AT: ' + original_path)
+        return ok
+    
+    def get_cache_remote_file_content_http(self, file_name, file_uri):
+        """ uses HTTP requests to get the content of a remote file,
             saves it to cache with the filename 'file_name'
         """
         ok = False
