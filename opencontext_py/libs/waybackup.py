@@ -127,6 +127,7 @@ for url in urls:
         self.filecache = None
         self.working_dir = 'web-archiving'
         self.cache_filekey = 'web-archive-urls'
+        self.cached_json = None
     
     def archive_urls(self):
         """ Archives a list of URLs to the Way Back machine,
@@ -203,6 +204,9 @@ for url in urls:
         """ downloads a web page and extracts URLs,
             works recursively
         """
+        if not isinstance(self.cached_json, dict):
+            json_obj = self.get_state_from_filecache()
+            self.cached_json = json_obj
         do_download = True
         skip_extensions = [
             # common files we don't want to download
@@ -395,8 +399,13 @@ for url in urls:
         """ updates the file cache to save the state of a urls """
         if self.filecache is not None:
             # print('Cache update !: ' + self.cache_filekey)
-            json_obj = LastUpdatedOrderedDict()
             self.filecache.working_dir = self.working_dir
+            json_obj = None
+            if not isinstance(self.cached_json, dict):
+                json_obj = self.get_state_from_filecache()
+                self.cached_json = json_obj
+            if not isinstance(json_obj, dict):
+                json_obj = LastUpdatedOrderedDict()
             json_obj['urls'] = self.urls
             for new_url in new_urls:
                 if new_url not in json_obj['urls']:
@@ -409,6 +418,7 @@ for url in urls:
             
     def get_state_from_filecache(self):
         """ gets the current state of the web-crawling process from the file cache"""
+        json_obj = None
         if self.filecache is not None:
             print('Look for prior work in file cache: ' + self.cache_filekey)
             self.filecache.working_dir = self.working_dir
@@ -423,6 +433,7 @@ for url in urls:
                     self.broken_urls = json_obj['broken_urls']
                 if 'failed_urls' in json_obj:
                     self.failed_urls= json_obj['failed_urls']
+        return json_obj
     
     def check_available_urls(self):
         """ Checks a list of URLs to make sure they have been entered
