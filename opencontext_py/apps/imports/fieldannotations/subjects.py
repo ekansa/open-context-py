@@ -970,6 +970,13 @@ class CandidateSubject():
                                    .get(hash_id=hash_id)
         except Subject.DoesNotExist:
             subject_match = False
+        if subject_match is False:
+            hash_id = Subject().make_hash_id('0', context)
+            try:
+                subject_match = Subject.objects\
+                                       .get(hash_id=hash_id)
+            except Subject.DoesNotExist:
+                subject_match = False
         if subject_match is not False:
             match_found = True
             self.uuid = subject_match.uuid
