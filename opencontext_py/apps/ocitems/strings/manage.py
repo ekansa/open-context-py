@@ -22,7 +22,7 @@ class StringManagement():
         or creates one if it does not yet exist
         """
         found = self.check_string_exists(content)
-        if(found is False):
+        if found is False:
             if self.suggested_uuid is not False:
                 uuid = self.suggested_uuid
             else:
