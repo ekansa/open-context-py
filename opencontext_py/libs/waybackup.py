@@ -278,42 +278,17 @@ for url in urls:
                   + ', failed '  + str(len(self.failed_urls)) \
                   + ' level: ' + str(current_depth))
             print('> Getting urls from: ' + url)
-            soup = BeautifulSoup(html, 'lxml')
-            for link in soup.find_all('a'):
-                do_raw_url = True
-                raw_url = link.get('href')
-                raw_url = self.transform_raw_url(raw_url)
-                if isinstance(raw_url, str):
-                    for skip_domain in skip_domains:
-                        if skip_domain in raw_url:
-                            # skip it, it's for a social media site
-                            do_raw_url = False
-                    if do_raw_url:
-                        # do it
-                        if raw_url[0:7] == 'http://' or \
-                           raw_url[0:8] == 'https://':
-                            # we have an absolute URL
-                            if raw_url not in urls:
-                                urls.append(raw_url)
-                        else:
-                            # we have a relative URL, make it absolute
-                            new_url = urljoin(url, raw_url)
-                            if new_url not in urls:
-                                urls.append(new_url)
-            if self.do_img_src:
-                print('Searching for image URLs...')
-                img_src_urls = []
-                for img in soup.find_all('img'):
+            soup = None
+            try:
+                soup = BeautifulSoup(html, 'lxml')
+            except:
+                soup = None
+            if soup is not None:
+                for link in soup.find_all('a'):
                     do_raw_url = True
-                    raw_url = img.get('src')
+                    raw_url = link.get('href')
+                    raw_url = self.transform_raw_url(raw_url)
                     if isinstance(raw_url, str):
-                        raw_url = raw_url.strip() # remove whitespaces, etc.
-                        raw_url = raw_url.replace('\\r', '')  # common URL problem
-                        raw_url = raw_url.replace('\\n', '')  # common URL problem
-                        if '#' in raw_url:
-                            # skip fragment identifiers in URLs
-                            url_ex = raw_url.split('#')
-                            raw_url = url_ex[0]
                         for skip_domain in skip_domains:
                             if skip_domain in raw_url:
                                 # skip it, it's for a social media site
@@ -323,28 +298,58 @@ for url in urls:
                             if raw_url[0:7] == 'http://' or \
                                raw_url[0:8] == 'https://':
                                 # we have an absolute URL
-                                if raw_url not in img_src_urls:
-                                    img_src_urls.append(raw_url)
+                                if raw_url not in urls:
+                                    urls.append(raw_url)
                             else:
                                 # we have a relative URL, make it absolute
                                 new_url = urljoin(url, raw_url)
-                                if new_url not in img_src_urls:
-                                    img_src_urls.append(new_url)
-                print('Found image URLs: ' + str(len(img_src_urls)))
-                for src_url in img_src_urls:
-                    if src_url not in self.failed_urls \
-                       and src_url not in self.archived_urls:
-                        print('Try to archive image: ' + src_url)
-                        ok = self.archive_url(src_url)
-                        if ok is False:
-                            print('PROBLEM ARCHIVING IMAGE!')
-                            if src_url not in self.failed_urls:
-                                self.failed_urls.append(src_url)
+                                if new_url not in urls:
+                                    urls.append(new_url)
+                if self.do_img_src:
+                    print('Searching for image URLs...')
+                    img_src_urls = []
+                    for img in soup.find_all('img'):
+                        do_raw_url = True
+                        raw_url = img.get('src')
+                        if isinstance(raw_url, str):
+                            raw_url = raw_url.strip() # remove whitespaces, etc.
+                            raw_url = raw_url.replace('\\r', '')  # common URL problem
+                            raw_url = raw_url.replace('\\n', '')  # common URL problem
+                            if '#' in raw_url:
+                                # skip fragment identifiers in URLs
+                                url_ex = raw_url.split('#')
+                                raw_url = url_ex[0]
+                            for skip_domain in skip_domains:
+                                if skip_domain in raw_url:
+                                    # skip it, it's for a social media site
+                                    do_raw_url = False
+                            if do_raw_url:
+                                # do it
+                                if raw_url[0:7] == 'http://' or \
+                                   raw_url[0:8] == 'https://':
+                                    # we have an absolute URL
+                                    if raw_url not in img_src_urls:
+                                        img_src_urls.append(raw_url)
+                                else:
+                                    # we have a relative URL, make it absolute
+                                    new_url = urljoin(url, raw_url)
+                                    if new_url not in img_src_urls:
+                                        img_src_urls.append(new_url)
+                    print('Found image URLs: ' + str(len(img_src_urls)))
+                    for src_url in img_src_urls:
+                        if src_url not in self.failed_urls \
+                           and src_url not in self.archived_urls:
+                            print('Try to archive image: ' + src_url)
+                            ok = self.archive_url(src_url)
+                            if ok is False:
+                                print('PROBLEM ARCHIVING IMAGE!')
+                                if src_url not in self.failed_urls:
+                                    self.failed_urls.append(src_url)
+                            else:
+                                if src_url not in self.archived_urls:
+                                    self.archived_urls.append(src_url)
                         else:
-                            if src_url not in self.archived_urls:
-                                self.archived_urls.append(src_url)
-                    else:
-                        pass
+                            pass
         # update our progress!
         self.update_url_filecache()
         # now do urls that we found.
