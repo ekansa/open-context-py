@@ -5,6 +5,7 @@ from opencontext_py.libs.rootpath import RootPath
 from django.template import RequestContext, loader
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
+from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.inputs.projectinputs import ProjectInputs
 from opencontext_py.apps.edit.inputs.labeling import InputLabeling
@@ -46,6 +47,26 @@ def profile_use(request, profile_uuid, edit_uuid):
                 prefix = request.GET['prefix']
             else:
                 prefix = ''
+            class_uri = False
+            class_label = False
+            if 'class_uri' in request.GET:
+                class_uri = request.GET['class_uri']
+                ent = Entity()
+                found = ent.dereference(class_uri)
+                if found:
+                    class_label = ent.label
+                else:
+                    class_uri = False
+            context_uuid = False
+            context_label = False
+            if 'context_uuid' in request.GET:
+                context_uuid = request.GET['context_uuid']
+                ent = Entity()
+                found = ent.dereference(context_uuid)
+                if found:
+                    context_label = ent.label
+                else:
+                    context_uuid = ''
             if 'id_len' in request.GET:
                 try:
                     id_len = int(float(request.GET['id_len']))
@@ -63,16 +84,21 @@ def profile_use(request, profile_uuid, edit_uuid):
                          'edit_uuid': edit_uuid,
                          'label_prefix': prefix,
                          'label_id_len': id_len,
+                         'class_uri': class_uri,
+                         'class_label': class_label,
+                         'context_uuid': context_uuid,
+                         'context_label': context_label,
                          'context': False,
                          'act_nav': 'profiles'}
             template = loader.get_template('edit/profiles/profile-use.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'super_user': request.user.is_superuser,
-                                      'icons': ItemBasicEdit.UI_ICONS,
-                                      'field_group_vis': InputFieldGroup.GROUP_VIS,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'item': temp_item,
+                'super_user': request.user.is_superuser,
+                'icons': ItemBasicEdit.UI_ICONS,
+                'field_group_vis': InputFieldGroup.GROUP_VIS,
+                'base_url': base_url
+            }
+            return HttpResponse(template.render(context, request))
         else:
             json_output = json.dumps({'error': 'edit permission required'},
                                      indent=4,
@@ -104,13 +130,14 @@ def profile_edit(request, profile_uuid):
                          'context': False,
                          'act_nav': 'profiles'}
             template = loader.get_template('edit/profiles/profile-edit.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'super_user': request.user.is_superuser,
-                                      'icons': ItemBasicEdit.UI_ICONS,
-                                      'field_group_vis': InputFieldGroup.GROUP_VIS,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context))
+            context = {
+                'item': temp_item,
+                'super_user': request.user.is_superuser,
+                'icons': ItemBasicEdit.UI_ICONS,
+                'field_group_vis': InputFieldGroup.GROUP_VIS,
+                'base_url': base_url
+            }
+            return HttpResponse(template.render(context, request))
         else:
             json_output = json.dumps({'error': 'edit permission required'},
                                      indent=4,
