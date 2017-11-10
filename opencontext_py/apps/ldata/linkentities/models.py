@@ -141,6 +141,8 @@ class LinkEntityGeneration():
                         'http://purl.org/heritagedata/schemes/mda_obj/concepts': 'fish',
                         'http://arachne.dainst.org/search': 'arachne-search',
                         'http://arachne.dainst.org/entity/': 'arachne-ent',
+                        'http://www.jstor.org/journal': 'jstor-jrn',
+                        'http://www.jstor.org/stable': 'jstor',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix

@@ -1306,6 +1306,7 @@ print(href)
                         href = href.replace(")", '')
                         href = href.replace("(", '')
                         href = href.replace(";", '')
+                        href = href.replace("\\", '')
                         href = 'http://www.poggiocivitate.org/photos/enlargements/' + href
                 elif 'viewartifactcatalog.asp?' in href:
                     href_ex = href.split('viewartifactcatalog.asp?')
@@ -1315,6 +1316,7 @@ print(href)
                         href = href.replace(")", '')
                         href = href.replace("(", '')
                         href = href.replace(";", '')
+                        href = href.replace("\\", '')
                         href = 'http://www.poggiocivitate.org/catalog/viewartifactcatalog.asp?' + href
                 elif 'trenchbookviewer.asp?' in href:
                     href_ex = href.split('trenchbookviewer.asp?')
@@ -1324,6 +1326,7 @@ print(href)
                         href = href.replace(")", '')
                         href = href.replace("(", '')
                         href = href.replace(";", '')
+                        href = href.replace("\\", '')
                         href = 'http://www.poggiocivitate.org/catalog/trenchbooks/trenchbookviewer.asp?' + href
                 elif 'viewtrenchbookreference.asp?' in href:
                     href_ex = href.split('viewtrenchbookreference.asp?')
@@ -1333,6 +1336,7 @@ print(href)
                         href = href.replace(")", '')
                         href = href.replace("(", '')
                         href = href.replace(";", '')
+                        href = href.replace("\\", '')
                         href = 'http://www.poggiocivitate.org/catalog/trenchbooks/viewtrenchbookreference.asp?' + href
                 elif 'viewlocus.asp?' in href:
                     href_ex = href.split('viewlocus.asp?')
@@ -1342,6 +1346,7 @@ print(href)
                         href = href.replace(")", '')
                         href = href.replace("(", '')
                         href = href.replace(";", '')
+                        href = href.replace("\\", '')
                         href = 'http://www.poggiocivitate.org/admin/viewlocus.asp?' + href   
         return href
     

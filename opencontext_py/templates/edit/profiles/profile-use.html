@@ -92,14 +92,29 @@
             var profile_obj = false;
             function start_profile_use(){
                 // gets the profile object ready
+                var enter_class = false;
+                var enter_context = false;
                 profile_obj = new useProfile(profile_uuid, edit_uuid, item_type, edit_new);
                 profile_obj.label_prefix = '{{ item.label_prefix }}';
+                {% if item.class_uri != False %}
+                    profile_obj.class_uri = '{{ item.class_uri }}';
+                    profile_obj.class_label = '{{ item.class_label }}';
+                    enter_class = true;
+                {% endif %}
+                {% if item.context_uuid != False %}
+                    profile_obj.context_uuid = '{{ item.context_uuid }}';
+                    profile_obj.context_label = '{{ item.context_label }}';
+                    enter_context = true;
+                {% endif %}
                 {% if item.label_id_len != False %}
                     profile_obj.label_id_len = {{ item.label_id_len }};
                 {% else %}
                     profile_obj.label_id_len = false;
                 {% endif %}
+                
                 profile_obj.get_all_data();
+                profile_obj.postprocess_pre_populated_fields();
+
             }
             -->
         </script> 

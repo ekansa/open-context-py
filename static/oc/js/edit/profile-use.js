@@ -13,7 +13,10 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 	this.edit_new = edit_new;
 	this.label_prefix = ''; // for composing new labels
 	this.label_id_len = false; //for composing new labels
-	this.context_uuid = false; //for creating a new item
+	this.context_uuid = false; //for creating a new item in a context
+	this.context_label = false; // for creating a new itme in a context
+	this.class_uri = false;  // for a default item class
+	this.class_label = false; // for a default item class
 	this.item_json_ld_obj = false;
 	this.profile_data = false;
 	this.panel_nums = [0]; // id number for the input profile panel, used for making a panel dom ID
@@ -27,7 +30,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		this.show_loading();
 		if (this.edit_new) {
 			// we've got a new item, so don't look for existing JSON-LD data
-            this.get_profile_data().then(this.getProfileItems);
+            this.get_profile_data().then(this.getProfileItems).then(this.postprocess_pre_populated_fields);
 		}
 		else{
 			// we've got an existing item, so look for existing JSON-LD data first
@@ -383,7 +386,7 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		if (data.ok) {
 			// the request was OK
 			var relative_url = '/edit/inputs/profiles/' + this.profile_uuid + '/new';
-			if (this.label_prefix != '' || this.label_id_len != false) {
+			if (this.label_prefix != '' || this.label_id_len != false || this.class_uri != false || this.context_uuid != false) {
 				// we should pass parameters to make a default label for the next item
 				// in this profile
 				var params = {};
@@ -394,6 +397,12 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 					if(this.label_id_len > 0){
 						params['id_len'] = this.label_id_len;
 					}
+				}
+				if (this.class_uri != false){
+					params['class_uri'] = this.class_uri;
+				}
+				if (this.context_uuid != false){
+					params['context_uuid'] = this.context_uuid;
 				}
 				var next_url = this.make_url_params(relative_url, params);
 			}
@@ -548,6 +557,13 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			field.label_prefix = this.label_prefix; // for composing new labels
 			field.label_id_len = this.label_id_len; //for composing new labels
 			field.context_uuid = this.context_uuid; //for creating a new item
+			if(this.context_uuid != false){
+				field.context_label = this.context_label;
+			}
+			if(this.class_uri != false){
+				field.class_uri = this.class_uri;
+				field.class_label = this.class_label;
+			}
 			field.pred_type = 'variable';
 			field.parent_obj_name = this.obj_name;
 			field.obj_name = 'fields[' + field.id + ']';
@@ -576,6 +592,12 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 						field.class_uri = categories[0].id;
 						field.class_label = categories[0].label;
 					}
+					else{
+						if(this.class_uri != ''){
+							field.class_uri = this.class_uri;
+							field.class_label = this.class_label;
+						}
+					}
 				}
 				else if (profile_field.predicate_uuid == field.context_pred_uuid) {
 					// we have a field for context
@@ -595,6 +617,25 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 			}
 			else{
 				field.values_obj = [];
+				if(this.context_uuid != false && profile_field.predicate_uuid == field.context_pred_uuid){
+					var context = {
+						label: this.context_label,
+						uuid: this.context_uuid,
+						item_type: 'subjects'
+					};
+					field.values_obj = [
+						context
+					];
+					field.ids_validation[this.context_uuid] = context;
+				}
+				if(this.class_uri != false && profile_field.predicate_uuid == field.class_pred_uuid){
+					var item = {
+						label: this.class_label,
+						id: this.class_uri,
+						vocab_uri: this.class_vocab_uri
+					};
+					field.ids_validation[this.class_uri] = item;
+				}
 			}
 			field.initialize();
 			var field_html = '<tr>' + field.make_field_html() + '</tr>';
@@ -658,7 +699,29 @@ function useProfile(profile_uuid, edit_uuid, edit_item_type, edit_new){
 		//now validate for preparing for all fields submissions
 		this.prep_all_create_update(); 
 	}
-	
+
+	this.postprocess_pre_populated_fields = function(){
+		// does validation on prepopulated fields
+		
+		for (var i = 0, length = this.fields.length; i < length; i++) {
+			var field = this.fields[i];
+			if(this.class_uri != false && field.predicate_uuid == field.class_pred_uuid){
+				// check on pre-populated class field
+				console.log('Validating prepopulated class_uri...');
+				field.validateID('0');
+				console.log(field);
+			}
+			if(this.context_uuid != false && field.predicate_uuid == field.context_pred_uuid){
+				// check on pre-populated class field
+				console.log('Validating prepopulated containment...');
+				field.validateID('0');
+				console.log(field);
+			}
+		}
+		
+		//now validate for preparing for all fields submissions
+		this.prep_all_create_update();
+	}
 	
 	
 	/*

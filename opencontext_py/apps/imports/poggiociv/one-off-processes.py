@@ -627,6 +627,13 @@ for b_str in b_strs:
 
 
 
+
+
+
+
+
+
+
 # add images to internet archive for IIIF serving
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -634,14 +641,73 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/seyitomer-hoyuk/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/seyitomer-hoyuk/'
-ia_m.project_uuids.append('347286db-b6c6-4fd2-b3bd-b50316b0cb9f')
+ia_m.do_http_request_for_cache = False
+ia_m.remote_uri_sub = 'http://127.0.0.1:8000/static/exports/new-sphinx-drawings/'
+ia_m.local_filesystem_uri_sub = 'C:\\GitHub\\open-context-py/static/exports/new-sphinx-drawings/'
+ia_m.project_uuids.append('141e814a-ba2d-4560-879f-80f1afb019e9')
 ia_m.delay_before_request = .25
 ia_m.archive_image_media_items()
 ia_m.errors
 
 
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.imports.records.models import ImportCell
+source_id = 'ref:2425834516014'
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+man_media = Manifest.objects.filter(item_type='media', project_uuid=project_uuid, source_id=source_id)
+for man_obj in man_media:
+    mf = Mediafile()
+    mf.uuid = man_obj.uuid
+    mf.source_id = source_id
+    mf.project_uuid = project_uuid
+    source_row_num = None
+    full_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:fullfile")[:1]
+    if len(full_files) < 1:
+        print('Missing full media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=6)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                full_mf = mf
+                full_mf.file_type = "oc-gen:fullfile"
+                full_mf.file_uri = file_uri
+                full_mf.save()
+    prev_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:preview")[:1]
+    if len(prev_files) < 1:
+        print('Missing preview media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=7)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                prev_mf = mf
+                prev_mf.file_type = "oc-gen:preview"
+                prev_mf.file_uri = file_uri
+                prev_mf.save()
+    thumb_files = Mediafile.objects.filter(uuid=man_obj.uuid, file_type="oc-gen:thumbnail")[:1]
+    if len(thumb_files) < 1:
+        print('Missing thumbnail media file for: ' + man_obj.label)
+        if source_row_num is None:
+            imp_label_rows = ImportCell.objects.filter(source_id=source_id, record=man_obj.label, field_num=3)[:1]
+            if len(imp_label_rows) > 0:
+                source_row_num = imp_label_rows[0].row_num
+        if source_row_num is not None:
+            imp_fileuri_rows = ImportCell.objects.filter(source_id=source_id, row_num=source_row_num, field_num=8)[:1]
+            if len(imp_fileuri_rows) > 0:
+                file_uri = imp_fileuri_rows[0].record
+                thumb_mf = mf
+                thumb_mf.file_type = "oc-gen:thumbnail"
+                thumb_mf.file_uri = file_uri
+                thumb_mf.save()
+    
 
 
 
@@ -692,8 +758,44 @@ wb.filecache = FileCacheJSON()
 wb.cache_filekey = 'ascsa-crawl'
 wb.delay_before_request = 1
 wb.do_img_src = True
+wb.skip_parameters = [
+    't=publication',
+    't=report',
+    't=letter',
+    't=monument',
+    't=drawing',
+    't=image',
+    't=object',
+    't=coin',
+    't=deposit',
+    't=notebook',
+    'v=icons',
+    'v=table',
+    'v=map',
+    '&details=',
+    'p=4',
+    'p=8',
+    'p=20',
+    'p=40',
+    'http://ascsa.net/help',
+]
 path = ['ascsa.net/']  # only follow links in these paths
 url = 'http://ascsa.net/research?v=default'
+wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
+wb.urls = wb.failed_urls
+# archive the previous failures
+wb.archive_urls()
+
+
+from opencontext_py.libs.filecache import FileCacheJSON
+from opencontext_py.libs.waybackup import WaybackUp
+wb = WaybackUp()
+wb.filecache = FileCacheJSON()
+wb.cache_filekey = 'maia-crawl'
+wb.delay_before_request = .5
+wb.do_img_src = True
+path = ['artiraq.org']  # only follow links in these paths
+url = 'https://artiraq.org/maia/'
 wb.scrape_urls(url, path, 10)  # archive pages discovered from the url, going 6 steps away
 wb.urls = wb.failed_urls
 # archive the previous failures
@@ -775,7 +877,7 @@ from opencontext_py.apps.indexer.reindex import SolrReIndex
 project_uuids = [
     'EDDA846F-7225-495E-AB77-7314C256449A',
     '766698E3-2E79-4A78-B0BC-245FF435BBBD',
-    'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
 ]
 uuids = []
 items = Manifest.objects.filter(project_uuid__in=project_uuids).exclude(indexed__gt='2018-10-03').order_by('sort')
@@ -823,3 +925,579 @@ project_uuids = [
 for project_uuid in project_uuids:
     pp = ProjectPermissions()
     pp.publish_project(project_uuid)
+
+
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+asses = Assertion.objects.filter(uuid='73E7814C-21BB-4120-DC16-8B7DC436031E', object_type='subjects')
+for ass in asses:
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(ass.object_uuid)
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
+from opencontext_py.libs.solrconnection import SolrConnection
+solr = SolrConnection().connection
+project_uuids = [
+    'EDDA846F-7225-495E-AB77-7314C256449A',
+    '766698E3-2E79-4A78-B0BC-245FF435BBBD',
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
+]
+
+man_regions = Manifest.objects.filter(item_type='subjects', class_uri='oc-gen:cat-region', project_uuid__in=project_uuids).order_by('sort')
+changed_uuids = []
+for man_region in man_regions:
+    act_subject = Subject.objects.get(uuid=man_region.uuid)
+    oc_subjects = Subject.objects.filter(context=act_subject.context, project_uuid='0')[:1]
+    if len(oc_subjects) > 0:
+        dm = DeleteMerge()
+        delete_uuid = man_region.uuid
+        merge_into_uuid = oc_subjects[0].uuid
+        print('Merge ' + delete_uuid + ' => into => ' + merge_into_uuid )
+        dm.merge_by_uuid(delete_uuid, merge_into_uuid)
+        q = 'uuid:' + delete_uuid
+        solr.delete_by_query(q)
+        changed_uuids.append(merge_into_uuid)
+        con_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                             object_uuid=merge_into_uuid)
+        if len(con_asses) > 1:
+            del_con_asses = []
+            ok_found = False
+            for con_ass in con_asses:
+                ok_man_objs = Manifest.objects.filter(project_uuid='0', uuid=con_ass.uuid)[:1]
+                if len(ok_man_objs) < 1:
+                    del_con_asses.append(con_ass)
+                else:
+                    ok_found = True
+            if ok_found and len(del_con_asses) > 0:
+                if len(del_con_asses) < len(con_asses):
+                    for del_con in del_con_asses:
+                        del_con.delete()
+        sg = SubjectGeneration()
+        sg.generate_save_context_path_from_uuid(merge_into_uuid)
+    else:
+        print('Make OC project for ' + man_region.uuid )
+        act_subject.project_uuid = '0'
+        act_subject.save()
+        geos = Geospace.objects.filter(uuid=man_region.uuid)
+        for geo in geos:
+            geo.project_uuid = '0'
+            geo.save()
+        man_region.project_uuid = '0'
+        man_region.save()
+        sg = SubjectGeneration()
+        sg.generate_save_context_path_from_uuid(man_region.uuid)
+        changed_uuids.append(man_region.uuid)
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+ohio_uuid = 'BDE4389E-F7CB-4236-3F7D-50A6E72C8ACD'
+pa_uuid = '93997F40-7682-4C69-2A06-A95C4B4B7428'
+sg = SubjectGeneration()
+sg.fix_multiple_context_paths(ohio_uuid, 2)
+sg = SubjectGeneration()
+sg.fix_multiple_context_paths(pa_uuid , 2)
+
+
+
+
+
+
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+source_id = 'ref:2411348901826'
+project_uuid = '0cea2f4a-84cb-4083-8c66-5191628abe67'
+ref_pred = 'dc-terms:isReferencedBy'
+imp_tris_cells = ImportCell.objects.filter(source_id=source_id, field_num=11)
+for imp_tri in imp_tris_cells:
+    jstor_uri = None
+    imp_jstors = ImportCell.objects.filter(source_id=source_id, field_num=17, row_num=imp_tri.row_num)[:1]
+    if len(imp_jstors) > 0:
+        jstor_uri = imp_jstors[0].record
+    title = None
+    imp_titles = ImportCell.objects.filter(source_id=source_id, field_num=1, row_num=imp_tri.row_num)[:1]
+    if len(imp_titles) > 0:
+        title = imp_titles[0].record
+    label = imp_tri.record
+    if isinstance(jstor_uri, str) and isinstance(title, str):
+        man_objs = Manifest.objects.filter(project_uuid=project_uuid, label=label)[:1]
+        if len(man_objs) > 0:
+            man_obj = man_objs[0]
+            print('For ' + jstor_uri + ' -> ' + title)
+            print('Found: ' + label + ' ' + man_obj.uuid)
+            le = LinkEntity()
+            le.uri = jstor_uri
+            le.label = title
+            le.alt_label = title
+            le.ent_type = 'class'
+            le.vocab_uri = 'http://www.jstor.org/journal/ameranti'
+            try:
+                le.save()
+            except:
+                pass
+            la = LinkAnnotation()
+            la.subject = man_obj.uuid
+            la.subject_type = 'subjects'
+            la.project_uuid = project_uuid
+            la.source_id = source_id
+            la.predicate_uri = ref_pred
+            la.object_uri = jstor_uri # the parent is the object
+            la.save()
+            try:
+                la.save()
+            except:
+                pass
+        
+
+# reindex
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.indexer.reindex import SolrReIndex
+project_uuids = [
+    '0cea2f4a-84cb-4083-8c66-5191628abe67'
+]
+items = Manifest.objects.filter(project_uuid__in=project_uuids).exclude(indexed__gt='2018-10-03').order_by('sort')
+for item in items:
+    uuids.append(item.uuid)
+
+uuids += project_uuids
+print('Items to index: ' + str(len(uuids)))
+sri = SolrReIndex()
+sri.reindex_uuids(uuids)
+
+
+from opencontext_py.apps.ocitems.strings.manage import StringManagement
+from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+source_id = 'ref:1884486698764'
+project_uuid = '0cea2f4a-84cb-4083-8c66-5191628abe67'
+ref_pred = 'dc-terms:isReferencedBy'
+cite_pred = 'f6a38cd7-6e8f-49d9-8af5-0bbddde929d8'
+tri_exp_pred = '04b1fd08-8dc1-4df2-be07-8bf88e862ef0'
+imp_uuids_cells = ImportCell.objects.filter(source_id=source_id, field_num=12)
+uuids = []
+for imp_uuid in imp_uuids_cells:
+    jstor_uri = None
+    imp_jstors = ImportCell.objects.filter(source_id=source_id, field_num=16, row_num=imp_uuid.row_num)[:1]
+    if len(imp_jstors) > 0:
+        jstor_uri = imp_jstors[0].record
+    title = None
+    imp_titles = ImportCell.objects.filter(source_id=source_id, field_num=1, row_num=imp_uuid.row_num)[:1]
+    if len(imp_titles) > 0:
+        title = imp_titles[0].record
+    citation = None
+    cite_str_obj = None
+    imp_cites = ImportCell.objects.filter(source_id=source_id, field_num=3, row_num=imp_uuid.row_num)[:1]
+    if len(imp_cites) > 0:
+        citation = imp_cites[0].record
+        str_man = StringManagement()
+        str_man.source_id = source_id
+        str_man.project_uuid = project_uuid
+        cite_str_obj = str_man.get_make_string(citation)
+    tri_expression = None
+    tri_str_obj = None
+    tri_expressions = ImportCell.objects.filter(source_id=source_id, field_num=9, row_num=imp_uuid.row_num)[:1]
+    if len(tri_expressions) > 0:
+        tri_expression  = tri_expressions[0].record
+        str_man = StringManagement()
+        str_man.source_id = source_id
+        str_man.project_uuid = project_uuid
+        tri_str_obj = str_man.get_make_string(tri_expression)
+    uuid = imp_uuid.record
+    if uuid not in uuids:
+        uuids.append(uuid)
+    man_objs = Manifest.objects.filter(uuid=uuid)[:1]
+    if len(man_objs) > 0:
+        man_obj = man_objs[0]
+    else:
+        man_obj = None
+    if man_obj is not None:
+        if cite_str_obj is not None:
+            new_ass = Assertion()
+            new_ass.uuid = uuid
+            new_ass.subject_type = man_obj.item_type
+            new_ass.project_uuid = project_uuid
+            new_ass.source_id = source_id
+            new_ass.obs_node = '#obs-3'
+            new_ass.obs_num = 3
+            new_ass.sort = 1
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = cite_pred
+            new_ass.object_type = 'xsd:string'
+            new_ass.object_uuid = str_obj.uuid
+            try:
+                new_ass.save()
+            except:
+                pass
+        if tri_str_obj is not None:
+            new_ass = Assertion()
+            new_ass.uuid = uuid
+            new_ass.subject_type = man_obj.item_type
+            new_ass.project_uuid = project_uuid
+            new_ass.source_id = source_id
+            new_ass.obs_node = '#obs-3'
+            new_ass.obs_num = 3
+            new_ass.sort = 10
+            new_ass.visibility = 1
+            new_ass.predicate_uuid = tri_exp_pred
+            new_ass.object_type = 'xsd:string'
+            new_ass.object_uuid = tri_str_obj.uuid
+            try:
+                new_ass.save()
+            except:
+                pass
+        if isinstance(jstor_uri, str) and isinstance(title, str):
+            print('For ' + jstor_uri + ' -> ' + title)
+            print('Found: ' + man_obj.label + ' ' + man_obj.uuid)
+            le = LinkEntity()
+            le.uri = jstor_uri
+            le.label = title
+            le.alt_label = title
+            le.ent_type = 'class'
+            le.vocab_uri = 'http://www.jstor.org/journal/ameranti'
+            try:
+                le.save()
+            except:
+                pass
+            la = LinkAnnotation()
+            la.subject = man_obj.uuid
+            la.subject_type = 'subjects'
+            la.project_uuid = project_uuid
+            la.source_id = source_id
+            la.predicate_uri = ref_pred
+            la.object_uri = jstor_uri # the parent is the object
+            la.save()
+            try:
+                la.save()
+            except:
+                pass
+        
+
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+jstor_ents = LinkEntity.objects.filter(vocab_uri='http://www.jstor.org/journal/ameranti').exclude(uri='http://www.jstor.org/journal/ameranti')
+for jstor_ent in jstor_ents:
+    lam = LinkAnnoManagement()
+    parent_uri = jstor_ent.vocab_uri # molluscs
+    child_uri =jstor_ent.uri  # cuttlefish
+    lam.add_skos_hierarachy(parent_uri, child_uri)
+
+
+
+
+
+
+from opencontext_py.libs.filecache import FileCacheJSON
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+fc = FileCacheJSON()
+fc.working_dir = 'jolene'
+geojson = fc.get_dict_from_file('va-md-original')
+statuses = fc.get_dict_from_file('va-status')
+if isinstance(geojson, dict) and isinstance(statuses, list):
+    new_geojson = LastUpdatedOrderedDict()
+    for key, vals in geojson.items():
+        if key != 'features':
+            new_geojson[key] = vals
+        else:
+            new_geojson[key] = []
+    print('ok!')
+    for feature in geojson['features']:
+        new_feature = LastUpdatedOrderedDict()
+        for key, val in feature.items():
+            new_feature[key] = val
+        new_feature['properties']['count eligible'] = 0
+        new_feature['properties']['count not eligible'] = 0
+        new_feature['properties']['count eligibility not evaluated / other'] = 0
+        tile_id = feature['properties']['id']
+        print('Check: ' + tile_id)
+        for status in statuses:
+            if status['id'][:-1] == tile_id:
+                if status['status'] == 'Eligibility Not Evaluated / Other':
+                    new_feature['properties']['count eligibility not evaluated / other'] += 1
+                elif status['status'] == 'Eligible':
+                    new_feature['properties']['count eligible'] += 1
+                elif status['status'] == 'Not Eligible':
+                    new_feature['properties']['count not eligible'] += 1
+        new_geojson['features'].append(new_feature)
+fc.save_serialized_json('va-md-statuses', new_geojson)
+
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+class_uris = [
+    'oc-gen:cat-feature',
+    'oc-gen:cat-trench'
+]
+man_objs = Manifest.objects.filter(project_uuid=project_uuid, class_uri__in=class_uris)
+for man_obj in man_objs:
+    media_asses = Assertion.objects.filter(uuid=man_obj.uuid, object_type='media')
+    if len(media_asses) > 0:
+        print('Has media: ' + man_obj.label)
+        for media_ass in media_asses:
+            new_ass = Assertion()
+            new_ass.uuid = media_ass.object_uuid
+            new_ass.subject_type = media_ass.object_type
+            new_ass.project_uuid = media_ass.project_uuid
+            new_ass.source_id = media_ass.source_id + '-recip'
+            new_ass.obs_node = '#obs-' + str(1)
+            new_ass.obs_num = 1
+            new_ass.sort = 0
+            new_ass.predicate_uuid = 'oc-3'
+            new_ass.object_type = man_obj.item_type
+            new_ass.object_uuid = man_obj.uuid
+            try:
+                new_ass.save()
+            except:
+                pass
+
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+sm_types = [
+    "oc-gen:thumbnail",
+    "oc-gen:preview"
+]
+all_media = Mediafile.objects.filter(project_uuid=project_uuid,
+                                     file_type='oc-gen:fullfile')
+for media in all_media:
+    ia_archives = Mediafile.objects.filter(project_uuid=project_uuid,
+                                           uuid=media.uuid,
+                                           file_type='oc-gen:ia-fullfile')[:1]
+    if len(ia_archives) > 0:
+        full_uri = ia_archives[0].file_uri
+        if media.file_uri != full_uri and media.mime_type_uri != 'http://purl.org/NET/mediatypes/application/pdf':
+            print('Update full file to: ' + full_uri)
+            media.file_uri = full_uri
+            media.save()
+            
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+all_media = Mediafile.objects.filter(project_uuid=project_uuid,
+                                     file_type='oc-gen:fullfile',
+                                     mime_type_uri='http://purl.org/NET/mediatypes/application/pdf')
+for media in all_media:
+    previews = Mediafile.objects.filter(project_uuid=project_uuid,
+                                        uuid=media.uuid,
+                                        file_type='oc-gen:preview')[:1]
+    if len(previews) > 0:
+        full_uri = previews[0].file_uri.replace('#preview', '')
+        if media.file_uri != full_uri:
+            print('Update full file to: ' + full_uri)
+            media.file_uri = full_uri
+            media.save()
+
+
+    sm_media = Mediafile.objects.filter(project_uuid=project_uuid,
+                                        uuid=media.uuid,
+                                        file_type__in=sm_types,
+                                        file_uri__contains='http://127.0.0.1:8000/')
+    for sm_m in sm_media:
+        sm_m.file_uri = sm_m.file_uri.replace('http://127.0.0.1:8000/static/exports/giza-sphinx/',
+                                              'https://artiraq.org/static/opencontext/giza-sphinx/')
+        print('Update ' +  sm_m.file_type  + ' to: ' + sm_m.file_uri)
+        sm_m.save()
+        
+
+
+from opencontext_py.libs.filecache import FileCacheJSON
+from opencontext_py.apps.ldata.oaipmh.dinaalink import OaiPmhDinaaLink
+oai_dinaa = OaiPmhDinaaLink()
+oai_dinaa.filecache = FileCacheJSON()
+oai_dinaa.only_valid_state_id = '41'
+url = 'http://scholarworks.sfasu.edu/do/oai/?verb=ListRecords&metadataPrefix=oai_dc&set=publication:ita'
+oai_dinaa.find_trinomials_in_repository(url)
+
+
+
+import json
+from opencontext_py.libs.filecache import FileCacheJSON
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+fc = FileCacheJSON()
+fc.working_dir = 'web-archiving'
+key = 'sphinx'
+geojson = fc.get_dict_from_file(key)
+new_geojson = LastUpdatedOrderedDict()
+for key, vals in geojson.items():
+    if key != 'features':
+        new_geojson[key] = vals
+    else:
+        new_geojson[key] = []
+for feature in geojson['features']:
+    name = feature['properties']['Name']
+    if name == 'GII.VT Antechamber N':
+        name = 'GII.VT Antechamber North'
+    if name == 'GII.VT Antechamber S':
+        name = 'GII.VT Antechamber South'
+    new_feature = LastUpdatedOrderedDict()
+    for key, val in feature.items():
+        new_feature[key] = val
+    man_objs = Manifest.objects.filter(label=name, project_uuid=project_uuid)[:1]
+    if len(man_objs) > 0:
+        coord_obj = feature['geometry']['coordinates']
+        coordinates = json.dumps(coord_obj,
+                                 indent=4,
+                                 ensure_ascii=False)
+        gg = GeospaceGeneration()
+        lon_lat = gg.get_centroid_lonlat_coordinates(coordinates,
+                                                     feature['geometry']['type'])
+        longitude = float(lon_lat[0])
+        latitude = float(lon_lat[1])
+        print('Lat: ' + str(latitude) + ', Lon: ' + str(longitude ))
+        uuid = man_objs[0].uuid
+        man_obj = man_objs[0]
+        new_feature['properties']['uuid'] = uuid
+        Geospace.objects.filter(uuid=uuid, project_uuid=project_uuid).delete()
+        act_geo = Geospace()
+        act_geo.uuid = man_obj.uuid
+        act_geo.project_uuid = man_obj.project_uuid
+        act_geo.source_id = 'sphinx-geojson-file'
+        act_geo.meta_type = "oc-gen:discovey-location"
+        act_geo.ftype = feature['geometry']['type']
+        act_geo.feature_id = 1
+        act_geo.latitude = latitude
+        act_geo.longitude = longitude
+        act_geo.coordinates = coordinates
+        act_geo.specificity = 0
+        act_geo.save()
+    else:
+        print('CRAP! cannot find: ' + name)
+    new_geojson['features'].append(new_feature)
+fc.save_serialized_json('sphinx-use', new_geojson)
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+for item in items:
+    media_label_ex = item['f'].split('.')
+    media_label = 'Drawing ' + media_label_ex[0]
+    man_objs = Manifest.objects.filter(label=media_label,
+                                       project_uuid=project_uuid,
+                                       item_type='media')[:1]
+    if len(man_objs) > 0:
+        media_uuid = man_objs[0].uuid
+    else:
+        media_uuid = None
+        print('Cannot find media item: ' + item['f'])
+    subject_uuid = None
+    if len(item['c']) > 0:
+        if 'FaE1' in item['c']:
+            item['c'] = item['c'].replace('FaE1', 'FEa1')
+        if '/F' in item['c'] and '/Feature' not in item['c']:
+            item['c'] = item['c'].replace('/F', '/Feature F')
+        if '/AII Temple Room' in item['c'] and '/AII Temple, Room' not in item['c']:
+            item['c'] = item['c'].replace('/AII Temple Room', '/AII Temple, Room')
+        if '/Square N1, E9-E10' in item['c']:
+            item['c'] = item['c'].replace('/Square N1, E9-E10', '/Squares N1, E9-E10')
+        if '/Rump' in item['c']:
+            item['c'] = item['c'].replace('/Rump', '/Sphinx Rump')
+        if 'Terrace1' in item['c']:
+            item['c'] = item['c'].replace('Terrace1', 'Terrace 1')
+        if 'East of Sphinx Temple/p1' in item['c']:
+            item['c'] = item['c'].replace('East of Sphinx Temple/p1', 'East of Sphinx Temple/Feature p1')
+        if 'GII.VT Roof Temple North' in item['c']:
+            item['c'] = item['c'].replace('GII.VT Roof Temple North', 'GII.VT Roof Terrace North')
+        item['c'] = item['c'].replace('/Feature Feature F', '/Feature F')
+        subs = Subject.objects.filter(project_uuid=project_uuid, context__contains=item['c'])[:1]
+        if len(subs) > 0:
+            subject_uuid = subs[0].uuid
+        else:
+            context_ex = item['c'].split('/')
+            label = context_ex[-1]
+            man_objs = Manifest.objects.filter(label=label,
+                                               project_uuid=project_uuid,
+                                               item_type='subjects')[:1]
+            if len(man_objs) > 0:
+                subject_uuid = man_objs[0].uuid
+            else:
+                print('Cannot find: ' + item['c'])
+    if isinstance(media_uuid, str) and isinstance(subject_uuid, str):
+        print('Adding links to ' + media_label + ' and ' + item['c'])
+        Assertion.objects.filter(uuid=media_uuid,
+                                 predicate_uuid='oc-3').delete()
+        Assertion.objects.filter(object_uuid=media_uuid,
+                                 predicate_uuid='oc-3').delete()
+        new_ass = Assertion()
+        new_ass.uuid = subject_uuid
+        new_ass.subject_type = 'subjects'
+        new_ass.project_uuid = project_uuid
+        new_ass.source_id = 'sphinx-drawings-link'
+        new_ass.obs_node = '#obs-' + str(1)
+        new_ass.obs_num = 1
+        new_ass.sort = 0
+        new_ass.visibility = 1
+        new_ass.predicate_uuid = 'oc-3'
+        new_ass.object_type = 'media'
+        new_ass.object_uuid = media_uuid
+        try:
+            new_ass.save()
+        except:
+            pass
+        new_ass = Assertion()
+        new_ass.uuid = media_uuid
+        new_ass.subject_type = 'media'
+        new_ass.project_uuid = project_uuid
+        new_ass.source_id = 'sphinx-drawings-link'
+        new_ass.obs_node = '#obs-' + str(1)
+        new_ass.obs_num = 1
+        new_ass.sort = 0
+        new_ass.visibility = 1
+        new_ass.predicate_uuid = 'oc-3'
+        new_ass.object_type = 'subjects'
+        new_ass.object_uuid = subject_uuid
+        try:
+            new_ass.save()
+        except:
+            pass
+
+
+
+from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchiveMedia
+from time import sleep
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
+project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
+sm_types = [
+    "oc-gen:thumbnail",
+    "oc-gen:preview"
+]
+all_media = Mediafile.objects.filter(project_uuid=project_uuid,
+                                     file_type__in=sm_types,
+                                     filesize=0)
+for media in all_media:
+    sleep(.25)
+    media.get_file_info()
+    if media.filesize > 0:
+        print('Updating: ' + media.uuid + ' ' + str(media.filesize))
+        media.save()
+    else:
+        ia_fulls = Mediafile.objects.filter(project_uuid=project_uuid,
+                                            uuid=media.uuid,
+                                            file_type='oc-gen:ia-fullfile')[:1]
+        if len(ia_fulls) > 0:
+            # https://archive.org/download/opencontext-101-drawing-d-n-006/101-drawing-d-n-006.jpg
+            file_ex = ia_fulls[0].file_uri.split('.')
+            file_uri = file_ex[0] + '.jpg'
+            file_uri_ex = file_uri.split('/')
+            file_name = file_uri_ex[-1]
+            print('Cache: ' + media.uuid + ' ' + file_uri + ' as ' + file_name)
+            ia_m = InternetArchiveMedia()
+            ia_m.cache_file_dir = 'missing-previews'
+            ia_m.get_cache_remote_file_content_http(file_name, file_uri)
+            

@@ -123,6 +123,21 @@ class Manifest(models.Model):
         elif isinstance(self.revised, datetime):
             if timezone.is_naive(self.revised):
                 self.revised = pytz.utc.localize(self.revised)
+        if isinstance(self.indexed, datetime):
+            if timezone.is_naive(self.indexed):
+                self.indexed = pytz.utc.localize(self.indexed)
+        if isinstance(self.vcontrol, datetime):
+            if timezone.is_naive(self.vcontrol):
+                self.vcontrol = pytz.utc.localize(self.vcontrol)
+        if isinstance(self.archived, datetime):
+            if timezone.is_naive(self.archived):
+                self.archived = pytz.utc.localize(self.archived)
+        if isinstance(self.published, datetime):
+            if timezone.is_naive(self.published):
+                self.published = pytz.utc.localize(self.published)
+        if isinstance(self.record_updated, datetime):
+            if timezone.is_naive(self.record_updated):
+                self.record_updated = pytz.utc.localize(self.record_updated)
         super(Manifest, self).save(*args, **kwargs)
 
     def indexed_save(self):

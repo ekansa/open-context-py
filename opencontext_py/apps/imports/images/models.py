@@ -15,7 +15,7 @@ from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.force_dashes = True
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-ii.make_image_versions('sardis-sherds')
+ii.make_image_versions('missing-previews')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -32,6 +32,8 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.thumbs_dir = 'thumbs'
         self.force_dashes = False  # make sure the new filenames have dashes, not spaces or underscores
         self.errors = []
+        self.max_image_size = 35000000000
+        self.single_size_limit = 250000000  # break up if the image has more than this number of pixel
 
     def make_image_versions(self, src):
         """ Copies a directory structure
@@ -74,6 +76,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                             filename_jpg = file_no_ext + '.jpg'
                             new_file = os.path.join(act_dir, filename_jpg)
                             try:
+                                Image.MAX_IMAGE_PIXELS = self.max_image_size
                                 im = Image.open(src_file)
                             except:
                                 print('Cannot use as image: ' + src_file)
@@ -100,6 +103,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
+                Image.MAX_IMAGE_PIXELS = self.max_image_size
                 ImageFile.LOAD_TRUNCATED_IMAGES = True
                 try:
                     im = Image.open(src_file)
@@ -108,14 +112,19 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     print('Cannot use as image: ' + src_file)
                     im = False
                 if im is not False:
+                    print('Source width: ' + str(im.width) + ', height: ' + str(im.height))
+                    if (im.width * im.height) >= self.single_size_limit:
+                        pass
+                        # the image is too big to for 32 bit python
+                if im is not False:
                     ratio = 1  # default to same size
                     if im.width > self.preview_width:
                         new_width = self.preview_width
                         ratio = im.width / self.preview_width
                     else:
                         new_width = im.width
-                    new_neight = int(round((im.height * ratio), 0))
-                    size = (new_width, new_neight)
+                    new_height = int(round((im.height * ratio), 0))
+                    size = (new_width, new_height)
                     rescale_ok = False
                     try:
                         im.load()
@@ -137,12 +146,14 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                                 print('cannot save the preview file: ' + new_file)
                             del background
                         if png is False:
+                            im.convert("RGB")
                             im.thumbnail(size, Image.ANTIALIAS)
                             try:
                                 im.save(new_file, "JPEG", quality=100)
                                 output = new_file
                             except:
                                 print('cannot save the preview file: ' + new_file)
+                    im.close()
                     del im
         return output
 
@@ -158,6 +169,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         if src_file != new_file:
             if os.path.exists(src_file):
                 # print('Getting: ' + src_file)
+                Image.MAX_IMAGE_PIXELS = self.max_image_size
                 ImageFile.LOAD_TRUNCATED_IMAGES = True
                 try:
                     im = Image.open(src_file)
@@ -166,9 +178,15 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     print('Cannot use as image: ' + src_file)
                     im = False
                 if im is not False:
+                    if (im.width * im.height) >= self.single_size_limit:
+                        pass
+                        # the image is too big to for 32 bit python
+                if im is not False:
                     size = (self.thumbnail_width_height,
                             self.thumbnail_width_height)
                     rescale_ok = False
+                    rescale_ok = True
+                    """
                     try:
                         im.load()
                         rescale_ok = True
@@ -176,6 +194,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                         rescale_ok = False
                         print('Problem rescaling image for: ' + new_file)
                         self.errors.append(new_file)
+                    """
                     if rescale_ok:
                         if png:
                             im.thumbnail(size, Image.ANTIALIAS)
@@ -189,12 +208,14 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                                 print('cannot save the preview file: ' + new_file)
                             del background
                         if png is False:
+                            im.convert("RGB")
                             im.thumbnail(size, Image.ANTIALIAS)
                             try:
                                 im.save(new_file, "JPEG", quality=100)
                                 output = new_file
                             except:
                                 print('cannot save the preview file: ' + new_file)
+                    im.close()
                     del im
         return output
 
