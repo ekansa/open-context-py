@@ -71,10 +71,11 @@ def html_view(request, uuid):
             return HttpResponse(template.render(context, request))
         else:
             template = loader.get_template('edit/view401.html')
-            context = RequestContext(request,
-                                     {'item': temp_item,
-                                      'base_url': base_url})
-            return HttpResponse(template.render(context), status=401)
+            context = {
+                'item': temp_item,
+                'base_url': base_url
+            }
+            return HttpResponse(template.render(context, request), status=401)
     else:
         # not in the manifest, check to see if this is an data entry input profile
         ipt = InputProfileTemplating()
