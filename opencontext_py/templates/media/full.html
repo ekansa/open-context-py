@@ -15,12 +15,14 @@
                {% with top_panel_num=0 %}
                {% with show_header=True %}
                {% with panel_label='Fullsize Image' %}
-               {% with panel_label_suffix=False %}
+               {% with panel_label_suffix=item.content.full_size_human %}
                {% with prefix_node_id='fullsize-' %}
                {% with node_id=1 %}
                {% with suffix_node_id='-file' %}
                {% with media_panel=True %}
+               {% with in_full_view=True %}
                {% include 'items/plain-panel-start.html' %}
+               {% endwith %}
                {% endwith %}
                {% endwith %}
                {% endwith %}
