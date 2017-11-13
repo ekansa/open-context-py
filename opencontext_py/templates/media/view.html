@@ -20,7 +20,7 @@
                         {% with idnum=1 %}
                         {% with idsuffix='file' %}
                         {% with panel_label='Media Preview' %}
-                        {% with panel_label_suffix=False %}
+                        {% with panel_label_suffix=item.content.full_size_human %}
                         {% with media_panel=True %}
                         {% include 'items/accordion-group-panel-start.html' %}
                         {% endwith %}
@@ -55,7 +55,7 @@
                         {% with top_panel_num=0 %}
                         {% with show_header=True %}
                         {% with panel_label='Media Preview' %}
-                        {% with panel_label_suffix=False %}
+                        {% with panel_label_suffix=item.content.full_size_human %}
                         {% with prefix_node_id='preview-' %}
                         {% with node_id=1 %}
                         {% with media_panel=item.fulldownload %}

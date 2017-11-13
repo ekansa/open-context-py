@@ -11,11 +11,17 @@
             <a title="Go to the full-size version of this image" href="{% url 'media_full'  item.uuid %}"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Full Size Image</a>
             {%endif%}    
         {% else %}
+        {% if in_full_view %}
+            {% if item.content.fullfile %}
+            <a title="Download the full version of this media resource" href="{{ item.content.fullfile }}" target="_blank"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Download File</a>
+            {%endif%}
+        {% else %}
             {% if item.iiif_json %}
             <a title="Go to the full-size version of this image" href="{% url 'media_full'  item.uuid %}"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Dynamic Full Image</a>
             {% else %}
             {% if item.fulldownload %}
             <a title="Download the full version of this media resource" href="{{ item.content.fullfile }}" target="_blank"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Download File</a>
+            {%endif%}
             {%endif%}
             {%endif%}
         {%endif%}

@@ -5,6 +5,7 @@ from random import randint
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
 from django.conf import settings
+from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.languages import Languages
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.rootpath import RootPath
@@ -322,16 +323,23 @@ class TemplateItem():
             if self.content is False:
                 self.content = {}
                 self.content['fullfile'] = False
+                self.content['full_size'] = 0  # filesize in bytes
+                self.content['full_size_human'] = False  # filesize in human readable form
                 self.content['preview'] = False
                 self.content['thumbnail'] = False
                 self.content['x3dom_model'] = False
                 self.content['x3dom_textures'] = []
                 self.content['gis_file'] = False
+            fmath = FileMath()
             rp = RootPath()
             for file_item in json_ld['oc-gen:has-files']:
                 if file_item['type'] == 'oc-gen:fullfile':
                     self.content['fullfile'] = rp.convert_to_https(file_item['id'])
                     self.fulldownload = True
+                    if 'dcat:size' in file_item:
+                        if float(file_item['dcat:size']) > 0:
+                            self.content['full_size'] = float(file_item['dcat:size'])
+                            self.content['full_size_human'] = fmath.approximate_size(float(file_item['dcat:size']))
                     if 'dc-terms:hasFormat' in file_item:
                         for mime_type in self.FULLIMAGE_MIMETYPES:
                             if mime_type in file_item['dc-terms:hasFormat']:
