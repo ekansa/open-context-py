@@ -195,6 +195,7 @@ class PelagiosData():
             # the following does a complicated SQL query to get gazetter references
             # to items that are in our self.project_uuids list
             # OR are in project '0' AND contain items in our self.project_uuids list
+            # print('Check gaz annos for: ' + str(self.project_uuids))
             oa_item = OaItem()
             ok_rows = oa_item.get_project_gaz_rels(self.project_uuids,
                                                    act_gaz_list)
@@ -202,8 +203,13 @@ class PelagiosData():
             for ok_row in ok_rows:
                 hash_ids.append(ok_row['hash_id'])
                 hashes_projs[ok_row['hash_id']] = ok_row['project_uuid']
+            # make a new filter to check subjects that are in the project list or project zero
+            # and also for types in the project list that relate to gazetteer entities
             used_gaz_annos = LinkAnnotation.objects\
-                                           .filter(hash_id__in=hash_ids)
+                                           .filter(Q(hash_id__in=hash_ids)\
+                                                   |Q(project_uuid__in=self.project_uuids,
+                                                      object_uri__in=act_gaz_list,
+                                                      subject_type='types'))
         for gaz_anno in used_gaz_annos:
             contained_project_uuid = None
             if gaz_anno.hash_id in hashes_projs:
@@ -214,11 +220,13 @@ class PelagiosData():
                and len(self.project_uuids) > 0:
                 contained_project_uuid = self.project_uuids[0]
             if gaz_anno.subject_type in self.OC_OA_TARGET_TYPES:
+                print('check gazetter related item: ' + gaz_anno.subject_type)
                 oa_items = self.update_oa_items(gaz_anno.subject,
                                                 gaz_anno.object_uri,
                                                 oa_items,
                                                 contained_project_uuid)
-            elif gaz_anno.subject_type == 'types':
+            if gaz_anno.subject_type == 'types':
+                # print('check items described by a gazeteer related type')
                 rel_asserts = Assertion.objects\
                                        .filter(subject_type__in=self.OC_OA_TARGET_TYPES,
                                                object_uuid=gaz_anno.subject)
