@@ -157,6 +157,14 @@ class PelagiosData():
             self.oa_items[act_uuid].manifest = man_obj
             if man_obj.item_type == 'subjects':
                 subjects_uuids.append(act_uuid)
+        # now check to see if we have already added a manifest item
+        # to oa_items. If we have check if they are subjects not yet
+        # in the subjects_uuids list
+        for uuid, oa_item in self.oa_items.items():
+            if uuid not in subjects_uuids:
+                if isinstance(oa_item.manifest, Manifest):
+                    if oa_item.manifest.item_type == 'subjects':
+                        subjects_uuids.append(uuid)
         return subjects_uuids
     
     def get_add_contexts(self, subjects_uuids):
@@ -219,6 +227,43 @@ class PelagiosData():
                                                     gaz_anno.object_uri,
                                                     oa_items,
                                                     contained_project_uuid)
+        if len(used_gaz_annos) < 1:
+            # no gazetteer annotations, so try looking at the parents
+            # of the active projects root subject items
+            for project_uuid in self.project_uuids:
+                cnt = Containment()
+                proj_roots = cnt.get_project_top_level_contexts(project_uuid)
+                if len(proj_roots) > 0:
+                    # we found root subject items, so now get THEIR parents
+                    parent_asses = Assertion.objects\
+                                            .filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                    object_uuid__in=proj_roots)
+                    parent_uuids = []
+                    for parent_ass in parent_asses:
+                        if parent_ass.uuid not in parent_uuids:
+                            parent_uuids.append(parent_ass.uuid)
+                    if len(parent_uuids) > 0:
+                        # now check to see if the parents of active project roots
+                        # have gazeteer assertions
+                        # print('Checking for gazeteer items related to ' + str(parent_uuids))
+                        used_gaz_annos = LinkAnnotation.objects\
+                                                       .filter(subject__in=parent_uuids,
+                                                               object_uri__in=act_gaz_list)
+                        for gaz_anno in used_gaz_annos:
+                            oa_items = self.update_oa_items(gaz_anno.subject,
+                                                            gaz_anno.object_uri,
+                                                            oa_items,
+                                                            project_uuid)
+                            # OK now add the manifest object to this item
+                            # so it will validate.
+                            try:
+                                subject_man_obj = Manifest.objects.get(uuid=gaz_anno.subject)
+                            except:
+                                subject_man_obj = None
+                            if subject_man_obj is not None and gaz_anno.subject in oa_items:
+                                # print('Adding manifest object to ' + subject_man_obj.uuid)
+                                oa_items[gaz_anno.subject].manifest = subject_man_obj
+                                oa_items[gaz_anno.subject].active_project_uuid = project_uuid
         self.oa_items = oa_items
         return self.oa_items
 
@@ -271,6 +316,7 @@ class OaItem():
         self.uri = None
         self.project_uri = None
         self.uuid = None
+        self.active_project_uuid = None
         self.contained_project_uuid = None
         self.manifest = None
         self.context = None
@@ -361,7 +407,10 @@ class OaItem():
             main item that actually has 1 or more gazetteer links
         """
         if self.is_valid and len(self.raw_associated) > 0:
-            project_ent = self.get_entity(self.manifest.project_uuid)
+            if isinstance(self.active_project_uuid, str):
+                project_ent = self.get_entity(self.active_project_uuid)
+            else:
+                project_ent = self.get_entity(self.manifest.project_uuid)
             ass_items = []  # list of associated items
             ass_sets = [] # list of associated sets
             for key, ass in self.raw_associated.items():
@@ -602,10 +651,17 @@ class OaItem():
         if self.is_valid:
             if isinstance(self.context, str):
                 # we have a context path string
-                cont_uuids = Subject.objects\
-                                    .filter(context__startswith=self.context)\
-                                    .exclude(uuid=self.manifest.uuid)\
-                                    .values_list('uuid', flat=True)
+                if isinstance(self.active_project_uuid, str):
+                    cont_uuids = Subject.objects\
+                                        .filter(context__startswith=self.context,
+                                                project_uuid=self.active_project_uuid)\
+                                        .exclude(uuid=self.manifest.uuid)\
+                                        .values_list('uuid', flat=True)
+                else:
+                    cont_uuids = Subject.objects\
+                                        .filter(context__startswith=self.context)\
+                                        .exclude(uuid=self.manifest.uuid)\
+                                        .values_list('uuid', flat=True)
                 if len(cont_uuids) > 1:
                     self.contents_cnt = len(cont_uuids) 
                 # now get categories of items contained in this list
@@ -782,11 +838,9 @@ class OaItem():
         return rows
     
     def get_project_gaz_rels(self, project_uuids, act_gaz_list):
-        """ gets distinct categories (class_uri)
-            of items in a project associated with media and document
-            resources. This is useful to say
-            we have images or documents related to
-            bones, sites, potttery or other class_uri
+        """ gets distinct hash IDs and project uuids for annotations
+            gazetteer annotations on subject items. The annotations need
+            to be in a specific project, or project 0
         """
         con_pred = Assertion.PREDICATES_CONTAINS
         if not isinstance(act_gaz_list, list):
