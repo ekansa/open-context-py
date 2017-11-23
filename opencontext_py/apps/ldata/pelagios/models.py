@@ -5,10 +5,12 @@ from django.conf import settings
 from django.db import connection
 from django.db import models
 from django.db.models import Q
+from django.core.cache import caches
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.isoyears import ISOyears
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -71,7 +73,6 @@ class PelagiosData():
         self.db_chunk_size = 100
         self.test_limit = None
         self.project_uuids = []
-        self.mem_cache_entities = {}
     
     def get_prep_ocitems_rel_gazetteer(self):
         """ gets gazetteer related items, then
@@ -79,7 +80,6 @@ class PelagiosData():
             paths (for subjects)
         """
         self.get_ocitems_rel_gazetteer()
-        self.get_oaitems_db_objects()
         valid_cnt = 0
         invalid_cnt = 0
         i = -1
@@ -95,10 +95,8 @@ class PelagiosData():
                 if oa_item.is_valid:
                     oa_item.get_geo_event_metadata()
                     oa_item.get_associated_categories()
-                    oa_item.mem_cache_entities = self.mem_cache_entities
                     oa_item.prep_item_dc_metadata()
                     oa_item.prep_assocated_dc_metadata()
-                    self.mem_cache_entities = oa_item.mem_cache_entities
                     # print(oa_item.manifest.label)
                     # print('Number associated: ' + str(len(oa_item.associated)))
                     valid_cnt += 1
@@ -109,169 +107,60 @@ class PelagiosData():
         print('Valid: ' + str(valid_cnt))
         print('Invalid: ' + str(invalid_cnt))
     
-    def get_oaitems_db_objects(self):
-        """ runs queries to get database objects for OA items """
-        man_uuids = []
-        subjects_uuids = []
-        temp_oa_items = self.oa_items
-        for uuid, oa_item in temp_oa_items.items():
-            if len(man_uuids) >= self.db_chunk_size:
-                # we have enough man_uuids to run a query, update the
-                # self.oa_items dict
-                subjects_uuids += self.get_add_manifest_objs(man_uuids)
-                man_uuids = []
-            else:
-                man_uuids.append(uuid)
-            if len(subjects_uuids) >= self.db_chunk_size:
-                # we have enough uuids of subject items to run a query,
-                # update the self.oa_items dict
-                self.get_add_contexts(subjects_uuids)
-                subjects_uuids = []
-        if len(man_uuids) > 0:
-            # update the self.oa_items dict for remaining man_uuids
-            subjects_uuids += self.get_add_manifest_objs(man_uuids)
-        if len(subjects_uuids) > 0:
-            # update the remaining oa_items for remaining man_uuids
-            self.get_add_contexts(subjects_uuids)
-    
-    def get_add_manifest_objs(self, man_uuids):
-        """ queries for a list of manifest objects,
-            updates the self.oa_items dict so oa_items
-            have manifest objects,
-            returns list of subjects uuids
-        """
-        subjects_uuids = []
-        if len(self.project_uuids) < 1:
-            # not filtering by projects
-            man_objs = Manifest.objects\
-                               .filter(uuid__in=man_uuids)
-        else:
-            # filter by project
-            proj_list = self.project_uuids
-            proj_list.append('0')  # add a project 0 (Open Context to the proj list)
-            man_objs = Manifest.objects\
-                               .filter(uuid__in=man_uuids,
-                                       project_uuid__in=proj_list)
-        for man_obj in man_objs:
-            act_uuid = man_obj.uuid
-            self.oa_items[act_uuid].manifest = man_obj
-            if man_obj.item_type == 'subjects':
-                subjects_uuids.append(act_uuid)
-        # now check to see if we have already added a manifest item
-        # to oa_items. If we have check if they are subjects not yet
-        # in the subjects_uuids list
-        for uuid, oa_item in self.oa_items.items():
-            if uuid not in subjects_uuids:
-                if isinstance(oa_item.manifest, Manifest):
-                    if oa_item.manifest.item_type == 'subjects':
-                        subjects_uuids.append(uuid)
-        return subjects_uuids
-    
-    def get_add_contexts(self, subjects_uuids):
-        """ queries for a list of subject objects,
-            to update the self.oc_items dict
-            and add context infromation
-        """
-        sub_objs = Subject.objects\
-                          .filter(uuid__in=subjects_uuids)
-        for sub_obj in sub_objs:
-            act_uuid = sub_obj.uuid
-            self.oa_items[act_uuid].context = sub_obj.context
-    
     def get_ocitems_rel_gazetteer(self):
         """ gets open context items that
             link to gazetteer entities
         """
         oa_items = {}
-        rel_oc_types = []
-        hashes_projs = {}
-        act_gaz_list = self.get_used_gazetteer_entities()
-        # get list of gazetteer vocabularies actually in use
-        if len(self.project_uuids) < 1:
-            used_gaz_annos = LinkAnnotation.objects\
-                                           .filter(object_uri__in=act_gaz_list)
-        else:
-            # Some gazetter references go to items belonging to Open Context, which is project 0
-            # the following does a complicated SQL query to get gazetter references
-            # to items that are in our self.project_uuids list
-            # OR are in project '0' AND contain items in our self.project_uuids list
-            # print('Check gaz annos for: ' + str(self.project_uuids))
-            oa_item = OaItem()
-            ok_rows = oa_item.get_project_gaz_rels(self.project_uuids,
-                                                   act_gaz_list)
-            hash_ids = []
-            for ok_row in ok_rows:
-                hash_ids.append(ok_row['hash_id'])
-                hashes_projs[ok_row['hash_id']] = ok_row['project_uuid']
-            # make a new filter to check subjects that are in the project list or project zero
-            # and also for types in the project list that relate to gazetteer entities
-            used_gaz_annos = LinkAnnotation.objects\
-                                           .filter(Q(hash_id__in=hash_ids)\
-                                                   |Q(project_uuid__in=self.project_uuids,
-                                                      object_uri__in=act_gaz_list,
-                                                      subject_type='types'))
-        for gaz_anno in used_gaz_annos:
-            contained_project_uuid = None
-            if gaz_anno.hash_id in hashes_projs:
-                # project_uuid for the item contained within a gazeteer id's item
-                contained_project_uuid = hashes_projs[gaz_anno.hash_id]
-            if contained_project_uuid is None \
-               and gaz_anno.project_uuid not in self.project_uuids \
-               and len(self.project_uuids) > 0:
-                contained_project_uuid = self.project_uuids[0]
-            if gaz_anno.subject_type in self.OC_OA_TARGET_TYPES:
-                print('check gazetter related item: ' + gaz_anno.subject_type)
-                oa_items = self.update_oa_items(gaz_anno.subject,
-                                                gaz_anno.object_uri,
-                                                oa_items,
-                                                contained_project_uuid)
-            if gaz_anno.subject_type == 'types':
-                # print('check items described by a gazeteer related type')
-                rel_asserts = Assertion.objects\
-                                       .filter(subject_type__in=self.OC_OA_TARGET_TYPES,
-                                               object_uuid=gaz_anno.subject)
-                for rel_assert in rel_asserts:
-                    oa_items = self.update_oa_items(rel_assert.uuid,
-                                                    gaz_anno.object_uri,
-                                                    oa_items,
-                                                    contained_project_uuid)
-        if len(used_gaz_annos) < 1:
-            # no gazetteer annotations, so try looking at the parents
-            # of the active projects root subject items
-            for project_uuid in self.project_uuids:
-                cnt = Containment()
-                proj_roots = cnt.get_project_top_level_contexts(project_uuid)
-                if len(proj_roots) > 0:
-                    # we found root subject items, so now get THEIR parents
-                    parent_asses = Assertion.objects\
-                                            .filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
-                                                    object_uuid__in=proj_roots)
-                    parent_uuids = []
-                    for parent_ass in parent_asses:
-                        if parent_ass.uuid not in parent_uuids:
-                            parent_uuids.append(parent_ass.uuid)
-                    if len(parent_uuids) > 0:
-                        # now check to see if the parents of active project roots
-                        # have gazeteer assertions
-                        # print('Checking for gazeteer items related to ' + str(parent_uuids))
-                        used_gaz_annos = LinkAnnotation.objects\
-                                                       .filter(subject__in=parent_uuids,
-                                                               object_uri__in=act_gaz_list)
-                        for gaz_anno in used_gaz_annos:
-                            oa_items = self.update_oa_items(gaz_anno.subject,
-                                                            gaz_anno.object_uri,
+        uuids_all_gaz = self.get_all_uuids_related_to_gazetteers()
+        for item_type_key in self.OC_OA_TARGET_TYPES:
+            count_items = len(uuids_all_gaz[item_type_key])
+            print('working on ' + item_type_key + ' ' + str(count_items))
+            if count_items > 0:
+                for hash_id, gaz_ref in uuids_all_gaz[item_type_key].items():
+                    uuid = gaz_ref['uuid']
+                    if item_type_key != 'subjects' and item_type_key != 'types':
+                        # check to see if the annotated item is in our project list of interest
+                        proj_mans = Manifest.objects\
+                                            .filter(uuid=uuid,
+                                                    project_uuid__in=self.project_uuids)[:1]
+                        if len(proj_mans) > 0:
+                            man_obj = proj_mans[0]
+                            oa_items = self.update_oa_items(uuid,
+                                                            gaz_ref['gaz_ent_uri'],
                                                             oa_items,
-                                                            project_uuid)
-                            # OK now add the manifest object to this item
-                            # so it will validate.
-                            try:
-                                subject_man_obj = Manifest.objects.get(uuid=gaz_anno.subject)
-                            except:
-                                subject_man_obj = None
-                            if subject_man_obj is not None and gaz_anno.subject in oa_items:
+                                                            man_obj.project_uuid)
+                            if uuid in oa_items:
                                 # print('Adding manifest object to ' + subject_man_obj.uuid)
-                                oa_items[gaz_anno.subject].manifest = subject_man_obj
-                                oa_items[gaz_anno.subject].active_project_uuid = project_uuid
+                                oa_items[uuid].manifest = man_obj
+                    elif 'context' in gaz_ref and 'context_project_uuids' in gaz_ref:
+                        # treat subjects items differently. Content in a project
+                        # may exist contained in a subject item with a gazetteer
+                        # reference in a totally different project
+                        context = gaz_ref['context']
+                        if isinstance(context, str):
+                            # the context is a string so we can check it for
+                            for project_uuid in self.project_uuids:
+                                if project_uuid in gaz_ref['context_project_uuids']:
+                                    # the current subject item has matches in the project
+                                    # which means, this project has subject items that are either
+                                    # annotated by a gazetteer reference, or CONTAINED in a
+                                    # subject item with a gazetteer reference
+                                    oa_items = self.update_oa_items(uuid,
+                                                                    gaz_ref['gaz_ent_uri'],
+                                                                    oa_items,
+                                                                    project_uuid)
+                                    # OK now add the manifest object to this item
+                                    # so it will validate.
+                                    try:
+                                        man_obj = Manifest.objects.get(uuid=uuid)
+                                    except Manifest.DoesNotExist:
+                                        man_obj = None
+                                    if man_obj is not None and uuid in oa_items:
+                                        # print('Adding manifest object to ' + subject_man_obj.uuid)
+                                        oa_items[uuid].manifest = man_obj
+                                        oa_items[uuid].active_project_uuid = project_uuid
+                                        oa_items[uuid].context = context
         self.oa_items = oa_items
         return self.oa_items
 
@@ -290,9 +179,119 @@ class PelagiosData():
         oa_items[uuid] = oa_item 
         return oa_items
 
+    def get_all_uuids_related_to_gazetteers(self, all_gaz_annos=None):
+        """ gets ALL subject entities related to gazetteer entities """
+        mc = MemoryCache()
+        cache_id = mc.make_memory_cache_key('gaz', 'uuids_all_gaz')
+        uuids_all_gaz = mc.get_cache_object(cache_id)
+        if uuids_all_gaz is None:
+            if all_gaz_annos is None:
+                all_gaz_annos = self.get_all_related_to_gazetteers()
+            uuids_all_gaz = {
+                'subjects': {},
+                'documents': {},
+                'media': {},
+                'projects': {},
+                'types': {}
+            }
+            for gaz_anno in all_gaz_annos:
+                hash_id = gaz_anno.hash_id
+                gaz_ent_uri = gaz_anno.object_uri
+                key =  gaz_anno.subject_type
+                if hash_id not in uuids_all_gaz[key]:
+                    gaz_ref = {
+                        'uuid': gaz_anno.subject,
+                        'item_type': gaz_anno.subject_type,
+                        'gaz_ent_uri': gaz_ent_uri
+                    }
+                    if key == 'subjects':
+                        # get subjects specific information for the gaz_ref
+                        gaz_ref = self.subjects_specific_gaz_ref(gaz_anno.subject,
+                                                                 gaz_ent_uri)
+                    uuids_all_gaz[key][hash_id] = gaz_ref
+                # Gazeteer linked types describe other items that we want to annotate
+                # Look up the items described by a type so we can add to the
+                # gazetteer described items
+                if gaz_anno.subject_type == 'types':
+                    rel_asserts = Assertion.objects\
+                                           .filter(subject_type__in=self.OC_OA_TARGET_TYPES,
+                                                   object_uuid=gaz_anno.subject)
+                    for rel_assert in rel_asserts:
+                        key = rel_assert.subject_type
+                        if hash_id not in uuids_all_gaz[key]:
+                            gaz_ref = {
+                                'uuid': rel_assert.uuid,
+                                'item_type': rel_assert.subject_type,
+                                'gaz_ent_uri': gaz_ent_uri
+                            }
+                            if key == 'subjects':
+                                # get subjects specific information
+                                gaz_ref = self.subjects_specific_gaz_ref(rel_assert.uuid,
+                                                                         gaz_ent_uri)
+                            uuids_all_gaz[key][hash_id] = gaz_ref
+            # save this hard work to the cache
+            mc.save_cache_object(cache_id, uuids_all_gaz)
+        return uuids_all_gaz
+    
+    def subjects_specific_gaz_ref(self, uuid, gaz_ent_uri):
+        """ adds keys and values for subject item specific gaz refs """
+        gaz_ref = {
+            'uuid': uuid,
+            'item_type': 'subjects',
+            'gaz_ent_uri': gaz_ent_uri,
+            'context': None,
+            'context_project_uuids': []
+        }
+        try:
+            subject_obj = Subject.objects.get(uuid=uuid)
+        except Subject.DoesNotExist:
+            subject_obj = None
+        if subject_obj is not None:
+            gaz_ref['context'] = subject_obj.context
+            # now add the project_uuids represented by this context AND
+            # its contents
+            dist_projects = Subject.objects\
+                                   .filter(Q(context__startswith=subject_obj.context)\
+                                           |Q(uuid=uuid))\
+                                   .values('project_uuid')\
+                                   .distinct()
+            for dist_proj in dist_projects:
+                gaz_ref['context_project_uuids'].append(dist_proj['project_uuid'])
+        return gaz_ref
+    
+    def get_all_related_to_gazetteers(self):
+        """ gets ALL subject entities related to gazetteer entities """
+        mc = MemoryCache()
+        cache_id = mc.make_memory_cache_key('gaz', 'all_gaz_annos')
+        all_gaz_annos = mc.get_cache_object(cache_id)
+        if all_gaz_annos is None:
+            subject_types = self.OC_OA_TARGET_TYPES
+            subject_types.append('types')
+            act_gaz_list = self.get_used_gazetteer_entities()
+            all_gaz_annos = LinkAnnotation.objects\
+                                          .filter(subject_type__in=subject_types,
+                                                  object_uri__in=act_gaz_list)
+            mc.save_cache_object(cache_id, all_gaz_annos)
+        return all_gaz_annos
+    
     def get_used_gazetteer_entities(self):
+        """ gets entitites in gazetteer vocabularies
+            that are actually being used.
+            NOTE! This checks the memnory cache first!
+        """
+        mc = MemoryCache()
+        cache_id = mc.make_memory_cache_key('gaz', 'used_gazetteer_ents')
+        act_gaz_list = mc.get_cache_object(cache_id)
+        if act_gaz_list is None:
+            # cache was empty, so get this from the database
+            act_gaz_list = self.get_used_gazetteer_entities_db()
+            mc.save_cache_object(cache_id, act_gaz_list)
+        return act_gaz_list
+        
+    def get_used_gazetteer_entities_db(self):
         """ gets entities in gazetteer vocabularies
             that are actually being used
+            NOTE! This checks the database (cache was empty)
         """
         act_gaz_list = []
         # get list of all entities in gazetteer vocabularies
@@ -332,7 +331,6 @@ class OaItem():
         self.geo_meta = None
         self.event_meta = None
         self.gazetteer_uris = []
-        self.mem_cache_entities = {}
         self.associated = []
         self.raw_associated = {}
     
@@ -771,14 +769,17 @@ class OaItem():
     def get_entity(self, identifier):
         """ gets entities, but checkes first if they are in memory """
         output = False
-        if identifier in self.mem_cache_entities:
-            output = self.mem_cache_entities[identifier]
+        mc = MemoryCache()
+        cache_id = mc.make_memory_cache_key('entities', identifier)
+        ent = mc.get_cache_object(cache_id)
+        if ent is not None:
+            output = ent
         else:
             ent = Entity()
             found = ent.dereference(identifier)
             if found:
                 output = ent
-                self.mem_cache_entities[identifier] = ent
+                mc.save_cache_object(cache_id, ent)
         return output
     
     def get_media_rel_categories(self, uuid_list):
