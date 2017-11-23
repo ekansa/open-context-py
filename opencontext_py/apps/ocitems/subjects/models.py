@@ -13,7 +13,7 @@ class Subject(models.Model):
     hash_id = models.CharField(max_length=50, unique=True)
     project_uuid = models.CharField(max_length=50)
     source_id = models.CharField(max_length=50)
-    context = models.CharField(max_length=400)
+    context = models.CharField(max_length=400, db_index=True)
     updated = models.DateTimeField(auto_now=True)
 
     def make_hash_id(self,
