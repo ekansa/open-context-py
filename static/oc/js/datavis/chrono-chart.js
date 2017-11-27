@@ -108,6 +108,10 @@ function chrono_chart(chart_dom_id, json_url) {
 					all_max_year = parseFloat(chrono['stop']);
 				}
 			}
+			if(all_min_year == all_max_year){
+				all_min_year = all_min_year - 1;
+				all_max_year = all_max_year + 1;
+			}
 			if (c_per_year > max_c_per_year) {
 				max_c_per_year = c_per_year;
 			}
@@ -172,9 +176,14 @@ function chrono_chart(chart_dom_id, json_url) {
 			dataset.title += ' to ';
 			dataset.title += this.round_date(nearest, chrono['stop']);
 			*/
-			dataset.label = this.round_date(nearest, chrono['start']);
-			dataset.label += ' to ';
-			dataset.label += this.round_date(nearest, chrono['stop']);
+			if(chrono['start'] != chrono['stop']){
+				dataset.label = this.round_date(nearest, chrono['start']);
+				dataset.label += ' to ';
+				dataset.label += this.round_date(nearest, chrono['stop']);
+			}
+			else{
+				dataset.label = this.round_date(nearest, chrono['start']);
+			}
 			dataset.label += ' (';
 			dataset.label += chrono.count;
 			dataset.label += ' items)';
