@@ -91,6 +91,10 @@ function chrono_chart(chart_dom_id, json_url) {
 				max_count = chrono.count;
 			}
 			var t_span = parseFloat(chrono['stop']) - parseFloat(chrono['start']);
+			if(t_span < 25){
+				t_span = 25;
+			}
+			
 			var c_per_year = chrono.count / t_span;
 			if (all_min_year == null) {
 				all_min_year = parseFloat(chrono['start']);
@@ -109,8 +113,8 @@ function chrono_chart(chart_dom_id, json_url) {
 				}
 			}
 			if(all_min_year == all_max_year){
-				all_min_year = all_min_year - 1;
-				all_max_year = all_max_year + 1;
+				all_min_year = all_min_year - 25;
+				all_max_year = all_max_year + 25;
 			}
 			if (c_per_year > max_c_per_year) {
 				max_c_per_year = c_per_year;
