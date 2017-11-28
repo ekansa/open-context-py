@@ -20,28 +20,38 @@ function localize_oc_uri(uri){
 }
 
 function initmap() {
-     
+    maxZoom = 25;
+	
 	map = L.map('map').setView([start_lat, start_lon], start_zoom); //map the map
 	map.fit_bounds = false;
 	bounds = new L.LatLngBounds();
 	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+	    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
+		maxZoom: maxZoom,
+		maxNativeZoom: 18
 	});
    
 	var mapboxTiles = L.tileLayer('https://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> ',
+		maxZoom: maxZoom,
+		maxNativeZoom: 18
 	});
    
 	var ESRISatelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-	    maxNativeZoom: 19,
-		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> '
+		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> ',
+		maxZoom: maxZoom,
+		maxNativeZoom: 19
 	});
    
 	var gmapRoad = new L.Google('ROADMAP');
+	gmapRoad.maxZoom = maxZoom;
+	gmapRoad.maxNativeZoom = 18;
 	var gmapSat = new L.Google('SATELLITE');
-	gmapSat.maxNativeZoom= 18;
+	gmapSat.maxZoom = 20;
+	gmapSat.maxNativeZoom = 18;
 	var gmapTer = new L.Google('TERRAIN');
-    gmapTer.maxNativeZoom= 19;
+    gmapTer.maxNativeZoom = 19;
+	gmapTer.maxZoom = 20;
    
 	var baseMaps = {
 		"Google-Terrain": gmapTer,
@@ -135,6 +145,11 @@ function initmap() {
 		}
 	);
 	map.fitBounds(act_layer.getBounds());
+	// set zooom controls appropriately
+	map.removeLayer(gmapSat);
+	map.addLayer(osmTiles);
+	map.removeLayer(osmTiles);
+	map.addLayer(gmapSat);
 	map.zoomOut(2);
 	var current_zoom = map.getZoom();
 	if (current_zoom > start_zoom && point_features_only){
