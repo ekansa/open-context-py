@@ -310,6 +310,8 @@ urlpatterns = [
         name='entity_proxy'),
     url(r'^entities/proxy-header/(?P<target_url>\S+)', EntityViews.proxy_header,
         name='entity_proxy_header'),
+    # testing for new item json generation
+    url(r'^items/(?P<identifier>\S+).json', EntityViews.items_json, name='items_json'),
     #----------------------------
     # BELOW ARE OAI REQUESTS (OAIviews)
     #----------------------------

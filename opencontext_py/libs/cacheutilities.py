@@ -25,6 +25,7 @@ class CacheUtilities():
             'redis': True,
             'default': True
         }
+        self.print_caching = False
 
     def make_memory_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
