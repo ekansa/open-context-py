@@ -35,9 +35,11 @@ class PartsJsonLD():
                              do_slug_uri=False,
                             add_hash_id=False):
         """
-        creates a list for an act_predicate of the json_ld dictionary object if it doesn't exist
-        adds a list item of a dictionary object for a linked Open Context item
+        creates a list for an predicate (act_pred_key) of the json_ld dictionary object if it doesn't exist
+        adds a list item of a dictionary object for item that's an object of the predicate
         """
+        # first get the identifiers for objects that
+        # may already be listed with this predicate. This prevents duplication
         object_ids = []
         if act_pred_key in act_dict:
             for obj in act_dict[act_pred_key]:
@@ -74,6 +76,7 @@ class PartsJsonLD():
                     self.class_uri_list.append(ent.class_uri)  # list of unique open context item classes
         elif act_pred_key == 'oc-gen:hasIcon':
             new_object_item = {'id': object_id}
+        # OK now check to see if the new object is already listed with the predicate
         if new_object_item['id'] not in object_ids:
             # only add it if it does not exist yet
             act_dict[act_pred_key].append(new_object_item)

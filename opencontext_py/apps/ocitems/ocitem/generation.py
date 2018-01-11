@@ -9,22 +9,19 @@ from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
-from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.contexts.models import ItemContext
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
-from opencontext_py.apps.ocitems.ocitem.attributes import OCitemAttributes
+from opencontext_py.apps.ocitems.ocitem.spatialtemporal import ItemSpatialTemporal
+from opencontext_py.apps.ocitems.ocitem.attributes import ItemAttributes
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.documents.models import OCdocument
 from opencontext_py.apps.ocitems.persons.models import Person
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectRels, ProjectMeta
-from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
@@ -55,8 +52,6 @@ class OCitem():
         self.time_start = time.time()
         self.json_ld = LastUpdatedOrderedDict()
         self.assertion_hashes = False  # provide hash ids for assertions, useful for edits
-        self.proj_context_json_ld = None
-        self.item_attributes = None
         self.uuid = None
         self.slug = None
         self.label = None
@@ -65,6 +60,10 @@ class OCitem():
         self.published = None
         self.modified = None
         self.manifest = None
+        self.proj_context_json_ld = None
+        self.item_space_time = None
+        self.item_attributes = None
+        self.class_uri_list = []  # uris of item classes used in this item
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
         self.item_gen_cache = ItemGenerationCache()
@@ -87,25 +86,41 @@ class OCitem():
             self.manifest = False
         return exists
 
+    def generate_json_ld(self):
+        """ make json_ld for an item """
+        if isinstance(self.manifest, Manifest):
+            # we've got an item in the manifest, so OK to make some JSON-LD for it
+            self.get_item_spatial_temporal()
+            self.get_item_attributes()
+            self.add_context_json_ld(self.project_uuid)
+            self.add_general_json_ld()
+            # add spatial context information
+            self.json_ld = self.item_space_time.add_json_ld_geojson_contexts(self.json_ld)
+            # add child item information
+            self.json_ld = self.item_space_time.add_contents_json_ld(self.json_ld)
+    
+    def get_item_spatial_temporal(self):
+        """ gets spatial temporal and context information from the cache and / or database
+            that describes this item
+        """
+        if isinstance(self.manifest, Manifest) and self.item_space_time is None:
+            # we've got a manifest object and we don't yet have item space time context gathered 
+            self.item_space_time = ItemSpatialTemporal()
+            self.item_space_time.manifest = self.manifest
+            self.item_space_time.assertion_hashes = self.assertion_hashes
+            self.item_space_time.get_spatial_temporal_context()
+            
     def get_item_attributes(self):
         """ gets attribute information from the cache and / or database
             that describes this item
         """
         if isinstance(self.manifest, Manifest) and self.item_attributes is None:
-            # we've got a manifest object and we don't yet have item attributes gathered 
-            self.item_attributes = OCitemAttributes()
+            # we've got a manifest object and we don't yet have item attributes gathered
+            self.item_attributes = ItemAttributes()
             self.item_attributes.manifest = self.manifest
-            self.item_attributes.get_spatial_temporal_context()
-    
-    def generate_json_ld(self):
-        """ make json_ld for an item """
-        if isinstance(self.manifest, Manifest):
-            # we've got an item in the manifest, so OK to make some JSON-LD for it
-            self.get_item_attributes()
-            self.add_context_json_ld(self.project_uuid)
-            self.add_general_json_ld()
-            # add spatial context information
-            self.json_ld = self.item_attributes.add_json_ld_contexts(self.json_ld)
+            self.item_attributes.assertion_hashes = self.assertion_hashes
+            self.item_attributes.proj_context_json_ld = self.proj_context_json_ld
+            self.item_attributes.get_db_item_attributes()
 
     def add_context_json_ld(self, project_uuid):
         """ adds context to the json_ld """

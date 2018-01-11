@@ -58,12 +58,35 @@ class ProjectContext():
             context = gen_context.context
             context = self.add_project_predicates_to_context(context)
             self.json_ld['@context'] = context
+        else:
+            self.json_ld = False
+        return self.json_ld
+
+    def make_context_and_vocab_json_ld(self):
+        """ makes the context JSON-LD and describes the
+            vocabularies used in a project, including with linked
+            data annotations
+        """
+        if self.manifest is not False:
+            self.json_ld = LastUpdatedOrderedDict()
+            gen_context = GeneralContext()
+            context = gen_context.context
+            context = self.add_project_predicates_to_context(context)
+            self.json_ld['@context'] = context
             self.json_ld['id'] = self.id
             self.json_ld['label'] = 'Context and Standards Annotations for ' + self.manifest.label
             graph = []
             graph = self.add_project_predicates_and_annotations_to_graph(graph)
             graph = self.add_project_types_with_annotations_to_graph(graph)
             self.json_ld['@graph'] = graph
+            """
+            # the following adds graph relations, but not in the context
+            # of a named graph
+            for graph_rec in graph:
+                act_id = graph_rec['@id']
+                graph_rec.pop('@id')
+                self.json_ld[act_id] = graph_rec
+            """
         else:
             self.json_ld = False
         return self.json_ld

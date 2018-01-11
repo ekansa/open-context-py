@@ -185,6 +185,10 @@ class Containment():
             # print(" Sad, an empty list! \n")
             return metadata_items
         else:
+            # the assumption is that the most specific (smallest, child) contexts are listed
+            # first, followed by the more general contexts. If space or time metadata
+            # is discovered, we break out of the loop so as to return the most specific
+            # metadata in the list
             if do_parents:
                 self.contexts = {}
                 self.contexts_list = []
@@ -205,9 +209,16 @@ class Containment():
                     # don't use the cache, just the database
                     metadata_items = self.get_db_geochron_from_search_uuid(search_uuid,
                                                                            metadata_type)
-                if isinstance(metadata_items, list):
+                # now make sure empty lists of metadata items are set to False
+                if metadata_items is not False:
+                    if len(metadata_items) < 1:
+                        metadata_items = False
+                if metadata_items is not False:
+                    # OK! We have some metadata for the search_uuid,
+                    # break the loop so we don't look at a more general context
                     break
                 elif do_parents and metadata_items is False:
+                    # we don't have metadata yet, and we're also to look in parents.
                     self.recurse_count = 0
                     self.get_parents_by_child_uuid(search_uuid)
             if metadata_items is False and do_parents:
