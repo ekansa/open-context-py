@@ -359,6 +359,8 @@ def items_json(request, identifier):
     # testing for using the new Open Context OCitem generator
     # that better integrates caching
     oc_item = OCitem()
+    if 'hashes' in request.GET:
+        oc_item.assertion_hashes = True
     exists = oc_item.check_exists(identifier)
     if exists:
         oc_item.generate_json_ld()

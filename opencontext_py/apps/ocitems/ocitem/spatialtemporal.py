@@ -38,6 +38,8 @@ class ItemSpatialTemporal():
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
         self.base_url = rp.get_baseurl()
+        self.contexts = False
+        self.linked_contexts = False
         self.geo_meta = False  # 
         self.temporal_meta = False
         self.event_meta = False
@@ -67,6 +69,7 @@ class ItemSpatialTemporal():
             self.contents = act_contain.get_children_by_parent_uuid(self.manifest.uuid)
         else:
             parents = act_contain.get_related_context(self.manifest.uuid)
+            self.contexts = False
             self.linked_contexts = parents
             if self.manifest.item_type == 'projects':
                 # get project metadata objects directly
@@ -74,19 +77,19 @@ class ItemSpatialTemporal():
                 self.geo_meta = pm.get_project_geo_from_db(self.uuid)
             act_contain = Containment()
             if self.geo_meta is False:
-                self.geo_meta = act_contain.get_related_geochron(self.uuid,
-                                                                 self.item_type,
+                self.geo_meta = act_contain.get_related_geochron(self.manifest.uuid,
+                                                                 self.manifest.item_type,
                                                                  'geo')
             if self.temporal_meta is False:
-                self.temporal_meta = act_contain.get_related_geochron(self.uuid,
-                                                                      self.item_type,
+                self.temporal_meta = act_contain.get_related_geochron(self.manifest.uuid,
+                                                                      self.manifest.item_type,
                                                                       'temporal')
                 if self.temporal_meta is False:
                     # now look in the project for temporal metadata
-                    self.temporal_meta = act_contain.get_temporal_from_project(self.project_uuid)
+                    self.temporal_meta = act_contain.get_temporal_from_project(self.manifest.project_uuid)
             if self.event_meta is False:
-                self.event_meta = act_contain.get_related_geochron(self.uuid,
-                                                                   self.item_type,
+                self.event_meta = act_contain.get_related_geochron(self.manifest.uuid,
+                                                                   self.manifest.item_type,
                                                                    'event')
     
     def add_json_ld_geojson_contexts(self, json_ld):

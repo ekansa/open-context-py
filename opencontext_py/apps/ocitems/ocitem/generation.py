@@ -29,24 +29,6 @@ from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 # OCitem is a very general class for all Open Context items.
 # This class is used to make a JSON-LD output from data returned from the database via other apps
 class OCitem():
-    PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:issued'
-    PREDICATES_DCTERMS_MODIFIED = 'dc-terms:modified'
-    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
-    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
-    PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
-    PREDICATES_DCTERMS_TITLE = 'dc-terms:title'
-    PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
-    PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
-    PREDICATES_OCGEN_HASLINKEDCONTEXTPATH = 'oc-gen:has-linked-context-path'
-    PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
-    PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
-    PREDICATES_OCGEN_CONTAINS = 'oc-gen:contains'
-    PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
-    PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
-    PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
-    PREDICATES_OCGEN_OBSLABEL = 'label'
-    PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
-    PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
 
     def __init__(self):
         self.time_start = time.time()
@@ -144,7 +126,7 @@ class OCitem():
         
     def add_general_json_ld(self):
         """ adds general (manifest) information to the JSON-LD object """
-        self.json_ld['id'] = self.base_url + '/' + self.item_type + '/' + self.uuid
+        self.json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
         self.json_ld['uuid'] = self.uuid
         self.json_ld['slug'] = self.slug
         self.json_ld['label'] = self.label
@@ -152,7 +134,9 @@ class OCitem():
         if isinstance(self.manifest.localized_json, dict):
             if len(self.manifest.localized_json) > 0:
                 json_ld['skos:altLabel'] = self.manifest.localized_json
-        self.json_ld['category'] = [
-            self.manifest.class_uri
-        ] 
+        if self.manifest.item_type in PartsJsonLD.ITEM_TYPE_CLASS_LIST \
+           and len(self.manifest.class_uri) > 1:
+            self.json_ld['category'] = [
+                self.manifest.class_uri
+            ] 
         

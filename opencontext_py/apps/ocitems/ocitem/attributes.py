@@ -80,6 +80,8 @@ class ItemAttributes():
     def add_json_ld_attributes(self, json_ld):
         """ adds attribute information to the JSON-LD """
         json_ld = self.add_json_ld_descriptive_assertions(json_ld)
+        json_ld = self.add_json_ld_stable_ids(json_ld)
+        json_ld = self.add_json_ld_link_annotations(json_ld)
         return json_ld
 
     def add_json_ld_descriptive_assertions(self, json_ld):
@@ -159,11 +161,31 @@ class ItemAttributes():
                 # object as a dict that has some useful information
                 # {id, label, slug, sometimes class}
                 add_literal_object = False
-                act_obs = parts_json_ld.addto_predicate_list(act_obs,
-                                                             pred_slug_uri,
-                                                             assertion.object_uuid,
-                                                             assertion.object_type)
+                if self.assertion_hashes:
+                    # we need to add the assertion hash identifier so as to be able
+                    # to identify assertions for editing purposes
+                    act_obs = parts_json_ld.addto_predicate_list(act_obs,
+                                                                 pred_slug_uri,
+                                                                 assertion.object_uuid,
+                                                                 assertion.object_type,
+                                                                 False,
+                                                                 assertion.hash_id)
+                else:
+                    # normal default assertion creation, without identification of
+                    # the assertion's hash ID
+                    act_obs = parts_json_ld.addto_predicate_list(act_obs,
+                                                                 pred_slug_uri,
+                                                                 assertion.object_uuid,
+                                                                 assertion.object_type)
             if act_obj is not None and add_literal_object:
+                if self.assertion_hashes:
+                    # we need to add the assertion hash identifier so as to be able
+                    # to identify assertions for editing purposes
+                    if not isinstance(act_obj, dict):
+                        literal = act_obj
+                        act_obj = LastUpdatedOrderedDict()
+                        act_obj['literal'] = literal
+                    act_obj['hash_id'] = assertion.hash_id
                 act_obj_list.append(act_obj)
             if len(act_obj_list) > 0 and add_literal_object:
                 # only add a list of literal objects if they are literal objects :)
@@ -231,7 +253,62 @@ class ItemAttributes():
                     act_obs[self.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
         act_obs['type'] = 'oc-gen:observations'
         return act_obs
+    
+    def add_json_ld_stable_ids(self, json_ld):
+        """
+        adds stable identifier information to an item's JSON-LD dictionary object
+        """
+        if self.stable_ids is not False:
+            if len(self.stable_ids) > 0:
+                stable_id_list = []
+                for stable_id in self.stable_ids:
+                    if stable_id.stable_type in settings.STABLE_ID_URI_PREFIXES:
+                        uri = settings.STABLE_ID_URI_PREFIXES[stable_id.stable_type]
+                        uri += str(stable_id.stable_id)
+                        id_dict = {'id': uri}
+                        stable_id_list.append(id_dict)
+                if self.manifest.item_type == 'persons' and len(stable_id_list) > 0:
+                    # persons with ORCID ids use the foaf:primarytopic predicate to link to ORCID
+                    primary_topic_list = []
+                    same_as_list = []
+                    for id_dict in stable_id_list:
+                        if 'http://orcid.org' in id_dict['id']:
+                            primary_topic_list.append(id_dict)
+                        else:
+                            same_as_list.append(id_dict)
+                    stable_id_list = same_as_list  # other types of identifiers use as owl:sameAs
+                    if len(primary_topic_list) > 0:
+                        json_ld[self.PREDICATES_FOAF_PRIMARYTOPICOF] = primary_topic_list
+                if len(stable_id_list) > 0:
+                    json_ld['owl:sameAs'] = stable_id_list
+        return json_ld
 
+    def add_json_ld_link_annotations(self, json_ld):
+        """
+        adds linked data annotations (typically referencing URIs from
+        outside Open Context)
+        """
+        if self.link_annotations is not False:
+            if len(self.link_annotations) > 0:
+                parts_json_ld = PartsJsonLD()
+                parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+                parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+                for la in self.link_annotations:
+                    tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
+                    if tcheck is False:
+                        # this item is NOT from open context
+                        item_type = False
+                    else:
+                        # an Open Context item
+                        item_type = tcheck['item_type']
+                    act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
+                    json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                 act_pred,
+                                                                 la.object_uri,
+                                                                 item_type)
+        return json_ld
+    
+    
     def get_db_assertions(self):
         """ gets assertions that describe an item, except for assertions about spatial containment """
         self.assertions = Assertion.objects.filter(uuid=self.manifest.uuid) \
