@@ -38,7 +38,7 @@ class ItemGenerationCache():
         else:
             pc = ProjectContext(project_uuid)
             pc.assertion_hashes
-            context_json_ld = pc.make_context_json_ld()
+            context_json_ld = pc.make_context_and_vocab_json_ld()
             if isinstance(context_json_ld, dict):
                 output = context_json_ld
                 self.cache_use.save_cache_object(cache_id,
@@ -80,6 +80,6 @@ class ItemGenerationCache():
                 obs_meta = obs_metas[0]
             else:
                 obs_meta = False
-            # cache the result, even if is False ad there is no observation metadata
+            # cache the result, even if is False ad there is no metadata
             self.cache_use.save_cache_object(cache_id, obs_meta)
         return obs_meta
