@@ -98,6 +98,8 @@ class OCitem():
             self.json_ld = self.item_space_time.add_json_ld_geojson_contexts(self.json_ld)
             # add child item information
             self.json_ld = self.item_space_time.add_contents_json_ld(self.json_ld)
+            # add attribute information
+            self.json_ld = self.item_attributes.add_json_ld_attributes(self.json_ld)
     
     def get_item_spatial_temporal(self):
         """ gets spatial temporal and context information from the cache and / or database
@@ -130,8 +132,14 @@ class OCitem():
         context.append(item_context_obj.geo_json_context)  # add the URI for GeoJSON context
         self.proj_context_json_ld = self.item_gen_cache.get_project_context(project_uuid,
                                                                             self.assertion_hashes)
-        proj_context_uri = self.proj_context_json_ld['id']
-        context.append(proj_context_uri)  # add the URI for project context
+        if '@id' in self.proj_context_json_ld:
+            proj_context_uri = self.proj_context_json_ld['@id']
+        elif 'id' in self.proj_context_json_ld:
+            proj_context_uri = self.proj_context_json_ld['id']
+        else:
+            proj_context_uri = None
+        if isinstance(proj_context_uri, str):
+            context.append(proj_context_uri)  # add the URI for project context
         self.json_ld['@context'] = context
         
     def add_general_json_ld(self):
@@ -140,6 +148,10 @@ class OCitem():
         self.json_ld['uuid'] = self.uuid
         self.json_ld['slug'] = self.slug
         self.json_ld['label'] = self.label
+        # add multilingual alternative labels
+        if isinstance(self.manifest.localized_json, dict):
+            if len(self.manifest.localized_json) > 0:
+                json_ld['skos:altLabel'] = self.manifest.localized_json
         self.json_ld['category'] = [
             self.manifest.class_uri
         ] 

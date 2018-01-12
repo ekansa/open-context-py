@@ -6,6 +6,7 @@ from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 
 
 class ItemGenerationCache():
@@ -63,3 +64,22 @@ class ItemGenerationCache():
             else:
                 output = False
         return output
+    
+    def get_observation_metadata(self, source_id, obs_num):
+        """ gets a metadata object for an observation node, that
+            provides some context on assertions made in an observation
+        """
+        cache_id = self.cache_use.make_memory_cache_key('obs-meta',
+                                                        (source_id + '-' + str(obs_num)))
+        obs_meta = self.cache_use.get_cache_object(cache_id)
+        if obs_meta is None:
+            obs_meta = False
+            obs_metas = ObsMetadata.objects.filter(source_id=source_id,
+                                                   obs_num=obs_num)[:1]
+            if len(obs_metas) > 0:
+                obs_meta = obs_metas[0]
+            else:
+                obs_meta = False
+            # cache the result, even if is False ad there is no observation metadata
+            self.cache_use.save_cache_object(cache_id, obs_meta)
+        return obs_meta

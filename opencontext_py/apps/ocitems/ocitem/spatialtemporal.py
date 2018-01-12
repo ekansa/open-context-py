@@ -18,14 +18,6 @@ from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
-from opencontext_py.apps.ocitems.predicates.models import Predicate
-from opencontext_py.apps.ocitems.octypes.models import OCtype
-from opencontext_py.apps.ocitems.strings.models import OCstring
-from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
-from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
-from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
-from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
 
 # OCitem is a very general class for all Open Context items.
@@ -121,8 +113,16 @@ class ItemSpatialTemporal():
         """ adds subject items contained in the current item """
         if isinstance(self.contents, dict):
             if len(self.contents) > 0:
-                #adds child contents, with different treenodes
+                # make a list of all the UUIDs for children items
+                act_children_uuids = []
+                for tree_node, children in self.contents.items():
+                    for child_uuid in children:
+                        if child_uuid not in act_children_uuids:
+                            act_children_uuids.append(child_uuid)
+                # adds child contents, with different treenodes
                 parts_json_ld = PartsJsonLD()
+                # get manifest objects for all the children items, for use in making JSON_LD
+                parts_json_ld.get_manifest_objects_from_uuids(act_children_uuids)
                 parts_json_ld.class_uri_list += self.class_uri_list
                 for tree_node, children in self.contents.items():
                     act_children = LastUpdatedOrderedDict()
@@ -365,9 +365,14 @@ class ItemSpatialTemporal():
             # now reverse the list of parent contexts, so top most parent context is first,
             # followed by children contexts
             parents = r_parents[::-1]
+            parts_json_ld = PartsJsonLD()
+            parts_json_ld.class_uri_list += self.class_uri_list
+            if len(parents) > 3:
+                # lots of parents, so probably not worth trying to use the cache.
+                # makes more sense look these all up in the manifest in 1 query
+                # get manifest objects for all the parent items, for use in making JSON_LD
+                parts_json_ld.get_manifest_objects_from_uuids(parents)
             for parent_uuid in parents:
-                parts_json_ld = PartsJsonLD()
-                parts_json_ld.class_uri_list += self.class_uri_list
                 act_context = parts_json_ld.addto_predicate_list(act_context,
                                                                  self.PREDICATES_OCGEN_HASPATHITEMS,
                                                                  parent_uuid,

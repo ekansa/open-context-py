@@ -10,6 +10,8 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.entities.entity.models import Entity
 
 
 # ItemJsonLD is used to make JSON-LD output for OC-Items
@@ -20,12 +22,28 @@ class PartsJsonLD():
         'media',
         'persons'
     ]
+    
+    ITEM_TYPE_MANIFEST_LIST = [
+        'subjects'
+        'documents',
+        'projects',
+        'tables'
+    ]
+    
+    # item types to dereference in the project context / vocabulary
+    ITEM_TYPE_PROJ_VOCAB_LIST = [
+        'predicates',
+        'types',
+        'persons'
+    ]
 
     def __init__(self):
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.class_uri_list = []  # uris of item classes used in this item 
+        self.class_uri_list = []  # uris of item classes used in this item
+        self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
+        self.proj_context_json_ld = {}  # general project context JSON-LD, with @graph of predicates, types
         
     def addto_predicate_list(self,
                              act_dict,
@@ -33,7 +51,7 @@ class PartsJsonLD():
                              object_id,
                              item_type,
                              do_slug_uri=False,
-                            add_hash_id=False):
+                             add_hash_id=False):
         """
         creates a list for an predicate (act_pred_key) of the json_ld dictionary object if it doesn't exist
         adds a list item of a dictionary object for item that's an object of the predicate
@@ -50,8 +68,7 @@ class PartsJsonLD():
         else:
             act_dict[act_pred_key] = []
         new_object_item = LastUpdatedOrderedDict()
-        igen_cache = ItemGenerationCache()
-        ent = igen_cache.get_entity(object_id)
+        ent = self.get_new_object_item_entity(object_id, item_type)
         if ent is not False:
             if add_hash_id is not False:
                 new_object_item['hash_id'] = add_hash_id
@@ -81,4 +98,122 @@ class PartsJsonLD():
             # only add it if it does not exist yet
             act_dict[act_pred_key].append(new_object_item)
         return act_dict 
+    
+    
+    def get_new_object_item_entity(self, object_id, item_type):
+        """ makes new object item json ld,
+            1st: check to see if this is in the self.manifest_obj_dict,
+                 if so, it means we've got an item that doesn't need
+                 multiple queries
+            2nd: if not in the self.manifest_obj_dict, look up the
+                 entity with the ItemGenerationCache() class
+        """
+        ent = False
+        if item_type in self.ITEM_TYPE_MANIFEST_LIST:
+            if object_id in self.manifest_obj_dict:
+                ent = self.manifest_obj_dict[object_id]
+        elif item_type in self.ITEM_TYPE_PROJ_VOCAB_LIST:
+            # look in the project vocabulary for an entity
+            ent = self.get_vocabulary_entity_from_proj_context(object_id,
+                                                               item_type)
+        if ent is False:
+            # we don't have an entity, so attempt to dereference and
+            # get it via the ItemGenerationCache entity lookup
+            igen_cache = ItemGenerationCache()
+            ent = igen_cache.get_entity(object_id)  # returns False if not found
+        return ent
+    
+    def get_json_ld_predicate_slug_uri(self, object_id):
+        """ gets a slug uri in the form of 'oc-pred:<slug>'. """
+        ent = self.get_new_object_item_entity(object_id,
+                                              'predicates')
+        if ent is not False:
+            if isinstance(ent.uuid, str):
+                # the entity has a uuid, so it's an open context predicate
+                # from a project
+                slug_uri = 'oc-pred:' + ent.slug
+            elif ':' in object_id:
+                # probably a prefixed URI so just leave it.
+                slug_uri = object_id
+            else:
+                # default to the entity URI. This seems to be a linked data entity
+                slug_uri = ent.uri
+        elif ':' in object_id:
+                # probably a prefixed URI so just leave it.
+                slug_uri = object_id
+        else:
+            # not found. something is wrong!
+            slug_uri = None
+        return slug_uri
+    
+    def get_vocabulary_entity_from_proj_context(self, object_id, item_type):
+        """ get a predicate or type from the project_context """
+        # id_keys are used to look for identifiers in json_ld items that can be
+        # used to reference object_ids
+        ent = False
+        id_keys = [
+            '@id',
+            'id',
+            'uuid',
+            'slug',
+            'owl:sameAs'
+        ]
+        if isinstance(self.proj_context_json_ld, dict) \
+           and item_type in self.ITEM_TYPE_PROJ_VOCAB_LIST:
+            if '@graph' in self.proj_context_json_ld:
+                vocab = self.proj_context_json_ld['@graph']
+            else:
+                vocab = []
+                for key, item in self.proj_context_json_ld:
+                    if key != '@context':
+                        vocab.append(item)
+            for item in vocab:
+                id_match = False
+                for id_key in id_keys:
+                    id_match = False
+                    if id_key in item:
+                        if object_id == item[id_key]:
+                            # the object id matches an identifer
+                            id_match = True
+                            break
+                if id_match:
+                    ent = Entity()
+                    ent.item_json_ld = item
+                    if 'id' in item:
+                        ent.uri = item['id']
+                    elif '@id' in item:
+                        ent.uri = item['@id']
+                    elif 'owl:sameAs' in item:
+                        ent.uri = item['owl:sameAs']
+                    if isinstance(ent.uri, str):
+                        # identify the item_type by looking at the URI
+                        for act_type in self.ITEM_TYPE_PROJ_VOCAB_LIST:
+                            if ('/' + act_type + '/') in ent.uri:
+                                ent.item_type = act_type
+                    if 'uuid' in item:
+                        ent.uuid = item['uuid']
+                    if 'slug' in item:
+                        ent.slug = item['slug']
+                    if 'label' in item:
+                        ent.label = item['label']
+                    break
+        return ent
         
+    def get_manifest_objects_from_uuids(self, query_uuids):
+        """ gets manifest objects from a list of uuids
+            that are in the ITEM_TYPE_MANIFEST_LIST
+        """
+        if not isinstance(query_uuids, list):
+            query_uuids = [query_uuids]
+        if len(query_uuids) > 0:
+            # go and retrieve all of these manifest objects
+            act_man_objs = Manifest.objects.filter(uuid__in=query_uuids,
+                                                   item_type__in=self.ITEM_TYPE_MANIFEST_LIST)
+            for act_man_obj in act_man_objs:
+                uuid = act_man_obj.uuid
+                # now add some attributes expected for entites
+                act_man_obj.uri = URImanagement.make_oc_uri(uuid, act_man_obj.item_type)
+                act_man_obj.thumbnail_uri = None
+                act_man_obj.content = None
+                self.manifest_obj_dict[uuid] = act_man_obj
+

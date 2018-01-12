@@ -13,7 +13,6 @@ from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
-from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
@@ -45,6 +44,12 @@ class ItemAttributes():
     NO_OBS_ASSERTION_PREDS = [
         'skos:note'
     ]
+    
+    NUMERIC_OBJECT_TYPES = [
+        'xsd:integer',
+        'xsd:double',
+        'xsd:boolean'
+    ]
 
     def __init__(self):
         self.proj_context_json_ld = None
@@ -54,6 +59,9 @@ class ItemAttributes():
         self.assertions = None
         self.link_annotations = None
         self.stable_ids = None
+        self.obs_list = []
+        self.string_obj_dict = {}  # OCstring objects, in a dict, with uuid as key
+        self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
         self.item_gen_cache = ItemGenerationCache()
@@ -69,12 +77,216 @@ class ItemAttributes():
         self.get_db_link_anotations()
         self.get_db_stable_ids()
 
+    def add_json_ld_attributes(self, json_ld):
+        """ adds attribute information to the JSON-LD """
+        json_ld = self.add_json_ld_descriptive_assertions(json_ld)
+        return json_ld
+
+    def add_json_ld_descriptive_assertions(self, json_ld):
+        """
+        adds descriptive assertions (descriptive properties, non spatial containment links)
+        to items, as parts of Observations
+        """
+        observations = []
+        working_obs = LastUpdatedOrderedDict()
+        act_obs = LastUpdatedOrderedDict()
+        for assertion in self.assertions:
+            act_obs_num = assertion.obs_num
+            if assertion.predicate_uuid in self.NO_OBS_ASSERTION_PREDS:
+                # we've got a predicate that does not belong in an observation
+                json_ld = self.add_json_ld_direct_assertion(json_ld,
+                                                            assertion)
+            else:    
+                if act_obs_num not in working_obs:
+                    # we've got a new observation, so make a new observation object for it
+                    act_obs = self.make_json_ld_obs_dict_w_metadata(assertion)
+                    working_obs[act_obs_num] = act_obs
+                else:
+                    act_obs = working_obs[act_obs_num]
+                act_obs = self.add_json_ld_assertion_predicate_objects(act_obs,
+                                                                       assertion)
+                working_obs[act_obs_num] = act_obs
+        # now that we've gotten observations made,
+        # add them to the final list of observations
+        for obs_num in self.obs_list:
+            if obs_num in working_obs:
+                act_obs = working_obs[obs_num]
+                observations.append(act_obs)
+        if len(observations) > 0:
+            json_ld[self.PREDICATES_OCGEN_HASOBS] = observations
+        return json_ld
+    
+    def add_json_ld_assertion_predicate_objects(self,
+                                                act_obs,
+                                                assertion):
+        """ adds value objects to for an assertion predicate """
+        # we've already looked up objects from the manifest
+        parts_json_ld = PartsJsonLD()
+        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        pred_slug_uri = parts_json_ld.get_json_ld_predicate_slug_uri(assertion.predicate_uuid)
+        if isinstance(pred_slug_uri, str):
+            if pred_slug_uri in act_obs:
+                act_obj_list = act_obs[pred_slug_uri]
+            else:
+                act_obj_list = []
+            act_obj = None
+            add_literal_object = True
+            if assertion.object_type == 'xsd:string':
+                # look for the string uuid in the dict of string objects we already
+                # got from the database
+                if assertion.object_uuid in self.string_obj_dict:
+                    act_obj = LastUpdatedOrderedDict()
+                    act_obj['id'] = '#string-' + str(assertion.object_uuid)
+                    string_obj = self.string_obj_dict[assertion.object_uuid]
+                    lang_obj = Languages()
+                    act_obj['xsd:string'] = lang_obj.make_json_ld_value_obj(string_obj.content,
+                                                                            string_obj.localized_json)
+                else:
+                    act_obj = 'string content missing'
+            elif assertion.object_type == 'xsd:date':
+                act_obj = assertion.data_date.date().isoformat()
+            elif assertion.object_type == 'xsd:integer':
+                try:
+                    act_obj = int(float(assertion.data_num))
+                except:
+                    act_obj = None
+            elif assertion.object_type in self.NUMERIC_OBJECT_TYPES:
+                act_obj = assertion.data_num
+            else:
+                # the object of is something identified by a URI, not a literal
+                # so we're using function in the parts_json_ld to add the uri identified
+                # object as a dict that has some useful information
+                # {id, label, slug, sometimes class}
+                add_literal_object = False
+                act_obs = parts_json_ld.addto_predicate_list(act_obs,
+                                                             pred_slug_uri,
+                                                             assertion.object_uuid,
+                                                             assertion.object_type)
+            if act_obj is not None and add_literal_object:
+                act_obj_list.append(act_obj)
+            if len(act_obj_list) > 0 and add_literal_object:
+                # only add a list of literal objects if they are literal objects :)
+                act_obs[pred_slug_uri] = act_obj_list
+        return act_obs
+
+    def add_json_ld_direct_assertion(self, json_ld, assertion):
+        """ adds an JSON-LD for an assertion that is made directly
+            to the item, and is not part of an observation
+        """
+        if assertion.predicate_uuid in self.NO_OBS_ASSERTION_PREDS:
+            # these predicates describe the item, but not in an observation
+            act_obj = None
+            if assertion.object_type == 'xsd:string':
+                # look for the string uuid in the dict of string objects we already
+                # got from the database
+                if assertion.object_uuid in self.string_obj_dict:
+                    string_obj = self.string_obj_dict[assertion.object_uuid]
+                    lang_obj = Languages()
+                    act_obj = lang_obj.make_json_ld_value_obj(string_obj.content,
+                                                              string_obj.localized_json)
+                else:
+                    act_obj = 'string content missing'
+            elif assertion.object_type == 'xsd:date':
+                act_obj = assertion.data_date.date().isoformat()
+            elif assertion.object_type == 'xsd:integer':
+                try:
+                    act_obj = int(float(assertion.data_num))
+                except:
+                    act_obj = None
+            elif assertion.object_type in self.NUMERIC_OBJECT_TYPES:
+                act_obj = assertion.data_num
+            else:
+                # the object of is something identified by a URI, not a literal
+                ent = parts_json_ld.get_new_object_item_entity(
+                        assertion.object_uuid,
+                        assertion.object_type
+                        )
+                if ent is not False:
+                    act_obj = entity.uri
+            if act_obj is not None:
+                json_ld[assertion.predicate_uuid] = act_obj
+        return json_ld
+    
+    def make_json_ld_obs_dict_w_metadata(self, assertion):
+        """ makes metadata for an observation """
+        act_obs = LastUpdatedOrderedDict()
+        act_obs['id'] = "#obs-" + str(assertion.obs_num)
+        if isinstance(assertion.obs_node, str):
+            if len(assertion.obs_node) > 1:
+                if assertion.obs_node[:1] == '#':
+                    act_obs['id'] = str(assertion.obs_node)
+        act_obs[self.PREDICATES_OCGEN_SOURCEID] = assertion.source_id
+        if assertion.obs_num >= 0 and assertion.obs_num != 100:
+            act_obs[self.PREDICATES_OCGEN_OBSTATUS] = 'active'
+        else:
+            act_obs[self.PREDICATES_OCGEN_OBSTATUS] = 'deprecated'
+        # now go get observation meta
+        obs_meta = self.item_gen_cache.get_observation_metadata(assertion.source_id,
+                                                                assertion.obs_num)
+        if obs_meta is not False:
+            act_obs[self.PREDICATES_OCGEN_OBSLABEL] = obs_meta.label
+            if isinstance(obs_meta.note, str):
+                if len(obs_meta.note) > 0:
+                    act_obs[self.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
+        act_obs['type'] = 'oc-gen:observations'
+        return act_obs
+
     def get_db_assertions(self):
         """ gets assertions that describe an item, except for assertions about spatial containment """
         self.assertions = Assertion.objects.filter(uuid=self.manifest.uuid) \
                                            .exclude(predicate_uuid=Assertion.PREDICATES_CONTAINS)\
                                            .exclude(visibility__lt=1)\
                                            .order_by('obs_num', 'sort')
+        # now that we have some assertions, go prepare
+        # lists of observations, and get objects of assertions into memory
+        self.prep_assertions_lists_and_objects()
+    
+    def prep_assertions_lists_and_objects(self):
+        """ prepares lists and objects from assertions. this is needed
+            to organize assertions into observations and get needed
+            assertion objects into memory
+        """
+        string_uuids = []
+        manifest_obj_uuids = []
+        if self.assertions is not False:
+            if len(self.assertions) > 0:
+                for ass in self.assertions:
+                    if ass.obs_num not in self.obs_list:
+                        self.obs_list.append(ass.obs_num)
+                    if ass.object_type == 'xsd:string':
+                        if ass.object_uuid not in string_uuids:
+                            string_uuids.append(ass.object_uuid)
+                    elif ass.object_type in PartsJsonLD.ITEM_TYPE_MANIFEST_LIST:
+                        if ass.object_uuid not in manifest_obj_uuids:
+                            manifest_obj_uuids.append(ass.object_uuid)
+        # now get the string objects that are the objects of some assertions                    
+        self.get_db_string_objs(string_uuids)
+        # now get manifest objects for objects of assertions
+        self.get_db_related_manifest_objs(manifest_obj_uuids)
+    
+    def get_db_string_objs(self, string_uuids):
+        """ gets strings associated with assertions. does it in 1 query to reduce time """
+        if len(string_uuids) > 0:
+            # we have assertions that reference strings, so now go and
+            # retrieve all of these strings
+            act_strings = OCstring.objects.filter(uuid__in=string_uuids)
+            for act_string in act_strings:
+                uuid = act_string.uuid
+                self.string_obj_dict[uuid] = act_string
+    
+    def get_db_related_manifest_objs(self, manifest_obj_uuids):
+        """ gets uuids of manifest objects associated with assertions.
+            We prepare this list to reduce the number of database queries.
+            Only some assertion object_types are OK
+            (specified in the PartsJsonLD.ITEM_TYPE_MANIFEST_LIST), because
+            other types of items need more queries than a simple manifest lookup.
+        """
+        if len(manifest_obj_uuids) > 0:
+            parts_json_ld = PartsJsonLD()
+            # get manifest objects items to use later in making JSON_LD
+            parts_json_ld.get_manifest_objects_from_uuids(manifest_obj_uuids)
+            self.manifest_obj_dict = parts_json_ld.manifest_obj_dict
     
     def get_db_link_anotations(self):
         """ gets linked data (using standard vocabularies, ontologies) assertions
@@ -87,3 +299,5 @@ class ItemAttributes():
     def get_db_stable_ids(self):
         """ gets stable identifiers (DOIs, ARKs, ORCIDS) """
         self.stable_ids = StableIdentifer.objects.filter(uuid=self.manifest.uuid)
+    
+    
