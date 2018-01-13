@@ -68,7 +68,7 @@ class PartsJsonLD():
         else:
             act_dict[act_pred_key] = []
         new_object_item = LastUpdatedOrderedDict()
-        ent = self.get_new_object_item_entity(object_id, item_type)
+        ent = self.get_object_item_entity(object_id, item_type)
         if ent is not False:
             if add_hash_id is not False:
                 new_object_item['hash_id'] = add_hash_id
@@ -100,7 +100,7 @@ class PartsJsonLD():
         return act_dict 
     
     
-    def get_new_object_item_entity(self, object_id, item_type):
+    def get_object_item_entity(self, object_id, item_type):
         """ makes new object item json ld,
             1st: check to see if this is in the self.manifest_obj_dict,
                  if so, it means we've got an item that doesn't need
@@ -123,28 +123,43 @@ class PartsJsonLD():
             ent = igen_cache.get_entity(object_id)  # returns False if not found
         return ent
     
-    def get_json_ld_predicate_slug_uri(self, object_id):
+    def get_json_ld_predicate_slug_uri(self, object_id, return_entity=False):
         """ gets a slug uri in the form of 'oc-pred:<slug>'. """
-        ent = self.get_new_object_item_entity(object_id,
-                                              'predicates')
+        ent = self.get_object_item_entity(object_id,
+                                          'predicates')
         if ent is not False:
-            if isinstance(ent.uuid, str):
-                # the entity has a uuid, so it's an open context predicate
-                # from a project
-                slug_uri = 'oc-pred:' + ent.slug
-            elif ':' in object_id:
-                # probably a prefixed URI so just leave it.
-                slug_uri = object_id
-            else:
-                # default to the entity URI. This seems to be a linked data entity
-                slug_uri = ent.uri
+            make_slug_uri = True
+            if hasattr(ent, 'slug_uri'):
+                if isinstance(ent.slug_uri, str):
+                    slug_uri = ent.slug_uri
+                    make_slug_uri = False
+            if make_slug_uri:
+                if isinstance(ent.uuid, str):
+                    # the entity has a uuid, so it's an open context predicate
+                    # from a project
+                    slug_uri = 'oc-pred:' + ent.slug
+                elif ':' in object_id:
+                    # probably a prefixed URI so just leave it.
+                    slug_uri = object_id
+                else:
+                    # default to the entity URI. This seems to be a linked data entity
+                    slug_uri = ent.uri
         elif ':' in object_id:
                 # probably a prefixed URI so just leave it.
                 slug_uri = object_id
         else:
             # not found. something is wrong!
             slug_uri = None
-        return slug_uri
+        # sometimes useful to get the found predicate entity object,
+        # not just the slug_uri
+        if return_entity:
+            output = {
+                'ent': ent,
+                'slug_uri': slug_uri
+            }
+        else:
+            output = slug_uri
+        return output
     
     def get_vocabulary_entity_from_proj_context(self, object_id, item_type):
         """ get a predicate or type from the project_context """
@@ -179,6 +194,7 @@ class PartsJsonLD():
                 if id_match:
                     ent = Entity()
                     ent.item_json_ld = item
+                    ent.slug_uri = None
                     if 'id' in item:
                         ent.uri = item['id']
                     elif '@id' in item:
@@ -194,11 +210,14 @@ class PartsJsonLD():
                         ent.uuid = item['uuid']
                     if 'slug' in item:
                         ent.slug = item['slug']
+                        if ent.item_type == 'predicates':
+                            # make a predicate slug URI
+                            ent.slug_uri = 'oc-pred:' + ent.slug
                     if 'label' in item:
                         ent.label = item['label']
                     break
         return ent
-        
+    
     def get_manifest_objects_from_uuids(self, query_uuids):
         """ gets manifest objects from a list of uuids
             that are in the ITEM_TYPE_MANIFEST_LIST
@@ -213,6 +232,7 @@ class PartsJsonLD():
                 uuid = act_man_obj.uuid
                 # now add some attributes expected for entites
                 act_man_obj.uri = URImanagement.make_oc_uri(uuid, act_man_obj.item_type)
+                act_man_obj.slug_uri = None
                 act_man_obj.thumbnail_uri = None
                 act_man_obj.content = None
                 self.manifest_obj_dict[uuid] = act_man_obj

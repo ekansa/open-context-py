@@ -18,6 +18,7 @@ from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.strings.models import OCstring
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
@@ -60,8 +61,11 @@ class ItemAttributes():
         self.link_annotations = None
         self.stable_ids = None
         self.obs_list = []
+        self.item_pred_objs = {} # predicate entity objects, with uuid as a key 
         self.string_obj_dict = {}  # OCstring objects, in a dict, with uuid as key
         self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
+        self.dc_contributor_uuids = []  # uuids of DC contribuors (persons/orgs) found in item assertions
+        self.dc_creator_uuids = [] # uuids of DC creators (persons/orgs) found in item assertions
         dc_terms_obj = DCterms()
         self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
         self.item_gen_cache = ItemGenerationCache()
@@ -126,7 +130,9 @@ class ItemAttributes():
         parts_json_ld = PartsJsonLD()
         parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
         parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
-        pred_slug_uri = parts_json_ld.get_json_ld_predicate_slug_uri(assertion.predicate_uuid)
+        pred_obj = self.get_pred_obj_by_uuid(parts_json_ld,
+                                             assertion.predicate_uuid)
+        pred_slug_uri = pred_obj['slug_uri']
         if isinstance(pred_slug_uri, str):
             if pred_slug_uri in act_obs:
                 act_obj_list = act_obs[pred_slug_uri]
@@ -161,6 +167,10 @@ class ItemAttributes():
                 # object as a dict that has some useful information
                 # {id, label, slug, sometimes class}
                 add_literal_object = False
+                # some assertions use predicates equiv. to DC-Terms creators or contributors
+                self.add_assertion_dc_authors(pred_obj,
+                                              assertion.object_uuid)
+                #
                 if self.assertion_hashes:
                     # we need to add the assertion hash identifier so as to be able
                     # to identify assertions for editing purposes
@@ -191,6 +201,73 @@ class ItemAttributes():
                 # only add a list of literal objects if they are literal objects :)
                 act_obs[pred_slug_uri] = act_obj_list
         return act_obs
+
+    def get_pred_obj_by_uuid(self, parts_json_ld, predicate_uuid):
+        """ gets a 'pred_obj' which is a dict returned from the
+            parts_json_ld method 'get_json_ld_predicate_slug_uri'
+        """
+        if predicate_uuid in self.item_pred_objs:
+            pred_obj = self.item_pred_objs[predicate_uuid]
+        else:
+            pred_obj = parts_json_ld.get_json_ld_predicate_slug_uri(predicate_uuid,
+                                                                    True)
+            pred_obj = self.check_pred_dc_author(pred_obj)
+            # now cache it in memory so we don't have to go looking to see if this
+            # has dublin core equivalence again
+            self.item_pred_objs[predicate_uuid] = pred_obj
+        return pred_obj
+
+    def check_pred_dc_author(self, pred_obj):
+        """ some predicates have equivalence relations with DC-terms:contributor
+            or DC-terms:creator properties. This method
+            checks to see if a predicate has some sort of equivalence to
+            a dublin core contributor or creator URI. If so
+        """
+        if isinstance(pred_obj, dict):
+            pred_obj['dc_contrib'] = False
+            pred_obj['dc_creator'] = False
+            if 'ent' in pred_obj:
+                pred_ent = pred_obj['ent']
+                if hasattr(pred_ent, 'item_json_ld'):
+                    if isinstance(pred_ent.item_json_ld, dict):
+                        pred_json_ld = pred_ent.item_json_ld
+                        le = LinkEquivalence()
+                        equiv_keys = le.get_identifier_list_variants(LinkAnnotation.PREDS_SBJ_EQUIV_OBJ)
+                        dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
+                        dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
+                        for equiv_key in equiv_keys:
+                            if equiv_key in pred_json_ld :
+                                if isinstance(pred_json_ld[equiv_key], list):
+                                    for pred_equiv in pred_json_ld[equiv_key]:
+                                        uri = None
+                                        if 'id' in pred_equiv:
+                                            uri = pred_equiv['id']
+                                        elif '@id' in pred_equiv:
+                                            uri = pred_equiv['@id']
+                                        if uri in dc_contrib_uris:
+                                            pred_obj['dc_contrib'] = True
+                                            break
+                                        if uri in dc_creator_uris:
+                                            pred_obj['dc_creator'] = True
+                                            break
+                            if pred_obj['dc_contrib'] or pred_obj['dc_creator']:
+                                # no need to keep searching, we found equivalence
+                                break
+        return pred_obj
+                                            
+    def add_assertion_dc_authors(self, pred_obj, object_uuid):
+        """ adds uuids of author objects if the predicate object says it
+            is a dc-terms contributor or a dc-terms creator equivalent
+        """
+        if isinstance(pred_obj, dict):
+            if 'dc_contrib' in pred_obj:
+                if pred_obj['dc_contrib'] and object_uuid not in self.dc_contributor_uuids:
+                    # uuids of DC contribuors (persons/orgs) found in item assertions
+                    self.dc_contributor_uuids.append(object_uuid)
+            if 'dc_creator' in pred_obj:
+                if pred_obj['dc_creator'] and object_uuid not in self.dc_creator_uuids:
+                    # uuids of DC creators (persons/orgs) found in item assertions
+                    self.dc_creator_uuids.append(object_uuid)
 
     def add_json_ld_direct_assertion(self, json_ld, assertion):
         """ adds an JSON-LD for an assertion that is made directly
@@ -301,6 +378,8 @@ class ItemAttributes():
                     else:
                         # an Open Context item
                         item_type = tcheck['item_type']
+                    # this shortens URIs in item-context declared namespaces
+                    # to make a compact URI (prefixed), as the act_pred
                     act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
                     json_ld = parts_json_ld.addto_predicate_list(json_ld,
                                                                  act_pred,
@@ -324,8 +403,8 @@ class ItemAttributes():
             to organize assertions into observations and get needed
             assertion objects into memory
         """
-        string_uuids = []
-        manifest_obj_uuids = []
+        string_uuids = []  # list of unique string uuids in these assertions
+        manifest_obj_uuids = []  # list of unique manifest object ids (for manifest lookup only)
         if self.assertions is not False:
             if len(self.assertions) > 0:
                 for ass in self.assertions:

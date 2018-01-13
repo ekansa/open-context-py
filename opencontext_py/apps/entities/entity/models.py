@@ -46,6 +46,7 @@ class Entity():
         self.get_icon = False
         self.icon = False
         self.ids_meta = False
+        self.slug_uri = False
 
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
@@ -105,7 +106,7 @@ class Entity():
                     manifest_item = Manifest.objects.get(Q(uuid=identifier) | Q(slug=identifier))
                 except Manifest.DoesNotExist:
                     manifest_item = False
-                if(manifest_item is not False):
+                if manifest_item is not False:
                     output = True
                     self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
                     self.uuid = manifest_item.uuid
@@ -135,6 +136,7 @@ class Entity():
                         if oc_pred is not False:
                             self.data_type = oc_pred.data_type
                             self.sort = oc_pred.sort
+                            self.slug_uri = 'oc-pred:' + str(self.slug)
                     elif manifest_item.item_type == 'projects':
                         # get a manifest object for the parent of a project, if it exists
                         ch_tab = '"oc_projects" AS "child"'

@@ -28,6 +28,7 @@ class ProjectContext():
 
     def __init__(self, uuid=None, request=None):
         self.id_href = True  # use the local href as the Context's ID
+        self.context_path = '/contexts/projects/'  # path for the ID of the context resource
         self.uuid = uuid
         rp = RootPath()
         self.base_url = rp.get_baseurl()
@@ -76,6 +77,9 @@ class ProjectContext():
             data annotations
         """
         if self.manifest is not False:
+            # we're making a JSON-LD document that includes an @graph vocabulary
+            self.context_path = '/contexts/project-vocabs/'
+            self.set_uri_urls(self.uuid)
             self.json_ld = LastUpdatedOrderedDict()
             gen_context = GeneralContext()
             context = gen_context.context
@@ -350,9 +354,9 @@ class ProjectContext():
         """ sets the uris and urls for this context resource """
         if self.uuid is None:
             self.uuid = uuid
-        self.href = self.base_url + '/contexts/projects/' \
+        self.href = self.base_url + self.context_path \
             + str(self.uuid) + '.json'  # URL for this
-        self.cannonical_href = settings.CANONICAL_HOST + '/contexts/projects/' \
+        self.cannonical_href = settings.CANONICAL_HOST + self.context_path \
             + str(self.uuid) + '.json'  # URI for main host
         if self.id_href:
             self.id = self.href
