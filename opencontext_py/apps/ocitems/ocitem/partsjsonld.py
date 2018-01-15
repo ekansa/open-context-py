@@ -44,6 +44,8 @@ class PartsJsonLD():
         self.class_uri_list = []  # uris of item classes used in this item
         self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
         self.proj_context_json_ld = {}  # general project context JSON-LD, with @graph of predicates, types
+        self.stable_id_predicate = False  # predicate to use to add a stable ID to an entity
+        self.stable_id_prefix_limit = False  # limit adding stable ID to the following URI prefix
         
     def addto_predicate_list(self,
                              act_dict,
@@ -91,6 +93,20 @@ class PartsJsonLD():
                 new_object_item['type'] = ent.class_uri
                 if ent.class_uri not in self.class_uri_list:
                     self.class_uri_list.append(ent.class_uri)  # list of unique open context item classes
+            if hasattr(ent, 'stable_id_uris'):
+                if ent.stable_id_uris is not False \
+                   and isinstance(self.stable_id_predicate, str):
+                    if len(ent.stable_id_uris) > 0:
+                        #  add a stable identifier URI using the appropriate predicate.
+                        #  just adds the first such identifier
+                        if isinstance(self.stable_id_prefix_limit, str):
+                            for stable_id_uri in ent.stable_id_uris:
+                                if self.stable_id_prefix_limit in stable_id_uri:
+                                    # we have a stable ID of the correct prefix
+                                    new_object_item[self.stable_id_predicate] = stable_id_uri
+                                    break
+                        else:
+                            new_object_item[self.stable_id_predicate] = ent.stable_id_uris[0]
         elif act_pred_key == 'oc-gen:hasIcon':
             new_object_item = {'id': object_id}
         # OK now check to see if the new object is already listed with the predicate
@@ -173,6 +189,8 @@ class PartsJsonLD():
             'slug',
             'owl:sameAs'
         ]
+        # print('try to look for ' + object_id + ' ' + item_type)
+        # print('proj_context: ' + str(self.proj_context_json_ld))
         if isinstance(self.proj_context_json_ld, dict) \
            and item_type in self.ITEM_TYPE_PROJ_VOCAB_LIST:
             if '@graph' in self.proj_context_json_ld:
@@ -192,6 +210,7 @@ class PartsJsonLD():
                             id_match = True
                             break
                 if id_match:
+                    # print('found this: ' + str(item))
                     ent = Entity()
                     ent.item_json_ld = item
                     ent.slug_uri = None
@@ -235,5 +254,6 @@ class PartsJsonLD():
                 act_man_obj.slug_uri = None
                 act_man_obj.thumbnail_uri = None
                 act_man_obj.content = None
+                act_man_obj.item_json_ld = None
                 self.manifest_obj_dict[uuid] = act_man_obj
 

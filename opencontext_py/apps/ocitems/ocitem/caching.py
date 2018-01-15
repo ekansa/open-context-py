@@ -2,11 +2,15 @@ import hashlib
 from django.conf import settings
 from django.db import models
 from django.core.cache import caches
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
+from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class ItemGenerationCache():
@@ -14,10 +18,15 @@ class ItemGenerationCache():
     methods for using the Reddis cache to
     streamline making item JSON-LD
     """
-
+    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
+    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
+    PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
+    
     def __init__(self):
         self.cache_use = CacheUtilities()
-    
+        dc_terms_obj = DCterms()
+        self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
+
     def get_project_context(self,
                             project_uuid,
                             assertion_hashes=False):
@@ -83,3 +92,87 @@ class ItemGenerationCache():
             # cache the result, even if is False ad there is no metadata
             self.cache_use.save_cache_object(cache_id, obs_meta)
         return obs_meta
+    
+    def get_all_project_metadata(self, project_uuid):
+        """ gets dc-metadata information for a project,
+            and its parent project (if applicable) from the cache.
+            If not cached, it queries the database.
+            These metadata are inherited by all items in the project
+            (author, and temporal)
+        """
+        cache_id = self.cache_use.make_memory_cache_key('proj-metadata',
+                                                        project_uuid)
+        all_proj_metadata = self.cache_use.get_cache_object(cache_id)
+        if all_proj_metadata is None:
+            all_proj_metadata = self.get_db_all_project_metadata(project_uuid)
+            if all_proj_metadata is not False:
+                self.cache_use.save_cache_object(cache_id,
+                                                 all_proj_metadata)
+        return all_proj_metadata
+    
+    def get_db_all_project_metadata(self, project_uuid):
+        """ Gets author information for a project
+            AND its parent project, if it exists     
+            from the database
+        """
+        all_proj_meta = False
+        project_entity = self.get_entity(project_uuid)
+        if project_entity is not False:
+            all_proj_meta = {}
+            all_proj_meta['project'] = self.get_db_project_dc_metadata(project_uuid)
+            # get the parent project (if it exists author annotations)
+            par_proj = Project.objects\
+                              .filter(uuid=project_uuid)\
+                              .exclude(project_uuid=project_uuid)\
+                              .exclude(project_uuid='0')[:1]
+            if len(par_proj) > 0:
+                # the current project is part of a parent project
+                parent_uuid = par_proj[0].project_uuid
+                all_proj_meta['parent-project'] = self.get_db_project_dc_metadata(parent_uuid)
+            else:
+                all_proj_meta['parent-project'] = False
+        return all_proj_meta
+
+    def get_db_project_dc_metadata(self, project_uuid):
+        """ Gets dc-metadata information for a project from the database
+            these metadata are inherited by all items in the project (author, and temporal)
+        """
+        le = LinkEquivalence()
+        dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
+        dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
+        dc_temporal_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_TEMPORAL)
+        dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris
+        proj_dc_meta = False
+        project_entity = self.get_entity(project_uuid)
+        if project_entity is not False:
+            proj_dc_meta = {
+                'entity': project_entity,
+                self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
+                self.PREDICATES_DCTERMS_CREATOR: [],
+                self.PREDICATES_DCTERMS_TEMPORAL: []
+            }
+            # get the project dc-metadata annotations (interitable only)
+            proj_meta_annos = LinkAnnotation.objects\
+                                            .filter(subject=project_uuid,
+                                                    predicate_uri__in=dc_meta_uris)\
+                                            .order_by('predicate_uri', 'sort')
+            for anno in proj_meta_annos:
+                if anno.predicate_uri in dc_contrib_uris:
+                    # we've got a contributor annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]\
+                           .append(anno.object_uri)
+                elif anno.predicate_uri in dc_creator_uris:
+                    # we've got creator annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]\
+                           .append(anno.object_uri)
+                elif anno.predicate_uri in dc_temporal_uris:
+                    # we've got temporal annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]\
+                           .append(anno.object_uri)
+        else:
+            # there's no project entity
+            proj_dc_meta = False
+        return proj_dc_meta

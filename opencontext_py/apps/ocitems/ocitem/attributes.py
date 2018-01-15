@@ -64,14 +64,22 @@ class ItemAttributes():
         self.item_pred_objs = {} # predicate entity objects, with uuid as a key 
         self.string_obj_dict = {}  # OCstring objects, in a dict, with uuid as key
         self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
-        self.dc_contributor_uuids = []  # uuids of DC contribuors (persons/orgs) found in item assertions
-        self.dc_creator_uuids = [] # uuids of DC creators (persons/orgs) found in item assertions
+        self.assertion_author_uuids = {
+            # uuids of DC contribuors (persons/orgs) found in item assertions
+            self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
+            # uuids of DC creators (persons/orgs) found in item assertions
+            self.PREDICATES_DCTERMS_CREATOR: []
+        }
+        self.dc_assertions = {}  # dublin core assertions. We add these last, just for aesthetics
+        self.dc_title = None  # dublin core title attribute, to use if not via default programatic way
         dc_terms_obj = DCterms()
-        self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
+        self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
+        self.dc_author_preds = dc_terms_obj.get_dc_authors_list()
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.class_uri_list = []  # uris of item classes used in this item
+        self.parent_context_list = []  # list of parent context labels, used for making a dc-terms:Title
 
     def get_db_item_attributes(self):
         """ gets item attributes (other than context, space, temporal) that describe
@@ -84,8 +92,9 @@ class ItemAttributes():
     def add_json_ld_attributes(self, json_ld):
         """ adds attribute information to the JSON-LD """
         json_ld = self.add_json_ld_descriptive_assertions(json_ld)
-        json_ld = self.add_json_ld_stable_ids(json_ld)
         json_ld = self.add_json_ld_link_annotations(json_ld)
+        json_ld = self.add_json_ld_dc_metadata(json_ld)
+        json_ld = self.add_json_ld_stable_ids(json_ld)
         return json_ld
 
     def add_json_ld_descriptive_assertions(self, json_ld):
@@ -130,6 +139,10 @@ class ItemAttributes():
         parts_json_ld = PartsJsonLD()
         parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
         parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        if assertion.object_type == 'persons':
+            # add a stable ID to person items, but only if they are ORCID IDs
+            parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+            parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
         pred_obj = self.get_pred_obj_by_uuid(parts_json_ld,
                                              assertion.predicate_uuid)
         pred_slug_uri = pred_obj['slug_uri']
@@ -261,13 +274,17 @@ class ItemAttributes():
         """
         if isinstance(pred_obj, dict):
             if 'dc_contrib' in pred_obj:
-                if pred_obj['dc_contrib'] and object_uuid not in self.dc_contributor_uuids:
+                pred_contrib = self.PREDICATES_DCTERMS_CONTRIBUTOR
+                if pred_obj['dc_contrib'] and \
+                   object_uuid not in self.assertion_author_uuids[pred_contrib]:
                     # uuids of DC contribuors (persons/orgs) found in item assertions
-                    self.dc_contributor_uuids.append(object_uuid)
+                    self.assertion_author_uuids[pred_contrib].append(object_uuid)
             if 'dc_creator' in pred_obj:
-                if pred_obj['dc_creator'] and object_uuid not in self.dc_creator_uuids:
+                pred_create = self.PREDICATES_DCTERMS_CREATOR
+                if pred_obj['dc_creator'] and \
+                   object_uuid not in self.assertion_author_uuids[pred_create]:
                     # uuids of DC creators (persons/orgs) found in item assertions
-                    self.dc_creator_uuids.append(object_uuid)
+                    self.assertion_author_uuids[pred_create].append(object_uuid)
 
     def add_json_ld_direct_assertion(self, json_ld, assertion):
         """ adds an JSON-LD for an assertion that is made directly
@@ -378,15 +395,103 @@ class ItemAttributes():
                     else:
                         # an Open Context item
                         item_type = tcheck['item_type']
+                    if item_type == 'persons':
+                        # add a stable ID to person items, but only if they are ORCID IDs
+                        parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+                        parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
                     # this shortens URIs in item-context declared namespaces
                     # to make a compact URI (prefixed), as the act_pred
                     act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
-                    json_ld = parts_json_ld.addto_predicate_list(json_ld,
-                                                                 act_pred,
-                                                                 la.object_uri,
-                                                                 item_type)
+                    if act_pred not in self.dc_author_preds \
+                       and act_pred not in self.dc_metadata_preds:
+                        # the act_prec is not a dublin core predicate, so we're OK to add it
+                        # now, not later.
+                        json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                     act_pred,
+                                                                     la.object_uri,
+                                                                     item_type)
+                    else:
+                        # we've got dublin core assertions, cache these in the dict_object
+                        # dc_assertions so they get added LAST, after other asserttions
+                        self.dc_assertions = parts_json_ld.addto_predicate_list(self.dc_assertions,
+                                                                                act_pred,
+                                                                                la.object_uri,
+                                                                                item_type)
         return json_ld
     
+    def add_json_ld_dc_metadata(self, json_ld):
+        """ adds dublin core metadata to the json_ld
+            does this in a regular, predictable order for
+            aethetic reasons
+        """
+        # start with the dc-terms:title
+        json_ld = self.add_json_ld_dc_title(json_ld)
+        # then add dc-terms:contributors, and creators
+        json_ld = self.add_json_ld_dc_metadata_authors(json_ld)
+        return json_ld
+    
+    def add_json_ld_dc_title(self, json_ld):
+        """ adds the dublin core title to the JSON-LD """
+        if not isinstance(self.dc_title, str) and 'label' in json_ld:
+            self.dc_title = json_ld['label']
+            if len(self.parent_context_list) > 0:
+                parents = '/'.join(self.parent_context_list)
+                self.dc_title += ' from ' + parents
+        if isinstance(self.dc_title, str):
+            json_ld[self.PREDICATES_DCTERMS_TITLE] = self.dc_title
+        return json_ld
+    
+    def add_json_ld_dc_metadata_authors(self, json_ld):
+        """ adds dublin core author (contributor, creator) metadata to the JSON-LD
+        
+            The ORDER of authors is important, because it reflects the relative
+            significance of their contribution to a publication.
+            
+            Author information comes from a variety of sources:
+            (1) Linked data annotations directly to an item
+            (2) Assertions using predicates that have an equivalence to a
+                dublin core contributor or creator property
+            (3) Project authoriship
+            (4) Parent project authorship
+        """
+        # we've already looked up objects from the manifest
+        parts_json_ld = PartsJsonLD()
+        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        # add a stable ID to person items, but only if they are ORCID IDs
+        parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+        parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
+        author_preds = [
+            self.PREDICATES_DCTERMS_CONTRIBUTOR,
+            self.PREDICATES_DCTERMS_CREATOR
+        ]
+        for author_pred in author_preds:
+            if author_pred in self.dc_assertions:
+                # add the 
+                json_ld[author_pred] = self.dc_assertions[author_pred]
+            if len(self.assertion_author_uuids[author_pred]) > 0:
+                # we have contributors noted in contributor equiv preds in the item assertions
+                for dc_auth_uuid in self.assertion_author_uuids[author_pred]:
+                    json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                 author_pred,
+                                                                 dc_auth_uuid,
+                                                                 'persons')
+        # now check to see it we need to add project level authorship to this item
+        item_contribs = False
+        item_creators = False
+        if self.PREDICATES_DCTERMS_CONTRIBUTOR in json_ld:
+            if len(json_ld[self.PREDICATES_DCTERMS_CONTRIBUTOR]) > 0:
+                item_contribs = True
+        if self.PREDICATES_DCTERMS_CREATOR in json_ld:
+            if len(json_ld[self.PREDICATES_DCTERMS_CREATOR]) > 0:
+                item_creators = True
+        if item_contribs is False or item_creators is False:
+            # we don't have contributor or creator information specific to this item
+            # so get project level metadata for these
+            proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
+            if proj_metadata is not False:
+                pass
+        return json_ld
     
     def get_db_assertions(self):
         """ gets assertions that describe an item, except for assertions about spatial containment """

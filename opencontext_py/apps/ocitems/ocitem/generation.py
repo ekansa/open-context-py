@@ -46,8 +46,6 @@ class OCitem():
         self.item_space_time = None
         self.item_attributes = None
         self.class_uri_list = []  # uris of item classes used in this item
-        dc_terms_obj = DCterms()
-        self.DC_META_PREDS = dc_terms_obj.get_dc_terms_list()
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
         self.base_url = rp.get_baseurl()
@@ -72,14 +70,16 @@ class OCitem():
         """ make json_ld for an item """
         if isinstance(self.manifest, Manifest):
             # we've got an item in the manifest, so OK to make some JSON-LD for it
+            self.add_context_json_ld(self.project_uuid)
             self.get_item_spatial_temporal()
             self.get_item_attributes()
-            self.add_context_json_ld(self.project_uuid)
             self.add_general_json_ld()
             # add spatial context information
             self.json_ld = self.item_space_time.add_json_ld_geojson_contexts(self.json_ld)
             # add child item information
             self.json_ld = self.item_space_time.add_contents_json_ld(self.json_ld)
+            # give the item_attributes object a list of parent contexts
+            self.item_attributes.parent_context_list = self.item_space_time.parent_context_list
             # add attribute information
             self.json_ld = self.item_attributes.add_json_ld_attributes(self.json_ld)
     
