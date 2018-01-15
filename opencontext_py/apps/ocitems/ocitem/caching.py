@@ -161,17 +161,17 @@ class ItemGenerationCache():
                     # we've got a contributor annotation
                     if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]:
                         proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]\
-                           .append(anno.object_uri)
+                           .append(anno)
                 elif anno.predicate_uri in dc_creator_uris:
                     # we've got creator annotation
                     if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]:
                         proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]\
-                           .append(anno.object_uri)
+                           .append(anno)
                 elif anno.predicate_uri in dc_temporal_uris:
                     # we've got temporal annotation
                     if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]:
                         proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]\
-                           .append(anno.object_uri)
+                           .append(anno)
         else:
             # there's no project entity
             proj_dc_meta = False

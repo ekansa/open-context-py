@@ -488,9 +488,39 @@ class ItemAttributes():
         if item_contribs is False or item_creators is False:
             # we don't have contributor or creator information specific to this item
             # so get project level metadata for these
-            proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
-            if proj_metadata is not False:
-                pass
+            # we've already looked up objects from the manifest
+            parts_json_ld = PartsJsonLD()
+            parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+            parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+            # add a stable ID to person items, but only if they are ORCID IDs
+            parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+            parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
+            # now get project wide metadata for inherited author assertions
+            all_proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
+            if all_proj_metadata is not False:
+                print('ok here')
+                proj_meta = all_proj_metadata['project']
+                parent_proj_meta = all_proj_metadata['parent-project']
+                needed_dc_proj_author_preds = []
+                if item_contribs is False:
+                    # the item itself has no contributors, so look for some from the project
+                    needed_dc_proj_author_preds.append(self.PREDICATES_DCTERMS_CONTRIBUTOR)
+                if item_creators is False:
+                    # the item itself has no creators, so look for some from the project
+                    needed_dc_proj_author_preds.append(self.PREDICATES_DCTERMS_CREATOR)
+                for dc_author_pred in needed_dc_proj_author_preds:
+                    # get the right type of author annotations
+                    proj_author_annos = proj_meta[dc_author_pred]
+                    if len(proj_author_annos) < 1 and isinstance(parent_project_meta, dict):
+                        # we don't have project author annotations of this type, so look
+                        # for some from the parent project
+                        proj_author_annos += parent_proj_meta[dc_author_pred]
+                    for proj_anno in proj_author_annos:
+                        # proj_anno is a Link Annotation
+                        json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                     dc_author_pred,
+                                                                     proj_anno.object_uri,
+                                                                     'persons')
         return json_ld
     
     def get_db_assertions(self):
