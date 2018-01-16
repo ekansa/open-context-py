@@ -44,6 +44,7 @@ class ItemAttributes():
     PREDICATES_OCGEN_OBSLABEL = 'label'
     PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
+    PREDICATES_OWL_SAMEAS = 'owl:sameAs'
     
     # predicates not for use in observations
     NO_OBS_ASSERTION_PREDS = [
@@ -603,6 +604,7 @@ class ItemAttributes():
             parts_json_ld = PartsJsonLD()
             parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
             parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+            parts_json_ld.stable_id_predicate = self.PREDICATES_OWL_SAMEAS
             json_ld = parts_json_ld.addto_predicate_list(json_ld,
                                                          self.PREDICATES_DCTERMS_ISPARTOF,
                                                          self.manifest.project_uuid,

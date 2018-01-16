@@ -127,8 +127,9 @@ class Entity():
                         if thumb_obj is not False:
                             self.thumbnail_media = thumb_obj
                             self.thumbnail_uri = thumb_obj.file_uri
-                    elif manifest_item.item_type == 'persons' or self.get_stable_ids:
-                        # get stable identifiers for persons by default
+                    elif manifest_item.item_type in ['persons', 'projects'] \
+                         or self.get_stable_ids:
+                        # get stable identifiers for persons or projects by default
                         stable_ids = StableIdentifer.objects.filter(uuid=manifest_item.uuid)
                         if len(stable_ids) > 0:
                             self.stable_id_uris = []
