@@ -27,12 +27,15 @@ from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 # This class is used to make a JSON-LD output from data returned from the database via other apps
 class ItemAttributes():
     
+    PREDICATES_DCTERMS_TITLE = 'dc-terms:title'
     PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:issued'
     PREDICATES_DCTERMS_MODIFIED = 'dc-terms:modified'
+    PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
-    PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
-    PREDICATES_DCTERMS_TITLE = 'dc-terms:title'
+    PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
+    PREDICATES_DCTERMS_ABSTRACT = 'dc-terms:abstract'
+    PREDICATES_DCTERMS_HASPART = 'dc-terms:hasPart'
     PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
     PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
     PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
@@ -426,8 +429,19 @@ class ItemAttributes():
         """
         # start with the dc-terms:title
         json_ld = self.add_json_ld_dc_title(json_ld)
+        # now add published and modified DC-terms properties
+        if self.manifest.published is not None and self.manifest.published is not False:
+            # we have a publication date
+            json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.manifest.published.date().isoformat()
+        if self.manifest.revised is not None and self.manifest.revised is not False:
+            # the 'revised' attribute is equivalent to the dc-terms:modified property
+            json_ld[self.PREDICATES_DCTERMS_MODIFIED] = self.manifest.revised.date().isoformat()
         # then add dc-terms:contributors, and creators
         json_ld = self.add_json_ld_dc_metadata_authors(json_ld)
+        # now add 'dc-terms:part-of' project information
+        json_ld = self.add_json_ld_dc_metadata_partof(json_ld)
+        # now add dc-terms:temporal metadata (if present, or inherited from the project)
+        json_ld = self.add_json_ld_dc_metadata_temporal(json_ld)
         return json_ld
     
     def add_json_ld_dc_title(self, json_ld):
@@ -498,7 +512,6 @@ class ItemAttributes():
             # now get project wide metadata for inherited author assertions
             all_proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
             if all_proj_metadata is not False:
-                print('ok here')
                 proj_meta = all_proj_metadata['project']
                 parent_proj_meta = all_proj_metadata['parent-project']
                 needed_dc_proj_author_preds = []
@@ -511,7 +524,7 @@ class ItemAttributes():
                 for dc_author_pred in needed_dc_proj_author_preds:
                     # get the right type of author annotations
                     proj_author_annos = proj_meta[dc_author_pred]
-                    if len(proj_author_annos) < 1 and isinstance(parent_project_meta, dict):
+                    if len(proj_author_annos) < 1 and isinstance(parent_proj_meta, dict):
                         # we don't have project author annotations of this type, so look
                         # for some from the parent project
                         proj_author_annos += parent_proj_meta[dc_author_pred]
@@ -521,6 +534,67 @@ class ItemAttributes():
                                                                      dc_author_pred,
                                                                      proj_anno.object_uri,
                                                                      'persons')
+        return json_ld
+    
+    def add_json_ld_dc_metadata_temporal(self, json_ld):
+        """ adds dublin core temporal metadata to the JSON-LD
+        
+            Like DC author information, temporal metadata can
+            be inherited from the parent project, as so:
+            (1) Linked data annotations directly to an item
+            (2) Assertions using predicates that have an equivalence to the
+                dublin core temporal property
+            (3) Project temporal metadata
+            (4) Parent project temporal metadata
+        """
+        # we've already looked up objects from the manifest
+        parts_json_ld = PartsJsonLD()
+        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        add_project_temp = True
+        if self.PREDICATES_DCTERMS_TEMPORAL in json_ld:
+            if len(json_ld[self.PREDICATES_DCTERMS_TEMPORAL]) > 0:
+                 add_project_temp = False
+        if add_project_temp:
+            # we don't have dc-temporal information specific to this item
+            # so get project level metadata for these
+            # we've already looked up objects from the manifest
+            parts_json_ld = PartsJsonLD()
+            parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+            parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+            # now get project wide metadata for inherited temporal assertions
+            all_proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
+            if all_proj_metadata is not False:
+                proj_meta = all_proj_metadata['project']
+                parent_proj_meta = all_proj_metadata['parent-project']
+                proj_temp_annos = proj_meta[self.PREDICATES_DCTERMS_TEMPORAL]
+                if len(proj_temp_annos) < 1 and isinstance(parent_proj_meta, dict):
+                    # we don't have project temporal annotations, so look
+                    # for some from the parent project
+                    proj_temp_annos += parent_proj_meta[self.PREDICATES_DCTERMS_TEMPORAL]
+                for proj_anno in proj_temp_annos:
+                    # proj_anno is a Link Annotation
+                    json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                 self.PREDICATES_DCTERMS_TEMPORAL,
+                                                                 proj_anno.object_uri,
+                                                                 False)
+        return json_ld
+    
+    def add_json_ld_dc_metadata_partof(self, json_ld):
+        """ adds dublin core partof metadata to the JSON-LD
+        
+            This property indicates that an item is part of a larger
+            body of work (an Open Context "project")
+        """
+        if self.manifest.uuid != self.manifest.project_uuid:
+            # we've already looked up objects from the manifest
+            parts_json_ld = PartsJsonLD()
+            parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+            parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+            json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                         self.PREDICATES_DCTERMS_ISPARTOF,
+                                                         self.manifest.project_uuid,
+                                                         'projects')
         return json_ld
     
     def get_db_assertions(self):
