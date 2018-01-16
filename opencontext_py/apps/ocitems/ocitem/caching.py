@@ -21,6 +21,7 @@ class ItemGenerationCache():
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
     PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
+    PREDICATES_DCTERMS_LICENSE = 'dc-terms:license'
     
     def __init__(self):
         self.cache_use = CacheUtilities()
@@ -141,7 +142,8 @@ class ItemGenerationCache():
         dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
         dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
         dc_temporal_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_TEMPORAL)
-        dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris
+        dc_license_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_LICENSE)
+        dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris + dc_license_uris
         proj_dc_meta = False
         project_entity = self.get_entity(project_uuid)
         if project_entity is not False:
@@ -149,7 +151,8 @@ class ItemGenerationCache():
                 'entity': project_entity,
                 self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
                 self.PREDICATES_DCTERMS_CREATOR: [],
-                self.PREDICATES_DCTERMS_TEMPORAL: []
+                self.PREDICATES_DCTERMS_TEMPORAL: [],
+                self.PREDICATES_DCTERMS_LICENSE: []
             }
             # get the project dc-metadata annotations (interitable only)
             proj_meta_annos = LinkAnnotation.objects\
@@ -171,6 +174,11 @@ class ItemGenerationCache():
                     # we've got temporal annotation
                     if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]:
                         proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]\
+                           .append(anno)
+                elif anno.predicate_uri in dc_license_uris:
+                    # we've got a license annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_LICENSE]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_LICENSE]\
                            .append(anno)
         else:
             # there's no project entity

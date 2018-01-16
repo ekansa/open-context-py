@@ -33,6 +33,7 @@ class ItemAttributes():
     PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
     PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
     PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
+    PREDICATES_DCTERMS_LICENSE = 'dc-terms:license'
     PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
     PREDICATES_DCTERMS_ABSTRACT = 'dc-terms:abstract'
     PREDICATES_DCTERMS_HASPART = 'dc-terms:hasPart'
@@ -78,6 +79,12 @@ class ItemAttributes():
         dc_terms_obj = DCterms()
         self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
         self.dc_author_preds = dc_terms_obj.get_dc_authors_list()
+        self.dc_inherit_preds = [
+            self.PREDICATES_DCTERMS_CONTRIBUTOR,
+            self.PREDICATES_DCTERMS_CREATOR,
+            self.PREDICATES_DCTERMS_TEMPORAL,
+            self.PREDICATES_DCTERMS_LICENSE
+        ]
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
         self.base_url = rp.get_baseurl()
@@ -406,6 +413,7 @@ class ItemAttributes():
                     # to make a compact URI (prefixed), as the act_pred
                     act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
                     if act_pred not in self.dc_author_preds \
+                       and act_pred not in self.dc_inherit_preds \
                        and act_pred not in self.dc_metadata_preds:
                         # the act_prec is not a dublin core predicate, so we're OK to add it
                         # now, not later.
@@ -436,12 +444,16 @@ class ItemAttributes():
         if self.manifest.revised is not None and self.manifest.revised is not False:
             # the 'revised' attribute is equivalent to the dc-terms:modified property
             json_ld[self.PREDICATES_DCTERMS_MODIFIED] = self.manifest.revised.date().isoformat()
-        # then add dc-terms:contributors, and creators
-        json_ld = self.add_json_ld_dc_metadata_authors(json_ld)
+        # then add dc-terms:contributors, and creators, from item assertion equivalances to
+        # dc-term authors
+        json_ld = self.add_json_ld_dc_author_from_item(json_ld)
+        # then other dc-terms properties made directly to the item
+        # this is done to preserve a consistent order of listing dc-term properties in the JSON-LD
+        json_ld = self.add_json_ld_dc_other_from_item(json_ld)
+        # now add json_ld that may be interited from the parent project of the item
+        json_ld = self.add_json_ld_dc_metadata_inherited(json_ld)
         # now add 'dc-terms:part-of' project information
         json_ld = self.add_json_ld_dc_metadata_partof(json_ld)
-        # now add dc-terms:temporal metadata (if present, or inherited from the project)
-        json_ld = self.add_json_ld_dc_metadata_temporal(json_ld)
         return json_ld
     
     def add_json_ld_dc_title(self, json_ld):
@@ -455,7 +467,7 @@ class ItemAttributes():
             json_ld[self.PREDICATES_DCTERMS_TITLE] = self.dc_title
         return json_ld
     
-    def add_json_ld_dc_metadata_authors(self, json_ld):
+    def add_json_ld_dc_author_from_item(self, json_ld):
         """ adds dublin core author (contributor, creator) metadata to the JSON-LD
         
             The ORDER of authors is important, because it reflects the relative
@@ -465,8 +477,8 @@ class ItemAttributes():
             (1) Linked data annotations directly to an item
             (2) Assertions using predicates that have an equivalence to a
                 dublin core contributor or creator property
-            (3) Project authoriship
-            (4) Parent project authorship
+            (3) Project authoriship (via the self.add_json_ld_dc_metadata_inherited method)
+            (4) Parent project authorship (via the self.add_json_ld_dc_metadata_inherited method)
         """
         # we've already looked up objects from the manifest
         parts_json_ld = PartsJsonLD()
@@ -490,17 +502,59 @@ class ItemAttributes():
                                                                  author_pred,
                                                                  dc_auth_uuid,
                                                                  'persons')
-        # now check to see it we need to add project level authorship to this item
-        item_contribs = False
-        item_creators = False
-        if self.PREDICATES_DCTERMS_CONTRIBUTOR in json_ld:
-            if len(json_ld[self.PREDICATES_DCTERMS_CONTRIBUTOR]) > 0:
-                item_contribs = True
-        if self.PREDICATES_DCTERMS_CREATOR in json_ld:
-            if len(json_ld[self.PREDICATES_DCTERMS_CREATOR]) > 0:
-                item_creators = True
-        if item_contribs is False or item_creators is False:
-            # we don't have contributor or creator information specific to this item
+        return json_ld
+    
+    def add_json_ld_dc_other_from_item(self, json_ld):
+        """ adds other DC-Term metadata annotated directly to the item
+            
+            To keep the order of predicates consistent, we make a list of
+            "dc_item_preds" that lists the dc-terms properties of interest.
+            
+            Note, because authorship is somewhat more complicated by
+            because of the possibility of item assertion predicates with
+            equivalences to dc-terms contributors or creators, we skip
+            looking at author related dc-terms properties in this method
+        """
+        dc_item_preds = [
+            self.PREDICATES_DCTERMS_TEMPORAL,
+            self.PREDICATES_DCTERMS_LICENSE,
+        ]
+        for dc_pred in self.dc_metadata_preds:
+            if dc_pred not in dc_item_preds:
+                dc_item_preds.append(dc_pred)
+         # we've already looked up objects from the manifest
+        parts_json_ld = PartsJsonLD()
+        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        for dc_pred in dc_item_preds:
+            if dc_pred in self.dc_assertions:
+                # we've got item linked data annotations
+                # that include this dc-term property. so add it to the
+                # json-ld
+                json_ld[dc_pred] = self.dc_assertions[dc_pred]
+        return json_ld
+    
+    def add_json_ld_dc_metadata_inherited(self, json_ld):
+        """ adds dublin core metadata inherited from the project to the JSON-LD
+        
+            Some metadata (dc-terms:contributor, dc-terms:creator,
+            dc-terms:license, and dc-terms:temporal) will
+            be inherited from the parent project IF
+            the item does not yet have those metadata properties.
+            
+        """
+        needed_dc_proj_preds = []
+        for check_dc_pred in self.dc_inherit_preds:
+            need_proj = True
+            if check_dc_pred in json_ld:
+                if len(json_ld[check_dc_pred]) > 0:
+                    need_proj = False
+            if need_proj:
+                # we have a dc-terms predicate missing, so look
+                # for it as inherited from the project
+                 needed_dc_proj_preds.append(check_dc_pred)
+        if len(needed_dc_proj_preds) > 0:
+            # we need to find some dc-terms metadata in the project
             # so get project level metadata for these
             # we've already looked up objects from the manifest
             parts_json_ld = PartsJsonLD()
@@ -515,69 +569,27 @@ class ItemAttributes():
                 proj_meta = all_proj_metadata['project']
                 parent_proj_meta = all_proj_metadata['parent-project']
                 needed_dc_proj_author_preds = []
-                if item_contribs is False:
-                    # the item itself has no contributors, so look for some from the project
-                    needed_dc_proj_author_preds.append(self.PREDICATES_DCTERMS_CONTRIBUTOR)
-                if item_creators is False:
-                    # the item itself has no creators, so look for some from the project
-                    needed_dc_proj_author_preds.append(self.PREDICATES_DCTERMS_CREATOR)
-                for dc_author_pred in needed_dc_proj_author_preds:
+                for dc_pred in needed_dc_proj_preds:
                     # get the right type of author annotations
-                    proj_author_annos = proj_meta[dc_author_pred]
-                    if len(proj_author_annos) < 1 and isinstance(parent_proj_meta, dict):
+                    proj_dc_pred_annos = proj_meta[dc_pred]
+                    if len(proj_dc_pred_annos) < 1 and isinstance(parent_proj_meta, dict):
                         # we don't have project author annotations of this type, so look
                         # for some from the parent project
-                        proj_author_annos += parent_proj_meta[dc_author_pred]
-                    for proj_anno in proj_author_annos:
+                        proj_dc_pred_annos += parent_proj_meta[dc_pred]
+                    for proj_anno in proj_dc_pred_annos:
                         # proj_anno is a Link Annotation
-                        json_ld = parts_json_ld.addto_predicate_list(json_ld,
-                                                                     dc_author_pred,
-                                                                     proj_anno.object_uri,
-                                                                     'persons')
-        return json_ld
-    
-    def add_json_ld_dc_metadata_temporal(self, json_ld):
-        """ adds dublin core temporal metadata to the JSON-LD
-        
-            Like DC author information, temporal metadata can
-            be inherited from the parent project, as so:
-            (1) Linked data annotations directly to an item
-            (2) Assertions using predicates that have an equivalence to the
-                dublin core temporal property
-            (3) Project temporal metadata
-            (4) Parent project temporal metadata
-        """
-        # we've already looked up objects from the manifest
-        parts_json_ld = PartsJsonLD()
-        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
-        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
-        add_project_temp = True
-        if self.PREDICATES_DCTERMS_TEMPORAL in json_ld:
-            if len(json_ld[self.PREDICATES_DCTERMS_TEMPORAL]) > 0:
-                 add_project_temp = False
-        if add_project_temp:
-            # we don't have dc-temporal information specific to this item
-            # so get project level metadata for these
-            # we've already looked up objects from the manifest
-            parts_json_ld = PartsJsonLD()
-            parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
-            parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
-            # now get project wide metadata for inherited temporal assertions
-            all_proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
-            if all_proj_metadata is not False:
-                proj_meta = all_proj_metadata['project']
-                parent_proj_meta = all_proj_metadata['parent-project']
-                proj_temp_annos = proj_meta[self.PREDICATES_DCTERMS_TEMPORAL]
-                if len(proj_temp_annos) < 1 and isinstance(parent_proj_meta, dict):
-                    # we don't have project temporal annotations, so look
-                    # for some from the parent project
-                    proj_temp_annos += parent_proj_meta[self.PREDICATES_DCTERMS_TEMPORAL]
-                for proj_anno in proj_temp_annos:
-                    # proj_anno is a Link Annotation
-                    json_ld = parts_json_ld.addto_predicate_list(json_ld,
-                                                                 self.PREDICATES_DCTERMS_TEMPORAL,
-                                                                 proj_anno.object_uri,
-                                                                 False)
+                        if dc_pred in self.dc_author_preds:
+                            # the we're adding author information
+                            json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                         dc_pred,
+                                                                         proj_anno.object_uri,
+                                                                         'persons')
+                        else:
+                            # we're a non-author (person) object to the dc-terms linked data
+                             json_ld = parts_json_ld.addto_predicate_list(json_ld,
+                                                                         dc_pred,
+                                                                         proj_anno.object_uri,
+                                                                         False)
         return json_ld
     
     def add_json_ld_dc_metadata_partof(self, json_ld):
