@@ -57,9 +57,10 @@ class DCterms():
 
     def get_dc_authors_list(self):
         """ returns a list of dc-terms author predicates """
+        dc_author_terms = []
         for dc_term_key, dc_solr_key in self.DC_AUTHOR_PREDICATES.items():
-            dc_terms.append(dc_term_key)
-        return dc_terms
+            dc_author_terms.append(dc_term_key)
+        return dc_author_terms
 
     def get_dc_params_list(self):
         """ returns a list of dc-params (for searches) """

@@ -139,6 +139,10 @@
     useful for Join replaces with other fields.  -->
     <field name="slug_type_uri_label" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
+    <!-- shard number, an integer value, initially based on geospatial tile coordinates -->
+    <field name="shard_id" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	
+
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 

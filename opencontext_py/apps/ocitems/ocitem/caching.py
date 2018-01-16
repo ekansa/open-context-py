@@ -2,7 +2,15 @@ import hashlib
 from django.conf import settings
 from django.db import models
 from django.core.cache import caches
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.cacheutilities import CacheUtilities
+from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
+from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
 
 class ItemGenerationCache():
@@ -10,78 +18,161 @@ class ItemGenerationCache():
     methods for using the Reddis cache to
     streamline making item JSON-LD
     """
-
+    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
+    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
+    PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
+    
     def __init__(self):
-        self.redis_ok = True
-        self.print_caching = False
+        self.cache_use = CacheUtilities()
+        dc_terms_obj = DCterms()
+        self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
 
-    def get_entity(self, identifier):
-        """ gets an entity either from the cache or from
-            database lookups
+    def get_project_context(self,
+                            project_uuid,
+                            assertion_hashes=False):
+        """ gets a project context, which lists all predicates
+            and has a graph of linked data annotations to
+            predicates and types
+            if assertion_hashes is true, then get
+            the project context with the hash identifiers
+            for the specific linked data assertions. This makes
+            it easier to reference specific assertions for edits.
         """
-        cache_id = self.make_memory_cache_key('entities', identifier)
-        item = self.get_cache_object(cache_id)
+        cache_id = self.cache_use.make_memory_cache_key('proj-context-' + str(assertion_hashes),
+                                                        project_uuid)
+        item = self.cache_use.get_cache_object(cache_id,
+                                               True)
         if item is not None:
             output = item
         else:
-            entity = Entity()
-            found = entity.dereference(identifier)
-            if found:
-                output = entity
-                self.save_cache_object(cache_id, entity)
-            else:
-                output = False
-        return output
+            pc = ProjectContext(project_uuid)
+            pc.assertion_hashes
+            context_json_ld = pc.make_context_and_vocab_json_ld()
+            if isinstance(context_json_ld, dict):
+                output = context_json_ld
+                self.cache_use.save_cache_object(cache_id,
+                                                 context_json_ld,
+                                                 True)
+        return context_json_ld
 
-    def get_entity_w_thumbnail(self, identifier):
-        """ gets an entity with thumbnail (useful for item json) """
-        cache_id = self.make_memory_cache_key('entities-thumb', identifier)
-        item = self.get_cache_object(cache_id)
+    def get_entity(self, identifier):
+        """ gets an entity either from the cache or from
+            database lookups.
+        """
+        cache_id = self.cache_use.make_memory_cache_key('entities', identifier)
+        item = self.cache_use.get_cache_object(cache_id)
         if item is not None:
             output = item
-            # print('YEAH found entity: ' + cache_id)
         else:
             entity = Entity()
             entity.get_thumbnail = True
             found = entity.dereference(identifier)
             if found:
                 output = entity
-                self.save_cache_object(cache_id, entity)
+                self.cache_use.save_cache_object(cache_id, entity)
             else:
                 output = False
         return output
+    
+    def get_observation_metadata(self, source_id, obs_num):
+        """ gets a metadata object for an observation node, that
+            provides some context on assertions made in an observation
+        """
+        cache_id = self.cache_use.make_memory_cache_key('obs-meta',
+                                                        (source_id + '-' + str(obs_num)))
+        obs_meta = self.cache_use.get_cache_object(cache_id)
+        if obs_meta is None:
+            obs_meta = False
+            obs_metas = ObsMetadata.objects.filter(source_id=source_id,
+                                                   obs_num=obs_num)[:1]
+            if len(obs_metas) > 0:
+                obs_meta = obs_metas[0]
+            else:
+                obs_meta = False
+            # cache the result, even if is False ad there is no metadata
+            self.cache_use.save_cache_object(cache_id, obs_meta)
+        return obs_meta
+    
+    def get_all_project_metadata(self, project_uuid):
+        """ gets dc-metadata information for a project,
+            and its parent project (if applicable) from the cache.
+            If not cached, it queries the database.
+            These metadata are inherited by all items in the project
+            (author, and temporal)
+        """
+        cache_id = self.cache_use.make_memory_cache_key('proj-metadata',
+                                                        project_uuid)
+        all_proj_metadata = self.cache_use.get_cache_object(cache_id)
+        if all_proj_metadata is None:
+            all_proj_metadata = self.get_db_all_project_metadata(project_uuid)
+            if all_proj_metadata is not False:
+                self.cache_use.save_cache_object(cache_id,
+                                                 all_proj_metadata)
+        return all_proj_metadata
+    
+    def get_db_all_project_metadata(self, project_uuid):
+        """ Gets author information for a project
+            AND its parent project, if it exists     
+            from the database
+        """
+        all_proj_meta = False
+        project_entity = self.get_entity(project_uuid)
+        if project_entity is not False:
+            all_proj_meta = {}
+            all_proj_meta['project'] = self.get_db_project_dc_metadata(project_uuid)
+            # get the parent project (if it exists author annotations)
+            par_proj = Project.objects\
+                              .filter(uuid=project_uuid)\
+                              .exclude(project_uuid=project_uuid)\
+                              .exclude(project_uuid='0')[:1]
+            if len(par_proj) > 0:
+                # the current project is part of a parent project
+                parent_uuid = par_proj[0].project_uuid
+                all_proj_meta['parent-project'] = self.get_db_project_dc_metadata(parent_uuid)
+            else:
+                all_proj_meta['parent-project'] = False
+        return all_proj_meta
 
-    def make_memory_cache_key(self, prefix, identifier):
-        """ makes a valid OK cache key """
-        hash_obj = hashlib.sha1()
-        concat_string = str(prefix) + " " + str(identifier)
-        hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
-
-    def get_cache_object(self, key):
-        """ gets a cached reddis object """
-        try:
-            cache = caches['redis']
-            obj = cache.get(key)
-            if self.print_caching:
-                print('Cache checked: ' + key)
-        except:
-            obj = None
-            if self.print_caching:
-                print('Cache Fail checked: ' + key)
-        return obj
-
-    def save_cache_object(self, key, obj):
-        """ saves a cached reddis object """
-        try:
-            cache = caches['redis']
-            cache.set(key, obj)
-            ok = True
-            if self.print_caching:
-                print('Cache Saved: ' + key)
-        except:
-            self.redis_ok = False
-            ok = False
-            if self.print_caching:
-                print('Failed to cache: ' + key)
-        return ok
+    def get_db_project_dc_metadata(self, project_uuid):
+        """ Gets dc-metadata information for a project from the database
+            these metadata are inherited by all items in the project (author, and temporal)
+        """
+        le = LinkEquivalence()
+        dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
+        dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
+        dc_temporal_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_TEMPORAL)
+        dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris
+        proj_dc_meta = False
+        project_entity = self.get_entity(project_uuid)
+        if project_entity is not False:
+            proj_dc_meta = {
+                'entity': project_entity,
+                self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
+                self.PREDICATES_DCTERMS_CREATOR: [],
+                self.PREDICATES_DCTERMS_TEMPORAL: []
+            }
+            # get the project dc-metadata annotations (interitable only)
+            proj_meta_annos = LinkAnnotation.objects\
+                                            .filter(subject=project_uuid,
+                                                    predicate_uri__in=dc_meta_uris)\
+                                            .order_by('predicate_uri', 'sort')
+            for anno in proj_meta_annos:
+                if anno.predicate_uri in dc_contrib_uris:
+                    # we've got a contributor annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]\
+                           .append(anno)
+                elif anno.predicate_uri in dc_creator_uris:
+                    # we've got creator annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]\
+                           .append(anno)
+                elif anno.predicate_uri in dc_temporal_uris:
+                    # we've got temporal annotation
+                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]:
+                        proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]\
+                           .append(anno)
+        else:
+            # there's no project entity
+            proj_dc_meta = False
+        return proj_dc_meta
