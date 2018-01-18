@@ -80,7 +80,7 @@ class ItemAttributes():
         dc_terms_obj = DCterms()
         self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
         self.dc_author_preds = dc_terms_obj.get_dc_authors_list()
-        self.dc_inherit_preds = [
+        self.dc_inherit_preds = [  # these are dc-terms predicates items can inherit from a project
             self.PREDICATES_DCTERMS_CONTRIBUTOR,
             self.PREDICATES_DCTERMS_CREATOR,
             self.PREDICATES_DCTERMS_TEMPORAL,
