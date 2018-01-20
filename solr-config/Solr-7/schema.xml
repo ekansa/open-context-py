@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="opencontext" version="1.5">
+<schema name="opencontext" version="1.6">
     <!-- attribute "name" is the name of this schema and is only used for display purposes.
        version="x.y" is Solr's version number for the schema syntax and 
        semantics.  It should not normally be changed by applications.
@@ -139,10 +139,6 @@
     useful for Join replaces with other fields.  -->
     <field name="slug_type_uri_label" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
-    <!-- shard number, an integer value, initially based on geospatial tile coordinates -->
-    <field name="shard_id" type="int" indexed="true" stored="true" required="true" multiValued="false" />
-	
-
     <!-- project_uuid is required, identifies the project owning the solr doc -->
     <field name="project_uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
@@ -184,6 +180,9 @@
    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
 
     <!-- SPACE AND TIME FIELDS -->
+    <!-- the uuid of the (subjects) document that was the source of the geometry for this record -->
+    <field name="geosource_uuid"  type="string"  indexed="true"  stored="true"  multiValued="false" />
+    
     <!-- discovery location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
     <field name="discovery_geotile"  type="string"  indexed="true"  stored="false"  multiValued="true" />

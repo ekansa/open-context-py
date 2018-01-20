@@ -12,6 +12,7 @@ from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.ocitems.octypes.lookup import TypeLookup
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 
 
 # This class is used to dereference URIs or prefixed URIs
@@ -41,11 +42,14 @@ class Entity():
         self.comment = False
         self.thumbnail_media = False
         self.get_thumbnail = False
+        self.stable_id_uris = False
+        self.get_stable_ids = False
         self.context = False
         self.get_context = False
         self.get_icon = False
         self.icon = False
         self.ids_meta = False
+        self.slug_uri = False
 
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
@@ -59,7 +63,7 @@ class Entity():
             if (settings.CANONICAL_HOST + '/tables/') in identifier:
                 identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
             if link_entity_slug or (len(identifier) > 8):
-                if(link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
+                if link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://'):
                     ent_equivs = EntityEquivalents()
                     uris = ent_equivs.make_uri_variants(identifier)
                     ld_entities = LinkEntity.objects.filter(Q(uri__in=uris) | Q(slug=identifier))[:1]
@@ -105,7 +109,7 @@ class Entity():
                     manifest_item = Manifest.objects.get(Q(uuid=identifier) | Q(slug=identifier))
                 except Manifest.DoesNotExist:
                     manifest_item = False
-                if(manifest_item is not False):
+                if manifest_item is not False:
                     output = True
                     self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
                     self.uuid = manifest_item.uuid
@@ -114,7 +118,7 @@ class Entity():
                     self.item_type = manifest_item.item_type
                     self.class_uri = manifest_item.class_uri
                     self.project_uuid = manifest_item.project_uuid
-                    if(manifest_item.item_type == 'media' and self.get_thumbnail):
+                    if manifest_item.item_type == 'media' and self.get_thumbnail:
                         # a media item. get information about its thumbnail.
                         try:
                             thumb_obj = Mediafile.objects.get(uuid=manifest_item.uuid, file_type='oc-gen:thumbnail')
@@ -123,6 +127,30 @@ class Entity():
                         if thumb_obj is not False:
                             self.thumbnail_media = thumb_obj
                             self.thumbnail_uri = thumb_obj.file_uri
+                    elif manifest_item.item_type in ['persons', 'projects'] \
+                         or self.get_stable_ids:
+                        # get stable identifiers for persons or projects by default
+                        stable_ids = StableIdentifer.objects.filter(uuid=manifest_item.uuid)
+                        if len(stable_ids) > 0:
+                            self.stable_id_uris = []
+                            doi_uris = []
+                            orcid_uris = []
+                            other_uris = []
+                            for stable_id in stable_ids:
+                                if stable_id.stable_type in StableIdentifer.ID_TYPE_PREFIXES:
+                                    prefix = StableIdentifer.ID_TYPE_PREFIXES[stable_id.stable_type]
+                                else:
+                                    prefix = ''
+                                stable_uri = prefix + stable_id.stable_id
+                                if stable_id.stable_type == 'orcid':
+                                    orcid_uris.append(stable_uri)
+                                elif stable_id.stable_type == 'doi':
+                                    doi_uris.append(stable_uri)
+                                else:
+                                    other_uris.append(stable_uri)
+                            # now list URIs in order of importance, with ORCIDs and DOIs
+                            # first, followed by other stable URI types (Arks or something else)
+                            self.stable_id_uris = orcid_uris + doi_uris + other_uris
                     elif manifest_item.item_type == 'types':
                         tl = TypeLookup()
                         tl.get_octype_without_manifest(identifier)
@@ -135,6 +163,7 @@ class Entity():
                         if oc_pred is not False:
                             self.data_type = oc_pred.data_type
                             self.sort = oc_pred.sort
+                            self.slug_uri = 'oc-pred:' + str(self.slug)
                     elif manifest_item.item_type == 'projects':
                         # get a manifest object for the parent of a project, if it exists
                         ch_tab = '"oc_projects" AS "child"'

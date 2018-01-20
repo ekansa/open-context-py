@@ -28,6 +28,7 @@ class ProjectContext():
 
     def __init__(self, uuid=None, request=None):
         self.id_href = True  # use the local href as the Context's ID
+        self.context_path = '/contexts/projects/'  # path for the ID of the context resource
         self.uuid = uuid
         rp = RootPath()
         self.base_url = rp.get_baseurl()
@@ -45,14 +46,40 @@ class ProjectContext():
         self.pred_sql_dict_list = None
         self.most_recent_date = None
         if uuid is not None:
-            self.dereference_uuid_or_slug(uuid)
-            self.set_uri_urls(self.uuid)
-            if request is not None:
-                self.check_permissions(request)
+            if uuid is False or uuid == '0' or uuid == 'open-context':
+                self.uuid = '0'
+                self.manifest = Manifest()
+                self.manifest.uuid = '0'
+                self.manifest.project_uuid = '0'
+                self.manifest.label = 'Open Context (General)'
+                self.manifest.item_type = 'projects'
+            else:
+                self.dereference_uuid_or_slug(uuid)
+                self.set_uri_urls(self.uuid)
+                if request is not None:
+                    self.check_permissions(request)
 
     def make_context_json_ld(self):
         """ makes the context JSON-LD """
         if self.manifest is not False:
+            self.json_ld = LastUpdatedOrderedDict()
+            gen_context = GeneralContext()
+            context = gen_context.context
+            context = self.add_project_predicates_to_context(context)
+            self.json_ld['@context'] = context
+        else:
+            self.json_ld = False
+        return self.json_ld
+
+    def make_context_and_vocab_json_ld(self):
+        """ makes the context JSON-LD and describes the
+            vocabularies used in a project, including with linked
+            data annotations
+        """
+        if self.manifest is not False:
+            # we're making a JSON-LD document that includes an @graph vocabulary
+            self.context_path = '/contexts/project-vocabs/'
+            self.set_uri_urls(self.uuid)
             self.json_ld = LastUpdatedOrderedDict()
             gen_context = GeneralContext()
             context = gen_context.context
@@ -64,6 +91,14 @@ class ProjectContext():
             graph = self.add_project_predicates_and_annotations_to_graph(graph)
             graph = self.add_project_types_with_annotations_to_graph(graph)
             self.json_ld['@graph'] = graph
+            """
+            # the following adds graph relations, but not in the context
+            # of a named graph
+            for graph_rec in graph:
+                act_id = graph_rec['@id']
+                graph_rec.pop('@id')
+                self.json_ld[act_id] = graph_rec
+            """
         else:
             self.json_ld = False
         return self.json_ld
@@ -163,9 +198,33 @@ class ProjectContext():
             cursor = connection.cursor()
             cursor.execute(query, [self.manifest.uuid])
             rows = self.dictfetchall(cursor)
-            output = rows
-            self.pred_sql_dict_list = output
+            self.pred_sql_dict_list = rows
+        # now get predicates from the Open Context general vocabulary, if applicable
+        self.get_open_context_general_predicates()
         return self.pred_sql_dict_list
+
+    def get_open_context_general_predicates(self):
+        """ gets general open context predicates, used in mulitple projects """
+        if self.uuid == '0':
+            # do this for the Open Context all vocabulary
+            query = ('SELECT m.uuid AS predicate_uuid, '
+                     'm.label AS label, '
+                     'm.slug AS slug, '
+                     'm.class_uri AS class_uri, '
+                     'p.data_type AS data_type, '
+                     'm.revised AS updated '
+                     'FROM oc_manifest AS m '
+                     'LEFT JOIN oc_predicates AS p ON m.uuid = p.uuid '
+                     'WHERE m.project_uuid = (%s) AND m.item_type = \'predicates\' '
+                     'ORDER BY p.data_type, m.slug, m.class_uri; ')
+            cursor = connection.cursor()
+            cursor.execute(query, [self.manifest.uuid])
+            rows = self.dictfetchall(cursor)
+            if isinstance(self.pred_sql_dict_list, list):
+                self.pred_sql_dict_list += rows
+            else:
+                self.pred_sql_dict_list = rows
+            return rows
 
     def get_link_annotations_for_preds(self, pred_sql_dict_list):
         """ gets link annotations for predicates """
@@ -295,9 +354,9 @@ class ProjectContext():
         """ sets the uris and urls for this context resource """
         if self.uuid is None:
             self.uuid = uuid
-        self.href = self.base_url + '/contexts/projects/' \
+        self.href = self.base_url + self.context_path \
             + str(self.uuid) + '.json'  # URL for this
-        self.cannonical_href = settings.CANONICAL_HOST + '/contexts/projects/' \
+        self.cannonical_href = settings.CANONICAL_HOST + self.context_path \
             + str(self.uuid) + '.json'  # URI for main host
         if self.id_href:
             self.id = self.href

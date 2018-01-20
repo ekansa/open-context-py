@@ -14,6 +14,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
+from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 
 
 # These views display an HTML form for classifying import fields,
@@ -350,3 +351,23 @@ def proxy_header(request, target_url):
         return HttpResponse('Fail with HTTP status: ' + str(content),
                             status=status_code,
                             content_type='text/plain')
+
+
+@cache_control(no_cache=True)
+@never_cache
+def items_json(request, identifier):
+    # testing for using the new Open Context OCitem generator
+    # that better integrates caching
+    oc_item = OCitem()
+    if 'hashes' in request.GET:
+        oc_item.assertion_hashes = True
+    exists = oc_item.check_exists(identifier)
+    if exists:
+        oc_item.generate_json_ld()
+        json_output = json.dumps(oc_item.json_ld,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
+    else:
+        raise Http404

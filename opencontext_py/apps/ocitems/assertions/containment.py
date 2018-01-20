@@ -1,7 +1,7 @@
 import hashlib
 from django.conf import settings
 from django.db import models
-from django.core.cache import caches
+from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
@@ -14,6 +14,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 class Containment():
 
     def __init__(self):
+        self.cache_use = CacheUtilities()
         self.contents = {}
         self.contexts = {}
         self.contexts_list = []
@@ -21,7 +22,7 @@ class Containment():
         self.related_subjects = False  # subject items related to an item
         self.use_cache = True
         self.redis_ok = True
-
+        
     def get_project_top_level_contexts(self, project_uuid, visible_only=True):
         """
         Gets (from DB) a list the top level contexts in a project hierarchy,
@@ -72,44 +73,39 @@ class Containment():
     def get_immediate_parents(self, child_uuid, obs_num=1):
         """ uses the cache or database get the immediate parents of a child """
         parents = None
+        cache_id = self.cache_use.make_memory_cache_key('contained-' + str(obs_num),
+                                                        child_uuid)
         if self.use_cache:
-            key = self.make_memory_cache_key('par-up-',
-                                             child_uuid,
-                                             {'obs_num': obs_num})
-            parents = self.get_cache_object(key)
+            parents = self.cache_use.get_cache_object(cache_id)
         if parents is None:
             parents = Assertion.objects.filter(object_uuid=child_uuid,
-                                               obs_num=1,
+                                               obs_num=obs_num,
                                                predicate_uuid=Assertion.PREDICATES_CONTAINS)
             if self.use_cache:
-                self.save_cache_object(key,
-                                       parents)
+                self.cache_use.save_cache_object(cache_id,
+                                                 parents)
         return parents
 
-    def get_parents_by_child_uuid(self, child_uuid, recursive=True, visibile_only=True):
+    def get_parents_by_child_uuid(self, child_uuid, recursive=True):
         """
         creates a list of parent uuids from the containment predicate,
         via the cache or DB queries. Defaults to a recursive function
         to get all parent uuids
         """
-        parent_uuid = False
-        try:
-            parents = self.get_immediate_parents(child_uuid, 1)
-            for parent in parents:
-                if parent.obs_node not in self.contexts:
-                    self.contexts[parent.obs_node] = []
-            for parent in parents:
+        parents = self.get_immediate_parents(child_uuid, 1)
+        for parent in parents:
+            if parent.obs_node not in self.contexts:
+                self.contexts[parent.obs_node] = []
+        for parent in parents:
+            if parent.visibility != 0:
                 parent_uuid = parent.uuid
                 if parent_uuid not in self.contexts_list:
                     self.contexts_list.append(parent_uuid)
                 self.contexts[parent.obs_node].append(parent_uuid)
                 if recursive and (self.recurse_count < 20):
                     self.contexts = self.get_parents_by_child_uuid(parent_uuid,
-                                                                   recursive,
-                                                                   visibile_only)
-            self.recurse_count += 1
-        except Assertion.DoesNotExist:
-            parent_uuid = False
+                                                                   recursive)
+        self.recurse_count += 1
         return self.contexts
 
     def get_children_by_parent_uuid(self, parent_uuid, recursive=False, visibile_only=True):
@@ -117,24 +113,21 @@ class Containment():
         creates a list of children uuids from the containment predicate, defaults to not being recursive function
         to get all children uuids
         """
-        try:
-            children = Assertion.objects\
-                                .filter(uuid=parent_uuid,
-                                        predicate_uuid=Assertion.PREDICATES_CONTAINS)\
-                                .order_by('sort')
-            for child in children:
-                if(child.obs_node not in self.contents):
-                    self.contents[child.obs_node] = []
-            for child in children:
-                child_uuid = child.object_uuid
-                self.contents[child.obs_node].append(child_uuid)
-                if recursive and (self.recurse_count < 20):
-                    self.contents = self.get_children_by_parent_uuid(child_uuid,
-                                                                     recursive,
-                                                                     visibile_only)
-            self.recurse_count += 1
-        except Assertion.DoesNotExist:
-            child_uuid = False
+        children = Assertion.objects\
+                            .filter(uuid=parent_uuid,
+                                    predicate_uuid=Assertion.PREDICATES_CONTAINS)\
+                            .order_by('sort')
+        for child in children:
+            if(child.obs_node not in self.contents):
+                self.contents[child.obs_node] = []
+        for child in children:
+            child_uuid = child.object_uuid
+            self.contents[child.obs_node].append(child_uuid)
+            if recursive and (self.recurse_count < 20):
+                self.contents = self.get_children_by_parent_uuid(child_uuid,
+                                                                 recursive,
+                                                                 visibile_only)
+        self.recurse_count += 1
         return self.contents
 
     def get_related_subjects(self, uuid, reverse_links_ok=True):
@@ -170,7 +163,7 @@ class Containment():
             rel_subject_uuid = rel_sub_uuid_list[0]
             parents = self.get_parents_by_child_uuid(rel_subject_uuid)
             # add the related subject as the first item in the parent list
-            if(len(parents) > 0):
+            if len(parents) > 0:
                 use_key = False
                 for key, parent_list in parents.items():
                     use_key = key
@@ -187,48 +180,48 @@ class Containment():
         if not found, looks up parent items
         """
         metadata_items = False
-        if(len(subject_list) < 1):
+        if len(subject_list) < 1:
             # can't find a related subject uuid
             # print(" Sad, an empty list! \n")
             return metadata_items
         else:
+            # the assumption is that the most specific (smallest, child) contexts are listed
+            # first, followed by the more general contexts. If space or time metadata
+            # is discovered, we break out of the loop so as to return the most specific
+            # metadata in the list
             if do_parents:
                 self.contexts = {}
                 self.contexts_list = []
             for search_uuid in subject_list:
                 # print(" trying: " + search_uuid + "\n")
-                if metadata_type == 'geo':
-                    metadata_items = Geospace.objects.filter(uuid=search_uuid)
-                    if len(metadata_items) >= 1:
-                        break
-                    else:
-                        metadata_items = False
-                elif metadata_type == 'temporal':
-                    # get temporal metadata
-                    lequiv = LinkEquivalence()
-                    subjects = lequiv.get_identifier_list_variants(search_uuid)
-                    predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
-                    metadata_items = LinkAnnotation.objects\
-                                                   .filter(subject__in=subjects,
-                                                           predicate_uri__in=predicates)
-                    if len(metadata_items) >= 1:
-                        break
-                    else:
-                        metadata_items = False
+                cache_id = self.cache_use.make_memory_cache_key('meta-' + str(metadata_type),
+                                                                search_uuid)
+                if self.use_cache:
+                    # use the cache to look for metadata
+                    metadata_items = self.cache_use.get_cache_object(cache_id)
+                    if metadata_items is None:
+                        # cache was empty, use the database
+                        metadata_items = self.get_db_geochron_from_search_uuid(search_uuid,
+                                                                               metadata_type)
+                        self.cache_use.save_cache_object(cache_id,
+                                                         metadata_items)
                 else:
-                    metadata_items = Event.objects.filter(uuid=search_uuid)
-                    if len(metadata_items) >= 1:
-                        break
-                    else:
-                        # can't find any vent, build a list of parent uuids to search
-                        metadata_items = False
-                if isinstance(metadata_items, list):
+                    # don't use the cache, just the database
+                    metadata_items = self.get_db_geochron_from_search_uuid(search_uuid,
+                                                                           metadata_type)
+                # now make sure empty lists of metadata items are set to False
+                if metadata_items is not False:
                     if len(metadata_items) < 1:
                         metadata_items = False
-                if do_parents and metadata_items is False:
+                if metadata_items is not False:
+                    # OK! We have some metadata for the search_uuid,
+                    # break the loop so we don't look at a more general context
+                    break
+                elif do_parents and metadata_items is False:
+                    # we don't have metadata yet, and we're also to look in parents.
                     self.recurse_count = 0
                     self.get_parents_by_child_uuid(search_uuid)
-            if(metadata_items is False and do_parents):
+            if metadata_items is False and do_parents:
                 # print(" going for parents: " + str(self.contexts_list) + "\n")
                 # use the list of parent uuid's from the context_list. It's in order of more
                 # specific to more general
@@ -237,16 +230,46 @@ class Containment():
                                                                      False)
         return metadata_items
 
+    def get_db_geochron_from_search_uuid(self, search_uuid, metadata_type):
+        """ gets geospatial, event, or temporal metadata objects for a search_uuid """
+        metadata_items = False
+        if metadata_type == 'geo':
+            metadata_items = Geospace.objects.filter(uuid=search_uuid)
+        elif metadata_type == 'temporal':
+            # get temporal metadata
+            lequiv = LinkEquivalence()
+            subjects = lequiv.get_identifier_list_variants(search_uuid)
+            predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
+            metadata_items = LinkAnnotation.objects\
+                                           .filter(subject__in=subjects,
+                                                   predicate_uri__in=predicates)
+        else:
+            metadata_items = Event.objects.filter(uuid=search_uuid)
+        if isinstance(metadata_items, list):
+            if len(metadata_items) < 1:
+                metadata_items = False
+        return metadata_items
+
     def get_temporal_from_project(self, project_uuid):
         """ gets temporal metadata by association with a project """
-        lequiv = LinkEquivalence()
-        subjects = lequiv.get_identifier_list_variants(project_uuid)
-        predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
-        metadata_items = LinkAnnotation.objects\
-                                       .filter(subject__in=subjects,
-                                               predicate_uri__in=predicates)
-        if len(metadata_items) < 1:
-            metadata_items = False
+        metadata_items = None
+        cache_id = self.cache_use.make_memory_cache_key('meta-proj-temp-',
+                                                        project_uuid)
+        if self.use_cache:
+            # use the cache to look for metadata
+            metadata_items = self.cache_use.get_cache_object(cache_id)
+        if metadata_items is None:
+            lequiv = LinkEquivalence()
+            subjects = lequiv.get_identifier_list_variants(project_uuid)
+            predicates = lequiv.get_identifier_list_variants('dc-terms:temporal')
+            metadata_items = LinkAnnotation.objects\
+                                           .filter(subject__in=subjects,
+                                                   predicate_uri__in=predicates)
+            if len(metadata_items) < 1:
+                metadata_items = False
+            if self.use_cache:
+                self.cache_use.save_cache_object(cache_id,
+                                                 metadata_items)
         return metadata_items
 
     def get_related_geochron(self, uuid, item_type, metadata_type):
@@ -254,7 +277,7 @@ class Containment():
         gets the most specific geospatial data related to an item. if not a 'subjects' type,
         looks first to find related subjects
         """
-        if(item_type != 'subjects'):
+        if item_type != 'subjects':
             subject_list = self.get_related_subjects(uuid)
         else:
             subject_list = []
@@ -313,36 +336,3 @@ class Containment():
         else:
             output = prev_context_depth
         return output
-
-    def make_memory_cache_key(self, prefix, identifier, params=''):
-        """ makes a valid OK cache key """
-        hash_obj = hashlib.sha1()
-        concat_string = str(prefix) + ' ' + str(identifier) + ' ' + str(params)
-        hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
-
-    def get_cache_object(self, key):
-        """ gets a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                obj = cache.get(key)
-            except:
-                obj = None
-        else:
-            obj = None
-        return obj
-
-    def save_cache_object(self, key, obj):
-        """ saves a cached reddis object """
-        if self.redis_ok:
-            try:
-                cache = caches['redis']
-                cache.set(key, obj)
-                ok = True
-            except:
-                self.redis_ok = False
-                ok = False
-        else:
-            ok = False
-        return ok

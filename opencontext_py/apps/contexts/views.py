@@ -59,8 +59,7 @@ def search_view(request):
 # @never_cache
 def projects_json(request, uuid):
     """ provides a JSON-LD context for
-        the data in a project. This will include
-        annotations of predicates and types
+        the predicates used in a project. 
     """
     proj_context = ProjectContext(uuid, request)
     if 'hashes' in request.GET:
@@ -73,6 +72,44 @@ def projects_json(request, uuid):
             req_neg.check_request_support(request.META['HTTP_ACCEPT'])
         if req_neg.supported:
             json_ld = proj_context.make_context_json_ld()
+            json_output = json.dumps(json_ld,
+                                     indent=4,
+                                     ensure_ascii=False)
+            if 'callback' in request.GET:
+                funct = request.GET['callback']
+                return HttpResponse(funct + '(' + json_output + ');',
+                                    content_type='application/javascript' + "; charset=utf8")
+            else:
+                return HttpResponse(json_output,
+                                    content_type=req_neg.use_response_type + "; charset=utf8")
+        else:
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
+    else:
+        raise Http404
+
+
+@cache_control(no_cache=True)
+# @never_cache
+def project_vocabs_json(request, uuid):
+    """ provides a JSON-LD context for
+        the data in a project. This will include
+        a graph object that has annotations
+        annotations of predicates and types
+    """
+    proj_context = ProjectContext(uuid, request)
+    if 'hashes' in request.GET:
+        proj_context.assertion_hashes = True
+    if proj_context.manifest is not False:
+        req_neg = RequestNegotiation('application/json')
+        req_neg.supported_types = ['application/ld+json',
+                                   'application/vnd.geo+json']
+        if 'HTTP_ACCEPT' in request.META:
+            req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+        if req_neg.supported:
+            json_ld = proj_context.make_context_and_vocab_json_ld()
             json_output = json.dumps(json_ld,
                                      indent=4,
                                      ensure_ascii=False)
