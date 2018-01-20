@@ -4,10 +4,9 @@
        <a role="botton"
           class="btn btn-primary btn-lg btn-block" href="{{ item.content.fullfile }}"
           target="_blank">
-        {% if item.content.full_size > 0 %}
+        {% if item.content.full_size > 1 %}
         <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
-            Download File ({{ item.full_size_human }})</a>
-        </div>
+            Download File ({{ item.content.full_size_human }})</a>
         {%else%}
         <span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span>
             Download File</a>
