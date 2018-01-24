@@ -21,14 +21,17 @@ class SearchTemplate():
             self.ok = True
         else:
             self.ok = False
+        self.id = None  # the search ID (url of the current results)
         self.geotile_scope = ''  # geo-tile applicable to all data
         self.total_count = 0
         self.start_num = 0
         self.end_num = 0
         self.items_per_page = 0
         self.response_tile_zoom = 0
-        # is the item_type_limit is in effect?
+        # is the item_type_limit is in effect ?
         self.item_type_limited = False
+        # explicitly OK to show human remains ?
+        self.human_remains_ok = False
         self.filters = []
         self.paging = {}
         self.num_facets = []
@@ -43,6 +46,8 @@ class SearchTemplate():
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
+            if 'id' in self.json_ld:
+                self.id = self.json_ld['id']
             self.set_sorting()  # sorting in the templating
             self.set_paging()  # adds to the paging dict
             self.set_text_search()  # adds text search fields
@@ -95,6 +100,7 @@ class SearchTemplate():
             if 'oc-api:has-results' in self.json_ld:
                 for json_rec in self.json_ld['oc-api:has-results']:
                     rr = ResultRecord()
+                    rr.human_remains_ok = self.human_remains_ok
                     rr.parse_json_record(json_rec)
                     self.geo_records.append(rr)
 
@@ -227,6 +233,7 @@ class ResultRecord():
         self.icon_thumbnail = False
         self.extra = False
         self.dc = False
+        self.human_remains_ok = False
 
     def parse_json_record(self, json_rec):
         """ parses json for a
