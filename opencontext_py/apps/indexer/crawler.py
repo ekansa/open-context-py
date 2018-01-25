@@ -37,6 +37,9 @@ crawler.crawl(100)
         self.uuidlist = UUIDList().uuids
         # Connect to Solr
         self.solr = SolrConnection().connection
+        # Flag as human remains sensitive
+        self.human_remains = 0  # 0 means no, positive values means yes
+        
 
     def crawl(self, chunksize=100):
         '''
@@ -130,6 +133,9 @@ crawler.crawl(100)
                     try:
                         sd_obj = SolrDocument(uuid)
                         sd_obj.process_item()
+                        if isinstance(self.human_remains, int):
+                            if self.human_remains > 0:
+                                sd_obj.fields['human_remains'] = self.human_remains
                         solrdocument = sd_obj.fields
                         if crawlutil().is_valid_document(solrdocument):
                             if solrdocument is not None:
