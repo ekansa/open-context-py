@@ -174,14 +174,17 @@
 
     <!-- repo: identifier for the item's version control repository, don't store only want facets of these  -->
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
+    
+    <!-- human remains sensitive, 0 means not sensitive. Higher values more sensitive  -->
+    <field name="human_remains" type="int" indexed="true" stored="true" multiValued="false" required="false" />
 
    <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
 
     <!-- SPACE AND TIME FIELDS -->
-    <!-- the uuid of the (subjects) document that was the source of the geometry for this record -->
-    <field name="geosource_uuid"  type="string"  indexed="true"  stored="true"  multiValued="false" />
+    <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
+    <field name="disc_geosource"  type="string"  indexed="true"  stored="true"  multiValued="false" required="false" />
     
     <!-- discovery location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->

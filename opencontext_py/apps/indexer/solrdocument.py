@@ -91,6 +91,7 @@ sd_b = sd_obj.fields
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
+        self.fields['human_remains'] = 0  # default, item is not about human remains.
         self.geo_specified = False
         self.chrono_specified = False
 
