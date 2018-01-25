@@ -8,7 +8,29 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
+from django.views.decorators.cache import cache_control
+from django.views.decorators.cache import never_cache
 
+
+@cache_control(no_cache=True)
+@never_cache
+def human_remains_ok(request):
+    """ toggles if the user opts-in or opts-out
+        to view human remains
+        for this user's session
+    """
+    prev_opt_in = request.session.get('human_remains_ok')
+    if prev_opt_in:
+        request.session['human_remains_ok'] = False
+    else:
+        request.session['human_remains_ok'] = True
+    output = LastUpdatedOrderedDict()
+    output['previous_opt_in'] = prev_opt_in
+    output['new_opt_in'] = request.session['human_remains_ok']
+    return HttpResponse(json.dumps(output,
+                                   ensure_ascii=False,
+                                   indent=4),
+                        content_type='application/json; charset=utf8')
 
 def meters_to_lat_lon(request):
     """ Converts Web mercator meters to WGS-84 lat / lon """

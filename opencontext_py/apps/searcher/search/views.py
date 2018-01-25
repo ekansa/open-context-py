@@ -82,6 +82,10 @@ def html_view(request, spatial_context=None):
         human_remains_ok = True
     else:
         human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     if rd.security_ok is False:
         # looks like an abusive SQL injection request
         template = loader.get_template('400.html')
@@ -311,6 +315,10 @@ def subjects_html_view(request, spatial_context=None):
         human_remains_ok = True
     else:
         human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -556,6 +564,10 @@ def media_html_view(request, spatial_context=None):
         human_remains_ok = True
     else:
         human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     if rd.security_ok is False:
         template = loader.get_template('400.html')
         context = RequestContext(request,
