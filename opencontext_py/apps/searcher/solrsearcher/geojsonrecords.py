@@ -147,6 +147,9 @@ class GeoJsonRecords():
             properties['early bce/ce'] = rec_props_obj.early_date
             properties['late bce/ce'] = rec_props_obj.late_date
             properties['item category'] = rec_props_obj.category
+            if rec_props_obj.human_remains_flagged:
+                # the record is flagged to relate to human remains
+                properties['human remains flagged'] = rec_props_obj.human_remains_flagged
             if rec_props_obj.snippet is not False:
                 properties['snippet'] = rec_props_obj.snippet
             properties['thumbnail'] = rec_props_obj.thumbnail_scr
