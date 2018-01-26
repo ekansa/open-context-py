@@ -30,8 +30,6 @@ class SearchTemplate():
         self.response_tile_zoom = 0
         # is the item_type_limit is in effect ?
         self.item_type_limited = False
-        # explicitly OK to show human remains ?
-        self.human_remains_ok = False
         self.filters = []
         self.paging = {}
         self.num_facets = []
@@ -42,6 +40,8 @@ class SearchTemplate():
         self.active_sort = {}
         self.sort_options = []
         self.nav_items = settings.NAV_ITEMS
+        self.human_remains_ok = False  # are we explicitly allowing display of human remains?
+        self.human_remains_flag = False  # default to NO human remains flagged records in view
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
@@ -88,6 +88,9 @@ class SearchTemplate():
                             # this is a feature describing a result record
                             geor = ResultRecord()
                             geor.parse_json_record(feature)
+                            if geor.human_remains_flag:
+                                # we have a record in view flagged with human remains
+                                self.human_remains_flag = True
                             self.geo_records.append(geor)
                         elif feature['category'] == 'oc-api:geo-facet':
                             # this is a feature describing a geo-region facet
@@ -100,9 +103,12 @@ class SearchTemplate():
             if 'oc-api:has-results' in self.json_ld:
                 for json_rec in self.json_ld['oc-api:has-results']:
                     rr = ResultRecord()
-                    rr.human_remains_ok = self.human_remains_ok
                     rr.parse_json_record(json_rec)
+                    if rr.human_remains_flag:
+                        # we have a record in view flagged with human remains
+                        self.human_remains_flag = True
                     self.geo_records.append(rr)
+            print('human remains flag? ' + str(self.human_remains_flag))
 
     def set_sorting(self):
         """ set links for sorting records """
@@ -233,7 +239,7 @@ class ResultRecord():
         self.icon_thumbnail = False
         self.extra = False
         self.dc = False
-        self.human_remains_ok = False
+        self.human_remains_flag = False
 
     def parse_json_record(self, json_rec):
         """ parses json for a
@@ -277,6 +283,9 @@ class ResultRecord():
                     self.late_suffix = False
             if 'item category' in props:
                 self.category = props['item category']
+            if 'human remains flagged' in props:
+                if props['human remains flagged']:
+                    self.human_remains_flag = True
             if 'snippet' in props:
                 self.snippet = props['snippet']
                 self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')

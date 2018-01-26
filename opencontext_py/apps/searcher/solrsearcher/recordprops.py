@@ -112,7 +112,7 @@ class RecordProperties():
                 self.published = solr_rec['published']
             if 'human_remains' in solr_rec:
                 # is the record flagged as related to human remains ?human_remains
-                if solr_rec['human_remins'] > 0:
+                if solr_rec['human_remains'] > 0:
                     self.human_remains_flagged = True
         return output
 

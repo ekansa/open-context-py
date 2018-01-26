@@ -39,6 +39,8 @@
             {%endif%}
         </div>
         <div class="col-sm-4">
+            
+            {% include 'search/human-remains.html' %}
             {% include 'search/text-search.html' %}
             {% include 'search/filters.html' %}
             {% include 'search/facets.html' %}
@@ -75,6 +77,9 @@
             search_map.map.get_request_hash();
             search_map.map.get_geojson_regions();
         }
+        
+        // add human remains display class
+        var humanRemains = new human_remains();
         -->
     </script>
 </div>
