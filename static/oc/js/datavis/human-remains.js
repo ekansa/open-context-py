@@ -18,7 +18,6 @@ function human_remains(){
 			context: this,
 			success: this.toggle_display
 		});
-		return false;
 	};
 	
 	this.toggle_display = function(data){
@@ -35,7 +34,7 @@ function human_remains(){
 			this.hide_dom_nodes_by_class(this.img_class);
 			this.show_dom_nodes_by_class(this.warn_class);
 		}
-		return false;
+		// return false;
 	};
 	
 	this.hide_dom_nodes_by_class = function(class_name){
