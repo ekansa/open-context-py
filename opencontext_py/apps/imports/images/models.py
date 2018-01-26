@@ -1,6 +1,6 @@
 import os, sys, shutil
 import codecs
-from PIL import Image, ImageFile
+from PIL import Image, ImageFile, ImageFilter
 from django.db import models
 from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -15,7 +15,8 @@ from opencontext_py.apps.imports.images.models import ImageImport
 ii = ImageImport()
 ii.force_dashes = True
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-ii.make_image_versions('missing-previews')
+ii.gaussian_blur_radius = 2
+ii.make_image_versions('new-sphinx-draw')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -25,6 +26,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
         self.project_uuid = False
         self.source_id = False
         self.class_uri = False
+        self.gaussian_blur_radius = None
         self.thumbnail_width_height = 150
         self.preview_width = 650
         self.full_dir = 'full'
@@ -116,6 +118,15 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     if (im.width * im.height) >= self.single_size_limit:
                         pass
                         # the image is too big to for 32 bit python
+                    if isinstance(self.gaussian_blur_radius, int) \
+                       and im.mode != "RGB":
+                        # use a gaussian blur first!
+                        print('Converting and blurring image mode: ' + im.mode)
+                        im_rgba = im.convert("RGB")
+                        im = None
+                        blurred_image = im_rgba.filter(ImageFilter.GaussianBlur(radius=self.gaussian_blur_radius))
+                        im = blurred_image
+                        blurred_image = None
                 if im is not False:
                     ratio = 1  # default to same size
                     if im.width > self.preview_width:
@@ -178,9 +189,19 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     print('Cannot use as image: ' + src_file)
                     im = False
                 if im is not False:
+                    print('Source width: ' + str(im.width) + ', height: ' + str(im.height))
                     if (im.width * im.height) >= self.single_size_limit:
                         pass
                         # the image is too big to for 32 bit python
+                    if isinstance(self.gaussian_blur_radius, int) \
+                       and im.mode != "RGB":
+                        # use a gaussian blur first!
+                        print('Converting and blurring image mode: ' + im.mode)
+                        im_rgba = im.convert("RGB")
+                        im = None
+                        blurred_image = im_rgba.filter(ImageFilter.GaussianBlur(radius=self.gaussian_blur_radius))
+                        im = blurred_image
+                        blurred_image = None
                 if im is not False:
                     size = (self.thumbnail_width_height,
                             self.thumbnail_width_height)

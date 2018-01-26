@@ -76,6 +76,16 @@ def html_view(request, spatial_context=None):
         chart = True
     request_dict_json = rd.make_request_dict_json(request,
                                                   spatial_context)
+    # toggle if Human-Remains are OK to show in search results
+    # defaults to FALSE, requires user interface action to allow
+    if request.GET.get('human-remains') is not None:
+        human_remains_ok = True
+    else:
+        human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     if rd.security_ok is False:
         # looks like an abusive SQL injection request
         template = loader.get_template('400.html')
@@ -161,6 +171,7 @@ def html_view(request, spatial_context=None):
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
                 st.item_type_limited = item_type_limited
+                st.human_remains_ok = human_remains_ok
                 st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
@@ -178,6 +189,7 @@ def html_view(request, spatial_context=None):
                     'st': st,
                     'item_type': '*',
                     'chart': chart,
+                    'human_remains_ok': human_remains_ok,
                     'base_search_link': m_json_ld.base_search_link,
                     'url': url,
                     'json_url': json_url,
@@ -297,6 +309,16 @@ def subjects_html_view(request, spatial_context=None):
     chart = False # provide a chart, now only experimental
     if request.GET.get('chart') is not None:
         chart = True
+    # toggle if Human-Remains are OK to show in search results
+    # defaults to FALSE, requires user interface action to allow
+    if request.GET.get('human-remains') is not None:
+        human_remains_ok = True
+    else:
+        human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     rp = RootPath()
     base_url = rp.get_baseurl()
     rd = RequestDict()
@@ -374,6 +396,7 @@ def subjects_html_view(request, spatial_context=None):
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
                 st.item_type_limited = item_type_limited
+                st.human_remains_ok = human_remains_ok
                 st.process_json_ld()
                 template = loader.get_template('search/view.html')
                 props = []
@@ -396,6 +419,7 @@ def subjects_html_view(request, spatial_context=None):
                     'st': st,
                     'csv_downloader': csv_downloader,
                     'chart': chart,
+                    'human_remains_ok': human_remains_ok,
                     'item_type': 'subjects',
                     'base_search_link': m_json_ld.base_search_link,
                     'url': url,
@@ -534,6 +558,16 @@ def media_html_view(request, spatial_context=None):
         chart = True
     if spatial_context is not None:
         chart = True
+    # toggle if Human-Remains are OK to show in search results
+    # defaults to FALSE, requires user interface action to allow
+    if request.GET.get('human-remains') is not None:
+        human_remains_ok = True
+    else:
+        human_remains_ok = False
+        human_remains_opt_in = request.session.get('human_remains_ok')
+        if human_remains_opt_in:
+            # opt-in OK for this user in this session
+            human_remains_ok = True
     if rd.security_ok is False:
         template = loader.get_template('400.html')
         context = RequestContext(request,
@@ -608,6 +642,7 @@ def media_html_view(request, spatial_context=None):
                 # now make the JSON-LD into an object suitable for HTML templating
                 st = SearchTemplate(json_ld)
                 st.item_type_limited = item_type_limited
+                st.human_remains_ok = human_remains_ok
                 st.process_json_ld()
                 props = []
                 if 'prop' in request.GET:
@@ -625,6 +660,7 @@ def media_html_view(request, spatial_context=None):
                     'st': st,
                     'item_type': 'media',
                     'chart': chart,
+                    'human_remains_ok': human_remains_ok,
                     'base_search_link': m_json_ld.base_search_link,
                     'url': url,
                     'json_url': json_url,

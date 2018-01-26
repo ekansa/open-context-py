@@ -11,4 +11,4 @@ class UUIDList:
         self.uuids = Manifest.objects.values_list(
             'uuid', flat=True
             ).filter(Q(indexed__isnull=True) | Q(indexed__lt=F('revised'))
-                     ).iterator()
+                     ).order_by('sort').iterator()

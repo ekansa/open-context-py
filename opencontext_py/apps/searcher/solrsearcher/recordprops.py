@@ -44,6 +44,7 @@ class RecordProperties():
         self.geojson = False
         self.early_date = False
         self.late_date = False
+        self.human_remains_flagged = False  # flagged as relating to human remains
         self.thumbnail_href = False
         self.thumbnail_uri = False
         self.thumbnail_scr = False
@@ -109,6 +110,10 @@ class RecordProperties():
                 self.updated = solr_rec['updated']
             if 'published' in solr_rec:
                 self.published = solr_rec['published']
+            if 'human_remains' in solr_rec:
+                # is the record flagged as related to human remains ?human_remains
+                if solr_rec['human_remains'] > 0:
+                    self.human_remains_flagged = True
         return output
 
     def get_snippet(self, solr_rec):

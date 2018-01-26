@@ -21,13 +21,14 @@ class SearchTemplate():
             self.ok = True
         else:
             self.ok = False
+        self.id = None  # the search ID (url of the current results)
         self.geotile_scope = ''  # geo-tile applicable to all data
         self.total_count = 0
         self.start_num = 0
         self.end_num = 0
         self.items_per_page = 0
         self.response_tile_zoom = 0
-        # is the item_type_limit is in effect?
+        # is the item_type_limit is in effect ?
         self.item_type_limited = False
         self.filters = []
         self.paging = {}
@@ -39,10 +40,14 @@ class SearchTemplate():
         self.active_sort = {}
         self.sort_options = []
         self.nav_items = settings.NAV_ITEMS
+        self.human_remains_ok = False  # are we explicitly allowing display of human remains?
+        self.human_remains_flag = False  # default to NO human remains flagged records in view
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
         if self.ok:
+            if 'id' in self.json_ld:
+                self.id = self.json_ld['id']
             self.set_sorting()  # sorting in the templating
             self.set_paging()  # adds to the paging dict
             self.set_text_search()  # adds text search fields
@@ -83,6 +88,9 @@ class SearchTemplate():
                             # this is a feature describing a result record
                             geor = ResultRecord()
                             geor.parse_json_record(feature)
+                            if geor.human_remains_flag:
+                                # we have a record in view flagged with human remains
+                                self.human_remains_flag = True
                             self.geo_records.append(geor)
                         elif feature['category'] == 'oc-api:geo-facet':
                             # this is a feature describing a geo-region facet
@@ -96,7 +104,11 @@ class SearchTemplate():
                 for json_rec in self.json_ld['oc-api:has-results']:
                     rr = ResultRecord()
                     rr.parse_json_record(json_rec)
+                    if rr.human_remains_flag:
+                        # we have a record in view flagged with human remains
+                        self.human_remains_flag = True
                     self.geo_records.append(rr)
+            print('human remains flag? ' + str(self.human_remains_flag))
 
     def set_sorting(self):
         """ set links for sorting records """
@@ -227,6 +239,7 @@ class ResultRecord():
         self.icon_thumbnail = False
         self.extra = False
         self.dc = False
+        self.human_remains_flag = False
 
     def parse_json_record(self, json_rec):
         """ parses json for a
@@ -270,6 +283,9 @@ class ResultRecord():
                     self.late_suffix = False
             if 'item category' in props:
                 self.category = props['item category']
+            if 'human remains flagged' in props:
+                if props['human remains flagged']:
+                    self.human_remains_flag = True
             if 'snippet' in props:
                 self.snippet = props['snippet']
                 self.snippet = self.snippet.replace('<em>', '[[[[mark]]]]')

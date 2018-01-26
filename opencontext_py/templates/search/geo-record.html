@@ -50,18 +50,30 @@
         {%endif%}
     </td>
     <td>
-        {% if geo_rec.thumbnail != False %}
-        {%  if geo_rec.icon_thumbnail %}
-        <div style="max-width: 120px; padding-right:2px;">
+        {% if geo_rec.human_remains_flag == False or human_remains_ok or request.session.human_remains_ok %}
+            {% if geo_rec.thumbnail != False %}
+            {%  if geo_rec.icon_thumbnail %}
+            <div style="max-width: 120px; padding-right:2px;">
+                <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                    <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                </a>
+            </div>
+            {%else%}
             <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
                 <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
             </a>
-        </div>
+            {%endif%}
+            {%endif%}
         {%else%}
-        <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
-            <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
-        </a>
-        {%endif%}
+            <div class="alert alert-warning human-warning" role="alert">
+                <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span> Record of human remains or burial. Click
+                <a href="javascript:humanRemains.toggle_opt_in();">here</a> to OK viewing such records.
+            </div>
+            <div class="human-remains-div" style="display: none;">
+                <a href="{{ geo_rec.href }}" target="_blank" title="Click to view item in a new tab">
+                    <img src="{{ geo_rec.thumbnail }}" class="img-rounded img-responsive" alt="Thumbnail for {{ geo_rec.label }}" />
+                </a>
+            </div>
         {%endif%}
     </td>
 </tr>

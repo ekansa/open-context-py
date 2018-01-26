@@ -56,6 +56,8 @@ sri.reindex_uuids(uuids)
         # if not false, use a Postgres SQL query to get a list of
         # UUIDs from a list of projects
         self.project_uuids = False
+        # Flag all solrdocuments as human remains sensitive
+        self.human_remains = 0  # 0 means no, positive values means yes
         # if not false, use a Postgres SQL query to get a list of
         # UUIDs
         self.sql = False
@@ -133,6 +135,10 @@ sri.reindex_uuids(uuids)
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
                 crawler = Crawler()
+                if isinstance(self.human_remains, int):
+                    if self.human_remains > 0:
+                        # we're reindexing sensitive human remains
+                        crawler.human_remains  = self.human_remains
                 crawler.index_document_list(uuids, self.list_size)
                 self.reindex()
             else:
@@ -143,6 +149,10 @@ sri.reindex_uuids(uuids)
         """
         if isinstance(uuids, list):
             crawler = Crawler()
+            if isinstance(self.human_remains, int):
+                if self.human_remains > 0:
+                    # we're reindexing sensitive human remains
+                    crawler.human_remains  = self.human_remains
             crawler.index_document_list(uuids, self.list_size)
             return len(uuids)
         else:
