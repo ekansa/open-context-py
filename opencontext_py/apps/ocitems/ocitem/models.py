@@ -1237,6 +1237,7 @@ class ItemConstruction():
                     rel_meta = self.get_entity_metadata(geo.uuid)
                     if rel_meta is not False:
                         geo_props['reference-label'] = rel_meta.label
+                        geo_props['reference-slug'] = rel_meta.slug
                 else:
                     geo_props['reference-type'] = 'specified'
                     if self.assertion_hashes:
@@ -1314,6 +1315,7 @@ class ItemConstruction():
                         item_f_point.id = geo_node
                         item_f_point.geometry.id = geo_node_geom
                         item_f_point.properties['id'] = geo_node_props
+                        item_f_point.properties['contained-in-region'] = True
                         item_f_point.properties['location-region-note'] = 'This point represents the center of the '\
                                                                           'region containing this item.'
                         features_dict[geo_node] = item_f_point
