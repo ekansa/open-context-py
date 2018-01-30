@@ -5,6 +5,7 @@ from opencontext_py.libs.languages import Languages
 from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -22,8 +23,7 @@ class SolrDocument:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-uuid = '70554607-439a-4684-9b58-6f1de54ef403'
-uuid = 'AF4DFB9E-9E5F-45F7-891F-ADBE5A9AA0C4'
+uuid = '182646e0-15cb-49f0-a180-84fa35709959'
 sd_obj = SolrDocument(uuid)
 sd_obj.process_item()
 sd_a = sd_obj.fields
@@ -661,8 +661,14 @@ sd_b = sd_obj.fields
                     except KeyError:
                         in_region_dict['slug'] = None
                     if isinstance(in_region_dict['label'], str) \
-                       and isinstance(in_region_dict['uri'], str):
-                        
+                       and isinstance(in_region_dict['uri'], str)\
+                       and isinstance(in_region_dict['slug'], str):
+                        # ok we have the data needed to make a reference to a polygon discovery
+                        # region for that's the inferred location for this item
+                        self.fields['disc_geosource'] = self._concat_solr_string_value(in_region_dict['slug'],
+                                                                                       'id',
+                                                                                       in_region_dict['uri'],
+                                                                                       in_region_dict['label'])
                 if ftype == 'Point' \
                     and (loc_type == 'oc-gen:discovey-location'
                          or loc_type == 'oc-gen:geo-coverage')\
