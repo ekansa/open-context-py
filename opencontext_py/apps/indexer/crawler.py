@@ -186,7 +186,7 @@ crawler.crawl(100)
             print('Error: ' + \
                   str(self.solr.update(
                   documents, 'json', commit=False
-                  ).str(raw_content['error'])))
+                  ).raw_content['error']))
         return ok
 
     def index_single_document(self, uuid):
