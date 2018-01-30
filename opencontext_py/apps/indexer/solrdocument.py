@@ -630,9 +630,39 @@ sd_b = sd_obj.fields
                 try:
                     ref_type = feature['properties']['reference-type']
                     if ref_type == 'specified':
-                        self.geo_specified = True
+                        self.geo_specified = True    
                 except KeyError:
                     ref_type = False
+                try:
+                    # is this contained in a parent polygon?
+                    contained_in_region = feature['properties']['contained-in-region']
+                except KeyError:
+                    contained_in_region = False
+                if self.geo_specified:
+                    if loc_type in ['oc-gen:discovey-location', 'oc-gen:geo-coverage'] \
+                       and ftype != 'Point' and 'slug_type_uri_label' in self.fields:
+                        # we have a specified location for a region (not a point)
+                        self.fields['disc_geosource'] = self.fields['slug_type_uri_label']
+                elif loc_type in ['oc-gen:discovey-location', 'oc-gen:geo-coverage'] \
+                     and contained_in_region:
+                    # we've got an infered location, check to see if
+                    # we have a location contained in a region (polygon feature)
+                    in_region_dict = {}
+                    try:
+                        in_region_dict['label'] = feature['properties']['reference-label']
+                    except KeyError:
+                        in_region_dict['label'] = None
+                    try:
+                        in_region_dict['uri'] = feature['properties']['reference-uri']
+                    except KeyError:
+                        in_region_dict['uri'] = None
+                    try:
+                        in_region_dict['slug'] = feature['properties']['reference-slug']
+                    except KeyError:
+                        in_region_dict['slug'] = None
+                    if isinstance(in_region_dict['label'], str) \
+                       and isinstance(in_region_dict['uri'], str):
+                        
                 if ftype == 'Point' \
                     and (loc_type == 'oc-gen:discovey-location'
                          or loc_type == 'oc-gen:geo-coverage')\
@@ -662,8 +692,6 @@ sd_b = sd_obj.fields
                             print('Geo problem in: ' + self.oc_item.uuid + ' ' + str(coords[0]) + ' ' + str(coords[1]))
                         discovery_done = True  # so we don't repeat getting
                                                # discovery locations
-                if discovery_done:
-                    break
 
     def validate_geo_coordinate(self, coordinate, coord_type):
         """ validates a geo-spatial coordinate """
