@@ -183,15 +183,17 @@ class ValidateGeoJson():
         return rings_ok
     
     def polygon_area(self, coordinates):
-        """ calculates the area of a polygon """
+        """ calculates the area of a polygon, 
+            works by subtracting the area of interior
+            'donut hole' rings
+        """
         area = 0
         len_coords = len(coordinates)
         if len_coords > 0:
             area += abs(self.ring_area(coordinates[0]))
-            # area += self.ring_area(coordinates[0])
             for i in range(1, len_coords):
+                # now subtract the area defined by interior rings
                 area -= abs(self.ring_area(coordinates[i]))
-                # area -= self.ring_area(coordinates[i])
         return area
     
     def ring_area(self, coordinates):
