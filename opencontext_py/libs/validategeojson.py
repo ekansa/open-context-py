@@ -132,6 +132,50 @@ class ValidateGeoJson():
                     ]
                 ]
     
+    def fix_geometry_rings_dir(self, geometry_type, coordinates):
+        """ fixes the directions of rings of coordinates for
+            a MultiPolygon or Polygon geometry
+        """
+        if geometry_type == 'MultiPolygon':
+            # a MultiPoylgon will be a list of Polygons
+            fixed_coords = []
+            for poly_coordinates in coordinates:
+                fixed_poly_coords = self.fix_poly_rings_dir(poly_coordinates)
+                fixed_coords.append(fixed_poly_coords)
+        elif geometry_type == 'Polygon':
+            # is a simple polygon
+            fixed_coords = self.fix_poly_rings_dir(coordinates)
+        else:
+            # don't mess with coordinates we don't understand
+            fixed_coords = coordinates
+        return fixed_coords
+    
+    def validate_all_geometry_coordinates(self, geometry_type, coordinates):
+        """ Validates the directions of rings of coordinates for
+            a MultiPolygon or Polygon geometry
+            
+            Returns True if all rings are valid, False if 1 or more rings
+            are not valid (in terms of direction)
+        """
+        valid = True
+        if geometry_type == 'MultiPolygon':
+            # a MultiPoylgon will be a list of Polygons
+            for poly_coordinates in coordinates:
+                rings_ok = self.validate_poly_rings_dir(poly_coordinates)
+                for ring_ok in rings_ok:
+                    if ring_ok is False:
+                        valid = False
+        elif geometry_type == 'Polygon':
+            # is a simple polygon
+            rings_ok = self.validate_poly_rings_dir(coordinates)
+            for ring_ok in rings_ok:
+                if ring_ok is False:
+                    valid = False
+        else:
+            # don't mess with coordinates we don't understand
+            valid = None
+        return valid 
+    
     def fix_poly_rings_dir(self, coordinates):
         """ makes new coordinates with valid directions
             for a polygon geometry

@@ -10,6 +10,7 @@ from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.subjects.models import Subject
@@ -49,7 +50,7 @@ class GeoJsonPolygons():
                 cnt_i += 2
                 solr_facet_count = solr_polygons[cnt_i]
                 parsed_key = self.parse_solr_value_parts(poly_key)
-                print('Key: ' + str(parsed_key))
+                # print('Key: ' + str(parsed_key))
                 uuid = parsed_key['uuid']
                 if isinstance(uuid, str):
                     if uuid in self.subjects_objs \
@@ -69,24 +70,27 @@ class GeoJsonPolygons():
                         record['json'] = fl.make_request_url(new_rparams, '.json')
                         record['count'] = solr_facet_count
                         record['type'] = 'Feature'
-                        record['category'] = 'oc-api:geo-contained-in'
+                        record['category'] = 'oc-api:geo-contained-in-feature'
                         if self.min_date is not False \
                            and self.max_date is not False:
                             when = LastUpdatedOrderedDict()
-                            when['id'] = '#event-' + tile_key
+                            when['id'] = '#event-feature-' + uuid
                             when['type'] = 'oc-gen:formation-use-life'
                             # convert numeric to GeoJSON-LD ISO 8601
                             when['start'] = ISOyears().make_iso_from_float(self.min_date)
                             when['stop'] = ISOyears().make_iso_from_float(self.max_date)
                             record['when'] = when
                         geometry = LastUpdatedOrderedDict()
-                        geometry['id'] = '#geo-disc-poly-geom-' + uuid
+                        geometry['id'] = '#geo-disc-feature-geom-' + uuid
                         geometry['type'] =  geo_obj.ftype
                         coord_obj = json.loads(geo_obj.coordinates)
+                        v_geojson = ValidateGeoJson()
+                        coord_obj = v_geojson.fix_geometry_rings_dir(geo_obj.ftype,
+                                                                     coord_obj)
                         geometry['coordinates'] = coord_obj
                         record['geometry'] = geometry
                         properties = LastUpdatedOrderedDict()
-                        properties['id'] = '#geo-disc-poly-' + uuid
+                        properties['id'] = '#geo-disc-feature-' + uuid
                         properties['href'] = record['id']
                         properties['item-href'] = parsed_key['href']
                         properties['label'] = subj_obj.context
@@ -95,6 +99,11 @@ class GeoJsonPolygons():
                         properties['early bce/ce'] = self.min_date
                         properties['late bce/ce'] = self.max_date
                         record['properties'] = properties
+                        dump = json.dumps(record,
+                                          ensure_ascii=False, indent=4)
+                        geojson_obj = geojson.loads(dump)
+                        if geojson_obj.is_valid is False:
+                            print('geojson errors: ' + str(geojson_obj.errors()))
                         self.geojson_features.append(record)
 
     def get_polygon_db_objects(self, solr_polygons):
@@ -121,6 +130,7 @@ class GeoJsonPolygons():
                                .exclude(ftype__in=exclude_types)
             for geo_obj in geo_objs:
                 uuid = geo_obj.uuid
+                
                 self.geo_objs[uuid] = geo_obj
 
     def make_url_from_val_string(self,

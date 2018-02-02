@@ -94,6 +94,8 @@ class MakeJsonLd():
         if 'geo-facet' in self.act_responses:
             # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
+        if 'geo-feature' in self.act_responses:
+            # make polygons of features that contain search results
             self.make_containing_geopolygons(solr_json)
         if 'geo-project' in self.act_responses:
             # now check for project geojson
@@ -587,7 +589,7 @@ class MakeJsonLd():
         if len(date_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-date-facets'] = date_fields
 
-    def make_discovery_geotiles(self, solr_json):
+    def make_discovery_geotiles(self, solr_json, add_features=True):
         """ makes discovery geotile facets.
             discovery geotiles need
             special handling.
@@ -612,7 +614,8 @@ class MakeJsonLd():
                 self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
                 self.json_ld['oc-api:response-tile-zoom'] = geo_regions.result_depth
                 self.json_ld['oc-api:geotile-scope'] = geo_regions.geotile_scope
-                self.json_ld['features'] = geo_regions.geojson_regions
+                if add_features:
+                    self.json_ld['features'] = geo_regions.geojson_regions
                 
     def make_containing_geopolygons(self, solr_json):
         """ makes discovery geotile facets.
@@ -622,12 +625,15 @@ class MakeJsonLd():
             and removes them from the other list
             of facets
         """
+        if 'oc-api:response-tile-zoom' not in self.json_ld:
+            # we haven't yet determined the tile scope for this response, so do it now
+            self.make_discovery_geotiles(solr_json, False)
         solr_disc_geopoly_facets = self.get_path_in_dict(['facet_counts',
                                                          'facet_fields',
                                                          'disc_geosource'],
                                                          solr_json)
         if solr_disc_geopoly_facets is not False:
-            print('Found contained polygons')
+            # print('Found contained polygons')
             geo_polys = GeoJsonPolygons(solr_json)
             geo_polys.min_date = self.min_date
             geo_polys.max_date = self.max_date
