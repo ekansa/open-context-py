@@ -131,6 +131,23 @@ if 'SECURE_SSL_REDIRECT' in secrets:
         DEFAULT_HTTPS = True
 
 
+# EZID Authentication and configuration
+# This is used to interact with the EZID service
+# to make and manage persistent identifiers
+EZID_USERNAME = False
+EZID_PASSWORD = False
+EZID_ARK_SHOULDER = False
+EZID_DOI_SHOULDER = False
+if 'EZID_USERNAME' in secrets:
+    EZID_USERNAME = get_secret('EZID_USERNAME')
+if 'EZID_PASSWORD' in secrets:
+    EZID_PASSWORD = get_secret('EZID_PASSWORD')
+if 'EZID_ARK_SHOULDER' in secrets:
+    EZID_ARK_SHOULDER = get_secret('EZID_ARK_SHOULDER')
+if 'EZID_DOI_SHOULDER' in secrets:
+    EZID_DOI_SHOULDER = get_secret('EZID_DOI_SHOULDER')
+
+
 # Application definition
 
 INSTALLED_APPS = (
