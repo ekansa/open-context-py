@@ -23,35 +23,39 @@ class EZIDmanage():
         """ makes an saves an ARK identifier by a uuid """
         ok = False
         oc_uri = None
-        oc_item = OCitem()
-        exists = oc_item.check_exists(uuid)
-        if oc_item.exists:
-            if metadata is None:
-                metadata = self.make_ark_metadata_by_uuid(uuid, oc_item)
-            if isinstance(metadata, dict):
-                if '_target' in metadata:
-                    oc_uri = metadata['_target']
-                else:
-                    oc_uri = URImanagement.make_oc_uri(oc_item.manifest.uuid,
-                                                       oc_item.item_type)
-                if isinstance(oc_uri, str):
-                    print('Make ARK id for: ' + oc_uri)
-                    ark_id = self.ezid.mint_identifier(oc_uri, metadata, 'ark')
-                    if isinstance(ark_id, str):
-                        # success! we have an ARK id!
-                        stable_id = ark_id.replace('ark:/', '')
-                        try:
-                            ok = True
-                            new_stable = StableIdentifer()
-                            new_stable.stable_id = stable_id
-                            new_stable.stable_type = 'ark'
-                            new_stable.uuid = oc_item.manifest.uuid
-                            new_stable.project_uuid = oc_item.manifest.project_uuid
-                            new_stable.item_type = oc_item.manifest.item_type
-                            new_stable.save()
-                        except:
-                            ok = False
-                            note = 'Identifier already in use'
+        arks = StableIdentifer.objects.filter(uuid=uuid,
+                                              stable_type='ark')[1]
+        if len(arks) < 1:
+            # the item doesn't yet have an ARK id, so make one!
+            oc_item = OCitem()
+            exists = oc_item.check_exists(uuid)
+            if oc_item.exists:
+                if metadata is None:
+                    metadata = self.make_ark_metadata_by_uuid(uuid, oc_item)
+                if isinstance(metadata, dict):
+                    if '_target' in metadata:
+                        oc_uri = metadata['_target']
+                    else:
+                        oc_uri = URImanagement.make_oc_uri(oc_item.manifest.uuid,
+                                                           oc_item.item_type)
+                    if isinstance(oc_uri, str):
+                        print('Make ARK id for: ' + oc_uri)
+                        ark_id = self.ezid.mint_identifier(oc_uri, metadata, 'ark')
+                        if isinstance(ark_id, str):
+                            # success! we have an ARK id!
+                            stable_id = ark_id.replace('ark:/', '')
+                            try:
+                                ok = True
+                                new_stable = StableIdentifer()
+                                new_stable.stable_id = stable_id
+                                new_stable.stable_type = 'ark'
+                                new_stable.uuid = oc_item.manifest.uuid
+                                new_stable.project_uuid = oc_item.manifest.project_uuid
+                                new_stable.item_type = oc_item.manifest.item_type
+                                new_stable.save()
+                            except:
+                                ok = False
+                                note = 'Identifier already in use'
         return ok           
     
     def make_ark_metadata_by_uuid(self, uuid, oc_item=None):
