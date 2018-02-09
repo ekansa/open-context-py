@@ -41,10 +41,12 @@ resp = ezid.mint_identifier(url, meta, 'ark')
         self.doi_shoulder = settings.EZID_DOI_SHOULDER  # shoulder (first part) for minting DOIs
         self.request_error = False
         self.request_url = False
+        self.new_ids = []
 
     def mint_identifier(self, oc_uri, metadata, id_type='ark'):
         """ mints a stable identifier of a given type, defaulting to ark
         """
+        new_id = None
         metadata['_target'] = oc_uri
         anvl = self.make_anvl_metadata_str(metadata)
         if self.delay_before_request > 0:
@@ -69,11 +71,21 @@ resp = ezid.mint_identifier(url, meta, 'ark')
             r.raise_for_status()
             self.request_url = r.url
             resp_txt = r.text
+            if 'success:' in r.text:
+                text_ex = r.text.split('success:')
+                if len(text_ex) < 2:
+                    new_id = False
+                else:
+                    new_id = text_ex[1].strip()
+                    new_id_dict = LastUpdatedOrderedDict()
+                    new_id_dict['uri'] = oc_uri
+                    new_id_dict['id'] = new_id
+                    self.new_ids.append(new_id_dict)
         except:
-            resp_txt = False
             self.request_url = r.url
             print('Error ' + str(r.text))
-        return resp_txt
+            new_id = False
+        return new_id
 
     def make_anvl_metadata_str(self, metadata):
         """ converts a dict of metadata into an ANVL formated
