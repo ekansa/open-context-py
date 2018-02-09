@@ -31,7 +31,9 @@ class metaARK():
     def make_metadata_dict(self):
         """ make a dictionary object of the metadata """
         metadata = LastUpdatedOrderedDict()
-        metadata[(self.META_PROFILE + '.who')] = self.who
-        metadata[(self.META_PROFILE + '.what')] = self.what
+        if isinstance(self.who, list):
+            self.make_who_list(make_who_list)
+        metadata[(self.META_PROFILE + '.who')] = str(self.who)
+        metadata[(self.META_PROFILE + '.what')] = str(self.what)
         metadata[(self.META_PROFILE + '.when')] = str(self.when)
         return metadata
