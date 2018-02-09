@@ -47,18 +47,9 @@ class EZIDmanage():
                         if isinstance(ark_id, str):
                             # success! we have an ARK id!
                             stable_id = ark_id.replace('ark:/', '')
-                            try:
-                                ok = True
-                                new_stable = StableIdentifer()
-                                new_stable.stable_id = stable_id
-                                new_stable.stable_type = 'ark'
-                                new_stable.uuid = oc_item.manifest.uuid
-                                new_stable.project_uuid = oc_item.manifest.project_uuid
-                                new_stable.item_type = oc_item.manifest.item_type
-                                new_stable.save()
-                            except:
-                                ok = False
-                                note = 'Identifier already in use'
+                            ok = self.save_oc_item_stable_id(oc_item,
+                                                             stable_id,
+                                                             'ark')
         return ok           
     
     def make_ark_metadata_by_uuid(self, uuid, oc_item=None):
@@ -111,25 +102,44 @@ class EZIDmanage():
                                                            oc_item.item_type)
                     if isinstance(oc_uri, str):
                         print('Make DOI id for: ' + oc_uri)
-                        doi_id = self.ezid.mint_identifier(oc_uri, metadata, 'doi')
+                        ezid_response = self.ezid.mint_identifier(oc_uri, metadata, 'doi')
                         if self.do_test:
-                            print('New DOI is: ' + str(doi_id))
-                        if isinstance(doi_id, str):
-                            # success! we have an DOI id!
-                            stable_id = doi_id.replace('doi:', '')
-                            try:
-                                ok = True
-                                new_stable = StableIdentifer()
-                                new_stable.stable_id = stable_id
-                                new_stable.stable_type = 'doi'
-                                new_stable.uuid = oc_item.manifest.uuid
-                                new_stable.project_uuid = oc_item.manifest.project_uuid
-                                new_stable.item_type = oc_item.manifest.item_type
-                                new_stable.save()
-                            except:
-                                ok = False
-                                note = 'Identifier already in use'
+                            print('EZID response: ' + str(ezid_response))
+                        if isinstance(ezid_response, str):
+                            if '|' in ezid_response:
+                                resp_ex = ezid_response.split('|')
+                                for resp_id in resp_ex:
+                                    if 'doi:' in resp_id:
+                                        ok = self.save_oc_item_stable_id(oc_item, resp_id, 'doi')
+                                    else:
+                                        pass
+                            else:
+                                ok = self.save_oc_item_stable_id(oc_item, ezid_response, 'doi')
         return ok           
+    
+    def save_oc_item_stable_id(self, oc_item, stable_id, stable_type='ark'):
+        """ saves stable_id for an oc_item object """
+        stable_id = stable_id.strip()
+        if 'doi:' in stable_id:
+            stable_type = 'doi'
+            stable_id = stable_id.replace('doi:', '')
+        elif 'ark:/' in stable_id:
+            stable_type = 'ark'
+            stable_id = stable_id.replace('ark:/', '')
+        print('Try to save ' + stable_type + ': ' + stable_id)
+        try:
+            ok = True
+            new_stable = StableIdentifer()
+            new_stable.stable_id = stable_id
+            new_stable.stable_type = stable_type
+            new_stable.uuid = oc_item.manifest.uuid
+            new_stable.project_uuid = oc_item.manifest.project_uuid
+            new_stable.item_type = oc_item.manifest.item_type
+            new_stable.save()
+        except:
+            ok = False
+            note = 'Identifier of type [' + stable_type + '] already exists.'
+        return ok
     
     def make_doi_metadata_by_uuid(self, uuid, oc_item=None):
         """ makes metadata for an ARK id """
@@ -150,12 +160,12 @@ class EZIDmanage():
                 meta_doi.publicationyear = str(datetime.datetime.now().year)
             creator_list = []
             if 'dc-terms:contributor' in oc_item.json_ld:
-                for dc_list in oc_item.json_ld['dc-terms:contributor']:
+                for dc_item in oc_item.json_ld['dc-terms:contributor']:
                     creator_list.append(str(dc_item['label']))
             if 'dc-terms:creator' in oc_item.json_ld and len(creator_list) < 1:
                 for dc_item in oc_item.json_ld['dc-terms:creator']:
                     creator_list.append(str(dc_item['label']))
-            meta_doi.make_creator_list(who_list)
+            meta_doi.make_creator_list(creator_list)
             metadata = meta_doi.make_metadata_dict()
             metadata['_target'] = oc_item.json_ld['id']
         return metadata
