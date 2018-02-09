@@ -18,6 +18,7 @@ from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
+from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta
 
 
 # OCitem is a very general class for all Open Context items.
@@ -74,7 +75,7 @@ class ItemSpatialTemporal():
             if self.manifest.item_type == 'projects':
                 # get project metadata objects directly
                 pm = ProjectMeta()
-                self.geo_meta = pm.get_project_geo_from_db(self.uuid)
+                self.geo_meta = pm.get_project_geo_from_db(self.manifest.uuid)
             act_contain = Containment()
             if self.geo_meta is False:
                 self.geo_meta = act_contain.get_related_geochron(self.manifest.uuid,
