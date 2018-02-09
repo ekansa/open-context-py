@@ -24,7 +24,7 @@ class EZIDmanage():
         ok = False
         oc_uri = None
         arks = StableIdentifer.objects.filter(uuid=uuid,
-                                              stable_type='ark')[1]
+                                              stable_type='ark')[:1]
         if len(arks) < 1:
             # the item doesn't yet have an ARK id, so make one!
             oc_item = OCitem()
