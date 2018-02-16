@@ -71,6 +71,9 @@ class ProjectShortID():
                 sumps = Project.objects\
                                .filter(short_id__gte=0)\
                                .aggregate(Max('short_id'))
-                short_id = sumps['short_id__max'] + 1
+                try:
+                    short_id = sumps['short_id__max'] + 1
+                except:
+                    short_id = 1
         return short_id
 
