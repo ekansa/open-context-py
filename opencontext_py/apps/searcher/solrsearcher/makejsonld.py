@@ -18,6 +18,7 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filters import ActiveFilters
 from opencontext_py.apps.searcher.solrsearcher.chronology import JsonLDchronology
 from opencontext_py.apps.searcher.solrsearcher.geojsonregions import GeoJsonRegions
+from opencontext_py.apps.searcher.solrsearcher.geojsonpolygons import GeoJsonPolygons
 from opencontext_py.apps.searcher.solrsearcher.geojsonprojects import GeoJsonProjects
 from opencontext_py.apps.searcher.solrsearcher.geojsonrecords import GeoJsonRecords
 from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
@@ -93,6 +94,9 @@ class MakeJsonLd():
         if 'geo-facet' in self.act_responses:
             # now check for discovery geotiles
             self.make_discovery_geotiles(solr_json)
+        if 'geo-feature' in self.act_responses:
+            # make polygons of features that contain search results
+            self.make_containing_geopolygons(solr_json)
         if 'geo-project' in self.act_responses:
             # now check for project geojson
             self.make_project_geojson(solr_json)
@@ -585,7 +589,7 @@ class MakeJsonLd():
         if len(date_fields) > 0 and 'facet' in self.act_responses:
             self.json_ld['oc-api:has-date-facets'] = date_fields
 
-    def make_discovery_geotiles(self, solr_json):
+    def make_discovery_geotiles(self, solr_json, add_features=True):
         """ makes discovery geotile facets.
             discovery geotiles need
             special handling.
@@ -610,7 +614,41 @@ class MakeJsonLd():
                 self.json_ld['oc-api:max-disc-tile-zoom'] = geo_regions.max_tile_precision
                 self.json_ld['oc-api:response-tile-zoom'] = geo_regions.result_depth
                 self.json_ld['oc-api:geotile-scope'] = geo_regions.geotile_scope
-                self.json_ld['features'] = geo_regions.geojson_regions
+                if add_features:
+                    self.json_ld['features'] = geo_regions.geojson_regions
+                
+    def make_containing_geopolygons(self, solr_json):
+        """ makes discovery geotile facets.
+            discovery geotiles need
+            special handling.
+            This finds any geodiscovery tiles
+            and removes them from the other list
+            of facets
+        """
+        if 'oc-api:response-tile-zoom' not in self.json_ld:
+            # we haven't yet determined the tile scope for this response, so do it now
+            self.make_discovery_geotiles(solr_json, False)
+        solr_disc_geopoly_facets = self.get_path_in_dict(['facet_counts',
+                                                         'facet_fields',
+                                                         'disc_geosource'],
+                                                         solr_json)
+        if solr_disc_geopoly_facets is not False:
+            # print('Found contained polygons')
+            geo_polys = GeoJsonPolygons(solr_json)
+            geo_polys.min_date = self.min_date
+            geo_polys.max_date = self.max_date
+            geo_polys.spatial_context = self.spatial_context
+            if 'oc-api:response-tile-zoom' in self.json_ld:
+                geo_polys.response_zoom_scope = self.json_ld['oc-api:response-tile-zoom']
+            geo_polys.process_solr_polygons(solr_disc_geopoly_facets)
+            if len(geo_polys.geojson_features) > 0:
+                if 'type' not in self.json_ld:
+                    self.json_ld['type'] = 'FeatureCollection'
+                if 'features' in self.json_ld:
+                    # we already have some features so add the new ones
+                    self.json_ld['features'] += geo_polys.geojson_features
+                else:
+                    self.json_ld['features'] = geo_polys.geojson_features
 
     def make_project_geojson(self, solr_json):
         """ makes project geojson based on a special
@@ -776,6 +814,9 @@ class MakeJsonLd():
             if 'document_count' in solr_facet_fields:
                 # remove document count facet
                 solr_facet_fields.pop('document_count', None)
+            if 'disc_geosource' in solr_facet_fields:
+                # remove document count facet
+                solr_facet_fields.pop('disc_geosource', None)
             # do this to consolidate facet fields for dcterms is referenced by
             consolidated_solr_facet_fields = LastUpdatedOrderedDict()
             dc_ref_field = 'dc_terms_isreferencedby___pred_id'

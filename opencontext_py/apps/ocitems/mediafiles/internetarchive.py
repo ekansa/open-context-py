@@ -31,9 +31,9 @@ from opencontext_py.apps.ocitems.mediafiles.internetarchive import InternetArchi
 ia_m = InternetArchiveMedia()
 ia_m.noindex = False
 ia_m.save_db = True
-ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/poggio-civitate/'
-ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/poggio-civitate/'
-ia_m.project_uuids.append('DF043419-F23B-41DA-7E4D-EE52AF22F92F')
+ia_m.remote_uri_sub = 'https://artiraq.org/static/opencontext/ottoman-tiles-fakahani-mosque/'
+ia_m.local_uri_sub = 'http://127.0.0.1:8000/static/exports/ottoman-tiles-images/'
+ia_m.project_uuids.append('2bc1f77d-fe36-41eb-99b9-c0261edb4f18')
 ia_m.archive_image_media_items()
 ia_m.errors
 
@@ -260,7 +260,7 @@ for med_full in med_files:
         item_metadata = {'collection': self.ia_collection}
         return item_metadata
 
-    def archive_image(self, man_obj):
+    def archive_image(self, man_obj, file_name=None, mf_file=None):
         """ does the work of archiving an image,
             1. gets the image from a remote server, makes a local file
             2. makes metadata
@@ -271,7 +271,8 @@ for med_full in med_files:
         if isinstance(json_ld, dict):
             # cache the remote file locally to upload it
             item_id = self.id_prefix + '-' + json_ld['slug']
-            file_name = self.get_cache_full_file(json_ld, man_obj)
+            if not isinstance(file_name, str):
+                file_name = self.get_cache_full_file(json_ld, man_obj)
             if not isinstance(file_name, str):
                 print('Failed to cache file!')
             else:
@@ -287,25 +288,40 @@ for med_full in med_files:
                 metadata = self.make_metadata_dict(json_ld, man_obj)
                 metadata['collection'] = self.ia_collection
                 metadata['mediatype'] = 'image'
+                if mf_file is not None:
+                    metadata = {}
                 # now upload the image file
                 dir = self.set_check_directory(self.cache_file_dir)
                 path = os.path.join(dir, file_name)
                 save_ia_files = False
+                """
+                print(str(metadata))
+                r = item.upload_file(path,
+                                     key=file_name,
+                                     metadata=metadata)
+                """
                 try:
                     r = item.upload_file(path,
                                          key=file_name,
                                          metadata=metadata)
                     if r.status_code == requests.codes.ok or self.save_db:
                         save_ia_files = True
+                    else:
+                        print('Bad status: ' + str(r.status_code))
                 except:
-                    print('Problem uploading: ' + file_name)
+                    print('Problem uploading: ' + path)
                     save_ia_files = False
                 # set the uri for the media item just uploaded
                 if save_ia_files:
                     ia_file_uri = self.make_ia_image_uri(item_id, file_name)
                     iiif_file_uri = self.make_ia_iiif_image_uri(item_id, file_name)
                     # now save the link to the IA full file
-                    mf = Mediafile()
+                    if mf_file is None:
+                        # make a new media file model object
+                        mf = Mediafile()
+                    else:
+                        # we're passing an existing media file model object, not making a new one
+                        mf = mf_file
                     mf.uuid = man_obj.uuid
                     mf.project_uuid = man_obj.project_uuid
                     mf.source_id = man_obj.source_id
@@ -320,22 +336,25 @@ for med_full in med_files:
                         error_msg += ' Cannot save oc_mediafile for ia-fullfile'
                         self.errors.append(error_msg)
                         ok = False
-                    # save the link to the IIIF version
-                    mf_b = Mediafile()
-                    mf_b.uuid = man_obj.uuid
-                    mf_b.project_uuid = man_obj.project_uuid
-                    mf_b.source_id = man_obj.source_id
-                    mf_b.file_type = self.IIIF_FILE_TYPE
-                    mf_b.file_uri = iiif_file_uri
-                    mf_b.filesize = 0
-                    try:
-                        mf_b.save()
-                        ok = True
-                    except:
-                        error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
-                        error_msg += ' Cannot save oc_mediafile for ia-iiif'
-                        self.errors.append(error_msg)
-                        ok = False
+                    # save the link to the IIIF version, but only if we're
+                    # not passing an existing media_file model object
+                    if mf_file is None:
+                        # newly archived image file, so make the IIIF
+                        mf_b = Mediafile()
+                        mf_b.uuid = man_obj.uuid
+                        mf_b.project_uuid = man_obj.project_uuid
+                        mf_b.source_id = man_obj.source_id
+                        mf_b.file_type = self.IIIF_FILE_TYPE
+                        mf_b.file_uri = iiif_file_uri
+                        mf_b.filesize = 0
+                        try:
+                            mf_b.save()
+                            ok = True
+                        except:
+                            error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
+                            error_msg += ' Cannot save oc_mediafile for ia-iiif'
+                            self.errors.append(error_msg)
+                            ok = False
         return ok
 
     def make_ia_image_uri(self, item_id, file_name):
@@ -396,7 +415,7 @@ for med_full in med_files:
 
     def make_metadata_dict(self, json_ld, man_obj):
         """ makes the metadata dict for the current item """
-        metadata = LastUpdatedOrderedDict()
+        metadata = {}
         metadata['uri'] = json_ld['id']
         metadata['title'] = self.make_title(json_ld, man_obj)
         metadata['partof'] = self.make_partof_metadata(json_ld, man_obj)

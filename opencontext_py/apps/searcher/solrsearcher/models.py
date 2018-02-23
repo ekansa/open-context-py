@@ -493,6 +493,9 @@ class SolrSearch():
             if 'proj' in request_dict:
                 if SolrDocument.ROOT_PREDICATE_SOLR not in query['facet.field']:
                     query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
+                    # we need to request a disc_geosource to get polygon regions of contexts
+                    query['facet.field'].append('disc_geosource')
+                    query['f.disc_geosource.facet.limit'] = -1
             elif SolrDocument.ROOT_PROJECT_SOLR not in query['facet.field']:
                 if self.item_type_limit != 'projects':
                     query['facet.field'].append(SolrDocument.ROOT_PROJECT_SOLR)
@@ -508,6 +511,9 @@ class SolrSearch():
                 if single_project_ok:
                     if SolrDocument.ROOT_PREDICATE_SOLR not in query['facet.field']:
                         query['facet.field'].append(SolrDocument.ROOT_PREDICATE_SOLR)
+                        # we need to request a disc_geosource to get polygon regions of contexts
+                        query['facet.field'].append('disc_geosource')
+                        query['f.disc_geosource.facet.limit'] = -1
         return query
 
     def add_root_discovery_geo(self,

@@ -54,7 +54,7 @@ class ItemGenerationCache():
                 self.cache_use.save_cache_object(cache_id,
                                                  context_json_ld,
                                                  True)
-        return context_json_ld
+        return output
 
     def get_entity(self, identifier):
         """ gets an entity either from the cache or from

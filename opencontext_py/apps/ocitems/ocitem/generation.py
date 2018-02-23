@@ -34,6 +34,7 @@ class OCitem():
         self.time_start = time.time()
         self.json_ld = LastUpdatedOrderedDict()
         self.assertion_hashes = False  # provide hash ids for assertions, useful for edits
+        self.exists = None
         self.uuid = None
         self.slug = None
         self.label = None
@@ -64,6 +65,7 @@ class OCitem():
         except Manifest.DoesNotExist:
             exists = False
             self.manifest = False
+        self.exists = exists
         return exists
 
     def generate_json_ld(self):

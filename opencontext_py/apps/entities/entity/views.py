@@ -95,6 +95,7 @@ def id_summary(request, identifier):
     entity_obj = False
     for test_id in id_list:
         ent = Entity()
+        ent.get_stable_ids = True
         found = ent.dereference(test_id)
         if found:
             entity_obj = LastUpdatedOrderedDict()
@@ -107,6 +108,7 @@ def id_summary(request, identifier):
             entity_obj['data_type'] = ent.data_type
             entity_obj['vocab_uri'] = ent.vocab_uri
             entity_obj['project_uuid'] = ent.project_uuid
+            entity_obj['stable_id_uris'] = ent.stable_id_uris
             break
     if entity_obj is not False:
         json_output = json.dumps(entity_obj,

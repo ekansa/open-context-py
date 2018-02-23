@@ -19,6 +19,7 @@ class SolrResponseTypes():
                      'facet',
                      'chrono-facet',
                      'geo-facet',
+                     'geo-feature',
                      'geo-project',
                      'geo-record',
                      'uuid',

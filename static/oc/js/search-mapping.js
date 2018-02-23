@@ -554,7 +554,11 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			for (var i = 0, length = count_keys.length; i < length; i++) { 
 				var count_key = count_keys[i];
 				var point = points[count_key];
-				feature_points.push(point);
+				if (point){
+					if (point.geometry.coordinates[0] && point.geometry.coordinates[1]){
+						feature_points.push(point);
+					}
+				}
 			}
 			// now switch the polygon regions for points
 			pgeo_json = {'type': "FeatureCollection",
