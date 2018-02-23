@@ -28,12 +28,13 @@ def index_view(request):
     if req_neg.supported:
         # requester wanted a mimetype we DO support
         template = loader.get_template('vocabularies/index.html')
-        context = RequestContext(request,
-                                 {'base_url': base_url,
-                                  'page_title': 'Open Context: Vocabularies + Ontologies',
-                                  'act_nav': 'vocabularies',
-                                  'nav_items': settings.NAV_ITEMS})
-        return HttpResponse(template.render(context))
+        context =  {
+            'base_url': base_url,
+            'page_title': 'Open Context: Vocabularies + Ontologies',
+            'act_nav': 'vocabularies',
+            'nav_items': settings.NAV_ITEMS
+        }
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(req_neg.error_message,
@@ -81,13 +82,14 @@ def html_view(request, identifier):
                                     content_type=req_neg.use_response_type + "; charset=utf8")
             else:
                 template = loader.get_template('vocabularies/view.html')
-                context = RequestContext(request,
-                                         {'item': t_vocab,
-                                          'base_url': base_url,
-                                          'page_title': 'Open Context: Vocabularies + Ontologies',
-                                          'act_nav': 'vocabularies',
-                                          'nav_items': settings.NAV_ITEMS})
-                return HttpResponse(template.render(context))
+                context = {
+                    'item': t_vocab,
+                    'base_url': base_url,
+                    'page_title': 'Open Context: Vocabularies + Ontologies',
+                    'act_nav': 'vocabularies',
+                    'nav_items': settings.NAV_ITEMS
+                }
+                return HttpResponse(template.render(context, request))
         else:
              # client wanted a mimetype we don't support
             return HttpResponse(req_neg.error_message,
