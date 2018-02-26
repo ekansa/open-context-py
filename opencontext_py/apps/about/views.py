@@ -206,6 +206,14 @@ def process_estimate(request):
                                  ensure_ascii=False)
         return HttpResponse(json_output,
                             content_type='application/json; charset=utf8')
+    elif request.method == 'GET':
+        cost = CostEstimator()
+        output = cost.process_estimate(request.GET)
+        json_output = json.dumps(output,
+                                 indent=4,
+                                 ensure_ascii=False)
+        return HttpResponse(json_output,
+                            content_type='application/json; charset=utf8')
     else:
         return HttpResponseForbidden
 

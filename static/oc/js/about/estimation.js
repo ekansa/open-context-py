@@ -16,7 +16,7 @@ function estimation(){
 		var data = this.make_estimate_data();
 		var url = this.make_url('/about/process-estimate');
 		return $.ajax({
-				type: "POST",
+				type: "GET",
 				url: url,
 				dataType: "json",
 				context: this,
