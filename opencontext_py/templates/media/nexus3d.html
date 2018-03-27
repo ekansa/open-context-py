@@ -27,7 +27,7 @@ function set_scene_dimensions(){
      if (scene_width < window.innerWidth * 0.33){
           scene_width = window.innerWidth * 0.5;
      }
-     scene_height = act_dom.offsetWidth * 1.25;
+     scene_height = scene_width * 1.15;
 }
 
 
@@ -59,7 +59,7 @@ var renderer = new THREE.WebGLRenderer( { antialias: false } );
 renderer.setClearColor( scene.fog.color );
 renderer.setPixelRatio( window.devicePixelRatio );
 set_scene_dimensions();
-renderer.setSize( scene_width , scene_height );
+renderer.setSize( scene_width * 0.98 , scene_height * 0.98 );
 
 var container = document.getElementById(container_dom_id);
 container.appendChild( renderer.domElement );

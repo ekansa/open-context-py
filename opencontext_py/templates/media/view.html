@@ -36,6 +36,12 @@
                          {% include 'media/x3dom.html' %}
                              
                         </div>
+                        {% elif item.nexus_3d != False %}
+                        <div class="preview-image">
+                         
+                         {% include 'media/nexus3d.html' %}
+                             
+                        </div>
                         {% elif item.geojson_file != False %}
                         
                         {% include 'media/geojson.html' %}
