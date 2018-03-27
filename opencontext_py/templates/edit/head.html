@@ -16,10 +16,9 @@
     <script src="{{ base_url }}/static/angularjs/abn_tree_directive.js"></script>
     <script src="{{ base_url }}/static/bootstrap/3.3.4/js/bootstrap.js"></script>
     
-    <link rel="stylesheet" href="{{ base_url }}/static/leaflet/main-latest/leaflet.css" />
-    <script src="{{ base_url }}/static/leaflet/main-latest/leaflet.js"></script>
-    <script src="https://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
-    <script src="{{ base_url }}/static/oc/js/GoogleLayers.js"></script>
-    <script src="{{ base_url }}/static/oc/js/item-mapping.js"></script>
+    
+    {% include 'mapping/headmap.html' %}
+    
+    <script src="{{ base_url }}/static/oc/js/mapping-rev/item-mapping.js"></script>
     <script src="{{ base_url }}/static/oc/js/tab-link.js"></script>
 </head>

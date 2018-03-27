@@ -20,46 +20,62 @@ function localize_oc_uri(uri){
 }
 
 function initmap() {
-    maxZoom = 25;
 	
 	map = L.map('map').setView([start_lat, start_lon], start_zoom); //map the map
 	map.fit_bounds = false;
 	bounds = new L.LatLngBounds();
 	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	    attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
-		maxZoom: maxZoom,
-		maxNativeZoom: 18
+		maxZoom: 26,
+		id: 'osm',
+		attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
-	var mapboxTiles = L.tileLayer('https://api.tiles.mapbox.com/v3/ekansa.map-tba42j14/{z}/{x}/{y}.png', {
-		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> ',
-		maxZoom: maxZoom,
-		maxNativeZoom: 18
+	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		maxZoom: 26,
+		id: 'mapbox-light',
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
+	});
+	
+	var mapboxDark = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		maxZoom: 26,
+		id: 'mapbox-dark',
+		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
    
 	var ESRISatelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> ',
-		maxZoom: maxZoom,
-		maxNativeZoom: 19
+		maxZoom: 26,
+		id: 'esri-sat',
+		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
-	var gmapRoad = new L.Google('ROADMAP');
-	gmapRoad.maxZoom = maxZoom;
-	gmapRoad.maxNativeZoom = 18;
-	var gmapSat = new L.Google('SATELLITE');
-	gmapSat.maxZoom = 20;
-	gmapSat.maxNativeZoom = 18;
-	var gmapTer = new L.Google('TERRAIN');
-    gmapTer.maxNativeZoom = 19;
-	gmapTer.maxZoom = 20;
-   
+	var gmapRoad = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'roadmap'
+		});
+	gmapRoad.id = 'gmap-road';
+	var gmapSat = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'satellite'
+		});
+	gmapSat.id = 'gmap-sat';
+	var gmapTer = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'terrain'
+		});
+	gmapTer.id = 'gmap-ter';
+	var gmapHybrid = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'hybrid'
+		});
+	gmapHybrid.id = 'gmap-hybrid';
 	var baseMaps = {
 		"Google-Terrain": gmapTer,
 		"Google-Satellite": gmapSat,
 		"ESRI-Satellite": ESRISatelliteTiles,
 		"Google-Roads": gmapRoad,
 		"OpenStreetMap": osmTiles,
-		"MapBox": mapboxTiles,
+		"Mapbox-Light": mapboxLight,
+		"Mapbox-Dark": mapboxDark,
 	};
     
 	// useful for seeting zooms. If only points, then we want to zoom
@@ -144,20 +160,19 @@ function initmap() {
 		onEachFeature: on_each_feature
 		}
 	);
-	map.fitBounds(act_layer.getBounds());
-	// set zooom controls appropriately
-	map.removeLayer(gmapSat);
-	map.addLayer(osmTiles);
-	map.removeLayer(osmTiles);
-	map.addLayer(gmapSat);
-	map.zoomOut(2);
+	if(point_features_only === false){
+		map.fitBounds(act_layer.getBounds());
+		map.zoomOut(2);
+	}
+	
+	act_layer.addTo(map);
 	var current_zoom = map.getZoom();
 	if (current_zoom > start_zoom && point_features_only){
 		// we are zoomed into far, so go out
+		alert('move out! ' + start_zoom);
 		map.setZoom(start_zoom);
 	}
 	if (current_zoom < 1){
 		map.setZoom(1);
 	}
-	act_layer.addTo(map);
 }

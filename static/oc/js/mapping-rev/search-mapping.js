@@ -8,7 +8,6 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	var map_dom_id = 'map';
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
-	var map_box_token = "pk.eyJ1IjoiZWthbnNhIiwiYSI6IlZFQ1RfM3MifQ.KebFObTZOeh9pDHM_yXY4g";
 	
 	this.base_search_link = base_search_link;
 	this.json_url = json_url; // base url for geo-json requests
