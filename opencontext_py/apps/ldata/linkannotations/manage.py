@@ -23,6 +23,12 @@ lam.make_von_den_driesch_equiv(project_uuid)
 
 from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
 lam = LinkAnnoManagement()
+project_uuid = '81d1157d-28f4-46ff-98dd-94899c1688f8'
+old_naa_proj_uuid = 'cbd24bbb-c6fc-44ed-bd67-6f844f120ad5'
+lam.make_naa_annotations(project_uuid, old_naa_proj_uuid)
+
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+lam = LinkAnnoManagement()
 parent_uri = 'http://eol.org/pages/2195' # molluscs
 child_uri = 'http://eol.org/pages/448836' # cuttlefish
 lam.add_skos_hierarachy(parent_uri, child_uri)
@@ -238,6 +244,93 @@ lam.add_skos_hierarachy(parent_uri, child_uri)
             between entities in the zooarch measurement
             ontology and predicates in a project
         """
+        preds = Predicate.objects\
+                         .filter(project_uuid=project_uuid,
+                                 data_type='xsd:double')
+        for pred in preds:
+            man_obj = False
+            try:
+                # try to find the manifest item
+                man_obj = Manifest.objects.get(uuid=pred.uuid)
+            except Manifest.DoesNotExist:
+                man_obj = False
+            if man_obj is not False:
+                l_ents = LinkEntity.objects\
+                                   .filter(label=man_obj.label,
+                                           vocab_uri='http://opencontext.org/vocabularies/open-context-zooarch/')[:1]
+                if len(l_ents) > 0:
+                    # a Match! Now let's make a close match assertion
+                    uri = l_ents[0].uri
+                    print(str(man_obj.label) + ' matches ' + uri)
+                    la = LinkAnnotation()
+                    la.subject = man_obj.uuid  # the subordinate is the subject
+                    la.subject_type = man_obj.item_type
+                    la.project_uuid = man_obj.project_uuid
+                    la.source_id = 'label-match'
+                    la.predicate_uri = equiv_pred
+                    la.object_uri = uri
+                    la.save()
+                    # save also that the unit of measurement is in MM
+                    la = LinkAnnotation()
+                    la.subject = man_obj.uuid  # the subordinate is the subject
+                    la.subject_type = man_obj.item_type
+                    la.project_uuid = man_obj.project_uuid
+                    la.source_id = 'label-match'
+                    la.predicate_uri = 'http://www.w3.org/2000/01/rdf-schema#range'
+                    la.object_uri = 'http://www.wikidata.org/wiki/Q174789'
+                    la.save()
+
+    def make_naa_annotations(self,
+                             project_uuid,
+                             naa_annotated_proj_uuid):
+        """ makes annotations to describe NAA
+            (Neutron Activation Analysis) attributes by
+            copying annoations from another project
+            with NAA attributes.
+        """
+        old_pred_uuids = []
+        old_preds = Predicate.objects\
+                             .filter(project_uuid=naa_annotated_proj_uuid,
+                                     data_type='xsd:double')
+        for old_pred in old_preds:
+            old_pred_uuids.append(old_pred.uuid)
+        old_pred_mans = Manifest.objects\
+                                .filter(uuid__in=old_pred_uuids,
+                                        project_uuid=naa_annotated_proj_uuid)\
+                                .order_by('label')
+        for old_pred_man in old_pred_mans:
+            new_man_pred = None
+            if len(old_pred_man.label) < 4:
+                # this has a short label, so more likely about a chemical
+                # element
+                new_man_preds = Manifest.objects\
+                                        .filter(item_type='predicates',
+                                                project_uuid=project_uuid,
+                                                label=old_pred_man.label)[:1]
+                if len(new_man_preds) > 0:
+                    # the new project has a predicate with a matching label
+                    new_man_pred = new_man_preds[0]
+            if new_man_pred is not None:
+                # we have a match between a predicate label in the old NAA project
+                # and the new project
+                print('-----------------------------')
+                print('Copy annotations from: ' + old_pred_man.label + ' (' + old_pred_man.uuid + ')')
+                print('To: ' + new_man_pred.uuid)
+                print('-----------------------------')
+                old_link_annos = LinkAnnotation.objects\
+                                               .filter(subject=old_pred_man.uuid)
+                for old_link_anno in old_link_annos:
+                    new_link_anno = old_link_anno
+                    new_link_anno.hash_id = None
+                    new_link_anno.subject = new_man_pred.uuid
+                    new_link_anno.subject_type = new_man_pred.item_type
+                    new_link_anno.project_uuid = new_man_pred.project_uuid
+                    new_link_anno.source_id = 'naa-link-annotations-method'
+                    try:
+                        new_link_anno.save()
+                    except:
+                        pass
+        
         preds = Predicate.objects\
                          .filter(project_uuid=project_uuid,
                                  data_type='xsd:double')
