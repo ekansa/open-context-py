@@ -143,7 +143,9 @@ class LinkEntityGeneration():
                         'http://arachne.dainst.org/entity/': 'arachne-ent',
                         'http://www.jstor.org/journal': 'jstor-jrn',
                         'http://www.jstor.org/stable': 'jstor',
-                        'http://scholarworks.sfasu.edu/ita': 'i-texas-a'
+                        'http://scholarworks.sfasu.edu/ita': 'i-texas-a',
+                        'http://doi.org': 'doi',
+                        'https://doi.org': 'doi'
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
