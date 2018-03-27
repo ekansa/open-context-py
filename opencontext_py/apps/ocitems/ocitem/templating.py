@@ -343,7 +343,6 @@ class TemplateItem():
                             rp = RootPath()
                             target_url = rp.convert_to_https(file_item['id'])
                             self.nexus_3d = self.make_cors_ok_url(target_url)
-                            # self.nexus_3d = file_item['id']
                             self.content['nexus_3d'] = file_item['id']
                             print('Nexus: ' + self.nexus_3d)
                     if 'dcat:size' in file_item:
