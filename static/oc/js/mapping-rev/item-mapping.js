@@ -162,7 +162,7 @@ function initmap() {
 	);
 	if(point_features_only === false){
 		map.fitBounds(act_layer.getBounds());
-		map.zoomOut(2);
+		// map.zoomOut(1);
 	}
 	
 	act_layer.addTo(map);
