@@ -81,6 +81,7 @@ class TemplateItem():
         self.iiif_server = False
         self.x3dom_model = False
         self.x3dom_textures = []
+        self.nexus_3d = False
         self.geojson_file = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
@@ -329,6 +330,7 @@ class TemplateItem():
                 self.content['thumbnail'] = False
                 self.content['x3dom_model'] = False
                 self.content['x3dom_textures'] = []
+                self.content['nexus_3d'] = False
                 self.content['gis_file'] = False
             fmath = FileMath()
             rp = RootPath()
@@ -336,6 +338,14 @@ class TemplateItem():
                 if file_item['type'] == 'oc-gen:fullfile':
                     self.content['fullfile'] = rp.convert_to_https(file_item['id'])
                     self.fulldownload = True
+                    if '.nxs' in self.content['fullfile']:
+                        if self.content['fullfile'][-4:] == '.nxs':
+                            rp = RootPath()
+                            target_url = rp.convert_to_https(file_item['id'])
+                            self.nexus_3d = self.make_cors_ok_url(target_url)
+                            # self.nexus_3d = file_item['id']
+                            self.content['nexus_3d'] = file_item['id']
+                            print('Nexus: ' + self.nexus_3d)
                     if 'dcat:size' in file_item:
                         if float(file_item['dcat:size']) > 0:
                             self.content['full_size'] = float(file_item['dcat:size'])

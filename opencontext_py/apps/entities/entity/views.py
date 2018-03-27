@@ -306,11 +306,16 @@ def proxy(request, target_url):
         content = target_url + ' ' + str(status_code)
     if ok:
         status_code = r.status_code
-        mimetype = r.headers['Content-Type']
         content = r.content
-        return HttpResponse(content,
-                            status=status_code,
-                            content_type=mimetype)
+        if 'Content-Type' in r.headers:
+            mimetype = r.headers['Content-Type']
+            return HttpResponse(content,
+                                status=status_code,
+                                content_type=mimetype)
+        else:
+            return HttpResponse(content,
+                                status=status_code,
+                                content_type='application/gzip')
     else:
         return HttpResponse('Fail with HTTP status: ' + str(content),
                             status=status_code,

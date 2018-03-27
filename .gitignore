@@ -21,6 +21,7 @@ static/imports/
 static/d3/
 static/openseadragon/
 static/chart/
+static/3d-nexus/
 static/bootstrap-slider/
 static/robots/robots.txt
 *.pyc
