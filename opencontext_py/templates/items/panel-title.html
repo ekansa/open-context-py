@@ -16,7 +16,7 @@
             <a title="Download the full version of this media resource" href="{{ item.content.fullfile }}" target="_blank"><span class="glyphicon glyphicon-cloud-download" aria-hidden="true"></span> Download File</a>
             {%endif%}
         {% else %}
-            {% if item.iiif_json %}
+            {% if item.iiif_json and item.full_doc_file == False %}
             <a title="Go to the full-size version of this image" href="{% url 'media_full'  item.uuid %}"><span class="glyphicon glyphicon-zoom-in" aria-hidden="true"></span> Dynamic Full Image</a>
             {% else %}
             {% if item.fulldownload %}
