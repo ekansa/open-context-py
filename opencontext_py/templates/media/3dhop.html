@@ -50,7 +50,7 @@
 			canvas_height = canvas_width * 1.15;
 		}
 	    
-		function old_setup3dhop() { 
+		function setup3dhop() { 
 			presenter = new Presenter("draw-canvas");
 		
 			presenter.setScene({
@@ -63,16 +63,6 @@
 			});
 		}
 		
-		function setup3dhop() { 
-			presenter = new Presenter("draw-canvas");
-		
-			presenter.setScene({
-				meshes: {
-					"{{ item.label }}" : { url: "{{ item.nexus_3d }}" }
-				}
-			});
-		}
-	    
 		function actionsToolbar(action) {
 			if(action=='home') presenter.resetTrackball(); 
 			else if(action=='zoomin') presenter.zoomIn();
