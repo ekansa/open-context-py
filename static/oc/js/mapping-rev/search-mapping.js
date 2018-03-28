@@ -8,6 +8,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	var map_dom_id = 'map';
 	var rows = 20; // default number of rows
 	var tile_constrained = false;
+	var initial_search_zoom = 10;
 	
 	this.base_search_link = base_search_link;
 	this.json_url = json_url; // base url for geo-json requests
@@ -16,7 +17,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		this.geodeep = response_tile_zoom; // geo-tile zoom level beyond current zoom level
 	}
 	else{
-		this.geodeep = 6; // geo-tile zoom level beyond current zoom level
+		this.geodeep = initial_map_zoom; // geo-tile zoom level beyond current zoom level
 	}
 	// this.response_types = 'geo-facet,chrono-facet'; // initial response type
 	this.response_types = 'geo-facet'; // initial response type
@@ -51,6 +52,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.json_url = this.json_url;
 	map.response_types = this.response_types;
 	map.geodeep = this.set_geodeep();
+	map.initial_zoom = map.geodeep;
 	// remove the geodeep parameter
 	this.json_url = removeURLParameter(this.json_url, 'geodeep');
 	//map.fit_bounds exists to set an inital attractive view
@@ -124,7 +126,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		"Mapbox-Light": mapboxLight,
 		"Mapbox-Dark": mapboxDark,
 	};
-	map._layersMaxZoom = 20;
+	
 	map.default_base_name = "Google-Satellite";
 	map.base_name = map.default_base_name;
 	map.act_base_map = gmapSat; //default base map
@@ -415,8 +417,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			region_layer.min_value = min_value;
 			tile_region_layer = region_layer;
 			if (map.fit_bounds) {
-				//map.fit_bounds exists to set an inital attractive view
-				map.fitBounds(region_layer.getBounds());
+				//set an inital attractive view
+				map.fitBounds(region_layer.getBounds(), maxZoom=20);
 			}
 			region_layer.addTo(map);
 			if (region_controls) {
@@ -617,6 +619,13 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			if (region_controls) {
 				map.toggle_tile_controls();
 			}
+			var act_zoom = map.getZoom();
+			if(act_zoom > 20){
+				map.setZoom(20);
+			}
+			if(feature_points.length < 2 && act_zoom > initial_search_zoom){
+				map.setZoom(initial_search_zoom);
+			}
 		}
 		map.button_ready = true;
 	}
@@ -708,8 +717,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 					}
 				map.show_title_menu('geo-facet', map.geodeep);
 				map.add_region_controls();
-				// L.control.scale().remove();
-				// var scale = L.control.scale().addTo(map); 
+				
 				if (map.req_hash != false) {
 					// for the initial load of the page,
 					// go back to the original request hash
