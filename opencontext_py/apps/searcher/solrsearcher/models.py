@@ -19,13 +19,20 @@ from opencontext_py.apps.searcher.solrsearcher.projquery import ProjectsQuery
 # to get useful information about the entity
 class SolrSearch():
 
-    DEFAULT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR,
-                            SolrDocument.ROOT_PROJECT_SOLR,
-                            'image_media_count',
-                            'other_binary_media_count',
-                            'document_count']
+    DEFAULT_FACET_FIELDS = [
+        SolrDocument.ROOT_LINK_DATA_SOLR,
+        SolrDocument.ROOT_PROJECT_SOLR,
+        'image_media_count',
+        'other_binary_media_count',
+        'document_count'
+    ]
 
-    PROJECT_FACET_FIELDS = [SolrDocument.ROOT_LINK_DATA_SOLR]
+    PROJECT_FACET_FIELDS = [
+        # SolrDocument.ROOT_LINK_DATA_SOLR
+        'dc_terms_subject___pred_id',
+        'dc_terms_coverage___pred_id',
+        'dc_terms_temporal___pred_id'
+    ]
 
     # the number of rows to display by default for different item types
     ITEM_TYPE_ROWS = {'projects': 100}
