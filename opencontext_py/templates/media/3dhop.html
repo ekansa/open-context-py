@@ -59,6 +59,12 @@
 				},
 				modelInstances : {
 					"Model1" : { mesh : "{{ item.label }}" } 
+				},
+				trackball: {
+				      	type: SphereTrackball,  // wider range of rotation?
+				      	trackOptions : {		
+						startDistance : 1.8,
+		      			}	
 				}
 			});
 		}
