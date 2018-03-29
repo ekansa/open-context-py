@@ -78,24 +78,8 @@
                         {% if item.x3dom_model != False %}
                         <div class="preview-image">
                          
-                         <script type='text/javascript' src='https://x3dom.org/download/1.7.2/x3dom.js'> </script> 
-                         <link rel='stylesheet' type='text/css' href='https://x3dom.org/download/1.7.2/x3dom.css'></link>
-                         
-                         <script type='text/javascript' src='https://artiraq.org/static/opencontext/gabii/gabii-3d/3d-view-translate.js'> </script>
-                         
-                              <div id="show-div"></div>
-                              <x3d id='x3dom' style="min-width:600px; width:100%; min-height:600px;"
-                                    showStat='false' showLog='false' x='0px' y='0px' >
-                                <scene id='x3dScene'>
-                                <navigationInfo type='"examine" "any"' id="navType"></navigationInfo>
+                         {% include 'media/x3dom.html' %}
                                  
-                                 <Viewpoint id='x3dviewpoint'> </Viewpoint>
-                               
-                                 <inline id="x3dInline" onload='modelOnLoad();' url="{{ item.x3dom_model }}" >  </inline>
-                                </scene>
-                               </x3d>
-                             
-                             
                         </div>
                         {% elif item.nexus_3d != False %}
                         <div class="preview-image">

@@ -233,6 +233,7 @@ class SolrSearch():
             query['fq'] += proj_query['fq']
             query['facet.field'] += proj_query['facet.field']    
         # Dublin-Core terms
+        dc_query_term_exists = False
         dc_terms_obj = DCterms()
         dc_params = dc_terms_obj.get_dc_params_list()
         for dc_param in dc_params:
@@ -241,6 +242,7 @@ class SolrSearch():
                                               False,
                                               True)
             if dc_terms is not False:
+                dc_query_term_exists = True
                 dc_query = qm.process_dc_term(dc_param,
                                               dc_terms)
                 query['fq'] += dc_query['fq']
@@ -272,6 +274,10 @@ class SolrSearch():
                 query['rows'] = self.ITEM_TYPE_ROWS[self.item_type_limit]
             if self.item_type_limit in self.ITEM_TYPE_FACET_MIN:
                 query['facet.mincount'] = self.ITEM_TYPE_FACET_MIN[self.item_type_limit]
+                if dc_query_term_exists is True and query['facet.mincount'] > 1:
+                    # we're already limiting by a DC terms search, so allow all
+                    # search facets
+                    query['facet.mincount'] = 1
             if self.item_type_limit in self.ITEM_TYPE_FACETFIELDS:
                 for add_facet_field in self.ITEM_TYPE_FACETFIELDS[self.item_type_limit]:
                     if add_facet_field not in query['facet.field']:
