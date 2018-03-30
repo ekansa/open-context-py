@@ -74,6 +74,8 @@
 		      			}	
 				}
 			});
+			
+			presenter._onEndMeasurement = onEndMeasure;
 		}
 		
 		function actionsToolbar(action) {
@@ -81,7 +83,12 @@
 			else if(action=='zoomin') presenter.zoomIn();
 			else if(action=='zoomout') presenter.zoomOut(); 
 			else if(action=='light' || action=='light_on') { presenter.enableLightTrackball(!presenter.isLightTrackballEnabled()); lightSwitch(); }
-			else if(action=='measure' || action=='measure_on') { presenter.enableMeasurementTool(!presenter.isMeasurementToolEnabled()); measureSwitch(); }
+			else if(action=='measure' || action=='measure_on') {
+				presenter.enableMeasurementTool(
+					!presenter.isMeasurementToolEnabled()
+				);
+				measureSwitch();
+			}
 			else if(action=='full'  || action=='full_on') fullscreenSwitch(); 
 		}
 		
