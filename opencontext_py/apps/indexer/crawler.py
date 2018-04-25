@@ -39,7 +39,7 @@ crawler.crawl(100)
         self.solr = SolrConnection().connection
         # Flag as human remains sensitive
         self.human_remains = 0  # 0 means no, positive values means yes
-        
+        self.max_geo_zoom = 30  # set the max geo tile zoom we should use for indexing
 
     def crawl(self, chunksize=100):
         '''
@@ -66,6 +66,10 @@ crawler.crawl(100)
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
                     sd_obj = SolrDocument(uuid)
+                    if isinstance(self.max_geo_zoom, int):
+                        if self.max_geo_zoom > 5:
+                            # only positive integers
+                            sd_obj.max_geo_zoom = self.max_geo_zoom
                     sd_obj.process_item()
                     solrdocument = sd_obj.fields 
                     if crawlutil().is_valid_document(solrdocument):
@@ -132,6 +136,10 @@ crawler.crawl(100)
                 if manifest is not False:
                     try:
                         sd_obj = SolrDocument(uuid)
+                        if isinstance(self.max_geo_zoom, int):
+                            if self.max_geo_zoom > 5:
+                                # only positive integers
+                                sd_obj.max_geo_zoom = self.max_geo_zoom
                         sd_obj.process_item()
                         if isinstance(self.human_remains, int):
                             if self.human_remains > 0:

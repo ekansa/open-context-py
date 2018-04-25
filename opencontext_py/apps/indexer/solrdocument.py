@@ -94,6 +94,7 @@ sd_b = sd_obj.fields
         self.fields['human_remains'] = 0  # default, item is not about human remains.
         self.geo_specified = False
         self.chrono_specified = False
+        self.max_geo_zoom = 30  # we can lower this if we want to force low precision on mapping
 
     def process_item(self):
         # Start processing and adding values...
@@ -679,6 +680,8 @@ sd_b = sd_obj.fields
                         coords = False
                     if coords is not False:
                         gm = GlobalMercator()
+                        if zoom > self.max_geo_zoom:
+                            zoom = self.max_geo_zoom
                         tile = gm.geojson_coords_to_quadtree(coords, zoom)
                         if len(tile) > (zoom - 2):
                             self.fields['discovery_geotile'] = \

@@ -12,7 +12,7 @@ class tdarAPI():
         First use-case is to relate DINAA trinomials with
         tDAR keywords
     """
-    KEYWORD_API_BASE_URL = 'http://core.tdar.org/lookup/keyword'
+    KEYWORD_API_BASE_URL = 'http://core.tdar.org/api/lookup/keyword'
     SITE_SEARCH_FEED_BASE_URL = 'http://core.tdar.org/search/rss'
     SITE_SEARCH_HTML_BASE_URL = 'http://core.tdar.org/search/results'
     BASE_URI = 'http://core.tdar.org'
@@ -30,7 +30,7 @@ class tdarAPI():
         """ get a key word for a site """
         results = False
         json_r = self.get_keyword_search_json(site_keyword,
-                                              'SiteNameKeyword')
+                                              'sitenamekeyword')
         if isinstance(json_r, dict):
             if 'items' in json_r:
                 if len(json_r['items']) > 0:
@@ -126,7 +126,7 @@ class tdarAPI():
                 self.html_url += act_param
                 i += 1
             feed = feedparser.parse(feed_url)
-            # print(feed_url)
+            print(feed_url)
             if feed.bozo == 1 \
                or feed.status >= 400:
                 feed = False

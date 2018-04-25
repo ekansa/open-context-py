@@ -56,6 +56,8 @@ sri.reindex_uuids(uuids)
         # if not false, use a Postgres SQL query to get a list of
         # UUIDs from a list of projects
         self.project_uuids = False
+        # set the max zoom we should use for indexing
+        self.max_geo_zoom = 30
         # Flag all solrdocuments as human remains sensitive
         self.human_remains = 0  # 0 means no, positive values means yes
         # if not false, use a Postgres SQL query to get a list of
@@ -135,6 +137,10 @@ sri.reindex_uuids(uuids)
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
                 crawler = Crawler()
+                if isinstance(self.max_geo_zoom, int):
+                    if self.max_geo_zoom > 5:
+                        # only positive integers
+                        crawler.max_geo_zoom = self.max_geo_zoom
                 if isinstance(self.human_remains, int):
                     if self.human_remains > 0:
                         # we're reindexing sensitive human remains
@@ -149,6 +155,10 @@ sri.reindex_uuids(uuids)
         """
         if isinstance(uuids, list):
             crawler = Crawler()
+            if isinstance(self.max_geo_zoom, int):
+                    if self.max_geo_zoom > 5:
+                        # only positive integers
+                        crawler.max_geo_zoom = self.max_geo_zoom
             if isinstance(self.human_remains, int):
                 if self.human_remains > 0:
                     # we're reindexing sensitive human remains

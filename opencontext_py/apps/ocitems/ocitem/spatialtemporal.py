@@ -185,7 +185,7 @@ class ItemSpatialTemporal():
                     if self.assertion_hashes:
                         geo_props['hash_id'] = geo.hash_id
                         geo_props['feature_id'] = geo.feature_id
-                if geo.specificity < 0 and self.item_type != 'projects':
+                if geo.specificity < 0 and self.manifest.item_type != 'projects':
                     # case where we've got reduced precision geospatial data
                     # geotile = quadtree.encode(geo.latitude, geo.longitude, abs(geo.specificity))
                     geo_props['location-precision'] = abs(geo.specificity)
