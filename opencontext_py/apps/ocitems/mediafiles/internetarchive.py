@@ -8,6 +8,7 @@ from django.conf import settings
 from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.generalapi import GeneralAPI
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
@@ -116,6 +117,7 @@ for med_full in med_files:
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
         self.pref_tiff_archive = True
+        self.bin_file_obj = None
         self.errors = []
     
     def archive_image_media_items(self):
@@ -260,19 +262,33 @@ for med_full in med_files:
         item_metadata = {'collection': self.ia_collection}
         return item_metadata
 
+    def prep_bin_file_obj(self):
+        """ prepares a binary file class object to manage the
+            retrieval and caching of binary files
+        """
+        if self.bin_file_obj is None:
+            self.bin_file_obj = BinaryFiles()
+            self.bin_file_obj.cache_file_dir = self.cache_file_dir
+            self.bin_file_obj.do_http_request_for_cache = self.do_http_request_for_cache
+            self.bin_file_obj.remote_uri_sub = self.remote_uri_sub
+            self.bin_file_obj.local_uri_sub = self.local_uri_sub
+            self.bin_file_obj.local_filesystem_uri_sub = self.local_filesystem_uri_sub
+
     def archive_image(self, man_obj, file_name=None, mf_file=None):
         """ does the work of archiving an image,
             1. gets the image from a remote server, makes a local file
             2. makes metadata
             3. saves the file
         """
+        self.prep_bin_file_obj()
         ok = False
         json_ld = self.make_oc_item(man_obj)
         if isinstance(json_ld, dict):
             # cache the remote file locally to upload it
             item_id = self.id_prefix + '-' + json_ld['slug']
             if not isinstance(file_name, str):
-                file_name = self.get_cache_full_file(json_ld, man_obj)
+                file_name = self.bin_file_obj.get_cache_full_file(json_ld, man_obj)
+                self.errors += self.bin_file_obj.errors
             if not isinstance(file_name, str):
                 print('Failed to cache file!')
             else:
@@ -291,17 +307,11 @@ for med_full in med_files:
                 if mf_file is not None:
                     metadata = {}
                 # now upload the image file
-                dir = self.set_check_directory(self.cache_file_dir)
-                path = os.path.join(dir, file_name)
+                dir_file = self.bin_file_obj.join_dir_filename(file_name,
+                                                               self.cache_file_dir)
                 save_ia_files = False
-                """
-                print(str(metadata))
-                r = item.upload_file(path,
-                                     key=file_name,
-                                     metadata=metadata)
-                """
                 try:
-                    r = item.upload_file(path,
+                    r = item.upload_file(dir_file,
                                          key=file_name,
                                          metadata=metadata)
                     if r.status_code == requests.codes.ok or self.save_db:
@@ -309,7 +319,7 @@ for med_full in med_files:
                     else:
                         print('Bad status: ' + str(r.status_code))
                 except:
-                    print('Problem uploading: ' + path)
+                    print('Problem uploading: ' + dir_file)
                     save_ia_files = False
                 # set the uri for the media item just uploaded
                 if save_ia_files:
@@ -374,6 +384,7 @@ for med_full in med_files:
     def add_file_to_archive(self, man_obj, file_name, cache_dir=None):
         """ adds another file to an existing archive item. No metadata modification
         """
+        self.prep_bin_file_obj()
         ia_file_uri = None
         json_ld = self.make_oc_item(man_obj)
         if isinstance(json_ld, dict):
@@ -381,10 +392,10 @@ for med_full in med_files:
             item_id = self.id_prefix + '-' + json_ld['slug']
             if not isinstance(cache_dir, str):
                 cache_dir = self.cache_file_dir
-            dir = self.set_check_directory(cache_dir)
-            path = os.path.join(dir, file_name)
-            if not os.path.exists(path):
-                print('Cannot find the cached file: ' +  path + ' !')
+            dir_file = self.bin_file_obj.join_dir_filename(file_name,
+                                                           cache_dir)
+            if not os.path.exists(dir_file):
+                print('Cannot find the cached file: ' +  dir_file + ' !')
             else:
                 sleep(self.delay_before_request)
                 print('Ready to upload: ' + file_name)
@@ -395,14 +406,10 @@ for med_full in med_files:
                                 archive_session=s,
                                 debug=True)
                 # now upload file
-                if not isinstance(cache_dir, str):
-                    cache_dir = self.cache_file_dir
-                dir = self.set_check_directory(cache_dir)
-                path = os.path.join(dir, file_name)
                 try:
                     # sometimes the connect fails with an uncaught exception, so
                     # catch it here.
-                    r = item.upload_file(path,
+                    r = item.upload_file(dir_file,
                                          key=file_name,
                                          metadata=metadata)
                     # set the uri for the media item just uploaded
@@ -445,147 +452,6 @@ for med_full in med_files:
             error_msg = 'UUID: ' + man_obj.uuid + ' item_id: ' + item_id
             error_msg += ' Metadata update error: ' + str(r.status_code)
             self.errors.append(error_msg)
-        return ok
-    
-    def get_cache_full_file(self, json_ld, man_obj):
-        """ gets and caches the fill file, saving temporarily to a local directory """
-        file_name = None
-        slug = man_obj.slug
-        file_uri = self.get_archive_fileuri(json_ld)
-        if isinstance(file_uri, str):
-            # we have a file
-            if isinstance(self.local_uri_sub, str) and isinstance(self.remote_uri_sub, str):
-                # get a local copy of the file, not a remote copy
-                file_uri = file_uri.replace(self.remote_uri_sub, self.local_uri_sub)
-                if 'https://' in self.remote_uri_sub:
-                    # so we also replace the https or http version of the remote with a local
-                    alt_remote_sub = self.remote_uri_sub.replace('https://', 'http://')
-                    file_uri = file_uri.replace(alt_remote_sub, self.local_uri_sub)
-            if '.' in file_uri:
-                file_ex = file_uri.split('.')
-                file_name = slug + '.' + file_ex[-1]
-            else:
-                file_name = slug
-            file_ok = self.get_cache_remote_file_content(file_name, file_uri)
-            if file_ok is False:
-                file_name = False
-                error_msg = 'UUID: ' + man_obj.uuid + ' file_uri: ' + file_uri
-                error_msg += ' file caching error.'
-                self.errors.append(error_msg)
-        return file_name
-            
-    def get_full_fileuri(self, json_ld):
-        """ gets the full file uri """
-        file_uri = None
-        if 'oc-gen:has-files' in json_ld:
-            for f_obj in json_ld['oc-gen:has-files']:
-                if f_obj['type'] == 'oc-gen:fullfile':
-                    file_uri = f_obj['id']
-                    break
-        return file_uri
-    
-    def get_archive_fileuri(self, json_ld):
-        """ gets the full file uri """
-        file_uri = None
-        if 'oc-gen:has-files' in json_ld:
-            for f_obj in json_ld['oc-gen:has-files']:
-                if self.pref_tiff_archive:
-                    if f_obj['type'] == 'oc-gen:archive':
-                        file_uri = f_obj['id']
-                        break
-            if file_uri is None:
-                # no TIFF archive file found, so use the full-file
-                for f_obj in json_ld['oc-gen:has-files']:
-                    if f_obj['type'] == 'oc-gen:fullfile':
-                        file_uri = f_obj['id']
-                        break
-        return file_uri
-                
-    def get_cache_remote_file_content(self, file_name, file_uri):
-        """ either uses an HTTP request to get a remote file
-            or looks for the file in the file system and copies it within
-            the file system
-        """
-        if self.do_http_request_for_cache:
-            ok = self.get_cache_remote_file_content_http(file_name,
-                                                         file_uri)
-        else:
-            ok = self.get_cache_remote_file_content_filesystem(file_name,
-                                                               file_uri)
-        return ok
-
-    def get_cache_remote_file_content_filesystem(self, file_name, file_uri):
-        """ use the file system to get the file for caching
-            and saving with a new filename
-        """
-        ok = False
-        dir = self.set_check_directory(self.cache_file_dir)
-        path = os.path.join(dir, file_name)
-        if os.path.exists(path):
-            # the file already exists, no need to download it again
-            print('Already cached: ' + path)
-            ok = True
-        else:
-            print('Cannot find: ' + path)
-            print('Need to copy with file-system: ' + file_uri)
-            if isinstance(self.remote_uri_sub, str) and isinstance(self.local_filesystem_uri_sub, str):
-                original_path = file_uri.replace(self.remote_uri_sub,
-                                                 self.local_filesystem_uri_sub)
-                if os.path.exists(original_path):
-                    try:
-                        shutil.copy2(original_path, path)
-                        ok = True
-                    except:
-                        print('Problem copying to: ' + path)
-                        ok = False
-                else:
-                    print('CANNOT FIND ORIGINAL AT: ' + original_path)
-        return ok
-    
-    def get_cache_remote_file_content_http(self, file_name, file_uri):
-        """ uses HTTP requests to get the content of a remote file,
-            saves it to cache with the filename 'file_name'
-        """
-        ok = False
-        dir = self.set_check_directory(self.cache_file_dir)
-        path = os.path.join(dir, file_name)
-        if os.path.exists(path):
-            # the file already exists, no need to download it again
-            print('Already cached: ' + path)
-            ok = True
-        else:
-            print('Cannot find: ' + path)
-            print('Need to download: ' + file_uri)
-            if not isinstance(self.local_uri_sub, str):
-                # only delay if we're not looking locally for the file
-                sleep(self.delay_before_request)
-            r = requests.get(file_uri, stream=True)
-            if r.status_code == 200:
-                with open(path, 'wb') as f:
-                    for chunk in r.iter_content(1024):
-                        f.write(chunk)
-                f.close()
-                ok = True
-            else:
-                # try with different capitalization
-                if '.JPG' in file_uri:
-                    new_file_uri = file_uri.replace('.JPG', '.jpg')
-                elif '.jpg' in file_uri:
-                    new_file_uri = file_uri.replace('.jpg', '.JPG')
-                else:
-                    new_file_uri = None
-                if new_file_uri is not None:
-                    print('Now trying with different capitalization: ' + new_file_uri)
-                    if not isinstance(self.local_uri_sub, str):
-                        # only delay if we're not looking locally for the file
-                        sleep(self.delay_before_request)
-                    r = requests.get(new_file_uri, stream=True)
-                    if r.status_code == 200:
-                        with open(path, 'wb') as f:
-                            for chunk in r.iter_content(1024):
-                                f.write(chunk)
-                        f.close()
-                        ok = True
         return ok
     
     def make_oc_item(self, man_obj):

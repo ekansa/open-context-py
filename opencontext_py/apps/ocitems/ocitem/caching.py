@@ -3,6 +3,7 @@ from django.conf import settings
 from django.db import models
 from django.core.cache import caches
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
@@ -23,10 +24,16 @@ class ItemGenerationCache():
     PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
     PREDICATES_DCTERMS_LICENSE = 'dc-terms:license'
     
-    def __init__(self):
+    def __init__(self, cannonical_uris = False):
+        self.cannonical_uris = cannonical_uris
         self.cache_use = CacheUtilities()
         dc_terms_obj = DCterms()
         self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
+        rp = RootPath()
+        if self.cannonical_uris:
+            self.base_url = rp.cannonical_host
+        else:
+            self.base_url = rp.get_baseurl()
 
     def get_project_context(self,
                             project_uuid,
@@ -47,7 +54,12 @@ class ItemGenerationCache():
             output = item
         else:
             pc = ProjectContext(project_uuid)
-            pc.assertion_hashes
+            if self.cannonical_uris:
+                pc.id_href = False  # use the cannonical href as the Context's ID
+            else:
+                pc.id_href = True  # use the local href as the Context's ID
+            pc.base_url = self.base_url
+            pc.assertion_hashes = assertion_hashes
             context_json_ld = pc.make_context_and_vocab_json_ld()
             if isinstance(context_json_ld, dict):
                 output = context_json_ld

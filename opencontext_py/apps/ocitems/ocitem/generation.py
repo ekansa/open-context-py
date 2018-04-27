@@ -30,7 +30,8 @@ from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 # This class is used to make a JSON-LD output from data returned from the database via other apps
 class OCitem():
 
-    def __init__(self):
+    def __init__(self, cannonical_uris=False):
+        self.cannonical_uris = cannonical_uris
         self.time_start = time.time()
         self.json_ld = LastUpdatedOrderedDict()
         self.assertion_hashes = False  # provide hash ids for assertions, useful for edits
@@ -47,9 +48,12 @@ class OCitem():
         self.item_space_time = None
         self.item_attributes = None
         self.class_uri_list = []  # uris of item classes used in this item
-        self.item_gen_cache = ItemGenerationCache()
+        self.item_gen_cache = ItemGenerationCache(cannonical_uris)
         rp = RootPath()
-        self.base_url = rp.get_baseurl()
+        if self.cannonical_uris:
+            self.base_url = rp.cannonical_host
+        else:
+            self.base_url = rp.get_baseurl()
     
     def check_exists(self, uuid_or_slug):
         """ checks to see it the item is in the manifest """
@@ -111,7 +115,7 @@ class OCitem():
     def add_context_json_ld(self, project_uuid):
         """ adds context to the json_ld """
         context = []
-        item_context_obj = ItemContext()
+        item_context_obj = ItemContext(False)
         context.append(item_context_obj.id)  # add the URI for the general item context
         context.append(item_context_obj.geo_json_context)  # add the URI for GeoJSON context
         self.proj_context_json_ld = self.item_gen_cache.get_project_context(project_uuid,
