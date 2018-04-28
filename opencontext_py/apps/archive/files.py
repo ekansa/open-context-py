@@ -6,6 +6,7 @@ from io import BytesIO
 from time import sleep
 from django.db import models
 from django.conf import settings
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -33,7 +34,7 @@ class ArchiveFiles():
         self.remote_uri_sub = None  # substitution for a remote uri
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
-        self.bin_file_obj = None
+        self.bin_file_obj = BinaryFiles()
     
     def save_project_data(self, project_uuid):
         """ saves data associated with a project """
@@ -165,7 +166,7 @@ class ArchiveFiles():
 
     def check_exists(self, act_dirs, file_name):
         """ checks to see if a file exists """
-        path = self.prep_directory(act_dirs)
+        path = self.prep_directory(act_dirs, False)
         dir_file = os.path.join(path, file_name)
         if os.path.exists(dir_file):
             output = True
@@ -183,8 +184,60 @@ class ArchiveFiles():
         file = codecs.open(dir_file, 'w', 'utf-8')
         file.write(json_output)
         file.close()
+    
+    def get_dict_from_file(self, act_dirs, file_name):
+        """ gets the file string
+            if the file exists,
+        """
+        json_obj = None
+        path = self.prep_directory(act_dirs, False)
+        dir_file = os.path.join(path, file_name)
+        if os.path.exists(dir_file):
+            try:
+                json_obj = json.load(codecs.open(dir_file,
+                                                 'r',
+                                                 'utf-8-sig'))
+            except:
+                print('Cannot parse as JSON: ' + dir_file)
+                json_obj = False
+        return json_obj
+    
+    def get_directory_size(self, act_dirs):
+        """ returns a list of directories contained in a list
+            of act_dirs
+        """
+        src_dir = self.prep_directory(act_dirs, False)
+        total_size = self.get_directory_size_path(src_dir)
+        return total_size
+    
+    def get_directory_size_path(self, path):
+        """ gets directory size recusively, but from a path
+            not from a list of act_dirs
+        """
+        if isinstance(path, str):
+            total_size = os.path.getsize(path)
+            for item in os.listdir(path):
+                itempath = os.path.join(path, item)
+                if os.path.isfile(itempath):
+                    total_size += os.path.getsize(itempath)
+                elif os.path.isdir(itempath):
+                    total_size += self.get_directory_size_path(itempath)
+        else:
+            total_size = None
+        return total_size
 
-    def prep_directory(self, act_dirs):
+    def get_sub_directories(self, act_dirs):
+        """ returns a list of directories contained in a list
+            of act_dirs
+        """
+        src_dir = self.prep_directory(act_dirs, False)
+        output = []
+        for dirpath, dirnames, filenames in os.walk(src_dir):
+            output = dirnames
+            break
+        return output
+
+    def prep_directory(self, act_dirs, make_dir=True):
         """ Prepares a directory to receive export files """
         output = False
         if not isinstance(act_dirs, list):
@@ -194,7 +247,7 @@ class ArchiveFiles():
         for act_dir in act_dirs:
             full_path = full_path + '/' + act_dir
             full_path = full_path.replace('//', '/')
-            if not os.path.exists(full_path):
+            if not os.path.exists(full_path) and make_dir:
                 print('Prepared directory: ' + str(full_path))
                 os.makedirs(full_path)
         if os.path.exists(full_path):
