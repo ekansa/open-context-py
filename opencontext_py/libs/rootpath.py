@@ -7,7 +7,7 @@ class RootPath():
     Makes the root path for URLs in this deployment
     """
     def __init__(self):
-        pass
+        self.cannonical_host = settings.CANONICAL_HOST
 
     def get_baseurl(self):
         """ get the base url for this instance

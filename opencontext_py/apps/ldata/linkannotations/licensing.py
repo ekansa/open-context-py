@@ -19,6 +19,7 @@ class Licensing():
 
     def __init__(self):
         self.license = False
+        self.proj_default_lic_dict = {}
         self.default_ok = True  # return default license if not specified
 
     def get_license(self, uuid, project_uuid=False):
@@ -28,9 +29,12 @@ class Licensing():
         """
         output = False
         output = self.get_license_by_uuid(uuid)
-        if output is False and project_uuid is not False:
-            output = self.get_license_by_uuid(project_uuid)
-        if output is False and self.default_ok:
+        if output is False and isinstance(project_uuid, str):
+            if project_uuid not in self.proj_default_lic_dict:
+                # cache this license
+                self.proj_default_lic_dict[project_uuid] = self.get_license_by_uuid(project_uuid)
+            output = self.proj_default_lic_dict[project_uuid]
+        if not isinstance(output, str) and self.default_ok:
             output = self.DEFAULT_LICENSE
         return output
 

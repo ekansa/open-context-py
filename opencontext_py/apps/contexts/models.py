@@ -53,7 +53,7 @@ class ItemContext():
     General namespaces used for JSON-LD
     for Items
     """
-    DOI = 'http://dx.doi.org/10.6078/M7P848VC'  # DOI for this
+    DOI = 'http://doi.org/10.6078/M7P848VC'  # DOI for this
 
     def __init__(self, id_href=True):
         self.id = self.DOI  # DOI for this
