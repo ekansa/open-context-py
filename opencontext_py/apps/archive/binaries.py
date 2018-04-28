@@ -38,6 +38,7 @@ class ArchiveBinaries():
         self.working_dir = 'archives'
         self.files_prefix = 'files'
         self.max_repo_GB = 35
+        self.max_repo_file_count = 1000
         self.GB_to_byte_multiplier = 1000000000
         self.error_uuids = []
         self.man_by_proj_lic = LastUpdatedOrderedDict() # dict with project UUID as key, and licences
@@ -136,6 +137,8 @@ class ArchiveBinaries():
                     # the highest part_num found has a big size, so increment up to the
                     # next part number
                     part_num += 1
+                elif len(dir_dict['files']) >= self.max_repo_file_count:
+                    part_num += 1
         act_dir = self.make_act_files_dir_name(part_num, license_uri, project_uuid)
         if act_dir not in self.dir_contents[project_uuid]:
             # make a new dir_dict for this active directory
@@ -186,11 +189,11 @@ class ArchiveBinaries():
                             act_dict['file_name'] = self.make_archival_file_name(med_file.file_type,
                                                                                          man_obj.slug,
                                                                                          file_uri)
-                            act_dict['uri'] = URImanagement.make_oc_uri(man_obj.uuid,
-                                                                        man_obj.item_type)
-                            act_dict['oc_file_types'] = []
+                            act_dict['id'] = URImanagement.make_oc_uri(man_obj.uuid,
+                                                                       man_obj.item_type)
+                            act_dict['type'] = []
                             files_dict[file_uri] = act_dict
-                        files_dict[file_uri]['oc_file_types'].append(med_file.file_type)
+                        files_dict[file_uri]['type'].append(med_file.file_type)
         return files_dict
     
     def make_archival_file_name(self, file_type, slug, file_uri):
