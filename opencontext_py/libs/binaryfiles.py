@@ -14,7 +14,10 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 class BinaryFiles():
     """
     This class has useful methods for managing binary
-    media files
+    media files. It is mainly for copying and moving such files form the file system,
+    the localhost, or a remote host over HTTP.
+    
+    For archiving purposes, it is often needed to stage such files locally.
     """
     
     def __init__(self):
@@ -22,6 +25,7 @@ class BinaryFiles():
         self.cache_file_dir = 'binary-cache'
         self.full_path_cache_dir = None
         self.do_http_request_for_cache = True  # use an HTTP request to get a file for local caching and saving with a new filename
+        self.delay_before_request = .5  # delay a request by .5 seconds so as not to overwhelm a remote server
         self.remote_uri_sub = None  # substitution for a remote uri
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
@@ -81,7 +85,7 @@ class BinaryFiles():
                         break
         return file_uri
                 
-    def get_cache_remote_file_content(self, file_name, file_uri):
+    def get_cache_remote_file_content(self, file_name, file_uri, act_dir=None):
         """ either uses an HTTP request to get a remote file
             or looks for the file in the file system and copies it within
             the file system
@@ -94,7 +98,7 @@ class BinaryFiles():
                                                                file_uri)
         return ok
 
-    def get_cache_remote_file_content_filesystem(self, file_name, file_uri):
+    def get_cache_remote_file_content_filesystem(self, file_name, file_uri, act_dir=None):
         """ use the file system to get the file for caching
             and saving with a new filename
         """
@@ -121,7 +125,7 @@ class BinaryFiles():
                     print('CANNOT FIND ORIGINAL AT: ' + original_path)
         return ok
     
-    def get_cache_remote_file_content_http(self, file_name, file_uri):
+    def get_cache_remote_file_content_http(self, file_name, file_uri, act_dir=None):
         """ uses HTTP requests to get the content of a remote file,
             saves it to cache with the filename 'file_name'
         """
@@ -168,7 +172,12 @@ class BinaryFiles():
  
     def join_dir_filename(self, file_name, act_dir):
         """ outputs a full path WITH filename """
-        path = self.set_check_directory(act_dir)
+        if isinstance(act_dir, str):
+            path = self.set_check_directory(act_dir)
+        elif isinstance(self.full_path_cache_dir, str):
+            path = self.full_path_cache_dir
+        else:
+            path = self.root_export_dir
         dir_file = os.path.join(path, file_name)
         return dir_file
 

@@ -38,9 +38,9 @@ class ArchiveBinaries():
         self.working_dir = 'archives'
         self.files_prefix = 'files'
         self.max_repo_GB = 35
-        self.max_repo_file_count = 1000
+        self.max_repo_file_count = 1500
         self.GB_to_byte_multiplier = 1000000000
-        self.error_uuids = []
+        self.errors = []
         self.man_by_proj_lic = LastUpdatedOrderedDict() # dict with project UUID as key, and licences
         self.dir_contents = LastUpdatedOrderedDict()
         self.dir_content_file_json = 'all-file-contents.json'
@@ -65,7 +65,7 @@ class ArchiveBinaries():
         man_objs = Manifest.objects\
                            .filter(project_uuid=project_uuid,
                                    item_type='media')\
-                           .order_by('sort')[:30]
+                           .order_by('sort')
         for man_obj in man_objs:
             lic_uri = lic_obj.get_license(man_obj.uuid,
                                           man_obj.project_uuid)
@@ -93,7 +93,7 @@ class ArchiveBinaries():
             item_files_dict = self.get_item_media_files(man_obj)
             new_files = []
             for file_uri_key, item_file_dict in item_files_dict.items():
-                print('Checking ' + file_uri_key)
+                # print('Checking ' + file_uri_key)
                 found = False
                 file_name = item_file_dict['file_name']
                 for dir_file in dir_dict['files']:
@@ -102,7 +102,15 @@ class ArchiveBinaries():
                         break
                 if found is False:
                     # we have a new file to save
-                    new_files.append(item_file_dict)
+                    # first, set the full path to cache the file
+                    self.bin_file_obj.full_path_cache_dir = self.arch_files_obj.prep_directory(act_dir)
+                    # now retrieve and save the file
+                    ok = self.bin_file_obj.get_cache_remote_file_content(file_name,
+                                                                         file_uri_key)
+                    if ok:
+                        new_files.append(item_file_dict)
+                    else:
+                        self.errors.append(item_file_dict)
             dir_dict['size'] = self.arch_files_obj.get_directory_size(act_dir)
             print('Adding files for ' + man_obj.uuid + ' ' + str(len(new_files)))
             dir_dict['files'] += new_files
