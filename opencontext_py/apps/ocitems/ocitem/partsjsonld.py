@@ -69,9 +69,10 @@ class PartsJsonLD():
                     object_ids.append(obj['@id'])
         else:
             act_dict[act_pred_key] = []
-        new_object_item = LastUpdatedOrderedDict()
+        new_object_item = None
         ent = self.get_object_item_entity(object_id, item_type)
         if ent is not False:
+            new_object_item = LastUpdatedOrderedDict()
             if add_hash_id is not False:
                 new_object_item['hash_id'] = add_hash_id
             if do_slug_uri:
@@ -110,9 +111,10 @@ class PartsJsonLD():
         elif act_pred_key == 'oc-gen:hasIcon':
             new_object_item = {'id': object_id}
         # OK now check to see if the new object is already listed with the predicate
-        if new_object_item['id'] not in object_ids:
-            # only add it if it does not exist yet
-            act_dict[act_pred_key].append(new_object_item)
+        if new_object_item  is not None:
+            if new_object_item['id'] not in object_ids:
+                # only add it if it does not exist yet
+                act_dict[act_pred_key].append(new_object_item)
         return act_dict 
     
     
