@@ -1,6 +1,7 @@
 import json
 import os
 import requests
+from io import BytesIO
 from time import sleep
 from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -23,16 +24,17 @@ class ArchiveZenodo():
         else:
             self.url_prefix = 'https://zenodo.org'
         
-    
-    def upload_file(self, deposition_id, filename, dir_file):
-        """ uploads a file of filename, stored at dir_file
+    def upload_file(self, deposition_id, filename, full_path_file, ok_if_exists=True):
+        """ uploads a file of filename, stored at full_path_file
             into a Zenodo deposit with deposition_id
+            
+            will respond with an OK if it already exists
         """
         output = None
         gapi = GeneralAPI()
         headers = gapi.client_headers
-        headers['Content-Type'] = 'application/json'
-        if not os.path.exists(dir_file):
+        # headers['Content-Type'] = 'application/json'
+        if not os.path.exists(full_path_file):
             # can't find the file to upload!
             output = False
         else:
@@ -44,23 +46,32 @@ class ArchiveZenodo():
             data = {
                 'filename': filename
             }
-            files = {
-                'file': open(dir_file, 'rb')
-            }
+            deposition_id = str(deposition_id)
             url = self.url_prefix + '/api/deposit/depositions/%s/files' % deposition_id
             try:
-                r = requests.post(url,
-                                  timeout=240,
-                                  headers=headers,
-                                  params={'access_token': self.ACCESS_TOKEN},
-                                  data=data,
-                                  files=files)
-                r.raise_for_status()
-                output = r.json()
+                with open(full_path_file, 'rb') as f:
+                    # strean the upload of the files, which can be really big!
+                    files = {
+                        'file': f
+                    }
+                    r = requests.post(url,
+                                      timeout=240,
+                                      headers=headers,
+                                      params={'access_token': self.ACCESS_TOKEN},
+                                      data=data,
+                                      files=files)
+                    r.raise_for_status()
+                    output = r.json()
             except:
-                print('FAIL with Status code: ' + str(r.status_code))
-                print(str(r.json()))
                 output = False
+                if ok_if_exists and 'message' in r.json():
+                    if r.json()['message'] == 'Filename already exists.':
+                        print('File already exists, with status code: ' + str(r.status_code))
+                        output = True
+                if output is False:
+                    # some other reason for failure
+                    print('FAIL with Status code: ' + str(r.status_code))
+                    print(str(r.json()))
         return output
     
     def create_empty_deposition(self):
@@ -90,3 +101,11 @@ class ArchiveZenodo():
             print(str(r.json()))
             output = False
         return output
+    
+    def get_deposition_id(self, deposition_dict):
+        """ gets the deposition id from a deposition_dict object """
+        deposition_id = None
+        if isinstance(deposition_dict, dict):
+            if 'id' in deposition_dict:
+                deposition_id = deposition_dict['id']
+        return deposition_id

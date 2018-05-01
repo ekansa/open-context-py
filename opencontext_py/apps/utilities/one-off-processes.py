@@ -384,12 +384,36 @@ arch_bin = ArchiveBinaries()
 project_uuid = '81d1157d-28f4-46ff-98dd-94899c1688f8'
 arch_bin.save_project_binaries(project_uuid)
 
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuid = '334853c8-320e-4bdc-96b3-f696171b5a58'
+arch_bin = ArchiveBinaries()
+arch_bin.save_project_binaries(project_uuid)
+arch_bin.get_project_binaries_dirs(project_uuid)
+
 
 from opencontext_py.apps.archive.files import ArchiveFiles
 archive = ArchiveFiles()
 archive.get_sub_directories([])
 
 
+from opencontext_py.apps.ocitems.ocitem.generation import OCitem
+from opencontext_py.apps.archive.metadata import ArchiveMetadata
+arch_meta = ArchiveMetadata()
+project_uuid = '81d1157d-28f4-46ff-98dd-94899c1688f8'
+oc_item = OCitem(True)
+exists = oc_item.check_exists(project_uuid)
+oc_item.generate_json_ld()
+item_dict = oc_item.json_ld
+arch_meta.make_zenodo_creator_list(item_dict)
+
 from opencontext_py.apps.archive.zenodo import ArchiveZenodo
 zenodo = ArchiveZenodo(True)
 zenodo.create_empty_deposition()
+
+
+
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuid = '334853c8-320e-4bdc-96b3-f696171b5a58'
+archive_dir = 'files-1-by---334853c8-320e-4bdc-96b3-f696171b5a58'
+arch_bin = ArchiveBinaries(True)
+deposition_id = arch_bin.archive_dir_project_binaries(project_uuid, archive_dir)

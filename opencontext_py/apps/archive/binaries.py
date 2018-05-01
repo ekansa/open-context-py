@@ -10,6 +10,8 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.archive.files import ArchiveFiles
+from opencontext_py.apps.archive.metadata import ArchiveMetadata
+from opencontext_py.apps.archive.zenodo import ArchiveZenodo
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
@@ -34,7 +36,12 @@ class ArchiveBinaries():
         'oc-gen:preview': 'zp---'
     }
     
-    def __init__(self):
+    ZENODO_FILE_KEYS = [
+        'filesize',
+        'checksum'
+    ]
+    
+    def __init__(self, do_testing=False):
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.working_dir = 'archives'
         self.files_prefix = 'files'
@@ -47,6 +54,119 @@ class ArchiveBinaries():
         self.dir_content_file_json = 'all-file-contents.json'
         self.arch_files_obj = ArchiveFiles()
         self.bin_file_obj = BinaryFiles()
+        self.zenodo = ArchiveZenodo(do_testing)
+        
+    
+    def archive_all_project_binaries(self, project_uuid):
+        """ archives project binary files in Zenodo """
+        pass
+    
+    def archive_dir_project_binaries(self, project_uuid, archive_dir, deposition_id=None):
+        """ archives files in for a project in a specific directory
+            known as "act dir"
+        """
+        all_archived = False
+        deposition_id = None
+        dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
+                                                          self.dir_content_file_json)
+        files_valid = self.validate_archive_dir_binaries(archive_dir,
+                                                         dir_dict)
+        if files_valid and deposition_id is None:
+            # we could find all the files to archive, so let's start archiving!
+            # first, start by making an empty deposition container in Zenodo
+            deposition_dict = self.zenodo.create_empty_deposition()
+            deposition_id = self.zenodo.get_deposition_id(deposition_dict)
+        if files_valid and deposition_id is not None:
+            # we have found all the files to archive, and we have created
+            # an empty Zenodo deposition
+            all_archived = True
+            full_path_cache_dir = self.arch_files_obj.prep_directory(archive_dir)
+            files_to_archive = dir_dict['files']
+            i = -1
+            for dir_file in files_to_archive:
+                i += 1
+                new_to_archive = True
+                for key in self.ZENODO_FILE_KEYS:
+                    if key in dir_file:
+                        # we already uploaded this, so skip it
+                        new_to_archive = False
+                if new_to_archive:
+                    # we haven't yet uploaded this particular file
+                    full_path_file = os.path.join(full_path_cache_dir, dir_file['filename'])
+                    zenodo_resp = self.zenodo.upload_file(deposition_id,
+                                                          dir_file['filename'],
+                                                          full_path_file)
+                    if isinstance(zenodo_resp, dict):
+                        # successful upload!
+                        print('Archived: ' + dir_file['filename'] + ' in ' + str(deposition_id))
+                        for key in self.ZENODO_FILE_KEYS:
+                            if key in zenodo_resp:
+                                # this stores some information provided by zenodo about the archived file
+                                dir_file[key] = zenodo_resp[key]
+                        dir_dict['files'][i] = dir_file  # update the dir file information
+                        # now save this, so we have an ongoing record, incase of interruption
+                        self.arch_files_obj.save_serialized_json(archive_dir,
+                                                                 self.dir_content_file_json,
+                                                                 dir_dict)
+                    else:
+                        # failed to archive the file
+                        all_archived = False
+                        self.errors.append(dir_file)
+            if all_archived:
+                # now archive the whole archive contents file
+                full_path_file = os.path.join(full_path_cache_dir, self.dir_content_file_json)
+                zenodo_resp = self.zenodo.upload_file(deposition_id,
+                                                      self.dir_content_file_json,
+                                                      full_path_file)
+                if isinstance(zenodo_resp, dict):
+                    print('Archiving complete after archiving: ' + self.dir_content_file_json + ' in ' + str(deposition_id))
+                else:
+                    # failed to archive the file
+                    all_archived = False
+                    self.errors.append(full_path_file)
+        return deposition_id
+    
+    def add_project_archive_dir_metadata(self, project_uuid, archive_dir, deposition_id):
+        """ adds metadata about a project to Zenodo deposition by deposition_id """
+        dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
+                                                          self.dir_content_file_json)
+        oc_item = OCitem(True)  # use cannonical URIs
+        exists = oc_item.check_exists(project_uuid)
+        if exists and isinstance(dir_dict, dict):
+             oc_item.generate_json_ld()
+             item_dict = oc_item.json_ld
+             meta = {
+                'title': item_dict['dc-terms:title'] + ' [Binary Media Files (' +  str( dir_dict['partion-number'] ) + ')]',
+                'upload_type': 'poster',
+             }
+    
+        
+    def validate_archive_dir_binaries(self, archive_dir, dir_dict):
+        """ makes sure the all the archive dir actually has all of the files
+            it says it has to archive
+        """
+        if not isinstance(dir_dict, dict):
+            print('The archive contents file: ' + self.dir_content_file_json + ' in ' + archive_dir + ' is not parsed as a dict')
+            valid = False
+        else:
+            valid = True
+            for dir_file in dir_dict['files']:
+                exists = self.arch_files_obj.check_exists(archive_dir, dir_file['filename'])
+                if exists is False:
+                    # can't find a file claimed to exist in the archive file
+                    print('Cannot find file to archive: ' + dir_file['filename'])
+                    valid = False
+                    self.errors.append(dir_file)
+        return valid
+
+    def get_project_binaries_dirs(self, project_uuid):
+        """ gets directories associated with a project binary file """
+        project_dirs = []
+        all_dirs = self.arch_files_obj.get_sub_directories([])
+        for act_dir in all_dirs:
+            if self.files_prefix in act_dir and project_uuid in act_dir:
+                project_dirs.append(act_dir)
+        return project_dirs
     
     def save_project_binaries(self, project_uuid):
         """ saves data associated with a project """
@@ -55,7 +175,7 @@ class ArchiveBinaries():
             for license_uri, manifest_list in self.man_by_proj_lic[project_uuid].items():
                 for man_obj in manifest_list:
                     # archive the files
-                    self.save_media_files(man_obj, license_uri)
+                    ok = self.save_media_files(man_obj, license_uri)     
     
     def get_manifest_grouped_by_license(self, project_uuid):
         """ gets list of distinct licenses for a project_uuid's
@@ -82,6 +202,7 @@ class ArchiveBinaries():
         """ saves media files 
             
         """
+        ok = False
         if isinstance(man_obj, Manifest):
             # first get metadata about the media item, especially creator + contribution informaiton
             oc_item = OCitem(True)  # use cannonical URIs
@@ -97,6 +218,7 @@ class ArchiveBinaries():
             # now get the item media files!
             item_files_dict = self.get_item_media_files(man_obj)
             new_files = []
+            files_ok = 0
             for file_uri_key, item_file_dict in item_files_dict.items():
                 # print('Checking ' + file_uri_key)
                 found = False
@@ -104,6 +226,7 @@ class ArchiveBinaries():
                 for dir_file in dir_dict['files']:
                     if dir_file['filename'] == file_name:
                         found = True
+                        files_ok += 1
                         break
                 if found is False:
                     # we have a new file to save
@@ -113,6 +236,7 @@ class ArchiveBinaries():
                     ok = self.bin_file_obj.get_cache_remote_file_content(file_name,
                                                                          file_uri_key)
                     if ok:
+                        files_ok += 1
                         dir_dict = self.record_citation_people(dir_dict, oc_item.json_ld)
                         new_files.append(item_file_dict)
                     else:
@@ -124,6 +248,10 @@ class ArchiveBinaries():
                                                      self.dir_content_file_json,
                                                      dir_dict)
             self.dir_contents[project_uuid][act_dir] = dir_dict
+            if len(item_files_dict) == files_ok:
+                # we have saved the expected number of files for this item
+                ok = True
+        return ok
     
     def get_current_part_num(self, license_uri, project_uuid):
         """ gets the current directory number based on
@@ -220,7 +348,7 @@ class ArchiveBinaries():
                                  .filter(uuid=man_obj.uuid,
                                          file_type__in=self.ARCHIVE_FILE_TYPES)\
                                  .order_by('-filesize')
-            print('found files: ' + str(len(med_files)))
+            #  print('found files: ' + str(len(med_files)))
             for act_type in self.ARCHIVE_FILE_TYPES:
                 for med_file in med_files:
                     if med_file.file_type == act_type:

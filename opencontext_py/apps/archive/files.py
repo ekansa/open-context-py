@@ -6,6 +6,7 @@ from io import BytesIO
 from time import sleep
 from django.db import models
 from django.conf import settings
+from collections import OrderedDict
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -196,7 +197,8 @@ class ArchiveFiles():
             try:
                 json_obj = json.load(codecs.open(dir_file,
                                                  'r',
-                                                 'utf-8-sig'))
+                                                 'utf-8-sig'),
+                                     object_pairs_hook=OrderedDict)
             except:
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False
