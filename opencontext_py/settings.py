@@ -464,6 +464,18 @@ if 'INTERNET_ARCHIVE_SECRET_KEY' in secrets:
 else:
     INTERNET_ARCHIVE_SECRET_KEY = None  
 
+if 'ZENODO_ACCESS_TOKEN' in secrets:
+    # API access / credential / authorization token for Zendo requests
+    ZENODO_ACCESS_TOKEN = get_secret('ZENODO_ACCESS_TOKEN')
+else:
+    ZENODO_ACCESS_TOKEN = None
+
+if 'ZENODO_SANDBOX_TOKEN' in secrets:
+    # API access / credential / authorization token for Zendo SANDBOX (testing) requests
+    ZENODO_SANDBOX_TOKEN = get_secret('ZENODO_SANDBOX_TOKEN')
+else:
+    ZENODO_SANDBOX_TOKEN = None  
+
 if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
     CORS_OK_DOMAINS = get_secret('CORS_OK_DOMAINS')

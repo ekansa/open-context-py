@@ -11,6 +11,7 @@ from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.archive.files import ArchiveFiles
 from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile, ManageMediafiles
 
@@ -82,6 +83,10 @@ class ArchiveBinaries():
             
         """
         if isinstance(man_obj, Manifest):
+            # first get metadata about the media item, especially creator + contribution informaiton
+            oc_item = OCitem(True)  # use cannonical URIs
+            exists = oc_item.check_exists(man_obj.uuid)
+            oc_item.generate_json_ld()
             project_uuid = man_obj.project_uuid
             part_num = self.get_current_part_num(license_uri,
                                                  project_uuid)
@@ -95,19 +100,20 @@ class ArchiveBinaries():
             for file_uri_key, item_file_dict in item_files_dict.items():
                 # print('Checking ' + file_uri_key)
                 found = False
-                file_name = item_file_dict['file_name']
+                file_name = item_file_dict['filename']
                 for dir_file in dir_dict['files']:
-                    if dir_file['file_name'] == file_name:
+                    if dir_file['filename'] == file_name:
                         found = True
                         break
                 if found is False:
                     # we have a new file to save
-                    # first, set the full path to cache the file
+                    # Now set the full path to cache the file
                     self.bin_file_obj.full_path_cache_dir = self.arch_files_obj.prep_directory(act_dir)
                     # now retrieve and save the file
                     ok = self.bin_file_obj.get_cache_remote_file_content(file_name,
                                                                          file_uri_key)
                     if ok:
+                        dir_dict = self.record_citation_people(dir_dict, oc_item.json_ld)
                         new_files.append(item_file_dict)
                     else:
                         self.errors.append(item_file_dict)
@@ -165,6 +171,8 @@ class ArchiveBinaries():
         dir_dict['partion-number'] = part_num
         dir_dict['label'] =  act_dir
         dir_dict['size'] = 0
+        dir_dict['dc-terms:creator'] = []
+        dir_dict['dc-terms:contributor'] = []
         dir_dict['files'] = []
         # save it so we can have a directory ready
         self.arch_files_obj.save_serialized_json(act_dir,
@@ -172,6 +180,37 @@ class ArchiveBinaries():
                                                  dir_dict)
         return dir_dict
         
+    
+    def record_citation_people(self, dir_dict, item_dict):
+        """ gets citation information for the specific media item
+        """
+        cite_preds = [
+            'dc-terms:creator',
+            'dc-terms:contributor'
+        ]
+        for cite_pred in cite_preds:
+            if cite_pred in item_dict:
+                if cite_pred not in dir_dict:
+                    # just in case we don't have this citation predicate
+                    # in the directory dict
+                    dir_dict[cite_pred] = []
+                all_cites = []
+                old_ids = []
+                for old_cite in dir_dict[cite_pred]:
+                    for cite_obj in item_dict[cite_pred]:
+                        if cite_obj['id'] == old_cite['id']:
+                            old_cite['count'] += 1
+                            break
+                    old_ids.append(old_cite['id'])
+                    all_cites.append(old_cite)
+                for cite_obj in item_dict[cite_pred]:
+                    cite_obj['count'] = 1
+                    if cite_obj['id'] not in old_ids:
+                        # we have a new reference to someone
+                        old_ids.append(cite_obj['id'])
+                        all_cites.append(cite_obj)
+                dir_dict[cite_pred] = all_cites
+        return dir_dict
     
     def get_item_media_files(self, man_obj):
         """ gets media file uris for archiving """
@@ -194,11 +233,11 @@ class ArchiveBinaries():
                             frag = file_ex[-1]
                         if file_uri not in files_dict:
                             act_dict = LastUpdatedOrderedDict()
-                            act_dict['file_name'] = self.make_archival_file_name(med_file.file_type,
-                                                                                         man_obj.slug,
-                                                                                         file_uri)
-                            act_dict['id'] = URImanagement.make_oc_uri(man_obj.uuid,
-                                                                       man_obj.item_type)
+                            act_dict['filename'] = self.make_archival_file_name(med_file.file_type,
+                                                                                man_obj.slug,
+                                                                                file_uri)
+                            act_dict['dc-terms:isPartOf'] = URImanagement.make_oc_uri(man_obj.uuid,
+                                                                                      man_obj.item_type)
                             act_dict['type'] = []
                             files_dict[file_uri] = act_dict
                         files_dict[file_uri]['type'].append(med_file.file_type)
