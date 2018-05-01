@@ -58,6 +58,8 @@ class ArchiveZenodo():
                 r.raise_for_status()
                 output = r.json()
             except:
+                print('FAIL with Status code: ' + str(r.status_code))
+                print(str(r.json()))
                 output = False
         return output
     
