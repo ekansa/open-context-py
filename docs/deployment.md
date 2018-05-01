@@ -54,7 +54,7 @@ If successful, then you've got a virtual environment ready!
 
 
 
-(1.6) Install Postgres 9.4:
+(1.6) Install Postgres (10+ or at least 9.4):
 
 This is a bit more involved, since currently, package installers for many Linux machines seem to default to installing Postgres 9.1 or 9.2. Follow the instructions on the Postgres website for installation of Postgres 9.4:
 
