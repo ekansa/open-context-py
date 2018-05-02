@@ -26,15 +26,27 @@ class ArchiveMetadata():
         ]
         all_order = 0
         list_order = 0
+        max_count = 1
         for cite_pred in cite_preds:
+            if cite_pred in meta_dict:
+                for obj_dict in meta_dict[cite_pred]:
+                    if 'count' in obj_dict:
+                        if obj_dict['count'] > max_count:
+                            max_count = obj_dict['count']
+        pred_adder = 0
+        for cite_pred in cite_preds:
+            pred_adder += max_count
             if cite_pred in meta_dict:
                 for obj_dict in meta_dict[cite_pred]:
                     act_id = obj_dict['id']
                     if act_id not in id_list:
                         id_list.append(act_id)
-                        list_order = len(id_list)
+                        list_order = (len(id_list)) + pred_adder
                         if 'count' in obj_dict:
-                            all_order = list_order + obj_dict['count']
+                            # count is useful for bulk uploads of several media items
+                            # these may have many creators, so the creaters referenced
+                            # the most frequently will appear hgi
+                            all_order = list_order + (max_count - obj_dict['count'])
                         else:
                             all_order = list_order
                         obj_w_order = (obj_dict, all_order)
