@@ -66,6 +66,7 @@ class ArchiveBinaries():
             known as "act dir"
         """
         all_archived = False
+        bucket_url = None
         dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
                                                           self.dir_content_file_json)
         files_valid = self.validate_archive_dir_binaries(archive_dir,
@@ -75,11 +76,15 @@ class ArchiveBinaries():
             # first, start by making an empty deposition container in Zenodo
             deposition_dict = self.zenodo.create_empty_deposition()
             # print('Deposition dict: ' + str(deposition_dict))
-            deposition_id = self.zenodo.get_deposition_id(deposition_dict)
+            deposition_id = self.zenodo.get_deposition_id_from_metadata(deposition_dict)
+            bucket_url = self.zenodo.get_bucket_url_from_metadata(deposition_dict)
             print('Made new deposition with ID: ' + str(deposition_id))
-        if files_valid and deposition_id is not None:
-            # we have found all the files to archive, and we have created
-            # an empty Zenodo deposition
+        if not isinstance(bucket_url, str) and deposition_id is not None:
+            # get the bucket URL for this deposition
+            bucket_url = self.zenodo.get_remote_deposition_bucket_url(deposition_id) 
+        if files_valid and deposition_id is not None and isinstance(bucket_url, str):
+            # we have found all the files to archive, and we have
+            # a ready Zenodo deposition and bucket_url
             print('READY to archive files to ' + str(deposition_id))
             all_archived = True
             full_path_cache_dir = self.arch_files_obj.prep_directory(archive_dir)
@@ -95,9 +100,9 @@ class ArchiveBinaries():
                 if new_to_archive:
                     # we haven't yet uploaded this particular file
                     full_path_file = os.path.join(full_path_cache_dir, dir_file['filename'])
-                    zenodo_resp = self.zenodo.upload_file(deposition_id,
-                                                          dir_file['filename'],
-                                                          full_path_file)
+                    zenodo_resp = self.zenodo.upload_file_by_put(bucket_url,
+                                                                 dir_file['filename'],
+                                                                 full_path_file)
                     if isinstance(zenodo_resp, dict):
                         # successful upload!
                         print('Archived: ' + dir_file['filename'] + ' in ' + str(deposition_id))

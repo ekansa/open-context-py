@@ -80,11 +80,52 @@ class ArchiveZenodo():
             print('URL: ' + url)
         return output
     
-    def get_deposition_bucket_url(self, deposition_id):
+    def get_remote_deposition_bucket_url(self, deposition_id):
         """ gets the bucket_url for PUT method requests to upload large files
         """
+        deposition_dict = self.get_deposition_meta_by_id(deposition_id)
+        return self.get_bucket_url_from_metadata(deposition_dict)
+     
+    def upload_file_by_put(self,
+                           bucket_url,
+                           filename,
+                           full_path_file):
+        """ uploads a file of filename, stored at full_path_file
+            into a Zenodo deposit at location bucket_url
+        """
         output = None
-        
+        if not os.path.exists(full_path_file):
+            # can't find the file to upload!
+            output = False
+        else:
+            # we found the file to upload
+            if self.delay_before_request > 0:
+                # default to sleep BEFORE a request is sent, to
+                # give the remote service a break.
+                sleep(self.delay_before_request)
+            url = bucket_url + '/' + filename
+            try:
+                # for bigger files, use this PUT method
+                # Adapted from: https://github.com/zenodo/zenodo/issues/833#issuecomment-324760423
+                files = {
+                    'file': open(full_path_file, 'rb')
+                }
+                gapi = GeneralAPI()
+                headers = gapi.client_headers
+                headers['Accept'] = 'application/json'
+                headers['Authorization'] = 'Bearer ' + self.ACCESS_TOKEN
+                headers['Content-Type'] = 'application/octet-stream'
+                r = requests.put(url,
+                                 headers=headers,
+                                 data=open(full_path_file, 'rb'))
+                r.raise_for_status()
+                output = r.json()
+            except:
+                output = False
+                print('FAIL with Status code: ' + str(r.status_code))
+                print(str(r.json()))
+                print('URL: ' + url)
+        return output
         
     def upload_file_by_post(self, deposition_id, filename, full_path_file, ok_if_exists=True):
         """ uploads a file of filename, stored at full_path_file
@@ -170,10 +211,21 @@ class ArchiveZenodo():
             output = False
         return output
     
-    def get_deposition_id(self, deposition_dict):
+    def get_deposition_id_from_metadata(self, deposition_dict):
         """ gets the deposition id from a deposition_dict object """
         deposition_id = None
         if isinstance(deposition_dict, dict):
             if 'id' in deposition_dict:
                 deposition_id = deposition_dict['id']
         return deposition_id
+    
+    def get_bucket_url_from_metadata(self, deposition_dict):
+        """ Gets the bucket url from deposition metadata
+            We need a bucket URL for PUT requests to upload files
+        """
+        bucket_url = None
+        if isinstance(deposition_dict, dict):
+            if 'links' in deposition_dict:
+                if 'bucket' in deposition_dict['links']:
+                    bucket_url = deposition_dict['links']['bucket']
+        return bucket_url
