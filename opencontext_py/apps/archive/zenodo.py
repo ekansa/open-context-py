@@ -52,12 +52,47 @@ class ArchiveZenodo():
             print(str(r.json()))
             output = False
         return output
+    
+    def get_deposition_meta_by_id(self, deposition_id):
+        """ gets a deposition metadata object via a
+            request for a JSON object from Zenodo
+        """
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        headers['Content-Type'] = 'application/json'
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        deposition_id = str(deposition_id)
+        url = self.url_prefix + '/api/deposit/depositions/%s' % deposition_id
+        try:
+            r = requests.get(url,
+                             timeout=240,
+                             headers=headers,
+                             params={'access_token': self.ACCESS_TOKEN})
+            r.raise_for_status()
+            output = r.json()
+        except:
+            output = False
+            print('FAIL with Status code: ' + str(r.status_code))
+            print(str(r.json()))
+            print('URL: ' + url)
+        return output
+    
+    def get_deposition_bucket_url(self, deposition_id):
+        """ gets the bucket_url for PUT method requests to upload large files
+        """
+        output = None
         
-    def upload_file(self, deposition_id, filename, full_path_file, ok_if_exists=True):
+        
+    def upload_file_by_post(self, deposition_id, filename, full_path_file, ok_if_exists=True):
         """ uploads a file of filename, stored at full_path_file
             into a Zenodo deposit with deposition_id
             
             will respond with an OK if it already exists
+            
+            This works by POST and is NOT the preferred method
         """
         output = None
         gapi = GeneralAPI()
@@ -78,8 +113,8 @@ class ArchiveZenodo():
             deposition_id = str(deposition_id)
             url = self.url_prefix + '/api/deposit/depositions/%s/files' % deposition_id
             try:
-                """
-                See fix at: https://github.com/zenodo/zenodo/issues/833
+                # for bigger files, this will not work routinely
+                # See fix at: https://github.com/zenodo/zenodo/issues/833
                 
                 with open(full_path_file, 'rb') as f:
                     # stream the upload of the files, which can be really big!
@@ -94,8 +129,6 @@ class ArchiveZenodo():
                                       files=files)
                     r.raise_for_status()
                     output = r.json()
-                """
-                
             except:
                 output = False
                 if ok_if_exists and 'message' in r.json():
