@@ -77,7 +77,6 @@ class ArchiveMetadata():
                 'These linked Open Context media resource items provide additional context and descriptive metadata '
                 'for the files archived here.</p>'
                 '<br/>'
-                '<br/>'
                 '<p><strong>Brief Description of this Project</strong>'
                 '<br/>' + project_des + '</p>'
             )
