@@ -90,6 +90,7 @@ class ArchiveBinaries():
             full_path_cache_dir = self.arch_files_obj.prep_directory(archive_dir)
             files_to_archive = dir_dict['files']
             i = -1
+            num_files = len(files_to_archive)
             for dir_file in files_to_archive:
                 i += 1
                 new_to_archive = True
@@ -105,7 +106,8 @@ class ArchiveBinaries():
                                                                  full_path_file)
                     if isinstance(zenodo_resp, dict):
                         # successful upload!
-                        print('Archived: ' + dir_file['filename'] + ' in ' + str(deposition_id))
+                        show_i = i + 1
+                        print('Archived ' + str(show_i) + ' of ' + str(num_files) + ': ' + dir_file['filename'] + ' in ' + str(deposition_id))
                         for key in self.ZENODO_FILE_KEYS:
                             if key in zenodo_resp:
                                 # this stores some information provided by zenodo about the archived file
@@ -122,9 +124,9 @@ class ArchiveBinaries():
         if all_archived:
             # now archive the whole archive contents file
             full_path_file = os.path.join(full_path_cache_dir, self.dir_content_file_json)
-            zenodo_resp = self.zenodo.upload_file(deposition_id,
-                                                  self.dir_content_file_json,
-                                                  full_path_file)
+            zenodo_resp = self.zenodo.upload_file_by_put(bucket_url,
+                                                         self.dir_content_file_json,
+                                                         full_path_file)
             if isinstance(zenodo_resp, dict):
                 print('Archiving complete after archiving: ' + self.dir_content_file_json + ' in ' + str(deposition_id))
             else:
