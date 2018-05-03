@@ -10,6 +10,7 @@ from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
@@ -123,6 +124,28 @@ class ItemGenerationCache():
                                                  all_proj_metadata)
         return all_proj_metadata
     
+    def get_project_model_object(self, project_uuid):
+        """ gets a project model object from the cache, or database if needed """
+        project = None
+        all_proj_metadata = self.get_all_project_metadata(project_uuid)
+        if isinstance(all_proj_metadata, dict):
+            if 'project' in all_proj_metadata:
+                if 'project_obj' in all_proj_metadata['project']:
+                    if isinstance(all_proj_metadata['project']['project_obj'], Project):
+                        project = all_proj_metadata['project']['project_obj']
+        return project
+    
+    def get_project_subprojects(self, project_uuid):
+        """ gets a project model object from the cache, or database if needed """
+        sub_projects = False
+        all_proj_metadata = self.get_all_project_metadata(project_uuid)
+        if isinstance(all_proj_metadata, dict):
+            if 'project' in all_proj_metadata:
+                if 'sub_projects' in all_proj_metadata['project']:
+                    if all_proj_metadata['project']['sub_projects'] is not False:
+                        sub_projects = all_proj_metadata['project']['sub_projects'] 
+        return sub_projects
+    
     def get_db_all_project_metadata(self, project_uuid):
         """ Gets author information for a project
             AND its parent project, if it exists     
@@ -150,6 +173,7 @@ class ItemGenerationCache():
         """ Gets dc-metadata information for a project from the database
             these metadata are inherited by all items in the project (author, and temporal)
         """
+        pr = ProjectRels()
         le = LinkEquivalence()
         dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
         dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
@@ -158,9 +182,15 @@ class ItemGenerationCache():
         dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris + dc_license_uris
         proj_dc_meta = False
         project_entity = self.get_entity(project_uuid)
+        try:
+            project = Project.objects.get(uuid=project_uuid)
+        except Project.DoesNotExist:
+            project = None
         if project_entity is not False:
             proj_dc_meta = {
                 'entity': project_entity,
+                'project_obj': project,
+                'sub_projects': pr.get_sub_projects(project_uuid),
                 self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
                 self.PREDICATES_DCTERMS_CREATOR: [],
                 self.PREDICATES_DCTERMS_TEMPORAL: [],

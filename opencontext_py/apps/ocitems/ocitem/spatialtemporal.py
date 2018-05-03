@@ -18,6 +18,7 @@ from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
+from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta
 
 
@@ -75,7 +76,19 @@ class ItemSpatialTemporal():
             if self.manifest.item_type == 'projects':
                 # get project metadata objects directly
                 pm = ProjectMeta()
+                project = self.item_gen_cache.get_project_model_object(self.manifest.uuid)
+                sub_projects = self.item_gen_cache.get_project_subprojects(self.manifest.uuid)
+                if project is not None:
+                    if isinstance(project.meta_json, dict):
+                        if Project.META_KEY_GEO_SPECIFICITY in project.meta_json:
+                            # the project has some default geographic specificity noted
+                            # use this value when making geo_meta
+                            pm.project_specificity = project.meta_json[Project.META_KEY_GEO_SPECIFICITY]
                 self.geo_meta = pm.get_project_geo_from_db(self.manifest.uuid)
+                if self.geo_meta is False:
+                    # make geospatial metadata for the project, and sub-projects if they exist
+                    pm.make_geo_meta(self.manifest.uuid, sub_projects)
+                    self.geo_meta = pm.geo_objs
             act_contain = Containment()
             if self.geo_meta is False:
                 self.geo_meta = act_contain.get_related_geochron(self.manifest.uuid,
@@ -152,7 +165,7 @@ class ItemSpatialTemporal():
         features_dict = False  # dict of all features to be added
         feature_events = False  # mappings between features and time periods
         if geo_meta is not False:
-            print('here!')
+            # print('here!' + str(geo_meta))
             features_dict = LastUpdatedOrderedDict()
             feature_events = LastUpdatedOrderedDict()
             for geo in geo_meta:

@@ -75,8 +75,12 @@ class OCitem():
     def generate_json_ld(self):
         """ make json_ld for an item """
         if isinstance(self.manifest, Manifest):
-            # we've got an item in the manifest, so OK to make some JSON-LD for it
             self.add_context_json_ld(self.project_uuid)
+            # we've got an item in the manifest, so OK to make some JSON-LD for it
+            if self.manifest.item_type == 'projects':
+                # prep the cache of project metadata, which will be useful for geospatial data
+                # and making project specific data
+                self.item_gen_cache.get_all_project_metadata(self.manifest.uuid)
             self.get_item_spatial_temporal()
             self.get_item_attributes()
             self.add_general_json_ld()
@@ -87,14 +91,14 @@ class OCitem():
             # give the item_attributes object a list of parent contexts
             self.item_attributes.parent_context_list = self.item_space_time.parent_context_list
             # add attribute information
-            self.json_ld = self.item_attributes.add_json_ld_attributes(self.json_ld)
+            self.json_ld = self.item_attributes.add_json_ld_attributes(self.json_ld) 
     
     def get_item_spatial_temporal(self):
         """ gets spatial temporal and context information from the cache and / or database
             that describes this item
         """
         if isinstance(self.manifest, Manifest) and self.item_space_time is None:
-            # we've got a manifest object and we don't yet have item space time context gathered 
+            # we've got a manifest object and we don't yet have item space time context gathered
             self.item_space_time = ItemSpatialTemporal()
             self.item_space_time.manifest = self.manifest
             self.item_space_time.assertion_hashes = self.assertion_hashes
@@ -129,7 +133,9 @@ class OCitem():
         if isinstance(proj_context_uri, str):
             context.append(proj_context_uri)  # add the URI for project context
         self.json_ld['@context'] = context
-        
+    
+    
+    
     def add_general_json_ld(self):
         """ adds general (manifest) information to the JSON-LD object """
         self.json_ld['id'] = URImanagement.make_oc_uri(self.uuid, self.item_type)
@@ -144,5 +150,18 @@ class OCitem():
            and len(self.manifest.class_uri) > 1:
             self.json_ld['category'] = [
                 self.manifest.class_uri
-            ] 
-        
+            ]
+        if self.manifest.item_type == 'projects':
+            # prep the cache of project metadata, which will be useful for geospatial data
+            # and making project specific data
+            self.add_project_json_ld()
+    
+    def add_project_json_ld(self):
+        """ adds project specific information to the JSON-LD object """
+        project = self.item_gen_cache.get_project_model_object(self.manifest.uuid)
+        if isinstance(project, Project):
+            lang_obj = Languages()
+            self.json_ld['description'] = lang_obj.make_json_ld_value_obj(project.short_des,
+                                                                          project.sm_localized_json)
+            self.json_ld['dc-terms:abstract'] = lang_obj.make_json_ld_value_obj(project.content,
+                                                                                project.lg_localized_json)

@@ -30,7 +30,7 @@ class ProjectRels():
         Gets (child) sub-projects from the current project uuid
         """
         sub_projs = Project.objects.filter(project_uuid=uuid).exclude(uuid=uuid)
-        if(len(sub_projs) > 0):
+        if len(sub_projs) > 0:
             self.sub_projects = sub_projs
         else:
             self.sub_projects = False
