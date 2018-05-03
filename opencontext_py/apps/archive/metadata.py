@@ -1,4 +1,8 @@
+import time
+import datetime
 from django.conf import settings
+from opencontext_py.libs.rootpath import RootPath
+from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -13,11 +17,170 @@ class ArchiveMetadata():
     """
     
     def __init__(self):
-        pass
+        self.proj_upload_type = 'publication'
+        self.proj_pub_type = 'other'
+        self.proj_binary_upload_type = 'publication'
+        self.proj_binary_pub_type = 'other'
+        self.access_right = 'open'
+        self.proj_binary_keywords = [
+            'Open Context',
+            'Data Publication',
+            'Media Files'
+        ]
+        self.proj_keywords = [
+            'Open Context',
+            'Data Publication',
+            'Structured Data',
+            'Linked Open Data',
+            'GeoJSON',
+            'JSON-LD'
+        ]
+    
+    def make_zenodo_proj_media_files_metadata(self, proj_dict, dir_dict, dir_content_file_json):
+        """ makes a zendo metadata object for a deposition
+            of media files from an Open Context project
+        """
+        meta = None
+        if isinstance(proj_dict, dict) and isinstance(dir_dict, dict):
+            rp = RootPath()
+            meta = LastUpdatedOrderedDict()
+            meta['title'] = (
+                '' + proj_dict['dc-terms:title'] + ' '
+                '[Aggregated Media Files (' +  str( dir_dict['partion-number'] ) + ') from Open Context]'
+            )
+            if 'dc-terms:modified' in proj_dict:
+                # date of last modification
+                meta['publication_date'] = proj_dict['dc-terms:modified']
+            else:
+                # default to today
+                today = datetime.date.today()
+                meta['publication_date'] = today.isoformat()
+            meta['license'] = self.make_zenodo_license_abrev(dir_dict)
+            meta['upload_type'] = self.proj_upload_type
+            if meta['upload_type'] == 'publication':
+                meta['publication_type'] = self.proj_binary_pub_type
+            meta['creators'] = self.make_zenodo_creator_list(dir_dict)
+            meta['keywords'] = self.proj_binary_keywords \
+                               + self.make_zendo_keywords_for_media_files(dir_dict)
+            meta['subjects'] = self.make_zenodo_subjects_list(proj_dict)
+            meta['related_identifiers'] = self.make_zenodo_related_list(proj_dict)
+            if 'description' in proj_dict:
+                project_des = proj_dict['description']
+            else:
+                project_des = '[No additional description provided]'
+            meta['description'] = (
+                '<p>This archives media files associated with the <em>'
+                '<a href="' + proj_dict['id'] + '">' + proj_dict['label'] + '</a></em> project published by '
+                '<a href="' + rp.cannonical_host + '">Open Context</a>.</p>'
+                '<p>The included JSON file "' + dir_content_file_json + '" describes links between the various files '
+                'in this archival deposit and their associated Open Context media resources (identified by URI). '
+                'These linked Open Context media resource items provide additional context and descriptive metadata '
+                'for the files archived here.</p>'
+                '<br/>'
+                '<br/>'
+                '<p><strong>Brief Description of this Project</strong>'
+                '<br/>' + project_des + '</p>'
+            )
+        return meta
+    
+    def make_zenodo_license_abrev(self, meta_dict):
+        """ zenodo wants an abbreviated license, not a full URI
+            this is annoying, but it is what it wants
+        """
+        zendo_license = None
+        if 'dc-terms:license' in meta_dict:
+            lic_uri = meta_dict['dc-terms:license']
+            if 'publicdomain' in lic_uri:
+                zendo_license = 'cc-zero'
+            elif 'licenses/' in lic_uri:
+                lic_ex = lic_uri.split('licenses/')
+                lic_part = lic_ex[-1]
+                if '/' in lic_part:
+                    lic_part_ex = lic_part.split('/')
+                    zendo_license = 'cc-' + lic_part_ex[0]
+                else:
+                    zendo_license = 'cc-' + lic_part
+        return zendo_license
+    
+    def make_zenodo_subjects_list(self, proj_dict):
+        """ makes a list of subjects that conform to the Zenodo model """
+        zenodo_list = []
+        sub_preds = [
+            'dc-terms:subject',
+            'dc-terms:spatial',
+            'dc-terms:temporal',
+            'dc-terms:coverage'
+        ]
+        for sub_pred in sub_preds:
+            if sub_pred in proj_dict:
+                if isinstance(proj_dict[sub_pred], list):
+                    for obj_dict in proj_dict[sub_pred]:
+                        zenodo_obj = LastUpdatedOrderedDict()
+                        zenodo_obj['term'] = obj_dict['label']
+                        zenodo_obj['identifier'] = obj_dict['id']
+                        zenodo_list.append(zenodo_obj)
+        return zenodo_list
+    
+    def make_zendo_keywords_for_media_files(self, dir_dict):
+        """ makes a list of keywords based on categories from the dir_dict """
+        zenodo_list = []
+        if 'category' in dir_dict:
+            if isinstance(dir_dict['category'], list):
+                for obj_dict in dir_dict['category']:
+                    ent = Entity()
+                    found = ent.dereference(obj_dict['id'])
+                    if found:
+                        if ent.label not in zenodo_list:
+                            zenodo_list.append(ent.label)
+        return zenodo_list
+    
+    def make_zenodo_related_list(self, proj_dict):
+        """ makes a list of related identifiers that
+            conform to the Zenodo model.
+            
+            These related identifiers describe how a
+            deposition relates to Open Context
+            and an Open Context project
+        """
+        rp = RootPath()
+        zenodo_list = []
+        # make relation to Open Context, the compiler of the deposition
+        zenodo_obj = LastUpdatedOrderedDict()
+        zenodo_obj['relation'] = 'isCompiledBy'
+        zenodo_obj['identifier'] =  rp.cannonical_host
+        zenodo_list.append(zenodo_obj)
+        # make relation to the Open Context, project
+        # this deposition will be part of the project
+        # and it will compile the project
+        proj_rels = [
+            'isPartOf',
+            'compiles'
+        ]
+        for proj_rel in proj_rels:
+            zenodo_obj = LastUpdatedOrderedDict()
+            zenodo_obj['relation'] = proj_rel
+            zenodo_obj['identifier'] =  proj_dict['id']
+            zenodo_list.append(zenodo_obj)
+            if 'owl:sameAs' in proj_dict:
+                if isinstance(proj_dict['owl:sameAs'], list):
+                    for obj_dict in proj_dict['owl:sameAs']:
+                        zenodo_obj = LastUpdatedOrderedDict()
+                        zenodo_obj['relation'] = proj_rel
+                        zenodo_obj['identifier'] =  obj_dict['id']
+                        zenodo_list.append(zenodo_obj)
+        # make relation to a parent Open Context project, if it applicable
+        if 'dc-terms:isPartOf' in proj_dict:
+            if isinstance(proj_dict['dc-terms:isPartOf'], list):
+                for obj_dict in proj_dict['dc-terms:isPartOf']:
+                    zenodo_obj = LastUpdatedOrderedDict()
+                    zenodo_obj['relation'] = 'isPartOf'
+                    zenodo_obj['identifier'] =  obj_dict['id']
+                    zenodo_list.append(zenodo_obj)
+        return zenodo_list
     
     def make_zenodo_creator_list(self, meta_dict):
         """ makes a list of creators that conform to the Zenodo model """
-        zendo_list = []
+        zenodo_list = []
         id_list = []
         objs_w_order = []
         cite_preds = [
@@ -35,7 +198,7 @@ class ArchiveMetadata():
                             max_count = obj_dict['count']
         pred_adder = 0
         for cite_pred in cite_preds:
-            pred_adder += max_count
+            pred_adder += 1
             if cite_pred in meta_dict:
                 for obj_dict in meta_dict[cite_pred]:
                     act_id = obj_dict['id']
@@ -58,11 +221,14 @@ class ArchiveMetadata():
             zenodo_obj = {}
             zenodo_obj['name'] = obj_dict['family_given_name']
             if 'foaf:isPrimaryTopicOf' in obj_dict:
-                zenodo_obj['orcid'] = obj_dict['foaf:isPrimaryTopicOf']
+                if 'orcid.org' in obj_dict['foaf:isPrimaryTopicOf']:
+                    id_ex = obj_dict['foaf:isPrimaryTopicOf'].split('/')
+                    zenodo_obj['orcid'] = id_ex [-1]  # the last part of the ORCID, not the full URI
             else:
-                zenodo_obj['affiliation'] = 'Open Context URI: ' + obj_dict['id']
-            zendo_list.append(zenodo_obj)
-        return zendo_list
+                pass
+                # zenodo_obj['affiliation'] = 'Open Context URI: ' + obj_dict['id']
+            zenodo_list.append(zenodo_obj)
+        return zenodo_list
     
     def add_person_names_to_obj(self, obj_dict, default_to_label=True):
         """ adds person names to a JSON-LD object dict """
@@ -102,4 +268,16 @@ class ArchiveMetadata():
                                                 obj_dict['family_given_name'] += ' ' + pers.mid_init.strip()
         return obj_dict
                     
-        
+        def make_zendo_keywords_for_media_files(self, dir_dict):
+            """ makes zenodo keywords from a directory
+                contents object
+            """
+            zenodo_keywords = []
+            if 'category' in dir_dict:
+                if instance(dir_dict['category'], list):
+                    for cat_obj in dir_dict['category']:
+                        ent = Entity()
+                        found = ent.dereference(cat_obj['id'])
+                        if found:
+                            zenodo_keywords.append(ent.label)
+            return zenodo_keywords

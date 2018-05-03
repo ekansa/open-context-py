@@ -66,7 +66,6 @@ class ArchiveBinaries():
             known as "act dir"
         """
         all_archived = False
-        deposition_id = None
         dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
                                                           self.dir_content_file_json)
         files_valid = self.validate_archive_dir_binaries(archive_dir,
@@ -75,10 +74,13 @@ class ArchiveBinaries():
             # we could find all the files to archive, so let's start archiving!
             # first, start by making an empty deposition container in Zenodo
             deposition_dict = self.zenodo.create_empty_deposition()
+            # print('Deposition dict: ' + str(deposition_dict))
             deposition_id = self.zenodo.get_deposition_id(deposition_dict)
+            print('Made new deposition with ID: ' + str(deposition_id))
         if files_valid and deposition_id is not None:
             # we have found all the files to archive, and we have created
             # an empty Zenodo deposition
+            print('READY to archive files to ' + str(deposition_id))
             all_archived = True
             full_path_cache_dir = self.arch_files_obj.prep_directory(archive_dir)
             files_to_archive = dir_dict['files']
@@ -112,34 +114,43 @@ class ArchiveBinaries():
                         # failed to archive the file
                         all_archived = False
                         self.errors.append(dir_file)
-            if all_archived:
-                # now archive the whole archive contents file
-                full_path_file = os.path.join(full_path_cache_dir, self.dir_content_file_json)
-                zenodo_resp = self.zenodo.upload_file(deposition_id,
-                                                      self.dir_content_file_json,
-                                                      full_path_file)
-                if isinstance(zenodo_resp, dict):
-                    print('Archiving complete after archiving: ' + self.dir_content_file_json + ' in ' + str(deposition_id))
-                else:
-                    # failed to archive the file
-                    all_archived = False
-                    self.errors.append(full_path_file)
+        if all_archived:
+            # now archive the whole archive contents file
+            full_path_file = os.path.join(full_path_cache_dir, self.dir_content_file_json)
+            zenodo_resp = self.zenodo.upload_file(deposition_id,
+                                                  self.dir_content_file_json,
+                                                  full_path_file)
+            if isinstance(zenodo_resp, dict):
+                print('Archiving complete after archiving: ' + self.dir_content_file_json + ' in ' + str(deposition_id))
+            else:
+                # failed to archive the file
+                all_archived = False
+                self.errors.append(full_path_file)
+        if all_archived:
+            self.add_project_archive_dir_metadata(project_uuid,
+                                                  archive_dir,
+                                                  deposition_id)
         return deposition_id
     
     def add_project_archive_dir_metadata(self, project_uuid, archive_dir, deposition_id):
         """ adds metadata about a project to Zenodo deposition by deposition_id """
+        ok = None
         dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
                                                           self.dir_content_file_json)
         oc_item = OCitem(True)  # use cannonical URIs
         exists = oc_item.check_exists(project_uuid)
         if exists and isinstance(dir_dict, dict):
-             oc_item.generate_json_ld()
-             item_dict = oc_item.json_ld
-             meta = {
-                'title': item_dict['dc-terms:title'] + ' [Binary Media Files (' +  str( dir_dict['partion-number'] ) + ')]',
-                'upload_type': 'poster',
-             }
-    
+            oc_item.generate_json_ld()
+            proj_dict = oc_item.json_ld
+            arch_meta = ArchiveMetadata()
+            meta = arch_meta.make_zenodo_proj_media_files_metadata(proj_dict,
+                                                                   dir_dict,
+                                                                   self.dir_content_file_json)
+            ok = self.zenodo.update_metadata(deposition_id, meta)
+            if ok is not False:
+                ok = True
+                print('Metadata created and updated for: ' + str(deposition_id))
+        return ok
         
     def validate_archive_dir_binaries(self, archive_dir, dir_dict):
         """ makes sure the all the archive dir actually has all of the files
@@ -237,6 +248,8 @@ class ArchiveBinaries():
                                                                          file_uri_key)
                     if ok:
                         files_ok += 1
+                        dir_dict = self.record_associated_categories(dir_dict,
+                                                                     oc_item.json_ld)
                         dir_dict = self.record_citation_people(dir_dict, oc_item.json_ld)
                         new_files.append(item_file_dict)
                     else:
@@ -301,6 +314,7 @@ class ArchiveBinaries():
         dir_dict['size'] = 0
         dir_dict['dc-terms:creator'] = []
         dir_dict['dc-terms:contributor'] = []
+        dir_dict['category'] = []
         dir_dict['files'] = []
         # save it so we can have a directory ready
         self.arch_files_obj.save_serialized_json(act_dir,
@@ -338,6 +352,38 @@ class ArchiveBinaries():
                         old_ids.append(cite_obj['id'])
                         all_cites.append(cite_obj)
                 dir_dict[cite_pred] = all_cites
+        return dir_dict
+    
+    def record_associated_categories(self, dir_dict, item_dict):
+        """ gets citation information for the specific media item
+        """
+        if 'oc-gen:has-linked-context-path' in item_dict:
+            path_obj = item_dict['oc-gen:has-linked-context-path']
+            if 'oc-gen:has-path-items' in path_obj:
+                if isinstance(path_obj['oc-gen:has-path-items'], list):
+                    last_path_obj = path_obj['oc-gen:has-path-items'][-1]
+                    if 'type' in last_path_obj:
+                        act_type = last_path_obj['type']
+                        if 'category' not in dir_dict:
+                            # just in case we don't have this predicate
+                            # in the directory dict
+                            dir_dict['category'] = []
+                        all_cats = []
+                        old_ids = []
+                        for old_cat in dir_dict['category']:
+                            if act_type == old_cat['id']:
+                                old_cat['count'] += 1
+                                break
+                            old_ids.append(old_cat['id'])
+                            all_cats.append(old_cat)
+                        if act_type not in old_ids:
+                            # we have a new reference to someone
+                            cat_obj = LastUpdatedOrderedDict()
+                            cat_obj['id'] = act_type
+                            cat_obj['count'] = 1
+                            old_ids.append(act_type)
+                            all_cats.append(cat_obj)
+                        dir_dict['category'] = all_cats
         return dir_dict
     
     def get_item_media_files(self, man_obj):

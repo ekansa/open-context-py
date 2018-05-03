@@ -23,6 +23,35 @@ class ArchiveZenodo():
             self.ACCESS_TOKEN = settings.ZENODO_SANDBOX_TOKEN
         else:
             self.url_prefix = 'https://zenodo.org'
+    
+    def update_metadata(self, deposition_id, metadata_dict):
+        """ updates metadata for a deposition """
+        output = None
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        headers['Content-Type'] = 'application/json'
+        deposition_id = str(deposition_id)
+        url = self.url_prefix + '/api/deposit/depositions/%s' % deposition_id
+        data = {
+            'metadata': metadata_dict
+        }
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        try:
+            r = requests.put(url,
+                             timeout=240,
+                             headers=headers,
+                             params={'access_token': self.ACCESS_TOKEN},
+                             data=json.dumps(data))
+            r.raise_for_status()
+            output = r.status_code
+        except:
+            print('FAIL to update metadata with status code: ' + str(r.status_code))
+            print(str(r.json()))
+            output = False
+        return output
         
     def upload_file(self, deposition_id, filename, full_path_file, ok_if_exists=True):
         """ uploads a file of filename, stored at full_path_file
@@ -49,8 +78,11 @@ class ArchiveZenodo():
             deposition_id = str(deposition_id)
             url = self.url_prefix + '/api/deposit/depositions/%s/files' % deposition_id
             try:
+                """
+                See fix at: https://github.com/zenodo/zenodo/issues/833
+                
                 with open(full_path_file, 'rb') as f:
-                    # strean the upload of the files, which can be really big!
+                    # stream the upload of the files, which can be really big!
                     files = {
                         'file': f
                     }
@@ -62,6 +94,8 @@ class ArchiveZenodo():
                                       files=files)
                     r.raise_for_status()
                     output = r.json()
+                """
+                
             except:
                 output = False
                 if ok_if_exists and 'message' in r.json():
@@ -72,6 +106,7 @@ class ArchiveZenodo():
                     # some other reason for failure
                     print('FAIL with Status code: ' + str(r.status_code))
                     print(str(r.json()))
+                    print('URL: ' + url)
         return output
     
     def create_empty_deposition(self):
