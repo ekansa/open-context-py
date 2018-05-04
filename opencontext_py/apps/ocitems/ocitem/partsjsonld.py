@@ -155,7 +155,10 @@ class PartsJsonLD():
                 if isinstance(ent.uuid, str):
                     # the entity has a uuid, so it's an open context predicate
                     # from a project
-                    slug_uri = 'oc-pred:' + ent.slug
+                    if isinstance(ent.slug, str):
+                        slug_uri = 'oc-pred:' + ent.slug
+                    else:
+                        slug_uri = 'oc-pred:' + ent.uuid
                 elif ':' in object_id:
                     # probably a prefixed URI so just leave it.
                     slug_uri = object_id
