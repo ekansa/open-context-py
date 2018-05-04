@@ -152,16 +152,77 @@ class OCitem():
                 self.manifest.class_uri
             ]
         if self.manifest.item_type == 'projects':
-            # prep the cache of project metadata, which will be useful for geospatial data
-            # and making project specific data
+            # now add the project specific data to the JSON-LD
             self.add_project_json_ld()
+        elif self.manifest.item_type == 'documents':
+            # now add document specific information to the JSON-LD
+            self.add_document_json_ld()
+        elif self.manifest.item_type == 'predicates':
+            # now add the predicate specific data the JSON-LD
+            self.add_predicate_json_ld()
+        elif self.manifest.item_type == 'types':
+            self.add_type_json_ld()
     
     def add_project_json_ld(self):
         """ adds project specific information to the JSON-LD object """
         project = self.item_gen_cache.get_project_model_object(self.manifest.uuid)
         if isinstance(project, Project):
+            dc_abstract = ItemAttributes.PREDICATES_DCTERMS_ABSTRACT
             lang_obj = Languages()
             self.json_ld['description'] = lang_obj.make_json_ld_value_obj(project.short_des,
                                                                           project.sm_localized_json)
-            self.json_ld['dc-terms:abstract'] = lang_obj.make_json_ld_value_obj(project.content,
-                                                                                project.lg_localized_json)
+            self.json_ld[dc_abstract] = lang_obj.make_json_ld_value_obj(project.content,
+                                                                        project.lg_localized_json)
+    
+    def add_document_json_ld(self):
+        """ adds document specific information to the JSON-LD object """
+        try:
+            document = OCdocument.objects.get(uuid=self.manifest.uuid)
+        except OCdocument.DoesNotExist:
+            document = None
+        if isinstance(document, OCdocument):
+            rdf_html = ItemAttributes.PREDICATES_RDF_HTML
+            lan_obj = Languages()
+            self.json_ld[rdf_html] = lan_obj.make_json_ld_value_obj(document.content,
+                                                                    document.localized_json)
+    
+    def add_predicate_json_ld(self):
+        """ adds predicate specific information to the JSON-LD object """
+        try:
+            predicate = Predicate.objects.get(uuid=self.manifest.uuid)
+        except Predicate.DoesNotExist:
+            predicate = None
+        if isinstance(predicate, Predicate):
+            self.json_ld['oc-gen:data-type'] = predicate.data_type
+            p_range = LastUpdatedOrderedDict()
+            p_range['id'] = predicate.data_type
+            if predicate.data_type == 'id':
+                p_range['id'] = 'http://opencontext.org/vocabularies/oc-general/items'
+                p_range['label'] = 'URI identified items'
+            elif predicate.data_type == 'xsd:string':
+                p_range['label'] = 'Alphanumeric text strings'
+            elif predicate.data_type == 'xsd:double':
+                p_range['label'] = 'Decimal values'
+            elif predicate.data_type == 'xsd:integer':
+                p_range['label'] = 'Integer values'
+            elif predicate.data_type == 'xsd:date':
+                p_range['label'] = 'Calendar / date values'
+            self.json_ld['rdfs:range'] = [p_range]
+            if self.assertion_hashes:
+                # add a default sort order, for edit view JSON
+                self.json_ld['oc-gen:default-sort-order'] = float(predicate.sort)
+    
+    def add_type_json_ld(self):
+        """ adds type specific information to the JSON-LD object """
+        try:
+            octype = OCtype.objects.get(uuid=self.manifest.uuid)
+        except OCtype.DoesNotExist:
+            octype = None
+        if isinstance(octype, OCtype):
+            parts_json_ld = PartsJsonLD()
+            parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+            parts_json_ld.predicate_uri_as_stable_id = ItemAttributes.PREDICATES_OWL_SAMEAS
+            self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
+                                                              ItemAttributes.PREDICATES_SKOS_RELATED,
+                                                              octype.predicate_uuid,
+                                                              'predicates')

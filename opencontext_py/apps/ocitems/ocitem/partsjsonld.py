@@ -46,6 +46,7 @@ class PartsJsonLD():
         self.proj_context_json_ld = {}  # general project context JSON-LD, with @graph of predicates, types
         self.stable_id_predicate = False  # predicate to use to add a stable ID to an entity
         self.stable_id_prefix_limit = False  # limit adding stable ID to the following URI prefix
+        self.predicate_uri_as_stable_id = False  # add the predicate full URI as a stable id with the stable_id_predicate
         
     def addto_predicate_list(self,
                              act_dict,
@@ -94,6 +95,9 @@ class PartsJsonLD():
                 new_object_item['type'] = ent.class_uri
                 if ent.class_uri not in self.class_uri_list:
                     self.class_uri_list.append(ent.class_uri)  # list of unique open context item classes
+            if isinstance(self.predicate_uri_as_stable_id, str) and item_type == 'predicates':
+                # we need to add a the full uri to make this predicate
+                new_object_item[self.predicate_uri_as_stable_id] = URImanagement.make_oc_uri(ent.uuid, item_type)
             if hasattr(ent, 'stable_id_uris'):
                 if ent.stable_id_uris is not False \
                    and isinstance(self.stable_id_predicate, str):

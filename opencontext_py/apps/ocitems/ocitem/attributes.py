@@ -45,6 +45,8 @@ class ItemAttributes():
     PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
     PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
     PREDICATES_OWL_SAMEAS = 'owl:sameAs'
+    PREDICATES_SKOS_RELATED = 'skos:related'
+    PREDICATES_RDF_HTML = 'rdf:HTML'
     
     # predicates not for use in observations
     NO_OBS_ASSERTION_PREDS = [
