@@ -35,6 +35,14 @@ class ArchiveMetadata():
             'GeoJSON',
             'JSON-LD'
         ]
+        self.community_ids = [
+            'opencontext',
+            'archaeology'
+        ]
+        self.default_subjects = [
+            {'term': 'Archaeology',
+             'identifier': 'http://id.loc.gov/authorities/subjects/sh85006507'}
+        ]
     
     def make_zenodo_proj_media_files_metadata(self, proj_dict, dir_dict, dir_content_file_json):
         """ makes a zendo metadata object for a deposition
@@ -68,6 +76,12 @@ class ArchiveMetadata():
                 project_des = proj_dict['description']
             else:
                 project_des = '[No additional description provided]'
+            meta['communities'] = []
+            for community_id in self.community_ids:
+                zenodo_obj = {
+                    'identifier': community_id
+                }
+                meta['communities'].append(community_id)
             meta['description'] = (
                 '<p>This archives media files associated with the <em>'
                 '<a href="' + proj_dict['id'] + '">' + proj_dict['label'] + '</a></em> project published by '
@@ -103,7 +117,12 @@ class ArchiveMetadata():
     
     def make_zenodo_subjects_list(self, proj_dict):
         """ makes a list of subjects that conform to the Zenodo model """
+        id_list = []
         zenodo_list = []
+        for zenodo_obj in self.default_subjects:
+            if zenodo_obj['identifier'] not in id_list:
+                id_list.append(zenodo_obj['identifier'])
+                zenodo_list.append(zenodo_obj)
         sub_preds = [
             'dc-terms:subject',
             'dc-terms:spatial',
@@ -114,10 +133,12 @@ class ArchiveMetadata():
             if sub_pred in proj_dict:
                 if isinstance(proj_dict[sub_pred], list):
                     for obj_dict in proj_dict[sub_pred]:
-                        zenodo_obj = LastUpdatedOrderedDict()
-                        zenodo_obj['term'] = obj_dict['label']
-                        zenodo_obj['identifier'] = obj_dict['id']
-                        zenodo_list.append(zenodo_obj)
+                        if obj_dict['id'] not in id_list:
+                            id_list.append(obj_dict['id'])
+                            zenodo_obj = LastUpdatedOrderedDict()
+                            zenodo_obj['term'] = obj_dict['label']
+                            zenodo_obj['identifier'] = obj_dict['id']
+                            zenodo_list.append(zenodo_obj)
         return zenodo_list
     
     def make_zendo_keywords_for_media_files(self, dir_dict):

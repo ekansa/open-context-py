@@ -27,13 +27,17 @@ class ArchiveBinaries():
     ARCHIVE_FILE_TYPES = [
         'oc-gen:archive',
         'oc-gen:fullfile',
-        'oc-gen:preview'
+        'oc-gen:preview',
+        'oc-gen:x3dom-model',
+        'oc-gen:x3dom-texture',
     ]
     
     ARCHIVE_FILE_PREFIXES = {
-        'oc-gen:archive': 'za---',
-        'oc-gen:fullfile': 'zf---',
-        'oc-gen:preview': 'zp---'
+        'oc-gen:archive': 'az---',
+        'oc-gen:fullfile': 'fz---',
+        'oc-gen:preview': 'pz---',
+        'oc-gen:x3dom-model': 'x3m---',
+        'oc-gen:x3dom-texture': 'x3t---'
     }
     
     ZENODO_FILE_KEYS = [
@@ -51,7 +55,7 @@ class ArchiveBinaries():
         self.errors = []
         self.man_by_proj_lic = LastUpdatedOrderedDict() # dict with project UUID as key, and licences
         self.dir_contents = LastUpdatedOrderedDict()
-        self.dir_content_file_json = 'all-file-contents.json'
+        self.dir_content_file_json = 'zenodo-oc-files.json'
         self.arch_files_obj = ArchiveFiles()
         self.bin_file_obj = BinaryFiles()
         self.zenodo = ArchiveZenodo(do_testing)
@@ -59,7 +63,9 @@ class ArchiveBinaries():
     
     def archive_all_project_binaries(self, project_uuid):
         """ archives project binary files in Zenodo """
-        pass
+        project_dirs = self.get_project_binaries_dirs(project_uuid)
+        for archive_dir in project_dirs:
+            self.archive_dir_project_binaries(project_uuid, archive_dir)
     
     def archive_dir_project_binaries(self, project_uuid, archive_dir, deposition_id=None):
         """ archives files in for a project in a specific directory
@@ -380,7 +386,6 @@ class ArchiveBinaries():
                         for old_cat in dir_dict['category']:
                             if act_type == old_cat['id']:
                                 old_cat['count'] += 1
-                                break
                             old_ids.append(old_cat['id'])
                             all_cats.append(old_cat)
                         if act_type not in old_ids:
