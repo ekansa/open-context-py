@@ -31,7 +31,6 @@ class ArchiveMetadata():
             'Open Context',
             'Data Publication',
             'Structured Data',
-            'Linked Open Data',
             'GeoJSON',
             'JSON-LD'
         ]
