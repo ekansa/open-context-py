@@ -188,8 +188,12 @@ class ArchiveBinaries():
         project_dirs = []
         all_dirs = self.arch_files_obj.get_sub_directories([])
         for act_dir in all_dirs:
-            if self.files_prefix in act_dir and project_uuid in act_dir:
-                project_dirs.append(act_dir)
+            if '---' in act_dir:
+                act_ex = act_dir.split('---') 
+                if self.files_prefix in act_ex[0] and project_uuid == act_ex[-1]:
+                    # the first part of a the name should be like 'files-1-by'
+                    # the second part, after the '---' should be the project_uuid
+                    project_dirs.append(act_dir)
         return project_dirs
     
     def save_project_binaries(self, project_uuid):
