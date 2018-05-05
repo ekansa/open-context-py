@@ -11,6 +11,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -65,6 +66,7 @@ class ItemAttributes():
         self.manifest = None
         self.assertion_hashes = False
         self.assertions = None
+        self.mediafiles = None
         self.link_annotations = None
         self.stable_ids = None
         self.obs_list = []
@@ -98,16 +100,48 @@ class ItemAttributes():
         """ gets item attributes (other than context, space, temporal) that describe
             an item
         """
+        self.get_db_mediafile_objs()
         self.get_db_assertions()
         self.get_db_link_anotations()
         self.get_db_stable_ids()
 
     def add_json_ld_attributes(self, json_ld):
         """ adds attribute information to the JSON-LD """
+        json_ld = self.add_json_ld_mediafiles(json_ld)
         json_ld = self.add_json_ld_descriptive_assertions(json_ld)
         json_ld = self.add_json_ld_link_annotations(json_ld)
         json_ld = self.add_json_ld_dc_metadata(json_ld)
         json_ld = self.add_json_ld_stable_ids(json_ld)
+        return json_ld
+    
+    def add_json_ld_mediafiles(self, json_ld):
+        """
+        adds media files
+        """
+        if self.mediafiles is not None:
+            media_list = []
+            thumb_missing = True
+            pdf_doc = False
+            for media_item in self.mediafiles:
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = media_item.file_uri
+                list_item['type'] = media_item.file_type
+                if media_item.file_type == 'oc-gen:thumbnail':
+                    thumb_missing = False
+                list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+                if 'application/pdf' in media_item.mime_type_uri:
+                    pdf_doc = True
+                list_item['dcat:size'] = float(media_item.filesize)
+                if self.assertion_hashes:
+                    list_item['hash_id'] = media_item.id
+                media_list.append(list_item)
+            if thumb_missing and pdf_doc:
+                # we have a PDF with a default thumbnail
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = Mediafile.PDF_DEFAULT_THUMBNAIL
+                list_item['type'] = 'oc-gen:thumbnail'
+                media_list.append(list_item)
+            json_ld['oc-gen:has-files'] = media_list
         return json_ld
 
     def add_json_ld_descriptive_assertions(self, json_ld):
@@ -645,6 +679,27 @@ class ItemAttributes():
         self.get_db_string_objs(string_uuids)
         # now get manifest objects for objects of assertions
         self.get_db_related_manifest_objs(manifest_obj_uuids)
+    
+    def get_db_mediafile_objs(self):
+        """ gets media file objects associated with the current item """
+        if self.manifest.item_type == 'projects':
+            # need to get a hero image if it exists
+            self.mediafiles = Mediafile.objects\
+                                       .filter(uuid=self.manifest.uuid,
+                                               file_type='oc-gen:hero')
+            if len(self.mediafiles) < 1:
+                # check for hero images belonging to the parent project
+                self.mediafiles = Mediafile.objects\
+                                           .filter(uuid=self.manifest.project_uuid,
+                                                   file_type='oc-gen:hero')
+        elif self.manifest.item_type == 'media':
+            # get the media files associated with this item type
+            self.mediafiles = Mediafile.objects\
+                                       .filter(uuid=self.manifest.uuid)\
+                                       .order_by('-filesize')
+        else:
+            # not getting media file information
+            pass
     
     def get_db_string_objs(self, string_uuids):
         """ gets strings associated with assertions. does it in 1 query to reduce time """
