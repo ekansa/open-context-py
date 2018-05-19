@@ -167,13 +167,18 @@ class ArchiveFiles():
 
     def check_exists(self, act_dirs, file_name):
         """ checks to see if a file exists """
-        path = self.prep_directory(act_dirs, False)
-        dir_file = os.path.join(path, file_name)
+        dir_file = self.make_full_path_filename(act_dirs, file_name)
         if os.path.exists(dir_file):
             output = True
         else:
             output = False
         return output
+    
+    def make_full_path_filename(self, act_dirs, file_name):
+        """ makes a full filepath and file name string """
+        path = self.prep_directory(act_dirs, False)
+        dir_file = os.path.join(path, file_name)
+        return dir_file
     
     def save_serialized_json(self, act_dirs, file_name, dict_obj):
         """ saves a data in the appropriate path + file """

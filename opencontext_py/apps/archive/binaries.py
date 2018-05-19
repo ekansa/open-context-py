@@ -49,6 +49,7 @@ class ArchiveBinaries():
         self.root_export_dir = settings.STATIC_EXPORTS_ROOT
         self.working_dir = 'archives'
         self.files_prefix = 'files'
+        self.temp_cache_dir = None
         self.max_repo_GB = 35
         self.max_repo_file_count = 1500
         self.GB_to_byte_multiplier = 1000000000
@@ -199,11 +200,20 @@ class ArchiveBinaries():
     def save_project_binaries(self, project_uuid):
         """ saves data associated with a project """
         self.get_manifest_grouped_by_license(project_uuid)
+        cached_uuids = self.get_uuids_for_cached_media_items(project_uuid)
+        len_cached = len(cached_uuids)
+        i = 0
         if project_uuid in self.man_by_proj_lic:
             for license_uri, manifest_list in self.man_by_proj_lic[project_uuid].items():
+                len_man_list = len(manifest_list)
                 for man_obj in manifest_list:
                     # archive the files
-                    ok = self.save_media_files(man_obj, license_uri)     
+                    if man_obj.uuid not in cached_uuids:
+                        i += 1
+                        print('----------------------------------------')
+                        print('Working on new item: ' + str(i) + ' of ' + str(len_man_list) +  ' ('+ str(len_cached) + ' previously done)')
+                        ok = self.save_media_files(man_obj, license_uri)
+                        print('----------------------------------------')
     
     def get_manifest_grouped_by_license(self, project_uuid):
         """ gets list of distinct licenses for a project_uuid's
@@ -249,20 +259,27 @@ class ArchiveBinaries():
             files_ok = 0
             for file_uri_key, item_file_dict in item_files_dict.items():
                 # print('Checking ' + file_uri_key)
-                found = False
                 file_name = item_file_dict['filename']
-                for dir_file in dir_dict['files']:
-                    if dir_file['filename'] == file_name:
-                        found = True
-                        files_ok += 1
-                        break
+                found = self.check_file_exists_in_all_project_dirs(project_uuid, file_name)
+                if found:
+                    files_ok += 1
+                else:
+                    file_name = item_file_dict['filename']
+                    for dir_file in dir_dict['files']:
+                        if dir_file['filename'] == file_name:
+                            found = True
+                            files_ok += 1
+                            break
                 if found is False:
                     # we have a new file to save
                     # Now set the full path to cache the file
                     self.bin_file_obj.full_path_cache_dir = self.arch_files_obj.prep_directory(act_dir)
                     # now retrieve and save the file
-                    ok = self.bin_file_obj.get_cache_remote_file_content(file_name,
-                                                                         file_uri_key)
+                    # check first if there's a file in the temp-cache directory (from previous attempts)
+                    ok = self.copy_file_from_temp_cache(act_dir, file_name)
+                    if ok is False:
+                        ok = self.bin_file_obj.get_cache_remote_file_content(file_name,
+                                                                             file_uri_key)
                     if ok:
                         files_ok += 1
                         dir_dict = self.record_associated_categories(dir_dict,
@@ -282,6 +299,40 @@ class ArchiveBinaries():
                 # we have saved the expected number of files for this item
                 ok = True
         return ok
+    
+    def check_file_exists_in_all_project_dirs(self, project_uuid, file_name):
+        """ checks if a file already exists in any of the project dirs """
+        exists = False
+        project_dirs = self.get_project_binaries_dirs(project_uuid)
+        for archive_dir in project_dirs:
+            exists = self.arch_files_obj.check_exists(archive_dir, file_name)
+            if exists:
+                print('Found ' + file_name + ' in ' + archive_dir)
+                break
+        return exists
+    
+    def copy_file_from_temp_cache(self, archive_dir, file_name):
+        """ copies a file from a temp cache if it exists into the
+            current archive dir
+        """
+        copied_ok = False
+        if isinstance(self.temp_cache_dir, str):
+            original_dir_file = self.arch_files_obj.make_full_path_filename(self.temp_cache_dir,
+                                                                            file_name)
+            new_dir_file = self.arch_files_obj.make_full_path_filename(archive_dir,
+                                                                       file_name)
+            original_exists = self.arch_files_obj.check_exists(self.temp_cache_dir,
+                                                               file_name)
+            if original_exists:
+                try:
+                    shutil.copy2(original_dir_file , new_dir_file)
+                    copied_ok = True
+                except:
+                    print('Problem copying to: ' + new_dir_file)
+                    copied_ok = False
+        if copied_ok:
+            print('Copied temp-cache file: ' + file_name)
+        return copied_ok
     
     def get_current_part_num(self, license_uri, project_uuid):
         """ gets the current directory number based on
@@ -318,6 +369,28 @@ class ArchiveBinaries():
                                                                           license_uri,
                                                                           project_uuid)
         return part_num
+    
+    def get_uuids_for_cached_media_items(self, project_uuid):
+        """ gets a list of uuids for media items already locally cached """
+        uuids = {}
+        project_dirs = self.get_project_binaries_dirs(project_uuid)
+        for archive_dir in project_dirs:
+            dir_dict = self.arch_files_obj.get_dict_from_file(archive_dir,
+                                                              self.dir_content_file_json)
+            if isinstance(dir_dict, dict):
+                if 'files' in dir_dict:
+                    for dir_file in dir_dict['files']:
+                        if 'dc-terms:isPartOf' in dir_file:
+                            uri = dir_file['dc-terms:isPartOf']
+                            uri_ex = uri.split('/')
+                            uuid = uri_ex[-1]
+                            if uuid not in uuids:
+                                uuids[uuid] = []
+                            if archive_dir not in uuids[uuid]:
+                                uuids[uuid].append(archive_dir)
+                            if len(uuids[uuid]) > 1:
+                                print('UUID: ' + uuid + ' in directories: ' + str(uuids[uuid]))
+        return uuids           
         
     def make_dir_dict(self, part_num, license_uri, project_uuid):
         """ """
