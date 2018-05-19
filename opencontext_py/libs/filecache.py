@@ -1,6 +1,7 @@
 import json
 import os
 import codecs
+from collections import OrderedDict
 from django.db import models
 from django.conf import settings
 
@@ -29,7 +30,8 @@ class FileCacheJSON():
             try:
                 json_obj = json.load(codecs.open(dir_file,
                                                  'r',
-                                                 'utf-8-sig'))
+                                                 'utf-8-sig'),
+                                     object_pairs_hook=OrderedDict)
             except:
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False
