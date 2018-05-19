@@ -173,6 +173,29 @@ class OCitem():
                                                                           project.sm_localized_json)
             self.json_ld[dc_abstract] = lang_obj.make_json_ld_value_obj(project.content,
                                                                         project.lg_localized_json)
+            if isinstance(project.edit_status, int):
+                # add editorial status
+                oc_status = 'oc-gen:edit-level-' + str(project.edit_status)
+                parts_json_ld = PartsJsonLD()
+                self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
+                                                                  'bibo:status',
+                                                                   oc_status,
+                                                                  'uri')
+                if project.edit_status == 0:
+                    self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
+                                                                      'bibo:status',
+                                                                      'bibo:status/forthcoming',
+                                                                      'uri')
+                elif project.edit_status >= 1 and project.edit_status <= 2:
+                    self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
+                                                                      'bibo:status',
+                                                                      'bibo:status/nonPeerReviewed',
+                                                                      'uri')
+                else:
+                    self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
+                                                                      'bibo:status',
+                                                                      'bibo:status/peerReviewed',
+                                                                      'uri')
     
     def add_document_json_ld(self):
         """ adds document specific information to the JSON-LD object """
