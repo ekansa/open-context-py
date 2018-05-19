@@ -356,25 +356,6 @@ sri.reindex_uuids(uuids)
 
 
 
-from opencontext_py.apps.ldata.tdar.api import tdarAPI
-keyword_uri = 'http://core.tdar.org/browse/site-name/9694/44ce83'
-tdar = tdarAPI()
-tdar.search_by_site_keyword_uris(keyword_uri)
-
-
-from opencontext_py.apps.archive.files import ArchiveFiles
-archive = ArchiveFiles()
-archive.save_project_data('3')
-
-from opencontext_py.apps.archive.binaries import ArchiveBinaries
-arch_bin = ArchiveBinaries()
-project_uuid = '141e814a-ba2d-4560-879f-80f1afb019e9'
-arch_bin.get_distinct_licenses(project_uuid)
-
-from opencontext_py.apps.archive.binaries import ArchiveBinaries
-arch_bin = ArchiveBinaries()
-project_uuid = 'cbd24bbb-c6fc-44ed-bd67-6f844f120ad5'
-arch_bin.get_distinct_licenses(project_uuid)
 
 
 
@@ -386,11 +367,28 @@ arch_bin.save_project_binaries(project_uuid)
 
 from opencontext_py.apps.archive.binaries import ArchiveBinaries
 project_uuids = [
-    '78affbdc-4ea7-4caf-89e5-c3bcea21e46d',
-    'd1c85af4-c870-488a-865b-b3cf784cfc60',
-    'bdc6cb19-e739-404b-8b4f-eeeaae3b8aae'
+    "DF043419-F23B-41DA-7E4D-EE52AF22F92F"
 ]
 for project_uuid in project_uuids:
     arch_bin = ArchiveBinaries()
+    arch_bin.temp_cache_dir = 'temp-cache'
+    arch_bin.max_repo_file_count = 2500
     arch_bin.save_project_binaries(project_uuid)
     arch_bin.archive_all_project_binaries(project_uuid)
+    
+
+
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuid = "3F6DCD13-A476-488E-ED10-47D25513FCB2"
+archive_dir = "files-4-by---3F6DCD13-A476-488E-ED10-47D25513FCB2"
+deposition_id = 1242673
+arch_bin = ArchiveBinaries()
+arch_bin.archive_dir_project_binaries(project_uuid, archive_dir, deposition_id)
+dirs = [
+    "files-5-by---3F6DCD13-A476-488E-ED10-47D25513FCB2",
+    "files-6-by---3F6DCD13-A476-488E-ED10-47D25513FCB2"
+]
+for archive_dir in dirs:
+    project_uuid = "3F6DCD13-A476-488E-ED10-47D25513FCB2"
+    arch_bin = ArchiveBinaries()
+    arch_bin.archive_dir_project_binaries(project_uuid, archive_dir)
