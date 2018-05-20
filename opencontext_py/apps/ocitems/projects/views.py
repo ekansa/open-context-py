@@ -3,6 +3,8 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+from opencontext_py.apps.ocitems.ocitem.generation import OCitem as OCitemNew
+from opencontext_py.apps.ocitems.ocitem.htmltemplating import HTMLtemplate
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.ocitems.projects.content import ProjectContent
@@ -31,9 +33,60 @@ def index(request):
     return redirect(new_url, permanent=True)
 
 
-# @cache_control(no_cache=True)
-# @never_cache
+@cache_control(no_cache=True)
+@never_cache
+def html_view_new(request, uuid):
+    ocitem = OCitemNew()
+    if 'hashes' in request.GET:
+        ocitem.assertion_hashes = True
+    exists = ocitem.check_exists(uuid)
+    if exists:
+        ocitem.generate_json_ld()
+        rp = RootPath()
+        base_url = rp.get_baseurl()
+        proj_content = ProjectContent(ocitem.manifest.uuid,
+                                      ocitem.manifest.slug,
+                                      ocitem.json_ld)
+        html_temp = HTMLtemplate()
+        html_temp.proj_context_json_ld = ocitem.proj_context_json_ld
+        html_temp.proj_content = proj_content.get_project_content()
+        html_temp.read_jsonld_dict(ocitem.json_ld)
+        template = loader.get_template('projects/view.html')
+        req_neg = RequestNegotiation('text/html')
+        req_neg.supported_types = ['application/json',
+                                   'application/ld+json',
+                                   'application/vnd.geo+json']
+        if 'HTTP_ACCEPT' in request.META:
+            req_neg.check_request_support(request.META['HTTP_ACCEPT'])
+        if req_neg.supported:
+            if 'json' in req_neg.use_response_type:
+                # content negotiation requested JSON or JSON-LD
+                request.content_type = req_neg.use_response_type
+                response = HttpResponse(json.dumps(ocitem.json_ld,
+                                        ensure_ascii=False, indent=4),
+                                        content_type=req_neg.use_response_type + "; charset=utf8")
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
+            else:
+                context = {
+                    'item': html_temp,
+                    'base_url': base_url,
+                    'user': request.user
+                }
+                response = HttpResponse(template.render(context, request))
+                patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
+                return response
+        else:
+            # client wanted a mimetype we don't support
+            return HttpResponse(req_neg.error_message,
+                                content_type=req_neg.use_response_type + "; charset=utf8",
+                                status=415)
+    else:
+        raise Http404
+
 def html_view(request, uuid):
+    if request.GET.get('new') is not None:
+        return html_view_new(request, uuid)
     ocitem = OCitem()
     ocitem.get_item(uuid, True)
     if ocitem.manifest is not False:

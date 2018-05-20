@@ -141,7 +141,12 @@ class ItemAttributes():
                 list_item['id'] = Mediafile.PDF_DEFAULT_THUMBNAIL
                 list_item['type'] = 'oc-gen:thumbnail'
                 media_list.append(list_item)
-            json_ld['oc-gen:has-files'] = media_list
+            if self.manifest.item_type == 'media':
+                json_ld['oc-gen:has-files'] = media_list
+            else:
+                # Use the depiction predicate, since it depects the item described
+                # like project hero images
+                json_ld['foaf:depiction'] = media_list
         return json_ld
 
     def add_json_ld_descriptive_assertions(self, json_ld):
