@@ -10,6 +10,7 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.contexts.models import ItemContext
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.spatialtemporal import ItemSpatialTemporal
 from opencontext_py.apps.ocitems.ocitem.attributes import ItemAttributes
@@ -167,7 +168,7 @@ class OCitem():
         """ adds project specific information to the JSON-LD object """
         project = self.item_gen_cache.get_project_model_object(self.manifest.uuid)
         if isinstance(project, Project):
-            dc_abstract = ItemAttributes.PREDICATES_DCTERMS_ABSTRACT
+            dc_abstract = ItemKeys.PREDICATES_DCTERMS_ABSTRACT
             lang_obj = Languages()
             self.json_ld['description'] = lang_obj.make_json_ld_value_obj(project.short_des,
                                                                           project.sm_localized_json)
@@ -204,7 +205,7 @@ class OCitem():
         except OCdocument.DoesNotExist:
             document = None
         if isinstance(document, OCdocument):
-            rdf_html = ItemAttributes.PREDICATES_RDF_HTML
+            rdf_html = ItemKeys.PREDICATES_RDF_HTML
             lan_obj = Languages()
             self.json_ld[rdf_html] = lan_obj.make_json_ld_value_obj(document.content,
                                                                     document.localized_json)
@@ -244,8 +245,8 @@ class OCitem():
         if isinstance(octype, OCtype):
             parts_json_ld = PartsJsonLD()
             parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
-            parts_json_ld.predicate_uri_as_stable_id = ItemAttributes.PREDICATES_OWL_SAMEAS
+            parts_json_ld.predicate_uri_as_stable_id = ItemKeys.PREDICATES_OWL_SAMEAS
             self.json_ld = parts_json_ld.addto_predicate_list(self.json_ld,
-                                                              ItemAttributes.PREDICATES_SKOS_RELATED,
+                                                              ItemKeys.PREDICATES_SKOS_RELATED,
                                                               octype.predicate_uuid,
                                                               'predicates')

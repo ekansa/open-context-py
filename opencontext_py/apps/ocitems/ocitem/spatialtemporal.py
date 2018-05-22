@@ -14,6 +14,7 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -22,15 +23,10 @@ from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.projects.metadata import ProjectMeta
 
 
-# OCitem is a very general class for all Open Context items.
-# This class is used to make a JSON-LD output from data returned from the database via other apps
 class ItemSpatialTemporal():
-
-    PREDICATES_OCGEN_HASCONTEXTPATH = 'oc-gen:has-context-path'
-    PREDICATES_OCGEN_HASLINKEDCONTEXTPATH = 'oc-gen:has-linked-context-path'
-    PREDICATES_OCGEN_HASPATHITEMS = 'oc-gen:has-path-items'
-    PREDICATES_OCGEN_HASCONTENTS = 'oc-gen:has-contents'
-    PREDICATES_OCGEN_CONTAINS = 'oc-gen:contains'
+    """ Methods for adding spatial context, containment, and spatial temporal
+        data to an Open Context Item JSON-LD object
+    """
 
     def __init__(self):
         self.project_uuid = None
@@ -112,12 +108,12 @@ class ItemSpatialTemporal():
         if isinstance(self.contexts, dict):
             if len(self.contexts) > 0:
                 # add spatial context, direct parents of a given subject item
-                context_predicate = self.PREDICATES_OCGEN_HASCONTEXTPATH
+                context_predicate = ItemKeys.PREDICATES_OCGEN_HASCONTEXTPATH
                 act_context = self.make_spatial_context_json_ld(self.contexts)
         elif isinstance(self.linked_contexts, dict):
             if len(self.linked_contexts) > 0:
                 # add related spatial contexts (related to a linked subject)
-                context_predicate = self.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH
+                context_predicate = ItemKeys.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH
                 act_context = self.make_spatial_context_json_ld(self.linked_contexts)
         # first make the GeoJSON part of the JSON-LD
         json_ld = self.add_geojson(json_ld)
@@ -147,11 +143,11 @@ class ItemSpatialTemporal():
                     act_children['type'] = 'oc-gen:contents'
                     for child_uuid in children:
                         act_children = parts_json_ld.addto_predicate_list(act_children,
-                                                                          self.PREDICATES_OCGEN_CONTAINS,
+                                                                          ItemKeys.PREDICATES_OCGEN_CONTAINS,
                                                                           child_uuid,
                                                                           'subjects')
                         self.class_uri_list += parts_json_ld.class_uri_list
-                json_ld[self.PREDICATES_OCGEN_HASCONTENTS] = act_children
+                json_ld[ItemKeys.PREDICATES_OCGEN_HASCONTENTS] = act_children
         return json_ld
     
     def add_geojson(self, json_ld):
@@ -393,14 +389,14 @@ class ItemSpatialTemporal():
                 parts_json_ld.get_manifest_objects_from_uuids(parents)
             for parent_uuid in parents:
                 act_context = parts_json_ld.addto_predicate_list(act_context,
-                                                                 self.PREDICATES_OCGEN_HASPATHITEMS,
+                                                                 ItemKeys.PREDICATES_OCGEN_HASPATHITEMS,
                                                                  parent_uuid,
                                                                  'subjects')
                 self.class_uri_list += parts_json_ld.class_uri_list
             if first_node:
                 # set aside a list of parent labels to use for making a dc-term:title
                 first_node = False
-                if self.PREDICATES_OCGEN_HASPATHITEMS in act_context:
-                    for parent_obj in act_context[self.PREDICATES_OCGEN_HASPATHITEMS]:
+                if ItemKeys.PREDICATES_OCGEN_HASPATHITEMS in act_context:
+                    for parent_obj in act_context[ItemKeys.PREDICATES_OCGEN_HASPATHITEMS]:
                         self.parent_context_list.append(parent_obj['label'])
         return act_context

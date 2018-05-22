@@ -15,7 +15,8 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
-from opencontext_py.apps.ocitems.ocitem.models import OCitem
+# from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -155,9 +156,9 @@ class HTMLtemplate():
                 self.person['intials'] = json_ld['foaf:nick']
             else:
                 self.person['intials'] = False
-            if OCitem.PREDICATES_FOAF_PRIMARYTOPICOF in json_ld:
+            if ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF in json_ld:
                 # get the orcid identifier for this person
-                orcid_dict = json_ld[OCitem.PREDICATES_FOAF_PRIMARYTOPICOF][0]
+                orcid_dict = json_ld[ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF][0]
                 orcid_api = orcidAPI()
                 orcid_dict['api'] = orcid_api.make_orcid_api_url(orcid_dict['id'])
                 self.person['orcid'] = orcid_dict
@@ -204,10 +205,10 @@ class HTMLtemplate():
             act_obs.make_type_obs(json_ld)
             if act_obs.properties is not False:
                 self.observations.append(act_obs)
-        if OCitem.PREDICATES_OCGEN_HASOBS in json_ld:
+        if ItemKeys.PREDICATES_OCGEN_HASOBS in json_ld:
             if self.observations is False:
                 self.observations = []
-            for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+            for obs_item in json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]:
                 obs_num = len(self.observations) + 1
                 act_obs = Observation()
                 act_obs.read_vocab_graph = self.read_vocab_graph
@@ -677,17 +678,17 @@ class Context():
     def make_context(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
         act_context = False
-        if(OCitem.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld):
+        if ItemKeys.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld:
             self.type = 'context'
-            act_context = json_ld[OCitem.PREDICATES_OCGEN_HASCONTEXTPATH]
-        elif(OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH in json_ld):
+            act_context = json_ld[ItemSpatialTemporal.PREDICATES_OCGEN_HASCONTEXTPATH]
+        elif ItemKeys.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH in json_ld:
             self.type = 'related'
-            act_context = json_ld[OCitem.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH]
-        if(act_context is not False):
+            act_context = json_ld[ItemKeys.PREDICATES_OCGEN_HASLINKEDCONTEXTPATH]
+        if act_context is not False:
             self.id = act_context['id']
             self.parents = []
-            if(OCitem.PREDICATES_OCGEN_HASPATHITEMS in act_context):
-                for parent_item in act_context[OCitem.PREDICATES_OCGEN_HASPATHITEMS]:
+            if ItemKeys.PREDICATES_OCGEN_HASPATHITEMS in act_context:
+                for parent_item in act_context[ItemKeys.PREDICATES_OCGEN_HASPATHITEMS]:
                     act_parent = {}
                     act_parent['uri'] = parent_item['id']
                     act_parent['label'] = parent_item['label']
@@ -711,13 +712,13 @@ class Children():
     def make_children(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
         act_children = False
-        if OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld:
+        if ItemKeys.PREDICATES_OCGEN_HASCONTENTS in json_ld:
             self.contype = 'Context'
-            act_children = json_ld[OCitem.PREDICATES_OCGEN_HASCONTENTS]
-            if OCitem.PREDICATES_OCGEN_CONTAINS in act_children:
+            act_children = json_ld[ItemKeys.PREDICATES_OCGEN_HASCONTENTS]
+            if ItemKeys.PREDICATES_OCGEN_CONTAINS in act_children:
                 self.id = act_children['id']
                 self.children = []
-                for child_item in act_children[OCitem.PREDICATES_OCGEN_CONTAINS]:
+                for child_item in act_children[ItemKeys.PREDICATES_OCGEN_CONTAINS]:
                     act_child = {}
                     act_child['uri'] = child_item['id']
                     act_child['label'] = child_item['label']
@@ -893,11 +894,11 @@ class Observation():
             links to persons items, and links to documents
         """
         self.id = obs_dict['id'].replace('#', '')
-        self.source_id = obs_dict[OCitem.PREDICATES_OCGEN_SOURCEID]
-        self.obs_status = obs_dict[OCitem.PREDICATES_OCGEN_OBSTATUS]
+        self.source_id = obs_dict[ItemKeys.PREDICATES_OCGEN_SOURCEID]
+        self.obs_status = obs_dict[ItemKeys.PREDICATES_OCGEN_OBSTATUS]
         self.obs_type = 'contributor'
-        if OCitem.PREDICATES_OCGEN_OBSLABEL in obs_dict:
-            self.label = obs_dict[OCitem.PREDICATES_OCGEN_OBSLABEL]
+        if ItemKeys.PREDICATES_OCGEN_OBSLABEL in obs_dict:
+            self.label = obs_dict[ItemKeys.PREDICATES_OCGEN_OBSLABEL]
         else:
             if self.obs_num < 2:
                 self.label = 'Main Observation'
@@ -1400,8 +1401,8 @@ class LinkedData():
         if ld_found and self.linked_predicates is not False:
             # using an ordered dict to make sure we can more easily have unique combos of preds and objects
             temp_annotations = LastUpdatedOrderedDict()
-            if OCitem.PREDICATES_OCGEN_HASOBS in json_ld:
-                for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
+            if ItemKeys.PREDICATES_OCGEN_HASOBS in json_ld:
+                for obs_item in json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]:
                     for link_pred in self.linked_predicates:
                         if link_pred['subject'] in obs_item:
                             if link_pred['id'] not in temp_annotations:

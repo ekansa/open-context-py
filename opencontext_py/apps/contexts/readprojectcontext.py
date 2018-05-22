@@ -2,12 +2,13 @@ from django.conf import settings
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 
 
 class ReadProjectContextVocabGraph():
     """ Methods to read the project context vocabulary graph """
     
-    GLOBAL_VOCABS = [
+    GLOBAL_VOCAB_GRAPH = [
         {'@id': 'oc-pred:link',
          'owl:sameAs': 'http://opencontext.org/predicates/oc-3',
          'label': 'link',
@@ -21,8 +22,32 @@ class ReadProjectContextVocabGraph():
          '@type': 'xsd:string'},
     ]
     
+    # predicates used for equivalence, used to make
+    # inferred assertions
+    REL_PREDICATES_FOR_INFERRENCE = [
+        'skos:closeMatch',
+        'skos:exactMatch'
+    ]
+    REL_MEASUREMENTS = ['cidoc-crm:P67_refers_to',
+                        'oc-gen:has-technique',
+                        'rdfs:range']
+    ITEM_REL_PREDICATES = ['skos:closeMatch',
+                           'skos:exactMatch',
+                           'owl:sameAs',
+                           'skos:related',
+                           'skos:broader',
+                           'dc-terms:references',
+                           'dc-terms:hasVersion',
+                           'http://nomisma.org/ontology#hasTypeSeriesItem']
+    
     def __init__(self, proj_context_json_ld=None):
-        self.context = proj_context_json_ld
+        self.context = None
+        self.graph = self.GLOBAL_VOCAB_GRAPH
+        if isinstance(proj_context_json_ld, dict):
+            if '@context' in proj_context_json_ld:
+                self.context = proj_context_json_ld['@context']
+            if '@graph' in proj_context_json_ld:
+                self.graph += proj_context_json_ld['@graph']
     
     def lookup_predicate(self, id):
         """looks up an Open Context predicate by an identifier
@@ -43,17 +68,15 @@ class ReadProjectContextVocabGraph():
            (slud id, uri, slug, or uuid)
         """
         output = None
-        if (isinstance(self.context, dict) and
+        if (isinstance(self.graph, list) and
             isinstance(id, str)):
-            if '@graph' in self.context:
-                self.context['@graph'] += self.GLOBAL_VOCABS
-                for g_obj in self.context['@graph']:
-                    id_list = self.get_id_list_for_g_obj(g_obj)
-                    if id in id_list:
-                        output = g_obj
-                        if item_type == 'predicates' and '@type' not in g_obj:
-                            output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
-                        break
+            for g_obj in self.graph:
+                id_list = self.get_id_list_for_g_obj(g_obj)
+                if id in id_list:
+                    output = g_obj
+                    if item_type == 'predicates' and '@type' not in g_obj:
+                        output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
+                    break
         return output
     
     def get_predicate_datatype_for_graph_obj(self, g_obj):
@@ -97,3 +120,7 @@ class ReadProjectContextVocabGraph():
                         datatype = self.context['@context'][slug_uri]['@type']
         return datatype
 
+    def infer_assertions_for_item_json_ld(self, json_ld):
+        """ makes a list of inferred assertions from item json ld """
+        pass    
+    
