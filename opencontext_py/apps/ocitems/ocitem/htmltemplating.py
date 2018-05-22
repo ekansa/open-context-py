@@ -52,6 +52,7 @@ class HTMLtemplate():
         self.uuid = False
         self.project_uuid = False
         self.proj_context_json_ld = False
+        self.read_vocab_graph = False
         self.id = False
         self.href = False
         self.slug = False
@@ -64,7 +65,7 @@ class HTMLtemplate():
         self.item_category_label = False
         self.item_category_uri = False
         self.item_category_icon = False
-        self.context = False
+        self.context = False  # items spatial context
         self.children = False
         self.observations = False
         self.obs_more_tab = 0
@@ -106,6 +107,8 @@ class HTMLtemplate():
     def read_jsonld_dict(self, json_ld):
         """ Reads JSON-LD dict object to make a TemplateItem object
         """
+        if isinstance(self.proj_context_json_ld, dict):
+            self.read_vocab_graph  = ReadProjectContextVocabGraph(self.proj_context_json_ld)
         self.uuid = json_ld['uuid']
         self.label = json_ld['label']
         self.id = json_ld['id']
@@ -162,13 +165,13 @@ class HTMLtemplate():
 
     def create_context(self, json_ld):
         """
-        Adds context object if json_ld describes such
+        Adds spatial context object if json_ld describes such
         """
         act_context = Context()
         act_context.make_context(json_ld, self.class_type_metadata)
-        if(act_context.type is not False):
+        if act_context.type is not False:
             self.context = act_context
-
+    
     def create_children(self, json_ld):
         """
         Adds children object if json_ld describes such
@@ -186,6 +189,7 @@ class HTMLtemplate():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
+            act_obs.read_vocab_graph = self.read_vocab_graph
             act_obs.obs_num = len(self.observations) + 1
             act_obs.make_predicate_obs(json_ld)
             if act_obs.properties is not False:
@@ -194,20 +198,21 @@ class HTMLtemplate():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
+            act_obs.read_vocab_graph = self.read_vocab_graph
             act_obs.obs_num = len(self.observations) + 1
             act_obs.make_type_obs(json_ld)
             if act_obs.properties is not False:
                 self.observations.append(act_obs)
         if OCitem.PREDICATES_OCGEN_HASOBS in json_ld:
-            context = json_ld['@context'][2]  # this context, after the item and the GeoJSON
             if self.observations is False:
                 self.observations = []
             for obs_item in json_ld[OCitem.PREDICATES_OCGEN_HASOBS]:
                 obs_num = len(self.observations) + 1
                 act_obs = Observation()
+                act_obs.read_vocab_graph = self.read_vocab_graph
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.obs_num = obs_num
-                act_obs.make_observation(context, obs_item)
+                act_obs.make_observation(obs_item)
                 if act_obs.use_accordions:
                     self.use_accordions = True
                 if obs_num == 1 and\
@@ -224,6 +229,7 @@ class HTMLtemplate():
             if len(self.linked_data.annotations) > 0:
                 # make a special observation for linked data annotations
                 act_obs = Observation()
+                act_obs.read_vocab_graph = self.read_vocab_graph
                 act_obs.class_type_metadata = self.class_type_metadata
                 act_obs.make_linked_data_obs(self.linked_data.annotations)
                 self.observations.append(act_obs)
@@ -232,6 +238,7 @@ class HTMLtemplate():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
+            act_obs.read_vocab_graph = self.read_vocab_graph
             act_obs.obs_num = len(self.observations) + 1
             act_obs.make_item_annotation_obs(self.item_linked_data)
             if act_obs.annotations is not False:
@@ -241,6 +248,7 @@ class HTMLtemplate():
             if self.observations is False:
                 self.observations = []
             act_obs = Observation()
+            act_obs.read_vocab_graph = self.read_vocab_graph
             act_obs.obs_num = len(self.observations) + 1
             act_obs.make_item_dc_metadata_obs(self.item_dc_metadata)
             if act_obs.annotations is not False:
@@ -647,8 +655,8 @@ class ItemMetadata():
     def get_class_meta(item, class_type_metadata):
         item['typelabel'] = False
         item['icon'] = False
-        if('type' in item):
-            if(item['type'] in class_type_metadata):
+        if 'type' in item:
+            if item['type'] in class_type_metadata:
                 meta = class_type_metadata[item['type']]
                 for key, value in meta.items():
                     item[key] = value
@@ -701,7 +709,7 @@ class Children():
     def make_children(self, json_ld, class_type_metadata):
         """ makes contexts for use with the template """
         act_children = False
-        if(OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld):
+        if OCitem.PREDICATES_OCGEN_HASCONTENTS in json_ld:
             self.contype = 'Context'
             act_children = json_ld[OCitem.PREDICATES_OCGEN_HASCONTENTS]
             if OCitem.PREDICATES_OCGEN_CONTAINS in act_children:
@@ -725,7 +733,7 @@ class Observation():
     describing descriptive properties and links for items"""
 
     def __init__(self):
-        self.context = False
+        self.read_vocab_graph = None
         self.id = False
         self.obs_num = 0
         self.label = False
@@ -883,12 +891,11 @@ class Observation():
         self.label = 'Standards Annotations'
         self.annotations = annotations
 
-    def make_observation(self, context, obs_dict):
+    def make_observation(self, obs_dict):
         """ Makes an observation with some observation metadata
             property list, links to subjects items, links to media items,
             links to persons items, and links to documents
         """
-        self.context = context
         self.id = obs_dict['id'].replace('#', '')
         self.source_id = obs_dict[OCitem.PREDICATES_OCGEN_SOURCEID]
         self.obs_status = obs_dict[OCitem.PREDICATES_OCGEN_OBSTATUS]
@@ -912,26 +919,15 @@ class Observation():
         """
         properties = False
         for key, item in obs_dict.items():
-            if key != 'id' and key in self.context:
-                if OCitem.PREDICATES_OCGEN_PREDICATETYPE in self.context[key]:
-                    if self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'variable':
-                        if(properties is False):
-                            properties = []
-                        act_prop = Property()
-                        act_prop.start_property(self.context[key])
-                        act_prop.add_property_values(obs_dict[key])
-                        properties.append(act_prop)
-            elif key == Assertion.PREDICATES_NOTE:
-                predicate_info = {'label': 'Note',
-                                  'owl:sameAs': False,
-                                  'slug': False,
-                                  'type': 'xsd:string'}
-                if properties is False:
-                    properties = []
-                act_prop = Property()
-                act_prop.start_property(predicate_info)
-                act_prop.add_property_values(obs_dict[key])
-                properties.append(act_prop)
+            predicate_info = self.read_vocab_graph.lookup_predicate(key)
+            if key != 'id' and isinstance(predicate_info, dict):
+                if predicate_info['oc-gen:predType'] == 'variable':
+                    if not isinstance(properties, list):
+                        properties = []
+                    act_prop = Property()
+                    act_prop.start_property(predicate_info)
+                    act_prop.add_property_values(obs_dict[key])
+                    properties.append(act_prop)
         return properties
 
     def make_links(self, obs_dict):
@@ -939,40 +935,40 @@ class Observation():
         """
         links = False
         for key, item in obs_dict.items():
-            if(key != 'id' and key in self.context):
-                if(OCitem.PREDICATES_OCGEN_PREDICATETYPE in self.context[key]):
-                    if(self.context[key][OCitem.PREDICATES_OCGEN_PREDICATETYPE] == 'link'):
-                        if links is False:
-                            links = []
-                        act_link = Link()
-                        act_link.class_type_metadata = self.class_type_metadata
-                        act_link.start_link(self.context[key])
-                        act_link.add_link_objects(obs_dict[key])
-                        if act_link.subjects is not False:
-                            self.subjects_link_count += len(act_link.subjects)
-                            if self.subjects_links is False:
-                                self.subjects_links = []
+            predicate_info = self.read_vocab_graph.lookup_predicate(key)
+            if key != 'id' and isinstance(predicate_info, dict):
+                if predicate_info['oc-gen:predType'] == 'link':
+                    if not isinstance(links, list):
+                        links = []
+                    act_link = Link()
+                    act_link.class_type_metadata = self.class_type_metadata
+                    act_link.start_link(predicate_info)
+                    act_link.add_link_objects(obs_dict[key])
+                    if act_link.subjects is not False:
+                        self.subjects_link_count += len(act_link.subjects)
+                        if not isinstance(self.subjects_links, list):
+                            self.subjects_links = []
                             act_link.nodeid = 'obs-' + str(self.obs_num) + '-subjects-' + act_link.linkslug
                             self.subjects_links.append(act_link)
-                        if act_link.media is not False:
-                            self.media_link_count += len(act_link.media)
-                            if self.media_links is False:
-                                self.media_links = []
-                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-media-' + act_link.linkslug
-                            self.media_links.append(act_link)
-                        if act_link.persons is not False:
-                            self.persons_link_count += len(act_link.persons)
-                            if self.persons_links is False:
-                                self.persons_links = []
-                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-persons-' + act_link.linkslug
-                            self.persons_links.append(act_link)
-                        if act_link.documents is not False:
-                            self.documents_link_count += len(act_link.documents)
-                            if self.documents_links is False:
-                                self.documents_links = []
-                            act_link.nodeid = 'obs-' + str(self.obs_num) + '-documents-' + act_link.linkslug
-                            self.documents_links.append(act_link)
-                        links.append(act_link)
+                    if act_link.media is not False:
+                        self.media_link_count += len(act_link.media)
+                        if not isinstance(self.media_links, list):
+                            self.media_links = []
+                        act_link.nodeid = 'obs-' + str(self.obs_num) + '-media-' + act_link.linkslug
+                        self.media_links.append(act_link)
+                    if act_link.persons is not False:
+                        self.persons_link_count += len(act_link.persons)
+                        if not isinstance(self.persons_links, list):
+                            self.persons_links = []
+                        act_link.nodeid = 'obs-' + str(self.obs_num) + '-persons-' + act_link.linkslug
+                        self.persons_links.append(act_link)
+                    if act_link.documents is not False:
+                        self.documents_link_count += len(act_link.documents)
+                        if not isinstance(self.documents_links, list):
+                            self.documents_links = []
+                        act_link.nodeid = 'obs-' + str(self.obs_num) + '-documents-' + act_link.linkslug
+                        self.documents_links.append(act_link)
+                    links.append(act_link)
         return links
 
 
@@ -993,7 +989,7 @@ class Property():
         self.varlabel = predicate_info['label']
         self.varuri = predicate_info['owl:sameAs']
         self.varslug = predicate_info['slug']
-        self.vartype = predicate_info['type']
+        self.vartype = predicate_info['@type']
 
     def add_property_values(self, prop_vals):
         """ Adds values to a variable
@@ -1026,7 +1022,7 @@ class Link():
         self.linklabel = predicate_info['label']
         self.linkuri = predicate_info['owl:sameAs']
         self.linkslug = predicate_info['slug']
-        self.linktype = predicate_info['type']
+        self.linktype = predicate_info['@type']
         if self.linkslug == 'link':
             self.linklabel = 'Linked / Associated'
 
@@ -1084,7 +1080,7 @@ class PropValue():
 
     def make_value(self, val_item):
         if isinstance(val_item, dict):
-            if('id' in val_item):
+            if 'id' in val_item:
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.uri = val_item['id']
                     uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
@@ -1150,7 +1146,7 @@ class Project():
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
-            if('dc-terms:isPartOf' in json_ld):
+            if 'dc-terms:isPartOf' in json_ld:
                 for proj_item in json_ld['dc-terms:isPartOf']:
                     if 'projects' in proj_item['id']:
                         self.uri = proj_item['id']
@@ -1388,6 +1384,7 @@ class LinkedData():
     def __init__(self):
         self.linked_predicates = False
         self.linked_types = False
+        self.proj_context_json_ld = None
         self.annotations = []  # annotations on entities found in observations
         self.item_annotations = []  # annotations on the main entity of the JSON-LD
         self.item_dc_metadata = []  # dublin-core annotations on the main entity of the JSON-LD
@@ -1732,3 +1729,97 @@ class LinkedData():
             query = 'prop=' + predicate + '---' + obj
         return query
 
+
+class ReadProjectContextVocabGraph():
+    """ Methods to read the project context vocabulary graph """
+    
+    GLOBAL_VOCABS = [
+        {'@id': 'oc-pred:link',
+         'owl:sameAs': 'http://opencontext.org/predicates/oc-3',
+         'label': 'link',
+         'slug': 'link',
+         'oc-gen:predType': 'link',
+         '@type': '@id'},
+        {'@id': Assertion.PREDICATES_NOTE,
+         'label': 'Note',
+         'owl:sameAs': False,
+         'slug': False,
+         '@type': 'xsd:string'},
+    ]
+    
+    def __init__(self, proj_context_json_ld=None):
+        self.context = proj_context_json_ld
+    
+    def lookup_predicate(self, id):
+        """looks up an Open Context predicate by an identifier
+           (slud id, uri, slug, or uuid)
+        """
+        output = self.lookup_oc_descriptor(id, 'predicates')
+        return output
+    
+    def lookup_type(self, id):
+        """looks up an Open Context type by an identifier
+           (slud id, uri, slug, or uuid)
+        """
+        output = self.lookup_oc_descriptor(id, 'types')
+        return output
+    
+    def lookup_oc_descriptor(self, id, item_type):
+        """looks up a predicate, or a type by an identifier
+           (slud id, uri, slug, or uuid)
+        """
+        output = None
+        if (isinstance(self.context, dict) and
+            isinstance(id, str)):
+            if '@graph' in self.context:
+                self.context['@graph'] += self.GLOBAL_VOCABS
+                for g_obj in self.context['@graph']:
+                    id_list = self.get_id_list_for_g_obj(g_obj)
+                    if id in id_list:
+                        output = g_obj
+                        if item_type == 'predicates' and '@type' not in g_obj:
+                            output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
+                        break
+        return output
+    
+    def get_predicate_datatype_for_graph_obj(self, g_obj):
+        """ looks up a predicate data type for a given graph object """
+        datatype = None
+        if isinstance(g_obj, dict):
+            if '@id' in g_obj:
+                slug_uri = g_obj['@id']
+            elif 'id' in g_obj:
+                slug_uri = g_obj['id']
+            else:
+                slug_uri = None
+            datatype = self.get_predicate_datatype_by_slug_uri(slug_uri)
+        return datatype
+    
+    def get_id_list_for_g_obj(self, g_obj):
+        """gets a list of ids for an object"""
+        id_list = []
+        id_keys = [
+            '@id',
+            'id',
+            'owl:sameAs',
+            'slug',
+            'uuid'
+        ]
+        if isinstance(g_obj, dict):
+            for id_key in id_keys:
+                if id_key in g_obj:
+                    if g_obj[id_key] not in id_list:
+                        id_list.append(g_obj[id_key])
+        return id_list
+    
+    def get_predicate_datatype_by_slug_uri(self, slug_uri):
+        """looks up a predicates datatype via the slug URI """
+        datatype = 'xsd:string'  # default to treating all as a string
+        if (isinstance(self.context, dict) and
+            isinstance(slug_uri, str)):
+            if '@context' in self.context:
+                if slug_uri in self.context['@context']:
+                    if '@type' in self.context['@context'][slug_uri]:
+                        datatype = self.context['@context'][slug_uri]['@type']
+        return datatype
+                        
