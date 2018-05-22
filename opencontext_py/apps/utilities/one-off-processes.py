@@ -377,6 +377,12 @@ for project_uuid in project_uuids:
     arch_bin.archive_all_project_binaries(project_uuid)
     
 
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+archive_dir = 'files-1-by---DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+deposition_id = 1251106
+arch_bin.archive_dir_project_binaries(project_uuid, archive_dir, deposition_id)
+
 
 from opencontext_py.apps.archive.binaries import ArchiveBinaries
 project_uuid = "3F6DCD13-A476-488E-ED10-47D25513FCB2"
