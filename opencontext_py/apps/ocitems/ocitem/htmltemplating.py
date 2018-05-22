@@ -13,6 +13,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
@@ -316,6 +317,7 @@ class HTMLtemplate():
         """ Makes an instance of a GeoMap class, with data from the JSON_LD
         """
         linked_data = LinkedData()
+        linked_data.read_vocab_graph = self.read_vocab_graph
         linked_data.project = self.project
         linked_data.make_linked_data(json_ld)
         self.linked_data = linked_data
@@ -798,18 +800,7 @@ class Observation():
         self.obs_type = 'contributor'
         self.label = 'Description of this Property / Relation'
         if 'skos:note' in json_ld:
-            act_val = PropValue()
-            act_val.vartype = 'xsd:string'
-            act_val.set_string_val_and_localizations(json_ld['skos:note'])
-            act_prop = Property()
-            act_prop.varlabel = 'Definition or note'
-            act_prop.varuri = False
-            act_prop.varslug = False
-            act_prop.vartype = 'xsd:string'
-            act_prop.values = [act_val]
-            if self.properties is False:
-                self.properties = []
-            self.properties.append(act_prop)
+            self.add_skos_note_property(json_ld)
         if 'rdfs:range' in json_ld:
             range_values = []
             for rel_item in json_ld['rdfs:range']:
@@ -847,18 +838,7 @@ class Observation():
         self.obs_type = 'contributor'
         self.label = 'Description of this Category / Type'
         if 'skos:note' in json_ld:
-            act_val = PropValue()
-            act_val.vartype = 'xsd:string'
-            act_val.set_string_val_and_localizations(json_ld['skos:note'])
-            act_prop = Property()
-            act_prop.varlabel = 'Definition or note'
-            act_prop.varuri = False
-            act_prop.varslug = False
-            act_prop.vartype = 'xsd:string'
-            act_prop.values = [act_val]
-            if self.properties is False:
-                self.properties = []
-            self.properties.append(act_prop)
+            self.add_skos_note_property(json_ld)
         if 'skos:related' in json_ld:
             for rel_item in json_ld['skos:related']:
                 if 'oc-pred:' in rel_item['id']:
@@ -879,6 +859,22 @@ class Observation():
                         act_val.val = rel_item['label']
                         act_prop.values.append(act_val)
                         self.properties.append(act_prop)
+
+    def add_skos_note_property(self, json_ld):
+        """adds a skos note property to the properties """
+        if 'skos:note' in json_ld:
+            act_val = PropValue()
+            act_val.vartype = 'xsd:string'
+            act_val.set_string_val_and_localizations(json_ld['skos:note'])
+            act_prop = Property()
+            act_prop.varlabel = 'Definition or Note'
+            act_prop.varuri = False
+            act_prop.varslug = False
+            act_prop.vartype = 'xsd:string'
+            act_prop.values = [act_val]
+            if not isinstance(self.properties, list):
+                self.properties = []
+            self.properties.append(act_prop)
 
     def make_linked_data_obs(self, annotations):
         """ Makes an observation with some metadata
@@ -1384,7 +1380,7 @@ class LinkedData():
     def __init__(self):
         self.linked_predicates = False
         self.linked_types = False
-        self.proj_context_json_ld = None
+        self.read_vocab_graph = None
         self.annotations = []  # annotations on entities found in observations
         self.item_annotations = []  # annotations on the main entity of the JSON-LD
         self.item_dc_metadata = []  # dublin-core annotations on the main entity of the JSON-LD
@@ -1728,98 +1724,3 @@ class LinkedData():
         else:
             query = 'prop=' + predicate + '---' + obj
         return query
-
-
-class ReadProjectContextVocabGraph():
-    """ Methods to read the project context vocabulary graph """
-    
-    GLOBAL_VOCABS = [
-        {'@id': 'oc-pred:link',
-         'owl:sameAs': 'http://opencontext.org/predicates/oc-3',
-         'label': 'link',
-         'slug': 'link',
-         'oc-gen:predType': 'link',
-         '@type': '@id'},
-        {'@id': Assertion.PREDICATES_NOTE,
-         'label': 'Note',
-         'owl:sameAs': False,
-         'slug': False,
-         '@type': 'xsd:string'},
-    ]
-    
-    def __init__(self, proj_context_json_ld=None):
-        self.context = proj_context_json_ld
-    
-    def lookup_predicate(self, id):
-        """looks up an Open Context predicate by an identifier
-           (slud id, uri, slug, or uuid)
-        """
-        output = self.lookup_oc_descriptor(id, 'predicates')
-        return output
-    
-    def lookup_type(self, id):
-        """looks up an Open Context type by an identifier
-           (slud id, uri, slug, or uuid)
-        """
-        output = self.lookup_oc_descriptor(id, 'types')
-        return output
-    
-    def lookup_oc_descriptor(self, id, item_type):
-        """looks up a predicate, or a type by an identifier
-           (slud id, uri, slug, or uuid)
-        """
-        output = None
-        if (isinstance(self.context, dict) and
-            isinstance(id, str)):
-            if '@graph' in self.context:
-                self.context['@graph'] += self.GLOBAL_VOCABS
-                for g_obj in self.context['@graph']:
-                    id_list = self.get_id_list_for_g_obj(g_obj)
-                    if id in id_list:
-                        output = g_obj
-                        if item_type == 'predicates' and '@type' not in g_obj:
-                            output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
-                        break
-        return output
-    
-    def get_predicate_datatype_for_graph_obj(self, g_obj):
-        """ looks up a predicate data type for a given graph object """
-        datatype = None
-        if isinstance(g_obj, dict):
-            if '@id' in g_obj:
-                slug_uri = g_obj['@id']
-            elif 'id' in g_obj:
-                slug_uri = g_obj['id']
-            else:
-                slug_uri = None
-            datatype = self.get_predicate_datatype_by_slug_uri(slug_uri)
-        return datatype
-    
-    def get_id_list_for_g_obj(self, g_obj):
-        """gets a list of ids for an object"""
-        id_list = []
-        id_keys = [
-            '@id',
-            'id',
-            'owl:sameAs',
-            'slug',
-            'uuid'
-        ]
-        if isinstance(g_obj, dict):
-            for id_key in id_keys:
-                if id_key in g_obj:
-                    if g_obj[id_key] not in id_list:
-                        id_list.append(g_obj[id_key])
-        return id_list
-    
-    def get_predicate_datatype_by_slug_uri(self, slug_uri):
-        """looks up a predicates datatype via the slug URI """
-        datatype = 'xsd:string'  # default to treating all as a string
-        if (isinstance(self.context, dict) and
-            isinstance(slug_uri, str)):
-            if '@context' in self.context:
-                if slug_uri in self.context['@context']:
-                    if '@type' in self.context['@context'][slug_uri]:
-                        datatype = self.context['@context'][slug_uri]['@type']
-        return datatype
-                        
