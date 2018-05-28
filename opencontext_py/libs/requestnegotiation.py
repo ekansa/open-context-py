@@ -20,10 +20,11 @@ class RequestNegotiation():
         """
         if not request.user.is_authenticated():
             # the user is not authenticated, therefore
-            # we will default to removing the session cookie for a user
-            request.session.set_expiry((24 * 60 * 60))  # expire in a day
-            request.session.flush()
-            request.session.clear()
+            # we will default to expire the session cookie for a user after the default
+            pass
+            # request.session.set_expiry((24 * 60 * 60))  # expire in a day
+            # request.session.flush()
+            # request.session.clear()
         return request
     
     def anonymize_response(self, request, response):
