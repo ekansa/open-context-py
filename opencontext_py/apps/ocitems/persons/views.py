@@ -12,6 +12,7 @@ from django.utils.cache import patch_vary_headers
 # that played some role in creating, describing, or managing data in Open Context
 # These are basically foaf:Agent items
 def index(request):
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url = base_url + '/search/?type=persons'
@@ -19,6 +20,7 @@ def index(request):
 
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if(ocitem.manifest is not False):

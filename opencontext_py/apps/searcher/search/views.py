@@ -24,6 +24,7 @@ from django.utils.cache import patch_vary_headers
 
 
 def index(request, spatial_context=None):
+    RequestNegotiation().anonymize_request(request)
     return HttpResponse("Hello, world. You're at the search index.")
 
 
@@ -35,6 +36,7 @@ def sets_view(request, spatial_context=''):
         so that old url parameters can be mapped to the
         current parameters
     """
+    RequestNegotiation().anonymize_request(request)
     url = request.get_full_path()
     new_url = url.replace('/sets/', '/subjects-search/')
     param_suffix = ''
@@ -52,6 +54,7 @@ def lightbox_view(request, spatial_context=''):
         so that old url parameters can be mapped to the
         current parameters
     """
+    RequestNegotiation().anonymize_request(request)
     url = request.get_full_path()
     new_url = url.replace('/lightbox/', '/media-search/')
     param_suffix = ''
@@ -65,6 +68,7 @@ def lightbox_view(request, spatial_context=''):
 # @vary_on_headers('Accept', 'accept', 'content-type')
 @cache_page(settings.FILE_CACHE_TIMEOUT, cache='file')
 def html_view(request, spatial_context=None):
+    RequestNegotiation().anonymize_request(request)
     item_type_limited = False
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
@@ -300,6 +304,7 @@ def json_view(request, spatial_context=None):
 def subjects_html_view(request, spatial_context=None):
     """ returns HTML representation of subjects search
     """
+    RequestNegotiation().anonymize_request(request)
     item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
@@ -545,6 +550,7 @@ def subjects_json_view(request, spatial_context=None):
 def media_html_view(request, spatial_context=None):
     """ returns HTML representation of media search
     """
+    RequestNegotiation().anonymize_request(request)
     item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()
@@ -775,6 +781,7 @@ def media_json_view(request, spatial_context=None):
 def projects_html_view(request, spatial_context=None):
     """ returns HTML representation of projects search
     """
+    RequestNegotiation().anonymize_request(request)
     item_type_limited = True
     mem_cache_obj = MemoryCache()
     mem_cache_obj.ping_redis_server()

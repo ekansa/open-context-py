@@ -15,6 +15,7 @@ from django.views.decorators.cache import never_cache
 # @never_cache
 def index_view(request):
     """ Get the search context JSON-LD """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -50,6 +51,7 @@ def index_view(request):
 @never_cache
 def uses_view(request):
     """ Get uses page """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -87,6 +89,7 @@ def uses_view(request):
 @never_cache
 def pub_view(request):
     """ Get publishing overview page """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -123,6 +126,7 @@ def pub_view(request):
 # @never_cache
 def people_view(request):
     """ Get people page """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -220,6 +224,7 @@ def process_estimate(request):
 
 def concepts_view(request):
     """ Get concepts overview """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -244,6 +249,7 @@ def concepts_view(request):
 @never_cache
 def tech_view(request):
     """ Show technology page """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -279,6 +285,7 @@ def tech_view(request):
 
 def services_view(request):
     """ Get page documenting the API """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -314,6 +321,7 @@ def services_view(request):
 
 def recipes_view(request):
     """ Get page about recipes using the API """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -350,6 +358,7 @@ def recipes_view(request):
 @never_cache
 def bibliography_view(request):
     """ Get page about bibliography / publications """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -387,6 +396,7 @@ def bibliography_view(request):
 @never_cache
 def ip_view(request):
     """ Get page about IP policies """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -424,6 +434,7 @@ def ip_view(request):
 @never_cache
 def sponsors_view(request):
     """ Get the page about sponsors """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -461,6 +472,7 @@ def sponsors_view(request):
 # @never_cache
 def terms_view(request):
     """ Get the page about Terms """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')

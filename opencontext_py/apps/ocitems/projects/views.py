@@ -27,6 +27,7 @@ def index(request):
     """ redirects requests from the projects index
         to the project-search view
     """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url =  base_url + '/projects-search/'
@@ -36,6 +37,7 @@ def index(request):
 @cache_control(no_cache=True)
 @never_cache
 def html_view_new(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitemNew()
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True
@@ -85,6 +87,7 @@ def html_view_new(request, uuid):
         raise Http404
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     if request.GET.get('new') is not None:
         return html_view_new(request, uuid)
     ocitem = OCitem()
