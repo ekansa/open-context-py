@@ -22,6 +22,7 @@ class RequestNegotiation():
             # the user is not authenticated, therefore
             # we will default to removing the session cookie for a user
             request.session.flush()
+        return request
 
     def check_request_support(self, raw_client_accepts):
         """ check to see if the client_accepts
