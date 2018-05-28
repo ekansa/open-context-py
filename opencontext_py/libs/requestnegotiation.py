@@ -22,6 +22,7 @@ class RequestNegotiation():
             # the user is not authenticated, therefore
             # we will default to removing the session cookie for a user
             request.session.flush()
+            request.session.clear()
         return request
     
     def anonymize_response(self, request, response):
