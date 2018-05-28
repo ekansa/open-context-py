@@ -31,7 +31,7 @@
                             <div style="padding-left: 4%;">
                                 <p>Open Context publishes open research data for different public communities to access and use. We require civil and respectful use of Open Context and the content it publishes according to the terms and conditions of service specified below.</p>
                                 
-								<p>In addition, Open Context data collection policies try to reduce user privacy risks. As <a href="#privacy">discussed below</a>, we use Piwik to collect and retain only information of low-risk to the confidentiality and identity of specific users.</p>
+								<p>In addition, Open Context data collection policies try to reduce user privacy risks. As <a href="#privacy">discussed below</a>, we use Matomo to collect and retain only information of low-risk to the confidentiality and identity of specific users.</p>
                             </div>
                         </div>
                     </div>
@@ -98,13 +98,21 @@
             </div>
             <div class="col-sm-8 step-text">
                 <h3>Privacy Policies and Tracking</h3>
-				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primarily deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>, and mirrored by the German Archaeological Institute at <a href="http://opencontext.dainst.org">http://opencontext.dainst.org</a>, which does not use encryption. Please be aware that third-parties may monitor your interactions with the unencrypted mirror site. Use the encrypted site for more secure and more private access to Open Context. User privacy policies are:</p>
+				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primarily deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>, and mirrored by the German Archaeological Institute at <a href="http://opencontext.dainst.org">http://opencontext.dainst.org</a>, which does not use encryption.</p>
+				
+				{% if 'opencontext.dainst.org' in base_url %}
+				<p>This mirror instance of Open Context is generously hosted by the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>. As described below, this instance of Open Context protects privacy by limiting data collection on individual users. This instance is also governed by <a href="https://www.dainst.org/datenschutz">DAI policies and European Union data privacy protection laws as described here</a>.</p>
+				{% else %}
+				<p>Open Context works towards "best practices" in protecting user privacy by limiting data collection on individual users. User privacy policies are:</p>
+				{%endif%}
 				
 				
 				<ul>
 					<li><strong>Anonymous Open Access</strong>: To protect user privacy and maximize accessibility, Open Context does not require a login to access published content. Only content in preparation prior to publication and some content subject to outside review lies behind a user login barrier.</li>
 					
-					<li><p><strong>Piwik User-Tracking and Privacy Protections</strong>: Open Context collects use statistics using an instance of <a href="https://piwik.org/">Piwik</a>, an open-source Web analytics application. We use Piwik to limit the amount of user data collected by third-parties, as would be the case with Google Analytics (<a href="http://piwik.org/privacy/">see more</a>). We also use the recommended <a href="http://piwik.org/docs/privacy/">privacy default</a> settings for Piwik to limit the specificity of data collected about users. Limiting the specificity of data collection reduces confidentiality risks to individuals in the event of an accidental or malicious breach of user data.</p>
+					<li><strong>Daily Rotation of Access Logs</strong>: Open Context limits retention of access logs (HTTP requests). In order to better safeguard against accidental or malicious data breaches, Open Context rotates (deletes) server access logs on a daily basis.</li>
+					
+					<li><p><strong>Matomo (formerly "Piwik") User-Tracking and Privacy Protections</strong>: Open Context collects use statistics using an instance of <a href="https://matomo.org/">Matomo</a>, an open-source Web analytics application. We use Matomo to limit the amount of user data collected by third-parties, as would be the case with Google Analytics (<a href="https://matomo.org/privacy/">see more</a>). We also use the recommended <a href="https://matomo.org/docs/privacy/">privacy default</a> settings for Matomo to limit the specificity of data collected about users. Limiting the specificity of data collection reduces confidentiality risks to individuals in the event of an accidental or malicious breach of user data. These protections also facilitate compliance with <a href="https://matomo.org/gdpr/">European Union data privacy protections (especially GDPR)</a>.</p>
 						<p>The user data we collect and record include:</p>
 						<ul>
 							<li>Anonymized User IP Addresses (An IP address can often identify a specific user. To prevent this, we mask 2 bytes of IP address information. For an analogy, this is similar to locating a user only by a general postal code / ZIP code, rather than a specific street address.)</li>
@@ -129,7 +137,10 @@
 					<li><p><strong>Opting Out of Tracking</strong>: Open Context respects <em>Do Not Track Directives</em>. If you do not want to be tracked in the manner described above, please select an applicable "Do Not Track" option on your Web browser.</p>
 					</li>
 					<li><strong>Changes</strong>: Open Context reserves the right to change privacy policies and user tracking policies at any time without notice, but only if such changes comply with the
-					<a href="http://www.ala.org/">American Library Association's recommendations for patron privacy</a> protections and applicable laws.						
+					<a href="http://www.ala.org/">American Library Association's recommendations for patron privacy</a> protections and applicable laws.
+					{% if 'opencontext.dainst.org' in base_url %}
+					This mirrored instance of Open Context may also change privacy policies to comply with European Union, German, and German Archaeological Institute requirements. 
+					{%endif%}
 					</li>
 				</ul>
 			</div>
