@@ -23,6 +23,19 @@ class RequestNegotiation():
             # we will default to removing the session cookie for a user
             request.session.flush()
         return request
+    
+    def anonymize_response(self, request, response):
+        """ anonymizes a response by deleting cookies for users
+            that are not logged in
+        """
+        if not request.user.is_authenticated():
+            if settings.SESSION_COOKIE_NAME in request.COOKIES:
+                response.delete_cookie(
+                    settings.SESSION_COOKIE_NAME,
+                    path=settings.SESSION_COOKIE_PATH,
+                    domain=settings.SESSION_COOKIE_DOMAIN,
+                )
+        return response
 
     def check_request_support(self, raw_client_accepts):
         """ check to see if the client_accepts
