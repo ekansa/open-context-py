@@ -46,6 +46,7 @@ class ProjectContext():
         self.errors = []
         self.pred_sql_dict_list = None
         self.most_recent_date = None
+        self.refresh_cache = False
         if uuid is not None:
             if uuid is False or uuid == '0' or uuid == 'open-context':
                 self.uuid = '0'
@@ -66,7 +67,10 @@ class ProjectContext():
             key = 'context---' + self.manifest.project_uuid
             fcache = FileCacheJSON()
             fcache.working_dir = 'contexts'
-            self.json_ld = fcache.get_dict_from_file(key)
+            if self.refresh_cache:
+                self.json_ld = None
+            else:
+                self.json_ld = fcache.get_dict_from_file(key)
             if not isinstance(self.json_ld, dict):
                 self.json_ld = self.make_context_json_ld_db()
                 fcache.save_serialized_json(key, self.json_ld)
@@ -84,7 +88,10 @@ class ProjectContext():
             key = 'context-vocabs---' + self.manifest.project_uuid
             fcache = FileCacheJSON()
             fcache.working_dir = 'contexts'
-            self.json_ld = fcache.get_dict_from_file(key)
+            if self.refresh_cache:
+                self.json_ld = None
+            else:
+                self.json_ld = fcache.get_dict_from_file(key)
             if not isinstance(self.json_ld, dict):
                 self.json_ld = self.make_context_and_vocab_json_ld_db()
                 fcache.save_serialized_json(key, self.json_ld)

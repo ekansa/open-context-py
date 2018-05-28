@@ -667,7 +667,7 @@ class ItemMetadata():
 
 class Context():
     """ This class makes an object useful for templating
-    describing context of items"""
+    describing spatial context of items"""
     def __init__(self):
         self.id = False
         self.type = False
@@ -675,7 +675,7 @@ class Context():
         self.parent_labels = []
 
     def make_context(self, json_ld, class_type_metadata):
-        """ makes contexts for use with the template """
+        """ makes spatial contexts for use with the template """
         act_context = False
         if ItemKeys.PREDICATES_OCGEN_HASCONTEXTPATH in json_ld:
             self.type = 'context'
