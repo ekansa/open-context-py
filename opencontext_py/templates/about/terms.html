@@ -100,6 +100,16 @@
                 <h3>Privacy Policies and Tracking</h3>
 				<p>We have set Open Context access and data collection policies to reduce privacy risks for users. Open Context is primarily deployed at an encrypted site <a href="https://opencontext.org">https://opencontext.org</a>, and mirrored by the German Archaeological Institute at <a href="http://opencontext.dainst.org">http://opencontext.dainst.org</a>, which does not use encryption.</p>
 				
+				<h4>Cookies</h4>
+				<p>Cookies are small text files that are stored in your computer when you visit most websites. Cookies enable some information states to be temporarily recorded when you visit Open Context. For example, Open Context uses a cookie to record that a given user has given "opt-in" consent to view images of human remains. Cookies can only be saved if you have allowed this in the settings of your browser.</p>
+
+				<p>Open Context uses cookies very sparingly. You can use this website without cookies by adjusting the appropriate settings of your web-browser. The cookies used on this website have two different functions:</p>
+
+				<ul>
+					<li>A part of the cookies used ensures that the website functions properly and is displayed. The validity of these cookies expires after 1 week of visiting Open Context (Open Context automatically issues new cookies to replace expired cookies).</li>
+					<li>Open Context uses analysis software called Matomo (formerly "Piwik", see below.). If you have set your browser to allow Matomo data collection, Matomo will issue cookies to store on your computer. The cookies are valid for two years if you do not delete them first.</li>
+				</ul>
+				
 				{% if 'opencontext.dainst.org' in base_url %}
 				<p>This mirror instance of Open Context is generously hosted by the <a href="https://www.dainst.org">German Archaeological Institute (DAI)</a>. As described below, this instance of Open Context protects privacy by limiting data collection on individual users. This instance is also governed by <a href="https://www.dainst.org/datenschutz">DAI policies and European Union data privacy protection laws as described here</a>.</p>
 				{% else %}
@@ -110,7 +120,7 @@
 				<ul>
 					<li><strong>Anonymous Open Access</strong>: To protect user privacy and maximize accessibility, Open Context does not require a login to access published content. Only content in preparation prior to publication and some content subject to outside review lies behind a user login barrier.</li>
 					
-					<li><strong>Daily Rotation of Access Logs</strong>: Open Context limits retention of access logs (HTTP requests). In order to better safeguard against accidental or malicious data breaches, Open Context rotates (deletes) server access logs on a daily basis.</li>
+					<li><strong>Daily Rotation of Access Logs</strong>: Open Context limits retention of access logs (HTTP requests). Server logs record anonymized IP addresses (as described below). To further safeguard against accidental or malicious data breaches, Open Context rotates (deletes) server access logs on a daily basis.</li>
 					
 					<li><p><strong>Matomo (formerly "Piwik") User-Tracking and Privacy Protections</strong>: Open Context collects use statistics using an instance of <a href="https://matomo.org/">Matomo</a>, an open-source Web analytics application. We use Matomo to limit the amount of user data collected by third-parties, as would be the case with Google Analytics (<a href="https://matomo.org/privacy/">see more</a>). We also use the recommended <a href="https://matomo.org/docs/privacy/">privacy default</a> settings for Matomo to limit the specificity of data collected about users. Limiting the specificity of data collection reduces confidentiality risks to individuals in the event of an accidental or malicious breach of user data. These protections also facilitate compliance with <a href="https://matomo.org/gdpr/">European Union data privacy protections (especially GDPR)</a>.</p>
 						<p>The user data we collect and record include:</p>

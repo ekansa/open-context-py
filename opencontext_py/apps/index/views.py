@@ -36,9 +36,7 @@ def index(request):
         req_neg.check_request_support(request.META['HTTP_ACCEPT'])
     if req_neg.supported:
         # requester wanted a mimetype we DO support
-        response = HttpResponse(template.render(context, request))
-        response = RequestNegotiation().anonymize_response(request, response)
-        return response
+        return HttpResponse(template.render(context, request))
     else:
         # client wanted a mimetype we don't support
         return HttpResponse(template.render(context, request),
