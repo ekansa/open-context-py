@@ -7,7 +7,7 @@ from opencontext_py.libs.requestnegotiation import RequestNegotiation
 
 def index(request):
     """ Get home page """
-    RequestNegotiation().anonymize_request(request)
+    request = RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')

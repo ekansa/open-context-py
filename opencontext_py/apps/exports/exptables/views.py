@@ -21,7 +21,7 @@ from django.views.decorators.cache import never_cache
 @never_cache
 def index_view(request, table_id=None):
     """ Get the search context JSON-LD """
-    RequestNegotiation().anonymize_request(request)
+    request = RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     req_neg = RequestNegotiation('text/html')
@@ -47,7 +47,7 @@ def index_view(request, table_id=None):
 @cache_control(no_cache=True)
 @never_cache
 def html_view(request, table_id):
-    RequestNegotiation().anonymize_request(request)
+    request = RequestNegotiation().anonymize_request(request)
     exp_tt = ExpTableTemplating(table_id)
     rp = RootPath()
     base_url = rp.get_baseurl()
@@ -134,7 +134,7 @@ def json_view(request, table_id):
 
 
 def csv_view(request, table_id):
-    RequestNegotiation().anonymize_request(request)
+    request = RequestNegotiation().anonymize_request(request)
     exp_tt = ExpTableTemplating(table_id)
     if exp_tt.exp_tab is not False:
         exp_tt.prep_csv()
