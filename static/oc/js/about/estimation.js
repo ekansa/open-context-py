@@ -50,7 +50,7 @@ function estimation(){
 				'</blockquote>',
 				error_html,
 				'<p><strong>Note:</strong> ',
-				'Emailing of results is a feature that is not yet ready. It will be implemented shortly.</p>',
+				'If you have questions or need clarification, please email the Open Context editor: <a href="mailto:sarahkansa@gmail.com">sarahkansa@gmail.com</a></p>',
 				'</div>',
 			'</div>',
 		].join('\n');
@@ -64,10 +64,23 @@ function estimation(){
 	
 	this.make_estimate_data = function(){
 		// basic contact + metadata
-		var user_name = document.getElementById('input-name').value;
-		var user_email = document.getElementById('input-email').value;
-		// var user_phone = document.getElementById('input-phone').value;
-		var project_name = document.getElementById('input-proj-name').value;
+		if (1 == 2){
+			var user_name = document.getElementById('input-name').value;
+			var user_email = document.getElementById('input-email').value;
+			// var user_phone = document.getElementById('input-phone').value;
+			var project_name = document.getElementById('input-proj-name').value;
+			var comment = document.getElementById('input-comment').value;
+			var license_uri = this.get_checked_value_by_class('input-license');
+			var license_note = document.getElementById('input-license-note').value;
+		}
+		else{
+			var user_name = null;
+			var user_email = null;
+			var project_name = null;
+			var comment = null;
+			var license_uri = null;
+			var license_note = null;
+		}
 		var is_grad_student = this.get_checked_value_by_class('input-diss-proj');
 		var duration = document.getElementById('input-proj-years').value;
 		var count_spec_datasets = document.getElementById('input-spec-datasets').value;
@@ -76,26 +89,23 @@ function estimation(){
 		var count_docs = this.get_checked_value_by_class('input-count-docs');
 		var count_gis = this.get_checked_value_by_class('input-count-gis');
 		var count_other = this.get_checked_value_by_class('input-count-other');
-		var comment = document.getElementById('input-comment').value;
-		var license_uri = this.get_checked_value_by_class('input-license');
-		var license_note = document.getElementById('input-license-note').value;
 		
 		var data = {
 			csrfmiddlewaretoken: csrftoken,
-			user_name: user_name,
-			user_email: user_email,
+			// user_name: user_name,
+			// user_email: user_email,
 			// user_phone: user_phone,
-			project_name: project_name,
+			// project_name: project_name,
+			// comment: comment,
+			// license_uri: license_uri,
+			// license_note: license_note
 			is_grad_student: is_grad_student,
 			duration: duration, 
 			count_spec_datasets: count_spec_datasets,
 			count_tables: count_tables,
 			count_images: count_images,
 			count_docs: count_docs,
-			count_other: count_other,
-			comment: comment,
-			license_uri: license_uri,
-			license_note: license_note
+			count_other: count_other
 		};
 		return data;
 	}
