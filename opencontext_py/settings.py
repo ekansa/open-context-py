@@ -247,6 +247,8 @@ WSGI_APPLICATION = 'opencontext_py.wsgi.application'
 
 SESSION_ENGINE = ('django.contrib.sessions.backends.db')
 
+SESSION_COOKIE_AGE = 7 * 24 * 60 * 60 # session expires in 1 week
+
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 DATABASES = {
