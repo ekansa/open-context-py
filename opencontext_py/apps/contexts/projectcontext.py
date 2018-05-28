@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.cache import caches
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.filecache import FileCacheJSON
 from opencontext_py.apps.contexts.models import GeneralContext
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -27,7 +28,7 @@ class ProjectContext():
     """
 
     def __init__(self, uuid=None, request=None):
-        self.id_href = True  # use the local href as the Context's ID
+        self.id_href = False  # if True, use the local href as the Context's ID, 
         self.context_path = '/contexts/projects/'  # path for the ID of the context resource
         self.uuid = uuid
         rp = RootPath()
@@ -45,6 +46,7 @@ class ProjectContext():
         self.errors = []
         self.pred_sql_dict_list = None
         self.most_recent_date = None
+        self.refresh_cache = False
         if uuid is not None:
             if uuid is False or uuid == '0' or uuid == 'open-context':
                 self.uuid = '0'
@@ -60,7 +62,45 @@ class ProjectContext():
                     self.check_permissions(request)
 
     def make_context_json_ld(self):
-        """ makes the context JSON-LD """
+        """ makes the context JSON-LD, looking first for this cached in the file cache """
+        if self.manifest is not False:
+            key = 'context---' + self.manifest.project_uuid
+            fcache = FileCacheJSON()
+            fcache.working_dir = 'contexts'
+            if self.refresh_cache:
+                self.json_ld = None
+            else:
+                self.json_ld = fcache.get_dict_from_file(key)
+            if not isinstance(self.json_ld, dict):
+                self.json_ld = self.make_context_json_ld_db()
+                fcache.save_serialized_json(key, self.json_ld)
+        else:
+            self.json_ld = False
+        return self.json_ld
+    
+    def make_context_and_vocab_json_ld(self):
+        """ makes the context JSON-LD, looking first for this cached in the file cache
+            also describes the
+            vocabularies used in a project, including with linked
+            data annotations with database queries
+        """
+        if self.manifest is not False:
+            key = 'context-vocabs---' + self.manifest.project_uuid
+            fcache = FileCacheJSON()
+            fcache.working_dir = 'contexts'
+            if self.refresh_cache:
+                self.json_ld = None
+            else:
+                self.json_ld = fcache.get_dict_from_file(key)
+            if not isinstance(self.json_ld, dict):
+                self.json_ld = self.make_context_and_vocab_json_ld_db()
+                fcache.save_serialized_json(key, self.json_ld)
+        else:
+            self.json_ld = False
+        return self.json_ld
+    
+    def make_context_json_ld_db(self):
+        """ makes the context JSON-LD with database queries"""
         if self.manifest is not False:
             self.json_ld = LastUpdatedOrderedDict()
             gen_context = GeneralContext()
@@ -71,10 +111,10 @@ class ProjectContext():
             self.json_ld = False
         return self.json_ld
 
-    def make_context_and_vocab_json_ld(self):
+    def make_context_and_vocab_json_ld_db(self):
         """ makes the context JSON-LD and describes the
             vocabularies used in a project, including with linked
-            data annotations
+            data annotations with database queries
         """
         if self.manifest is not False:
             # we're making a JSON-LD document that includes an @graph vocabulary
@@ -91,14 +131,6 @@ class ProjectContext():
             graph = self.add_project_predicates_and_annotations_to_graph(graph)
             graph = self.add_project_types_with_annotations_to_graph(graph)
             self.json_ld['@graph'] = graph
-            """
-            # the following adds graph relations, but not in the context
-            # of a named graph
-            for graph_rec in graph:
-                act_id = graph_rec['@id']
-                graph_rec.pop('@id')
-                self.json_ld[act_id] = graph_rec
-            """
         else:
             self.json_ld = False
         return self.json_ld
@@ -110,11 +142,13 @@ class ProjectContext():
             for sql_dict in pred_sql_dict_list:
                 act_pred = LastUpdatedOrderedDict()
                 if sql_dict['data_type'] == 'id':
-                    act_pred['type'] = '@id'
+                    act_pred['@type'] = '@id'
                 else:
-                    act_pred['type'] = str(sql_dict['data_type'])
+                    act_pred['@type'] = str(sql_dict['data_type'])
                 context_key = 'oc-pred:' + str(sql_dict['slug'])
-                context[context_key] = act_pred
+                if isinstance(sql_dict['data_type'], str):
+                    # only add if we have a data type, otherwise JSON-LD won't validate
+                    context[context_key] = act_pred
         return context
 
     def add_project_predicates_and_annotations_to_graph(self, graph):
@@ -141,13 +175,9 @@ class ProjectContext():
                         pred_found = True
                         # prefix common URIs for the predicate of the link annotation
                         la_pred_uri = URImanagement.prefix_common_uri(la_pred.predicate_uri)
-                        if la_pred_uri not in act_pred:
-                            act_pred[la_pred_uri] = []
-                        la_object_item = self.make_object_dict_item(la_pred.object_uri)
-                        if isinstance(act_pred[la_pred_uri], str):
-                            # we need this as a list!
-                            act_pred[la_pred_uri] = [act_pred[la_pred_uri]]
-                        act_pred[la_pred_uri].append(la_object_item)
+                        act_pred = self.add_unique_object_dict_to_pred(act_pred,
+                                                                       la_pred_uri,
+                                                                       la_pred.object_uri)
                     else:
                         if pred_found:
                             # because this list is sorted by la_pred.subject, we're done
@@ -260,14 +290,40 @@ class ProjectContext():
                 else:
                     act_type = all_types[type_uri]
                 la_pred_uri = URImanagement.prefix_common_uri(sql_dict['predicate_uri'])
-                if la_pred_uri not in act_type:
-                    act_type[la_pred_uri] = []
-                la_object_item = self.make_object_dict_item(sql_dict['object_uri'])
-                act_type[la_pred_uri].append(la_object_item)
+                act_type = self.add_unique_object_dict_to_pred(act_type,
+                                                               la_pred_uri,
+                                                               sql_dict['object_uri'])
                 all_types[type_uri] = act_type
             for type_uri, act_type in all_types.items():
                 graph.append(act_type)
         return graph
+    
+    def add_unique_object_dict_to_pred(self, subject_dict, predicate_uri, object_uri):
+        """ adds a unique object dict for a given predicate_uri to a subject dict """
+        if isinstance(predicate_uri, str) and isinstance(object_uri, str):
+            if predicate_uri not in subject_dict:
+                subject_dict[predicate_uri] = []
+            else:
+                if isinstance(subject_dict[predicate_uri], str):
+                    # we need this as a list!
+                    subject_dict[predicate_uri] = [subject_dict[predicate_uri]]
+            add_object_uri = True
+            for old_object in subject_dict[predicate_uri]:
+                if 'id' in old_object:
+                    old_obj_uri = old_object['id']
+                elif '@id' in old_object:
+                    old_obj_uri = old_object['@id']
+                else:
+                    old_obj_uri = None
+                if old_obj_uri == object_uri:
+                    # we already have the same object_uri for this predicate_uri
+                    # so do not add the object_uri again
+                    add_object_uri = False
+                    break
+            if add_object_uri:
+                object_item = self.make_object_dict_item(object_uri)
+                subject_dict[predicate_uri].append(object_item)
+        return subject_dict
 
     def get_working_project_types(self):
         """ gets project types that have linked data annotations.

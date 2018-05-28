@@ -46,6 +46,7 @@ class PartsJsonLD():
         self.proj_context_json_ld = {}  # general project context JSON-LD, with @graph of predicates, types
         self.stable_id_predicate = False  # predicate to use to add a stable ID to an entity
         self.stable_id_prefix_limit = False  # limit adding stable ID to the following URI prefix
+        self.predicate_uri_as_stable_id = False  # add the predicate full URI as a stable id with the stable_id_predicate
         
     def addto_predicate_list(self,
                              act_dict,
@@ -69,9 +70,10 @@ class PartsJsonLD():
                     object_ids.append(obj['@id'])
         else:
             act_dict[act_pred_key] = []
-        new_object_item = LastUpdatedOrderedDict()
+        new_object_item = None
         ent = self.get_object_item_entity(object_id, item_type)
         if ent is not False:
+            new_object_item = LastUpdatedOrderedDict()
             if add_hash_id is not False:
                 new_object_item['hash_id'] = add_hash_id
             if do_slug_uri:
@@ -93,6 +95,9 @@ class PartsJsonLD():
                 new_object_item['type'] = ent.class_uri
                 if ent.class_uri not in self.class_uri_list:
                     self.class_uri_list.append(ent.class_uri)  # list of unique open context item classes
+            if isinstance(self.predicate_uri_as_stable_id, str) and item_type == 'predicates':
+                # we need to add a the full uri to make this predicate
+                new_object_item[self.predicate_uri_as_stable_id] = URImanagement.make_oc_uri(ent.uuid, item_type)
             if hasattr(ent, 'stable_id_uris'):
                 if ent.stable_id_uris is not False \
                    and isinstance(self.stable_id_predicate, str):
@@ -110,9 +115,10 @@ class PartsJsonLD():
         elif act_pred_key == 'oc-gen:hasIcon':
             new_object_item = {'id': object_id}
         # OK now check to see if the new object is already listed with the predicate
-        if new_object_item['id'] not in object_ids:
-            # only add it if it does not exist yet
-            act_dict[act_pred_key].append(new_object_item)
+        if new_object_item  is not None:
+            if new_object_item['id'] not in object_ids:
+                # only add it if it does not exist yet
+                act_dict[act_pred_key].append(new_object_item)
         return act_dict 
     
     
@@ -153,7 +159,10 @@ class PartsJsonLD():
                 if isinstance(ent.uuid, str):
                     # the entity has a uuid, so it's an open context predicate
                     # from a project
-                    slug_uri = 'oc-pred:' + ent.slug
+                    if isinstance(ent.slug, str):
+                        slug_uri = 'oc-pred:' + ent.slug
+                    else:
+                        slug_uri = 'oc-pred:' + ent.uuid
                 elif ':' in object_id:
                     # probably a prefixed URI so just leave it.
                     slug_uri = object_id

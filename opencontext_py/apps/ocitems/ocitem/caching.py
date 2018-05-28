@@ -7,9 +7,11 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.cacheutilities import CacheUtilities
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.obsmetadata.models import ObsMetadata
 from opencontext_py.apps.ocitems.projects.models import Project
+from opencontext_py.apps.ocitems.projects.metadata import ProjectRels
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 
@@ -19,10 +21,6 @@ class ItemGenerationCache():
     methods for using the Reddis cache to
     streamline making item JSON-LD
     """
-    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
-    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
-    PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
-    PREDICATES_DCTERMS_LICENSE = 'dc-terms:license'
     
     def __init__(self, cannonical_uris = False):
         self.cannonical_uris = cannonical_uris
@@ -123,6 +121,28 @@ class ItemGenerationCache():
                                                  all_proj_metadata)
         return all_proj_metadata
     
+    def get_project_model_object(self, project_uuid):
+        """ gets a project model object from the cache, or database if needed """
+        project = None
+        all_proj_metadata = self.get_all_project_metadata(project_uuid)
+        if isinstance(all_proj_metadata, dict):
+            if 'project' in all_proj_metadata:
+                if 'project_obj' in all_proj_metadata['project']:
+                    if isinstance(all_proj_metadata['project']['project_obj'], Project):
+                        project = all_proj_metadata['project']['project_obj']
+        return project
+    
+    def get_project_subprojects(self, project_uuid):
+        """ gets a project model object from the cache, or database if needed """
+        sub_projects = False
+        all_proj_metadata = self.get_all_project_metadata(project_uuid)
+        if isinstance(all_proj_metadata, dict):
+            if 'project' in all_proj_metadata:
+                if 'sub_projects' in all_proj_metadata['project']:
+                    if all_proj_metadata['project']['sub_projects'] is not False:
+                        sub_projects = all_proj_metadata['project']['sub_projects'] 
+        return sub_projects
+    
     def get_db_all_project_metadata(self, project_uuid):
         """ Gets author information for a project
             AND its parent project, if it exists     
@@ -150,21 +170,28 @@ class ItemGenerationCache():
         """ Gets dc-metadata information for a project from the database
             these metadata are inherited by all items in the project (author, and temporal)
         """
+        pr = ProjectRels()
         le = LinkEquivalence()
-        dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
-        dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
-        dc_temporal_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_TEMPORAL)
-        dc_license_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_LICENSE)
+        dc_contrib_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR)
+        dc_creator_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_CREATOR)
+        dc_temporal_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_TEMPORAL)
+        dc_license_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_LICENSE)
         dc_meta_uris = dc_contrib_uris + dc_creator_uris + dc_temporal_uris + dc_license_uris
         proj_dc_meta = False
         project_entity = self.get_entity(project_uuid)
+        try:
+            project = Project.objects.get(uuid=project_uuid)
+        except Project.DoesNotExist:
+            project = None
         if project_entity is not False:
             proj_dc_meta = {
                 'entity': project_entity,
-                self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
-                self.PREDICATES_DCTERMS_CREATOR: [],
-                self.PREDICATES_DCTERMS_TEMPORAL: [],
-                self.PREDICATES_DCTERMS_LICENSE: []
+                'project_obj': project,
+                'sub_projects': pr.get_sub_projects(project_uuid),
+                ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR: [],
+                ItemKeys.PREDICATES_DCTERMS_CREATOR: [],
+                ItemKeys.PREDICATES_DCTERMS_TEMPORAL: [],
+                ItemKeys.PREDICATES_DCTERMS_LICENSE: []
             }
             # get the project dc-metadata annotations (interitable only)
             proj_meta_annos = LinkAnnotation.objects\
@@ -174,23 +201,23 @@ class ItemGenerationCache():
             for anno in proj_meta_annos:
                 if anno.predicate_uri in dc_contrib_uris:
                     # we've got a contributor annotation
-                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]:
-                        proj_dc_meta[self.PREDICATES_DCTERMS_CONTRIBUTOR]\
+                    if anno.object_uri not in proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR]:
+                        proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR]\
                            .append(anno)
                 elif anno.predicate_uri in dc_creator_uris:
                     # we've got creator annotation
-                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]:
-                        proj_dc_meta[self.PREDICATES_DCTERMS_CREATOR]\
+                    if anno.object_uri not in proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_CREATOR]:
+                        proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_CREATOR]\
                            .append(anno)
                 elif anno.predicate_uri in dc_temporal_uris:
                     # we've got temporal annotation
-                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]:
-                        proj_dc_meta[self.PREDICATES_DCTERMS_TEMPORAL]\
+                    if anno.object_uri not in proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_TEMPORAL]:
+                        proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_TEMPORAL]\
                            .append(anno)
                 elif anno.predicate_uri in dc_license_uris:
                     # we've got a license annotation
-                    if anno.object_uri not in proj_dc_meta[self.PREDICATES_DCTERMS_LICENSE]:
-                        proj_dc_meta[self.PREDICATES_DCTERMS_LICENSE]\
+                    if anno.object_uri not in proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_LICENSE]:
+                        proj_dc_meta[ItemKeys.PREDICATES_DCTERMS_LICENSE]\
                            .append(anno)
         else:
             # there's no project entity

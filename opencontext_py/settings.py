@@ -464,6 +464,18 @@ if 'INTERNET_ARCHIVE_SECRET_KEY' in secrets:
 else:
     INTERNET_ARCHIVE_SECRET_KEY = None  
 
+if 'ZENODO_ACCESS_TOKEN' in secrets:
+    # API access / credential / authorization token for Zendo requests
+    ZENODO_ACCESS_TOKEN = get_secret('ZENODO_ACCESS_TOKEN')
+else:
+    ZENODO_ACCESS_TOKEN = None
+
+if 'ZENODO_SANDBOX_TOKEN' in secrets:
+    # API access / credential / authorization token for Zendo SANDBOX (testing) requests
+    ZENODO_SANDBOX_TOKEN = get_secret('ZENODO_SANDBOX_TOKEN')
+else:
+    ZENODO_SANDBOX_TOKEN = None  
+
 if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
     CORS_OK_DOMAINS = get_secret('CORS_OK_DOMAINS')
@@ -485,9 +497,9 @@ ITEM_TYPES = (
 
 SLUG_TYPES = ['predicates', 'projects']
 
-STABLE_ID_URI_PREFIXES = {'doi': 'http://dx.doi.org/',
-                          'orcid': 'http://orcid.org/',
-                          'ark': 'http://n2t.net/ark:/'}
+STABLE_ID_URI_PREFIXES = {'doi': 'https://doi.org/',
+                          'orcid': 'https://orcid.org/',
+                          'ark': 'https://n2t.net/ark:/'}
 
 TEXT_CONTENT_PREDICATES = [
     'dc-terms:description',

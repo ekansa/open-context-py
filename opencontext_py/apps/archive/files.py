@@ -6,6 +6,7 @@ from io import BytesIO
 from time import sleep
 from django.db import models
 from django.conf import settings
+from collections import OrderedDict
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.binaryfiles import BinaryFiles
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -166,13 +167,18 @@ class ArchiveFiles():
 
     def check_exists(self, act_dirs, file_name):
         """ checks to see if a file exists """
-        path = self.prep_directory(act_dirs, False)
-        dir_file = os.path.join(path, file_name)
+        dir_file = self.make_full_path_filename(act_dirs, file_name)
         if os.path.exists(dir_file):
             output = True
         else:
             output = False
         return output
+    
+    def make_full_path_filename(self, act_dirs, file_name):
+        """ makes a full filepath and file name string """
+        path = self.prep_directory(act_dirs, False)
+        dir_file = os.path.join(path, file_name)
+        return dir_file
     
     def save_serialized_json(self, act_dirs, file_name, dict_obj):
         """ saves a data in the appropriate path + file """
@@ -196,7 +202,8 @@ class ArchiveFiles():
             try:
                 json_obj = json.load(codecs.open(dir_file,
                                                  'r',
-                                                 'utf-8-sig'))
+                                                 'utf-8-sig'),
+                                     object_pairs_hook=OrderedDict)
             except:
                 print('Cannot parse as JSON: ' + dir_file)
                 json_obj = False

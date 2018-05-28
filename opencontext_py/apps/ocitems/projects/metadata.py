@@ -30,7 +30,7 @@ class ProjectRels():
         Gets (child) sub-projects from the current project uuid
         """
         sub_projs = Project.objects.filter(project_uuid=uuid).exclude(uuid=uuid)
-        if(len(sub_projs) > 0):
+        if len(sub_projs) > 0:
             self.sub_projects = sub_projs
         else:
             self.sub_projects = False
@@ -215,10 +215,21 @@ class ProjectMeta():
         data = array(lon_lats)
         resonable_clusters = False
         number_clusters = self.MAX_CLUSTERS
+        # check to make sure we don't have too many clusters
+        centroid_problem = True
+        while centroid_problem is True:
+            try:
+                centroids, _ = kmeans(data, number_clusters)
+                centroid_problem = False
+            except:
+                centroid_problem = True
+            if centroid_problem:
+                number_clusters -= 1
         proc_centroids = []
         cluster_loop = 0
         while resonable_clusters is False:
             cluster_loop += 1
+            print('check loop: ' + str(cluster_loop))
             resonable_clusters = True
             centroids, _ = kmeans(data, number_clusters)
             idx, _ = vq(data, centroids)

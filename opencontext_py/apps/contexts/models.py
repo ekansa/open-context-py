@@ -39,6 +39,7 @@ class GeneralContext():
         context['slug'] = 'oc-gen:slug'
         context['type'] = '@type'
         context['category'] = {'@id': 'oc-gen:category', '@type': '@id'}
+        context['owl:sameAs'] = {'@type': '@id'}
         context['skos:altLabel'] = {'@container': '@language'}
         context['xsd:string'] = {'@container': '@language'}
         context['description'] = {'@id': 'dc-terms:description', '@container': '@language'}

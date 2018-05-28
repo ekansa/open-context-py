@@ -9,8 +9,10 @@ from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
+from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.predicates.models import Predicate
@@ -23,28 +25,10 @@ from opencontext_py.apps.ldata.linkannotations.authorship import Authorship
 from opencontext_py.apps.ldata.linkannotations.licensing import Licensing
 
 
-# OCitem is a very general class for all Open Context items.
-# This class is used to make a JSON-LD output from data returned from the database via other apps
 class ItemAttributes():
-    
-    PREDICATES_DCTERMS_TITLE = 'dc-terms:title'
-    PREDICATES_DCTERMS_PUBLISHED = 'dc-terms:issued'
-    PREDICATES_DCTERMS_MODIFIED = 'dc-terms:modified'
-    PREDICATES_DCTERMS_ISPARTOF = 'dc-terms:isPartOf'
-    PREDICATES_DCTERMS_CREATOR = 'dc-terms:creator'
-    PREDICATES_DCTERMS_CONTRIBUTOR = 'dc-terms:contributor'
-    PREDICATES_DCTERMS_LICENSE = 'dc-terms:license'
-    PREDICATES_DCTERMS_TEMPORAL = 'dc-terms:temporal'
-    PREDICATES_DCTERMS_ABSTRACT = 'dc-terms:abstract'
-    PREDICATES_DCTERMS_HASPART = 'dc-terms:hasPart'
-    PREDICATES_OCGEN_PREDICATETYPE = 'oc-gen:predType'
-    PREDICATES_OCGEN_HASOBS = 'oc-gen:has-obs'
-    PREDICATES_OCGEN_SOURCEID = 'oc-gen:sourceID'
-    PREDICATES_OCGEN_OBSTATUS = 'oc-gen:obsStatus'
-    PREDICATES_OCGEN_OBSLABEL = 'label'
-    PREDICATES_OCGEN_OBSNOTE = 'oc-gen:obsNote'
-    PREDICATES_FOAF_PRIMARYTOPICOF = 'foaf:isPrimaryTopicOf'
-    PREDICATES_OWL_SAMEAS = 'owl:sameAs'
+    """ Methods for adding descriptive attributes and metadata 
+        data to an Open Context Item JSON-LD object
+    """
     
     # predicates not for use in observations
     NO_OBS_ASSERTION_PREDS = [
@@ -63,6 +47,7 @@ class ItemAttributes():
         self.manifest = None
         self.assertion_hashes = False
         self.assertions = None
+        self.mediafiles = None
         self.link_annotations = None
         self.stable_ids = None
         self.obs_list = []
@@ -71,9 +56,9 @@ class ItemAttributes():
         self.manifest_obj_dict = {}  # manifest objects, in a dict with uuid as key
         self.assertion_author_uuids = {
             # uuids of DC contribuors (persons/orgs) found in item assertions
-            self.PREDICATES_DCTERMS_CONTRIBUTOR: [],
+            ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR: [],
             # uuids of DC creators (persons/orgs) found in item assertions
-            self.PREDICATES_DCTERMS_CREATOR: []
+            ItemKeys.PREDICATES_DCTERMS_CREATOR: []
         }
         self.dc_assertions = {}  # dublin core assertions. We add these last, just for aesthetics
         self.dc_title = None  # dublin core title attribute, to use if not via default programatic way
@@ -81,10 +66,10 @@ class ItemAttributes():
         self.dc_metadata_preds = dc_terms_obj.get_dc_terms_list()
         self.dc_author_preds = dc_terms_obj.get_dc_authors_list()
         self.dc_inherit_preds = [  # these are dc-terms predicates items can inherit from a project
-            self.PREDICATES_DCTERMS_CONTRIBUTOR,
-            self.PREDICATES_DCTERMS_CREATOR,
-            self.PREDICATES_DCTERMS_TEMPORAL,
-            self.PREDICATES_DCTERMS_LICENSE
+            ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR,
+            ItemKeys.PREDICATES_DCTERMS_CREATOR,
+            ItemKeys.PREDICATES_DCTERMS_TEMPORAL,
+            ItemKeys.PREDICATES_DCTERMS_LICENSE
         ]
         self.item_gen_cache = ItemGenerationCache()
         rp = RootPath()
@@ -96,16 +81,53 @@ class ItemAttributes():
         """ gets item attributes (other than context, space, temporal) that describe
             an item
         """
+        self.get_db_mediafile_objs()
         self.get_db_assertions()
         self.get_db_link_anotations()
         self.get_db_stable_ids()
 
     def add_json_ld_attributes(self, json_ld):
         """ adds attribute information to the JSON-LD """
+        json_ld = self.add_json_ld_mediafiles(json_ld)
         json_ld = self.add_json_ld_descriptive_assertions(json_ld)
         json_ld = self.add_json_ld_link_annotations(json_ld)
         json_ld = self.add_json_ld_dc_metadata(json_ld)
         json_ld = self.add_json_ld_stable_ids(json_ld)
+        return json_ld
+    
+    def add_json_ld_mediafiles(self, json_ld):
+        """
+        adds media files
+        """
+        if self.mediafiles is not None:
+            media_list = []
+            thumb_missing = True
+            pdf_doc = False
+            for media_item in self.mediafiles:
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = media_item.file_uri
+                list_item['type'] = media_item.file_type
+                if media_item.file_type == 'oc-gen:thumbnail':
+                    thumb_missing = False
+                list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
+                if 'application/pdf' in media_item.mime_type_uri:
+                    pdf_doc = True
+                list_item['dcat:size'] = float(media_item.filesize)
+                if self.assertion_hashes:
+                    list_item['hash_id'] = media_item.id
+                media_list.append(list_item)
+            if thumb_missing and pdf_doc:
+                # we have a PDF with a default thumbnail
+                list_item = LastUpdatedOrderedDict()
+                list_item['id'] = Mediafile.PDF_DEFAULT_THUMBNAIL
+                list_item['type'] = 'oc-gen:thumbnail'
+                media_list.append(list_item)
+            if self.manifest.item_type == 'media':
+                json_ld['oc-gen:has-files'] = media_list
+            else:
+                # Use the depiction predicate, since it depects the item described
+                # like project hero images
+                json_ld['foaf:depiction'] = media_list
         return json_ld
 
     def add_json_ld_descriptive_assertions(self, json_ld):
@@ -139,7 +161,7 @@ class ItemAttributes():
                 act_obs = working_obs[obs_num]
                 observations.append(act_obs)
         if len(observations) > 0:
-            json_ld[self.PREDICATES_OCGEN_HASOBS] = observations
+            json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS] = observations
         return json_ld
     
     def add_json_ld_assertion_predicate_objects(self,
@@ -152,7 +174,7 @@ class ItemAttributes():
         parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
         if assertion.object_type == 'persons':
             # add a stable ID to person items, but only if they are ORCID IDs
-            parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+            parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
             parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
         pred_obj = self.get_pred_obj_by_uuid(parts_json_ld,
                                              assertion.predicate_uuid)
@@ -257,8 +279,8 @@ class ItemAttributes():
                         pred_json_ld = pred_ent.item_json_ld
                         le = LinkEquivalence()
                         equiv_keys = le.get_identifier_list_variants(LinkAnnotation.PREDS_SBJ_EQUIV_OBJ)
-                        dc_contrib_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CONTRIBUTOR)
-                        dc_creator_uris = le.get_identifier_list_variants(self.PREDICATES_DCTERMS_CREATOR)
+                        dc_contrib_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR)
+                        dc_creator_uris = le.get_identifier_list_variants(ItemKeys.PREDICATES_DCTERMS_CREATOR)
                         for equiv_key in equiv_keys:
                             if equiv_key in pred_json_ld :
                                 if isinstance(pred_json_ld[equiv_key], list):
@@ -285,13 +307,13 @@ class ItemAttributes():
         """
         if isinstance(pred_obj, dict):
             if 'dc_contrib' in pred_obj:
-                pred_contrib = self.PREDICATES_DCTERMS_CONTRIBUTOR
+                pred_contrib = ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR
                 if pred_obj['dc_contrib'] and \
                    object_uuid not in self.assertion_author_uuids[pred_contrib]:
                     # uuids of DC contribuors (persons/orgs) found in item assertions
                     self.assertion_author_uuids[pred_contrib].append(object_uuid)
             if 'dc_creator' in pred_obj:
-                pred_create = self.PREDICATES_DCTERMS_CREATOR
+                pred_create = ItemKeys.PREDICATES_DCTERMS_CREATOR
                 if pred_obj['dc_creator'] and \
                    object_uuid not in self.assertion_author_uuids[pred_create]:
                     # uuids of DC creators (persons/orgs) found in item assertions
@@ -343,19 +365,19 @@ class ItemAttributes():
             if len(assertion.obs_node) > 1:
                 if assertion.obs_node[:1] == '#':
                     act_obs['id'] = str(assertion.obs_node)
-        act_obs[self.PREDICATES_OCGEN_SOURCEID] = assertion.source_id
+        act_obs[ItemKeys.PREDICATES_OCGEN_SOURCEID] = assertion.source_id
         if assertion.obs_num >= 0 and assertion.obs_num != 100:
-            act_obs[self.PREDICATES_OCGEN_OBSTATUS] = 'active'
+            act_obs[ItemKeys.PREDICATES_OCGEN_OBSTATUS] = 'active'
         else:
-            act_obs[self.PREDICATES_OCGEN_OBSTATUS] = 'deprecated'
+            act_obs[ItemKeys.PREDICATES_OCGEN_OBSTATUS] = 'deprecated'
         # now go get observation meta
         obs_meta = self.item_gen_cache.get_observation_metadata(assertion.source_id,
                                                                 assertion.obs_num)
         if obs_meta is not False:
-            act_obs[self.PREDICATES_OCGEN_OBSLABEL] = obs_meta.label
+            act_obs[ItemKeys.PREDICATES_OCGEN_OBSLABEL] = obs_meta.label
             if isinstance(obs_meta.note, str):
                 if len(obs_meta.note) > 0:
-                    act_obs[self.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
+                    act_obs[ItemKeys.PREDICATES_OCGEN_OBSNOTE] = obs_meta.note
         act_obs['type'] = 'oc-gen:observations'
         return act_obs
     
@@ -383,7 +405,7 @@ class ItemAttributes():
                             same_as_list.append(id_dict)
                     stable_id_list = same_as_list  # other types of identifiers use as owl:sameAs
                     if len(primary_topic_list) > 0:
-                        json_ld[self.PREDICATES_FOAF_PRIMARYTOPICOF] = primary_topic_list
+                        json_ld[ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF] = primary_topic_list
                 if len(stable_id_list) > 0:
                     json_ld['owl:sameAs'] = stable_id_list
         return json_ld
@@ -408,7 +430,7 @@ class ItemAttributes():
                         item_type = tcheck['item_type']
                     if item_type == 'persons':
                         # add a stable ID to person items, but only if they are ORCID IDs
-                        parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+                        parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
                         parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
                     # this shortens URIs in item-context declared namespaces
                     # to make a compact URI (prefixed), as the act_pred
@@ -441,10 +463,10 @@ class ItemAttributes():
         # now add published and modified DC-terms properties
         if self.manifest.published is not None and self.manifest.published is not False:
             # we have a publication date
-            json_ld[self.PREDICATES_DCTERMS_PUBLISHED] = self.manifest.published.date().isoformat()
+            json_ld[ItemKeys.PREDICATES_DCTERMS_PUBLISHED] = self.manifest.published.date().isoformat()
         if self.manifest.revised is not None and self.manifest.revised is not False:
             # the 'revised' attribute is equivalent to the dc-terms:modified property
-            json_ld[self.PREDICATES_DCTERMS_MODIFIED] = self.manifest.revised.date().isoformat()
+            json_ld[ItemKeys.PREDICATES_DCTERMS_MODIFIED] = self.manifest.revised.date().isoformat()
         # then add dc-terms:contributors, and creators, from item assertion equivalances to
         # dc-term authors
         json_ld = self.add_json_ld_dc_author_from_item(json_ld)
@@ -465,7 +487,7 @@ class ItemAttributes():
                 parents = '/'.join(self.parent_context_list)
                 self.dc_title += ' from ' + parents
         if isinstance(self.dc_title, str):
-            json_ld[self.PREDICATES_DCTERMS_TITLE] = self.dc_title
+            json_ld[ItemKeys.PREDICATES_DCTERMS_TITLE] = self.dc_title
         return json_ld
     
     def add_json_ld_dc_author_from_item(self, json_ld):
@@ -486,11 +508,11 @@ class ItemAttributes():
         parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
         parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
         # add a stable ID to person items, but only if they are ORCID IDs
-        parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+        parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
         parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
         author_preds = [
-            self.PREDICATES_DCTERMS_CONTRIBUTOR,
-            self.PREDICATES_DCTERMS_CREATOR
+            ItemKeys.PREDICATES_DCTERMS_CONTRIBUTOR,
+            ItemKeys.PREDICATES_DCTERMS_CREATOR
         ]
         for author_pred in author_preds:
             if author_pred in self.dc_assertions:
@@ -517,8 +539,8 @@ class ItemAttributes():
             looking at author related dc-terms properties in this method
         """
         dc_item_preds = [
-            self.PREDICATES_DCTERMS_TEMPORAL,
-            self.PREDICATES_DCTERMS_LICENSE,
+            ItemKeys.PREDICATES_DCTERMS_TEMPORAL,
+            ItemKeys.PREDICATES_DCTERMS_LICENSE,
         ]
         for dc_pred in self.dc_metadata_preds:
             if dc_pred not in dc_item_preds:
@@ -562,7 +584,7 @@ class ItemAttributes():
             parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
             parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
             # add a stable ID to person items, but only if they are ORCID IDs
-            parts_json_ld.stable_id_predicate = self.PREDICATES_FOAF_PRIMARYTOPICOF
+            parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
             parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
             # now get project wide metadata for inherited author assertions
             all_proj_metadata = self.item_gen_cache.get_all_project_metadata(self.manifest.project_uuid)
@@ -604,9 +626,9 @@ class ItemAttributes():
             parts_json_ld = PartsJsonLD()
             parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
             parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
-            parts_json_ld.stable_id_predicate = self.PREDICATES_OWL_SAMEAS
+            parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_OWL_SAMEAS
             json_ld = parts_json_ld.addto_predicate_list(json_ld,
-                                                         self.PREDICATES_DCTERMS_ISPARTOF,
+                                                         ItemKeys.PREDICATES_DCTERMS_ISPARTOF,
                                                          self.manifest.project_uuid,
                                                          'projects')
         return json_ld
@@ -643,6 +665,27 @@ class ItemAttributes():
         self.get_db_string_objs(string_uuids)
         # now get manifest objects for objects of assertions
         self.get_db_related_manifest_objs(manifest_obj_uuids)
+    
+    def get_db_mediafile_objs(self):
+        """ gets media file objects associated with the current item """
+        if self.manifest.item_type == 'projects':
+            # need to get a hero image if it exists
+            self.mediafiles = Mediafile.objects\
+                                       .filter(uuid=self.manifest.uuid,
+                                               file_type='oc-gen:hero')
+            if len(self.mediafiles) < 1:
+                # check for hero images belonging to the parent project
+                self.mediafiles = Mediafile.objects\
+                                           .filter(uuid=self.manifest.project_uuid,
+                                                   file_type='oc-gen:hero')
+        elif self.manifest.item_type == 'media':
+            # get the media files associated with this item type
+            self.mediafiles = Mediafile.objects\
+                                       .filter(uuid=self.manifest.uuid)\
+                                       .order_by('-filesize')
+        else:
+            # not getting media file information
+            pass
     
     def get_db_string_objs(self, string_uuids):
         """ gets strings associated with assertions. does it in 1 query to reduce time """
