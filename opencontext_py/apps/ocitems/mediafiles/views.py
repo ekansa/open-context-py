@@ -18,6 +18,7 @@ def index(request):
     """ redirects requests from the media index
         to the media-search view
     """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url =  base_url + '/media-search/'
@@ -25,6 +26,7 @@ def index(request):
 
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:
@@ -87,6 +89,7 @@ def html_view(request, uuid):
 
 # render the full version of the image (if an image)
 def html_full(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True

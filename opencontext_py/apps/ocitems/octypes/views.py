@@ -14,6 +14,7 @@ from django.utils.cache import patch_vary_headers
 # The main dependency for this app is for OCitems, which are used to generate
 # Every type of item in Open Context, including subjects
 def index(request):
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url = base_url + '/search/?type=types'
@@ -21,6 +22,7 @@ def index(request):
 
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:

@@ -16,6 +16,7 @@ def index(request):
     """ redirects requests from the media index
         to the media-search view
     """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url = base_url + '/search/?type=documents'
@@ -23,6 +24,7 @@ def index(request):
 
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     if 'hashes' in request.GET:
         ocitem.assertion_hashes = True

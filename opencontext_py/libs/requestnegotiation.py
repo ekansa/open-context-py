@@ -7,12 +7,21 @@ class RequestNegotiation():
         to do some simple content negotiation
     """
 
-    def __init__(self, default_type):
+    def __init__(self, default_type='text/html'):
         self.default_type = default_type  # the default mime-type supported
         self.supported_types = []  # other types supported
         self.supported = True
         self.use_response_type = default_type  # use this response type
         self.error_message = False
+
+    def anonymize_request(self, request):
+        """ anonymizes a request by flushing session cookies for users
+            that are not logged in
+        """
+        if not request.user.is_authenticated():
+            # the user is not authenticated, therefore
+            # we will default to removing the session cookie for a user
+            request.session.flush()
 
     def check_request_support(self, raw_client_accepts):
         """ check to see if the client_accepts

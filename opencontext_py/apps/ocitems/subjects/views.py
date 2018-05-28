@@ -18,6 +18,7 @@ def index(request):
     """ redirects requests from the subjects index
         to the subjects-search view
     """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url = base_url + '/subjects-search/'
@@ -28,6 +29,7 @@ def old_redirect_view(request):
     """ Redirects from the original PHP version of
         Open Context when ".php" was in URLs
     """
+    RequestNegotiation().anonymize_request(request)
     rp = RootPath()
     base_url = rp.get_baseurl()
     new_url = base_url + '/subjects-search/'
@@ -38,6 +40,7 @@ def old_redirect_view(request):
 
 
 def html_view(request, uuid):
+    RequestNegotiation().anonymize_request(request)
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if ocitem.manifest is not False:
