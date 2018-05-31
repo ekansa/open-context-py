@@ -52,22 +52,24 @@ class CostEstimator():
 
     def process_estimate(self, post_data):
         """ processes an estimate """
-        if 'user_name' in post_data:
-            self.user_name = post_data['user_name'].strip()
-            if len(self.user_name) < 1:
-                self.user_name = '[Unnamed researcher]'
-        if 'user_email' in post_data:
-            try:
-                validate_email(post_data['user_email'])
-            except ValidationError as e:
-                self.user_email = '[No valid email provided]'
-                self.errors.append('Need a valid email to send estimate results')
-            else:
-                self.user_email = post_data['user_email'].strip()
-        if 'project_name' in post_data:
-            self.project_name = post_data['project_name'].strip()
-            if len(self.project_name) < 1:
-                self.project_name = '[Unnamed project]'
+        if False:
+            # disable personal information
+            if 'user_name' in post_data:
+                self.user_name = post_data['user_name'].strip()
+                if len(self.user_name) < 1:
+                    self.user_name = '[Unnamed researcher]'
+            if 'user_email' in post_data:
+                try:
+                    validate_email(post_data['user_email'])
+                except ValidationError as e:
+                    self.user_email = '[No valid email provided]'
+                    self.errors.append('Need a valid email to send estimate results')
+                else:
+                    self.user_email = post_data['user_email'].strip()
+            if 'project_name' in post_data:
+                self.project_name = post_data['project_name'].strip()
+                if len(self.project_name) < 1:
+                    self.project_name = '[Unnamed project]'
         if 'is_grad_student' in post_data:
             if post_data['is_grad_student'] == '1':
                 self.is_grad_student = True
@@ -115,24 +117,25 @@ class CostEstimator():
             except:
                 count_other = 0
             self.count_other = count_other
-        if 'comments' in post_data:
-            self.comments = post_data['comments'].strip()
-            if len(self.comments) < 1:
-                self.comments = '[No additional user comments]'
-        if 'license_uri' in post_data:
-            self.license_uri = post_data['license_uri'].strip()
-            self.license_label = self.get_license_label(self.license_uri)
-        if 'license_note' in post_data:
-            self.license_note = post_data['license_note'].strip()
-            if len(self.license_note) < 1:
-                self.license_note = '[No additional licensing comments]'
+        if False:
+            if 'comments' in post_data:
+                self.comments = post_data['comments'].strip()
+                if len(self.comments) < 1:
+                    self.comments = '[No additional user comments]'
+            if 'license_uri' in post_data:
+                self.license_uri = post_data['license_uri'].strip()
+                self.license_label = self.get_license_label(self.license_uri)
+            if 'license_note' in post_data:
+                self.license_note = post_data['license_note'].strip()
+                if len(self.license_note) < 1:
+                    self.license_note = '[No additional licensing comments]'
         output = LastUpdatedOrderedDict()
         output['cost'] = self.estimate_cost()
         output['dollars'] = self.format_currency(output['cost'])
         output['raw_estimate'] = self.raw_cost
         output['label'] = self.project_name
-        output['email'] = self.user_email
-        output['name'] = self.user_name
+        # output['email'] = self.user_email
+        # output['name'] = self.user_name
         output['errors'] = self.errors
         return output
 
