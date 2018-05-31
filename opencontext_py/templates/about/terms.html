@@ -157,6 +157,15 @@
 					<li><p><strong>Uses of Web Analytics Data</strong>: Our goal is to limit risks associated with data collection and will only collect and retain the low-sensitivity data described above. These data will be used to help guide improvements to Open Context, and may be made available, on a limited basis, to qualified researchers conducting not-for-profit Institutional Review Board (IRB) approved studies.</p>
 					</li>
 					<li><p><strong>Opting Out of Tracking</strong>: Open Context respects <em>Do Not Track Directives</em>. If you do not want to be tracked in the manner described above, please select an applicable "Do Not Track" option on your Web browser.</p>
+					{% if first_nav.PIWIK_SITE_ID > 0 %}
+					{% if first_nav.PIWIK_DOMAIN_PATH is not False %}
+					<p>Alternatively, you can stop Open Context tracking by unchecking the "opt-in" option below:</p>
+					<div class="well well-sm">
+						<iframe style="border: none; height: auto; width: 100%; " src="https://piwik.alexandriaarchive.org/index.php?module=CoreAdminHome&action=optOut&language=en&backgroundColor=&fontColor=&fontSize=&fontFamily=Verdana">
+						</iframe>
+					</div>
+					{%endif%} 
+					{%endif%}
 					</li>
 					<li><strong>Changes</strong>: Open Context reserves the right to change privacy policies and user tracking policies at any time without notice, but only if such changes comply with the
 					<a href="http://www.ala.org/">American Library Association's recommendations for patron privacy</a> protections and applicable laws.
