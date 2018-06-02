@@ -7,11 +7,12 @@ from django.db.models import Q
 from django.conf import settings
 from django.core.cache import cache
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
-from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.edit.items.itembasic import ItemBasicEdit
 from opencontext_py.apps.edit.versioning.deletion import DeletionRevision
@@ -99,6 +100,15 @@ class ItemGeoTime():
                 coordinates = output['coordinates']
                 if output['type'] is not False:
                     ftype = output['type']
+                    if isinstance(coordinates, str):
+                        v_geojson = ValidateGeoJson()
+                        coord_list = json.loads(coordinates)
+                        coord_list  = v_geojson.fix_geometry_rings_dir(ftype, coord_list )
+                        coordinates = json.dumps(coord_list)
+                        gg = GeospaceGeneration()
+                        lon_lat = gg.get_centroid_lonlat_coordinates(coordinates, ftype)
+                        latitude = lon_lat[1]
+                        longitude = lon_lat[0]
                 if coordinates is False and latitude is not False\
                    and longitude is not False:
                     # no coordinates input in GeoJSON so make them
