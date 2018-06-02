@@ -23,34 +23,49 @@ function item_file_map(geo_json_url) {
 	pmap.default_overlay_layer = 'any';
 	var bounds = new L.LatLngBounds();
 	var osmTiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+		maxZoom: 26,
 		id: 'osm',
 		attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
 	});
    
 	var mapboxLight = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		maxZoom: 26,
 		id: 'mapbox-light',
 		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
 	
 	var mapboxDark = L.tileLayer('https://api.tiles.mapbox.com/v4/mapbox.dark/{z}/{x}/{y}.png?access_token=' + map_box_token, {
+		maxZoom: 26,
 		id: 'mapbox-dark',
 		attribution: '&copy; <a href="https://MapBox.com">MapBox.com</a> '
 	});
    
 	var ESRISatelliteTiles = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+		maxZoom: 26,
 		id: 'esri-sat',
-		maxNativeZoom: 19,
 		attribution: '&copy; <a href="https://services.arcgisonline.com/">ESRI.com</a> '
 	});
    
-	var gmapRoad = new L.Google('ROADMAP');
+	var gmapRoad = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'roadmap'
+		});
 	gmapRoad.id = 'gmap-road';
-	var gmapSat = new L.Google('SATELLITE');
+	var gmapSat = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'satellite'
+		});
 	gmapSat.id = 'gmap-sat';
-	gmapSat.maxNativeZoom= 19;
-	var gmapTer = new L.Google('TERRAIN');
+	var gmapTer = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'terrain'
+		});
 	gmapTer.id = 'gmap-ter';
-	gmapTer.maxNativeZoom= 19;
+	var gmapHybrid = new L.gridLayer.googleMutant({
+			maxZoom: 26,
+			type:'hybrid'
+		});
+	gmapHybrid.id = 'gmap-hybrid';
 	var baseMaps = {
 		"Google-Terrain": gmapTer,
 		"Google-Satellite": gmapSat,
