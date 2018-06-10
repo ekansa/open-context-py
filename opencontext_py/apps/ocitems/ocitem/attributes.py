@@ -114,7 +114,10 @@ class ItemAttributes():
                     pdf_doc = True
                 list_item['dcat:size'] = float(media_item.filesize)
                 if self.assertion_hashes:
-                    list_item['hash_id'] = media_item.id
+                    if hasattr(media_item, 'hash_id'):
+                        list_item['hash_id'] = media_item.hash_id
+                    else:
+                        list_item['hash_id'] = media_item.id
                 media_list.append(list_item)
             if thumb_missing and pdf_doc:
                 # we have a PDF with a default thumbnail
