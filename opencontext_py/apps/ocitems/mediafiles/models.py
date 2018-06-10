@@ -1,6 +1,8 @@
-from time import sleep
+import collections
+import hashlib
 import requests
 import reversion  # version control object
+from jsonfield import JSONField  # json field for complex objects
 from time import sleep
 from django.db import models
 
@@ -16,12 +18,18 @@ class Mediafile(models.Model):
         'oc-gen:iiif',
         'oc-gen:archive',
         'oc-gen:ia-fullfille',
-        'oc-gen:archive',
         'oc-gen:x3dom-model',
         'oc-gen:x3dom-texture'
+        'oc-gen:nexus-3d',
     ]
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
-    PDF_DEFAULT_THUMBNAIL = 'http://opencontext.org/static/oc/images/icons/pdf-noun-89522.png'
+    NEXUS_3D_MIME_TYPE = 'http://vcg.isti.cnr.it/nexus/'
+    NEXUS_3D_COMPRESS_MIME_TYPE = 'http://vcg.isti.cnr.it/nexus/#nxz'
+    PDF_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/pdf-noun-89522.png'
+    THREED_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/3d-noun-37529.png'
+    GIS_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/gis-noun-14294.png'
+    RASTER_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/raster-small.png'
+    hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)
     source_id = models.CharField(max_length=50, db_index=True)
@@ -29,8 +37,32 @@ class Mediafile(models.Model):
     mime_type_uri = models.CharField(max_length=200)
     file_uri = models.CharField(max_length=400)
     filesize = models.DecimalField(max_digits=19, decimal_places=3)
-    highlight = models.IntegerField(null=True)  # rank for showcasing, highlighting as interesting
+    highlight = models.IntegerField(default=0)  # rank for showcasing, highlighting as interesting
+    # sup_json is for occationally occuring metadata fields.
+    sup_json = JSONField(default={},
+                         load_kwargs={'object_pairs_hook': collections.OrderedDict},
+                         blank=True)
     updated = models.DateTimeField(auto_now=True)
+    
+    def make_hash_id(self):
+        """
+        Make a hash-id to insure unique combinations of uuids, file_types and highlight.
+        By default, highlight is generally 0, which means that most of the time, saving a record
+        to this model will only have 1 unqiue combination of uuid and file_type. However, for
+        sake of some flexibility, we can have more than one uuid + file_type combination if the
+        highlight value is changed. This would allow, for instance multiple "oc-gen:archive" records
+        so we can point to multiple repositories that hold the binary media.
+        """
+        hash_obj = hashlib.sha1()
+        concat_string = str(self.uuid) + " " + str(self.file_type) + " " + str(self.highlight)
+        hash_obj.update(concat_string.encode('utf-8'))
+        raw_hash = hash_obj.hexdigest()
+        if len(self.uuid) > 8:
+            # this helps keep uuids together on the table, reduces DB lookup time
+            hash_id = self.uuid[0:8] + '-' + raw_hash
+        else:
+            hash_id = self.uuid + '-' + raw_hash
+        return hash_id
 
     def get_file_info(self):
         """ Gets information about the file from a remote server """
@@ -43,7 +75,7 @@ class Mediafile(models.Model):
 
     def save(self, *args, **kwargs):
         """
-        saves a manifest item with a good slug
+        saves a mediafile item with a hash_id 
         """
         if self.filesize is None:
             self.filesize = 0
@@ -52,11 +84,22 @@ class Mediafile(models.Model):
         if self.highlight is None:
             self.highlight = 0
         self.get_file_info()
+        if (self.file_type == 'oc-gen:nexus-3d' and
+            (self.mime_type_uri == '' or self.mime_type_uri is None)):
+            # the nexus-3d file format does not have an official mime type, so
+            # reference the webpage for Nexus-3D for now
+            self.mime_type_uri = self.NEXUS_3D_MIME_TYPE
+            if len(self.file_uri > 4) and self.file_uri[-4:].lower() == '.nxz':
+                # specify the compressed mime type.
+                self.mime_type_uri = self.NEXUS_3D_COMPRESS_MIME_TYPE
+        # make the hash_id last so the hash is generated
+        # with the self.highlight value
+        self.hash_id = self.make_hash_id()
         super(Mediafile, self).save(*args, **kwargs)
 
     class Meta:
         db_table = 'oc_mediafiles'
-        unique_together = (('uuid', 'file_type'),)
+        unique_together = (('uuid', 'file_type', 'highlight'),)
 
 
 class ManageMediafiles():
