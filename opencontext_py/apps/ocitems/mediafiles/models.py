@@ -56,7 +56,13 @@ class Mediafile(models.Model):
         hash_obj = hashlib.sha1()
         concat_string = str(self.uuid) + " " + str(self.file_type) + " " + str(self.highlight)
         hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
+        raw_hash = hash_obj.hexdigest()
+        if len(self.uuid) > 8:
+            # this helps keep uuids together on the table, reduces DB lookup time
+            hash_id = self.uuid[0:8] + '-' + raw_hash
+        else:
+            hash_id = self.uuid + '-' + raw_hash
+        return hash_id
 
     def get_file_info(self):
         """ Gets information about the file from a remote server """
