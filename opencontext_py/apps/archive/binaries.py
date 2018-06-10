@@ -50,9 +50,11 @@ class ArchiveBinaries():
         self.working_dir = 'archives'
         self.files_prefix = 'files'
         self.temp_cache_dir = None
+        self.exclude_archive_dirs = [] # list of directories to exclude from archiving
         self.max_repo_GB = 35
         self.max_repo_file_count = 1500
         self.GB_to_byte_multiplier = 1000000000
+        self.sleep_first = None
         self.errors = []
         self.man_by_proj_lic = LastUpdatedOrderedDict() # dict with project UUID as key, and licences
         self.dir_contents = LastUpdatedOrderedDict()
@@ -65,8 +67,17 @@ class ArchiveBinaries():
     def archive_all_project_binaries(self, project_uuid):
         """ archives project binary files in Zenodo """
         project_dirs = self.get_project_binaries_dirs(project_uuid)
+        project_dirs = self.sort_project_binaries_dirs(project_dirs)
+        if isinstance(self.sleep_first, int):
+            print('Pausing execution for seconds: ' + str(self.sleep_first))
+            for x in range(self.sleep_first):
+                print("Sleep {} of {} seconds...".format(x, self.sleep_first), end="\r")
+                sleep(x * .5)
         for archive_dir in project_dirs:
-            self.archive_dir_project_binaries(project_uuid, archive_dir)
+            if archive_dir not in self.exclude_archive_dirs: 
+                self.archive_dir_project_binaries(project_uuid, archive_dir)
+            else:
+                print('Skipping directory: ' + archive_dir)
     
     def archive_dir_project_binaries(self, project_uuid, archive_dir, deposition_id=None):
         """ archives files in for a project in a specific directory
@@ -114,7 +125,10 @@ class ArchiveBinaries():
                     if isinstance(zenodo_resp, dict):
                         # successful upload!
                         show_i = i + 1
-                        print('Archived ' + str(show_i) + ' of ' + str(num_files) + ': ' + dir_file['filename'] + ' in ' + str(deposition_id))
+                        print('Archived ' + str(show_i) +
+                              ' of ' + str(num_files) + ': ' + dir_file['filename'] +
+                              ' in ' + str(deposition_id) +
+                              ' from: ' + archive_dir)
                         for key in self.ZENODO_FILE_KEYS:
                             if key in zenodo_resp:
                                 # this stores some information provided by zenodo about the archived file
@@ -197,6 +211,26 @@ class ArchiveBinaries():
                     project_dirs.append(act_dir)
         return project_dirs
     
+    def sort_project_binaries_dirs(self, project_dirs):
+        """ sorts the list of project dirs by their number """
+        sorted_dirs = None
+        if isinstance(project_dirs, list):
+            tuple_dirs = []
+            for act_dir in project_dirs:
+                act_ex = act_dir.split('---')
+                first_ex = act_ex[0].split('-')
+                num_part = first_ex[1]
+                try:
+                    dir_index= int(float(num_part))
+                except:
+                    dir_index = len(project_dirs) + 1
+                dir_tuple = (dir_index, act_dir)
+                tuple_dirs.append(dir_tuple)
+            sorted_dirs = []
+            for tuple_dir in sorted(tuple_dirs, key=lambda x: x[0]):
+                sorted_dirs.append(tuple_dir[1])
+        return sorted_dirs
+                
     def save_project_binaries(self, project_uuid):
         """ saves data associated with a project """
         self.get_manifest_grouped_by_license(project_uuid)
