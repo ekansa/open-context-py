@@ -1469,7 +1469,10 @@ class ItemConstruction():
                 list_item['dc-terms:hasFormat'] = media_item.mime_type_uri
                 list_item['dcat:size'] = float(media_item.filesize)
                 if self.assertion_hashes:
-                    list_item['hash_id'] = media_item.id
+                    if hasattr(media_item, 'hash_id'):
+                        list_item['hash_id'] = media_item.hash_id
+                    else:
+                        list_item['hash_id'] = media_item.id
                 media_list.append(list_item)
             act_dict['foaf:depiction'] = media_list
         return act_dict
