@@ -26,6 +26,8 @@ from opencontext_py.apps.searcher.solrsearcher.uuids import SolrUUIDs
 
 class MakeJsonLd():
 
+    TEXT_SEARCH_TITLE = 'Filter by Text Search'
+    
     def __init__(self, request_dict_json):
         self.mem_cache_obj = MemoryCache()  # memory caching object
         self.base_search_link = '/search/'
@@ -397,7 +399,7 @@ class MakeJsonLd():
             search_term = param_vals[0]
         field = LastUpdatedOrderedDict()
         field['id'] = '#textfield-keyword-search'
-        field['label'] = 'General Keyword Search'
+        field['label'] = self.TEXT_SEARCH_TITLE
         field['oc-api:search-term'] = search_term
         if search_term is False or search_term is None:
             new_rparams = fl.add_to_request_by_solr_field('q',

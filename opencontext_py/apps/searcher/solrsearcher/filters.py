@@ -18,6 +18,7 @@ from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 class ActiveFilters():
 
     """ Methods to show search / query filters in use """
+    TEXT_SEARCH_TITLE = 'Current Text Search Filter'
 
     IGNORE_PARAMS = ['geodeep',
                      'chronodeep',
@@ -97,7 +98,7 @@ class ActiveFilters():
                         else:
                             act_filter['label'] = all_vals[0]
                     elif param_key == 'q':
-                        act_filter['oc-api:filter'] = 'General Keyword Search'
+                        act_filter['oc-api:filter'] = self.TEXT_SEARCH_TITLE
                         act_filter['label'] = 'Search Term: \'' + all_vals[0] + '\''
                     elif param_key == 'id':
                         act_filter['oc-api:filter'] = 'Identifier Lookup'
