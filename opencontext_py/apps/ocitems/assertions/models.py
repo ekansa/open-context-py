@@ -26,6 +26,9 @@ class Assertion(models.Model):
     # use this to not make the subject too cluttered with visible links
     # this is provisional, I may decide this is stupid beyond hope
     PREDICATES_LINKED_FROM = 'oc-gen:is-linked-from'
+    # standard predicate for a link between an item and a geospatial bitmap image
+    PREDICATES_GEO_OVERLAY = 'oc-gen:has-geo-overlay'
+    
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     subject_type = models.CharField(max_length=50, choices=settings.ITEM_TYPES)
@@ -59,7 +62,7 @@ class Assertion(models.Model):
         raw_hash = hash_obj.hexdigest()
         if len(self.uuid) > 8:
             # this helps keep uuids together on the table, reduces DB lookup time
-            hash_id = self.uuid[0:8] + '-' + raw_hash
+            hash_id = self.uuid[0:8] + '-' + raw_hash[0:34]
         else:
             hash_id = self.uuid + '-' + raw_hash
         return hash_id

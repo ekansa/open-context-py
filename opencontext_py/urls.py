@@ -111,6 +111,7 @@ urlpatterns = [
     # url(r'^projects.json', ProjectViews.index_json, name='projects_index_json'),
     url(r'^projects/(?P<uuid>\S+).json', ProjectViews.json_view, name='projects_json'),
     url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='projects_html'),
+    url(r'^project-layers/(?P<uuid>\S+)', ProjectViews.layers_view, name='projects_layers'),
     url(r'^projects', ProjectViews.index, name='projects_search_html_s'),
     # url(r'^projects', AboutViews.index_view, name='about_index'),
     # Predicates views for descriptive variables and linking relations from OC contributors
