@@ -170,6 +170,7 @@ def json_view(request, uuid):
         raise Http404
 
 
+@cache_control(no_cache=True)
 def layers_view(request, uuid):
     """View geospatial layers associated with a project. """
     ocitem = OCitem()

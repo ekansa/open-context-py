@@ -58,12 +58,8 @@ class GeoMedia():
     def __init__(self, manifest_obj):
         self.uuid = manifest_obj.uuid
         self.label = manifest_obj.label
-        try:
-            sup_json = json.loads(manifest_obj.sup_json)
-        except:
-            sup_json = None
-        self.metadata = sup_json
-        self.full_file_obj = self.get_full_file(manifest_obj)
+        self.metadata = manifest_obj.sup_json
+        self.full_file_obj = self.get_full_file(manifest_obj.uuid)
     
     def get_full_file(self, uuid):
         """Gets the full (main) file associated with a media object. """
