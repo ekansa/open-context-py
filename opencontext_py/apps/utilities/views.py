@@ -1,12 +1,16 @@
 import json
+import pyproj
 import random
+
 from django.http import HttpResponse, Http404
 from django.conf import settings
 from django.template import RequestContext, loader
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+from opencontext_py.libs.reprojection import ReprojectUtilities
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+
 from opencontext_py.apps.imports.fields.datatypeclass import DescriptionDataType
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -145,3 +149,58 @@ def quadtree_to_lat_lon(request):
         return HttpResponse(message,
                             content_type='text/plain; charset=utf8',
                             status=406)
+
+
+def reproject(request):
+    """ Converts a quadtree tile to WGS-84 lat / lon coordinates in different formats """
+    if not (request.GET.get('input-proj') and request.GET.get('output-proj')):
+        return HttpResponse('Need input-proj and output-proj parameters to specify projections.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)
+    if not (request.GET.get('x') and request.GET.get('y')):
+        return HttpResponse('Need x (Longitude) and y (Latitude) parameters.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)
+    raw_proj_x_vals = request.GET.get('x').split(',')
+    raw_proj_y_vals = request.GET.get('y').split(',')
+    if len(raw_proj_x_vals) != len(raw_proj_y_vals):
+        return HttpResponse('Need the same number of x (Longitude) and y (Latitude) values.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)
+    try:
+        proj_x_vals = [(lambda x: float(x.strip()))(x) for x in raw_proj_x_vals]
+        proj_y_vals = [(lambda y: float(y.strip()))(y) for y in raw_proj_y_vals]
+    except:
+        return HttpResponse('All x (Longitude) and y (Latitude) values must be numbers.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)
+    reproj = ReprojectUtilities()
+    reproj.set_in_out_crs(request.GET.get('input-proj'), request.GET.get('output-proj'))
+    try:
+        reproj.set_in_out_crs(request.GET.get('input-proj'), request.GET.get('output-proj'))
+    except:
+        return HttpResponse('Could not recognize input and/or output CRS.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)
+    try:
+        out_x, out_y = reproj.reproject_coordinates(proj_x_vals, proj_y_vals)
+    except:
+        return HttpResponse('Transformation failure.',
+                            content_type='text/plain; charset=utf8',
+                            status=406)    
+    coords = reproj.package_coordinates(out_x, out_y, request.GET.get('geometry'))
+    if (request.GET.get('format') == 'geojson' and
+        request.GET.get('geometry')):
+        geo = LastUpdatedOrderedDict()
+        geo['type'] = request.GET.get('geometry')
+        geo['coordinates'] = coords
+        output = json.dumps(geo,
+                            ensure_ascii=False,
+                            indent=4)
+    else:
+        output = json.dumps(coords,
+                            ensure_ascii=False,
+                            indent=4)
+    content_type='application/json; charset=utf8'
+    return HttpResponse(output,
+                        content_type=content_type)
