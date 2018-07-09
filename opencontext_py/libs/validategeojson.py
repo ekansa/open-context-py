@@ -173,7 +173,7 @@ class ValidateGeoJson():
                     valid = False
         else:
             # don't mess with coordinates we don't understand
-            valid = None
+            pass
         return valid 
     
     def fix_poly_rings_dir(self, coordinates):

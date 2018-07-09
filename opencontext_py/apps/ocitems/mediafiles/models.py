@@ -10,6 +10,7 @@ from django.db import models
 # Mediafile has basic metadata about media resources (binary files) associated with a media resource item
 @reversion.register  # records in this model under version control
 class Mediafile(models.Model):
+
     FILE_TYPES = [
         'oc-gen:fullfile',
         'oc-gen:preview',
@@ -22,6 +23,7 @@ class Mediafile(models.Model):
         'oc-gen:x3dom-texture'
         'oc-gen:nexus-3d',
     ]
+    
     MEDIA_MIMETYPE_NS = 'http://purl.org/NET/mediatypes/'
     NEXUS_3D_MIME_TYPE = 'http://vcg.isti.cnr.it/nexus/'
     NEXUS_3D_COMPRESS_MIME_TYPE = 'http://vcg.isti.cnr.it/nexus/#nxz'
@@ -29,6 +31,7 @@ class Mediafile(models.Model):
     THREED_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/3d-noun-37529.png'
     GIS_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/gis-noun-14294.png'
     RASTER_DEFAULT_THUMBNAIL = 'https://opencontext.org/static/oc/images/icons/raster-small.png'
+    
     hash_id = models.CharField(max_length=50, primary_key=True)
     uuid = models.CharField(max_length=50, db_index=True)
     project_uuid = models.CharField(max_length=50, db_index=True)

@@ -1,6 +1,8 @@
 import json
 from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
+
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem as OCitemNew
@@ -8,14 +10,9 @@ from opencontext_py.apps.ocitems.ocitem.htmltemplating import HTMLtemplate
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.ocitems.projects.content import ProjectContent
+from opencontext_py.apps.ocitems.projects.layers import ProjectLayers
+
 from django.template import RequestContext, loader
-from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
-from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
-from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
-from opencontext_py.apps.searcher.solrsearcher.templating import SearchTemplate
-from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
-from opencontext_py.apps.searcher.solrsearcher.projtemplating import ProjectAugment
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
@@ -171,3 +168,23 @@ def json_view(request, uuid):
                                 status=415)
     else:
         raise Http404
+
+
+@cache_control(no_cache=True)
+def layers_view(request, uuid):
+    """View geospatial layers associated with a project. """
+    ocitem = OCitem()
+    if 'hashes' in request.GET:
+        ocitem.assertion_hashes = True
+    ocitem.get_item(uuid, True)
+    if ocitem.manifest is not False:
+        proj_layers = ProjectLayers(ocitem.manifest.uuid)
+        proj_layers.get_geo_overlays()
+        json_output = proj_layers.json_geo_overlay()
+        if 'callback' in request.GET:
+            funct = request.GET['callback']
+            return HttpResponse(funct + '(' + json_output + ');',
+                                content_type='application/javascript' + "; charset=utf8")
+        else:
+            return HttpResponse(json_output,
+                                content_type="application/json; charset=utf8")
