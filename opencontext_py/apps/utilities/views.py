@@ -152,6 +152,13 @@ def quadtree_to_lat_lon(request):
 
 
 def reproject(request):
+    """
+http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=poggio-civitate&output-proj=EPSG:4326&x=103.08&y=-60.79
+
+http://127.0.0.1:8000/utilities/reproject?format=geojson&geometry=Point&input-proj=EPSG:3003&output-proj=EPSG:4326&x=169613.07889640043&y=-477999.93973334756
+    """       
+    
+    
     """ Converts a quadtree tile to WGS-84 lat / lon coordinates in different formats """
     if not (request.GET.get('input-proj') and request.GET.get('output-proj')):
         return HttpResponse('Need input-proj and output-proj parameters to specify projections.',
@@ -175,9 +182,18 @@ def reproject(request):
                             content_type='text/plain; charset=utf8',
                             status=406)
     reproj = ReprojectUtilities()
-    reproj.set_in_out_crs(request.GET.get('input-proj'), request.GET.get('output-proj'))
+    input_proj = request.GET.get('input-proj')
+    if input_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
+        # the request uses a Murlo Project local coordinate system
+        # we can transform it to global, by first changing the values
+        # of the x and y coordinates.
+        proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(proj_x_vals,
+                                                              proj_y_vals,
+                                                              input_proj)
+        # now set the input projection to the correct 
+        input_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[input_proj]
     try:
-        reproj.set_in_out_crs(request.GET.get('input-proj'), request.GET.get('output-proj'))
+        reproj.set_in_out_crs(input_proj, request.GET.get('output-proj'))
     except:
         return HttpResponse('Could not recognize input and/or output CRS.',
                             content_type='text/plain; charset=utf8',
@@ -193,6 +209,9 @@ def reproject(request):
         request.GET.get('geometry')):
         geo = LastUpdatedOrderedDict()
         geo['type'] = request.GET.get('geometry')
+        if len(out_x) == 1:
+            # always make a Point for single coordinate pairs
+            geo['type'] = 'Point'
         geo['coordinates'] = coords
         output = json.dumps(geo,
                             ensure_ascii=False,

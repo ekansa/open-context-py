@@ -1,8 +1,13 @@
-import os
 import re
 import json
+import os, sys, shutil
 import codecs
 import datetime
+import geojson
+from geojson import Polygon
+from shapely.geometry import Point
+from shapely.geometry import shape
+
 from unidecode import unidecode
 from dateutil.parser import parse
 from collections import OrderedDict
@@ -11,11 +16,14 @@ from django.db.models import Q
 from django.conf import settings
 from django.template.defaultfilters import slugify
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
+from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
 from opencontext_py.apps.imports.records.create import ImportRecords
 from opencontext_py.apps.imports.fields.create import ImportFields
@@ -48,6 +56,8 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
         self.fields = False
         self.imp_source_obj = False
         self.import_batch_size = 250
+        self.delete_old_geo = True
+        self.uuid_counts = {}
         self.geometry_field_name = 'geojson-geometry'
         self.geometry_field_type = 'geojson'
         self.props_config = [{'prop': 'FeatureNum',
@@ -339,36 +349,54 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
             (1) Find the appropriate item in the manifest table
             (2) Adds a record in the geospace table
         """
+        man_obj = None
         if 'properties' in feature:
             props = feature['properties']
-            for check_prop in self.props_config:
-                if check_prop['prop'] in props:
-                    prop_id = str(props[check_prop['prop']])
-                    if check_prop['data_type'] == 'xsd:integer':
-                        try:
-                            num_id = float(prop_id)
-                        except:
-                            num_id = False
-                        if num_id is not False:
-                            try:
-                                int_id = int(num_id)
-                            except:
-                                int_id = False
-                            if int_id is not False:
-                                prop_id = str(int_id)
-                    prop_id = check_prop['prefix'] + prop_id
-                    print('Checking to find: ' + prop_id)
-                    man_objs = Manifest.objects\
-                                       .filter(label=prop_id,
-                                               project_uuid=self.project_uuid,
-                                               class_uri=self.class_uri)[:1]
-                    if len(man_objs):
-                        uuid = str(man_objs[0].uuid)
-                    else:
-                        uuid = False
-                    if uuid is not False:
-                        # found a uuid for this item!
-                        print('Found: ' + prop_id + ' is ' + uuid)
+            if 'uri' in props:
+                try_uuid = props['uri'].split('/')[-1]
+                man_objs = Manifest.objects.filter(uuid=try_uuid)[:1]
+                if man_objs:
+                    man_obj = man_objs[0]
+        if man_obj and 'geometry' in feature:
+            # first get and validate the coordinates from the GeoJSON file
+            if man_obj.uuid not in self.uuid_counts:
+                self.uuid_counts[man_obj.uuid] = 0
+            self.uuid_counts[man_obj.uuid] += 1
+            geometry_type = feature['geometry']['type']
+            coordinates = feature['geometry']['coordinates']
+            v_geojson = ValidateGeoJson()
+            c_ok = v_geojson.validate_all_geometry_coordinates(geometry_type,
+                                                               coordinates)
+            if not c_ok:
+                print('Fixing coordinates for: {}'.format(uuid))
+                coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
+                                                               coordinates)
+            if self.delete_old_geo and self.uuid_counts[man_obj.uuid] < 2:
+                Geospace.objects.filter(uuid=man_obj.uuid).delete()
+            coord_str = json.dumps(coordinates,
+                                   indent=4,
+                                   ensure_ascii=False)
+            gg = GeospaceGeneration()
+            lon_lat = gg.get_centroid_lonlat_coordinates(coord_str, geometry_type)
+            print('Saving new geomettry for: ' + str(man_obj.uuid))
+            geo = Geospace()
+            geo.uuid = man_obj.uuid
+            geo.project_uuid = man_obj.project_uuid
+            geo.source_id = self.source_id
+            geo.item_type = man_obj.item_type
+            geo.feature_id = self.uuid_counts[man_obj.uuid]
+            geo.meta_type = ImportFieldAnnotation.PRED_GEO_LOCATION
+            geo.ftype = geometry_type
+            geo.latitude = lon_lat[1]
+            geo.longitude = lon_lat[0]
+            geo.specificity = 0
+            # dump coordinates as json string
+            geo.coordinates = coord_str
+            try:
+                geo.save()
+            except:
+                print('Problem saving: ' + str(man_obj.uuid))
+                quit()
 
     def process_features_in_file(self, act_dir, filename):
         """ Processes a file to extract geojson features
@@ -377,6 +405,7 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
         json_obj = self.load_json_file(act_dir, filename)
         if json_obj is not False:
             if 'features' in json_obj:
+                print('Processing features in '+ filename)
                 if self.load_into_importer:
                     self.get_props_from_features(json_obj['features'])
                     self.guess_properties_data_types(json_obj['features'])
@@ -402,11 +431,153 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
         json_obj = False
         dir_file = self.set_check_directory(act_dir) + filename
         if os.path.exists(dir_file):
+            print('Loading: ' + dir_file)
             self.make_source_id(act_dir, filename)
             fp = open(dir_file, 'r')
             # keep keys in the same order as the original file
             json_obj = json.load(fp, object_pairs_hook=OrderedDict)
         return json_obj
+    
+    def save_no_coord_file(self, json_obj, act_dir, filename):
+        """ saves a new json file without the coordinates (to facilitate debugging) """
+        new_json = LastUpdatedOrderedDict()
+        new_json['features'] = []
+        for feature in json_obj['features']:
+            feature['geometry']['coordinates'] = 'removed'
+            new_json['features'].append(feature)
+        dir_file = self.set_check_directory(act_dir) + '/no-coord-' + filename
+        json_output = json.dumps(new_json,
+                                 indent=4,
+                                 ensure_ascii=False)
+        file = codecs.open(dir_file, 'w', 'utf-8')
+        file.write(json_output)
+        file.close()
+        print('Saved: ' + dir_file)
+    
+    def save_partial_clean_file(self,
+                                json_obj,
+                                act_dir,
+                                filename,
+                                id_prop,
+                                ok_ids=[],
+                                add_props={},
+                                combine_json_obj=None):
+        """ saves a new json file with clean cordinates (to facilitate debugging) """
+        all_ids = False
+        if not ok_ids:
+            all_ids = True
+        new_json = LastUpdatedOrderedDict()
+        new_json['type'] = 'FeatureCollection'
+        new_json['features'] = []
+        for feature in json_obj['features']:
+            min_lon = None
+            max_lon = None
+            min_lat = None
+            max_lat = None
+            if all_ids or id_prop in feature['properties']:
+                feature_id = feature['properties'][id_prop]
+                if all_ids or feature_id in ok_ids:
+                    if feature_id in add_props:
+                        id_add_props = add_props[feature_id]
+                        for key, value in id_add_props.items():
+                            feature['properties'][key] = value
+                    geometry_type = feature['geometry']['type']
+                    coordinates = feature['geometry']['coordinates']
+                    v_geojson = ValidateGeoJson()
+                    c_ok = v_geojson.validate_all_geometry_coordinates(geometry_type,
+                                                                       coordinates)
+                    if not c_ok:
+                        coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
+                                                                       coordinates)
+                        feature['geometry']['coordinates'] = coordinates
+                    if geometry_type == 'Polygon':
+                        poly = Polygon(coordinates)
+                        act_feature = geojson.Feature(geometry=poly)
+                        cors = geojson.utils.coords(act_feature)
+                        for cor in cors:
+                            if min_lon is None or min_lon > cor[0]:
+                                min_lon = cor[0]
+                            if max_lon is None or max_lon < cor[0]:
+                                max_lon = cor[0]
+                            if min_lat is None or min_lat > cor[1]:
+                                min_lat = cor[1]
+                            if max_lat is None or max_lat < cor[1]:
+                                max_lat = cor[1]
+                        if combine_json_obj:
+                            feature['properties']['p-uris'] = ''
+                            print('Limit to {}, {} :: {}, {}'.format(
+                                min_lon, min_lat, max_lon, max_lat
+                                ))
+                            near_contexts = []
+                            near_uris = []
+                            contexts = []
+                            uris = []
+                            for cfeature in combine_json_obj['features']:
+                                near = True
+                                inside = False
+                                cgeometry_type = cfeature['geometry']['type']
+                                if cgeometry_type == 'Point':
+                                    ccors = cfeature['geometry']['coordinates']
+                                    if ccors[0] < min_lon or ccors[0] > max_lon:
+                                        near = False
+                                    if ccors[1] < min_lat or ccors[1] > max_lat:
+                                        near = False
+                                    spoly = shape(feature['geometry'])
+                                    point = Point(ccors) # create point
+                                    inside = spoly.contains(point)
+                                    # print('inside?: {}'.format(inside))  
+                                if 'uri' in cfeature['properties'] and (near or inside):
+                                    uri = cfeature['properties']['uri']
+                                    if inside:
+                                        uris.append(uri)
+                                    if near:
+                                        near_uris.append(uri)
+                                    uuid = uri.split('/')[-1]
+                                    sub = Subject.objects.get(uuid=uuid)
+                                    context = '/'.join(sub.context.split('/')[0:5])
+                                    if near:
+                                        near_contexts.append(context)
+                                    if inside:
+                                        contexts.append(context)
+                                    # new_json['features'].append(cfeature)
+                            n_common_context, n_all_contexts, n_c_uuid = self.make_context_count_str(near_contexts)
+                            common_context, all_contexts, c_uuid = self.make_context_count_str(contexts)
+                            feature['properties']['p-uris'] = '; '.join(uris)
+                            feature['properties']['n-contexts'] = n_all_contexts
+                            feature['properties']['n-context'] = n_common_context
+                            feature['properties']['n-c-uuid'] = n_c_uuid
+                            feature['properties']['contexts'] = all_contexts
+                            feature['properties']['context'] = common_context
+                            feature['properties']['c-uuid'] = c_uuid
+                    new_json['features'].append(feature)
+                    
+        dir_file = self.set_check_directory(act_dir) + '/id-clean-coord-' + filename
+        json_output = json.dumps(new_json,
+                                 indent=4,
+                                 ensure_ascii=False)
+        file = codecs.open(dir_file, 'w', 'utf-8')
+        file.write(json_output)
+        file.close()
+        print('Saved: ' + dir_file)
+    
+    def make_context_count_str(self, contexts):
+        """ makes a string of all contexts, sorted by count in descenting order """
+        all_contexts = ''
+        common_context = ''
+        uuid = ''
+        if len(contexts) > 0:
+            contexts.sort()
+            common_context = max(set(contexts), key=contexts.count)
+            contexts_cnt = [(i, contexts.count(i)) for i in set(contexts)]
+            scontexts_cnt = sorted(contexts_cnt,key=lambda x:(-x[1],x[0]))
+            cont_strs = []
+            for cont, cnt in scontexts_cnt:
+                cont_strs.append(str(cnt) + ':: ' + cont)
+            all_contexts = '; '.join(cont_strs)
+            subs = Subject.objects.filter(context=common_context)[:1]
+            if subs:
+                uuid = subs[0].uuid
+        return common_context, all_contexts, uuid
 
     def make_source_id(self, act_dir, filename):
         """ makes a source_id by sluggifying the act_dir and filename """

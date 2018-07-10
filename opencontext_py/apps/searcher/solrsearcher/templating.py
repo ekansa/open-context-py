@@ -2,6 +2,7 @@ import datetime
 from django.utils.html import strip_tags
 from django.http import QueryDict
 from django.conf import settings
+from opencontext_py.apps.ocitems.projects.layers import ProjectLayers
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
@@ -39,6 +40,7 @@ class SearchTemplate():
         self.text_search = []
         self.active_sort = {}
         self.sort_options = []
+        self.project_layers = False
         self.nav_items = settings.NAV_ITEMS
         self.human_remains_ok = False  # are we explicitly allowing display of human remains?
         self.human_remains_flag = False  # default to NO human remains flagged records in view
@@ -66,6 +68,8 @@ class SearchTemplate():
                 for json_filter in self.json_ld['oc-api:active-filters']:
                     s_filter = SearchFilter()
                     s_filter.parse_json_filter(json_filter)
+                    if s_filter.project_uuid:
+                        self.get_project_layers_json(s_filter.project_uuid)
                     self.filters.append(s_filter)
             if 'oc-api:has-facets' in self.json_ld:
                 dom_id_prefix = 'f-'
@@ -109,6 +113,12 @@ class SearchTemplate():
                         self.human_remains_flag = True
                     self.geo_records.append(rr)
             print('human remains flag? ' + str(self.human_remains_flag))
+
+    def get_project_layers_json(self, project_uuid):
+        """Gets project layers json """
+        proj_layers = ProjectLayers(project_uuid)
+        proj_layers.get_geo_overlays()
+        self.project_layers = proj_layers.json_geo_overlay()
 
     def set_sorting(self):
         """ set links for sorting records """
@@ -178,6 +188,7 @@ class SearchFilter():
         self.filter_label = False
         self.filter_value = False
         self.remove_href = False
+        self.project_uuid = False
 
     def parse_json_filter(self, json_filter):
         """ parses a json filter record
@@ -189,6 +200,10 @@ class SearchFilter():
             self.filter_value = json_filter['label']
         if 'oc-api:remove' in json_filter:
             self.remove_href = json_filter['oc-api:remove']
+        if ('rdfs:isDefinedBy' in json_filter and
+            'opencontext.org/projects/' in json_filter['rdfs:isDefinedBy']):
+            # we're filtering by a project, so get its uuid
+            self.project_uuid = json_filter['rdfs:isDefinedBy'].split('/')[-1]
 
 
 class TextSearch():
