@@ -70,6 +70,17 @@
         var base_search_link = "{{ base_search_link }}";
         var response_tile_zoom = {{ st.response_tile_zoom }};
         var total_count = {{ st.total_count }};
+        
+        {% if st.project_layers %}
+        
+        var project_layers = {{ st.project_layers|safe }};
+        
+        {%else%}
+        
+        var project_layers = false;
+        
+        {%endif%}
+        
         var search_map = new search_map("{{ json_url|safe }}",
                                         base_search_link,
                                         response_tile_zoom);

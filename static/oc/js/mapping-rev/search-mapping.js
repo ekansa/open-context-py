@@ -127,13 +127,63 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		"Mapbox-Dark": mapboxDark,
 	};
 	
+	// add project layers if they exist
+	var overlayImages = false;
+	if (typeof project_layers != "undefined" && project_layers !== false){
+		// we have project layers
+		var img_layer_cnt = 0;
+		for (var i = 0, length = project_layers.overlays.length; i < length; i++) {
+			// L.imageOverlay(imageUrl, imageBounds)
+			var act_over = project_layers.overlays[i];
+			if('url' in act_over && 'metadata' in act_over && 'Leaflet' in act_over.metadata){
+				var meta = act_over.metadata.Leaflet;
+				if('bounds' in meta){
+					img_layer_cnt++;
+					if(overlayImages === false){
+						overlayImages = {};
+					}
+					var img_label = 'Project Layer ' + img_layer_cnt;
+					if('label' in meta){
+						img_label = meta.label;
+					}
+					var img_opacity = 0.9;
+					if('opacity' in meta){
+						img_opacity = meta.opacity;
+					}
+					// Coordinates need to be in the lat-lon order (not GeoJSON order)
+					// meta.bounds = [[11.4019, 43.1523], [11.4033, 43.1531]] (does not work)
+					// meta.bounds = [[43.1523, 11.4019], [43.1531, 11.4033]] (works)
+					
+					img_over = L.imageOverlay(act_over.url, meta.bounds);
+					img_over.id = img_layer_cnt;
+					img_over.img_label = img_label;
+					img_over.setOpacity(img_opacity);
+					overlayImages[img_label] = img_over;
+					img_over.addTo(map);
+				}	
+			}
+		}
+	}
+	
 	map.default_base_name = "Google-Satellite";
 	map.base_name = map.default_base_name;
 	map.act_base_map = gmapSat; //default base map
 	map.base_layers = baseMaps;
 	map.record_base_change = false;
+	map.overlay_images = overlayImages;
+	
+	
+	
 	// add the layer control
-	var layerControl = L.control.layers(baseMaps).addTo(map);
+	var layerControl;
+	if(overlayImages === false){
+		layerControl = L.control.layers(baseMaps).addTo(map);
+	}
+	else{
+		// add image overlays to the controls
+		layerControl = L.control.layers(baseMaps, overlayImages).addTo(map);
+		console.log(overlayImages);
+	}
 	map.on('baselayerchange', function(e) {
 		// when the base layer changes, keep the id
 		this.base_name = e.name;
@@ -145,9 +195,34 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			// for the fist layer change
 			this.record_base_change = true;
 		}
+		if(map.overlay_images !== false){
+			// bring any overlay images to the front.
+			for (var over_key in map.overlay_images) {
+				if (map.overlay_images.hasOwnProperty(over_key)){
+					var act_over = map.overlay_images[over_key];
+					var over_exists = map.hasLayer(act_over);
+					if(over_exists){
+						act_over.bringToFront();
+						console.log('Project-image to front.');
+					}
+				}
+			}
+		}
 	});
 	// now add the active base map
 	map.addLayer(map.act_base_map);
+	if(map.overlay_images !== false){
+		// bring images to the front of the map.
+		for (var over_key in map.overlay_images) {
+			if (map.overlay_images.hasOwnProperty(over_key)){
+				var act_over = map.overlay_images[over_key];
+				var over_exists = map.hasLayer(act_over);
+				if(over_exists){
+					act_over.bringToFront();
+				}
+			}
+		}
+	}
 	
 	
 	
