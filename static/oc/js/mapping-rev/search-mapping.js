@@ -504,7 +504,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 					}
 				}
 			}
-			var region_layer = false;
+			
 			var region_layer = L.geoJson(geojson_facets,
 				{
 					style: function(feature){
@@ -517,10 +517,11 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 							var fill_opacity = style_obj.generate_opacity();
 							return {color: hex_color,
 									fillOpacity: fill_opacity,
-									weight: 2}
+									weight: 2};
 						    },
 					onEachFeature: on_each_region_feature
 				});
+
 			region_layer.geodeep = map.geodeep;
 			region_layer.max_value = max_value;
 			region_layer.min_value = min_value;
@@ -555,14 +556,15 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 				color: hex_color,
 				fillOpacity: fill_opacity
 			});
-		}
+		};
 		if (feature.properties) {
+			var date_range;
 			if (feature.properties['early bce/ce'] != feature.properties['late bce/ce']) {
-				var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+				date_range = style_bce_ce_year(feature.properties['early bce/ce']);
 				date_range += " to " + style_bce_ce_year(feature.properties['late bce/ce']);
 			}
 			else{
-				var date_range = style_bce_ce_year(feature.properties['early bce/ce']);
+				date_range = style_bce_ce_year(feature.properties['early bce/ce']);
 			}
 			
 			var popupContent = "<div> This discovery region has " + feature.count;
@@ -577,7 +579,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 					next_deep = 20;
 				}
 				use_href += "&geodeep=" + next_deep;
-				popupContent += "<a href='" + use_href + "'>Click here</a> to filter by this region."
+				popupContent += "<a href='" + use_href + "'>Click here</a> to filter by this region.";
 			}
 			popupContent += "</div>";
 			layer.bindPopup(popupContent);
@@ -932,12 +934,12 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 						add_row = false;
 					}
 					if(prop in EXPORT_LINK_PROPS){
-						var plabel = EXPORT_LINK_PROPS[prop]['href_label_prop'];
+						var plabel = EXPORT_LINK_PROPS[prop].href_label_prop;
 						if(feature.properties.hasOwnProperty(plabel)){
 							var link_text = feature.properties[plabel];
 							pval = '<a href="' + pval + '" target="_blank">';
 							pval += link_text + '</a>';
-							prop = EXPORT_LINK_PROPS[prop]['display_prop'];
+							prop = EXPORT_LINK_PROPS[prop].display_prop;
 							add_row = true;
 						}
 					}
