@@ -7,10 +7,14 @@ function CSVexporter(json_url, total_results){
 	this.meta_facets_url = false; 
 	this.modal_id = 'searchModal';
 	this.total_results = total_results;
-	this.completed_export_page = 0;
 	this.total_export_pages = 0;
+	this.csv_completed_export_page = 0;
+	this.geojson_completed_export_page = 0;
 	this.records_per_page = 100;
-	this.completed_pages = [];
+	this.csv_completed_pages = [];
+	this.geojson_completed_pages = [];
+	this.csv_data = [];
+	this.geojson_data = [];
 	this.data = [];
 	this.metadata = false;
 	this.added_field_slug_list = [];
@@ -52,6 +56,8 @@ function CSVexporter(json_url, total_results){
 	];
 	this.csv_filename = 'open-context-csv-export.csv';
 	this.geojson_filename = 'open-context-geojson-export.json';
+	
+	
 	this.show_interface = function(){
 		/* shows an interface for starting the exporter
 		 * 
@@ -69,7 +75,8 @@ function CSVexporter(json_url, total_results){
 		else{
 			this.show_attributes_html();
 		}
-	}
+	};
+	
 	this.make_interface_body_html = function(){
 		/* makes the HTML for the exporter interface
 		 * 
@@ -97,7 +104,8 @@ function CSVexporter(json_url, total_results){
 		'</div>'
 		].join('\n');
 		return html;
-	}
+	};
+	
 	this.show_controls_html = function(){
 		/* Shows controls to start, stop an export
 		 * and to determine what kind of data to export
@@ -114,7 +122,9 @@ function CSVexporter(json_url, total_results){
 					'</div>',
 					'<div class="col-xs-3">',
 						'<label>Export File Type:</label><br/>',
+						'<div id="export-type-selects-outer">',
 						radio_html,
+						'</div>',
 					'</div>',
 					'<div class="col-xs-3">',
 						'<label>Export Controls:</label><br/>',
@@ -137,7 +147,7 @@ function CSVexporter(json_url, total_results){
 			'</div>',
 		].join('\n');
 		return html;
-	}
+	};
 	this.make_file_type_radio_html = function(){
 		// makes the html for the radio buttons for export file formats
 		var export_csv = '';
@@ -153,6 +163,7 @@ function CSVexporter(json_url, total_results){
 		'<div class="radio" id="data-type-export-outer-csv">',
 			'<label>',
 				'<input type="radio" class="data-type-export" ' + export_csv,
+				'onchange="' + this.obj_name + '.change_export_type();" ',
 				'id="data-type-csv" name="data-type-export" value="csv" />',
 				'<i class="fa fa-table"></i>',
 				' Table (CSV)',
@@ -161,6 +172,7 @@ function CSVexporter(json_url, total_results){
 		'<div class="radio" id="data-type-export-outer-geojson">',
 			'<label>',
 				'<input type="radio" class="data-type-export" ' + export_geojson,
+				'onchange="' + this.obj_name + '.change_export_type();" ',
 				'id="data-type-geojson" name="data-type-export" value="geojson" />',
 				'<i class="fa fa-map-marker"></i>',
 				' GIS (GeoJSON)',
@@ -168,7 +180,7 @@ function CSVexporter(json_url, total_results){
 		'</div>',
 		].join('\n');
 		return html;
-	}
+	};
 	this.make_file_type_radio_inline_html = function(){
 		// another HTML format for export file format interface controls
 		var export_csv = '';
@@ -183,28 +195,74 @@ function CSVexporter(json_url, total_results){
 		'',
 		'<label class="radio-inline">',
 			'<input type="radio" class="data-type-export" ' + export_csv,
+			'onchange="' + this.obj_name + '.change_export_type();" ',
 			'id="data-type-csv" name="data-type-export" value="csv" />',
 			'<i class="fa fa-table"></i>',
 			' Table (CSV)',
 		'</label>',
 		'<label style="margin-left: 20px;" class="radio-inline">',
 			'<input type="radio" class="data-type-export" ' + export_geojson,
+			'onchange="' + this.obj_name + '.change_export_type();" ',
 			'id="data-type-geojson" name="data-type-export" value="geojson" />',
 			'<i class="fa fa-map-marker"></i>',
 			' GIS (GeoJSON)',
 		'</label>',
 		].join('\n');
 		return html;
-	}
+	};
+	this.change_export_type = function(){
+		// change of export type events
+		this.set_export_type();
+		var data_length = this.get_current_data_length();
+		if(data_length > 0 &&  data_length < this.total_results){
+			// case where we're still downloading so hide different radio options
+			this.toggle_export_buttons();
+		}
+		else{
+			// remake the radio buttons, so we can change them again if needed
+			var act_dom = document.getElementById('export-type-selects-outer');
+			var html = this.make_file_type_radio_html();
+			act_dom.innerHTML = html;
+			// toggle the start and download buttons
+			this.toggle_export_buttons();
+		}
+	};
+	
+	/******************************************
+	 * Functions for tracking state / progress of downloads
+	 * for CSV and GEOJSON export types
+	 ******************************************
+	 */
+	this.get_current_data_length = function(){
+		var data_length = 0;
+		if(this.export_type == 'csv'){
+			data_length = this.csv_data.length; 
+		}
+		else{
+			data_length = this.geojson_data.length; 
+		}
+		return data_length;
+	};
+	this.get_completed_export_page = function(){
+		var page = 0;
+		if(this.export_type == 'csv'){
+			page = this.csv_completed_export_page;
+		}
+		else{
+			page = this.geojson_completed_export_page;
+		}
+		return page;
+	};
+	
 	this.make_start_button_html = function(){
 		//makes the HTML for the start button, optionally disabled
 		var page_total = this.get_total_export_pages();
 		
 		var dis_html = '';
 		if (this.continue_exporting) {
-			var dis_html = ' disabled="disabled" ';
+			dis_html = ' disabled="disabled" ';
 		}
-		var start_index = this.data.length; 
+		var start_index = this.get_current_data_length();
 		if (start_index < 1) {
 			var html = [
 			'<button type="button" class="btn btn-primary btn-block" ',
@@ -227,6 +285,19 @@ function CSVexporter(json_url, total_results){
 			'class="glyphicon glyphicon-ok" aria-hidden="true"></span>',
 			'</button>',
 			].join('');
+			
+			if (this.export_type != 'csv' && typeof search_map != "undefined"){
+				html = [
+				'<button type="button" class="btn btn-info btn-block" ',
+				'title="Downloaded data added to map" ',
+				// 'onclick="' + this.obj_name + '.viewExport();" ',
+				dis_html + '>',
+				'Done (View on Map)',
+				'<span style="margin-left: 5px;" ',
+				'class="glyphicon glyphicon-ok" aria-hidden="true"></span>',
+				'</button>',
+				].join('');
+			}
 		}
 		else{
 			var html = [
@@ -240,7 +311,8 @@ function CSVexporter(json_url, total_results){
 			].join('');
 		}
 		return html;
-	}
+	};
+	
 	this.make_pause_button_html = function(){
 		//makes the HTML for the start button, optionally disabled
 		var page_total = this.get_total_export_pages();
@@ -277,9 +349,9 @@ function CSVexporter(json_url, total_results){
 		//makes the HTML for the reset button, optionally disabled
 		var dis_html = '';
 		if (this.continue_exporting) {
-			var dis_html = ' disabled="disabled" ';
+			dis_html = ' disabled="disabled" ';
 		}
-		var start_index = this.data.length; 
+		var start_index = this.get_current_data_length();
 		if (start_index < 1) {
 			// no data downloaded yet, make non-dangerous reset button
 			var b_class = 'btn btn-default btn-block';
@@ -339,18 +411,19 @@ function CSVexporter(json_url, total_results){
 	this.ajax_next_page_records = function(){
 		var page_total = this.get_total_export_pages();
 		if (this.continue_exporting) {
-			var start_index = this.data.length;
-			var current_export_page = this.completed_export_page + 1;
+			var url;
+			var start_index = this.get_current_data_length();
+			var current_export_page = this.get_completed_export_page() + 1;
 			if (start_index < this.total_results) {
 				if (start_index > 1) {
 					// pause between requests, because of rate limiting on server
 					var slept = this.sleep(this.sleep_pause);
 				}
 				if (this.export_type == 'csv') {
-					var url = replaceURLparameter(this.json_url, 'response', 'uri-meta');
+					url = replaceURLparameter(this.json_url, 'response', 'uri-meta');
 				}
 				else{
-					var url = replaceURLparameter(this.json_url, 'response', 'geo-record');	
+					url = replaceURLparameter(this.json_url, 'response', 'geo-record');	
 				}
 				url = replaceURLparameter(url, 'start', start_index);
 				url = url.replace(/&amp;prop=/g, '&prop=');
@@ -371,23 +444,32 @@ function CSVexporter(json_url, total_results){
 					context: this,
 					success: function(data){
 						
-						this.completed_pages.push(current_export_page);
-						var pages_done = this.completed_pages.length;
-						
+						var pages_done = 0;
+						var records_done = 0;
 						if (this.export_type == 'csv') {
-							this.data = this.data.concat(data);
+							this.csv_data = this.csv_data.concat(data);
+							records_done = this.csv_data.length;
+							this.csv_completed_pages.push(current_export_page);
+							pages_done = this.csv_completed_pages.length;
+							this.csv_completed_export_page += 1;
 						}
 						else{
-							this.data = this.data.concat(data.features);
+							this.geojson_data = this.geojson_data.concat(data.features);
+							records_done = this.geojson_data.length;
+							this.geojson_completed_pages.push(current_export_page);
+							pages_done = this.geojson_completed_pages.length;
+							this.geojson_completed_export_page += 1;
 						}
-						var records_done = this.data.length;
 						
-						this.completed_export_page += 1;
 						if (records_done < this.total_results && pages_done < page_total) {
 							this.continue_exporting = true;
 						}
 						else{
 							this.continue_exporting = false;
+							if(this.export_type != 'csv'){
+								// display the data on a map
+								this.viewExport();
+							}
 						}
 						this.update_progress(page_total, pages_done, records_done);
 						this.toggle_export_buttons();
@@ -508,7 +590,8 @@ function CSVexporter(json_url, total_results){
 	 *---------------------------------------------------------------------
 	 */
 	this.save = function(){
-		if (this.data.length > 0) {
+		var data_length = this.get_current_data_length();
+		if (data_length > 0) {
 			if (this.export_type == 'csv') {
 				this.save_csv();
 			}
@@ -547,9 +630,9 @@ function CSVexporter(json_url, total_results){
 					//OK we haven't checked this key yet, so lets check if
 					//it's in our ordered field list
 					var key_in_list = this.check_item_in_list(key, ordered_field_key_list);
-					if (key_in_list == false) {
+					if (key_in_list === false) {
 						//we haven't seen this item yet!
-						ordered_field_key_list.push(key)
+						ordered_field_key_list.push(key);
 					}
 					
 				}
@@ -576,6 +659,8 @@ function CSVexporter(json_url, total_results){
 			if (this.default_field_mappings.hasOwnProperty(field)) {
 				field_value = this.default_field_mappings[field];
 			}
+			// escape, incase the fields have commas in them.
+			field_value = this.csv_escape(field_value);
 			if (field != 'context label') {
 				// normal fields, add as normal
 				row_list.push(field_value);
@@ -596,8 +681,8 @@ function CSVexporter(json_url, total_results){
 		csvFile += rowDelim;
 		
 		//now add the rows of data records to the CSV string
-		for (var i = 0; i < this.data.length; i++) {
-			var item = this.data[i];
+		for (var i = 0; i < this.csv_data.length; i++) {
+			var item = this.csv_data[i];
 			var row_list = [];
 			var item_context_list = this.spit_contexts(item);
 			var num_item_contexts = item_context_list.length;
@@ -660,7 +745,7 @@ function CSVexporter(json_url, total_results){
 		//package it all up into a Feature Collection
 		var geojson_obj = {
 			type: 'FeatureCollection',
-			features: this.data
+			features: this.geojson_data
 		};
 		//convert the json to a string
 		var geojson = JSON.stringify(geojson_obj, null, 2);
@@ -690,6 +775,19 @@ function CSVexporter(json_url, total_results){
 			result = context.split('/');
 		}
 		return result;
+	}
+	this.viewExport = function(){
+		/*---------------------------------------------------------
+		 * Function to display the exported records as points on
+		 * the map
+		 * --------------------------------------------------------
+		 */
+		if (typeof search_map != "undefined"){
+			search_map.map.geojson_records = this.geojson_data;
+			search_map.map.make_overlay_from_export();
+			console.log(search_map.map);
+		}
+		return false;
 	}
 	/*---------------------------------------------------------------------
 	 * Functions for displaying and manipulating fields / attributes

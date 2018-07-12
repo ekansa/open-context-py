@@ -296,6 +296,10 @@ if DEBUG:
             'OPTIONS': {
                 'MAX_ENTRIES': 10
             }
+        },
+        'memory': {
+            'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+            'LOCATION': '127.0.0.1:11211',
         }
     }
 else:
@@ -326,6 +330,10 @@ else:
             'OPTIONS': {
                 'MAX_ENTRIES': 1500
             }
+        },
+        'memory': {
+            'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+            'LOCATION': '127.0.0.1:11211',
         }
     }
 

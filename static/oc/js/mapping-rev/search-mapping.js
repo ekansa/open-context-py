@@ -2,6 +2,30 @@
  * Map search results (currently only geo-facets)
  * from the GeoJSON API service
  */
+var EXPORT_LINK_PROPS = {
+	'href': {'href_label_prop': 'label', 'display_prop': 'Item'},
+	'context href': {'href_label_prop': 'context label', 'display_prop': 'Context'},
+	// 'project href': 'project label',
+}
+
+var EXPORT_SKIP_PROPS = [
+	"id",
+	"uri",
+    "feature-type",
+    "citation uri",
+	"href",
+	"label",
+	"context href",
+	"context label",
+	"project href",
+	"project label",
+    "early bce/ce",
+    "late bce/ce",
+    "published",
+    "updated",
+	"thumbnail",
+];
+
 
 function search_map(json_url, base_search_link, response_tile_zoom) {
 	
@@ -65,7 +89,10 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.button_ready = true;
 	map.min_tile_count_display = 25;
 	map.geojson_facets = {};  //geojson data for facet regions, geodeep as key
-	map.geojson_records = {}; //geojson data for records, start as key
+	map.geojson_records = []; //geojson data for records, start as key
+	map.layer_name_tile = 'Summary Counts, as Squares';
+	map.layer_name_circle = 'Summary Counts, as Circles';
+	map.layer_name_export = 'Selected Records';
 	if (map.geodeep > 6 || tile_constrained) {
 		map.fit_bounds = true;
 	}
@@ -153,7 +180,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 					// Coordinates need to be in the lat-lon order (not GeoJSON order)
 					// meta.bounds = [[11.4019, 43.1523], [11.4033, 43.1531]] (does not work)
 					// meta.bounds = [[43.1523, 11.4019], [43.1531, 11.4033]] (works)
-					
+					act_over.url = 'https://artiraq.org/static/opencontext/poggio-civitate/overlays/full/pc-site-plan-v2-cropped.png';
+					meta.bounds = [[43.153660, 11.402448],[43.152420, 11.400873]];
 					img_over = L.imageOverlay(act_over.url, meta.bounds);
 					img_over.id = img_layer_cnt;
 					img_over.img_label = img_label;
@@ -171,19 +199,41 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.base_layers = baseMaps;
 	map.record_base_change = false;
 	map.overlay_images = overlayImages;
+	// now add the active base map
+	map.addLayer(map.act_base_map);
+	
+	var layerControl = false;
+	map.update_base_overlay_controls = function(){
+		if(layerControl !== false){
+			// remove it if if exists
+			layerControl.remove();
+		}
+		
+		// now make a layer control with base maps, and possible overlay images
+		if(map.overlay_images === false){
+			layerControl = L.control.layers(map.base_layers).addTo(map);
+		}
+		else{
+			layerControl = L.control.layers(map.base_layers, map.overlay_images).addTo(map);
+		}
+		
+		if(tile_region_layer !== false){
+			// add the tile layer to the layer control overlay
+			layerControl.addOverlay(tile_region_layer, map.layer_name_tile);
+		}
+		if(circle_region_layer !== false){
+			// add the circle region to layer control overlay
+			layerControl.addOverlay(circle_region_layer, map.layer_name_circle);
+		}
+		if(export_record_layer !== false){
+			// add exported records to layer control overlay
+			layerControl.addOverlay(export_record_layer, map.layer_name_export);
+		}
+	};
 	
 	
 	
-	// add the layer control
-	var layerControl;
-	if(overlayImages === false){
-		layerControl = L.control.layers(baseMaps).addTo(map);
-	}
-	else{
-		// add image overlays to the controls
-		layerControl = L.control.layers(baseMaps, overlayImages).addTo(map);
-		console.log(overlayImages);
-	}
+	
 	map.on('baselayerchange', function(e) {
 		// when the base layer changes, keep the id
 		this.base_name = e.name;
@@ -209,20 +259,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			}
 		}
 	});
-	// now add the active base map
-	map.addLayer(map.act_base_map);
-	if(map.overlay_images !== false){
-		// bring images to the front of the map.
-		for (var over_key in map.overlay_images) {
-			if (map.overlay_images.hasOwnProperty(over_key)){
-				var act_over = map.overlay_images[over_key];
-				var over_exists = map.hasLayer(act_over);
-				if(over_exists){
-					act_over.bringToFront();
-				}
-			}
-		}
-	}
+	
 	
 	
 	
@@ -267,7 +304,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			// Fragment doesn't exist
 			map.req_hash = false;
 		}
-	}
+	};
 	
 	
 	/**************************************************
@@ -369,7 +406,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		}
 		
 		map.check_hide_circle_control();
-	}
+	};
 	
 	map.toggle_tile_controls = function(){
 		var act_dom_id = 'tile-more-precision';
@@ -435,8 +472,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 				map.get_geojson_regions();
 			}
 		}
-	}
-	
+	};
 	
 	/**************************************************
 	 * Functions for displaying geo-facets as rectangle
@@ -493,15 +529,17 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			tile_region_layer = region_layer;
 			if (map.fit_bounds) {
 				//set an inital attractive view
-				map.fitBounds(region_layer.getBounds(), maxZoom=20);
+				map.fitBounds(tile_region_layer.getBounds(), maxZoom=20);
 			}
-			region_layer.addTo(map);
+			tile_region_layer.addTo(map, map.layer_name_tile);
 			if (region_controls) {
 				map.toggle_tile_controls();
 			}
+			// update the overlay controls
+			map.update_base_overlay_controls();
 		}
 		map.button_ready = true;
-	}
+	};
 	
 	function on_each_region_feature(feature, layer){
 		/*
@@ -574,7 +612,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			 * 1st we aggregate nearby tiles getting points for the center of each
 			 * tile region
 			 */
-			var aggregated_tiles = {}
+			var aggregated_tiles = {};
 			for (var i = 0, length = geojson_facets.features.length; i < length; i++) {
 				var feature = geojson_facets.features[i];
 				var geometry = feature.geometry;
@@ -602,39 +640,36 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			var min_value = false;
 			var count_keys = [];
 			var points = {};
-			for(var tile_key in aggregated_tiles) { 
+			for(var tile_key in aggregated_tiles){
 				var points_data = aggregated_tiles[tile_key];
 				var total_count = 0;
 				var sum_longitude = 0;
 				var sum_latitude = 0;
-				var url = points_data[0]['url'];
-				// console.log(points_data);
-				for (var i = 0, length = points_data.length; i < length; i++) {
+				var url = points_data[0].url;
+				for(i = 0, length = points_data.length; i < length; i++){
 					var act_pdata = points_data[i];
-					total_count += act_pdata['count'];
-					sum_longitude += act_pdata['centroid'][0] * act_pdata['count'];
-					sum_latitude += act_pdata['centroid'][1] * act_pdata['count'];
+					total_count += act_pdata.count;
+					sum_longitude += act_pdata.centroid[0] * act_pdata.count;
+					sum_latitude += act_pdata.centroid[1] * act_pdata.count;
 				}
 				// computed weighted average for the center of these tile regions
 				var mean_longitude = sum_longitude / total_count;
 				var mean_latitude = sum_latitude / total_count;
 				var point = {'type': 'Feature',
-				             'properties': {
-						'href': url
-					     },
-					     'geometry': {
-						'type': 'Point',
-						'coordinates': [mean_longitude, mean_latitude]
-					     },
-					     'count': total_count,
-					     'url': url}
+				'properties': {'href': url},
+				'geometry': {
+					'type': 'Point',
+					'coordinates': [mean_longitude, mean_latitude]
+				},
+				'count': total_count,
+				'url': url};
 				var count_key = make_unique_count_key(total_count, count_keys);
-				count_keys.push(count_key)
+				count_keys.push(count_key);
 				points[count_key] = point;
 				if (total_count > max_value) {
 					max_value = total_count;
 				}
-				if (min_value == false) {
+				if (min_value === false) {
 					min_value = total_count;
 				}
 				else{
@@ -647,12 +682,12 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			 * 3rd we sort the points in descending order of count so the point features with
 			 * the highest counts will be rendered lower
 			 */
-			count_keys.sort(function(a, b){return b-a});
-			var feature_points = []
-			for (var i = 0, length = count_keys.length; i < length; i++) { 
+			count_keys.sort(function(a, b){return b-a;});
+			var feature_points = [];
+			for(i = 0, length = count_keys.length; i < length; i++){ 
 				var count_key = count_keys[i];
 				var point = points[count_key];
-				if (point){
+				if(point){
 					if (point.geometry.coordinates[0] && point.geometry.coordinates[1]){
 						feature_points.push(point);
 					}
@@ -660,7 +695,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			}
 			// now switch the polygon regions for points
 			pgeo_json = {'type': "FeatureCollection",
-			             'features': feature_points}
+			             'features': feature_points};
 			var circle_layer = L.geoJson(pgeo_json, {
 				onEachFeature: on_each_circle_feature,
 				pointToLayer: function (feature, latlng) {
@@ -688,9 +723,9 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			circle_region_layer = circle_layer;
 			if (map.fit_bounds) {
 				//map.fit_bounds exists to set an inital attractive view
-				map.fitBounds(circle_layer.getBounds());
+				map.fitBounds(circle_region_layer.getBounds());
 			}
-			circle_layer.addTo(map);
+			circle_region_layer.addTo(map, map.layer_name_circle);
 			if (region_controls) {
 				map.toggle_tile_controls();
 			}
@@ -703,7 +738,9 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			}
 		}
 		map.button_ready = true;
-	}
+		// update the overlay controls
+		map.update_base_overlay_controls();
+	};
 	
 	function on_each_circle_feature(feature, layer){
 		
@@ -846,6 +883,87 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 			}
 		}
 	}
+	
+	
+	/**************************************************
+	 * Functions for displaying exported point data
+	 *************************************************
+	 */
+	var export_record_layer = false;
+	map.make_overlay_from_export = function(){
+		// Makes an overlay from the exported data
+		var geojson_obj = {
+			type: 'FeatureCollection',
+			features: map.geojson_records,
+		};
+		var export_layer = L.geoJson(geojson_obj, {
+			onEachFeature: on_each_export_feature,
+			pointToLayer: function (feature, latlng) {
+			var markerOps = {
+				'radius': 8,
+				'fillColor': '#337ab7',
+				'color': '#149bdf',
+				weight: 1,
+				opacity: 1,
+				fillOpacity: 0.9
+			};
+			return L.circleMarker(latlng, markerOps);
+			}
+		});
+		export_layer.id = 'export-features';
+		export_record_layer = export_layer;
+		console.log('export layer!');
+		export_record_layer.addTo(map, map.layer_name_export);
+		// update the overlay controls
+		map.update_base_overlay_controls();
+	};
+	
+	function on_each_export_feature(feature, layer){
+		// make popup HTML for exported features
+		if (feature.properties) {
+			var popup = [
+				'<div class="small pre-scrollable" style="max-height:300px;">',
+				'<table class="table table-condensed">',
+				'<tbody>',
+			];
+			for(var prop in feature.properties){
+				if(feature.properties.hasOwnProperty(prop)){
+					var add_row = true;
+					var pval = feature.properties[prop];
+					if(EXPORT_SKIP_PROPS.indexOf(prop) >= 0){
+						add_row = false;
+					}
+					if(prop in EXPORT_LINK_PROPS){
+						var plabel = EXPORT_LINK_PROPS[prop]['href_label_prop'];
+						if(feature.properties.hasOwnProperty(plabel)){
+							var link_text = feature.properties[plabel];
+							pval = '<a href="' + pval + '" target="_blank">';
+							pval += link_text + '</a>';
+							prop = EXPORT_LINK_PROPS[prop]['display_prop'];
+							add_row = true;
+						}
+					}
+					if(prop == 'thumbnail' && typeof pval === 'string' && pval.indexOf('http') === 0){
+						pval = '<img src="' + pval + '" alt="item thumbnail" class="img-rounded"/>';
+						add_row = true;
+					}
+					if(add_row){
+						var row = '<tr><td style="font-variant: small-caps;">'+ prop;
+						row += '</td><td>' + pval + '</td></tr>';
+						popup.push(row);
+					}
+				}
+				
+			}
+			popup.push('</tbody>');
+			popup.push('</table>');
+			popup.push('</div>');
+			var popupContent = popup.join('\n');
+			layer.bindPopup(popupContent);
+		}
+	}
+	
+	
 	L.control.scale().addTo(map); 
 	this.map = map;
 }

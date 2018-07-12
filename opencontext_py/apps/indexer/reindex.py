@@ -2,6 +2,7 @@ import json
 import requests
 from django.db import models
 from django.conf import settings
+from django.core.cache import caches
 from opencontext_py.apps.searcher.solrsearcher.solrdirect import SolrDirect
 from opencontext_py.apps.indexer.crawler import Crawler
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -17,11 +18,15 @@ class SolrReIndex():
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
 uuids = []
-items = Manifest.objects.filter(item_type='media').exclude(indexed__gt='2016-04-12')
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+items = Manifest.objects\
+                .filter(project_uuid=project_uuid).exclude(indexed__gt='2018-07-07')\
+                .order_by('sort')
 for item in items:
     uuids.append(item.uuid)
 
-uuids = ['13d645d6-4a4d-4e60-a618-e1d394aa3bcf']
+# uuids += ['DF043419-F23B-41DA-7E4D-EE52AF22F92F']
 print('Items to index: ' + str(len(uuids)))
 sri = SolrReIndex()
 sri.reindex_uuids(uuids)
@@ -68,6 +73,7 @@ sri.reindex_uuids(uuids)
         """ Reindexes items in Solr,
             with item UUIDs coming from a given source
         """
+        self.clear_caches()
         self.iteration += 1
         print('Iteration: ' + str(self.iteration))
         if self.iteration <= self.max_iterations:
@@ -153,6 +159,7 @@ sri.reindex_uuids(uuids)
     def reindex_uuids(self, uuids):
         """ reindexes a list of uuids
         """
+        self.clear_caches()
         if isinstance(uuids, list):
             crawler = Crawler()
             if isinstance(self.max_geo_zoom, int):
@@ -314,3 +321,16 @@ sri.reindex_uuids(uuids)
         except:
             uuids = []
         return uuids
+    
+    def clear_caches(self):
+        """Clears caches to make sure reidexing uses fresh data. """
+        cache = caches['redis']
+        cache.clear()
+        cache = caches['default']
+        cache.clear()
+        try:
+            # only worry about this if it exists
+            cache = caches['memory']
+            cache.clear()
+        except:
+            pass

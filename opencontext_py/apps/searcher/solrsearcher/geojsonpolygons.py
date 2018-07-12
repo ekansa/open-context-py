@@ -102,8 +102,6 @@ class GeoJsonPolygons():
                         dump = json.dumps(record,
                                           ensure_ascii=False, indent=4)
                         geojson_obj = geojson.loads(dump)
-                        if geojson_obj.is_valid is False:
-                            print('geojson errors: ' + str(geojson_obj.errors()))
                         self.geojson_features.append(record)
 
     def get_polygon_db_objects(self, solr_polygons):
