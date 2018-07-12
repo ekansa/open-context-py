@@ -40,6 +40,10 @@
         </div>
         <div class="col-sm-4">
             
+            {% if csv_downloader %}
+            {% include 'search/export-map.html' %} 
+            {%endif%} 
+            
             {% include 'search/human-remains.html' %}
             {% include 'search/text-search.html' %}
             {% include 'search/filters.html' %}
