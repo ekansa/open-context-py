@@ -178,10 +178,8 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 						img_opacity = meta.opacity;
 					}
 					// Coordinates need to be in the lat-lon order (not GeoJSON order)
-					// meta.bounds = [[11.4019, 43.1523], [11.4033, 43.1531]] (does not work)
-					// meta.bounds = [[43.1523, 11.4019], [43.1531, 11.4033]] (works)
-					act_over.url = 'https://artiraq.org/static/opencontext/poggio-civitate/overlays/full/pc-site-plan-v2-cropped.png';
-					meta.bounds = [[43.153660, 11.402448],[43.152420, 11.400873]];
+					// meta.bounds = [[11.4019, 43.1523], [11.4033, 43.1531]]; (does not work)
+					// meta.bounds = [[43.153660, 11.402448],[43.152420, 11.400873]]; works
 					img_over = L.imageOverlay(act_over.url, meta.bounds);
 					img_over.id = img_layer_cnt;
 					img_over.img_label = img_label;
