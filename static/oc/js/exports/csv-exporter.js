@@ -21,7 +21,7 @@ function CSVexporter(json_url, total_results){
 	this.default_add_common_fields = true;
 	this.export_type = 'csv';
 	this.continue_exporting = false;
-	this.sleep_pause = 300; // milliseconds to pause between requests
+	this.sleep_pause = 325; // milliseconds to pause between requests
 	this.default_field_mappings = {
 		'uri': 'URI',
 		'citation uri': 'Citation URI',
