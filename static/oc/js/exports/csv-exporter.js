@@ -15,13 +15,13 @@ function CSVexporter(json_url, total_results){
 	this.geojson_completed_pages = [];
 	this.csv_data = [];
 	this.geojson_data = [];
-	this.data = [];
 	this.metadata = false;
 	this.added_field_slug_list = [];
 	this.default_add_common_fields = true;
 	this.export_type = 'csv';
 	this.continue_exporting = false;
 	this.sleep_pause = 325; // milliseconds to pause between requests
+	this.max_map_export = 20000;
 	this.default_field_mappings = {
 		'uri': 'URI',
 		'citation uri': 'Citation URI',
@@ -65,7 +65,9 @@ function CSVexporter(json_url, total_results){
 		var main_modal_title_domID = this.modal_id + "Label";
 		var main_modal_body_domID = this.modal_id + "Body";
 		var title_dom = document.getElementById(main_modal_title_domID);
-		title_dom.innerHTML = 'Export These ' + this.total_results + ' Records: Data Table (CSV) or GIS (GeoJSON)';
+		var title = 'Download these ' + this.total_results + ' Individual Records: ';
+		title += 'Data Table (CSV) or GIS (GeoJSON)';
+		title_dom.innerHTML = title;
 		var body_dom = document.getElementById(main_modal_body_domID);
 		body_dom.innerHTML = this.make_interface_body_html();
 		$("#" + this.modal_id).modal('show');
@@ -81,18 +83,24 @@ function CSVexporter(json_url, total_results){
 		/* makes the HTML for the exporter interface
 		 * 
 		*/
+		var map_comment = '';
+		if(this.total_results <= this.max_map_export){
+			map_comment = 'GIS exports can be saved and previewed on the search result map. ';
+		}
+		
 		var controls_html = this.show_controls_html();
 		var html = [
 		'<div>',
-		    '<h4>About Exporting these Search Results</h4>',
+		    // '<h4>About Downloading Individual Search Records</h4>',
 			'<p class="small">',
 			'This tool exports the current set of records as a data table or a GIS output. ',
+			map_comment,
 			'For convenience, these outputs represent data in somewhat simplified formats. ',
 			'If you need more expressive and complete representations of these data, please see the ',
 			'<a href="' + base_url + '/about/services" target="_blank">API documentation</a>. ',
 			'Please also note that geospatial data for certain records may be approximated ',
-			'as a security precaution. The API provides full documentation about geospatial precision for ',
-			'each record of data.',
+			'as a security precaution. The API provides full documentation about geospatial ',
+			'precision for each record of data.',
 			'</p>',
 			'<div class="well well-sm">',
 				'<div id="metadata-attributes">',
@@ -119,6 +127,12 @@ function CSVexporter(json_url, total_results){
 			'<div style="margin-top: 20px;">',
 				'<div class="row">',
 					'<div class="col-xs-6"  id="export-progress">',
+					'<label>Mapping Note:</label><br/>',
+					'<p class="small">',
+					'Once fully downloaded, <strong>GeoJSON</strong> ',
+					'exports of ' + this.max_map_export,
+					' items or less will appear on the search results map.',
+					'</p>',
 					'</div>',
 					'<div class="col-xs-3">',
 						'<label>Export File Type:</label><br/>',
@@ -286,11 +300,14 @@ function CSVexporter(json_url, total_results){
 			'</button>',
 			].join('');
 			
-			if (this.export_type != 'csv' && typeof search_map != "undefined"){
+			if (this.export_type != 'csv' &&
+				typeof search_map != "undefined" &&
+				this.total_results <= this.max_map_export){
+				dis_html = '';
 				html = [
 				'<button type="button" class="btn btn-info btn-block" ',
 				'title="Downloaded data added to map" ',
-				// 'onclick="' + this.obj_name + '.viewExport();" ',
+				'onclick="' + this.obj_name + '.modal_close_view_map();" ',
 				dis_html + '>',
 				'Done (View on Map)',
 				'<span style="margin-left: 5px;" ',
@@ -311,6 +328,16 @@ function CSVexporter(json_url, total_results){
 			].join('');
 		}
 		return html;
+	};
+	
+	this.modal_close_view_map = function(){
+		$("#" + this.modal_id).modal('hide');
+		var scroll_to = window.scrollTop;
+		var act_dom = document.getElementById('map');
+		if(act_dom){
+			act_dom.scrollIntoView(true);
+			
+		}
 	};
 	
 	this.make_pause_button_html = function(){
@@ -610,7 +637,7 @@ function CSVexporter(json_url, total_results){
 			var slug = this.added_field_slug_list[i];
 			var label = this.get_field_val_from_metadata(slug, 'label');
 			var label_in_list = this.check_item_in_list(label, ordered_field_key_list);
-			if (label_in_list == false) {
+			if (label_in_list === false) {
 				//new label, add to then end of the field_key_list
 				ordered_field_key_list.push(label);
 			}
@@ -619,8 +646,8 @@ function CSVexporter(json_url, total_results){
 		//now we double check to make sure we've got all the field keys in the
 		//actual downloaded data
 		var checked_field_keys = {};
-		for (var i = 0; i < this.data.length; i++) {
-			var item = this.data[i];
+		for (var i = 0; i < this.csv_data.length; i++) {
+			var item = this.csv_data[i];
             for (var key in item){
 				if (checked_field_keys.hasOwnProperty(key)) {
 					// skip
@@ -659,8 +686,6 @@ function CSVexporter(json_url, total_results){
 			if (this.default_field_mappings.hasOwnProperty(field)) {
 				field_value = this.default_field_mappings[field];
 			}
-			// escape, incase the fields have commas in them.
-			field_value = this.csv_escape(field_value);
 			if (field != 'context label') {
 				// normal fields, add as normal
 				row_list.push(field_value);
@@ -674,9 +699,14 @@ function CSVexporter(json_url, total_results){
 			}
         }
 		
-		// now add the row of field names as the first from of the CSV string 
+		// now add the row of field names as the first from of the CSV string
+		// but first, escape the field names because they can have commas in them.
 		console.log(row_list);
 		var req_field_count = row_list.length;
+		csv_esc_field_row = [];
+		for (i = 0; i < req_field_count; i++) {
+			csv_esc_field_row.push(this.csv_escape(row_list[i]));
+		}
 		csvFile += row_list.join(",");
 		csvFile += rowDelim;
 		
@@ -782,10 +812,10 @@ function CSVexporter(json_url, total_results){
 		 * the map
 		 * --------------------------------------------------------
 		 */
-		if (typeof search_map != "undefined"){
+		if (typeof search_map != "undefined" &&
+			this.geojson_data.length <= this.max_map_export){
 			search_map.map.geojson_records = this.geojson_data;
 			search_map.map.make_overlay_from_export();
-			console.log(search_map.map);
 		}
 		return false;
 	}
@@ -1208,9 +1238,16 @@ function CSVexporter(json_url, total_results){
 		/* resets the exporter
 		 * 
 		*/
-		this.current_export_page = 0;
-		this.completed_pages = [];
-		this.data = [];
+		if (this.export_type == 'csv') {
+			this.csv_data = [];
+			this.csv_completed_pages = [];
+			this.csv_completed_export_page = 0;
+		}
+		else{
+			this.geojson_data = [];
+			this.geojson_completed_pages = [];
+			this.geojson_completed_export_page = 0;
+		}
 		this.added_field_slug_list = [];
 		this.default_add_common_fields = true;
 		this.show_interface();
