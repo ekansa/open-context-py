@@ -154,7 +154,62 @@ function initmap() {
 	
 	map.addLayer(gmapSat);
 	map._layersMaxZoom = 30;
-	L.control.layers(baseMaps).addTo(map);
+	
+	// add project layers if they exist
+	var overlayImages = false;
+	if (typeof project_layers != "undefined" && project_layers !== false){
+		// we have project layers
+		var img_layer_cnt = 0;
+		for (var i = 0, length = project_layers.overlays.length; i < length; i++) {
+			// L.imageOverlay(imageUrl, imageBounds)
+			var act_over = project_layers.overlays[i];
+			if('url' in act_over && 'metadata' in act_over && 'Leaflet' in act_over.metadata){
+				var meta = act_over.metadata.Leaflet;
+				if('bounds' in meta){
+					img_layer_cnt++;
+					if(overlayImages === false){
+						overlayImages = {};
+					}
+					var img_label = 'Project Layer ' + img_layer_cnt;
+					if('label' in meta){
+						img_label = meta.label;
+					}
+					var img_opacity = 0.9;
+					if('opacity' in meta){
+						img_opacity = meta.opacity;
+					}
+					// Coordinates need to be in the lat-lon order (not GeoJSON order)
+					// meta.bounds = [[11.4019, 43.1523], [11.4033, 43.1531]]; (does not work)
+					// meta.bounds = [[43.153660, 11.402448],[43.152420, 11.400873]]; works
+					img_over = L.imageOverlay(act_over.url, meta.bounds);
+					img_over.id = img_layer_cnt;
+					img_over.img_label = img_label;
+					img_over.setOpacity(img_opacity);
+					overlayImages[img_label] = img_over;
+					img_over.addTo(map);
+					
+					// now set the zoom to be a bit further out from the overlay
+					map.fitBounds(img_over.getBounds());
+					if(start_zoom < (map.getZoom() - 1)){
+						start_zoom = map.getZoom() - 1;
+					}
+				}	
+			}
+		}
+	}
+	
+	
+	if(overlayImages !== false){
+		// we have overlay images to add
+		
+		L.control.layers(baseMaps, overlayImages).addTo(map);
+	}
+	else{
+		// normal case, no project overlay images
+		L.control.layers(baseMaps).addTo(map);
+	}
+	
+	
 	var act_layer = L.geoJson(geojson, {
 		style: polyStyle,
 		onEachFeature: on_each_feature
@@ -169,7 +224,6 @@ function initmap() {
 	var current_zoom = map.getZoom();
 	if (current_zoom > start_zoom && point_features_only){
 		// we are zoomed into far, so go out
-		alert('move out! ' + start_zoom);
 		map.setZoom(start_zoom);
 	}
 	if (current_zoom < 1){

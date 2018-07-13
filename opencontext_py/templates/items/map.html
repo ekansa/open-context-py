@@ -31,6 +31,17 @@
         var start_lon = {{ item.geo.start_lon }};
         var start_zoom = {{ item.geo.start_zoom }};
 		var item_type = '{{ item.act_nav }}';
+		
+		{% if item.project.project_layers %}
+        
+        var project_layers = {{ item.project.project_layers|safe }};
+        
+        {%else%}
+        
+        var project_layers = false;
+        
+        {%endif%}
+		
         initmap();
         -->
 	</script>

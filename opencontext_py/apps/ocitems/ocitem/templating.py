@@ -17,6 +17,7 @@ from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
 from opencontext_py.apps.ocitems.projects.permissions import ProjectPermissions
+from opencontext_py.apps.ocitems.projects.layers import ProjectLayers
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.tdar.api import tdarAPI
@@ -1145,6 +1146,7 @@ class Project():
         self.view_authorized = False
         self.proj_geo_specificity = 0
         self.proj_geo_note = False
+        self.project_layers = False
 
     def make_project(self, json_ld):
         if isinstance(json_ld, dict):
@@ -1178,6 +1180,10 @@ class Project():
                         # get the number at the end of edit-level
                         self.edit_status = float(bibo_status['id'].split('-')[-1])
                         break
+            # now get any project specific overlay information if it exists
+            proj_layers = ProjectLayers(self.uuid)
+            proj_layers.get_geo_overlays()
+            self.project_layers = proj_layers.json_geo_overlay()
         
     def get_proj_geo_metadata(self, project):
         """ gets project geospatial metadata if stored in a project object """
