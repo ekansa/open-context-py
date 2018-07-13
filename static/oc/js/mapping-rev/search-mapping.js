@@ -450,11 +450,11 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 		/*
 		 * get a layer by zoom level
 		 */
-		if (map.hasLayer(circle_region_layer)) {
+		if (circle_region_layer !== false && map.hasLayer(circle_region_layer)) {
 			//delete the cicle if it exits
 			map.removeLayer(circle_region_layer);
 		}
-		if (map.hasLayer(tile_region_layer)) {
+		if (tile_region_layer !== false &&  map.hasLayer(tile_region_layer)) {
 			// delete the tile if it exits
 			map.removeLayer(tile_region_layer);
 		}
@@ -481,6 +481,17 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.render_region_layer = function (){
 		// does the work of rendering a region facet layer
 		if (map.geodeep in map.geojson_facets) {
+			
+			// do some clean up of other region layers
+			if (circle_region_layer !== false && map.hasLayer(circle_region_layer)) {
+				//delete the cicle if it exits
+				map.removeLayer(circle_region_layer);
+			}
+			if (tile_region_layer !== false &&  map.hasLayer(tile_region_layer)) {
+				// delete the tile if it exits
+				map.removeLayer(tile_region_layer);
+			}
+			
 			/*
 			 * Loop through features to get the range of counts.
 			 */
@@ -603,6 +614,17 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	map.circle_regions = function (){
 		// does the work of rendering a region facet layer
 		if (map.geodeep in map.geojson_facets) {
+			
+			// do some clean up of other region layers
+			if (circle_region_layer !== false && map.hasLayer(circle_region_layer)) {
+				//delete the cicle if it exits
+				map.removeLayer(circle_region_layer);
+			}
+			if (tile_region_layer !== false &&  map.hasLayer(tile_region_layer)) {
+				// delete the tile if it exits
+				map.removeLayer(tile_region_layer);
+			}
+			
 			// var original_geojson = map.geojson_facets[map.geodeep];
 			var geojson_facets = map.geojson_facets[map.geodeep];
 			if ('oc-api:max-disc-tile-zoom' in geojson_facets) {
@@ -770,7 +792,7 @@ function search_map(json_url, base_search_link, response_tile_zoom) {
 	 * 
 	 *************************************************
 	*/
-	map.get_geojson_regions = function (){
+	map.get_geojson_regions = function(){
 		map.show_region_loading(); // show loading gif
 		//do the ajax request
 		$.ajax({
