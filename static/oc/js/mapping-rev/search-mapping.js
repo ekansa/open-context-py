@@ -24,6 +24,7 @@ var EXPORT_SKIP_PROPS = [
     "published",
     "updated",
 	"thumbnail",
+	"human remains flagged",
 ];
 
 
