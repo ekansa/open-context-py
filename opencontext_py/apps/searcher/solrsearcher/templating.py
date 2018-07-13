@@ -31,6 +31,7 @@ class SearchTemplate():
         self.response_tile_zoom = 0
         # is the item_type_limit is in effect ?
         self.item_type_limited = False
+        self.subjects_link = False
         self.filters = []
         self.paging = {}
         self.num_facets = []
@@ -44,6 +45,8 @@ class SearchTemplate():
         self.nav_items = settings.NAV_ITEMS
         self.human_remains_ok = False  # are we explicitly allowing display of human remains?
         self.human_remains_flag = False  # default to NO human remains flagged records in view
+        rp = RootPath()
+        self.base_url = rp.get_baseurl()
 
     def process_json_ld(self):
         """ processes JSON-LD to make a view """
@@ -53,6 +56,10 @@ class SearchTemplate():
             self.set_sorting()  # sorting in the templating
             self.set_paging()  # adds to the paging dict
             self.set_text_search()  # adds text search fields
+            if not self.item_type_limited:
+                # link to subjects records of this general search
+                url_ex = self.id.split('/search')
+                self.subjects_link = self.base_url + '/subjects-search' + url_ex[-1]
             if 'totalResults' in self.json_ld:
                 self.total_count = self.json_ld['totalResults']
             if 'itemsPerPage' in self.json_ld:

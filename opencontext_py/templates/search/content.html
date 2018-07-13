@@ -43,10 +43,15 @@
             {% if csv_downloader %}
             {% include 'search/export-map.html' %} 
             {%endif%} 
+
+            {% if st.subjects_link %}
+            {% include 'search/subjects-link.html' %} 
+            {%endif%} 
             
             {% include 'search/human-remains.html' %}
-            {% include 'search/text-search.html' %}
             {% include 'search/filters.html' %}
+            
+            {% include 'search/text-search.html' %}
             {% include 'search/facets.html' %}
             
         </div>
