@@ -1,6 +1,7 @@
 import json
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.projects.models import Project
@@ -17,9 +18,23 @@ class ProjectLayers():
         self.all_proj_uuids = []
         self.geo_overlays = []
         self.features = []
-        
+    
     def get_geo_overlays(self):
         """Gets geo overlays for an item identified by uuid."""
+        m_cache = MemoryCache()
+        cache_key = m_cache.make_cache_key('geo-layers',
+                                           self.uuid)
+        geo_overlays = m_cache.get_cache_object(cache_key)
+        if geo_overlays is not None:
+            self.geo_overlays = geo_overlays
+            return self.geo_overlays
+        else:
+            geo_overlays = self.get_geo_overlays_db()
+            m_cache.save_cache_object(cache_key, geo_overlays)
+        return self.geo_overlays
+    
+    def get_geo_overlays_db(self):
+        """Uses the database to get geo overlays for an item identified by uuid."""
         uuids = self._get_make_all_project_list(self.uuid)
         geo_asserts = Assertion.objects.filter(uuid__in=uuids,
                                                predicate_uuid=Assertion.PREDICATES_GEO_OVERLAY)
@@ -29,6 +44,7 @@ class ProjectLayers():
                 geo_media = GeoMedia(man_objs[0])
                 if geo_media.full_file_obj and geo_media.metadata:
                     self.geo_overlays.append(geo_media)
+        return self.geo_overlays
         
     def _get_make_all_project_list(self, uuid):
         """Makes a list of this uuid and parent projects if they exist."""
