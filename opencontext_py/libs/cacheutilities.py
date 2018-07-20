@@ -27,12 +27,16 @@ class CacheUtilities():
         }
         self.print_caching = False
 
-    def make_memory_cache_key(self, prefix, identifier):
+    def make_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
         hash_obj = hashlib.sha1()
         concat_string = str(prefix) + " " + str(identifier)
         hash_obj.update(concat_string.encode('utf-8'))
         return hash_obj.hexdigest()
+
+    def make_memory_cache_key(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        return self.make_cache_key(prefix, identifier)
 
     def get_cache_object(self,
                          key,

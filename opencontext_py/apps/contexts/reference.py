@@ -99,7 +99,7 @@ rc.get_project_context('3')
         proj_context = ProjectContext()
         proj_context.dereference_uuid_or_slug(uuid_or_slug)
         if isinstance(proj_context.uuid, str):
-            cache_key = self.make_memory_cache_key('p-cntxt', proj_context.uuid)
+            cache_key = self.make_cache_key('p-cntxt', proj_context.uuid)
             self.project_uuid = proj_context.uuid
             json_ld = self.get_cache_object(cache_key)
             if json_ld is None:
@@ -116,7 +116,7 @@ rc.get_project_context('3')
             self.json_ld = False
         return output
 
-    def make_memory_cache_key(self, prefix, identifier):
+    def make_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
         concat_string = str(prefix) + "-" + str(identifier)
         return slugify(unidecode(concat_string))

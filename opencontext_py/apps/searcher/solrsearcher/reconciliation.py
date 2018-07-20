@@ -5,12 +5,11 @@ from django.conf import settings
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
-from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
-from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from opencontext_py.apps.ocitems.manifest.models import Manifest
-
+from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 
 class Reconciliation():
     """ Methods to transform normal JSON results
@@ -20,7 +19,7 @@ class Reconciliation():
     def __init__(self):
         self.geojson_ld = False
         self.raw_related_labels = {}
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache()  # memory caching object
 
     def process(self, request_dict, geojson_ld):
         """ checks to see if we need to
@@ -55,7 +54,7 @@ class Reconciliation():
                         id_ranks = {}
                         for facet_value in facet['oc-api:has-id-options']:
                             id_uri = facet_value['rdfs:isDefinedBy']
-                            children = self.mem_cache_obj.get_entity_children(id_uri)
+                            children = LinkRecursion().get_entity_children(id_uri)
                             if len(children) > 0:
                                 levels = len(lr.child_entities) + 1
                             else:

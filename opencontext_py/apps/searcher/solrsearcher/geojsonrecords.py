@@ -30,7 +30,7 @@ class GeoJsonRecords():
     def __init__(self, response_dict_json):
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache()  # memory caching object
         self.response_dict_json = response_dict_json
         self.response_dict = json.loads(response_dict_json)
         self.highlighting = False
@@ -89,7 +89,6 @@ class GeoJsonRecords():
             i += 1
             record = LastUpdatedOrderedDict()
             rec_props_obj = RecordProperties(self.response_dict_json)
-            rec_props_obj.mem_cache_obj = self.mem_cache_obj
             rec_props_obj.min_date = self.min_date
             rec_props_obj.max_date = self.max_date
             rec_props_obj.highlighting = self.highlighting
@@ -241,7 +240,5 @@ class GeoJsonRecords():
         """
         solr_uuids = SolrUUIDs(self.response_dict_json)
         solr_uuids.rec_attributes = self.rec_attributes
-        solr_uuids.mem_cache_obj = self.mem_cache_obj
         output = solr_uuids.get_string_rec_attributes(solr_recs)
-        self.mem_cache_obj = solr_uuids.mem_cache_obj
         return output

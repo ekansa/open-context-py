@@ -5,9 +5,10 @@ from django.db import models
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.memorycache import MemoryCache
-from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.searcher.solrsearcher.recordprops import RecordProperties
+from opencontext_py.apps.searcher.solrsearcher.caching import SearchGenerationCache
 
 
 class SolrUUIDs():
@@ -22,7 +23,8 @@ class SolrUUIDs():
         self.base_url = rp.get_baseurl()
         self.uuids = []
         self.uris = []
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache()  # memory caching object
+        self.s_cache = SearchGenerationCache() # supplemental caching object, specific for searching
         self.response_dict_json = response_dict_json
         self.highlighting = False
         # make values to these fields "flat" not a list
@@ -66,7 +68,6 @@ class SolrUUIDs():
             string_attrib_data = self.get_string_rec_attributes(solr_recs)
             for solr_rec in solr_recs:
                 rec_props_obj = RecordProperties(self.response_dict_json)
-                rec_props_obj.mem_cache_obj = self.mem_cache_obj
                 rec_props_obj.min_date = self.min_date
                 rec_props_obj.max_date = self.max_date
                 rec_props_obj.highlighting = self.highlighting
@@ -81,7 +82,6 @@ class SolrUUIDs():
                         item = rec_props_obj.uri
                     else:
                         rec_props_obj.parse_solr_record(solr_rec)
-                        self.mem_cache_obj = rec_props_obj.mem_cache_obj  # add to existing list of entities, reduce lookups
                         item = self.make_item_dict_from_rec_props_obj(rec_props_obj)
                     self.uris.append(item)
         return self.uris
@@ -260,12 +260,12 @@ class SolrUUIDs():
         output = {}
         str_attribs = {}
         for attribute in self.rec_attributes:
-            entity = self.mem_cache_obj.get_entity(attribute, False)
-            if entity is not False:
+            entity = self.m_cache.get_entity(attribute)
+            if entity:
                 prop_slug = entity.slug
                 # check to make sure we have the entity data type for linked fields
                 if entity.data_type is False and entity.item_type == 'uri':
-                    dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
+                    dtypes = self.s_cache.get_dtypes(entity.uri)
                     if isinstance(dtypes, list):
                         # set te data type and the act-field
                         # print('Found for ' + prop_slug + ' ' + dtypes[0])

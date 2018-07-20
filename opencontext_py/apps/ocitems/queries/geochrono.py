@@ -53,7 +53,7 @@ geos = gcq.get_project_geo_meta(project_uuid)
     def get_project_date_range(self, project_uuid):
         """ gets a project date range """
         mem = MemoryCache()
-        key = mem.make_memory_cache_key('proj-chrono', project_uuid)
+        key = mem.make_cache_key('proj-chrono', project_uuid)
         date_range = mem.get_cache_object(key)
         if not isinstance(date_range, dict):
             date_range = self.get_project_date_range_db(project_uuid)
@@ -78,7 +78,7 @@ geos = gcq.get_project_geo_meta(project_uuid)
     def get_project_geo_meta(self, project_uuid):
         """ gets a geo_meta object for a project """
         mem = MemoryCache()
-        key = mem.make_memory_cache_key('proj-geo', project_uuid)
+        key = mem.make_cache_key('proj-geo', project_uuid)
         geo_meta = mem.get_cache_object(key)
         if geo_meta is None:
             geo_meta = self.get_project_geo_meta_db(project_uuid)

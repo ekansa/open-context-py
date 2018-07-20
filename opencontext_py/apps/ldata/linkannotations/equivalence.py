@@ -1,10 +1,13 @@
 import hashlib
 from django.db import models
+
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
+
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
 from opencontext_py.apps.ocitems.predicates.models import Predicate
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
-from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 
 class LinkEquivalence():
@@ -13,7 +16,6 @@ class LinkEquivalence():
     """
     def __init__(self):
         self.predicates = {}
-        self.mem_cache_entities = {}
 
     def get_from_object(self, object_uri):
         """
@@ -103,15 +105,9 @@ class LinkEquivalence():
                 output_list.append(full_uri)
             else:
                 # probably an open context uuid or a slug
-                if identifier in self.mem_cache_entities:
-                    ent = self.mem_cache_entities[identifier]
-                    found = True
-                else:
-                    ent = Entity()
-                    found = ent.dereference(identifier)
-                    if found:
-                        self.mem_cache_entities[identifier] = ent
-                if found:
+                m_cache = MemoryCache()
+                ent = m_cache.get_entity(identifier)
+                if ent:
                     full_uri = ent.uri
                     output_list.append(full_uri)
                     prefix_uri = URImanagement.prefix_common_uri(full_uri)

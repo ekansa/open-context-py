@@ -19,30 +19,25 @@ class CompleteQuery():
         make a search query
     """
     def __init__(self):
-        self.mem_cache_obj = MemoryCache()
+        self.m_cache = MemoryCache()
         self.request_full_path = ''
 
     def get_json_query(self, request, spatial_context=None):
         """ makes a json query """
         json_ld = False
-        self.mem_cache_obj.ping_redis_server()
         request_dict = self.make_request_dict(request,
                                               spatial_context)
         request_dict_json = json.dumps(request_dict,
                                        ensure_ascii=False, indent=4)
         solr_s = SolrSearch()
-        solr_s.mem_cache_obj = self.mem_cache_obj
         if solr_s.solr is not False:
             response = solr_s.search_solr(request_dict_json)
-            self.mem_cache_obj = solr_s.mem_cache_obj  # reused cached memory items
             m_json_ld = MakeJsonLd(request_dict_json)
             m_json_ld.base_search_link = '/search/'
             # share entities already looked up. Saves database queries
-            m_json_ld.mem_cache_obj = self.mem_cache_obj
             m_json_ld.request_full_path = self.request_full_path
             m_json_ld.spatial_context = spatial_context
             json_ld = m_json_ld.convert_solr_json(response.raw_content)
-            self.mem_cache_obj = m_json_ld.mem_cache_obj
         return json_ld
 
     def make_request_dict(self, request, spatial_context=None):

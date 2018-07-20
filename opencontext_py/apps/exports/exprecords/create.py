@@ -71,6 +71,7 @@ class Create():
         self.multi_source_value_delim = '; '  # delimiter for multiple values in source data field
         self.obs_limits = []  # limits predicate exports to listed observation numbers, no limit if empty
         self.entities = {}
+        self.numeric_fields_last = False
         self.predicate_uris_boolean_types = False  # predicate_uris expressed as boolean types
         self.predicate_uuids = LastUpdatedOrderedDict()  # predicate uuids used with a table
         self.ld_predicates = LastUpdatedOrderedDict()  # unique linked_data predicates
@@ -320,6 +321,11 @@ class Create():
                     pred_sort = self.entities[pred_uuid].sort
                     if pred_sort is False:
                         pred_sort = 10000 # default to putting this at the end
+                    # print('Type {} sort to {}'.format(pred_label, pred_type))
+                    self.numeric_fields_last = True
+                    if self.numeric_fields_last and pred_type in ['xsd:integer', 'xsd:double']:
+                        pred_sort += 1000
+                        # print('Changing {} sort to {}'.format(pred_label, pred_sort))
                     temp_predicate_uuids[pred_uuid] = {'count': count,
                                                        'sort': pred_sort,
                                                        'label': pred_label,
