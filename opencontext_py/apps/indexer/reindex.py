@@ -15,20 +15,32 @@ class SolrReIndex():
     """ This class contains methods to make updates to
         the solr index especially after edits
 
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+la = LinkAnnotation.objects.filter(subject='252A30E2-3F6C-4BB8-1148-FD2D27436185',
+                                   subject_type='types',
+                                   project_uuid=project_uuid,
+                                   predicate_uri='skos:broader')\
+                           .exclude(object_uri__contains='opencontext.org')\
+                           .delete()
+
+
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
 uuids = []
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
 items = Manifest.objects\
                 .filter(project_uuid=project_uuid).exclude(indexed__gt='2018-07-07')\
                 .order_by('sort')
 for item in items:
     uuids.append(item.uuid)
 
-# uuids += ['DF043419-F23B-41DA-7E4D-EE52AF22F92F']
+uuids += ['DF043419-F23B-41DA-7E4D-EE52AF22F92F']
 print('Items to index: ' + str(len(uuids)))
+url = 'https://opencontext.org/search/.json?response=uuid&rows=1500&prop=24-fabric-category---24-bucchero&proj=24-murlo'
+
 sri = SolrReIndex()
+uuids += sri.get_uuids_oc_url(url)
 sri.reindex_uuids(uuids)
 
 
@@ -328,9 +340,5 @@ sri.reindex_uuids(uuids)
         cache.clear()
         cache = caches['default']
         cache.clear()
-        try:
-            # only worry about this if it exists
-            cache = caches['memory']
-            cache.clear()
-        except:
-            pass
+        cache = caches['memory']
+        cache.clear()

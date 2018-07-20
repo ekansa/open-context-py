@@ -11,6 +11,7 @@ from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
+from opencontext_py.apps.searcher.solrsearcher.caching import SearchGenerationCache
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
@@ -61,7 +62,8 @@ class RecordProperties():
         self.base_url = settings.CANONICAL_HOST
         rp = RootPath()
         self.base_url = rp.get_baseurl()
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache()  # memory caching object
+        self.s_cache = SearchGenerationCache() # supplemental caching object, specific for searching
         self.request_dict_json = request_dict_json
         if request_dict_json is not False:
             self.request_dict = json.loads(request_dict_json)
@@ -313,12 +315,12 @@ class RecordProperties():
         qm = QueryMaker()
         solr_field_entities = {}
         for attribute in self.rec_attributes:
-            entity = self.mem_cache_obj.get_entity(attribute, False)
-            if entity is not False:
+            entity = self.m_cache.get_entity(attribute)
+            if entity:
                 prop_slug = entity.slug
                 # check to make sure we have the entity data type for linked fields
                 if entity.data_type is False and entity.item_type == 'uri':
-                    dtypes = self.mem_cache_obj.get_dtypes(entity.uri)
+                    dtypes = self.s_cache.get_dtypes(entity.uri)
                     if isinstance(dtypes, list):
                         # set te data type and the act-field
                         # print('Found for ' + prop_slug + ' ' + dtypes[0])
@@ -334,8 +336,8 @@ class RecordProperties():
         if isinstance(self.attribute_hierarchies, dict):
             self.other_attributes = []
             for field_slug_key, values in self.attribute_hierarchies.items():
-                entity = self.mem_cache_obj.get_entity(field_slug_key, False)
-                if entity is not False:
+                entity = self.m_cache.get_entity(field_slug_key)
+                if entity:
                     attribute_dict = LastUpdatedOrderedDict()
                     attribute_dict['property'] = entity.label
                     attribute_dict['values_list'] = []

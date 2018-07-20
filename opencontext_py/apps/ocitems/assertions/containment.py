@@ -73,8 +73,8 @@ class Containment():
     def get_immediate_parents(self, child_uuid, obs_num=1):
         """ uses the cache or database get the immediate parents of a child """
         parents = None
-        cache_id = self.cache_use.make_memory_cache_key('contained-' + str(obs_num),
-                                                        child_uuid)
+        cache_id = self.cache_use.make_cache_key('contained-' + str(obs_num),
+                                                 child_uuid)
         if self.use_cache:
             parents = self.cache_use.get_cache_object(cache_id)
         if parents is None:
@@ -194,8 +194,8 @@ class Containment():
                 self.contexts_list = []
             for search_uuid in subject_list:
                 # print(" trying: " + search_uuid + "\n")
-                cache_id = self.cache_use.make_memory_cache_key('meta-' + str(metadata_type),
-                                                                search_uuid)
+                cache_id = self.cache_use.make_cache_key('meta-' + str(metadata_type),
+                                                         search_uuid)
                 if self.use_cache:
                     # use the cache to look for metadata
                     metadata_items = self.cache_use.get_cache_object(cache_id)
@@ -253,8 +253,8 @@ class Containment():
     def get_temporal_from_project(self, project_uuid):
         """ gets temporal metadata by association with a project """
         metadata_items = None
-        cache_id = self.cache_use.make_memory_cache_key('meta-proj-temp-',
-                                                        project_uuid)
+        cache_id = self.cache_use.make_cache_key('meta-proj-temp-',
+                                                 project_uuid)
         if self.use_cache:
             # use the cache to look for metadata
             metadata_items = self.cache_use.get_cache_object(cache_id)

@@ -5,6 +5,7 @@ from django.core.cache import caches
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.cacheutilities import CacheUtilities
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.contexts.projectcontext import ProjectContext
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
@@ -44,8 +45,8 @@ class ItemGenerationCache():
             for the specific linked data assertions. This makes
             it easier to reference specific assertions for edits.
         """
-        cache_id = self.cache_use.make_memory_cache_key('proj-context-' + str(assertion_hashes),
-                                                        project_uuid)
+        cache_id = self.cache_use.make_cache_key('proj-context-' + str(assertion_hashes),
+                                                 project_uuid)
         item = self.cache_use.get_cache_object(cache_id,
                                                True)
         if item is not None:
@@ -70,27 +71,15 @@ class ItemGenerationCache():
         """ gets an entity either from the cache or from
             database lookups.
         """
-        cache_id = self.cache_use.make_memory_cache_key('entities', identifier)
-        item = self.cache_use.get_cache_object(cache_id)
-        if item is not None:
-            output = item
-        else:
-            entity = Entity()
-            entity.get_thumbnail = True
-            found = entity.dereference(identifier)
-            if found:
-                output = entity
-                self.cache_use.save_cache_object(cache_id, entity)
-            else:
-                output = False
-        return output
+        m_cache = MemoryCache()
+        return m_cache.get_entity(identifier)
     
     def get_observation_metadata(self, source_id, obs_num):
         """ gets a metadata object for an observation node, that
             provides some context on assertions made in an observation
         """
-        cache_id = self.cache_use.make_memory_cache_key('obs-meta',
-                                                        (source_id + '-' + str(obs_num)))
+        cache_id = self.cache_use.make_cache_key('obs-meta',
+                                                 (source_id + '-' + str(obs_num)))
         obs_meta = self.cache_use.get_cache_object(cache_id)
         if obs_meta is None:
             obs_meta = False
@@ -111,8 +100,8 @@ class ItemGenerationCache():
             These metadata are inherited by all items in the project
             (author, and temporal)
         """
-        cache_id = self.cache_use.make_memory_cache_key('proj-metadata',
-                                                        project_uuid)
+        cache_id = self.cache_use.make_cache_key('proj-metadata',
+                                                 project_uuid)
         all_proj_metadata = self.cache_use.get_cache_object(cache_id)
         if all_proj_metadata is None:
             all_proj_metadata = self.get_db_all_project_metadata(project_uuid)

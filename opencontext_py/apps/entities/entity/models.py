@@ -205,14 +205,16 @@ class Entity():
                vocab_uri=False,
                ent_type=False,
                context_uuid=False,
-               data_type=False):
+               data_type=False,
+               context=False):
         """ Searches for entities limited by query strings
             and optionally other criteria
         """
         ent_equivs = EntityEquivalents()
         uri_alts = ent_equivs.get_identifier_list_variants(qstring);
         entity_list = []
-        manifest_list = []
+        manifest_list = [] 
+        subjects_obj = None
         if ent_type is not False:
             # make ent_type search a list
             ents = [ent_type]
@@ -276,17 +278,36 @@ class Entity():
                                                 | Q(slug__icontains=qstring)\
                                                 | Q(label__icontains=qstring)\
                                                 | Q(alt_label__icontains=qstring))[:15]
+        
+        
         elif item_type is not False and item_type != 'uri':
-            """ Look only for manifest items """
+            """ Look only for manifest items """ 
             args = {}
+            last_args = {}
+            search_sub_uuids = []
+            if context:
+                # limit by context path
+                c_args = {'context__icontains': context}
+                if project_uuid:
+                    project_uuid = self.make_id_list(project_uuid)
+                    c_args['project_uuid__in'] = project_uuid
+                subs = Subject.objects.filter(**c_args)
+                for sub in subs:
+                    search_sub_uuids.append(sub.uuid)
+                args['uuid__in'] = search_sub_uuids
+                last_args['uuid__in'] = search_sub_uuids
+                # print('Limit to contexts: ' + str(search_sub_uuids))
             item_type = self.make_id_list(item_type)
             args['item_type__in'] = item_type
+            last_args['item_type__in'] = item_type
             if class_uri is not False:
                 class_uri = self.make_id_list(class_uri)
                 args['class_uri__in'] = class_uri
             if project_uuid is not False:
                 project_uuid = self.make_id_list(project_uuid)
                 args['project_uuid__in'] = project_uuid
+                last_args['project_uuid__in'] = project_uuid
+            # print('args are here: ' + str(args))
             if context_uuid is not False and 'types' in item_type:
                 l_tables = 'oc_types'
                 filter_types = 'oc_manifest.uuid = oc_types.uuid \
@@ -316,6 +337,7 @@ class Entity():
             if len(manifest_list) < 1:
                 # now just search for a uuid, since we may have a search just for UUIDs
                 manifest_list = Manifest.objects\
+                                        .filter(**last_args)\
                                         .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
         elif item_type is False and project_uuid is not False:
             project_uuid = self.make_id_list(project_uuid)
@@ -361,6 +383,12 @@ class Entity():
                     item['data_type'] = pred.data_type
                 except Predicate.DoesNotExist:
                     item['data_type'] = False
+            if context and man_entity.item_type == 'subjects':
+                try:
+                    sub = Subject.objects.get(uuid=man_entity.uuid)
+                    item['context'] = sub.context
+                except Subject.DoesNotExist:
+                    item['context'] = False
             item['class_uri'] = man_entity.class_uri
             item['ent_type'] = False
             item['partOf_id'] = man_entity.project_uuid
@@ -372,8 +400,10 @@ class Entity():
         """ Simple method to make an id_string a list of ids """
         if ',' in id_string:
             output_list = id_string.split(",")
-        else:
+        elif not isinstance(id_string, list):
             output_list = [id_string]
+        else:
+            output_list = id_string
         return output_list
 
     def get_link_entity_label(self, uri):

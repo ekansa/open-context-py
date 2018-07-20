@@ -79,7 +79,7 @@ class RequestHttpMetric():
         geo_ip_obj = None
         ip = self.get_client_ip(request)
         if ip is not None:
-            key = self.make_memory_cache_key('request-ip', ip)
+            key = self.make_cache_key('request-ip', ip)
             geo_ip_obj = self.get_cache_object(key)
             if geo_ip_obj is None:
                 # could not get the geo_ip_obj from the memory cache
@@ -129,7 +129,7 @@ class RequestHttpMetric():
                 request_dict[key] = request.GET.getlist(key)    
         return request_dict
     
-    def make_memory_cache_key(self, prefix, identifier):
+    def make_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
         hash_obj = hashlib.sha1()
         concat_string = str(prefix) + " " + str(identifier)

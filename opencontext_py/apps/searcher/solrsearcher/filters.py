@@ -27,29 +27,28 @@ class ActiveFilters():
                      'start']
 
     def __init__(self):
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache()  # memory caching object
         self.base_search_link = '/search/'
         self.hierarchy_delim = '---'
 
     def add_filters_json(self, request_dict):
         """ adds JSON describing search filters """
         fl = FilterLinks()
-        fl.mem_cache_obj = self.mem_cache_obj
         fl.base_search_link = self.base_search_link
         filters = []
         string_fields = []  # so we have an interface for string searches
         i = 0
         for param_key, param_vals in request_dict.items():
             if param_key == 'path':
-                if param_vals is not False and param_vals is not None:
+                if param_vals:
                     i += 1
-                    f_entity = self.mem_cache_obj.get_entity(param_vals, True)
+                    f_entity = self.m_cache.get_entity(param_vals)
                     label = http.urlunquote_plus(param_vals)
                     act_filter = LastUpdatedOrderedDict()
                     act_filter['id'] = '#filter-' + str(i)
                     act_filter['oc-api:filter'] = 'Context'
                     act_filter['label'] = label.replace('||', ' OR ')
-                    if f_entity is not False:
+                    if f_entity:
                         act_filter['rdfs:isDefinedBy'] = f_entity.uri
                     # generate a request dict without the context filter
                     rem_request = fl.make_request_sub(request_dict,
@@ -304,8 +303,8 @@ class ActiveFilters():
             db_val = qm.clean_related_slug(val)
             if val != db_val:
                 related_suffix = ' (for related items)'
-            f_entity = self.mem_cache_obj.get_entity(db_val, False)
-            if f_entity is not False:
+            f_entity = self.m_cache.get_entity(db_val)
+            if f_entity:
                 # get the solr field data type
                 ent_solr_data_type = qm.get_solr_field_type(f_entity.data_type)
                 if ent_solr_data_type is not False \

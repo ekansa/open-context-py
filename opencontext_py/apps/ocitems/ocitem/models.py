@@ -15,6 +15,7 @@ from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.contexts.models import ItemContext
@@ -923,7 +924,7 @@ class ItemConstruction():
         contribs = False
         creators = False
         icc = itemConstructionCache()
-        cache_key = icc.make_memory_cache_key('proj-auth-', str(self.project_uuid))
+        cache_key = icc.make_cache_key('proj-auth-', str(self.project_uuid))
         auth = None
         if self.cache_entities:
             auth = icc.get_cache_object(cache_key)
@@ -1000,8 +1001,8 @@ class ItemConstruction():
         """ Adds license information """
         item_license = None
         icc = itemConstructionCache()
-        cache_key = icc.make_memory_cache_key('proj-lic-',
-                                              str(self.uuid) + ' ' + str(self.project_uuid))
+        cache_key = icc.make_cache_key('proj-lic-',
+                                       str(self.uuid) + ' ' + str(self.project_uuid))
         if self.cache_entities:
             item_license = icc.get_cache_object(cache_key)
         if item_license is None:
@@ -1117,7 +1118,7 @@ class ItemConstruction():
         la_count = 0
         link_annotations = None
         icc = itemConstructionCache()
-        cache_key = icc.make_memory_cache_key('linkanno-', subject_uuid)
+        cache_key = icc.make_cache_key('linkanno-', subject_uuid)
         if self.cache_entities:
             link_annotations = icc.get_cache_object(cache_key)
             if link_annotations is not None:
@@ -1170,9 +1171,9 @@ class ItemConstruction():
         alt_identifier = URImanagement.convert_prefix_to_full_uri(class_uri)
         link_annotations = None
         icc = itemConstructionCache()
-        cache_key = icc.make_memory_cache_key('linkanno-', (str(class_uri) \
-                                                            + ' ' \
-                                                            + str(alt_identifier)))
+        cache_key = icc.make_cache_key('linkanno-', (
+                                       str(class_uri) +
+                                       ' '+ str(alt_identifier)))
         if self.cache_entities:
             link_annotations = icc.get_cache_object(cache_key)
             if link_annotations is not None:
@@ -1540,53 +1541,25 @@ class itemConstructionCache():
 
     def get_entity_w_thumbnail(self, identifier):
         """ gets an entity with thumbnail (useful for item json) """
-        cache_id = self.make_memory_cache_key('entities-thumb', identifier)
-        item = self.get_cache_object(cache_id)
-        if item is not None:
-            output = item
-            # print('YEAH found entity: ' + cache_id)
-        else:
-            entity = Entity()
-            entity.get_thumbnail = True
-            found = entity.dereference(identifier)
-            if found:
-                output = entity
-                self.save_cache_object(cache_id, entity)
-            else:
-                output = False
-        return output
+        m_cache = MemoryCache()
+        return m_cache.get_entity(identifier)
+    
+    def make_cache_key(self, prefix, identifier):
+        """ makes a valid OK cache key """
+        m_cache = MemoryCache()
+        return m_cache.make_cache_key(prefix, identifier)
 
     def make_memory_cache_key(self, prefix, identifier):
         """ makes a valid OK cache key """
-        hash_obj = hashlib.sha1()
-        concat_string = str(prefix) + " " + str(identifier)
-        hash_obj.update(concat_string.encode('utf-8'))
-        return hash_obj.hexdigest()
+        m_cache = MemoryCache()
+        return m_cache.make_cache_key(prefix, identifier)
 
     def get_cache_object(self, key):
         """ gets a cached reddis object """
-        try:
-            cache = caches['redis']
-            obj = cache.get(key)
-            if self.print_caching:
-                print('Cache checked: ' + key)
-        except:
-            obj = None
-            if self.print_caching:
-                print('Cache Fail checked: ' + key)
-        return obj
+        m_cache = MemoryCache()
+        return m_cache.get_cache_object(key)
 
     def save_cache_object(self, key, obj):
         """ saves a cached reddis object """
-        try:
-            cache = caches['redis']
-            cache.set(key, obj)
-            ok = True
-            if self.print_caching:
-                print('Cache Saved: ' + key)
-        except:
-            self.redis_ok = False
-            ok = False
-            if self.print_caching:
-                print('Failed to cache: ' + key)
-        return ok
+        m_cache = MemoryCache()
+        return m_cache.save_cache_object(key, obj)

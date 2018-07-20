@@ -63,8 +63,6 @@ class SolrSearch():
         self.solr_connect()
         self.solr_response = False
         self.json_ld = False
-        self.mem_cache_obj = MemoryCache()  # memory caching object
-        self.entities = {}  # entities involved in a search request
         self.facet_fields = self.DEFAULT_FACET_FIELDS
         self.stats_fields = self.GENERAL_STATS_FIELDS
         self.rows = 20
@@ -135,7 +133,6 @@ class SolrSearch():
     def compose_query(self, request_dict):
         """ composes the search query based on the request_dict """
         qm = QueryMaker()
-        qm.mem_cache_obj = self.mem_cache_obj
         child_context_join = False # do a JOIN to include children in results
         query = {}
         query['facet'] = 'true'
@@ -191,6 +188,7 @@ class SolrSearch():
         # Spatial Context
         if 'path' in request_dict and self.do_context_paths:
             self.remove_from_default_facet_fields(SolrDocument.ROOT_CONTEXT_SOLR)
+            print('context starts as: ' + str(request_dict['path']))
             context = qm._process_spatial_context(request_dict['path'])
             query['fq'].append(context['fq'])
             query['facet.field'] += context['facet.field']  # context facet fields, always a list
@@ -468,8 +466,6 @@ class SolrSearch():
             statsq.fq = query['fq']
             statsq.stats_fields = self.prequery_stats
             query = statsq.add_stats_ranges_from_solr(query)
-        # Now set aside entities used as search filters
-        self.mem_cache_obj = qm.mem_cache_obj
         if child_context_join:
             all_fq = False
             for fq in query['fq']:
@@ -551,16 +547,6 @@ class SolrSearch():
             query['facet.field'].append('form_use_life_chrono_tile')
             query['f.form_use_life_chrono_tile.facet.limit'] = -1
         return query
-
-    def gather_entities(self, entities_dict):
-        """ Gathers and stores entites found in
-            the query maker object.
-            These entities can be used in indicating
-            filters applied in a search
-        """
-        for search_key, entity in entities_dict.items():
-            if search_key not in self.entities:
-                self.entities[search_key] = entity
 
     def get_request_param(self,
                           request_dict,

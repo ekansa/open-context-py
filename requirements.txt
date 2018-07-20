@@ -30,7 +30,7 @@ mysolr==0.8.3
 
 numpy==1.11.0
 
-Pillow==2.9.0
+Pillow==5.2.0
 
 psycopg2==2.6.1
 

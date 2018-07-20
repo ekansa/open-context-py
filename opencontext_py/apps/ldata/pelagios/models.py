@@ -182,7 +182,7 @@ class PelagiosData():
     def get_all_uuids_related_to_gazetteers(self, all_gaz_annos=None):
         """ gets ALL subject entities related to gazetteer entities """
         mc = MemoryCache()
-        cache_id = mc.make_memory_cache_key('gaz', 'uuids_all_gaz')
+        cache_id = mc.make_cache_key('gaz', 'uuids_all_gaz')
         uuids_all_gaz = mc.get_cache_object(cache_id)
         if uuids_all_gaz is None:
             if all_gaz_annos is None:
@@ -262,7 +262,7 @@ class PelagiosData():
     def get_all_related_to_gazetteers(self):
         """ gets ALL subject entities related to gazetteer entities """
         mc = MemoryCache()
-        cache_id = mc.make_memory_cache_key('gaz', 'all_gaz_annos')
+        cache_id = mc.make_cache_key('gaz', 'all_gaz_annos')
         all_gaz_annos = mc.get_cache_object(cache_id)
         if all_gaz_annos is None:
             subject_types = self.OC_OA_TARGET_TYPES
@@ -280,7 +280,7 @@ class PelagiosData():
             NOTE! This checks the memnory cache first!
         """
         mc = MemoryCache()
-        cache_id = mc.make_memory_cache_key('gaz', 'used_gazetteer_ents')
+        cache_id = mc.make_cache_key('gaz', 'used_gazetteer_ents')
         act_gaz_list = mc.get_cache_object(cache_id)
         if act_gaz_list is None:
             # cache was empty, so get this from the database
@@ -768,19 +768,8 @@ class OaItem():
     
     def get_entity(self, identifier):
         """ gets entities, but checkes first if they are in memory """
-        output = False
         mc = MemoryCache()
-        cache_id = mc.make_memory_cache_key('entities', identifier)
-        ent = mc.get_cache_object(cache_id)
-        if ent is not None:
-            output = ent
-        else:
-            ent = Entity()
-            found = ent.dereference(identifier)
-            if found:
-                output = ent
-                mc.save_cache_object(cache_id, ent)
-        return output
+        return mc.get_entity(identifier)
     
     def get_media_rel_categories(self, uuid_list):
         """ gets distinct categories (class_uri)

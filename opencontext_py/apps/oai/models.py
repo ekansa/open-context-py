@@ -1033,7 +1033,7 @@ icc.get_cache_object(cache_id)
             as a date_time object!
         """
         mc = MemoryCache()
-        cache_key = mc.make_memory_cache_key('early_date', 'manifest')
+        cache_key = mc.make_cache_key('early_date', 'manifest')
         early_date = mc.get_cache_object(cache_key)
         if early_date is None:
             sum_man = Manifest.objects\

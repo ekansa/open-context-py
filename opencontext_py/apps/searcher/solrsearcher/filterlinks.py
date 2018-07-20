@@ -31,7 +31,7 @@ class FilterLinks():
         self.hierarchy_delim = '---'
         self.partial_param_val_match = False
         self.remove_start_param = True
-        self.mem_cache_obj = MemoryCache()  # memory caching object
+        self.m_cache = MemoryCache() # memory caching object  # memory caching object
         self.SOLR_FIELD_PARAM_MAPPINGS = self.BASE_SOLR_FIELD_PARAM_MAPPINGS
         for param_key, solr_field in DCterms.DC_META_FIELDS.items():
             self.SOLR_FIELD_PARAM_MAPPINGS[solr_field] = param_key
@@ -137,10 +137,9 @@ class FilterLinks():
             # remove paging information when composing a new link
             new_rparams.pop('start', None)
         if param == 'path':
-            found = self.mem_cache_obj.check_con_entity_found(new_value)
-            if found:
+            entity = self.m_cache.get_entity(new_value)
+            if entity:
                 # convert the (slug) value into a context path
-                entity = self.mem_cache_obj.get_con_entity(new_value)
                 new_value = entity.context
         if param not in new_rparams:
             if param == 'path':
