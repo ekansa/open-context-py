@@ -80,9 +80,12 @@ class ActiveFilters():
                         act_filter['label'] = False
                         if len(all_vals) < 2:
                             act_filter['oc-api:filter'] = 'Description'
+                            act_filter['oc-api:filter-slug'] = all_vals[0]
                         else:
                             filt_dict = self.make_filter_label_dict(all_vals[0])
                             act_filter['oc-api:filter'] = filt_dict['label']
+                            if 'slug' in filt_dict:
+                                act_filter['oc-api:filter-slug'] = filt_dict['slug']
                             if filt_dict['data-type'] == 'string':
                                 act_filter['label'] = 'Search Term: \'' + all_vals[-1] + '\''
                         if act_filter['label'] is False:

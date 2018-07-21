@@ -830,14 +830,18 @@ class MakeJsonLd():
                                                                   solr_facet_count)
                         val_obj_data_type = facet_val_obj['data-type']
                         facet_val_obj.pop('data-type', None)
-                        if val_obj_data_type == 'id':
-                            id_options.append(facet_val_obj)
-                        elif val_obj_data_type == 'numeric':
-                            num_options.append(facet_val_obj)
-                        elif val_obj_data_type == 'date':
-                            date_options.append(facet_val_obj)
-                        elif val_obj_data_type == 'string':
-                            string_options.append(facet_val_obj)
+                        in_filters = self.check_facet_value_in_filters(facet_val_obj)
+                        if not in_filters:
+                            # only add facet values if they are not already in
+                            # the active search filters.
+                            if val_obj_data_type == 'id':
+                                id_options.append(facet_val_obj)
+                            elif val_obj_data_type == 'numeric':
+                                num_options.append(facet_val_obj)
+                            elif val_obj_data_type == 'date':
+                                date_options.append(facet_val_obj)
+                            elif val_obj_data_type == 'string':
+                                string_options.append(facet_val_obj)
                     if len(id_options) > 0:
                         facet['oc-api:has-id-options'] = id_options
                     if len(num_options) > 0:
@@ -855,6 +859,17 @@ class MakeJsonLd():
             json_ld_facets = self.make_sorted_facet_list(pre_sort_facets)
             if len(json_ld_facets) > 0 and 'facet' in self.act_responses:
                 self.json_ld['oc-api:has-facets'] = json_ld_facets
+
+    def check_facet_value_in_filters(self, facet_val_obj):
+        """ checks to see if a facet_val_object is in the active filters. """
+        in_filter = False
+        if 'oc-api:active-filters' in self.json_ld:
+            for filter in self.json_ld['oc-api:active-filters']:
+                if 'oc-api:filter-slug' in filter and 'slug' in facet_val_obj:
+                    if filter['oc-api:filter-slug'] == facet_val_obj['slug']:
+                        in_filter = True
+                        break
+        return in_filter
 
     def make_sorted_facet_list(self, pre_sort_facets):
         """ makes a list of sorted facets based on 

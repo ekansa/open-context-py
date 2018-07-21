@@ -34,7 +34,7 @@ function OpenContextFacetsAPI() {
 				multi_opt_dom.style.display = 'none';
 			}
 		}
-	}
+	};
 	
 	this.get_field_options_from_html = function(f_field_id, op_type){
 		// gets the field options from the HTML dom
@@ -52,17 +52,18 @@ function OpenContextFacetsAPI() {
 		}
 		this.field_options[f_field_id] = options;
 		return options;
-	}
+	};
 	
 	this.make_multi_option_html = function(f_field_id, op_type){
 		// makes the HTLML for the multi-selection tions for a facet field
 		var dom_ids = this.make_dom_ids(f_field_id, op_type);
+		var len_opts;
 		if(f_field_id in this.field_options){
-			var len_opts = this.field_options[f_field_id].length;
+			len_opts = this.field_options[f_field_id].length;
 		}
 		else{
 			this.field_options[f_field_id] = [];
-			var len_opts = this.field_options[f_field_id].length;
+			len_opts = this.field_options[f_field_id].length;
 		}
 		
 		if(document.getElementById(dom_ids.multi_ops)){
@@ -81,7 +82,7 @@ function OpenContextFacetsAPI() {
 				act_dom.style.display = 'block';
 			}
 		}
-	}
+	};
 	
 	this.make_options_html = function(f_field_id, op_type){
 		// makes the multi-select HTML for the facet options
@@ -112,12 +113,12 @@ function OpenContextFacetsAPI() {
 		}
 		var html = html_list.join('\n');
 		return html;
-	}
+	};
 	
 	this.number_style = function(x) {
 		// adds commas to numbers for legibility
 		return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-	}
+	};
 	
 	this.opt_check = function(f_field_id, op_type){
 		// executed when a user checks or unchecks a multi-select option
@@ -134,7 +135,7 @@ function OpenContextFacetsAPI() {
 				act_dom.innerHTML = this.make_options_toggle_html(f_field, op_type);
 			}
 		}
-	}
+	};
 	
 	this.get_selected_options = function(f_field_id){
 		// gets the list of options checked for selection
@@ -148,7 +149,7 @@ function OpenContextFacetsAPI() {
 			}
 		}
 		return sel_options;
-	}
+	};
 	
 	this.search_options = function(f_field_id, op_type){
 		// executes the actual search
@@ -191,7 +192,7 @@ function OpenContextFacetsAPI() {
 		else{
 			alert('Select a search option first.');
 		}
-	}
+	};
 	
 	this.find_url_dif = function( o_str, n_str) {
 		// this function compares different Open Context query URLs to
@@ -251,7 +252,7 @@ function OpenContextFacetsAPI() {
 			}
 		}
 		return dif;
-	}
+	};
 	
 	this.make_options_toggle_html = function(f_field_id, op_type){
 		var dom_ids = this.make_dom_ids(f_field_id, op_type);
@@ -263,7 +264,7 @@ function OpenContextFacetsAPI() {
             '</a>'
 		].join('\n');
 		return html;
-	}
+	};
 	
 	this.make_search_execute_html = function(f_field_id, op_type, num_sel){
 		var dom_ids = this.make_dom_ids(f_field_id, op_type);
@@ -277,7 +278,7 @@ function OpenContextFacetsAPI() {
             '</a>'
 		].join('\n');
 		return html;
-	}
+	};
 	
 	this.make_searching_html = function(num_sel){
 		var title = 'Running search on ' + num_sel + ' option(s)';
@@ -287,10 +288,10 @@ function OpenContextFacetsAPI() {
 			'alt="Loading icon..." title="' + title + '" />'
 		].join('\n');
 		return html;
-	}
+	};
 	
 	this.make_dom_ids = function(f_field_id, op_type){
-		var id_part = f_field_id + '-' + op_type
+		var id_part = f_field_id + '-' + op_type;
 		var dom_ids = {
 			control: 'opts-control-' + id_part,  // heading where control buttons go
 			tog: 'opts-show-' + id_part,  // toggle button for single, multiple search
@@ -301,7 +302,7 @@ function OpenContextFacetsAPI() {
 			mult_ops_list: 'm-ops-' + id_part, // id for ul of mult-select options list
 			sel_class: 'm-op-' + f_field_id,  // class for multiple select options
 			single_op_class: 'f-op-l-' + id_part,  // class for single select options
-		}
+		};
 		return dom_ids;
-	}
+	};
 }

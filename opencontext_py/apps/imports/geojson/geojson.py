@@ -20,6 +20,7 @@ from opencontext_py.libs.validategeojson import ValidateGeoJson
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
 from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -476,11 +477,27 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
             max_lat = None
             if all_ids or id_prop in feature['properties']:
                 feature_id = feature['properties'][id_prop]
+                feature['id'] = feature_id
                 if all_ids or feature_id in ok_ids:
                     if feature_id in add_props:
                         id_add_props = add_props[feature_id]
                         for key, value in id_add_props.items():
                             feature['properties'][key] = value
+                            if key == 'uri':
+                                uuid = value.split('/')[-1]
+                                sub = Subject.objects.get(uuid=uuid)
+                                feature['properties']['context'] = sub.context.replace('Italy/', '')
+                                asses = Assertion.objects.filter(uuid=uuid, object_type='documents')
+                                d_uuids = []
+                                for ass in asses:
+                                    if ass.object_uuid not in d_uuids:
+                                        d_uuids.append(ass.object_uuid)
+                                d_mans = Manifest.objects.filter(uuid__in=d_uuids)
+                                min_len = 10000000
+                                for d_man in d_mans:
+                                    if len(d_man.label) < min_len:
+                                        min_len = len(d_man.label)
+                                        feature['properties']['trench-book'] = d_man.label
                     geometry_type = feature['geometry']['type']
                     coordinates = feature['geometry']['coordinates']
                     v_geojson = ValidateGeoJson()
