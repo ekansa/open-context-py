@@ -483,30 +483,26 @@ from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.indexer.reindex import SolrReIndex
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 source_id = 'pc-iiif-backfill'
-fixed_media = []
-
-b_medias = Mediafile.objects.filter(project_uuid=project_uuid, file_uri__contains='"')
-for media in b_medias:
-    media.file_uri = media.file_uri.replace('"', '')
-    media.source_id = source_id
-    media.save()
-    print('Fixed messup ' + media.uuid)
-    fixed_media.append(media.uuid)
-    
 
 meds = Mediafile.objects.filter(project_uuid=project_uuid,
-                                file_type='oc-gen:iiif')
-types = [
-    {'file_type': 'oc-gen:thumbnail', 'suffix': '/full/150,/0/default.jpg'},
-    {'file_type': 'oc-gen:preview', 'suffix': '/full/800,/0/default.jpg'},
-]
-fixed_media = []
+                                source_id=source_id)
 
+req_types = ['oc-gen:thumbnail', 'oc-gen:preview', 'oc-gen:fullfile']
 for media in meds:
-    media_ok = Mediafile.objects.filter(uuid=media.uuid)\
-                                .exclude(file_type__in=['oc-gen:iiif', 'oc-gen:ia-fullfile'])
-    if not media_ok:
-        print('Missing thumbnail, preview, full for {}'.format(media.uuid))
+    for type in req_types:
+        media_ok = Mediafile.objects.filter(uuid=media.uuid, file_type=type)
+        if not media_ok:
+            print('Missing {} for {}'.format(type, media.uuid))
+            ia_fulls = Mediafile.objects.filter(uuid=media.uuid, file_type='oc-gen:ia-fullfile')[:1]
+            n_media = ia_fulls[0]
+            n_media.hash_id = None
+            n_media.source_id = ia_fulls[0].source_id
+            n_media.file_type = 'oc-gen:fullfile'
+            n_media.file_uri = ia_fulls[0].file_uri
+            n_media.save()
+        
+        
+        
         base_uri = media.file_uri.replace('/info.json', '')
         for type in types:
             n_media = media
@@ -1107,7 +1103,7 @@ gimp.save_partial_clean_file(pc_json_obj,
     id_prop, ok_ids=False, add_props=pc_props, combine_json_obj=None)
 
 gimp.load_into_importer = False
-gimp.process_features_in_file('pc-geo', 'id-clean-coord-pc_trenches_2017_4326.geojson')
+gimp.process_features_in_file('pc-geo', 'labeled-pc-trenches-2017-4326.geojson')
 
 
 from opencontext_py.apps.ocitems.geospace.models import Geospace

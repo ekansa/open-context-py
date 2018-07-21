@@ -60,13 +60,18 @@ class FilterLinks():
                 url += context_path
         url += doc_format
         param_sep = '?'
+        param_list = []
         for param, param_vals in new_rparams.items():
             if param != 'path':
                 for val in param_vals:
                     quote_val = quote_plus(val)
                     quote_val = quote_val.replace('%7BSearchTerm%7D', '{SearchTerm}')
-                    url += param_sep + param + '=' + quote_val
-                    param_sep = '&'
+                    param_item = param + '=' + quote_val
+                    param_list.append(param_item)
+        if len(param_list) > 0:
+            # keep a consistent sort order on query parameters + values.
+            param_list.sort()
+            url += '?' + '&'.join(param_list)
         return url
 
     def make_request_sub(self,
