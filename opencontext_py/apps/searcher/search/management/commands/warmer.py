@@ -59,13 +59,17 @@ class SearchWarmer():
     
     
     def follow_url(self, url, recursive=True):
-        """ get a key word for a site """
+        """ Follows a URL, gets data for links above the threshold (follow_count)
+        and then follow those links. Following those links warms the search API
+        so that data are pre-cached for users.
+        """
         new_urls = []
         if url in self.done_urls or url in self.request_errors:
             return new_urls
         print('Following: ' + url)
         json_r = self.get_search_json(url)
         if json_r:
+            self.get_search_html(url)
             self.done_urls.append(url)
             for facet_type in self.SPACETIME_FACET_TYPES:
                 if facet_type in json_r:
@@ -97,7 +101,7 @@ class SearchWarmer():
 
     def get_search_json(self, url):
         """
-        gets json data from Open Context in response to a keyword search
+        Gets json data from Open Context search API
         """
         gapi = GeneralAPI()
         headers = gapi.client_headers
@@ -116,6 +120,27 @@ class SearchWarmer():
             self.request_errors.append(url)
             json_r = False
         return json_r
+    
+    def get_search_html(self, url):
+        """
+        Get HTML from Open Context from a URL, do nothing with the data
+        however.
+        """
+        gapi = GeneralAPI()
+        headers = gapi.client_headers
+        if self.delay_before_request > 0:
+            # default to sleep BEFORE a request is sent, to
+            # give the remote service a break.
+            sleep(self.delay_before_request)
+        try:
+            r = requests.get(url,
+                             timeout=240,
+                             headers=headers)
+            r.raise_for_status()
+            ok = True
+        except:
+            ok = False
+        return ok
 
 
 class Command(BaseCommand):
