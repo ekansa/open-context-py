@@ -33,7 +33,8 @@ class ImportProfile():
                                     'early',
                                     'late',
                                     'metadata',
-                                    'complex-description']
+                                    'complex-description',
+                                    'obs-num']
 
     DEFAULT_DESCRIBE_OBJECT_TYPES = ['types',
                                      'xsd:boolean',
@@ -62,6 +63,7 @@ class ImportProfile():
         self.PRED_DOC_Text = ImportFieldAnnotation.PRED_DOC_Text
         self.PRED_GEO_LOCATION = ImportFieldAnnotation.PRED_GEO_LOCATION
         self.PRED_DATE_EVENT = ImportFieldAnnotation.PRED_DATE_EVENT
+        self.PRED_OBS_NUM = ImportFieldAnnotation.PRED_OBS_NUM
         self.PRED_METADATA = ImportFieldAnnotation.PRED_METADATA
         self.PRED_DRAFT_CONTAINS = ImportFieldAnnotation.PRED_DRAFT_CONTAINS
         self.PRED_COMPLEX_DES = ImportFieldAnnotation.PRED_COMPLEX_DES
@@ -218,6 +220,8 @@ class ImportProfile():
                 anno_dict['predicate']['label'] = 'Contains (part. hierarchy)'
             elif anno_obj.predicate == ImportFieldAnnotation.PRED_COMPLEX_DES:
                 anno_dict['predicate']['label'] = 'Has Complex Description'
+            elif anno_obj.predicate == ImportFieldAnnotation.PRED_OBS_NUM:
+                anno_dict['predicate']['label'] = 'Is Observation Number Of'
             else:
                 anno_dict['predicate']['label'] = False
                 anno_dict['predicate']['type'] = False

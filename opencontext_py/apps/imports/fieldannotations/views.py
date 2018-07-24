@@ -129,6 +129,7 @@ def create(request, source_id):
         if request.method == 'POST':
             ip = ImportProfile(source_id)
             if ip.project_uuid is not False:
+                predicate_field_num = None
                 ifd = ImportFieldDescribe(source_id)
                 ifd.project_uuid = ip.project_uuid
                 if 'predicate_field_num' in request.POST:
@@ -158,12 +159,16 @@ def create(request, source_id):
                                                request.POST['object_field_num'])
                 elif request.POST['predicate'] == ImportFieldAnnotation.PRED_DESCRIBES:
                     if 'object_field_num' in request.POST:
-                        ifd.update_desciption(request.POST['field_num'],
-                                              request.POST['object_field_num'])
+                        ifd.update_description(request.POST['field_num'],
+                                               request.POST['object_field_num'])
                 elif request.POST['predicate'] == ImportFieldAnnotation.PRED_VALUE_OF:
                     if 'object_field_num' in request.POST:
                         ifd.update_variable_value(request.POST['field_num'],
                                                   request.POST['object_field_num'])
+                elif request.POST['predicate'] == ImportFieldAnnotation.PRED_OBS_NUM:
+                    if 'object_field_num' in request.POST:
+                        ifd.update_obs_num(request.POST['field_num'],
+                                           request.POST['object_field_num'])
                 else:
                     if predicate_field_num is None:
                         # we don't have a field chosen for a predicate relationship
