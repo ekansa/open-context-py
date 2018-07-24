@@ -319,7 +319,7 @@ else:
             'LOCATION': 'redis://127.0.0.1:6379/1',
             'TIMEOUT': (60 * 60),  # 1 hour for cache
             'OPTIONS': {
-                'MAX_ENTRIES': 15000,
+                'MAX_ENTRIES': 25000,
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient'
             }
         },
