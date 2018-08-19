@@ -319,13 +319,13 @@ class CandidateMediaFile():
         sleep(.1)
         ok = True
         mf = Mediafile()
-        mf.uuid = self.uuid
+        mf.uuid = str(self.uuid)
         mf.project_uuid = self.project_uuid
         mf.source_id = self.source_id
         mf.file_type = self.file_type
         mf.file_uri = self.file_uri
         mf.filesize = 0
-        mf.mime_type_ur = ''
+        mf.mime_type_uri = ''
         ok = True
         try:
             mf.save()
@@ -357,7 +357,7 @@ class CandidateMediaFile():
                         self.file_uri = f_alt_ext
                         mf.file_uri = self.file_uri
                         mf.save()
-                        if mf.filesize > 0:
+                        if mf.filesize > 0 or self.file_uri.endswith('.nxs') or  self.file_uri.endswith('.zip'):
                             print('Corrected extension capitalization: ' + str(self.file_uri))
                             check_extension = False
                             # yeah! We found the correct extention

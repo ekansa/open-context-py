@@ -385,6 +385,10 @@ class TemplateItem():
                     self.x3dom_textures.append(texture_url)
                     self.content['x3dom_textures'].append(file_item['id'])
                 elif file_item['type'] == 'oc-gen:nexus-3d':
+                    # set the preview to true so the preview template area shows up, the
+                    # nexus_3d template will be invoked because there's
+                    # self.content['nexus_3d'] set
+                    self.content['preview'] = True
                     rp = RootPath()
                     target_url = rp.convert_to_https(file_item['id'])
                     self.nexus_3d = self.make_cors_ok_url(target_url)
