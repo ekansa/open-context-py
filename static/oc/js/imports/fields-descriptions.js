@@ -25,12 +25,13 @@ function alt_field_data_Done(data){
 	var described_fields_DomID = "described_fields_outer";
 	var described_fields_dom = document.getElementById(described_fields_DomID);
 	var var_val = check_for_var_val_fields();
+	var use_subj_fields = [];
 	if (var_val) {
-		var use_subj_fields = ['variable'];
+		use_subj_fields = ['variable'];
 		use_subj_fields = use_subj_fields.concat(DEFAULT_SUBJECT_TYPE_FIELDS);
 	}
 	else{
-		var use_subj_fields = DEFAULT_SUBJECT_TYPE_FIELDS;
+		use_subj_fields = DEFAULT_SUBJECT_TYPE_FIELDS;
 	}
 	var described_fields_HTML = generateFieldListHTML("described", use_subj_fields);
 	described_fields_dom.innerHTML = described_fields_HTML;
@@ -55,6 +56,7 @@ function check_for_var_val_fields(){
 	return output;
 }
 
+
 function getSelectedFieldNumbers(){
 	// gets comma sep value list of selected rows of desciptive fields
 	var nodeList = document.getElementsByClassName('ui-selected');
@@ -75,8 +77,9 @@ function determine_description_predicate(selected_fields, object_field_num){
 	// determines what predicate to assign based on
 	// the selected fields and the object field
 	var act_predicate = PRED_DESCRIBES;
-	value_field = false;
-	variable_field = false;
+	var value_field = false;
+	var variable_field = false;
+	var obs_num_field = false;
 	for (var i = 0, length = field_data.length; i < length; i++) {
 		if (field_data[i].field_type == 'variable' && field_data[i].field_num == object_field_num) {
 			variable_field = true;
@@ -84,9 +87,16 @@ function determine_description_predicate(selected_fields, object_field_num){
 		else if (field_data[i].field_type == 'value' && field_data[i].field_num == selected_fields) {
 			value_field = true;
 		}
+		if (field_data[i].field_type == 'obs-num' && field_data[i].field_num == selected_fields) {
+			obs_num_field = true;
+		}
 	}
 	if (variable_field && value_field) {
 		act_predicate = PRED_VALUE_OF;
+	}
+	if (obs_num_field){
+		// assignment of the observation predicate
+		act_predicate = PRED_OBS_NUM;
 	}
 	return act_predicate;
 }

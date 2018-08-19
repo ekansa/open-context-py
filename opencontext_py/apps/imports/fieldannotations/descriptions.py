@@ -178,6 +178,7 @@ class ProcessDescriptions():
             # --------
             for subj_field_num, ent_obj in self.des_rels.items():
                 subj_field_type = ent_obj['field'].field_type
+                obs_num_field_num = ent_obj['obs_num_field_num']
                 # get records for the subject of the description
                 pc = ProcessCells(self.source_id,
                                   self.start_row)
@@ -195,11 +196,6 @@ class ProcessDescriptions():
                             # print('subject_uuid: ' + subject_uuid)
                             for des_field_obj in ent_obj['des_by_fields']:
                                 des_field_num = des_field_obj.field_num
-                                if des_field_obj.obs_num < 1:
-                                    obs_num = 1
-                                else:
-                                    obs_num = des_field_obj.obs_num
-                                obs_node = '#obs-' + str(obs_num)
                                 # get the 'value-of' import cell objects for the current
                                 # 'descriptive' or 'variable' field_num
                                 # 'variable' field_nums may make multiple 'value-of' import_cell_objs
@@ -210,6 +206,11 @@ class ProcessDescriptions():
                                     pass
                                 for imp_cell_obj in object_imp_cell_objs:
                                     row_num = imp_cell_obj.row_num
+                                    # get the observation num and node
+                                    obs_num = self.get_records_obs_num(des_field_obj,
+                                                                       row_num,
+                                                                       obs_num_field_num)
+                                    obs_node = '#obs-' + str(obs_num)
                                     predicate = self.look_up_predicate(des_field_num,
                                                                        row_num)
                                     if predicate is not False:
@@ -268,8 +269,10 @@ class ProcessDescriptions():
                     field_obj = pg.get_field_obj(des_anno.object_field_num)
                     if field_obj is not False:
                         if field_obj.field_type in ImportProfile.DEFAULT_SUBJECT_TYPE_FIELDS:
+                            obs_num_field_num = self.get_obs_num_field_num(field_obj)
                             self.des_rels[des_anno.object_field_num] = LastUpdatedOrderedDict()
                             self.des_rels[des_anno.object_field_num]['field'] = field_obj
+                            self.des_rels[des_anno.object_field_num]['obs_num_field_num'] = obs_num_field_num
                             self.des_rels[des_anno.object_field_num]['des_by_fields'] = []
                             add_descriptor_field = True
                 else:
@@ -291,6 +294,44 @@ class ProcessDescriptions():
                 # get list of field_nums that have the des_by_field as their object
                 valueof_fields = self.get_field_valueofs(des_field_obj.field_num)
         return valueof_fields
+    
+    def get_obs_num_field_num(self, field_obj):
+        """ Gets the observation number field for descriptive fields if they exist."""
+        obs_num_field_num = False
+        obs_fields = ImportFieldAnnotation.objects\
+                                          .filter(source_id=self.source_id,
+                                                  predicate=ImportFieldAnnotation.PRED_OBS_NUM,
+                                                  object_field_num=field_obj.field_num)[:1]
+        if len(obs_fields) > 0:
+            pg = ProcessGeneral(self.source_id)
+            obs_num_obj = pg.get_field_obj(obs_fields[0].field_num)
+            if obs_num_obj:
+                if obs_num_obj.field_type == 'obs-num':
+                    obs_num_field_num = obs_num_obj.field_num
+        return obs_num_field_num
+    
+    def get_records_obs_num(self, des_field_obj, row_num, obs_num_field_num=False):
+        """ Gets the observation number for the current row. Either from the
+            default of 1, defined for the whole field, or from a look up on a field
+            that has obs numbers, or by the default for the
+            current field.
+        """
+        if des_field_obj.obs_num < 1:
+            obs_num = 1
+        else:
+            obs_num = des_field_obj.obs_num
+        if obs_num_field_num:
+            # we have a field defined that has observation numbers.
+            obs_recs = ImportCell.objects.filter(source_id=self.source_id,
+                                                 field_num=obs_num_field_num,
+                                                 row_num=row_num)[:1]
+            if len(obs_recs):
+                obs_rec = CandidateDescription().validate_integer(obs_recs[0].record)
+                if obs_rec:
+                    # a valid integer to use for the observation number.
+                    obs_num = obs_rec
+        return obs_num
+        
     
     def get_field_valueofs(self, variable_field_num):
         """ gets the field_valueofs for a variable field_num """

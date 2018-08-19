@@ -339,13 +339,6 @@ class TemplateItem():
                 if file_item['type'] == 'oc-gen:fullfile':
                     self.content['fullfile'] = rp.convert_to_https(file_item['id'])
                     self.fulldownload = True
-                    if '.nxs' in self.content['fullfile']:
-                        if self.content['fullfile'][-4:] == '.nxs':
-                            rp = RootPath()
-                            target_url = rp.convert_to_https(file_item['id'])
-                            self.nexus_3d = self.make_cors_ok_url(target_url)
-                            self.content['nexus_3d'] = file_item['id']
-                            print('Nexus: ' + self.nexus_3d)
                     if 'dcat:size' in file_item:
                         if float(file_item['dcat:size']) > 0:
                             self.content['full_size'] = float(file_item['dcat:size'])
@@ -391,6 +384,15 @@ class TemplateItem():
                     texture_url = self.make_cors_ok_url(target_url)
                     self.x3dom_textures.append(texture_url)
                     self.content['x3dom_textures'].append(file_item['id'])
+                elif file_item['type'] == 'oc-gen:nexus-3d':
+                    # set the preview to true so the preview template area shows up, the
+                    # nexus_3d template will be invoked because there's
+                    # self.content['nexus_3d'] set
+                    self.content['preview'] = True
+                    rp = RootPath()
+                    target_url = rp.convert_to_https(file_item['id'])
+                    self.nexus_3d = self.make_cors_ok_url(target_url)
+                    self.content['nexus_3d'] = file_item['id']
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:

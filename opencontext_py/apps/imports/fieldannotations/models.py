@@ -14,6 +14,7 @@ class ImportFieldAnnotation(models.Model):
     PRED_DATE_EVENT = 'oc-gen:formation-use-life'
     PRED_METADATA = 'oc-gen:metadata'
     PRED_COMPLEX_DES = 'oc-gen:has-complex-description'
+    PRED_OBS_NUM = 'oc-gen:obs-num-of'
     PRED_COMPLEX_LABEL = 'rdfs:label'
 
     source_id = models.CharField(max_length=50, db_index=True)

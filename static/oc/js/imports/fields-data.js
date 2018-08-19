@@ -186,12 +186,17 @@ function generateFieldListRowsHTML(sub_obj_type, field_type_limits){
 function generate_field_describesHTML(field){
 	// makes HTML snippet for what the field describes
 	var outputHTML = "";
+	var pred_list = [
+		PRED_DESCRIBES,
+		PRED_GEO_LOCATION,
+		PRED_DATE_EVENT,
+		PRED_VALUE_OF,
+		PRED_METADATA,
+		PRED_OBS_NUM
+	];
+	
 	for (var i = 0, length = field.annotations.length; i < length; i++) {
-		if (field.annotations[i].predicate.id == PRED_DESCRIBES ||
-			 field.annotations[i].predicate.id == PRED_GEO_LOCATION ||
-			 field.annotations[i].predicate.id == PRED_DATE_EVENT ||
-			 field.annotations[i].predicate.id == PRED_VALUE_OF ||
-			 field.annotations[i].predicate.id == PRED_METADATA) {
+		if (pred_list.indexOf(field.annotations[i].predicate.id) >= 0) {
 			outputHTML = "<button type=\"button\" class=\"btn btn-warning btn-xs\" ";
 			outputHTML += "onclick=\"javascript:removeDescriptionAnno(" + field.annotations[i].id + ");\" >";
 			outputHTML += "<span class=\"glyphicon glyphicon-remove\"></span></button> ";

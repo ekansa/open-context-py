@@ -92,7 +92,7 @@ class Mediafile(models.Model):
             # the nexus-3d file format does not have an official mime type, so
             # reference the webpage for Nexus-3D for now
             self.mime_type_uri = self.NEXUS_3D_MIME_TYPE
-            if len(self.file_uri > 4) and self.file_uri[-4:].lower() == '.nxz':
+            if len(self.file_uri) > 4 and self.file_uri[-4:].lower() == '.nxz':
                 # specify the compressed mime type.
                 self.mime_type_uri = self.NEXUS_3D_COMPRESS_MIME_TYPE
         # make the hash_id last so the hash is generated

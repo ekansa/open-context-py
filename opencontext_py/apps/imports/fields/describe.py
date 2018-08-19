@@ -166,7 +166,7 @@ class ImportFieldDescribe():
         ifa.object_uuid = ''
         ifa.save()
 
-    def update_desciption(self, field_num, object_field_num):
+    def update_description(self, field_num, object_field_num):
         """ Updates a field annotation so that a list of field_num
         are assigned to describe an object_field_num entity
         """
@@ -266,6 +266,26 @@ class ImportFieldDescribe():
         ifa.project_uuid = self.project_uuid
         ifa.field_num = field_num
         ifa.predicate = ImportFieldAnnotation.PRED_VALUE_OF
+        ifa.predicate_field_num = 0
+        ifa.object_field_num = object_field_num
+        ifa.object_uuid = ''
+        ifa.save()
+    
+    def update_obs_num(self, field_num, object_field_num):
+        """ Updates a field annotation to make entities in a field_num (subject)
+        contain entities in an object_ield_num
+        """
+        # delete cases where the field_num is an OBS NUM of another field
+        anno_objs = ImportFieldAnnotation.objects\
+                                         .filter(source_id=self.source_id,
+                                                 predicate=ImportFieldAnnotation.PRED_OBS_NUM,
+                                                 field_num=field_num)\
+                                         .delete()
+        ifa = ImportFieldAnnotation()
+        ifa.source_id = self.source_id
+        ifa.project_uuid = self.project_uuid
+        ifa.field_num = field_num
+        ifa.predicate = ImportFieldAnnotation.PRED_OBS_NUM
         ifa.predicate_field_num = 0
         ifa.object_field_num = object_field_num
         ifa.object_uuid = ''

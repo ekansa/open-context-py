@@ -1204,3 +1204,21 @@ for archive_dir in dirs:
     project_uuid = "3F6DCD13-A476-488E-ED10-47D25513FCB2"
     arch_bin = ArchiveBinaries()
     arch_bin.archive_dir_project_binaries(project_uuid, archive_dir)
+    
+    
+    
+
+import shutil
+import os
+from django.conf import settings
+path = settings.STATIC_EXPORTS_ROOT + 'aap-3d/obj-models'
+zip_path = settings.STATIC_EXPORTS_ROOT + 'aap-3d/obj-models-zip'
+for root, dirs, files in os.walk(path):
+    for adir in dirs:
+        zip_dir = os.path.join(path, adir)
+        zip_file = os.path.join(zip_path, adir)
+        print(zip_dir + ' to ' + zip_file)
+        shutil.make_archive(zip_file, 'zip', zip_dir)
+
+
+
