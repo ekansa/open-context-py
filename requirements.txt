@@ -58,7 +58,7 @@ Shapely==1.5.15
 
 six==1.10.0
 
-sqlparse==0.1.19
+sqlparse==0.2.4
 
 titlecase==0.9.0
 
