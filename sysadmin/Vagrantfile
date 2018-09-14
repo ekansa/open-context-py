@@ -1,0 +1,108 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+
+  config.vm.define "opencontext" do |node|
+    
+    # Every Vagrant virtual environment requires a box to build off of.
+    node.vm.box = "debian/jessie64"
+
+    # node.vm.network "forwarded_port", guest: 80, host: 8080
+    node.vm.network "private_network", ip: "192.168.33.10"
+    node.ssh.forward_agent = true
+    #node.vm.network "private_network", type: "dhcp"
+  
+    #node.vm.synced_folder "data", "vagrant_data"
+    node.vm.synced_folder ".", "/vagrant", disabled: false 
+  
+    node.vm.provision 'ansible' do |ansible|
+      ansible.playbook = 'build.yml'
+
+      ansible.verbose = "vv"
+      # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
+      ansible.raw_arguments  = [
+          "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
+          "--limit=opencontext, 127.0.0.1",
+          "-e vname=opencontext",
+          "-e hostname=oc.dataunbound.com",
+          "-e branch=master",
+          # "--start-at-task=restart_here"
+      ]
+    end
+
+  
+   # 512MB not enough for compiling lxml: https://stackoverflow.com/a/25916353/7782
+   # https://stackoverflow.com/a/26468913/7782 --> for how to get to this setting
+    node.vm.provider "virtualbox" do |v|
+        v.memory = 1024
+        v.cpus = 2
+    end
+  
+    node.vm.provider :aws do |aws, override|
+      aws.access_key_id =  ENV.fetch('AWS_ACCESS_KEY_ID')
+      aws.secret_access_key = ENV.fetch('AWS_SECRET_ACCESS_KEY')
+
+      aws.keypair_name = ENV.fetch('AWS_KEYPAIR_NAME')
+  
+      # Ubuntu 12.04 LTS Precise / PV EBS-SSD boot
+      # alestic 2015.05.05
+      
+      #aws.instance_type="t1.micro"
+      #aws.instance_type="m1.small"
+      
+      # aws.region = "us-east-1"
+      # aws.availability_zone = "us-east-1c"
+      # 2015.05.05
+      # aws.ami = "ami-d8132bb0"
+      # 2016.03.01
+      # aws.ami = "ami-03dcdd69"
+      # 2017.03.17
+      # Trusty 14.04
+      # aws.ami = "ami-9fde7f89"
+      # put into just security group
+      # aws.security_groups = ["just"]
+
+
+      # FEF
+
+      aws.instance_type="m1.small"
+      aws.region = "us-east-1"
+      aws.availability_zone = "us-east-1a"
+      # 2017.03.17
+      # Trusty 14.04
+      # aws.ami = "ami-9fde7f89"
+      # 2017.11.22
+      # Xenial 16.04
+      # hvm:ebs-ssd 20171121.1  ami-aa2ea6d0
+      aws.ami = "ami-aa2ea6d0"
+      # put into just security group
+      # regluit-pub-a
+      aws.subnet_id = "subnet-a97777e0"
+      # SSHAccesss, just_ec2
+      aws.associate_public_ip = true
+      aws.security_groups = ["sg-93aed0ef", "sg-f6a1df8a"]
+
+      
+      aws.tags = {
+        'Name' => 'please_vagrant'
+      }
+   
+      override.vm.box = "dummy"
+      override.ssh.username = "ubuntu"
+      override.ssh.private_key_path = ENV['SSH_PRIVATE_KEY_PATH']  || "~/.ssh/id_rsa"
+    end
+
+  end  
+
+ end
+
+

@@ -1,0 +1,61 @@
+- name: opencontext setup
+  hosts: '{{vname}}'
+  vars:
+    user: "{{ ansible_ssh_user }}"
+    aws_access_key: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+    aws_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+    target: '{{vname}}'
+    migrate: "{{do_migrate | default('true')}}"
+    postgresql_python_library: python-psycopg2
+    postgresql_user: postgres
+    postgresql_group: postgres
+    postgresql_databases:
+      - name: example_db
+    postgresql_users:
+      - name: example_user
+        password: supersecure
+  sudo: yes
+
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      register: output
+      changed_when: output.stdout != ""
+      tags: always
+    - setup: # aka gather_facts
+    - name: check apt last update
+      stat: path=/var/cache/apt
+      register: apt_cache_stat
+    - name: update apt if needed
+      apt: update_cache=yes
+      when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
+
+    - name: do apt-get update --fix-missing
+      command: apt-get update --fix-missing
+      
+    - name: installing dependencies
+      apt: pkg={{ item }} update_cache=yes state=present
+      with_items:
+        - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
+        - python-pip
+        - python3-pip
+        - python-dev
+        - python3-dev
+      tags: install
+
+  roles:
+    - role: geerlingguy.postgresql
+      become: yes
+
+  tasks:
+        
+    # add repo to get latest version of python 2.7
+    # - name: add-apt-repository ppa:fkrull/deadsnakes-python2.7
+    #   apt_repository: repo='ppa:fkrull/deadsnakes-python2.7' state=present update_cache=true
+    #   when: class in ['please', 'just', 'prod']
+
+
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted

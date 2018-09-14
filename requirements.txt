@@ -34,7 +34,7 @@ pandas>=0.22.0
 
 Pillow==5.2.0
 
-psycopg2==2.6.1
+psycopg2==2.7.5
 
 pyparsing==2.1.1
 
@@ -74,7 +74,7 @@ Unidecode==0.4.19
 
 user-agents==1.0.1
 
-uWSGI==2.0.12
+uWSGI==2.0.17.1
 
 python-memcached==1.59
 
