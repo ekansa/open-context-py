@@ -6,6 +6,8 @@
     aws_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
     target: '{{vname}}'
     migrate: "{{do_migrate | default('true')}}"
+
+    # postgres vars
     postgresql_python_library: python-psycopg2
     postgresql_user: postgres
     postgresql_group: postgres
@@ -14,6 +16,18 @@
     postgresql_users:
       - name: example_user
         password: supersecure
+
+    # https://github.com/whiskerlabs/ansible-python
+    python_version: 3.5.6
+    python_bin: /usr/bin
+    # python_setuptools_version: 40.2.0
+    # python_pip_version: 10.0
+    # python_virtualenv_version: 16.0.0
+    # python_upgrade_packaging_tools: yes
+    # python_install_root: /usr/local
+    # python_apt_package_deps (default: [build-essential, libbz2-dev, libssl-dev, openssl, zlib1g-dev])
+    # python_dnf_package_deps (default: [@Development tools, ncurses-devel, openssl-devel, zlib-devel])
+
   sudo: yes
 
   gather_facts: False
@@ -37,6 +51,7 @@
     - name: installing dependencies
       apt: pkg={{ item }} update_cache=yes state=present
       with_items:
+        - python
         - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
         - python-pip
         - python3-pip
@@ -45,8 +60,13 @@
       tags: install
 
   roles:
+      # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
     - role: geerlingguy.postgresql
       become: yes
+    - role: ansible-python
+      become: yes
+    # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
+    - role: geerlingguy.solr
 
   tasks:
         
