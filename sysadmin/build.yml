@@ -20,6 +20,12 @@
     # https://github.com/whiskerlabs/ansible-python
     python_version: 3.5.6
     python_bin: /usr/bin
+
+    # git parameters
+    git_user_name: "Raymond Yee"
+    git_user_email: "raymond.yee@gmail.com"
+
+
     # python_setuptools_version: 40.2.0
     # python_pip_version: 10.0
     # python_virtualenv_version: 16.0.0
@@ -47,16 +53,49 @@
 
     - name: do apt-get update --fix-missing
       command: apt-get update --fix-missing
+
+    - name: Installing repo for Java 8
+      apt_repository:
+        repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main
+      become: true
+
+    - name: install new key for repo to install Java
+      command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
+      become: yes
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Accept Java 8 License
+      become: yes
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
       
     - name: installing dependencies
       apt: pkg={{ item }} update_cache=yes state=present
       with_items:
+        - git-core
         - python
         - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
         - python-pip
         - python3-pip
         - python-dev
         - python3-dev
+        - oracle-java8-installer
+        - oracle-java8-set-default
+        - ca-certificates
+        - libpq-dev
+        - liblapack-dev
+        - libblas-dev
+        - make
+        - gcc
+        - libpcre3
+        - libpcre3-dev
+        - nginx
+        - libgeos-c1
+        - libxml2-dev
+        - libxslt1-dev
       tags: install
 
   roles:
@@ -65,30 +104,63 @@
       become: yes
     - role: ansible-python
       become: yes
-    # - role: geerlingguy.java
-    #   when: "ansible_os_family == 'Debian'"
-    #   java_packages:
-    #     - openjdk-7-jdk
-    - role: ansiblebit.oracle-java
-      oracle_java_use_defaults: no
-      oracle_java_apt_repository: 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main'
-      oracle_java_apt_repository_key: 'EEA14886'
-      oracle_java_cache_valid_time: 3600
-      oracle_java_deb_package: 'oracle-java8-installer'
-      oracle_java_debconf_package_default: 'oracle-java8-set-default'
-      oracle_java_home: "/usr/lib/jvm/java-8-oracle"
-      oracle_java_set_as_default: yes
-      oracle_java_state: latest
-
     # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
     - role: geerlingguy.solr
 
   tasks:
-        
-    # add repo to get latest version of python 2.7
-    # - name: add-apt-repository ppa:fkrull/deadsnakes-python2.7
-    #   apt_repository: repo='ppa:fkrull/deadsnakes-python2.7' state=present update_cache=true
-    #   when: class in ['please', 'just', 'prod']
+
+  
+    - name: install virtualenv
+      pip: 
+        name: virtualenv
+        executable: /usr/local/bin/pip3
+      become: yes
+
+    - name: upgrade pip3
+      pip: >
+           name={{item}}
+           executable=/usr/local/bin/pip3
+           extra_args="--upgrade"
+      with_items:
+        - pip
+      become: yes
+
+    - name: create /opt/oc
+      file: path=/opt/oc state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: git config
+      command: "{{item}}"
+      with_items:
+        - git config --global user.name "{{git_user_name}}"
+        - git config --global user.email "{{git_user_email}}"
+ 
+    - name: ssh-keygen
+      #command: pwd
+      command: ssh-keygen -b 2048 -t rsa -f /home/{{user}}/.ssh/id_rsa -P ""
+      become: no
+      args:
+        creates: /home/{{user}}/.ssh/id_rsa
+
+    - name: clone the oc git repo into /opt/oc
+      become: no
+      git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest=/opt/oc accept_hostkey=True force=yes version="{{branch | default('master')}}"
+
+    # - name: install requests
+    #   pip:
+    #     name: requests
+    #     virtualenv: /opt/oc/ENV
+    #     virtualenv_command: /usr/local/bin/virtualenv
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    - name: pip requirements
+      pip: >
+           requirements=/opt/oc/requirements.txt
+           virtualenv=/opt/oc/ENV
+           virtualenv_command=/usr/local/bin/virtualenv
+           virtualenv_site_packages=no
+      become: no
 
 
   handlers:

@@ -25,7 +25,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node.vm.synced_folder ".", "/vagrant", disabled: false 
   
     node.vm.provision 'ansible' do |ansible|
-      ansible.playbook = 'java.yml'
+      ansible.playbook = 'build.yml'
 
       ansible.verbose = "vv"
       # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
@@ -34,7 +34,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--limit=opencontext, 127.0.0.1",
           "-e vname=opencontext",
           "-e hostname=oc.dataunbound.com",
-          "-e branch=master",
+          "-e branch=ry_dev",
           # "--start-at-task=restart_here"
       ]
     end
