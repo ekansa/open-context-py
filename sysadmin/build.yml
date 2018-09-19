@@ -65,6 +65,21 @@
       become: yes
     - role: ansible-python
       become: yes
+    # - role: geerlingguy.java
+    #   when: "ansible_os_family == 'Debian'"
+    #   java_packages:
+    #     - openjdk-7-jdk
+    - role: ansiblebit.oracle-java
+      oracle_java_use_defaults: no
+      oracle_java_apt_repository: 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main'
+      oracle_java_apt_repository_key: 'EEA14886'
+      oracle_java_cache_valid_time: 3600
+      oracle_java_deb_package: 'oracle-java8-installer'
+      oracle_java_debconf_package_default: 'oracle-java8-set-default'
+      oracle_java_home: "/usr/lib/jvm/java-8-oracle"
+      oracle_java_set_as_default: yes
+      oracle_java_state: latest
+
     # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
     - role: geerlingguy.solr
 

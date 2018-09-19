@@ -1,0 +1,71 @@
+- name: java setup
+  hosts: '{{vname}}'
+  vars:
+    user: "{{ ansible_ssh_user }}"
+    aws_access_key: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
+    aws_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+    target: '{{vname}}'
+    migrate: "{{do_migrate | default('true')}}"
+
+
+  become: yes
+
+  gather_facts: False
+  pre_tasks:
+
+    - setup: # aka gather_facts
+    - name: check apt last update
+      stat: path=/var/cache/apt
+      register: apt_cache_stat
+    - name: update apt if needed
+      apt: update_cache=yes
+      when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
+
+    - name: do apt-get update --fix-missing
+      command: apt-get update --fix-missing
+      args:
+        warn: no
+
+    - name: Installing repo for Java 8 
+      apt_repository:
+        repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main
+      become: true
+
+    - name: install new key for repo to install Java 
+      command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
+      become: yes
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Accept Java 8 License
+      become: yes
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+      
+  roles:
+
+    - role: geerlingguy.java
+      java_packages:
+        - oracle-java8-installer
+        - ca-certificates
+        - oracle-java8-set-default
+
+    # - role: ansiblebit.oracle-java
+    #   oracle_java_use_defaults: no
+    #   oracle_java_apt_repository: 'deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main'
+    #   oracle_java_apt_repository_key: 'EEA14886'
+    #   oracle_java_cache_valid_time: 3600
+    #   oracle_java_deb_package: 'oracle-java8-installer'
+    #   oracle_java_debconf_package_default: 'oracle-java8-set-default'
+    #   oracle_java_home: "/usr/lib/jvm/java-8-oracle"
+    #   oracle_java_set_as_default: yes
+    #   oracle_java_state: latest
+
+
+
+  handlers:
+    - name: restart apache2
+      service: name=apache2 state=restarted

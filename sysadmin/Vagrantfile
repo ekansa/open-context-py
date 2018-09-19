@@ -25,7 +25,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node.vm.synced_folder ".", "/vagrant", disabled: false 
   
     node.vm.provision 'ansible' do |ansible|
-      ansible.playbook = 'build.yml'
+      ansible.playbook = 'java.yml'
 
       ansible.verbose = "vv"
       # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
