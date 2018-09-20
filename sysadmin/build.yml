@@ -107,6 +107,12 @@
     # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
     - role: geerlingguy.solr
 
+    - role: DavidWittman.redis
+      redis_version: 3.0.7
+      redis_verify_checksum: true
+      redis_install_dir:  /etc/redis
+      redis_checksum: "sha256:b2a791c4ea3bb7268795c45c6321ea5abcc24457178373e6a6e3be6372737f23"
+
   tasks:
 
   
@@ -145,14 +151,6 @@
       become: no
       git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest=/opt/oc accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
-    # - name: install requests
-    #   pip:
-    #     name: requests
-    #     virtualenv: /opt/oc/ENV
-    #     virtualenv_command: /usr/local/bin/virtualenv
-
-    - name: restart_here
-      debug: msg="provision restart here"
 
     - name: pip requirements
       pip: >
@@ -161,6 +159,17 @@
            virtualenv_command=/usr/local/bin/virtualenv
            virtualenv_site_packages=no
       become: no
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    # uwsgi
+
+    - name: install uwsgi
+      pip:
+        name: uwsgi
+        virtualenv: /opt/oc/ENV
+        virtualenv_command: /usr/local/bin/virtualenv
 
 
   handlers:
