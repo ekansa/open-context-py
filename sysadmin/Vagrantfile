@@ -23,6 +23,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   
     #node.vm.synced_folder "data", "vagrant_data"
     node.vm.synced_folder ".", "/vagrant", disabled: false 
+    #node.vm.synced_folder "./oc", "/opt/oc", disabled: false 
+
   
     node.vm.provision 'ansible' do |ansible|
       ansible.playbook = 'build.yml'
