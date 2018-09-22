@@ -20,6 +20,10 @@
     # https://github.com/whiskerlabs/ansible-python
     python_version: 3.5.6
     python_bin: /usr/bin
+    python_pip_version: 18.0
+    python_upgrade_packaging_tools: false
+    # python_setuptools_version: 40.4.2
+    # python_virtualenv_version: 16.0.0
 
     # git parameters
     git_user_name: "Raymond Yee"
@@ -44,9 +48,11 @@
       changed_when: output.stdout != ""
       tags: always
     - setup: # aka gather_facts
+
     - name: check apt last update
       stat: path=/var/cache/apt
       register: apt_cache_stat
+
     - name: update apt if needed
       apt: update_cache=yes
       when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
@@ -54,14 +60,22 @@
     - name: do apt-get update --fix-missing
       command: apt-get update --fix-missing
 
+    - name: install dirmngr
+      apt:
+        pkg: dirmngr
+        update_cache: yes
+        state: present
+
+    - name: Add an apt key by id from a keyserver
+      apt_key:
+         keyserver: keyserver.ubuntu.com
+         id: C2518248EEA14886
+      become: yes
+
     - name: Installing repo for Java 8
       apt_repository:
-        repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main
+        repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
       become: true
-
-    - name: install new key for repo to install Java
-      command: apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886
-      become: yes
 
     - name: apt-get update
       apt:
@@ -93,7 +107,7 @@
         - libpcre3
         - libpcre3-dev
         - nginx
-        - libgeos-c1
+        - libgeos-c1v5
         - libxml2-dev
         - libxslt1-dev
       tags: install
@@ -102,9 +116,12 @@
       # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
     - role: geerlingguy.postgresql
       become: yes
+    # ansible-galaxy install git+https://github.com/rdhyee/ansible-python.git,dev
+
     - role: ansible-python
       become: yes
-    # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
+
+    # # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
     - role: geerlingguy.solr
 
     - role: DavidWittman.redis
@@ -115,7 +132,9 @@
 
   tasks:
 
-  
+    # - name: end play
+    #   meta: end_play
+
     - name: install virtualenv
       pip: 
         name: virtualenv

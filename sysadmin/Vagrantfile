@@ -14,7 +14,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "opencontext" do |node|
     
     # Every Vagrant virtual environment requires a box to build off of.
-    node.vm.box = "debian/jessie64"
+    node.vm.box = "debian/stretch64"
 
     # node.vm.network "forwarded_port", guest: 80, host: 8080
     node.vm.network "private_network", ip: "192.168.33.10"
