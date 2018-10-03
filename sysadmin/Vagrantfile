@@ -35,9 +35,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
           "--limit=opencontext, 127.0.0.1",
           "-e vname=opencontext",
-          "-e hostname=oc.dataunbound.com",
-          "-e branch=ry_dev",
-          # "--start-at-task=restart_here"
+          "-e hostname=devv",
+          "-e branch=debian9",
+          # --start-at-task=restart_here"
       ]
     end
 
@@ -48,61 +48,35 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
         v.memory = 1024
         v.cpus = 2
     end
-  
-    node.vm.provider :aws do |aws, override|
-      aws.access_key_id =  ENV.fetch('AWS_ACCESS_KEY_ID')
-      aws.secret_access_key = ENV.fetch('AWS_SECRET_ACCESS_KEY')
 
-      aws.keypair_name = ENV.fetch('AWS_KEYPAIR_NAME')
-  
-      # Ubuntu 12.04 LTS Precise / PV EBS-SSD boot
-      # alestic 2015.05.05
+
+    # GCE
+
+    node.vm.provider :google do |google, override|
+      google.google_project_id = "opencontext2018"
+      google.google_client_email = "raymond.yee@gmail.com"
+      google.google_json_key_location = "/Volumes/ryvault1/opencontext/keys/opencontext2018-gce.json"
       
-      #aws.instance_type="t1.micro"
-      #aws.instance_type="m1.small"
+      # Make sure to set this to trigger the zone_config
+      google.zone = "us-central1-f"
+
+      google.zone_config "us-central1-f" do |zone1f|
+          zone1f.name = "oc-stretch201809"
+          zone1f.image = "debian-9-stretch-v20180911"
+          #zone1f.machine_type = "f1-micro"
+          zone1f.machine_type = "n1-standard-1"
+          zone1f.zone = "us-central1-f"
+          zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+          zone1f.scopes = []
+          zone1f.tags = ['web', 'app1']
+      end
       
-      # aws.region = "us-east-1"
-      # aws.availability_zone = "us-east-1c"
-      # 2015.05.05
-      # aws.ami = "ami-d8132bb0"
-      # 2016.03.01
-      # aws.ami = "ami-03dcdd69"
-      # 2017.03.17
-      # Trusty 14.04
-      # aws.ami = "ami-9fde7f89"
-      # put into just security group
-      # aws.security_groups = ["just"]
-
-
-      # FEF
-
-      aws.instance_type="m1.small"
-      aws.region = "us-east-1"
-      aws.availability_zone = "us-east-1a"
-      # 2017.03.17
-      # Trusty 14.04
-      # aws.ami = "ami-9fde7f89"
-      # 2017.11.22
-      # Xenial 16.04
-      # hvm:ebs-ssd 20171121.1  ami-aa2ea6d0
-      aws.ami = "ami-aa2ea6d0"
-      # put into just security group
-      # regluit-pub-a
-      aws.subnet_id = "subnet-a97777e0"
-      # SSHAccesss, just_ec2
-      aws.associate_public_ip = true
-      aws.security_groups = ["sg-93aed0ef", "sg-f6a1df8a"]
-
-      
-      aws.tags = {
-        'Name' => 'please_vagrant'
-      }
-   
-      override.vm.box = "dummy"
-      override.ssh.username = "ubuntu"
-      override.ssh.private_key_path = ENV['SSH_PRIVATE_KEY_PATH']  || "~/.ssh/id_rsa"
+      override.vm.box = "gce"
+      override.ssh.username = "raymond.yee"
+      override.ssh.private_key_path = "~/.ssh/id_rsa"
     end
-
+   
+  
   end  
 
  end

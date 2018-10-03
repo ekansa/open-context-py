@@ -2,8 +2,6 @@
   hosts: '{{vname}}'
   vars:
     user: "{{ ansible_ssh_user }}"
-    aws_access_key: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
-    aws_secret_key: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
     target: '{{vname}}'
     migrate: "{{do_migrate | default('true')}}"
 
@@ -12,10 +10,10 @@
     postgresql_user: postgres
     postgresql_group: postgres
     postgresql_databases:
-      - name: example_db
+      - name: opencontextdb
     postgresql_users:
-      - name: example_user
-        password: supersecure
+      - name: opencontextuser
+        password: opencontextpw
 
     # https://github.com/whiskerlabs/ansible-python
     python_version: 3.5.6
@@ -110,6 +108,8 @@
         - libgeos-c1v5
         - libxml2-dev
         - libxslt1-dev
+        - ufw
+        - unzip
       tags: install
 
   roles:
@@ -170,7 +170,6 @@
       become: no
       git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest=/opt/oc accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
-
     - name: pip requirements
       pip: >
            requirements=/opt/oc/requirements.txt
@@ -179,9 +178,6 @@
            virtualenv_site_packages=no
       become: no
 
-    - name: restart_here
-      debug: msg="provision restart here"
-
     # uwsgi
 
     - name: install uwsgi
@@ -189,6 +185,129 @@
         name: uwsgi
         virtualenv: /opt/oc/ENV
         virtualenv_command: /usr/local/bin/virtualenv
+
+    - name: turn on ports
+      ufw: rule=allow port={{ item }} proto=tcp
+      with_items:
+      - 22
+      - 80
+      - 443
+      - 8000
+
+    - name: enable ufw
+      ufw: state=enabled
+
+    - name: create /opt/oc/logs
+      file: path=/opt/oc/logs state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create /opt/oc/cache
+      file: path=/opt/oc/cache state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create /opt/ocstatic
+      file: path=/opt/ocstatic state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create secrets.json from template
+      template: src=templates/secrets.json.j2 dest="/opt/oc/secrets.json" owner={{user}} group={{user}} mode=0664
+
+    - name: run migrations
+      command: /opt/oc/ENV/bin/python manage.py migrate
+      args:
+        chdir: /opt/oc/
+
+    # # - name: django migrations
+    # #   django_manage: >
+    # #       command=migrate
+    # #       app_path=
+    # #       settings="regluit.settings.{{class}}"
+    # #       virtualenv=/opt/regluit/ENV
+    # #   become: no
+    # #   when: migrate
+    # #   notify:
+    # #     - restart apache2
+
+    - name: create cachetable
+      command: /opt/oc/ENV/bin/python manage.py createcachetable
+      args:
+        chdir: /opt/oc
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    # - name: install bootstrap
+    #   command: cd /opt/oc
+    #   command: wget https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
+    #   command: unzip bootstrap-3.3.4-dist.zip
+    #   command: mkdir /opt/oc/static/bootstrap/
+    #   command: mkdir /opt/oc/static/bootstrap/3.3.4/
+    #   command: mv bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+    #   command: rm bootstrap-3.3.4-dist.zip
+    #   command: rm -rf bootstrap-3.3.4-dist/
+
+
+    - name: Download bootstrap
+      get_url:
+        url: https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
+        dest: /opt/oc
+        mode: 0640
+        owner: "{{user}}"
+        group: "{{user}}"
+
+    - name: unzip bootstrap file
+      unarchive:
+        src: /opt/oc/bootstrap-3.3.4-dist.zip
+        dest: /opt/oc/
+        remote_src: true
+        owner: "{{user}}"
+        group: "{{user}}"
+
+    - name: empty /opt/oc/static/bootstrap/3.3.4/ if it was already there
+      file: path=/opt/oc/static/bootstrap/3.3.4/  state=absent
+
+    - name: create /opt/oc/static/bootstrap/3.3.4/
+      file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user}} group={{user}} mode=0745
+
+    # - name: make sure /opt/oc/static/bootstrap/3.3.4/ is empty
+    #   shell: rm -rf /opt/oc/static/bootstrap/3.3.4/*
+
+    #  mv bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+    # 
+    # https://stackoverflow.com/questions/36696952/copy-multiple-files-with-ansible
+    # doesn't work: "Remote copy does not support recursive copy of directory"
+    # - name: copy bootstrap directories to static
+    #   copy:  
+    #     src: /opt/oc/bootstrap-3.3.4-dist/
+    #     dest: /opt/oc/static/bootstrap/3.3.4/
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #     mode: 0644
+    #     remote_src: true
+
+    # figure out the files in a the bootstrap dir to move
+    # - name: compute the files to move
+    #   find: paths="/opt/oc/bootstrap-3.3.4-dist/" recurse=no file_type=any
+    #   register: file_to_copy
+
+    # - name: log file_to_copy
+    #   debug: msg="file_to_copy {{file_to_copy}}"
+
+    # - meta: end_play
+
+    # works, but not idempotent
+    # could come back to with_fileglob to use find to get a list of files to move ()
+    # but workaround right now https://github.com/ansible/ansible/issues/14131#issuecomment-367877670
+    # isn't that much better for now. 
+    - name: mv bootstrap files using mv
+      shell: mv -f /opt/oc/bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+
+    - name: rm bootstrap-3.3.4-dist.zip
+      file: path="{{item}}" state=absent
+      with_items:
+        - /opt/oc/bootstrap-3.3.4-dist.zip 
+        - /opt/oc/bootstrap-3.3.4-dist
+
+
+    # - name: launch dev server
+    #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
 
 
   handlers:
