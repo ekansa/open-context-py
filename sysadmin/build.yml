@@ -213,6 +213,7 @@
       command: /opt/oc/ENV/bin/python manage.py migrate
       args:
         chdir: /opt/oc/
+      become: no
 
     # # - name: django migrations
     # #   django_manage: >
@@ -230,8 +231,6 @@
       args:
         chdir: /opt/oc
 
-    - name: restart_here
-      debug: msg="provision restart here"
 
     # - name: install bootstrap
     #   command: cd /opt/oc
@@ -244,27 +243,27 @@
     #   command: rm -rf bootstrap-3.3.4-dist/
 
 
-    - name: Download bootstrap
-      get_url:
-        url: https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
-        dest: /opt/oc
-        mode: 0640
-        owner: "{{user}}"
-        group: "{{user}}"
+    # - name: Download bootstrap
+    #   get_url:
+    #     url: https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
+    #     dest: /opt/oc
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
 
-    - name: unzip bootstrap file
-      unarchive:
-        src: /opt/oc/bootstrap-3.3.4-dist.zip
-        dest: /opt/oc/
-        remote_src: true
-        owner: "{{user}}"
-        group: "{{user}}"
+    # - name: unzip bootstrap file
+    #   unarchive:
+    #     src: /opt/oc/bootstrap-3.3.4-dist.zip
+    #     dest: /opt/oc/
+    #     remote_src: true
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
 
-    - name: empty /opt/oc/static/bootstrap/3.3.4/ if it was already there
-      file: path=/opt/oc/static/bootstrap/3.3.4/  state=absent
+    # - name: empty /opt/oc/static/bootstrap/3.3.4/ if it was already there
+    #   file: path=/opt/oc/static/bootstrap/3.3.4/  state=absent
 
-    - name: create /opt/oc/static/bootstrap/3.3.4/
-      file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user}} group={{user}} mode=0745
+    # - name: create /opt/oc/static/bootstrap/3.3.4/
+    #   file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user}} group={{user}} mode=0745
 
     # - name: make sure /opt/oc/static/bootstrap/3.3.4/ is empty
     #   shell: rm -rf /opt/oc/static/bootstrap/3.3.4/*
@@ -296,14 +295,35 @@
     # could come back to with_fileglob to use find to get a list of files to move ()
     # but workaround right now https://github.com/ansible/ansible/issues/14131#issuecomment-367877670
     # isn't that much better for now. 
-    - name: mv bootstrap files using mv
-      shell: mv -f /opt/oc/bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
 
-    - name: rm bootstrap-3.3.4-dist.zip
-      file: path="{{item}}" state=absent
-      with_items:
-        - /opt/oc/bootstrap-3.3.4-dist.zip 
-        - /opt/oc/bootstrap-3.3.4-dist
+    # - name: mv bootstrap files using mv
+    #   shell: mv -f /opt/oc/bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+
+    # - name: rm bootstrap-3.3.4-dist.zip
+    #   file: path="{{item}}" state=absent
+    #   with_items:
+    #     - /opt/oc/bootstrap-3.3.4-dist.zip 
+    #     - /opt/oc/bootstrap-3.3.4-dist
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+
+    # - name: copy over the static files
+    #   copy:
+    #     src: static/
+    #     dest: /opt/oc/static
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #     force: yes
+    #     mode: 0765
+
+
+    - name: copy over static files
+      unarchive:
+        src: static.tar.gz
+        dest: /opt/oc/
+        keep_newer: no
 
 
     # - name: launch dev server
