@@ -1,0 +1,19 @@
+[uwsgi]
+ home=/opt/oc
+ virtualenv=/opt/oc/ENV
+ chdir=/opt/oc/
+ module=opencontext_py.wsgi:application
+ env=DJANGO_SETTINGS_MODULE=opencontext_py.settings
+ #static-map = /static=/opt/ocstatic
+ static-map = /static=/opt/oc/static
+ uid=www-data
+ gid=www-data
+ master=true
+ vacuum=true
+ socket=/opt/ocweb/%n.sock
+ chmod-socket=666
+ pidfile=/opt/ocweb/%n.pid
+ no-site=true
+ daemonize=/opt/ocweb/%n.log
+ die-on-term = true
+ vhost=true

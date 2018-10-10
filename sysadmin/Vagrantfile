@@ -22,7 +22,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #node.vm.network "private_network", type: "dhcp"
   
     #node.vm.synced_folder "data", "vagrant_data"
-    node.vm.synced_folder ".", "/vagrant", disabled: false 
+    #node.vm.synced_folder ".", "/vagrant", disabled: false 
     #node.vm.synced_folder "./oc", "/opt/oc", disabled: false 
 
   
@@ -66,12 +66,13 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           #zone1f.machine_type = "f1-micro"
           zone1f.machine_type = "n1-standard-1"
           zone1f.zone = "us-central1-f"
-          zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
-          zone1f.scopes = []
-          zone1f.tags = ['web', 'app1']
+          # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+          # zone1f.scopes = []
+          # zone1f.tags = ['web', 'app1']
       end
       
       override.vm.box = "gce"
+      # override.ssh.username = "raymond_yee_gmail_com"
       override.ssh.username = "raymond.yee"
       override.ssh.private_key_path = "~/.ssh/id_rsa"
     end

@@ -1,0 +1,25 @@
+upstream django {
+   server unix:///opt/ocweb/oc.sock;
+}
+
+server {
+    listen  80;
+    server_name localhost;
+    charset utf-8;
+    access_log /opt/ocweb/nginx_access.log;
+    error_log /opt/ocweb/nginx_error.log;
+
+    location  /static/ {
+       autoindex on;
+       alias  /opt/oc/static;
+    }
+
+    location / {
+        try_files $uri @django;
+    }
+
+    location @django {
+       uwsgi_pass django;
+       include uwsgi_params;
+    }
+}

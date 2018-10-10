@@ -305,9 +305,6 @@
     #     - /opt/oc/bootstrap-3.3.4-dist.zip 
     #     - /opt/oc/bootstrap-3.3.4-dist
 
-    - name: restart_here
-      debug: msg="provision restart here"
-
 
     # - name: copy over the static files
     #   copy:
@@ -325,6 +322,8 @@
         dest: /opt/oc/
         keep_newer: no
 
+    - name: restart_here
+      debug: msg="provision restart here"
 
     # - name: launch dev server
     #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
