@@ -325,10 +325,47 @@
     - name: restart_here
       debug: msg="provision restart here"
 
+    - name: create /opt/ocweb
+      file: path=/opt/ocweb state=directory owner={{user}} group={{user}} mode=0745
+
+    # cp templates/uwsgi.ini.j2 to /opt/ocweb/uwsgi.ini
+    - name: create uwsgi.ini from template
+      template: src=templates/uwsgi.ini.j2  dest="/opt/ocweb/uwsgi_oc.ini" owner={{user}} group={{user}} mode=0664
+
+
+    # cp templates/nginx_conf.j2 to /etc/nginx/sites-available/oc_nginx.conf
+    - name: create oc_nginx.conf from template
+      template: src=templates/nginx_conf.j2  dest="/etc/nginx/sites-available/oc_nginx.conf"
+      become: yes
+
+    # sudo rm /etc/nginx/sites-enabled/default
+    - name: remove the default nginx sites 
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      become: yes
+   
+    # sudo ln -s /etc/nginx/sites-available/oc_nginx.conf to /etc/nginx/sites-enabled/oc_nginx.conf
+    - name: enable nginx oc_nginx site
+      file: 
+        src: /etc/nginx/sites-available/oc_nginx.conf
+        dest: /etc/nginx/sites-enabled/oc_nginx.conf
+        state: link 
+      become: yes
+      notify:
+        - restart nginx
+
+
+    # run /opt/oc/ENV/bin/uwsgi --http :1333 --ini /opt/ocweb/usgi.ini
+    - name: run uwsgi
+      shell: /opt/oc/ENV/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini
+      become: no
+
     # - name: launch dev server
     #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
 
 
   handlers:
-    - name: restart apache2
-      service: name=apache2 state=restarted
+    - name: restart nginx
+      service: name=nginx state=restarted
+      become: yes
