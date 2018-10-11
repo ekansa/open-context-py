@@ -45,6 +45,7 @@
       register: output
       changed_when: output.stdout != ""
       tags: always
+
     - setup: # aka gather_facts
 
     - name: check apt last update
@@ -150,8 +151,9 @@
         - pip
       become: yes
 
-    - name: create /opt/oc
-      file: path=/opt/oc state=directory owner={{user}} group={{user}} mode=0745
+    - name: create {{oc_install_dir}}
+      file: path={{oc_install_dir}} state=directory owner={{user}} group={{user}} mode=0745
+    
 
     - name: git config
       command: "{{item}}"
@@ -166,14 +168,14 @@
       args:
         creates: /home/{{user}}/.ssh/id_rsa
 
-    - name: clone the oc git repo into /opt/oc
+    - name: clone the oc git repo into {{oc_install_dir}}
       become: no
-      git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest=/opt/oc accept_hostkey=True force=yes version="{{branch | default('master')}}"
+      git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
     - name: pip requirements
       pip: >
-           requirements=/opt/oc/requirements.txt
-           virtualenv=/opt/oc/ENV
+           requirements="{{oc_install_dir}}/requirements.txt"
+           virtualenv="{{oc_install_dir}}/ENV"
            virtualenv_command=/usr/local/bin/virtualenv
            virtualenv_site_packages=no
       become: no
@@ -183,7 +185,7 @@
     - name: install uwsgi
       pip:
         name: uwsgi
-        virtualenv: /opt/oc/ENV
+        virtualenv: "{{oc_install_dir}}/ENV"
         virtualenv_command: /usr/local/bin/virtualenv
 
     - name: turn on ports
@@ -197,22 +199,22 @@
     - name: enable ufw
       ufw: state=enabled
 
-    - name: create /opt/oc/logs
-      file: path=/opt/oc/logs state=directory owner={{user}} group={{user}} mode=0745
+    - name: create "{{oc_install_dir}}/logs"
+      file: path="{{oc_install_dir}}/logs" state=directory owner={{user}} group={{user}} mode=0745
 
-    - name: create /opt/oc/cache
-      file: path=/opt/oc/cache state=directory owner={{user}} group={{user}} mode=0745
+    - name: create "{{oc_install_dir}}/cache"
+      file: path="{{oc_install_dir}}/cache" state=directory owner={{user}} group={{user}} mode=0745
 
-    - name: create /opt/ocstatic
-      file: path=/opt/ocstatic state=directory owner={{user}} group={{user}} mode=0745
+    - name: create "{{oc_static_dir}}"
+      file: path="{{oc_static_dir}}" state=directory owner={{user}} group={{user}} mode=0745
 
     - name: create secrets.json from template
-      template: src=templates/secrets.json.j2 dest="/opt/oc/secrets.json" owner={{user}} group={{user}} mode=0664
+      template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user}} group={{user}} mode=0664
 
     - name: run migrations
-      command: /opt/oc/ENV/bin/python manage.py migrate
+      command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
       args:
-        chdir: /opt/oc/
+        chdir: "{{oc_install_dir}}"
       become: no
 
     # # - name: django migrations
@@ -227,9 +229,9 @@
     # #     - restart apache2
 
     - name: create cachetable
-      command: /opt/oc/ENV/bin/python manage.py createcachetable
+      command: "{{oc_install_dir}}/ENV/bin/python manage.py createcachetable"
       args:
-        chdir: /opt/oc
+        chdir: "{{oc_install_dir}}"
 
 
     # - name: install bootstrap
@@ -319,11 +321,9 @@
     - name: copy over static files
       unarchive:
         src: static.tar.gz
-        dest: /opt/oc/
+        dest: "{{oc_install_dir}}"
         keep_newer: no
 
-    - name: restart_here
-      debug: msg="provision restart here"
 
     - name: create /opt/ocweb
       file: path=/opt/ocweb state=directory owner={{user}} group={{user}} mode=0745
@@ -358,11 +358,14 @@
 
     # run /opt/oc/ENV/bin/uwsgi --http :1333 --ini /opt/ocweb/usgi.ini
     - name: run uwsgi
-      shell: /opt/oc/ENV/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini
+      shell: "{{oc_install_dir}}/ENV/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini"
       become: no
 
     # - name: launch dev server
     #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
+
+    - name: restart_here
+      debug: msg="provision restart here"
 
 
   handlers:
