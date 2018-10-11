@@ -11,7 +11,7 @@ server {
 
     location  /static/ {
        autoindex on;
-       alias  /opt/oc/static;
+       alias  {{oc_install_dir}};
     }
 
     location / {

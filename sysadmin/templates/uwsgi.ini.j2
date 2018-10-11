@@ -1,11 +1,11 @@
 [uwsgi]
- home=/opt/oc
- virtualenv=/opt/oc/ENV
- chdir=/opt/oc/
+ home={{oc_install_dir}}
+ virtualenv={{oc_install_dir}}/ENV
+ chdir={{oc_install_dir}}
  module=opencontext_py.wsgi:application
  env=DJANGO_SETTINGS_MODULE=opencontext_py.settings
  #static-map = /static=/opt/ocstatic
- static-map = /static=/opt/oc/static
+ static-map = /static={{oc_install_dir}}/static
  uid=www-data
  gid=www-data
  master=true
