@@ -11,10 +11,24 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
+  required_plugins = %w( vagrant-vbguest vagrant-disksize )
+  _retry = false
+  required_plugins.each do |plugin|
+      unless Vagrant.has_plugin? plugin
+          system "vagrant plugin install #{plugin}"
+          _retry=true
+      end
+  end
+
+  if (_retry)
+      exec "vagrant " + ARGV.join(' ')
+  end
+
   config.vm.define "opencontext" do |node|
     
     # Every Vagrant virtual environment requires a box to build off of.
     node.vm.box = "debian/stretch64"
+    node.disksize.size = "20GB"
 
     # node.vm.network "forwarded_port", guest: 80, host: 8080
     node.vm.network "private_network", ip: "192.168.33.10"
@@ -45,8 +59,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
    # 512MB not enough for compiling lxml: https://stackoverflow.com/a/25916353/7782
    # https://stackoverflow.com/a/26468913/7782 --> for how to get to this setting
     node.vm.provider "virtualbox" do |v|
-        v.memory = 1024
+        v.memory = 2048
         v.cpus = 2
+        v.name = "opencontext"
     end
 
 
@@ -64,7 +79,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           zone1f.name = "oc-stretch201809"
           zone1f.image = "debian-9-stretch-v20180911"
           #zone1f.machine_type = "f1-micro"
-          zone1f.machine_type = "n1-standard-1"
+          zone1f.machine_type = "n1-standard-2"
+          zone1f.disk_size = 100
           zone1f.zone = "us-central1-f"
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []

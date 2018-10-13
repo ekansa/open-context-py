@@ -217,6 +217,12 @@
         chdir: "{{oc_install_dir}}"
       become: no
 
+    # - name: collectstatic
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py collectstatic"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+
     # # - name: django migrations
     # #   django_manage: >
     # #       command=migrate
