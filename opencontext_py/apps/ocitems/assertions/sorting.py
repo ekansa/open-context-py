@@ -89,18 +89,22 @@ class AssertionSorting():
 
     def re_rank_manifest_assertions_by_predicate(self,
                                                  predicate_uuid,
-                                                 project_uuid):
+                                                 project_uuid,
+                                                 only_subject_uuid=None):
         """ Reranks objects of assertions made using a given
         predicate for a given project by the order in the manifest
         table
         """
         change_count = 0
-        act_subjects = Assertion.objects\
-                                .values_list('uuid', flat=True)\
-                                .filter(project_uuid=project_uuid,
-                                        predicate_uuid=predicate_uuid)\
-                                .distinct('uuid')\
-                                .iterator()
+        if only_subject_uuid:
+            act_subjects = [only_subject_uuid]
+        else:
+            act_subjects = Assertion.objects\
+                                    .values_list('uuid', flat=True)\
+                                    .filter(project_uuid=project_uuid,
+                                            predicate_uuid=predicate_uuid)\
+                                    .distinct('uuid')\
+                                    .iterator()
         for uuid in act_subjects:
             print('Work - predicate: ' + predicate_uuid + ' - subject: ' + uuid)
             # get all assertions for this subject uuid and predicate_uuid
