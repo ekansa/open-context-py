@@ -4,7 +4,7 @@ coverage==4.0.3
 
 coveralls==1.1
 
-Django==1.11.6
+Django==1.11.15
 
 django-debug-toolbar==1.8
 
