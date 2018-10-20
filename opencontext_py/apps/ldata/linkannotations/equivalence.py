@@ -93,7 +93,7 @@ class LinkEquivalence():
             id_list = [str(id_list)]
         for identifier in id_list:
             output_list.append(identifier)
-            if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
+            if(identifier.startswith('http://') or identifier.startswith('https://')):
                 oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
                 if oc_uuid is not False:
                     output_list.append(oc_uuid)

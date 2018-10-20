@@ -8,17 +8,13 @@ class URImanagement():
         """ Checks to see if a an identifer is a prefixed URI,
             if so, it will convert to a full uri
         """
-        if(':' in identifier):
-            split_id = True
-            if(len(identifier) > 8):
-                if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                    split_id = False
-            if(split_id):
+        if ':' in identifier:
+            if not identifier.startswith('http://') and not identifier.startswith('https://'):
                 item_ns = ItemNamespaces()
                 identifier_parts = identifier.split(':')
                 prefix = identifier_parts[0]
                 suffix = identifier_parts[1]
-                if(prefix in item_ns.namespaces):
+                if prefix in item_ns.namespaces:
                     identifier = str(item_ns.namespaces[prefix]) + str(suffix)
         return identifier
 
@@ -26,16 +22,12 @@ class URImanagement():
         """ Converts URIs to a prefixed URI if it is in a
         namespace used by Open Context JSON-LD @context
         """
-        id_len = len(identifier)
-        if(id_len > 8):
-            if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                item_ns = ItemNamespaces()
-                for prefix, ns_uri in item_ns.namespaces.items():
-                    ns_uri_len = len(ns_uri)
-                    if(ns_uri_len < id_len):
-                        if(identifier[:ns_uri_len] == ns_uri):
-                            identifier = identifier.replace(ns_uri, (prefix + ':'))
-                            break
+        if(identifier.startswith('http://') or identifier.startswith('https://')):
+            item_ns = ItemNamespaces()
+            for prefix, ns_uri in item_ns.namespaces.items():
+                if identifier.startswith(ns_uri) and identifier.split(ns_uri)[-1]:
+                    identifier = prefix + ':' + identifier.split(ns_uri)[-1]
+                    break
         return identifier
 
     def get_uuid_from_oc_uri(uri, return_type=False):
