@@ -389,11 +389,17 @@ Assertion.objects\
                  predicate_uuid=Assertion.PREDICATES_GEO_OVERLAY)\
          .delete()
 
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+media_uuid = 'da676164-9829-4798-bb5d-c5b1135daa27'
+media_man = Manifest.objects.get(uuid=media_uuid)
+
 ass = Assertion()
 ass.uuid = project_uuid
 ass.subject_type = 'projects'
 ass.project_uuid = project_uuid
-ass.source_id = 'test-geo-overlay'
+ass.source_id = 'heit-el-ghurab-geo-overlay'
 ass.obs_node = '#obs-' + str(1)
 ass.obs_num =  1
 ass.sort = 1
@@ -1149,6 +1155,38 @@ json_obj = gimp.load_json_file('pc-geo', 'id-clean-coord-pc_trenches_2017_4326.g
 gimp.save_no_coord_file(json_obj, 'pc-geo', 'id-clean-coord-pc_trenches_2017_4326.geojson')
 
 
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
+gimp = GeoJSONimport()
+gimp.load_into_importer = False
+gimp.project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+gimp.source_id = 'botany-areas'
+id_prop = 'LocalArea'
+ok_ids = False
+projects=['10aa84ad-c5de-4e79-89ce-d83b75ed72b5', '5A6DDB94-70BE-43B4-2D5D-35D983B21515']
+json_obj = gimp.load_json_file('giza-areas', 'botany-areas.geojson')
+rev_json = LastUpdatedOrderedDict()
+rev_json['features'] = []
+for feat in json_obj['features']:
+    area_name = feat['properties']['LocalArea']
+    if area_name == 'KKT-Nohas House':
+        area_name = "Noha's"
+    elif area_name == 'G1':
+        area_name = 'GI'
+    man_objs = Manifest.objects.filter(label=area_name, project_uuid__in=projects, class_uri='oc-gen:cat-area')[:1]
+    if len(man_objs):
+        feat['properties']['uri'] = 'http://opencontext.org/subjects/' + man_objs[0].uuid
+        rev_json['features'].append(feat)
+    else:
+        print('Cannot find: ' + area_name)
+        
+
+gimp.save_json_file(rev_json, 'giza-areas', 'botany-areas-w-uris.geojson')
+gimp.process_features_in_file('giza-areas', 'botany-areas-w-uris.geojson')
+
+
+
 
 
 from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
@@ -1168,8 +1206,19 @@ gimp.process_features_in_file('pc-geo', 'pc_trenches_2017_4326.geojson')
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.archive.binaries import ArchiveBinaries
 arch_bin = ArchiveBinaries()
-project_uuid = '81d1157d-28f4-46ff-98dd-94899c1688f8'
+project_uuid = 'b6de18c6-bba8-4b53-9d9e-3eea4b794268'
 arch_bin.save_project_binaries(project_uuid)
+
+
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuids = [
+    'b6de18c6-bba8-4b53-9d9e-3eea4b794268'
+]
+for project_uuid in project_uuids:
+    arch_bin = ArchiveBinaries()
+    arch_bin.save_project_binaries(project_uuid)
+    arch_bin.archive_all_project_binaries(project_uuid)
+
 
 from opencontext_py.apps.archive.binaries import ArchiveBinaries
 project_uuids = [
@@ -1205,6 +1254,31 @@ for archive_dir in dirs:
     arch_bin = ArchiveBinaries()
     arch_bin.archive_dir_project_binaries(project_uuid, archive_dir)
     
+
+
+
+
+
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+project_uuid = "141e814a-ba2d-4560-879f-80f1afb019e9"
+archive_dir = "files-4-by---141e814a-ba2d-4560-879f-80f1afb019e9"
+deposition_id = 1439449
+arch_bin = ArchiveBinaries()
+arch_bin.archive_dir_project_binaries(project_uuid, archive_dir, deposition_id)
+
+
+from opencontext_py.apps.archive.binaries import ArchiveBinaries
+
+dirs = [
+    "files-5-by---141e814a-ba2d-4560-879f-80f1afb019e9",
+    "files-6-by---141e814a-ba2d-4560-879f-80f1afb019e9",
+]
+for archive_dir in dirs:
+    project_uuid = "141e814a-ba2d-4560-879f-80f1afb019e9"
+    arch_bin = ArchiveBinaries()
+    arch_bin.archive_dir_project_binaries(project_uuid, archive_dir)
+
+
     
     
 
@@ -1221,4 +1295,231 @@ for root, dirs, files in os.walk(path):
         shutil.make_archive(zip_file, 'zip', zip_dir)
 
 
+
+import pandas as pd
+import shutil
+import os
+import numpy as np
+
+from django.conf import settings
+
+renames = {
+    'FORMDATE': 'FORM_DATE',
+    'TRINOMIAL': 'SITE_NUM',
+    'SITENUM': 'SITE_NUM',
+    'TYPE_SITE': 'SITE_TYPE',
+    'TYPESITE': 'SITE_TYPE',
+    'TYPE_STE': 'SITE_TYPE',
+    'SIZESITE': 'SITE_SIZE',
+    'SITESIZE': 'SITE_SIZE',
+    'SITENAME': 'SITE_NAME',
+    'Atlas_Number': 'ATLAS_NUMBER',
+    'MAT_COL': 'MATERIAL_COLLECTED',
+    'MATERIALS': 'MATERIAL_COLLECTED',
+    'ARTIFACTS': 'ARTIFACTS',
+    'CULT_DESC': 'TIME_CULTURE_DESC',
+    'TIME_DESC': 'TIME_CULTURE_DESC',
+    'TIME_OCC': 'TIME_PERIOD',
+    'TIME_PER': 'TIME_PERIOD',
+    'SING_COM': 'COMPONENT_SINGLE',
+    'SINGLE': 'COMPONENT_SINGLE',
+    'MULT_COM': 'COMPONENT_MULTI',
+    'MULTIPLE': 'COMPONENT_MULTI',
+    'COMP_DESC': 'COMPONENT_DESC',
+    'BASIS': 'COMPONENT_DESC',
+    'COUNTY': 'COUNTY'
+}
+
+
+path = settings.STATIC_EXPORTS_ROOT + 'texas'
+dfs = []
+all_cols = []
+excel_files = []
+for root, dirs, files in os.walk(path):
+    for act_file in files:
+        if act_file.endswith('.xls'):
+            file_num = ''.join(c for c in act_file if c.isdigit())
+            excel_files.append((int(file_num), act_file))
+            dir_file = os.path.join(path, act_file)
+            df = pd.read_excel(dir_file, index_col=None, na_values=['NA'])
+            df['filename'] = act_file
+            df = df.applymap(lambda x: x.encode('unicode_escape').decode('utf-8') if isinstance(x, str) else x)
+            col_names = df.columns.values.tolist()
+            print('-'*40)
+            print(act_file)
+            print(str(col_names))
+            """
+            for bad_col, good_col in renames.items():
+                if bad_col in col_names:
+                    df.rename(columns={bad_col: good_col}, inplace=True)
+            """
+            new_cols = df.columns.values.tolist()
+            all_cols = list(set(all_cols + new_cols))
+            all_cols.sort()
+            print('Total of {} columns for all dataframes'.format(len(all_cols)))
+            dfs.append(df)
+            
+            
+excel_files = sorted(excel_files)
+print('\n'.join([f[1] for f in excel_files]))
+
+
+all_df = pd.concat(dfs)
+csv_all_dir_file = os.path.join(path, 'all-texas.csv')
+print('Save the CSV: ' + csv_all_dir_file)
+with open(csv_all_dir_file, 'a' ) as f:
+    while True:
+        all_df.to_csv(f)
+
+
+
+xls_all_dir_file = os.path.join(path, 'all-texas.xlsx')
+print('Save the Excel: ' + xls_all_dir_file)
+with open(xls_all_dir_file, 'a' ) as f:
+    while True:
+        all_df.to_excel(f, sheet_name='Sheet1')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
+from opencontext_py.libs.solrconnection import SolrConnection
+project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+area_proj_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+source_id = 'ref:2289489501377'
+area_field = 9
+feature_field = 10
+specimen_field = 1
+man_fixes = Manifest.objects.filter(item_type='subjects', class_uri='oc-gen:cat-plant-remains', project_uuid=project_uuid).order_by('sort')
+changed_uuids = []
+p_subs = {}
+for man_obj in man_fixes:
+    cont_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=man_obj.uuid)[:1]
+    if len(cont_asses):
+        continue
+    # need to fix missing context association
+    spec_id = man_obj.label.replace('Specimen ', '')
+    spec_cell = ImportCell.objects.get(source_id=source_id, record=spec_id, field_num=specimen_field)
+    area_cell = ImportCell.objects.get(source_id=source_id, field_num=area_field, row_num=spec_cell.row_num)
+    feat_cell = ImportCell.objects.get(source_id=source_id, field_num=feature_field, row_num=spec_cell.row_num)
+    l_context = '/{}/Feat. {}'.format(area_cell.record.replace('/', '--'), feat_cell.record)
+    if feat_cell.record in ['1031', '1089', '1188'] and 'SSGH' in area_cell.record:
+        l_context = '/SSGH (Khentkawes)/Feat. {}'.format(feat_cell.record)
+    if l_context == '/KKT-E+/Feat. 33821':
+        l_context = '/KKT-E/Feat. 33821'
+    if l_context == '/KKT-E+/Feat. 33831':
+        l_context = '/KKT-E/Feat. 33831'
+    print('Find Context: {} for {} import row: {}'.format(l_context, man_obj.label, spec_cell.row_num))
+    if l_context not in p_subs:
+        parent_sub = Subject.objects.get(context__endswith=l_context, project_uuid__in=[project_uuid, area_proj_uuid])
+        p_subs[l_context] = parent_sub
+    else:
+        parent_sub = p_subs[l_context]
+    new_ass = Assertion()
+    new_ass.uuid = parent_sub.uuid
+    new_ass.subject_type = 'subjects'
+    new_ass.project_uuid = man_obj.project_uuid
+    new_ass.source_id = 'ref:1967003269393-fix'
+    new_ass.obs_node = '#contents-' + str(1)
+    new_ass.obs_num = 1
+    new_ass.sort = 1
+    new_ass.visibility = 1
+    new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
+    new_ass.object_type = man_obj.item_type
+    new_ass.object_uuid = man_obj.uuid
+    new_ass.save()
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(man_obj.uuid)
+    
+
+
+
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
+from opencontext_py.libs.solrconnection import SolrConnection
+project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+area_proj_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+source_id = 'ref:1967003269393'
+area_field = 20
+feature_field = 22
+specimen_field = 1
+man_fixes = Manifest.objects.filter(item_type='subjects', class_uri='oc-gen:cat-feature', project_uuid=project_uuid).order_by('sort')
+changed_uuids = []
+p_subs = {}
+for man_obj in man_fixes:
+    cont_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=man_obj.uuid)[:1]
+    if len(cont_asses):
+        continue
+    # need to fix missing context association
+    act_id = man_obj.label.replace('Feat. ', '')
+    feat_cell = ImportCell.objects.filter(source_id=source_id, record=act_id, field_num=feature_field)[:1][0]
+    area_cell = ImportCell.objects.get(source_id=source_id, field_num=area_field, row_num=feat_cell.row_num)
+    l_context = area_cell.record.replace('/', '--')
+    l_context = '/' + l_context
+    if act_id in ['1031', '1089', '1188'] and 'SSGH' in l_context:
+        l_context = '/SSGH (Khentkawes)'
+    print('Find Context: {} for {} import row: {}'.format(l_context, man_obj.label, feat_cell.row_num))
+    if l_context not in p_subs:
+        parent_sub = Subject.objects.get(context__endswith=l_context, project_uuid__in=[project_uuid, area_proj_uuid])
+        p_subs[l_context] = parent_sub
+    else:
+        parent_sub = p_subs[l_context]
+    print('Adding Context: {} : {}'.format(parent_sub.uuid, parent_sub.context))
+    new_ass = Assertion()
+    new_ass.uuid = parent_sub.uuid
+    new_ass.subject_type = 'subjects'
+    new_ass.project_uuid = man_obj.project_uuid
+    new_ass.source_id = source_id + '-fix'
+    new_ass.obs_node = '#contents-' + str(1)
+    new_ass.obs_num = 1
+    new_ass.sort = 1
+    new_ass.visibility = 1
+    new_ass.predicate_uuid = Assertion.PREDICATES_CONTAINS
+    new_ass.object_type = man_obj.item_type
+    new_ass.object_uuid = man_obj.uuid
+    new_ass.save()
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(man_obj.uuid)
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+parent_uuid = '64a12f7b-5ed3-4b1e-beb0-186d5f6c8549'
+project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+area_proj_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+child_uuids = []
+for child in Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, uuid=parent_uuid):
+    child_uuids.append(child.object_uuid)
+
+keeps_mans = Manifest.objects.filter(uuid__in=child_uuids, project_uuid=area_proj_uuid)
+for keep_man in keeps_mans:
+    rem_men = Manifest.objects.filter(label=keep_man.label, uuid__in=child_uuids, project_uuid=project_uuid)[:1]
+    if len(rem_men):
+        delete_uuid = rem_men[0].uuid
+        merge_into_uuid = keep_man.uuid
+        print('Remove {} to keep {} with label {}'.format(delete_uuid, merge_into_uuid, keep_man.label))
+        dm = DeleteMerge()
+        dm.merge_by_uuid(delete_uuid, merge_into_uuid)
 

@@ -80,7 +80,7 @@ class ArchiveMetadata():
                 zenodo_obj = {
                     'identifier': community_id
                 }
-                meta['communities'].append(community_id)
+                meta['communities'].append(zenodo_obj)
             meta['description'] = (
                 '<p>This archives media files associated with the <em>'
                 '<a href="' + proj_dict['id'] + '">' + proj_dict['label'] + '</a></em> project published by '

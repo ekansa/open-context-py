@@ -26,7 +26,7 @@ lr.get_jsonldish_entity_parents('oc-gen:cat-arch-element')
 lr = LinkRecursion()
 lr.get_jsonldish_entity_parents('http://eol.org/pages/7680')
 lr = LinkRecursion()
-lr.get_entity_children('http://eol.org/pages/7680', True)
+lr.get_entity_children('http://eol.org/pages/4077', True)
     """
     def __init__(self):
         self.m_cache = MemoryCache()
@@ -98,10 +98,12 @@ lr.get_entity_children('http://eol.org/pages/7680', True)
                     output.append(p_item)
         return output
     
-    def get_entity_parents(self, identifier, parent_list=[], loop_count=0):
+    def get_entity_parents(self, identifier, parent_list=None, loop_count=0):
         """
         Gets parent concepts for a given URI or UUID identified entity
         """
+        if not parent_list:
+            parent_list = []
         loop_count += 1
         parent_id = self._get_parent_id(identifier)
         # print('ID: {} has parent: {}'.format(identifier, parent_id))
