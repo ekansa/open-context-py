@@ -369,7 +369,7 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
             c_ok = v_geojson.validate_all_geometry_coordinates(geometry_type,
                                                                coordinates)
             if not c_ok:
-                print('Fixing coordinates for: {}'.format(uuid))
+                print('Fixing coordinates for: {}'.format(man_obj.uuid))
                 coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
                                                                coordinates)
             if self.delete_old_geo and self.uuid_counts[man_obj.uuid] < 2:
@@ -447,13 +447,7 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
             feature['geometry']['coordinates'] = 'removed'
             new_json['features'].append(feature)
         dir_file = self.set_check_directory(act_dir) + '/no-coord-' + filename
-        json_output = json.dumps(new_json,
-                                 indent=4,
-                                 ensure_ascii=False)
-        file = codecs.open(dir_file, 'w', 'utf-8')
-        file.write(json_output)
-        file.close()
-        print('Saved: ' + dir_file)
+        self.save_json_file(new_json, None, None, dir_file=dir_file)
     
     def save_partial_clean_file(self,
                                 json_obj,
@@ -569,7 +563,13 @@ gimp.process_features_in_file('giza-geo', 'Features_KKT.geojson')
                     new_json['features'].append(feature)
                     
         dir_file = self.set_check_directory(act_dir) + '/id-clean-coord-' + filename
-        json_output = json.dumps(new_json,
+        self.save_json_file(new_json, None, None, dir_file=dir_file)
+    
+    def save_json_file(self, json_obj, act_dir, filename, dir_file=None):
+        """Saves a json file """
+        if not dir_file:
+            dir_file = self.set_check_directory(act_dir) + '/' + filename
+        json_output = json.dumps(json_obj,
                                  indent=4,
                                  ensure_ascii=False)
         file = codecs.open(dir_file, 'w', 'utf-8')
