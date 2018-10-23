@@ -143,6 +143,55 @@ class SubjectGeneration():
                                               'error': 'bad path'}
         return output
 
+    def make_parent_the_only_parent(self, parent_uuid, pref_project_uuid=None):
+        """Makes a parent the only parent of the children of that parent.
+        
+        This removes children from other hierarchies other than the hierarchy
+        for the specified parent_uuid.
+        """
+        # Get the children that are supposed to be parents of the parent_uuid
+        keep_p_asses = Assertion.objects.filter(uuid=parent_uuid,
+                                                predicate_uuid=Assertion.PREDICATES_CONTAINS)
+        for keep_p_ch in keep_p_asses:
+            changed = False
+            ch_uuid = keep_p_ch.object_uuid
+            # Now get other assertions where the child item is contained in another item
+            # that is not its preferred parent.
+            bad_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                 object_uuid=ch_uuid)\
+                                         .exclude(uuid=parent_uuid)
+            if len(bad_asses):
+                print('Remove {} erroneous parents for :'.format(len(bad_asses), ch_uuid))
+                bad_asses.delete()
+                changed = True
+            # Sometimes a child can have multiple containment relationships to the SAME
+            # parent, but this still screws it up.
+            good_asses = Assertion.objects.filter(uuid=parent_uuid,
+                                                  predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                  object_uuid=ch_uuid)
+            if len(good_asses) <= 1:
+                continue
+            print('Muliple ({}) parent assertions for : {} '.format(len(good_asses), ch_uuid))
+            if pref_project_uuid:
+                # Get a query set that excludes the preferred project_uuid
+                redund_ass = Assertion.objects.filter(uuid=parent_uuid,
+                                                      predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                      object_uuid=ch_uuid)\
+                                               .exclude(project_uuid=pref_project_uuid)
+            else:
+                # Get a queryset that excludes the first item from the good query set.
+                redund_ass = Assertion.objects.filter(uuid=parent_uuid,
+                                                      predicate_uuid=Assertion.PREDICATES_CONTAINS,
+                                                      object_uuid=ch_uuid)\
+                                               .exclude(hash_id=good_asses[0].hash_id)
+            if len(redund_ass) < len(good_asses):
+                print('Delete {} containment assertions for child_uuid {}'.format(len(redund_ass), ch_uuid))
+                redund_ass.delete()
+                changed = True
+            if changed:
+                # Now clean up the Subjects path for the item.
+                self.generate_save_context_path_from_uuid(ch_uuid)
+
     def fix_multiple_context_paths(self, root_uuid, level_limit=1):
         """ fixes context paths for uuids where there may be more than
             1 containment assertion
