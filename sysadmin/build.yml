@@ -133,8 +133,6 @@
 
   tasks:
 
-    # - name: end play
-    #   meta: end_play
 
     - name: install virtualenv
       pip: 
@@ -370,8 +368,27 @@
     # - name: launch dev server
     #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
 
-    - name: restart_here
-      debug: msg="provision restart here"
+ 
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
+
+    # # make sure we can read off the auth token
+    # - name: show auth token
+    #   debug: msg="{{GROUP_SECRETS.GOOGLE_STORAGE_READ_TOKEN}}"
+
+    # # download the postgres database 
+    # - name: download postgres database 
+    #   get_url:
+    #     url: "https://www.googleapis.com/storage/v1/b/{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}/o/{{GROUP_SECRETS.POSTGRES_BACKUP}}?alt=media"
+    #     dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
+    #     headers: "Authorization: Bearer {{GROUP_SECRETS.GOOGLE_STORAGE_READ_TOKEN}}"
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+
+    # - name: end play
+    #   meta: end_play
 
 
   handlers:
