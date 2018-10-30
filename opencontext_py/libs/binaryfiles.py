@@ -29,6 +29,7 @@ class BinaryFiles():
         self.remote_uri_sub = None  # substitution for a remote uri
         self.local_uri_sub = None  # local substitution uri prefix, so no retrieval from remote
         self.local_filesystem_uri_sub = None  # substitution to get a path to the local file in the file system
+        self.pref_tiff_archive = False # Prefer to archive a TIFF archive file
         self.errors = []
     
     def get_cache_full_file(self, json_ld, man_obj):
@@ -90,12 +91,16 @@ class BinaryFiles():
             or looks for the file in the file system and copies it within
             the file system
         """
+        if not act_dir:
+            act_dir = self.cache_file_dir
         if self.do_http_request_for_cache:
             ok = self.get_cache_remote_file_content_http(file_name,
-                                                         file_uri)
+                                                         file_uri,
+                                                         act_dir)
         else:
             ok = self.get_cache_remote_file_content_filesystem(file_name,
-                                                               file_uri)
+                                                               file_uri,
+                                                               act_dir)
         return ok
 
     def get_cache_remote_file_content_filesystem(self, file_name, file_uri, act_dir=None):
