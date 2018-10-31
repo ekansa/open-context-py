@@ -186,6 +186,7 @@
         virtualenv: "{{oc_install_dir}}/ENV"
         virtualenv_command: /usr/local/bin/virtualenv
 
+    # TO DO:  be more restrictive once we get this into production
     - name: turn on ports
       ufw: rule=allow port={{ item }} proto=tcp
       with_items:
@@ -193,6 +194,7 @@
       - 80
       - 443
       - 8000
+      - 8983
 
     - name: enable ufw
       ufw: state=enabled
@@ -368,9 +370,20 @@
     # - name: launch dev server
     #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
 
- 
-    # - name: restart_here
-    #   debug: msg="provision restart here"
+    # # make sure we can read off the auth token
+    # - name: show bucket
+    #   debug: msg="{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}"   
+
+    # # download test image from GS 
+    # - name: download test image from GS
+    #   gc_storage: 
+    #     bucket: "{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}"
+    #     object: oc.png
+    #     dest: /tmp/oc.png
+    #     mode: get
+    #     gs_access_key: "{{GROUP_SECRETS.GOOGLE_STORAGE_ACCESS_KEY}}"
+    #     gs_secret_key: "{{GROUP_SECRETS.GOOGLE_STORAGE_SECRET_KEY}}"
+    #   become: no
 
 
     # # make sure we can read off the auth token
@@ -387,8 +400,78 @@
     #     owner: "{{user}}"
     #     group: "{{user}}"
 
-    # - name: end play
-    #   meta: end_play
+
+    # download the postgres database 
+    - name: download postgres database 
+      get_url:
+        url: "{{GROUP_SECRETS.DATABASE_BACKUP_URL}}"
+        dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
+        mode: 0640
+        owner: "{{user}}"
+        group: "{{user}}"
+
+
+    # download the solr backup 
+    - name: download solr backup 
+      get_url:
+        url: "{{GROUP_SECRETS.SOLR_BACKUP_URL}}"
+        dest: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        mode: 0640
+        owner: "{{user}}"
+        group: "{{user}}"
+
+    - name: create /tmp/solr_backup
+      file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0745
+      become: yes
+
+    # unarchive the solr zip file
+    - name: unzip solr zip file
+      unarchive:
+        src: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        dest: /tmp/solr_backup
+        remote_src: true
+        owner: solr
+        group: solr
+
+    # create core using /opt/solr/bin/solr with ? parameters
+    # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+    - name: create open-context core 
+      command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+
+
+    # # this didn't work -- time out on some privilege escalation
+    # - name: create open-context core 
+    #   command: "/opt/solr/bin/solr create_core -c open-context"
+    #   become: true
+    #   become_method: su
+    #   become_user: solr
+    #   become_flags: '-s /bin/bash'    
+
+    # mv /tmp/solr_backup/oc-solr-6/server/solr/open-context/* /var/solr/data/open-context/
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    - name: stat solr backup data 
+      stat: path=/tmp/solr_backup/oc-solr-6/server/solr/open-context
+      register: oc_stat
+      become: yes
+
+    # TO DO -- parameterize oc-solr-6
+    - name: Move solr backup to solr data directory
+      command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
+      when: oc_stat.stat.exists
+
+    # issue command to reload core
+    - name: issue command to reload core
+      command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+
+    # then need a reload https://serverfault.com/questions/703031/how-do-i-add-a-solr-core-without-restarting-the-solr-server
+    # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+    # curl "http://octest.raymondyee.net:8983/solr/admin/cores?action=RELOAD&core=collection1&wt=json"
+
+    - name: end play
+      meta: end_play
 
 
   handlers:
