@@ -49,8 +49,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
           "--limit=opencontext, 127.0.0.1",
           "-e vname=opencontext",
-          "-e hostname=devv",
+          "-e hostname=devv", 
           "-e branch=debian9",
+          "-e install_db=true",
+          "-e do_migrate=true", 
           # "--start-at-task=restart_here"
       ]
     end
@@ -92,10 +94,84 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       override.ssh.username = "raymond.yee"
       override.ssh.private_key_path = "~/.ssh/id_rsa"
     end
-   
+
+  end  
+
+
+  config.vm.define "opencontext_predb" do |node|
+    
+    # predefined db
+    # Every Vagrant virtual environment requires a box to build off of.
+    node.vm.box = "debian/stretch64"
+    node.disksize.size = "20GB"
+
+    # node.vm.network "forwarded_port", guest: 80, host: 8080
+    node.vm.network "private_network", ip: "192.168.33.10"
+    node.ssh.forward_agent = true
+    #node.vm.network "private_network", type: "dhcp"
+  
+    #node.vm.synced_folder "data", "vagrant_data"
+    #node.vm.synced_folder ".", "/vagrant", disabled: false 
+    #node.vm.synced_folder "./oc", "/opt/oc", disabled: false 
+
+  
+    node.vm.provision 'ansible' do |ansible|
+      ansible.playbook = 'build.yml'
+
+      ansible.verbose = "vv"
+      # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
+      ansible.raw_arguments  = [
+          "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
+          "--limit=opencontext_predb, 127.0.0.1",
+          "-e vname=opencontext_predb",
+          "-e hostname=devv", 
+          "-e branch=debian9",
+          "-e install_db=false",
+          "-e do_migrate=false", 
+          # "--start-at-task=restart_here"
+      ]
+    end
+
+  
+   # 512MB not enough for compiling lxml: https://stackoverflow.com/a/25916353/7782
+   # https://stackoverflow.com/a/26468913/7782 --> for how to get to this setting
+    node.vm.provider "virtualbox" do |v|
+        v.memory = 2048
+        v.cpus = 2
+        v.name = "opencontext"
+    end
+
+
+    # GCE
+
+    node.vm.provider :google do |google, override|
+      google.google_project_id = "opencontext2018"
+      google.google_client_email = "raymond.yee@gmail.com"
+      google.google_json_key_location = "/Volumes/ryvault1/opencontext/keys/opencontext2018-gce.json"
+      
+      # Make sure to set this to trigger the zone_config
+      google.zone = "us-central1-f"
+
+      google.zone_config "us-central1-f" do |zone1f|
+          zone1f.name = "oc-stretch201809"
+          zone1f.image = "debian-9-stretch-v20180911"
+          #zone1f.machine_type = "f1-micro"
+          zone1f.machine_type = "n1-standard-2"
+          zone1f.disk_size = 100
+          zone1f.zone = "us-central1-f"
+          # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+          # zone1f.scopes = []
+          # zone1f.tags = ['web', 'app1']
+      end
+      
+      override.vm.box = "gce"
+      # override.ssh.username = "raymond_yee_gmail_com"
+      override.ssh.username = "raymond.yee"
+      override.ssh.private_key_path = "~/.ssh/id_rsa"
+    end
+      
   
   end  
 
  end
-
 

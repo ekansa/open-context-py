@@ -4,6 +4,7 @@
     user: "{{ ansible_ssh_user }}"
     target: '{{vname}}'
     migrate: "{{do_migrate | default('true')}}"
+    install_db: "{{install_db | default('true')}}"
 
     # postgres vars
     postgresql_python_library: python-psycopg2
@@ -117,6 +118,7 @@
       # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
     - role: geerlingguy.postgresql
       become: yes
+
     # ansible-galaxy install git+https://github.com/rdhyee/ansible-python.git,dev
 
     - role: ansible-python
@@ -216,6 +218,7 @@
       args:
         chdir: "{{oc_install_dir}}"
       become: no
+      when: migrate
 
     # - name: collectstatic
     #   command: "{{oc_install_dir}}/ENV/bin/python manage.py collectstatic"
@@ -238,6 +241,7 @@
       command: "{{oc_install_dir}}/ENV/bin/python manage.py createcachetable"
       args:
         chdir: "{{oc_install_dir}}"
+      when: migrate
 
 
     # - name: install bootstrap
@@ -401,6 +405,7 @@
     #     group: "{{user}}"
 
 
+
     # download the postgres database 
     - name: download postgres database 
       get_url:
@@ -409,6 +414,7 @@
         mode: 0640
         owner: "{{user}}"
         group: "{{user}}"
+      when: install_db
 
 
     # download the solr backup 
@@ -470,9 +476,8 @@
     # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
     # curl "http://octest.raymondyee.net:8983/solr/admin/cores?action=RELOAD&core=collection1&wt=json"
 
-    - name: end play
-      meta: end_play
-
+    # - name: end play
+    #   meta: end_play
 
   handlers:
     - name: restart nginx
