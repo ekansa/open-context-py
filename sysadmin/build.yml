@@ -213,12 +213,20 @@
     - name: create secrets.json from template
       template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user}} group={{user}} mode=0664
 
-    - name: run migrations
+    - name: run migrations 
       command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
       args:
         chdir: "{{oc_install_dir}}"
       become: no
       when: migrate
+
+    - name: run migrations (syncdb)
+      command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate --run-syncdb"
+      args:
+        chdir: "{{oc_install_dir}}"
+      become: no
+      when: migrate
+
 
     # - name: collectstatic
     #   command: "{{oc_install_dir}}/ENV/bin/python manage.py collectstatic"
