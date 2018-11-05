@@ -3,12 +3,12 @@ import json
 
 @pytest.fixture(autouse=True)
 def enable_db_access_for_all_tests(db):
-        pass
+    pass
 
 @pytest.fixture(scope='session')
 def django_db_setup():
 
-	secrets = json.loads('secrets.json')
+    secrets = json.loads('secrets.json')
 
     settings.DATABASES['default'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
