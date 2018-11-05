@@ -8,7 +8,7 @@ def enable_db_access_for_all_tests(db):
 @pytest.fixture(scope='session')
 def django_db_setup():
 
-    secrets = json.loads('secrets.json')
+    secrets = json.loads(open('secrets.json').read())
 
     settings.DATABASES['default'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
