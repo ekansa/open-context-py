@@ -50,7 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--limit=opencontext, 127.0.0.1",
           "-e vname=opencontext",
           "-e hostname=devv", 
-          "-e branch=debian9",
+          "-e branch=django_update",
           "-e install_db=true",
           "-e do_migrate=true", 
           # "--start-at-task=restart_here"
@@ -125,7 +125,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--limit=opencontext_predb, 127.0.0.1",
           "-e vname=opencontext_predb",
           "-e hostname=devv", 
-          "-e branch=debian9",
+          "-e branch=django_update",
           "-e install_db=false",
           "-e do_migrate=false", 
           # "--start-at-task=restart_here"

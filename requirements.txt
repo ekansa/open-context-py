@@ -79,3 +79,19 @@ uWSGI==2.0.17.1
 python-memcached==1.59
 
 pyproj==1.9.5
+
+atomicwrites==1.2.1
+
+attrs==18.2.0
+
+more-itertools==4.3.0
+
+pathlib2==2.3.2
+
+pluggy==0.8.0
+
+py==1.7.0
+
+pytest==3.9.3
+
+pytest-django==3.4.3
