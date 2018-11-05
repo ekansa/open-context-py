@@ -15,6 +15,6 @@ def django_db_setup():
         'NAME': secrets.get('DATABASES_NAME'),
         'USER': secrets.get('DATABASES_USER'),
         'PASSWORD': secrets.get('DATABASES_PASSWORD'),
-        'HOST': secrets,get('DATABASES_HOST'),
+        'HOST': secrets.get('DATABASES_HOST'),
         'CONN_MAX_AGE': 600,
     }
