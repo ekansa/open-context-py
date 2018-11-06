@@ -32,7 +32,7 @@ def test_other_pages():
 
     bad_status_codes = {}
 
-    for page in pages_to test:
+    for page in pages_to_test:
         response = client.get(page)
         if response.status_code != 200:
             bad_status_codes[page] = response.status_code
