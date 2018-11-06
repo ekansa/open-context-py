@@ -18,6 +18,32 @@ def test_main_page():
     response = client.get('/')
     assert response.status_code == 200
 
+def test_other_pages():
+
+    pages_to_test = [
+        '/about',
+        '/projects-search/',
+        '/subjects-search/#1/-10/13/6/any/Google-Satellite',
+        '/search/#2/45.0/0.0/6/any/Google-Satellite',
+        '/projects/416A274C-CF88-4471-3E31-93DB825E9E4A'
+    ]
+
+    client = Client()
+
+    bad_status_codes = {}
+
+    for page in pages_to test:
+        response = client.get(page)
+        if response.status_code != 200:
+            bad_status_codes[page] = response.status_code
+
+    if bad_status_codes:
+        print (bad_status_codes)
+        assert False
+    else:
+        assert True
+
+
 def test_num_octypes():
     assert models.OCtype.objects.count() > 0
 
