@@ -18,7 +18,7 @@ class RequestNegotiation():
         """ anonymizes a request by flushing session cookies for users
             that are not logged in
         """
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             # the user is not authenticated, therefore
             # we will default to expire the session cookie for a user after the default
             pass
