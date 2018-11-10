@@ -18,7 +18,7 @@
         password: opencontextpw
 
     # https://github.com/whiskerlabs/ansible-python
-    python_version: 3.5.6
+    python_version: 3.6.7
     python_bin: /usr/bin
     python_pip_version: 18.0
     python_upgrade_packaging_tools: false
