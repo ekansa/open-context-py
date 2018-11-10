@@ -5,6 +5,7 @@
     target: '{{vname}}'
     migrate: "{{do_migrate | default('true')}}"
     install_db: "{{install_db | default('true')}}"
+    install_solr_data: "{{install_solr_data | default('true')}}"
 
     # postgres vars
     postgresql_python_library: python-psycopg2
@@ -151,6 +152,14 @@
         - pip
       become: yes
 
+    - name: install pipenv
+      pip: >
+           name={{item}}
+           executable=/usr/local/bin/pip3
+      with_items:
+        - pipenv
+      become: yes
+
     - name: create {{oc_install_dir}}
       file: path={{oc_install_dir}} state=directory owner={{user}} group={{user}} mode=0745
     
@@ -172,21 +181,46 @@
       become: no
       git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
-    - name: pip requirements
-      pip: >
-           requirements="{{oc_install_dir}}/requirements.txt"
-           virtualenv="{{oc_install_dir}}/ENV"
-           virtualenv_command=/usr/local/bin/virtualenv
-           virtualenv_site_packages=no
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    # use pipenv to install dependencies
+    # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
+    - name: initialize the virtualenv using pipenv
       become: no
+      shell: "PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages"
+      args:
+        chdir: "{{oc_install_dir}}"
+
+    # - name: pip requirements
+    #   pip: >
+    #        requirements="{{oc_install_dir}}/requirements.txt"
+    #        virtualenv="{{oc_install_dir}}/ENV"
+    #        virtualenv_command=/usr/local/bin/virtualenv
+    #        virtualenv_site_packages=no
+    #   become: no
+
+    # install pipenv requirements
+    - name: pipenv install
+      become: no
+      command: "/usr/local/bin/pipenv install"
+      args:
+        chdir: "{{oc_install_dir}}"
 
     # uwsgi
 
-    - name: install uwsgi
-      pip:
-        name: uwsgi
-        virtualenv: "{{oc_install_dir}}/ENV"
-        virtualenv_command: /usr/local/bin/virtualenv
+    # - name: install uwsgi in ENV
+    #   pip:
+    #     name: uwsgi
+    #     virtualenv: "{{oc_install_dir}}/ENV"
+    #     virtualenv_command: /usr/local/bin/virtualenv
+
+    - name: install uwsgi using pipenv
+      become: no
+      command: "/usr/local/bin/pipenv install uwsgi"
+      args:
+        chdir: "{{oc_install_dir}}"
+
 
     # TO DO:  be more restrictive once we get this into production
     - name: turn on ports
@@ -213,15 +247,29 @@
     - name: create secrets.json from template
       template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user}} group={{user}} mode=0664
 
+    # - name: run migrations
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+    #   when: migrate
+
+    # - name: run migrations (syncdb)
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate --run-syncdb"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+    #   when: migrate
+
     - name: run migrations 
-      command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate"
       args:
         chdir: "{{oc_install_dir}}"
       become: no
       when: migrate
 
     - name: run migrations (syncdb)
-      command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate --run-syncdb"
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate --run-syncdb"
       args:
         chdir: "{{oc_install_dir}}"
       become: no
@@ -246,7 +294,7 @@
     # #     - restart apache2
 
     - name: create cachetable
-      command: "{{oc_install_dir}}/ENV/bin/python manage.py createcachetable"
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py createcachetable"
       args:
         chdir: "{{oc_install_dir}}"
       when: migrate
@@ -373,10 +421,8 @@
       notify:
         - restart nginx
 
-
-    # run /opt/oc/ENV/bin/uwsgi --http :1333 --ini /opt/ocweb/usgi.ini
     - name: run uwsgi
-      shell: "{{oc_install_dir}}/ENV/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini"
+      shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini"
       become: no
 
     # - name: launch dev server
@@ -414,15 +460,15 @@
 
 
 
-    # download the postgres database 
-    - name: download postgres database 
-      get_url:
-        url: "{{GROUP_SECRETS.DATABASE_BACKUP_URL}}"
-        dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
-        mode: 0640
-        owner: "{{user}}"
-        group: "{{user}}"
-      when: install_db
+    # # download the postgres database
+    # - name: download postgres database
+    #   get_url:
+    #     url: "{{GROUP_SECRETS.DATABASE_BACKUP_URL}}"
+    #     dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #   when: install_db
 
 
     # download the solr backup 
@@ -433,10 +479,12 @@
         mode: 0640
         owner: "{{user}}"
         group: "{{user}}"
+      when: install_solr_data
 
     - name: create /tmp/solr_backup
       file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0745
       become: yes
+      when: install_solr_data
 
     # unarchive the solr zip file
     - name: unzip solr zip file
@@ -446,11 +494,13 @@
         remote_src: true
         owner: solr
         group: solr
+      when: install_solr_data
 
     # create core using /opt/solr/bin/solr with ? parameters
     # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
     - name: create open-context core 
       command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+      when: install_solr_data
 
 
     # # this didn't work -- time out on some privilege escalation
@@ -463,22 +513,22 @@
 
     # mv /tmp/solr_backup/oc-solr-6/server/solr/open-context/* /var/solr/data/open-context/
 
-    - name: restart_here
-      debug: msg="provision restart here"
 
     - name: stat solr backup data 
       stat: path=/tmp/solr_backup/oc-solr-6/server/solr/open-context
       register: oc_stat
       become: yes
+      when: install_solr_data
 
     # TO DO -- parameterize oc-solr-6
     - name: Move solr backup to solr data directory
       command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
-      when: oc_stat.stat.exists
+      when: oc_stat.stat.exists and install_solr_data
 
     # issue command to reload core
     - name: issue command to reload core
       command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+      when: install_solr_data
 
     # then need a reload https://serverfault.com/questions/703031/how-do-i-add-a-solr-core-without-restarting-the-solr-server
     # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"

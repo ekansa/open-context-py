@@ -1,6 +1,6 @@
 [uwsgi]
  home={{oc_install_dir}}
- virtualenv={{oc_install_dir}}/ENV
+ virtualenv={{oc_install_dir}}/.venv
  chdir={{oc_install_dir}}
  module=opencontext_py.wsgi:application
  env=DJANGO_SETTINGS_MODULE=opencontext_py.settings
