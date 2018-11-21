@@ -108,7 +108,6 @@ WHERE
 
 def test_custom_sql():
     row = my_custom_sql()
-    print(row)
-    assert False
+    assert row[0] == 251
 
 
