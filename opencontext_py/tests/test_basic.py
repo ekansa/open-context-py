@@ -1,6 +1,7 @@
 import pytest
 import json
 
+from django.db import connection
 from django.test.utils import setup_test_environment
 from django.test.client import Client
 
@@ -88,5 +89,26 @@ def test_projects_feed():
 
 
 
+def my_custom_sql():
+
+    query = """
+-- mediafiles associated with San Diego project?
+-- now I can get 251
+SELECT *
+FROM oc_mediafiles AS media
+WHERE
+  media.project_uuid = '3FAAA477-5572-4B05-8DC1-CA264FE1FC10' AND 
+  media.file_type = 'oc-gen:fullfile';
+"""
+    with connection.cursor() as cursor:
+        cursor.execute(query)
+        row = cursor.fetchone()
+
+    return row
+
+def test_custom_sql():
+    row = my_custom_sql()
+    print(row)
+    assert False
 
 
