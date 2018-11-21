@@ -94,7 +94,7 @@ def my_custom_sql():
     query = """
 -- mediafiles associated with San Diego project?
 -- now I can get 251
-SELECT *
+SELECT COUNT(*)
 FROM oc_mediafiles AS media
 WHERE
   media.project_uuid = '3FAAA477-5572-4B05-8DC1-CA264FE1FC10' AND 
