@@ -66,3 +66,27 @@ def test_json_feed():
         m_json_ld.spatial_context = spatial_context
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
         print (json.dumps(json_ld, indent=4))
+
+def test_projects_feed():
+    spatial_context = None
+    request_dict_json = json.dumps({'path': False, 'a': ['c']})
+
+    solr_s = SolrSearch()
+    solr_s.is_bot = False  # True if bot detected
+    solr_s.do_bot_limit = False  # Toggle limits on facets for bots
+    solr_s.do_context_paths = False
+    solr_s.item_type_limit = 'projects'
+
+    if solr_s.solr is not False:
+        response = solr_s.search_solr(request_dict_json)
+        m_json_ld = MakeJsonLd(request_dict_json)
+        m_json_ld.base_search_link = '/projects-search/'
+        m_json_ld.request_full_path = '/projects-search/'
+        m_json_ld.spatial_context = spatial_context
+        json_ld = m_json_ld.convert_solr_json(response.raw_content)
+        assert json_ld['totalResults'] == 108
+
+
+
+
+
