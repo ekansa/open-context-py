@@ -524,11 +524,15 @@
     - name: Move solr backup to solr data directory
       command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
       when: oc_stat.stat.exists and install_solr_data
+      when: install_solr_data
+
 
     # issue command to reload core
     - name: issue command to reload core
       command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
       when: install_solr_data
+      when: install_solr_data
+
 
     # then need a reload https://serverfault.com/questions/703031/how-do-i-add-a-solr-core-without-restarting-the-solr-server
     # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
