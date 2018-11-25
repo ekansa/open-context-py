@@ -3,6 +3,7 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import redirect
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.requestnegotiation import RequestNegotiation
+from opencontext_py.apps.entities.redirects.manage import RedirectURL
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.ocitem.templating import TemplateItem
 from opencontext_py.apps.ocitems.subjects.supplement import SubjectSupplement
@@ -45,7 +46,7 @@ def old_redirect_view(request):
 
 def html_view(request, uuid):
     request = RequestNegotiation().anonymize_request(request)
-    # The client is allowd to see the current item.    
+    # Handle some content negotiation for the item.    
     req_neg = RequestNegotiation('text/html')
     req_neg.supported_types = []
     if 'HTTP_ACCEPT' in request.META:
@@ -57,6 +58,13 @@ def html_view(request, uuid):
     ocitem = OCitem()
     ocitem.get_item(uuid)
     if not ocitem.manifest:
+        # Did not find a record for the table, check for redirects
+        r_url = RedirectURL()
+        r_ok = r_url.get_direct_by_type_id(ITEM_TYPE, uuid)
+        if r_ok:
+            # found a redirect!!
+            return redirect(r_url.redirect, permanent=r_url.permanent)
+        # raise Http404
         raise Http404
     # check to see if there's related data via API calls. Add if so.
     request.uuid = ocitem.manifest.uuid
@@ -128,6 +136,11 @@ def json_view(request, uuid):
     """Returns a JSON media response for an item"""
     return items_graph(
         request, uuid, return_media='application/json', item_type=ITEM_TYPE)
+
+def geojson_view(request, uuid):
+    """Returns a GeoJSON media response for an item"""
+    return items_graph(
+        request, uuid, return_media='application/vnd.geo+json', item_type=ITEM_TYPE)
 
 def jsonld_view(request, uuid):
     """Returns a JSON-LD media response for an item"""
