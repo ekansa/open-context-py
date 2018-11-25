@@ -118,7 +118,6 @@ urlpatterns = [
     url(r'^documents/(?P<uuid>\S+)?.rdf', DocumentViews.rdf_view, name='documents_rdf'),
     url(r'^documents/(?P<uuid>\S+)?.ttl', DocumentViews.turtle_view, name='documents_turtle'),
     url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
-    # url(r'^documents', DocumentViews.index, name='documents_index'),
     url(r'^documents', DocumentViews.index, name='documents_index'),
     # Person views for Person / organization items
     url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='persons_json'),
@@ -136,11 +135,13 @@ urlpatterns = [
     url(r'^projects/(?P<uuid>\S+)', ProjectViews.html_view, name='projects_html'),
     url(r'^project-layers/(?P<uuid>\S+)', ProjectViews.layers_view, name='projects_layers'),
     url(r'^projects', ProjectViews.index, name='projects_search_html_s'),
-    # url(r'^projects', AboutViews.index_view, name='about_index'),
     # Predicates views for descriptive variables and linking relations from OC contributors
+    url(r'^predicates/(?P<uuid>\S+)?.jsonld', PredicateViews.jsonld_view, name='predicates_jsonld'),
     url(r'^predicates/(?P<uuid>\S+).json', PredicateViews.json_view, name='predicates_json'),
+    url(r'^predicates/(?P<uuid>\S+)?.nt', PredicateViews.ntrpls_view, name='predicates_ntrpls'),
+    url(r'^predicates/(?P<uuid>\S+)?.rdf', PredicateViews.rdf_view, name='predicates_rdf'),
+    url(r'^predicates/(?P<uuid>\S+)?.ttl', PredicateViews.turtle_view, name='predicates_turtle'),
     url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='predicates_html'),
-    # url(r'^predicates', PredicateViews.index, name='predicates_index'),
     url(r'^predicates', AboutViews.index_view, name='about_index'),
     # Types views for controlled vocabulary entities from OC contributors
     url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
