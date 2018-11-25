@@ -7,10 +7,10 @@
     
     {% if item.href != False %}
     <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.json" />
-    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.json" />
+    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.jsonld" />
     {% else %}
     <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
-    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
+    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.jsonld" />
     {%endif%}
     
     <!-- Start of Bibliographic Metadata -->    
