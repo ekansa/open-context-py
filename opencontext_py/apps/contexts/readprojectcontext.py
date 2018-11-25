@@ -147,6 +147,22 @@ class ReadProjectContextVocabGraph():
                         datatype = self.context['@context'][slug_uri]['type']
         return datatype
 
+    def get_equivalent_objects(self, info_dict):
+        """ Gets equivalent linked data dicts associated with an
+            info_dict.
+        """
+        equiv_uris = []
+        equiv_objects = []
+        for rel_pred in self.REL_PREDICATES_FOR_INFERRENCE:
+            if rel_pred in info_dict:
+                for equiv_obj in info_dict[rel_pred]:
+                    equiv_uri = self.get_id_from_g_obj(equiv_obj)
+                    if equiv_uri and equiv_uri not in equiv_uris:
+                        # make sure that the equivalent URIs are unique
+                        equiv_uris.append(equiv_uri)
+                        equiv_objects.append(equiv_obj)
+        return equiv_objects
+
     def infer_assertions_for_item_json_ld(self, json_ld):
         """ makes a list of inferred assertions from item json ld """
         inferred_assertions = []
@@ -155,53 +171,58 @@ class ReadProjectContextVocabGraph():
                 unique_pred_assertions = LastUpdatedOrderedDict()
                 for obs_dict in json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]:
                     for obs_pred_key, obj_values in obs_dict.items():
-                        obs_pred_info = self.lookup_predicate(obs_pred_key)
                         assertion = None
-                        equiv_pred_uri = None
-                        for rel_pred in self.REL_PREDICATES_FOR_INFERRENCE:
-                            if rel_pred in obs_pred_info:
-                                # the observation predicate has an equivalence
-                                # to another LOD property. So, we need to make
-                                # inferred description of this item.
-                                #
-                                # we will only care about the first equivalent
-                                # LOD property. Otherwise, too complicated.
-                                equiv_pred_obj = obs_pred_info[rel_pred][0]
-                                equiv_pred_uri = self.get_id_from_g_obj(equiv_pred_obj)
-                                if isinstance(equiv_pred_uri, str):
-                                    # inferred assertions will have unique LOD predicates, with
-                                    # one or more values. The unique_pred_assertions dict makes
-                                    # sure the LOD predicates are used only once.
-                                    if equiv_pred_uri not in unique_pred_assertions:
-                                        assertion = equiv_pred_obj
-                                        assertion['objects'] = LastUpdatedOrderedDict()
-                                        assertion['oc_objects'] = LastUpdatedOrderedDict()
-                                        assertion['literals'] = []
-                                        unique_pred_assertions[equiv_pred_uri] = assertion
-                                    assertion = unique_pred_assertions[equiv_pred_uri]
-                                    break
-                        if isinstance(assertion, dict) and isinstance(equiv_pred_uri, str):
+                        obs_pred_info = self.lookup_predicate(obs_pred_key)
+                        equiv_pred_objs = self.get_equivalent_objects(obs_pred_info)
+                        if len(equiv_pred_objs):
+                            # we're ony going to use the first equivalent of a predicate
+                            # otherwise this gets too complicated
+                            equiv_pred_obj = equiv_pred_objs[0]
+                            equiv_pred_uri = self.get_id_from_g_obj(equiv_pred_obj)
+                            # inferred assertions will have unique LOD predicates, with
+                            # one or more values. The unique_pred_assertions dict makes
+                            # sure the LOD predicates are used only once.
+                            if equiv_pred_uri not in unique_pred_assertions:
+                                assertion = equiv_pred_obj
+                                assertion['ld_objects'] = LastUpdatedOrderedDict()
+                                assertion['oc_objects'] = LastUpdatedOrderedDict()
+                                assertion['literals'] = []
+                                unique_pred_assertions[equiv_pred_uri] = assertion
+                            assertion = unique_pred_assertions[equiv_pred_uri]
+                        if assertion and equiv_pred_uri:
                             # we have a LOD equvalient property
                             if not isinstance(obj_values, list):
                                 obj_values = [obj_values]
                             for obj_val in obj_values:
+                                literal_val = None
                                 if not isinstance(obj_val, dict):
                                     # the object of the assertion is not a dict, so it must be
                                     # a literal
+                                    literal_val = obj_val
                                     if obj_val not in assertion['literals']:
+                                        has_literal = True
                                         assertion['literals'].append(obj_val)
                                 else:
                                     if 'xsd:string' in obj_val:
-                                        if obj_val['xsd:string'] not in assertion['literals']:
-                                            # makes sure we've got unique string literals
-                                            assertion['literals'].append(obj_val['xsd:string'])
-                                    else:
-                                        # add any linked data equivalences by looking for this
-                                        # type in the graph list
-                                        obj_val = self.lookup_type_by_type_obj(obj_val)         
-                                        for rel_pred in self.REL_PREDICATES_FOR_INFERRENCE:
-                                            if rel_pred in obj_val: 
-                                                # the type object has Linked Data equivalence(s)
-                                                for equiv_type_obj in obj_val[rel_pred]:
-                                                    pass
-                                    
+                                        literal_val = obj_val['xsd:string']
+                                if literal_val and literal_val not in assertion['literals']:
+                                    assertion['literals'].append(literal_val)
+                                if literal_val is None:
+                                    # add any linked data equivalences by looking for this
+                                    # type in the graph list
+                                    obj_val = self.lookup_type_by_type_obj(obj_val)
+                                    obj_uri = self.get_id_from_g_obj(obj_val)
+                                    equiv_obj_objs = self.get_equivalent_objects(obj_val)           
+                                    if len(equiv_obj_objs):
+                                        # we have LD equivalents for the object value
+                                        for equiv_obj_obj in equiv_obj_objs:
+                                            equiv_obj_uri = self.get_id_from_g_obj(equiv_obj_obj)
+                                            assertion['ld_objects'][equiv_obj_uri] = equiv_obj_obj
+                                    elif obj_uri:
+                                        # we don't have LD equivalents for the object value
+                                        # add to the oc_objects
+                                        assertion['oc_objects'][obj_uri] = obj_val
+                                    unique_pred_assertions[equiv_pred_uri] = assertion
+                for pred_key, assertion in unique_pred_assertions.items():                            
+                    inferred_assertions.append(assertion)
+        return inferred_assertions
