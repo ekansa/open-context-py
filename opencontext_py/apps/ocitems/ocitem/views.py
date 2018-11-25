@@ -70,10 +70,13 @@ def items_graph(request, identifier, return_media=None, item_type=None):
         patch_vary_headers(response, ['accept', 'Accept', 'content-type'])
         return response
     # We're outputing JSON
-    if req_neg.use_response_type == 'application/ld+json':
+    if (req_neg.use_response_type == 'application/ld+json' or
+        return_media == 'application/ld+json'):
         # A hack to remove non-point features so JSON-LD will validate.
-        oc_item.json_ld = strip_non_point_features(oc_item.json_ld)
-    json_output = json.dumps(oc_item.json_ld,
+        json_ld = strip_non_point_features(oc_item.json_ld)
+    else:
+        json_ld = oc_item.json_ld
+    json_output = json.dumps(json_ld,
                              indent=4,
                              ensure_ascii=False)
     if 'callback' in request.GET:
