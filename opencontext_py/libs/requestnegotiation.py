@@ -53,6 +53,14 @@ class RequestNegotiation():
              or 'text/plain' in client_accepts) \
              and 'text/' in self.default_type:
             self.use_response_type = self.default_type
+        elif (self.default_type in client_accepts and
+              client_accepts.startswith('application/ld+json') and
+              'application/ld+json' in self.supported_types):
+            # This satisfies the JSON-LD playground, which is OK
+            # with both json and json-ld media types, but which
+            # will only get JSON, so may get upset with list-of-list
+            # GeoJSON features which normal people are OK with.
+            self.use_response_type = 'application/ld+json' 
         elif self.default_type in client_accepts:
             # client accepts our default
             self.use_response_type = self.default_type
