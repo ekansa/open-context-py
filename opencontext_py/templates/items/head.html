@@ -6,12 +6,25 @@
     <link rel="canonical" href="{{ item.id }}" />
     
     {% if item.href != False %}
+    {% if item.geo != False %}
+    <link type="application/vnd.geo+json" rel="alternate" title="GeoJSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.geojson" />
+    {%endif%}
     <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.json" />
     <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.jsonld" />
+    <link type="application/n-triples" rel="alternate" title="N3 Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.nt" />
+    <link type="application/rdf+xml" rel="alternate" title="RDF-XML Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.rdf" />
+    <link type="text/turtle" rel="alternate" title="Turtle (RDF) Representation of {{ item.label }}" href="{{base_url}}/{{ item.href }}.ttl" />
     {% else %}
-    <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
-    <link type="application/ld+json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.jsonld" />
+    {% if item.geo != False %}
+    <link type="application/vnd.geo+json" rel="alternate" title="GeoJSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.geojson" />
     {%endif%}
+    <link type="application/json" rel="alternate" title="JSON(-LD) Representation of {{ item.label }}" href="{{ item.id }}.json" />
+    <link type="application/ld+json" rel="alternate" title="JSON-LD Representation of {{ item.label }}" href="{{ item.id }}.jsonld" />
+    <link type="application/n-triples" rel="alternate" title="N3 Representation of {{ item.label }}" href="{{ item.id }}.nt" />
+    <link type="application/rdf+xml" rel="alternate" title="RDF-XML Representation of {{ item.label }}" href="{{ item.id }}.rdf" />
+    <link type="text/turtle" rel="alternate" title="Turtle (RDF) Representation of {{ item.label }}" href="{{ item.id }}.ttl" />
+    {%endif%}
+    
     
     <!-- Start of Bibliographic Metadata -->    
     <link rel="schema.DC" href="http://purl.org/dc/terms/" />
