@@ -120,10 +120,12 @@ urlpatterns = [
     url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
     url(r'^documents', DocumentViews.index, name='documents_index'),
     # Person views for Person / organization items
+    url(r'^persons/(?P<uuid>\S+)?.jsonld', PersonViews.jsonld_view, name='persons_jsonld'),
     url(r'^persons/(?P<uuid>\S+).json', PersonViews.json_view, name='persons_json'),
+    url(r'^persons/(?P<uuid>\S+)?.nt', PersonViews.ntrpls_view, name='persons_ntrpls'),
+    url(r'^persons/(?P<uuid>\S+)?.rdf', PersonViews.rdf_view, name='persons_rdf'),
+    url(r'^persons/(?P<uuid>\S+)?.ttl', PersonViews.turtle_view, name='persons_turtle'),
     url(r'^persons/(?P<uuid>\S+)', PersonViews.html_view, name='persons_html'),
-    # url(r'^persons', PersonViews.index, name='persons_index'),
-    url(r'^persons/(?P<uuid>\S+)', AboutViews.index_view, name='about_index'),
     url(r'^persons', AboutViews.index_view, name='about_index'),
     # Project views for projects
     url(r'^projects/(?P<uuid>\S+)?.jsonld', ProjectViews.jsonld_view, name='projects_jsonld'),
@@ -150,8 +152,7 @@ urlpatterns = [
     url(r'^types/(?P<uuid>\S+)?.rdf', OCtypeViews.rdf_view, name='types_rdf'),
     url(r'^types/(?P<uuid>\S+)?.ttl', OCtypeViews.turtle_view, name='types_turtle'),
     url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
-    # url(r'^types', OCtypeViews.index, name='types_index'),
-    url(r'^types', AboutViews.index_view, name='about_index'),
+    url(r'^types', OCtypeViews.index, name='types_index'),
     # Table views for controlled downloadable tables
     url(r'^tables/(?P<table_id>\S+).json', OCtableViews.json_view, name='tables_json'),
     url(r'^tables/(?P<table_id>\S+).csv', OCtableViews.csv_view, name='tables_csv'),
