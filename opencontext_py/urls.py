@@ -61,8 +61,13 @@ urlpatterns = [
     url(r'^contexts/search.json', ContextViews.search_view, name='context_search'),
     url(r'^contexts/projects/(?P<uuid>\S+)?.json', ContextViews.projects_json, name='context_proj_json'),
     url(r'^contexts/projects/(?P<uuid>\S+)?', ContextViews.projects_json, name='context_proj_gen'),
-    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.json', ContextViews.project_vocabs_json, name='context_proj_vocab_gen'),
-    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?', ContextViews.project_vocabs_json, name='context_proj_vocab_gen'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.json', ContextViews.project_vocabs_json, name='context_proj_vocab_json'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.jsonld', ContextViews.project_vocabs_jsonld, name='context_proj_vocab_jsonld'),
+    # url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.nq', ContextViews.project_vocabs_nquads, name='context_proj_vocab_nquads'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.nt', ContextViews.project_vocabs_ntrpls, name='context_proj_vocab_ntrpls'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.rdf', ContextViews.project_vocabs_rdf, name='context_proj_vocab_rdf'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?.ttl', ContextViews.project_vocabs_turtle, name='project_vocabs_turtle'),
+    url(r'^contexts/project-vocabs/(?P<uuid>\S+)?', ContextViews.project_vocabs, name='context_proj_vocab_gen'),
     url(r'^contexts', AboutViews.index_view, name='about_index'),
     # Sets views
     url(r'^sets/(?P<spatial_context>\S+)?.json', SearchViews.sets_view, name='sets_json'),
@@ -88,6 +93,10 @@ urlpatterns = [
     # Subjects views for main records (subjects of observations)
     url(r'^database/space.php', SubjectViews.old_redirect_view, name='old_redirect_html'),
     url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
+    url(r'^subjects/(?P<uuid>\S+)?.jsonld', SubjectViews.jsonld_view, name='subjects_jsonld'),
+    url(r'^subjects/(?P<uuid>\S+)?.nt', SubjectViews.ntrpls_view, name='subjects_ntrpls'),
+    url(r'^subjects/(?P<uuid>\S+)?.rdf', SubjectViews.rdf_view, name='subjects_rdf'),
+    url(r'^subjects/(?P<uuid>\S+)?.ttl', SubjectViews.turtle_view, name='subjects_turtle'),
     url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
     url(r'^subjects', SubjectViews.index, name='subjects_index_html_s'),
     # Media views (media resources / metadata + binary files)
