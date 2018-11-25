@@ -3,7 +3,7 @@ import json
 
 from django.conf import settings
 from django.http import HttpResponse
-
+from opencontext_py.libs.general import LastUpdatedOrderedDict
 from rdflib.plugin import register, Parser
 from rdflib import ConjunctiveGraph, Graph, URIRef, Literal
 
@@ -77,6 +77,18 @@ def graph_serialize(graph_media_type, json_ld, id=None):
         return None
     return output
 
+def make_point_feature_list(old_features):
+    """Makes a new list of point-only features."""
+    new_features = []
+    for feature in old_features:
+        if 'geometry' not in feature:
+            continue
+        if 'type' not in feature['geometry']:
+            continue
+        if feature['geometry']['type'].lower() == 'point':
+            new_features.append(feature)
+    return new_features
+
 def strip_non_point_features(json_ld):
     """Removes non point features from a JSON-LD response."""
     # This is a HACK, but useful for the short term because JSON-LD
@@ -86,13 +98,11 @@ def strip_non_point_features(json_ld):
         return json_ld
     if 'features' not in json_ld:
         return json_ld
-    new_features = []
-    for feature in json_ld['features']:
-        if 'geometry' not in feature:
-            continue
-        if 'type' not in feature['geometry']:
-            continue
-        if feature['geometry']['type'].lower() == 'point':
-            new_features.append(feature)
-    json_ld['features'] = new_features
-    return json_ld
+    new_json_ld = LastUpdatedOrderedDict()
+    for key, vals in json_ld.items():
+        if key == 'features':
+            new_json_ld['features'] = make_point_feature_list(
+                                        json_ld['features'])
+        else:
+            new_json_ld[key] = vals
+    return new_json_ld
