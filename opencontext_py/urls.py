@@ -144,7 +144,11 @@ urlpatterns = [
     url(r'^predicates/(?P<uuid>\S+)', PredicateViews.html_view, name='predicates_html'),
     url(r'^predicates', AboutViews.index_view, name='about_index'),
     # Types views for controlled vocabulary entities from OC contributors
+    url(r'^types/(?P<uuid>\S+)?.jsonld', OCtypeViews.jsonld_view, name='types_jsonld'),
     url(r'^types/(?P<uuid>\S+).json', OCtypeViews.json_view, name='types_json'),
+    url(r'^types/(?P<uuid>\S+)?.nt', OCtypeViews.ntrpls_view, name='types_ntrpls'),
+    url(r'^types/(?P<uuid>\S+)?.rdf', OCtypeViews.rdf_view, name='types_rdf'),
+    url(r'^types/(?P<uuid>\S+)?.ttl', OCtypeViews.turtle_view, name='types_turtle'),
     url(r'^types/(?P<uuid>\S+)', OCtypeViews.html_view, name='types_html'),
     # url(r'^types', OCtypeViews.index, name='types_index'),
     url(r'^types', AboutViews.index_view, name='about_index'),
