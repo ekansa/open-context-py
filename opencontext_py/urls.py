@@ -93,6 +93,7 @@ urlpatterns = [
     # Subjects views for main records (subjects of observations)
     url(r'^database/space.php', SubjectViews.old_redirect_view, name='old_redirect_html'),
     url(r'^subjects/(?P<uuid>\S+)?.jsonld', SubjectViews.jsonld_view, name='subjects_jsonld'),
+    url(r'^subjects/(?P<uuid>\S+)?.geojson', SubjectViews.geojson_view, name='subjects_geojson'),
     url(r'^subjects/(?P<uuid>\S+).json', SubjectViews.json_view, name='subjects_json'),
     url(r'^subjects/(?P<uuid>\S+)?.nt', SubjectViews.ntrpls_view, name='subjects_ntrpls'),
     url(r'^subjects/(?P<uuid>\S+)?.rdf', SubjectViews.rdf_view, name='subjects_rdf'),
@@ -100,7 +101,12 @@ urlpatterns = [
     url(r'^subjects/(?P<uuid>\S+)', SubjectViews.html_view, name='subjects_html'),
     url(r'^subjects', SubjectViews.index, name='subjects_index_html_s'),
     # Media views (media resources / metadata + binary files)
+    url(r'^media/(?P<uuid>\S+)?.jsonld', MediaViews.jsonld_view, name='media_jsonld'),
+    url(r'^media/(?P<uuid>\S+)?.geojson', MediaViews.geojson_view, name='media_geojson'),
     url(r'^media/(?P<uuid>\S+).json', MediaViews.json_view, name='media_json'),
+    url(r'^media/(?P<uuid>\S+)?.nt', MediaViews.ntrpls_view, name='media_ntrpls'),
+    url(r'^media/(?P<uuid>\S+)?.rdf', MediaViews.rdf_view, name='media_rdf'),
+    url(r'^media/(?P<uuid>\S+)?.ttl', MediaViews.turtle_view, name='media_turtle'),
     url(r'^media/(?P<uuid>\S+)/full', MediaViews.html_full, name='media_full'),
     url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
     url(r'^media', MediaViews.index, name='media_index_html_s'),
