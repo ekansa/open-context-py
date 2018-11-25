@@ -1,3 +1,4 @@
+import json
 from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -12,6 +13,41 @@ class GeneralContext():
     
     GEO_JSON_CONTEXT_URI = 'http://geojson.org/geojson-ld/geojson-context.jsonld'
     
+    # Cache the GeoJSON context locally so that we can use this in
+    # cases of a deployment that has no larger Web access.
+    GEO_JSON_CONTEXT = """
+{
+  "@context": {
+    "geojson": "https://purl.org/geojson/vocab#",
+    "Feature": "geojson:Feature",
+    "FeatureCollection": "geojson:FeatureCollection",
+    "GeometryCollection": "geojson:GeometryCollection",
+    "LineString": "geojson:LineString",
+    "MultiLineString": "geojson:MultiLineString",
+    "MultiPoint": "geojson:MultiPoint",
+    "MultiPolygon": "geojson:MultiPolygon",
+    "Point": "geojson:Point",
+    "Polygon": "geojson:Polygon",
+    "bbox": {
+      "@container": "@list",
+      "@id": "geojson:bbox"
+    },
+    "coordinates": {
+      "@container": "@list",
+      "@id": "geojson:coordinates"
+    },
+    "features": {
+      "@container": "@set",
+      "@id": "geojson:features"
+    },
+    "geometry": "geojson:geometry",
+    "id": "@id",
+    "properties": "geojson:properties",
+    "type": "@type"
+  }
+}
+"""
+
     def __init__(self, id_href=True):
         # for geo_json_context
         self.geo_json_context = self.GEO_JSON_CONTEXT_URI
@@ -47,6 +83,10 @@ class GeneralContext():
             if pred not in context:
                 context[pred] = {'@container': '@language'}
         self.context = context
+    
+    def geo_json_dict(self):
+        """ Returns the GeoJSON context as a dictionary object """
+        return json.loads(self.GEO_JSON_CONTEXT)
 
 
 class ItemContext():
@@ -54,7 +94,8 @@ class ItemContext():
     General namespaces used for JSON-LD
     for Items
     """
-    DOI = 'http://doi.org/10.6078/M7P848VC'  # DOI for this
+    DOI = 'https://doi.org/10.6078/M7P848VC'  # DOI for this
+    URL = 'https://raw.githubusercontent.com/ekansa/open-context-py/master/json-ld-examples/Item-context.json'
 
     def __init__(self, id_href=True):
         self.id = self.DOI  # DOI for this
@@ -111,7 +152,8 @@ class SearchContext():
     for faceted search
     """
 
-    DOI = 'http://dx.doi.org/10.6078/M7JH3J42'  # DOI for this
+    DOI = 'https://doi.org/10.6078/M7JH3J42'  # DOI for this
+    URL = 'https://raw.githubusercontent.com/ekansa/open-context-py/master/json-ld-examples/Search-context.json'
 
     def __init__(self, id_href=True):
         self.id = self.DOI  # DOI for this

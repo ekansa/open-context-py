@@ -7,6 +7,7 @@ from django.conf import settings
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.generalapi import GeneralAPI
+from opencontext_py.libs.requestnegotiation import RequestNegotiation
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.entities.entity.templating import EntityTemplate
 from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
@@ -14,7 +15,7 @@ from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
 from django.views.decorators.cache import cache_control
 from django.views.decorators.cache import never_cache
-from opencontext_py.apps.ocitems.ocitem.generation import OCitem
+from opencontext_py.apps.ocitems.ocitem.views import items_graph
 
 
 # These views display an HTML form for classifying import fields,
@@ -369,16 +370,4 @@ def proxy_header(request, target_url):
 def items_json(request, identifier):
     # testing for using the new Open Context OCitem generator
     # that better integrates caching
-    oc_item = OCitem()
-    if 'hashes' in request.GET:
-        oc_item.assertion_hashes = True
-    exists = oc_item.check_exists(identifier)
-    if exists:
-        oc_item.generate_json_ld()
-        json_output = json.dumps(oc_item.json_ld,
-                                 indent=4,
-                                 ensure_ascii=False)
-        return HttpResponse(json_output,
-                            content_type='application/json; charset=utf8')
-    else:
-        raise Http404
+    return items_graph(request, identifier, return_media='application/ld+json')

@@ -1158,6 +1158,12 @@ gimp.save_no_coord_file(json_obj, 'pc-geo', 'id-clean-coord-pc_trenches_2017_432
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
+from opencontext_py.apps.ocitems.geospace.models import Geospace
+print('Delete old botany-areas geospatial data')
+Geospace.objects\
+        .filter(source_id='botany-areas',
+                project_uuid='10aa84ad-c5de-4e79-89ce-d83b75ed72b5',
+                ftype__in=['Polygon', 'Multipolygon']).delete()
 gimp = GeoJSONimport()
 gimp.load_into_importer = False
 gimp.project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
@@ -1165,7 +1171,7 @@ gimp.source_id = 'botany-areas'
 id_prop = 'LocalArea'
 ok_ids = False
 projects=['10aa84ad-c5de-4e79-89ce-d83b75ed72b5', '5A6DDB94-70BE-43B4-2D5D-35D983B21515']
-json_obj = gimp.load_json_file('giza-areas', 'botany-areas.geojson')
+json_obj = gimp.load_json_file('giza-areas', 'botany-areas-revised.geojson')
 rev_json = LastUpdatedOrderedDict()
 rev_json['features'] = []
 for feat in json_obj['features']:
@@ -1182,8 +1188,84 @@ for feat in json_obj['features']:
         print('Cannot find: ' + area_name)
         
 
-gimp.save_json_file(rev_json, 'giza-areas', 'botany-areas-w-uris.geojson')
-gimp.process_features_in_file('giza-areas', 'botany-areas-w-uris.geojson')
+gimp.save_json_file(rev_json, 'giza-areas', 'botany-areas-revised-w-uris.geojson')
+gimp.process_features_in_file('giza-areas', 'botany-areas-revised-w-uris.geojson')
+gimp.save_no_coord_file(rev_json, 'giza-areas', 'id-clean-coord-botany-areas-revised-w-uris.geojson')
+
+
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+media_uuid = '6d42ad2a-cbc2-46e2-a72c-907607b6fe3c'
+project_uuid = '10aa84ad-c5de-4e79-89ce-d83b75ed72b5'
+
+Assertion.objects\
+         .filter(uuid=project_uuid,
+                 predicate_uuid=Assertion.PREDICATES_GEO_OVERLAY)\
+         .delete()
+
+
+media_man = Manifest.objects.get(uuid=media_uuid)
+if not isinstance(media_man.sup_json, dict):
+    meta = LastUpdatedOrderedDict()
+else:
+    meta = media_man.sup_json
+
+meta['Leaflet'] = LastUpdatedOrderedDict()
+meta['Leaflet']['bounds'] = [[31.138088,	29.972094], [31.135083, 29.973761]]
+meta['Leaflet']['bounds'] = [[29.972094,	31.138088], [29.973761, 31.135083]]
+meta['Leaflet']['label'] = 'Menkaure Valley Temple East Plan'
+media_man.sup_json = meta
+media_man.save()
+
+Assertion.objects\
+         .filter(uuid=project_uuid,
+                 predicate_uuid=Assertion.PREDICATES_GEO_OVERLAY)\
+         .delete()
+
+ass = Assertion()
+ass.uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+ass.subject_type = 'projects'
+ass.project_uuid = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+ass.source_id = 'test-geo-overlay'
+ass.obs_node = '#obs-' + str(1)
+ass.obs_num =  1
+ass.sort = 1
+ass.visibility = 1
+ass.predicate_uuid = Assertion.PREDICATES_GEO_OVERLAY
+ass.object_uuid = media_man.uuid
+ass.object_type = media_man.item_type
+ass.save()
+ass = Assertion()
+ass.uuid = project_uuid
+ass.subject_type = 'projects'
+ass.project_uuid = project_uuid
+ass.source_id = 'test-geo-overlay'
+ass.obs_node = '#obs-' + str(1)
+ass.obs_num =  1
+ass.sort = 1
+ass.visibility = 1
+ass.predicate_uuid = Assertion.PREDICATES_GEO_OVERLAY
+ass.object_uuid = 'da676164-9829-4798-bb5d-c5b1135daa27'
+ass.object_type = 'media'
+ass.save()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1448,6 +1530,57 @@ for man_obj in man_fixes:
     sg = SubjectGeneration()
     sg.generate_save_context_path_from_uuid(man_obj.uuid)
     
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+
+Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid='2176cb88-bcb4-4ad9-b4aa-e9009b8c4a66').exclude(uuid='FEC673D2-C1F0-4B62-BF66-29127AE2AE11').delete()
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
+from opencontext_py.apps.ocitems.subjects.models import Subject
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from django.core.cache import caches
+cache = caches['redis']
+cache.clear()
+cache = caches['default']
+cache.clear()
+cache = caches['memory']
+cache.clear()
+bad_subs = Subject.objects.filter(context__contains='/Egypt/')
+bad_uuids = [bs.uuid for bs in bad_subs]
+bad_man_objs = Manifest.objects.filter(uuid__in=bad_uuids, class_uri__in=['oc-gen:cat-feature'])
+bad_feats = [bm.uuid for bm in bad_man_objs]
+f_subs = Subject.objects.filter(uuid__in=bad_feats)
+for bad_sub in bad_subs:
+    sg = SubjectGeneration()
+    sg.generate_save_context_path_from_uuid(bad_sub.uuid)
+
+
+
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+keep_proj = '5A6DDB94-70BE-43B4-2D5D-35D983B21515'
+keep_p = 'bd0a8c74-c3fe-47bb-bb1a-be067e101069'
+keep_p_asses = Assertion.objects.filter(uuid=keep_p, predicate_uuid=Assertion.PREDICATES_CONTAINS)
+for keep_p_ch in keep_p_asses:
+    ch_uuid = keep_p_ch.object_uuid
+    bad_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=ch_uuid).exclude(uuid=keep_p)
+    if len(bad_asses):
+        print('Remove erroneous parents for :' + ch_uuid)
+        bad_asses.delete()
+    good_asses = Assertion.objects.filter(uuid=keep_p, predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=ch_uuid)
+    if len(good_asses) > 1:
+        print('More than 1 parent for :' + ch_uuid)
+        redund_ass = Assertion.objects.filter(uuid=keep_p, predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=ch_uuid).exclude(project_uuid=keep_proj)
+        if len(redund_ass) < len(good_asses):
+            print('Delete redundant for ' + ch_uuid)
+            redund_ass.delete()
+    
+    
+    bad_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=ch_uuid).exclude(uuid=mvt)
+    if len(bad_asses):
+        print('delete wrong for: ' + ch_uuid )
+        bad_asses.delete()
+    m_asses = Assertion.objects.filter(predicate_uuid=Assertion.PREDICATES_CONTAINS, object_uuid=ch_uuid).exclude(uuid=mvt)
+
 
 
 
@@ -1523,3 +1656,214 @@ for keep_man in keeps_mans:
         dm = DeleteMerge()
         dm.merge_by_uuid(delete_uuid, merge_into_uuid)
 
+
+
+from opencontext_py.apps.edit.items.deletemerge import DeleteMerge
+
+delete_uuid = '12b6512b-22bc-4eb7-b23d-868aff7b380a'
+merge_into_uuid = '9a567a71-1cc7-4e51-8e8f-79e0a46e0f40'
+dm = DeleteMerge()
+dm.merge_by_uuid(delete_uuid, merge_into_uuid)
+
+
+
+# This following is for fixing the hieararchy for existing plant remains
+# in Open Context
+from django.core.cache import caches
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ocitems.octypes.models import OCtype
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+plant_uri = 'http://eol.org/pages/281'
+pred_fam = '5DBFAB49-7FDC-4AD3-27A6-89CF48F0C75C' # family
+pred_sp = 'B7CDA162-0316-4456-ABF0-7E58C6C23EDC' # species
+act_types = OCtype.objects.filter(predicate_uuid=pred_sp)
+type_uuids = [t.uuid for t in act_types]
+done_fams = []
+for s_type in type_uuids:
+    cache = caches['redis']
+    cache.clear()
+    cache = caches['default']
+    cache.clear()
+    s_eol_la = LinkAnnotation.objects.filter(subject=s_type, object_uri__contains='http://eol')[:1]
+    if not len(s_eol_la):
+        # ignore the rest
+        continue
+    s_eol_uri = s_eol_la[0].object_uri
+    s_ass = Assertion.objects.filter(object_uuid=s_type)[:1][0]
+    f_ass = Assertion.objects.filter(uuid=s_ass.uuid, predicate_uuid=pred_fam)[:1][0]
+    f_man = Manifest.objects.get(uuid=f_ass.object_uuid)
+    f_eol_la = LinkAnnotation.objects.filter(subject=f_man.uuid, object_uri__contains='http://eol')[:1]
+    if not len(f_eol_la):
+        continue
+    f_eol_uri = f_eol_la[0].object_uri
+    if f_eol_uri not in done_fams:
+        print('\n')
+        print('Add hierachy to f_uri: '+ f_eol_uri)
+        LinkAnnotation.objects.filter(subject__contains='http://eol', object_uri=f_eol_uri).delete()
+        lam = LinkAnnoManagement()
+        lam.add_skos_hierarachy(plant_uri, f_eol_uri)
+    print('\n')
+    print('Add hierachy to s_uri: '+ s_eol_uri)
+    LinkAnnotation.objects.filter(subject=s_eol_uri,  object_uri__contains='http://eol').delete()
+    LinkAnnotation.objects.filter(subject__contains='http://eol', object_uri=s_eol_uri).delete()
+    lam = LinkAnnoManagement()
+    lam.add_skos_hierarachy(f_eol_uri, s_eol_uri)
+
+
+
+
+
+from opencontext_py.apps.ldata.linkannotations.models import LinkAnnotation
+from opencontext_py.apps.ldata.linkannotations.manage import LinkAnnoManagement
+from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
+from django.core.cache import caches
+plant_uri = 'http://eol.org/pages/281'
+done_fams = []
+f_s = [
+('http://eol.org/pages/4076', 'http://eol.org/pages/632799', ),
+('http://eol.org/pages/4200', 'http://eol.org/pages/477954', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/38104', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/44923', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/475430', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/5111389', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/59386', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/6182968', ),
+('http://eol.org/pages/4206', 'http://eol.org/pages/6884304', ),
+('http://eol.org/pages/4219', 'http://eol.org/pages/38044', ),
+('http://eol.org/pages/4219', 'http://eol.org/pages/584018', ),
+('http://eol.org/pages/4229', 'http://eol.org/pages/37656', ),
+('http://eol.org/pages/4230', 'http://eol.org/pages/37754', ),
+('http://eol.org/pages/4230', 'http://eol.org/pages/585884', ),
+('http://eol.org/pages/4230', 'http://eol.org/pages/586723', ),
+('http://eol.org/pages/4231', 'http://eol.org/pages/483312', ),
+('http://eol.org/pages/4234', 'http://eol.org/pages/587111', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/11911326', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/13463', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/13650', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/27787', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/27789', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/27793', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/27812', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/27877', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/28123', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/28131', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/28324', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/647510', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/685208', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/687277', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/688445', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703168', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703183', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703192', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703201', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703202', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703383', ),
+('http://eol.org/pages/4277', 'http://eol.org/pages/703648', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/489676', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/49195', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/5352709', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/5355813', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/590604', ),
+('http://eol.org/pages/4301', 'http://eol.org/pages/61209', ),
+('http://eol.org/pages/4302', 'http://eol.org/pages/2894369', ),
+('http://eol.org/pages/4315', 'http://eol.org/pages/581568', ),
+('http://eol.org/pages/4321', 'http://eol.org/pages/584653', ),
+('http://eol.org/pages/4321', 'http://eol.org/pages/61013', ),
+('http://eol.org/pages/4364', 'http://eol.org/pages/38064', ),
+('http://eol.org/pages/4364', 'http://eol.org/pages/38335', ),
+('http://eol.org/pages/4364', 'http://eol.org/pages/587351', ),
+('http://eol.org/pages/4381', 'http://eol.org/pages/2885426', ),
+('http://eol.org/pages/4382', 'http://eol.org/pages/582304', ),
+('http://eol.org/pages/4426', 'http://eol.org/pages/579181', ),
+('http://eol.org/pages/4437', 'http://eol.org/pages/581037', ),
+('http://eol.org/pages/4450', 'http://eol.org/pages/491538', ),
+('http://eol.org/pages/4450', 'http://eol.org/pages/594632', ),
+('http://eol.org/pages/4450', 'http://eol.org/pages/60627', ),
+('http://eol.org/pages/4464', 'http://eol.org/pages/5743200', ),
+('http://eol.org/pages/4464', 'http://eol.org/pages/585675', ),
+('http://eol.org/pages/4464', 'http://eol.org/pages/60977', ),
+('http://eol.org/pages/8097', 'http://eol.org/pages/231567', ),
+('http://eol.org/pages/8097', 'http://eol.org/pages/30108', ),
+('http://eol.org/pages/8193', 'http://eol.org/pages/1135088', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1119225', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1120155', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1121553', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1121991', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1122153', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/1122179', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/249606', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/29129', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/29130', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/29150', ),
+('http://eol.org/pages/8211', 'http://eol.org/pages/30089', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108051', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108054', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108065', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108079', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108088', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108090', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108094', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108108', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/108128', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1114086', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1114455', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1114735', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1114980', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1115240', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/1115242', ),
+('http://eol.org/pages/8223', 'http://eol.org/pages/2896418', ),  
+]
+for f_eol_uri, s_eol_uri in f_s:
+    cache = caches['redis']
+    cache.clear()
+    cache = caches['default']
+    cache.clear()
+    if f_eol_uri not in done_fams:
+        print('\n')
+        print('Add hierachy to f_uri: '+ f_eol_uri)
+        # LinkAnnotation.objects.filter(subject__contains='http://eol', object_uri=f_eol_uri).delete()
+        lam = LinkAnnoManagement()
+        lam.add_skos_hierarachy(plant_uri, f_eol_uri)
+    print('\n')
+    print('Add hierachy to s_uri: '+ s_eol_uri)
+    LinkAnnotation.objects.filter(subject=s_eol_uri,  object_uri__contains='http://eol').delete()
+    LinkAnnotation.objects.filter(subject__contains='http://eol', object_uri=s_eol_uri).delete()
+    lam = LinkAnnoManagement()
+    lam.add_skos_hierarachy(f_eol_uri, s_eol_uri)
+
+
+
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+LinkEntity.objects.filter(vocab_uri='', uri__startswith='http://www.geonames').update(vocab_uri='http://www.geonames.org')
+fix_vocabs = [
+    ('http://www.geonames.org', 'http://www.geonames.org/',),
+    ('http://www.w3.org/2004/02/skos/core#', 'http://www.w3.org/2004/02/skos/core',),
+    ('http://opencontext.org/vocabularies/oc-general/', 'http://opencontext.org/vocabularies/oc-general',),
+]
+for g_uri, b_uri in fix_vocabs:
+    LinkEntity.objects.filter(vocab_uri=b_uri).update(vocab_uri=g_uri)
+
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+vocab_uris_for_fixtures = [
+    'http://purl.org/dc/terms',
+    'http://www.w3.org/2000/01/rdf-schema#',
+    'http://www.w3.org/2002/07/owl',
+    'http://www.w3.org/2004/02/skos/core#',
+    'http://www.w3.org/2003/01/geo/wgs84_pos#',
+    'http://opencontext.org/vocabularies/oc-general/',
+]
+link_entities_for_fixtures = LinkEntity.objects.filter(vocab_uri__in=vocab_uris_for_fixtures)
+
+
+
+
+from opencontext_py.apps.ldata.linkentities.models import LinkEntity
+from opencontext_py.apps.entities.uri.models import URImanagement
+for le in LinkEntity.objects.all().order_by('vocab_uri', 'uri'):
+    prefix_id = URImanagement.prefix_common_uri(le.uri)
+    uri = URImanagement.convert_prefix_to_full_uri(prefix_id)
+    if le.uri == prefix_id:
+        continue
+    print('\n\n Orig: {}  \n prefix: {}  \n back: {}'.format(le.uri, prefix_id, uri))
