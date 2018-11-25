@@ -111,7 +111,12 @@ urlpatterns = [
     url(r'^media/(?P<uuid>\S+)', MediaViews.html_view, name='media_html'),
     url(r'^media', MediaViews.index, name='media_index_html_s'),
     # Document views for HTML document items
+    url(r'^documents/(?P<uuid>\S+)?.jsonld', DocumentViews.jsonld_view, name='documents_jsonld'),
+    url(r'^documents/(?P<uuid>\S+)?.geojson', DocumentViews.geojson_view, name='documents_geojson'),
     url(r'^documents/(?P<uuid>\S+).json', DocumentViews.json_view, name='documents_json'),
+    url(r'^documents/(?P<uuid>\S+)?.nt', DocumentViews.ntrpls_view, name='documents_ntrpls'),
+    url(r'^documents/(?P<uuid>\S+)?.rdf', DocumentViews.rdf_view, name='documents_rdf'),
+    url(r'^documents/(?P<uuid>\S+)?.ttl', DocumentViews.turtle_view, name='documents_turtle'),
     url(r'^documents/(?P<uuid>\S+)', DocumentViews.html_view, name='documents_html'),
     # url(r'^documents', DocumentViews.index, name='documents_index'),
     url(r'^documents', DocumentViews.index, name='documents_index'),
