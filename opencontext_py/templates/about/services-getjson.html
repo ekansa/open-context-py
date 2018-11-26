@@ -1,6 +1,7 @@
 <h3>Getting JSON(-LD) Data</h3>
 
 <p>Open Context offers two main ways to get JSON-LD data. The better-practice approach relies upon <a title="Wikipedia introduction" href="http://en.wikipedia.org/wiki/Content_negotiation" target="_blank">HTTP content negotiation</a>. The second expedient approach involves adding a <samp>.json</samp> to request URLs. The table below provides examples for using these different approaches.</p>
+
 <table class="table">
     <thead>
         <th class="col-sm-3">Approach</th>
@@ -15,8 +16,9 @@
                 <p>Open Context supports content resolution for both item record and search APIs. To request JSON data, include either of the following in the HTTP header of your request:
                 </p>
                 <ul class="list-unstyled">
-                    <li><samp>Accept: application/json</samp></li>
-                    <li><samp>Accept: application/ld+json</samp></li>
+                    <li><samp>Accept: application/json</samp> (Usually also valid as JSON-LD)</li>
+                    <li><samp>Accept: application/vnd.geo+json</samp> (Usually also valid as JSON-LD)</li>
+                    <li><samp>Accept: application/ld+json</samp> (Strict JSON-LD)</li>
                 </ul>
             </td>
         </tr>
@@ -26,6 +28,7 @@
             </th>
             <td>
                 <p>For individual record items, you can get JSON data by simply adding a "<strong>.json</strong>" to the end of a record's URL. For example, you can get the JSON for this object: <samp><a title="Example pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC</a></samp>, with this URL: <samp><a title="JSON for the pottery object" target="_blank" href="{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC.json">{{ base_url}}/subjects/2CC0F946-95F0-4D40-7753-6C61D3A416CC<strong>.json</strong></a></samp>.</p>
+                <p>Because JSON-LD has some constraints that make it unsuitable to express complex geospatial features (see note below), Open Context allows you to specifically request strict JSON-LD either through content negotiation or by appending <samp>.jsonld</samp> to item URLs.</p>
             </td>
         </tr>
         <tr>
@@ -70,3 +73,22 @@
         </tr>
     </tbody>
 </table>
+
+
+<div id="json-ld-caveat" style="margin-top:20px;">
+    <h4>Notes about GeoJSON, JSON, and JSON-LD</h4>
+    
+    <p>In general, the GeoJSON, JSON, and JSON-LD responses from Open Context are all exactly the same. However, the JSON-LD standard currently has some constraints that make it unsuitable for expressing deeply nested lists of coordinates as required for representing non-point geospatial features. If you specify a JSON-LD response (as opposed to a plain JSON or GeoJSON response), only point geospatial features will be returned by Open Context. This will help keep the JSON-LD response valid, but it will not express richer geospatial data for polygon, multipolygon or line features.</p>
+</div>
+
+<div id="json-ld-caveat" style="margin-top:20px;">
+    <h4>Other Linked Data Representations</h4>
+    
+    <p>Open Context provides preliminary / experimental support for other RDF (linked data) representations via content negotiation or by appending extensions to the URLs of item records. These now include:</p>
+    <ul class="list-unstyled">
+        <li><samp>Accept: application/n-triples</samp>, or extension: <samp>.nt</samp></li>
+        <li><samp>Accept: application/rdf+xml</samp>, or extension: <samp>.rdf</samp></li>
+        <li><samp>Accept: text/turtle</samp>, or extension: <samp>.ttl</samp></li>
+    </ul>
+</div>
+
