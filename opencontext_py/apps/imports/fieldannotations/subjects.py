@@ -875,7 +875,17 @@ class CandidateSubject():
                 self.create_subject_item(sup_metadata)
                 self.is_new = True
         else:
-            if self.label is not False:
+            if self.metadata_obj is not None:
+                # Check if we've alreadu specified the UUID with some associated
+                # metadata for the item.
+                sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                              imp_cell_obj.row_num)
+                meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                if isinstance(meta_uuid, str):
+                    # use the uuid in the metadata!
+                    self.uuid = meta_uuid
+                    match_found = True
+            if self.label and not match_found:
                 # only allow matches on non-blank items when not creating a record
                 match_found = self.match_against_manifest(self.label,
                                                           self.class_uri)
@@ -939,7 +949,7 @@ class CandidateSubject():
 
     def update_import_cell_uuid(self):
         """ Saves the uuid to the import cell record """
-        if self.uuid is not False:
+        if self.uuid:
             if self.import_rows is False:
                 # only update the current import cell object
                 self.imp_cell_obj.fl_uuid = self.uuid
