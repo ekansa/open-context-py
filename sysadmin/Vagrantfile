@@ -155,7 +155,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
       google.zone = "us-central1-f"
 
       google.zone_config "us-central1-f" do |zone1f|
-          zone1f.name = "oc-stretch20181121"
+          zone1f.name = "oc-stretch20181203"
           zone1f.image = "debian-9-stretch-v20180911"
           #zone1f.machine_type = "f1-micro"
           zone1f.machine_type = "n1-standard-2"
