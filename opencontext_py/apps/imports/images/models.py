@@ -16,7 +16,7 @@ ii = ImageImport()
 ii.force_dashes = True
 ii.project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 ii.gaussian_blur_radius = 2
-ii.make_image_versions('new-sphinx-draw')
+ii.make_image_versions('giza-seeds')
 ii.walk_directory('OB_Illustrations')
 ii.make_thumbnail('', 'PhotoID027.jpg')
     """
@@ -63,6 +63,7 @@ ii.make_thumbnail('', 'PhotoID027.jpg')
                     os.mkdir(act_dir)
                     for filename in filenames:
                         src_file = os.path.join(dirpath, filename)
+                        print('Working on src_file: ' + src_file)
                         if self.force_dashes:
                             # make sure the new filenames have dashes, not spaces or underscores
                             filename = filename.replace(' ', '-')
