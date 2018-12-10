@@ -86,4 +86,69 @@ class ReprojectUtilities():
         print('EPSG:3003 x' + str(epsg3003_x))
         print('EPSG:3003 y' + str(epsg3003_y))
         return epsg3003_x, epsg3003_y
-            
+    
+    def reproject_coordinate_pair(self, c_pair):
+        """Reprojects a coordinate pair. """
+        if (not isinstance(c_pair, list) or
+            not len(c_pair) == 2):
+            return None
+        if (not isinstance(c_pair[0], float) or
+            not isinstance(c_pair[1], float)):
+            return None
+        x_in = [c_pair[0]]
+        y_in = [c_pair[1]]
+        # Do the transformation
+        x_list, y_list = self.reproject_coordinates(x_in, y_in)
+        return [x_list[0], y_list[0]]
+    
+    def reproject_coordinate_ring(self, ring_list):
+        """Reprojects a ring of coorindates"""
+        new_ring_list = []
+        for c_pair in ring_list:
+            new_c_pair = self.reproject_coordinate_pair(c_pair)
+            if new_c_pair is not None:
+                new_ring_list.append(new_c_pair)
+        if new_ring_list[0] != new_ring_list[-1]:
+            # Close the ring because the last coordinate needs to
+            # be the same as the first.
+            new_ring_list.append(new_ring_list[0])
+        return new_ring_list
+    
+    def reproject_mulipolygon(self, coordinates, geometry_type='MultiPolygon'):
+        """Reprojects coordinates for a GeoJSON MultiPolygon geometry"""
+        new_coordinates = []
+        for poly_coordinates in coordinates:
+            new_poly_coords = []
+            for ring_list in poly_coordinates:
+                new_ring_list = self.reproject_coordinate_ring(ring_list)
+                new_poly_coords.append(new_ring_list)
+            new_coordinates.append(new_poly_coords)
+        v_geojson = ValidateGeoJson()
+        c_ok = v_geojson.validate_all_geometry_coordinates(geometry_type,
+                                                           new_coordinates)
+        if not c_ok:
+            new_coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
+                                                               new_coordinates)
+        return new_coordinates
+                
+    def reproject_polygon(self, coordinates, geometry_type='Polygon'):
+        """Reprojects coordinates for a GeoJSON polygon"""
+        new_coordinates = []
+        for ring_list in coordinates:
+            new_ring_list = self.reproject_coordinate_ring(ring_list)
+            new_coordinates.append(new_ring_list)
+        v_geojson = ValidateGeoJson()
+        c_ok = v_geojson.validate_all_geometry_coordinates(geometry_type,
+                                                           new_coordinates)
+        if not c_ok:
+            new_coordinates = v_geojson.fix_geometry_rings_dir(geometry_type,
+                                                               new_coordinates)
+        return new_coordinates
+    
+    def reproject_multi_or_polygon(self, coordinates, geometry_type):
+        """Reprojects GeoJSON Polygon or MultiPolygon coordinates"""
+        if geometry_type == 'Polygon':
+            return self.reproject_polygon(coordinates, geometry_type)
+        elif geometry_type == 'MultiPolygon':
+            return self.reproject_mulipolygon(coordinates, geometry_type)
+        return None
