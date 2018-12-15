@@ -54,6 +54,7 @@ class ImportFieldDescribe():
                                            label__in=labels_list)[:1]
                 if len(man_pred) > 0:
                     imp_field.field_type = 'description'
+                    imp_field.label = man_pred[0].label
                     try:
                         pred = Predicate.objects.get(uuid=man_pred[0].uuid)
                     except Predicate.DoesNotExist:
@@ -63,6 +64,7 @@ class ImportFieldDescribe():
                             or imp_field.field_data_type == '' \
                             or imp_field.field_data_type == ImportField.DEFAULT_DATA_TYPE):
                         imp_field.field_data_type = pred.data_type
+                    self.field_num_list.append(imp_field.field_num)
                     imp_field.save()
                 # now check to blank out empty fields and set as ignore
                 non_blank_cells = ImportCell.objects\
@@ -72,6 +74,7 @@ class ImportFieldDescribe():
                 if len(non_blank_cells) < 1:
                     imp_field.field_type = 'ignore'
                     imp_field.field_data_type == ImportField.DEFAULT_DATA_TYPE
+                    self.field_num_list.append(imp_field.field_num)
                     imp_field.save()
 
     def update_field_label(self, label, field_num):
