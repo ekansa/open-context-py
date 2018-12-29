@@ -2,6 +2,7 @@
 <div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.js"></script>
 <script type="text/javascript" src="{{ base_url }}/static/3d-nexus/TrackballControls.js"> </script>
+<script type="text/javascript" src="{{ base_url }}/static/3d-nexus/meco.js"> </script>
 <script type="text/javascript" src="{{ base_url }}/static/3d-nexus/nexus.js"> </script>
 <script type="text/javascript" src="{{ base_url }}/static/3d-nexus/nexus_three.js"> </script>
 
@@ -14,6 +15,14 @@
 
 
 <script>
+
+{% if item.item.unit_of_measure_uri != False %}
+var unit_of_measure_uri = "{{ item.unit_of_measure_uri }}";
+var unit_of_measure_label = "{{ item.unit_of_measure_label }}";
+{%else%}
+var unit_of_measure_uri = false;
+var unit_of_measure_label = false;
+{%endif%}
 
 var container_dom_id = 'nexus-container';
 var camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, 0.1, 100 );
@@ -73,6 +82,7 @@ var material = new THREE.MeshLambertMaterial( { color: 0xffffff, map: texture } 
 
 
 var model = "{{ item.nexus_3d }}";
+
 
 var nexus_obj = new NexusObject(model, renderer, render);
 scene.add(nexus_obj);
