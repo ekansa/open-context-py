@@ -1193,6 +1193,74 @@ gimp.process_features_in_file('giza-areas', 'botany-areas-revised-w-uris.geojson
 gimp.save_no_coord_file(rev_json, 'giza-areas', 'id-clean-coord-botany-areas-revised-w-uris.geojson')
 
 
+
+
+import json
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.ocitems.geospace.models import Geospace, GeospaceGeneration
+from opencontext_py.apps.imports.geojson.geojson import GeoJSONimport
+from opencontext_py.libs.validategeojson import ValidateGeoJson
+from opencontext_py.libs.reprojection import ReprojectUtilities
+import pyproj
+from pyproj import Proj, transform
+import numpy
+import geojson
+
+# TRAP Bulgaria
+project_uuid = '24e2aa20-59e6-4d66-948b-50ee245a7cfc'
+gimp = GeoJSONimport()
+gimp.load_into_importer = False
+gimp.project_uuid = project_uuid
+json_obj = gimp.load_json_file('trap-geo', 'kaz-survey-units.geojson')
+new_geojson = LastUpdatedOrderedDict()
+for key, vals in json_obj.items():
+    if key != 'features':
+        new_geojson[key] = vals
+    else:
+        new_geojson[key] = []
+        
+
+features = []
+bad_features = []
+reproj = ReprojectUtilities()
+reproj.set_in_out_crs('EPSG:32635', 'EPSG:4326')
+for feature in json_obj['features']:
+    id = str(feature['properties']['SUID'])
+    label = 'Survey Unit ' + id
+    print('Find: {}'.format(label))
+    try:
+        m_obj = Manifest.objects.get(project_uuid=project_uuid, label=label, item_type='subjects')
+        uuid = m_obj.uuid
+    except:
+        uuid = ''
+    print('--> {}'.format(uuid))
+    feature['properties']['uuid'] = uuid
+    if not isinstance(feature['geometry'], dict):
+        print(' ---- BAD FEATURE: {}'.format(label))
+        bad_features.append(feature)
+        continue
+    geometry_type = feature['geometry']['type']
+    coordinates = feature['geometry']['coordinates']
+    new_coordinates = reproj.reproject_multi_or_polygon(coordinates, geometry_type)
+    feature['geometry']['coordinates'] = new_coordinates
+    features.append(feature)
+
+
+new_geojson['features'] = features
+new_geojson['bad-features'] = bad_features
+gimp.save_json_file(new_geojson, 'trap-geo', 'kaz-survey-units-reproj-w-uuids.geojson')
+
+
+
+
+
+
+
+
+
+
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.manifest.models import Manifest
@@ -1867,3 +1935,40 @@ for le in LinkEntity.objects.all().order_by('vocab_uri', 'uri'):
     if le.uri == prefix_id:
         continue
     print('\n\n Orig: {}  \n prefix: {}  \n back: {}'.format(le.uri, prefix_id, uri))
+    
+    
+    
+
+
+from opencontext_py.apps.ocitems.strings.manage import OCstring
+from opencontext_py.apps.exports.exprecords.models import ExpCell
+table_id = '16135942-206f-499d-ab90-b4eb8777784c'
+project_uuid = '1fea0e30-148e-40dd-a251-76dbcb76730b'
+field_num = 44
+bad_prefix = 'http://portal.vertnet.org/o/uf-archaeology/parnell-feature1?id='
+good_prefix = 'http://portal.vertnet.org/o/flarch/parnell-feature1?id='
+bad_strs = OCstring.objects.filter(project_uuid=project_uuid, content__contains=bad_prefix)
+for str_obj in bad_strs:
+    str_obj.hash_id = None
+    str_obj.content = str_obj.content.replace(bad_prefix, good_prefix)
+    str_obj.save()
+
+
+
+bad_cells = ExpCell.objects.filter(
+                table_id=table_id,
+                field_num=field_num,
+                record__contains=bad_prefix)
+for cell in bad_cells:
+    cell.record = cell.record.replace(bad_prefix, good_prefix)
+    cell.save()
+
+
+
+
+
+import random
+iterations = 1000
+for i in range(0, 1000):
+    prize_index = random.choice([0,1,2])
+    

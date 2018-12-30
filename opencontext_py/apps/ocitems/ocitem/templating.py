@@ -46,6 +46,8 @@ class TemplateItem():
         'types': 'controlled vocabulary (often a typology) concept',
         'persons': 'person or organization record'
     }
+    
+    HAS_UNIT_OF_MEASUREMENT = 'http://www.wikidata.org/wiki/Property:P3328'
 
     def __init__(self, request=False):
         self.label = False
@@ -83,6 +85,8 @@ class TemplateItem():
         self.x3dom_model = False
         self.x3dom_textures = []
         self.nexus_3d = False
+        self.unit_of_measure_uri = False
+        self.unit_of_measure_label = False
         self.geojson_file = False
         self.nav_items = settings.NAV_ITEMS
         self.act_nav = False
@@ -319,6 +323,11 @@ class TemplateItem():
         """
         Gets various forms of content for media, documents, projects
         """
+        if self.HAS_UNIT_OF_MEASUREMENT in json_ld:
+            # Needed for Nexus 3D and potentially other media where scale can be
+            # represented in the media.
+            self.unit_of_measure_uri = json_ld[self.HAS_UNIT_OF_MEASUREMENT][0]['id']
+            self.unit_of_measure_label = json_ld[self.HAS_UNIT_OF_MEASUREMENT][0]['label']
         lang_obj = Languages()
         if 'oc-gen:has-files' in json_ld:
             # content for media
@@ -333,6 +342,8 @@ class TemplateItem():
                 self.content['x3dom_textures'] = []
                 self.content['nexus_3d'] = False
                 self.content['gis_file'] = False
+                self.content['unit_of_measure_uri'] = False
+                self.content['unit_of_measure_label'] = False
             fmath = FileMath()
             rp = RootPath()
             for file_item in json_ld['oc-gen:has-files']:
@@ -393,6 +404,7 @@ class TemplateItem():
                     target_url = rp.convert_to_https(file_item['id'])
                     self.nexus_3d = self.make_cors_ok_url(target_url)
                     self.content['nexus_3d'] = file_item['id']
+                    
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:

@@ -30,6 +30,10 @@ class eolAPI():
             if 'scientificName' in json_data:
                 output['label'] = json_data['scientificName']
                 output['alt_label'] = json_data['scientificName']
+            elif 'taxonConcept' in json_data:
+                if 'scientificName' in json_data['taxonConcept']:
+                    output['label'] = json_data['taxonConcept']['scientificName']
+                    output['alt_label'] = json_data['taxonConcept']['scientificName']
         return output
 
     def get_basic_json_for_eol_uri(self, eol_uri):

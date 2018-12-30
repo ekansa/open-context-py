@@ -79,6 +79,7 @@ class ImportFields():
                                     .filter(Q(label=label) | Q(ref_name=label) | Q(ref_orig_name=orig_name),
                                             Q(source_id=self.source_id) | Q(source_id=self.obsolete_source_id))[:1]
         if len(old_fields) > 0:
+            imp_f.label = old_fields[0].label
             imp_f.field_type = old_fields[0].field_type
             imp_f.field_data_type = old_fields[0].field_data_type
             imp_f.field_value_cat = old_fields[0].field_value_cat
