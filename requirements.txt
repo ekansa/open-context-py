@@ -40,7 +40,7 @@ python-dateutil==2.5.3
 
 pytz==2016.4
 
-PyYAML==3.11
+PyYAML==3.13
 
 rdflib==4.2.1
 
