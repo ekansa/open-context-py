@@ -18,7 +18,7 @@
         password: opencontextpw
 
     # https://github.com/whiskerlabs/ansible-python
-    python_version: 3.6.7
+    python_version: 3.6.8
     python_bin: /usr/bin
     python_pip_version: 18.0
     python_upgrade_packaging_tools: false
@@ -181,14 +181,11 @@
       become: no
       git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
-    - name: restart_here
-      debug: msg="provision restart here"
-
     # use pipenv to install dependencies
     # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
     - name: initialize the virtualenv using pipenv
       become: no
-      shell: "PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages"
+      shell: "PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.6 --site-packages"
       args:
         chdir: "{{oc_install_dir}}"
 
@@ -470,6 +467,8 @@
     #     group: "{{user}}"
     #   when: install_db
 
+    - name: restart_here
+      debug: msg="provision restart here"
 
     # download the solr backup 
     - name: download solr backup 

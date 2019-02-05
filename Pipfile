@@ -54,4 +54,4 @@ uWSGI = "==2.0.17.1"
 [dev-packages]
 
 [requires]
-python_version = "3.5"
+python_version = "3.6"
