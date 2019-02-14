@@ -10,9 +10,15 @@ from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
 
 def test_hello():
+    """
+    a hello world test -- will get rid of once I'm more confident of understanding all these pieces
+    """
     assert True
 
 def test_main_page():
+    """
+    load up the homepage
+    """
 
     client = Client()
 
@@ -20,6 +26,9 @@ def test_main_page():
     assert response.status_code == 200
 
 def test_other_pages():
+    """
+    a basic way to test functionality of the overall system by loading various pages
+    """
 
     pages_to_test = [
         '/about',
@@ -90,6 +99,10 @@ def test_projects_feed():
 
 
 def my_custom_sql():
+
+    """
+    example of a custom sql query to run for testing
+    """
 
     query = """
 -- mediafiles associated with San Diego project?
