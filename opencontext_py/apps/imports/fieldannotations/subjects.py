@@ -836,6 +836,7 @@ class CandidateSubject():
 
     def reconcile_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the subjects table """
+        match_found = False
         self.imp_cell_obj = imp_cell_obj
         self.item_field_num = imp_cell_obj.field_num
         if len(imp_cell_obj.record) > 0:
@@ -876,7 +877,7 @@ class CandidateSubject():
                 self.is_new = True
         else:
             if self.metadata_obj is not None:
-                # Check if we've alreadu specified the UUID with some associated
+                # Check if we've already specified the UUID with some associated
                 # metadata for the item.
                 sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
                                                               imp_cell_obj.row_num)
@@ -886,7 +887,7 @@ class CandidateSubject():
                     self.uuid = meta_uuid
                     match_found = True
             if self.label and not match_found:
-                # only allow matches on non-blank items when not creating a record
+                # Only allow matches on non-blank items when not creating a record
                 match_found = self.match_against_manifest(self.label,
                                                           self.class_uri)
         self.update_import_cell_uuid()
