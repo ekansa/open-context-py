@@ -130,7 +130,7 @@ class ClusterGeoJson():
     def get_feature_centroid(self, feature_geometry):
         """Gets the centroid from a feature's geometry"""
         if feature_geometry['type'].lower() == 'point':
-            return feat['geometry']['coordinates']
+            return feature_geometry['coordinates']
         else:
             geom = shape(feature_geometry)
             g_centroid = geom.centroid
