@@ -123,6 +123,8 @@
     # ansible-galaxy install git+https://github.com/rdhyee/ansible-python.git,dev
 
     - role: ansible-python
+      # https://github.com/whiskerlabs/ansible-python/blob/8a2f027c2539e7da70ada44412376beee217cbbf/vars/main.yml#L25
+      python_readline_6_2_tgz_url: https://mirrors.sjtug.sjtu.edu.cn/gnu/readline/readline-6.2.tar.gz
       become: yes
 
     # # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
@@ -470,6 +472,36 @@
     - name: restart_here
       debug: msg="provision restart here"
 
+    # solr configuration
+
+    # create core using /opt/solr/bin/solr with ? parameters
+    # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+    - name: create open-context core 
+      command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+
+
+    # if install_solr_data is true: we get the solr index dump
+    # otherwise: configure with 
+    # ../solr-config/Solr-7/solrconfig.xml --> /var/solr/data/open-context/conf/solrconfig.xml
+
+    - name: copy over solrconfig.xml
+      copy:
+        src: "../solr-config/Solr-7/solrconfig.xml"
+        dest: /var/solr/data/open-context/conf/solrconfig.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
+    - name: copy over schema.xml
+      copy:
+        src: "../solr-config/Solr-7/schema.xml"
+        dest: /var/solr/data/open-context/conf/schema.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
     # download the solr backup 
     - name: download solr backup 
       get_url:
@@ -493,12 +525,6 @@
         remote_src: true
         owner: solr
         group: solr
-      when: install_solr_data
-
-    # create core using /opt/solr/bin/solr with ? parameters
-    # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
-    - name: create open-context core 
-      command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
       when: install_solr_data
 
 
