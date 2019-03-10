@@ -858,7 +858,7 @@ class CandidateSubject():
                 self.context = self.parent_context + Subject.HIEARCHY_DELIM + self.label
             else:
                 self.context = self.label
-            # print('Reconcile context: ' + self.context)
+            print('Reconcile context: ' + self.context)
             match_found = self.match_against_subjects(self.context)
             if match_found is False:
                 # create new subject, manifest objects. Need new UUID, since we can't assume
@@ -981,14 +981,20 @@ class CandidateSubject():
                                    .get(hash_id=hash_id)
         except Subject.DoesNotExist:
             subject_match = False
-        if subject_match is False:
+        if not subject_match:
             hash_id = Subject().make_hash_id('0', context)
             try:
                 subject_match = Subject.objects\
                                        .get(hash_id=hash_id)
             except Subject.DoesNotExist:
                 subject_match = False
+        if not subject_match:
+            try:
+                subject_match = Subject.objects.get(context=context)
+            except Subject.DoesNotExist:
+                subject_match = False
         if subject_match is not False:
+            print('Found: {} as {}'.format(context, subject_match.uuid))
             match_found = True
             self.uuid = subject_match.uuid
         else:
