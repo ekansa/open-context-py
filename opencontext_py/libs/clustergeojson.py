@@ -124,6 +124,9 @@ class ClusterGeoJson():
                 coordinates = v_geojson.fix_geometry_rings_dir(geometry_type, coordinates)
             feat['geometry']['type'] = geometry_type
             feat['geometry']['coordinates'] = coordinates
+            centroid = self.get_feature_centroid(feat['geometry'])
+            feat['properties']['latitude'] = centroid[1]
+            feat['properties']['longitude'] = centroid[0]
             geojson['features'].append(feat)
         return geojson
     
