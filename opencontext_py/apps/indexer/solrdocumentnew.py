@@ -232,9 +232,7 @@ sd_a = sd_obj.fields
         # default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.manifest.item_type
-    
-    
-    
+
     def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
         '''
         Defines whether our dynamic solr fields names for
@@ -254,7 +252,7 @@ sd_a = sd_obj.fields
             raise Exception(
                 "Unknown predicate type: {}".format(predicate_type)
             )
-    
+
     def _get_predicate_type_from_dict(self, predicate_dict):
         """Gets data type from a predicate dictionary object. """
         for key in ['type', '@type']:
@@ -263,14 +261,14 @@ sd_a = sd_obj.fields
             return predicate_dict[key]
         # Default to a string.
         return 'xsd:string'
-    
+
     def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
         """Gets the solr predicate type from a dictionary object. """
         return self._get_solr_predicate_type_string(
             self._get_predicate_type_from_dict(predicate_dict),
             prefix=prefix
         ) 
-    
+
     def _add_id_field_fq_field_values(
             self,
             solr_id_field,
@@ -303,49 +301,10 @@ sd_a = sd_obj.fields
         if slug not in self.fields[solr_id_field_fq]:
             # only add it if we don't already have it
             self.fields[solr_id_field_fq].append(slug)
-        
-    def _add_predicate_hiearchy(self, hiearchy_items, root_solr_field):
-        """Adds a hiearchy of predicates to the solr doc."""
-        for index, item in enumerate(hiearchy_items):
-            if item['slug'] == 'link':
-                # Skip the standard link, we don't do
-                # special processing for standard links.
-                continue
-            # Add the label of the variable to the text field
-            self.fields['text'] += ' ' + str(item['label']) + ' '
-            
-            # Compose the solr value for the current parent item.
-            act_solr_value = self._concat_solr_string_value(
-                item['slug'],
-                self._get_solr_predicate_type_from_dict(item),
-                item['id'],
-                item['label']
-            )
-            
-            # Treat the first parent in a special way
-            if index == 0:
-                # We're at the highest level of the hiearchy,
-                # so solr field name is the root solr field name.
-                solr_field_name = root_solr_field
-            else:
-                # We're at a higher level of the hiearchy, so the
-                # solr field name comes from the previous (parent)
-                # item in the hiearchy.
-                solr_field_name = self._convert_slug_to_solr(
-                     hiearchy_items[index - 1]['slug'] +
-                     self.SOLR_VALUE_DELIM + 'pred_id'
-                )
-            # Now add the predicate hiearchy item to the
-            # appropriate solr doc fields.
-            self._add_id_field_fq_field_values(
-                solr_field_name,
-                act_solr_value,
-                item['slug']
-            )
 
-    def _get_oc_subject_uuid(self, uri):
-        """Returns a uuid from an URI referencing an Open Context subject,
-           or None if not an OC subject URI.
+    def _get_oc_item_uuid(self, uri, match_type='subjects'):
+        """Returns a uuid from an URI referencing an Open Context item,
+           of a given type,or None if not the type is not matched.
         """
         uri_parsed = URImanagement.get_uuid_from_oc_uri(
             uri,
@@ -353,12 +312,24 @@ sd_a = sd_obj.fields
         )
         if not isinstance(uri_parsed, dict):
             return None
-        if uri_parsed['item_type'] == 'subjects':
+        if uri_parsed['item_type'] == match_type:
             return uri_parsed['uuid']
         else:
             return None
 
-    def _add_object_value_hiearchy(self, hiearchy_items, root_solr_field):
+    def _get_oc_item_type(self, uri):
+        """Returns the Open Context item type from a URI, if an
+           Open Context item, otherwise None.
+        """
+        uri_parsed = URImanagement.get_uuid_from_oc_uri(
+            uri,
+            return_type=True
+        )
+        if not isinstance(uri_parsed, dict):
+            return None
+        return uri_parsed['item_type']
+
+    def _add_object_value_hiearchy(self, root_solr_field, hiearchy_items):
         """Adds a hiearchy of predicates to the solr doc."""
         # The act_solr_field starts at the solr field that is
         # for the root of the hierarchy, passed as an argument to
@@ -410,34 +381,65 @@ sd_a = sd_obj.fields
                 item['slug']
             ) + self.SOLR_VALUE_DELIM + root_solr_field
 
+    def _add_joined_subject_uuid(self, val_obj_id):
+        """Adds subject uuids to facilitate joins."""
+        if not self.oc_item.manifest.item_type in ['media','documents']:
+            # This Open Context item type does not record joins.
+            return None
+        val_obj_subject_uuid = self._get_oc_item_uuid(
+            val_obj_id,
+            match_type='subjects'
+        )
+        if not val_obj_subject_uuid:
+            # Not a subject, no uuid to join.
+            return None
+        # We need to facilitate joins to a related
+        # Open Context subject item (join by UUID).
+        if self.join_solr_field not in self.fields:
+            # We don't have a solr field for joins yet, so
+            # make one.
+            self.fields[self.join_solr_field] = []
+        # Append to the solr field for joins
+        self.fields[self.join_solr_field].append(val_obj_subject_uuid)
+
+    def _add_solr_fields_for_linked_media_documents(self, val_obj):
+        """Adds standard solr fields relating to media and document links."""
+        val_obj_oc_type = self._get_oc_item_type(val_obj['id'])
+        if val_obj_oc_type == 'media':
+            if 'image' in val_obj['type']:
+                self.fields['image_media_count'] += 1
+            else:
+                self.fields['other_binary_media_count'] += 1
+        elif val_obj_oc_type == 'documents':
+            self.fields['document_count'] += 1
+        if (not 'thumbnail_uri' in self.fields and
+            'oc-gen:thumbnail-uri' in val_obj):
+            # We store the first thumbnail in the solr document.
+            self.fields['thumbnail_uri'] = val_obj['oc-gen:thumbnail-uri']
+        if (not 'iiif_json_uri' in self.fields  and
+            'oc-gen:iiif-json-uri' in val_obj):
+            # We store the first IIIF uri in the solr document.
+            self.fields['iiif_json_uri'] = val_obj['oc-gen:iiif-json-uri']
+
     def _add_solr_id_field_values(self, solr_field_name, pred_value_objects):
         """Adds non-literal predicate value objects,
            and their hiearchy parents, to the Solr doc
         """
-        make_join_ids = False
-        if self.oc_item.manifest.item_type in ['media','documents']:
-            # We want to make joins easier for these types of items
-            make_join_ids = True
         for val_obj in pred_value_objects:
-            val_obj_subject_uuid = self._get_oc_subject_uuid(val_obj['id'])
-            if make_join_ids and val_obj_subject_uuid:
-                # We need to facilitate joins to a related
-                # Open Context subject item (join by UUID).
-                if self.join_solr_field not in self.fields:
-                    # We don't have a solr field for joins yet, so
-                    # make one.
-                    self.fields[self.join_solr_field] = []
-                # Append to the solr field for joins
-                self.fields[self.join_solr_field].append(val_obj_subject_uuid)
+            # Add subject uuid joins, if applicable.
+            self._add_joined_subject_uuid(val_obj['id'])
+            # Add standard solr fields that summarize linked media,
+            # documents.
+            self._add_solr_fields_for_linked_media_documents(val_obj)
             # Now add the val_obj item (and parents) to the
             # solr document.
             hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
                 val_obj['id']
             )
-            self._add_object_value_hiearchy(hiearchy_items, solr_field_name)
+            self._add_object_value_hiearchy(solr_field_name, hiearchy_items)
             # A little stying for different value objects in the text field.
             self.fields['text'] += '\n'
-          
+
     def _add_solr_field_values(
             self,
             solr_field_name,
@@ -484,6 +486,48 @@ sd_a = sd_obj.fields
             )
         else:
             return None
+
+    def _add_predicate_hiearchy(self, hiearchy_items, root_solr_field):
+        """Adds a hiearchy of predicates to the solr doc."""
+        last_item_index = len(hiearchy_items) - 1
+        for index, item in enumerate(hiearchy_items):
+            if item['slug'] == 'link':
+                # Skip the standard link, we don't do
+                # special processing for standard links.
+                continue
+            if index < last_item_index:
+                # Add the label of the hiearchy item
+                # to the text field, to faciliate key-word searches.
+                self.fields['text'] += ' ' + str(item['label']) + ' '
+            
+            # Compose the solr value for the current parent item.
+            act_solr_value = self._concat_solr_string_value(
+                item['slug'],
+                self._get_solr_predicate_type_from_dict(item),
+                item['id'],
+                item['label']
+            )
+            
+            # Treat the first parent in a special way
+            if index == 0:
+                # We're at the highest level of the hiearchy,
+                # so solr field name is the root solr field name.
+                solr_field_name = root_solr_field
+            else:
+                # We're at a higher level of the hiearchy, so the
+                # solr field name comes from the previous (parent)
+                # item in the hiearchy.
+                solr_field_name = self._convert_slug_to_solr(
+                     hiearchy_items[index - 1]['slug'] +
+                     self.SOLR_VALUE_DELIM + 'pred_id'
+                )
+            # Now add the predicate hiearchy item to the
+            # appropriate solr doc fields.
+            self._add_id_field_fq_field_values(
+                solr_field_name,
+                act_solr_value,
+                item['slug']
+            )
 
     def _add_predicate_and_object_description(
             self,
@@ -536,6 +580,24 @@ sd_a = sd_obj.fields
             pred_value_objects
         )
 
+    def _add_link_object_values(self, pred_value_objects):
+        """Adds object values for linked ('oc-pred:link') resources."""
+        if self.do_related:
+            # We are creating a solr-doc related to media. So
+            # skip this step.
+            return None
+        if not isinstance(pred_value_objects, list):
+            return None
+        self.fields['text'] += 'Links: '
+        for val_obj in pred_value_objects:
+            self.fields['text'] += str(val_obj['label']) + ' '
+            # Add subject uuid joins, if applicable.
+            self._add_joined_subject_uuid(val_obj['id'])
+            # Do updates, specific to the Open Context item_type,
+            # to the solr document.
+            self._add_solr_fields_for_linked_media_documents(val_obj)
+        self.fields['text'] += '\n'
+      
     def _add_observations_descriptions(self):
         """Adds descriptions from item observations to the Solr doc."""
         if not ItemKeys.PREDICATES_OCGEN_HASOBS in self.oc_item.json_ld:
@@ -549,6 +611,11 @@ sd_a = sd_obj.fields
                 if pred_key in projGraph.LINKDATA_OBS_PREDS_SKIP:
                     # Skip, since these are metadata about the observation itself,
                     # and not something we currently index for Solr searches.
+                    continue
+                if pred_key == 'oc-pred:link':
+                    # This 'oc-pred:link' requires special processing.
+                    self._add_link_object_values(pred_value_objects)
+                    # Now skip the rest below.
                     continue
                 # Add the predicate and the object values for this
                 # predicate to the Solr document.
