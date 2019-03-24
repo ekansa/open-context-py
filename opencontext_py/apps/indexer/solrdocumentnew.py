@@ -135,7 +135,7 @@ sd_a = sd_obj.fields
             self.field_prefix = ''
     
     def ensure_text_ok(self):
-        """ makes sure the text is solr escaped """
+        """ Makes sure the text is solr escaped """
         self.fields['text'] = force_text(
             self.fields['text'],
             encoding='utf-8',
@@ -513,10 +513,22 @@ sd_a = sd_obj.fields
                     # Add all multi-lingual versions of the text to the text field.
                     act_str = lang_obj.get_all_value_str(val_obj['xsd:string'])
                     self.fields['text'] += str(act_str) + ' \n'
+                    act_str = force_text(
+                        str(act_str),
+                        encoding='utf-8',
+                        strings_only=False,
+                        errors='surrogateescape'
+                    )
                     self.fields[solr_field_name].append(act_str)
                 else:
                     self.fields['text'] += str(val_obj) + ' \n'
-                    self.fields[solr_field_name].append(str(val_obj))
+                    act_str = force_text(
+                        str(val_obj),
+                        encoding='utf-8',
+                        strings_only=False,
+                        errors='surrogateescape'
+                    )
+                    self.fields[solr_field_name].append(str(act_str))
         elif solr_pred_type == 'numeric':
             # Add numeric literal values ot the solr_field_name in the
             # solr document.
