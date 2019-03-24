@@ -142,16 +142,6 @@ sd_a = sd_obj.fields
             strings_only=False,
             errors='surrogateescape'
         )
-
-    def _get_context_path_items(self):
-        """Gets the context path items from the oc_item.json_ld."""
-        for context_key in self.CONTEXT_PREDICATES:
-            if not context_key in self.oc_item.json_ld:
-                continue
-            context = self.oc_item.json_ld[context_key]
-            if ItemKeys.PREDICATES_OCGEN_HASPATHITEMS in context:
-                return context[ItemKeys.PREDICATES_OCGEN_HASPATHITEMS]
-        return None
     
     def _convert_slug_to_solr(self, slug):
         """Converts a slug to a solr style slug."""
@@ -233,42 +223,6 @@ sd_a = sd_obj.fields
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.manifest.item_type
 
-    def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
-        '''
-        Defines whether our dynamic solr fields names for
-        predicates end with ___pred_id, ___pred_numeric, etc.
-        '''
-        if predicate_type in ['@id', 'id', 'types', False]:
-            return prefix + 'id'
-        elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-            return prefix + 'numeric'
-        elif predicate_type == 'xsd:string':
-            return prefix + 'string'
-        elif predicate_type == 'xsd:date':
-            return prefix + 'date'
-        elif predicate_type in self.MISSING_PREDICATE_TYPES:
-            return prefix + 'string'
-        else:
-            raise Exception(
-                "Unknown predicate type: {}".format(predicate_type)
-            )
-
-    def _get_predicate_type_from_dict(self, predicate_dict):
-        """Gets data type from a predicate dictionary object. """
-        for key in ['type', '@type']:
-            if not key in predicate_dict:
-                continue
-            return predicate_dict[key]
-        # Default to a string.
-        return 'xsd:string'
-
-    def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
-        """Gets the solr predicate type from a dictionary object. """
-        return self._get_solr_predicate_type_string(
-            self._get_predicate_type_from_dict(predicate_dict),
-            prefix=prefix
-        ) 
-
     def _add_id_field_fq_field_values(
             self,
             solr_id_field,
@@ -328,6 +282,106 @@ sd_a = sd_obj.fields
         if not isinstance(uri_parsed, dict):
             return None
         return uri_parsed['item_type']
+
+
+    def _get_context_path_items(self):
+        """Gets the context path items from the oc_item.json_ld."""
+        for context_key in self.CONTEXT_PREDICATES:
+            if not context_key in self.oc_item.json_ld:
+                continue
+            context = self.oc_item.json_ld[context_key]
+            if ItemKeys.PREDICATES_OCGEN_HASPATHITEMS in context:
+                return context[ItemKeys.PREDICATES_OCGEN_HASPATHITEMS]
+        return None
+    
+    def _add_solr_spatial_context(self):
+        """Adds spatial context fields to the solr document."""
+        context_items = self._get_context_path_items()
+        if not context_items:
+            # This item has no spatial context.
+            return None
+        # Iterate through the spatial context items.
+        for index, context in enumerate(context_items):
+            context_uuid = self._get_oc_item_uuid(
+                context['id'],
+                match_type='subjects'
+            )
+            if not context_uuid:
+                # Something went wrong, but we're forgiving,
+                # so skip.
+                continue
+            # Compose the solr_value for this item in the context
+            # hiearchy.
+            act_solr_value = self._concat_solr_string_value(
+                context['slug'],
+                'id',
+                ('/subjects/' + context_uuid),
+                context['label']
+            )
+            # The self.ALL_CONTEXT_SOLR takes values for
+            # each context item in spatial context hiearchy, thereby
+            # facilitating queries at all levels of the context
+            # hierarchy. Without the self.ALL_CONTEXT_SOLR, we would need
+            # to know the full hiearchy path of parent items in order
+            # to query for a given spatial context.
+            self._add_id_field_fq_field_values(
+                self.ALL_CONTEXT_SOLR,
+                act_solr_value,
+                context['slug']
+            )
+            if index == 0:
+                # We are at the top of the spatial hiearchy
+                # so the solr context field is self.ROOT_CONTEXT_SOLR.
+                solr_context_field = self.ROOT_CONTEXT_SOLR
+            else:
+                # We are at sub-levels in the spatial hiearchy
+                # so the solr context field comes from the parent item
+                # in the spatial context hierarchy
+                solr_context_field = (
+                    context_items[index - 1]['slug'] +
+                    self.SOLR_VALUE_DELIM + 'context_id'
+                )
+            self._add_id_field_fq_field_values(
+                solr_context_field,
+                act_solr_value,
+                context['slug']
+            )
+
+    def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
+        '''
+        Defines whether our dynamic solr fields names for
+        predicates end with ___pred_id, ___pred_numeric, etc.
+        '''
+        if predicate_type in ['@id', 'id', 'types', False]:
+            return prefix + 'id'
+        elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+            return prefix + 'numeric'
+        elif predicate_type == 'xsd:string':
+            return prefix + 'string'
+        elif predicate_type == 'xsd:date':
+            return prefix + 'date'
+        elif predicate_type in self.MISSING_PREDICATE_TYPES:
+            return prefix + 'string'
+        else:
+            raise Exception(
+                "Unknown predicate type: {}".format(predicate_type)
+            )
+
+    def _get_predicate_type_from_dict(self, predicate_dict):
+        """Gets data type from a predicate dictionary object. """
+        for key in ['type', '@type']:
+            if not key in predicate_dict:
+                continue
+            return predicate_dict[key]
+        # Default to a string.
+        return 'xsd:string'
+
+    def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
+        """Gets the solr predicate type from a dictionary object. """
+        return self._get_solr_predicate_type_string(
+            self._get_predicate_type_from_dict(predicate_dict),
+            prefix=prefix
+        ) 
 
     def _add_object_value_hiearchy(self, root_solr_field, hiearchy_items):
         """Adds a hiearchy of predicates to the solr doc."""
@@ -633,6 +687,8 @@ sd_a = sd_obj.fields
         self._set_required_solr_fields()
         # Add (multilingual) labels and titles to the text field
         self._add_labels_titles_to_text_field()
+        # Add the spatial context hiearchy to the solr document
+        self._add_solr_spatial_context()
         # Add descriptions from the item observations
         self._add_observations_descriptions()
         # Make sure the text field is valid for Solr
