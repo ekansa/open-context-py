@@ -5,7 +5,7 @@ from opencontext_py.libs.languages import Languages
 from django.utils.encoding import force_text
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph
+from opencontext_py.apps.contexts.readprojectcontext import ReadProjectContextVocabGraph as projGraph
 from opencontext_py.apps.ocitems.ocitem.generation import OCitem
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
@@ -93,6 +93,10 @@ sd_a = sd_obj.fields
         'False'
     ]
 
+    # The delimiter for parts of an object value added to a
+    # solr field.
+    SOLR_VALUE_DELIM = '___'
+    
     def __init__(self, uuid):
         '''
         Using our Python JSON-LD and other info provided in OCitem,
@@ -106,18 +110,22 @@ sd_a = sd_obj.fields
         self.do_related = False
         self.max_file_size = 0
         self.oc_item = None
+        self.proj_graph_obj = None
         # First get core data structures
         oc_item = OCitem()
         if oc_item.check_exists(uuid):
             # We found a record for this in the manifest
             oc_item.generate_json_ld()
             self.oc_item = oc_item
+            self.proj_graph_obj = projGraph(self.oc_item.proj_context_json_ld)
         self.geo_specified = False
         self.chrono_specified = False
         # Store values here
         self.fields = {}
         self.fields['text'] = ''  # Start of full-text field
         self.fields['human_remains'] = 0  # Default, item is not about human remains.
+        # The solr field for joins by uuid.
+        self.join_solr_field = 'join' +  self.SOLR_VALUE_DELIM + 'pred_id'
 
     def _set_solr_field_prefix(self):
         """Sets the solr field_prefix, depending on do_related."""
@@ -128,10 +136,12 @@ sd_a = sd_obj.fields
     
     def ensure_text_ok(self):
         """ makes sure the text is solr escaped """
-        self.fields['text'] = force_text(self.fields['text'],
-                                         encoding='utf-8',
-                                         strings_only=False,
-                                         errors='surrogateescape')
+        self.fields['text'] = force_text(
+            self.fields['text'],
+            encoding='utf-8',
+            strings_only=False,
+            errors='surrogateescape'
+        )
 
     def _get_context_path_items(self):
         """Gets the context path items from the oc_item.json_ld."""
@@ -148,6 +158,20 @@ sd_a = sd_obj.fields
         slug = self.field_prefix + slug
         return slug.replace('-', '_')
 
+    def _concat_solr_string_value(self, slug, type, id, label):
+        """Make a solr value for an object item."""
+        id_part = id
+        uri_parsed = URImanagement.get_uuid_from_oc_uri(
+            id,
+            return_type=True
+        )
+        if isinstance(uri_parsed, dict):
+            id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
+        slug = self.field_prefix + slug
+        return self.SOLR_VALUE_DELIM.join(
+            [slug, type, id_part, label]
+        )
+
     def _add_labels_titles_to_text_field(self):
         """Adds multiple language labels and titles to add to text field."""
         lang_obj = Languages()
@@ -161,14 +185,17 @@ sd_a = sd_obj.fields
     
     def _make_slug_type_uri_label(self):
         """Makes a slug_type_uri_label field for solr """
-        parts = []
-        parts.append(self.oc_item.json_ld['slug'])
+        parts = [
+            self.oc_item.json_ld['slug']
+        ]
         if self.oc_item.manifest.item_type == 'predicates':
             if self.oc_item.json_ld['oc-gen:data-type']:
                 # Looks up the predicte type mapped to Solr types
-                parts.append(self._get_predicate_type_string(
-                                    self.oc_item.json_ld['oc-gen:data-type']
-                                ))
+                parts.append(
+                    self._get_predicate_type_string(
+                        self.oc_item.json_ld['oc-gen:data-type']
+                    )
+                )
             else:
                 # Defaults to ID
                 parts.append('id')
@@ -176,7 +203,7 @@ sd_a = sd_obj.fields
             parts.append('id')
         parts.append('/' + self.oc_item.manifest.item_type + '/' + self.oc_item.manifest.uuid)
         parts.append(self.oc_item.json_ld['label'])
-        return '___'.join(parts)
+        return self.SOLR_VALUE_DELIM.join(parts)
 
     def _set_required_solr_fields(self):
         """Sets data for the core solr fields (non-dynamic, required)."""
@@ -188,10 +215,11 @@ sd_a = sd_obj.fields
         else:
             published_datetime = self.oc_item.manifest.published
         self.fields['published'] = published_datetime.strftime(
-                                    '%Y-%m-%dT%H:%M:%SZ')
+            '%Y-%m-%dT%H:%M:%SZ'
+        )
         self.fields['updated'] = datetime.datetime.utcnow().strftime(
-                '%Y-%m-%dT%H:%M:%SZ'
-            )
+            '%Y-%m-%dT%H:%M:%SZ'
+        )
         # default, can add as image media links discovered
         self.fields['image_media_count'] = 0
         # default, can add as other media links discovered
@@ -199,11 +227,335 @@ sd_a = sd_obj.fields
         # default, can add as doc links discovered
         self.fields['document_count'] = 0
         self.fields['sort_score'] = float(
-                '.' + self.oc_item.manifest.sort.replace('-', '')
-            )
+            '0.' + self.oc_item.manifest.sort.replace('-', '')
+        )
         # default, adds to interest score once other fields determined
         self.fields['interest_score'] = 0
         self.fields['item_type'] = self.oc_item.manifest.item_type
+    
+    
+    
+    def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
+        '''
+        Defines whether our dynamic solr fields names for
+        predicates end with ___pred_id, ___pred_numeric, etc.
+        '''
+        if predicate_type in ['@id', 'id', 'types', False]:
+            return prefix + 'id'
+        elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+            return prefix + 'numeric'
+        elif predicate_type == 'xsd:string':
+            return prefix + 'string'
+        elif predicate_type == 'xsd:date':
+            return prefix + 'date'
+        elif predicate_type in self.MISSING_PREDICATE_TYPES:
+            return prefix + 'string'
+        else:
+            raise Exception(
+                "Unknown predicate type: {}".format(predicate_type)
+            )
+    
+    def _get_predicate_type_from_dict(self, predicate_dict):
+        """Gets data type from a predicate dictionary object. """
+        for key in ['type', '@type']:
+            if not key in predicate_dict:
+                continue
+            return predicate_dict[key]
+        # Default to a string.
+        return 'xsd:string'
+    
+    def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
+        """Gets the solr predicate type from a dictionary object. """
+        return self._get_solr_predicate_type_string(
+            self._get_predicate_type_from_dict(predicate_dict),
+            prefix=prefix
+        ) 
+    
+    def _add_id_field_fq_field_values(
+            self,
+            solr_id_field,
+            concat_val,
+            slug
+        ):
+        """Adds values for an id field, and the associated slug
+           value for the related _fq field
+        """
+        if (not isinstance(solr_id_field, str) or
+            not isinstance(concat_val, str)):
+            return None
+        # Add the main solr id field if not present,
+        # then append the concat_val
+        if solr_id_field not in self.fields:
+            self.fields[solr_id_field] = []
+        if len(concat_val) > 0 and concat_val not in self.fields[solr_id_field]:
+            # Only add it if we don't already have it
+            self.fields[solr_id_field].append(concat_val)
+        # Add the solr id field's _fq field if not present.
+        solr_id_field_fq = solr_id_field + '_fq'
+        if solr_id_field_fq not in self.fields:
+            self.fields[solr_id_field_fq] = []
+        # Skip th rest of the funciton if slug is not a
+        # non-zero length string.
+        if not isinstance(slug, str) or len(slug) == 0:
+            return None
+        # Add the field prefix if needed
+        slug = self.field_prefix + slug
+        if slug not in self.fields[solr_id_field_fq]:
+            # only add it if we don't already have it
+            self.fields[solr_id_field_fq].append(slug)
+        
+    def _add_predicate_hiearchy(self, hiearchy_items, root_solr_field):
+        """Adds a hiearchy of predicates to the solr doc."""
+        for index, item in enumerate(hiearchy_items):
+            if item['slug'] == 'link':
+                # Skip the standard link, we don't do
+                # special processing for standard links.
+                continue
+            # Add the label of the variable to the text field
+            self.fields['text'] += ' ' + str(item['label']) + ' '
+            
+            # Compose the solr value for the current parent item.
+            act_solr_value = self._concat_solr_string_value(
+                item['slug'],
+                self._get_solr_predicate_type_from_dict(item),
+                item['id'],
+                item['label']
+            )
+            
+            # Treat the first parent in a special way
+            if index == 0:
+                # We're at the highest level of the hiearchy,
+                # so solr field name is the root solr field name.
+                solr_field_name = root_solr_field
+            else:
+                # We're at a higher level of the hiearchy, so the
+                # solr field name comes from the previous (parent)
+                # item in the hiearchy.
+                solr_field_name = self._convert_slug_to_solr(
+                     hiearchy_items[index - 1]['slug'] +
+                     self.SOLR_VALUE_DELIM + 'pred_id'
+                )
+            # Now add the predicate hiearchy item to the
+            # appropriate solr doc fields.
+            self._add_id_field_fq_field_values(
+                solr_field_name,
+                act_solr_value,
+                item['slug']
+            )
+
+    def _get_oc_subject_uuid(self, uri):
+        """Returns a uuid from an URI referencing an Open Context subject,
+           or None if not an OC subject URI.
+        """
+        uri_parsed = URImanagement.get_uuid_from_oc_uri(
+            uri,
+            return_type=True
+        )
+        if not isinstance(uri_parsed, dict):
+            return None
+        if uri_parsed['item_type'] == 'subjects':
+            return uri_parsed['uuid']
+        else:
+            return None
+
+    def _add_object_value_hiearchy(self, hiearchy_items, root_solr_field):
+        """Adds a hiearchy of predicates to the solr doc."""
+        # The act_solr_field starts at the solr field that is
+        # for the root of the hierarchy, passed as an argument to
+        # this function.
+        act_solr_field = root_solr_field
+        # The all_obj_solr_field is defined for the solr field
+        # at the root of this hiearchy. It will take values for
+        # each item in the object value hiearchy, thereby
+        # facilitating queries at all levels of the object value
+        # hierarchy. Without the all_obj_solr_field, we would need
+        # to know the full hiearchy path of parent items in order
+        # to query for a given object value.
+        all_obj_solr_field = (
+            'obj_all' + self.SOLR_VALUE_DELIM + root_solr_field
+        )
+        
+        # Now iterate through the list of hiearchy items of
+        # object values.
+        for index, item in enumerate(hiearchy_items):
+            # Add the label of this item in the hiearchy
+            # to the text field. This means key-word searches will
+            # be inclusive of all parent items in a hiearchy.
+            self.fields['text'] += ' ' + str(item['label']) + ' '
+            # Compose the solr value for the current parent item.
+            act_solr_value = self._concat_solr_string_value(
+                item['slug'],
+                self._get_solr_predicate_type_from_dict(item),
+                item['id'],
+                item['label']
+            )
+            # Add to the solr document the object value to the
+            # solr field for this level of the hiearchy.
+            self._add_id_field_fq_field_values(
+                act_solr_field,
+                act_solr_value,
+                item['slug']
+            )
+            # Add to the solr document the object value to the
+            # all_obj_solr_field , to facilitate queries at ALL
+            # levels of the object value hiearchy.
+            self._add_id_field_fq_field_values(
+                all_obj_solr_field,
+                act_solr_value,
+                item['slug']
+            )
+            # Make the next act_solr_field for the next
+            # iteration through the loop.
+            act_solr_field = self._convert_slug_to_solr(
+                item['slug']
+            ) + self.SOLR_VALUE_DELIM + root_solr_field
+
+    def _add_solr_id_field_values(self, solr_field_name, pred_value_objects):
+        """Adds non-literal predicate value objects,
+           and their hiearchy parents, to the Solr doc
+        """
+        make_join_ids = False
+        if self.oc_item.manifest.item_type in ['media','documents']:
+            # We want to make joins easier for these types of items
+            make_join_ids = True
+        for val_obj in pred_value_objects:
+            val_obj_subject_uuid = self._get_oc_subject_uuid(val_obj['id'])
+            if make_join_ids and val_obj_subject_uuid:
+                # We need to facilitate joins to a related
+                # Open Context subject item (join by UUID).
+                if self.join_solr_field not in self.fields:
+                    # We don't have a solr field for joins yet, so
+                    # make one.
+                    self.fields[self.join_solr_field] = []
+                # Append to the solr field for joins
+                self.fields[self.join_solr_field].append(val_obj_subject_uuid)
+            # Now add the val_obj item (and parents) to the
+            # solr document.
+            hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                val_obj['id']
+            )
+            self._add_object_value_hiearchy(hiearchy_items, solr_field_name)
+            # A little stying for different value objects in the text field.
+            self.fields['text'] += '\n'
+          
+    def _add_solr_field_values(
+            self,
+            solr_field_name,
+            solr_pred_type,
+            pred_value_objects
+        ):
+        """Adds predicate value objects, and their hiearchy parents, to the Solr doc."""
+        if not isinstance(pred_value_objects, list):
+            return None
+        if solr_pred_type == 'string':
+            # Add string literal values ot the solr_field_name in the
+            # solr document. Adds multiple language versions for
+            # indexing if multiple langugage versions exist.
+            lang_obj = Languages()
+            for val_obj in pred_value_objects:
+                if isinstance(val_obj, dict) and 'xsd:string' in val_obj:
+                    # Add all multi-lingual versions of the text to the text field.
+                    act_str = lang_obj.get_all_value_str(val_obj['xsd:string'])
+                    self.fields['text'] += str(act_str) + ' \n'
+                    self.fields[solr_field_name].append(act_str)
+                else:
+                    self.fields['text'] += str(val_obj) + ' \n'
+                    self.fields[solr_field_name].append(str(val_obj))
+        elif solr_pred_type == 'numeric':
+            # Add numeric literal values ot the solr_field_name in the
+            # solr document.
+            for val_obj in pred_value_objects:
+                self.fields['text'] += str(val_obj) + ' \n'
+                self.fields[solr_field_name].append(val_obj)
+        elif solr_pred_type == 'date':
+            # Add date literal values ot the solr_field_name in the
+            # solr document.
+            for val_obj in pred_value_objects:
+                self.fields['text'] += str(val_obj) + ' \n'
+                self.fields[solr_field_name].append((val_obj + 'T00:00:00Z'))
+        elif solr_pred_type == 'id':
+            # This is the most complicated case where the value
+            # objects will be non-literals (entities with outside URIs or URI
+            # identified Open Context entities). So we need to add them, and
+            # any of their hiearchy parents, to the solr document.
+            self._add_solr_id_field_values(
+                solr_field_name,
+                pred_value_objects
+            )
+        else:
+            return None
+
+    def _add_predicate_and_object_description(
+            self,
+            pred_key,
+            pred_value_objects
+        ):
+        """Adds descriptions from a given predicate and object to the Solr doc."""
+        # Get needed metadata about the predicate by looking up
+        # the pred_key and making a dictionary object of this metadata.
+        predicate = self.proj_graph_obj.lookup_predicate(pred_key)
+        if not predicate:
+            # The predicate does not seem to exist. Skip out.
+            return None
+        if not 'uuid' in predicate:
+            print('Wierd predicate: {}'.format(str(predicate)))
+            hiearchy_items = []
+        else:
+            # Get any hiearchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hiearchy.
+            hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                predicate['uuid']
+            )
+        # This adds the parents of the predicate to the solr document,
+        # starting at the self.ROOT_PREDICATE_SOLR
+        self._add_predicate_hiearchy(
+            hiearchy_items,
+            self.ROOT_PREDICATE_SOLR
+        )
+        # Set up the solr field name for the predicate.
+        solr_field_name = self._convert_slug_to_solr(
+            predicate['slug'] +
+            self._get_solr_predicate_type_from_dict(
+                predicate, prefix=(self.SOLR_VALUE_DELIM + 'pred_')
+            )
+        )
+        # Make sure the solr_field_name is in the solr document's
+        # dictionary of fields.
+        if solr_field_name not in self.fields:
+            self.fields[solr_field_name] = []
+        # Add the predicate label to the text string to help
+        # make full-text search snippets more meaningful.
+        self.fields['text'] += predicate['label'] + ': '
+        # Add the predicate's value objects, including hiearchy parents
+        # of those value objects, to the solr document.
+        self._add_solr_field_values(
+            solr_field_name,
+            self._get_solr_predicate_type_from_dict(
+                predicate, prefix=''
+            ),
+            pred_value_objects
+        )
+
+    def _add_observations_descriptions(self):
+        """Adds descriptions from item observations to the Solr doc."""
+        if not ItemKeys.PREDICATES_OCGEN_HASOBS in self.oc_item.json_ld:
+            return None
+        # Get the list of all the observations made on this item.
+        # Each observation is a dictionary with descriptive assertions
+        # keyed by a predicate.
+        obs_list = self.oc_item.json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]
+        for obs in obs_list:
+            for pred_key, pred_value_objects in obs.items():
+                if pred_key in projGraph.LINKDATA_OBS_PREDS_SKIP:
+                    # Skip, since these are metadata about the observation itself,
+                    # and not something we currently index for Solr searches.
+                    continue
+                # Add the predicate and the object values for this
+                # predicate to the Solr document.
+                self._add_predicate_and_object_description(
+                    pred_key,
+                    pred_value_objects
+                )
 
     def make_solr_doc(self):
         """Make a solr document """
@@ -214,6 +566,8 @@ sd_a = sd_obj.fields
         self._set_required_solr_fields()
         # Add (multilingual) labels and titles to the text field
         self._add_labels_titles_to_text_field()
+        # Add descriptions from the item observations
+        self._add_observations_descriptions()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
         
