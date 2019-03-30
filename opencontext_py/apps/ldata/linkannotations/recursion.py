@@ -50,16 +50,21 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         If add_original is true, add the original UUID for the entity
         that's the childmost item, at the bottom of the hierarchy
         """
-        cache_key = self.m_cache.make_cache_key(self.jsonldish_p_prefix.format(str(add_original)),
-                                                identifier)
+        cache_key = self.m_cache.make_cache_key(
+            self.jsonldish_p_prefix.format(str(add_original)),
+            identifier
+        )
         obj = self.m_cache.get_cache_object(cache_key)
         if obj is not None:
             return obj
-        else:
-            obj = self._get_jsonldish_entity_parents_db(identifier, add_original)
-            if obj:
-                self.m_cache.save_cache_object(cache_key, obj)
-            return obj
+        # We don't have it cached, so get from the database.
+        obj = self._get_jsonldish_entity_parents_db(
+            identifier,
+            add_original
+        )
+        if obj:
+            self.m_cache.save_cache_object(cache_key, obj)
+        return obj
 
     def _get_jsonldish_entity_parents_db(self, identifier, add_original=True):
         """
@@ -73,29 +78,38 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         output = False
         if add_original:
             # add the original identifer to the list of parents, at lowest rank
-            raw_parents = [identifier] + self.get_entity_parents(identifier,
-                                                                 [], 0)
+            raw_parents = (
+                [identifier] +
+                self.get_entity_parents(identifier, [], 0)
+            )
         else:
-            raw_parents = self.get_entity_parents(identifier,
-                                                  [], 0)
-        if len(raw_parents) > 0:
-            output = []
-            # reverse the order of the list, to make top most concept
-            # first
-            for par_id in raw_parents[::-1]:
-                # print('par_id is: ' + par_id)
-                ent = self.m_cache.get_entity(par_id)
-                if ent:
-                    p_item = LastUpdatedOrderedDict()
-                    p_item['id'] = ent.uri
-                    p_item['slug'] = ent.slug
-                    p_item['label'] = ent.label
-                    if ent.data_type is not False:
-                        p_item['type'] = ent.data_type
-                    else:
-                        p_item['type'] = '@id'
-                    p_item['ld_object_ok'] = ent.ld_object_ok
-                    output.append(p_item)
+            raw_parents = self.get_entity_parents(
+                identifier,
+                [],
+                0
+            )
+        if not len(raw_parents):
+            # No parens. Returns false.
+            return output
+        # Make the output.
+        # reverse the order of the list, to make top most concept
+        # first
+        output = []
+        for par_id in raw_parents[::-1]:
+            # print('par_id is: ' + par_id)
+            ent = self.m_cache.get_entity(par_id)
+            if not ent:
+                continue
+            p_item = LastUpdatedOrderedDict()
+            p_item['id'] = ent.uri
+            p_item['slug'] = ent.slug
+            p_item['label'] = ent.label
+            if ent.data_type is not False:
+                p_item['type'] = ent.data_type
+            else:
+                p_item['type'] = '@id'
+            p_item['ld_object_ok'] = ent.ld_object_ok
+            output.append(p_item)
         return output
     
     def get_entity_parents(self, identifier, parent_list=None, loop_count=0):
@@ -136,6 +150,7 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         parent_id = None
         lequiv = LinkEquivalence()
         identifiers = lequiv.get_identifier_list_variants(identifier)
+        # print('identifiers: {}'.format(identifiers))
         p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
         preds_for_superobjs = lequiv.get_identifier_list_variants(p_for_superobjs)
         p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
@@ -151,12 +166,12 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
                 superobjs_anno = False
         except LinkAnnotation.DoesNotExist:
             superobjs_anno = False
-        if superobjs_anno is not False:
+        if superobjs_anno:
             parent_id = superobjs_anno[0].object_uri
-            if parent_id.count('/') > 1:
-                oc_uuid = URImanagement.get_uuid_from_oc_uri(parent_id)
-                if oc_uuid is not False:
-                    parent_id = oc_uuid
+            # print('Subject {} is child of {}'.format(identifiers, parent_id))
+            oc_uuid = URImanagement.get_uuid_from_oc_uri(parent_id)
+            if oc_uuid:
+                parent_id = oc_uuid
         try:
             """
             Now look for superior entities in the subject, not the object
@@ -170,12 +185,12 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
                 supersubj_anno = False
         except LinkAnnotation.DoesNotExist:
             supersubj_anno = False
-        if supersubj_anno is not False:
+        if supersubj_anno:
             parent_id = supersubj_anno[0].subject
-            if parent_id.count('/') > 1:
-                oc_uuid = URImanagement.get_uuid_from_oc_uri(parent_id)
-                if oc_uuid is not False:
-                    parent_id = oc_uuid
+            # print('Subject {} is parent of {}'.format(parent_id, identifiers))
+            oc_uuid = URImanagement.get_uuid_from_oc_uri(parent_id)
+            if oc_uuid:
+                parent_id = oc_uuid
         return parent_id
 
     def get_entity_children(self, identifier, recursive=True):
