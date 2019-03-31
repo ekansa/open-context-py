@@ -435,6 +435,47 @@ sd_a = sd_obj.fields
                 item['slug']
             ) + self.SOLR_VALUE_DELIM + root_solr_field
 
+    def _add_category(self):
+        """Adds category / type data ('class_uri' in the manifest table)
+        to the solr document.
+        """
+        if not 'category' in self.oc_item.json_ld:
+            # No category, skip the rest.
+            return None
+        for category in self.oc_item.json_ld['category']:
+            # get the parent entities of the current category
+            raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                category
+            )
+            solr_field_name = None
+            hiearchy_items = []
+            for item in raw_hiearchy_items:
+                # We only add the category hierarchy to the solr
+                # document once we the poss_item_type has been
+                # matched with the the current item's item type.
+                # This means that we're NOT indexing the hiearchy
+                # above the oc_item.manifest.item_type
+                if ((settings.CANONICAL_HOST + '/vocabularies/oc-general/') in
+                    item['id']):
+                   poss_item_type = item['id'].split('/vocabularies/oc-general/')[-1]
+                if (not solr_field_name and
+                   poss_item_type == self.oc_item.manifest.item_type):
+                    solr_field_name = self._convert_slug_to_solr(
+                        item['slug'] +
+                        self.SOLR_VALUE_DELIM + 'pred_id'
+                    )
+                    continue
+                if not solr_field_name:
+                    continue
+                hiearchy_items.append(item)
+            # Now add the hiearchy of categories (class_uri) that is under the
+            # oc_item.manifest.item_type.
+            if solr_field_name:
+                self._add_object_value_hiearchy(
+                    solr_field_name,
+                    hiearchy_items
+                )
+    
     def _add_joined_subject_uuid(self, val_obj_id):
         """Adds subject uuids to facilitate joins."""
         if not self.oc_item.manifest.item_type in ['media','documents']:
@@ -701,6 +742,8 @@ sd_a = sd_obj.fields
         self._add_labels_titles_to_text_field()
         # Add the spatial context hiearchy to the solr document
         self._add_solr_spatial_context()
+        # Add the item's category (class_uri) to the solr document
+        self._add_category()
         # Add descriptions from the item observations
         self._add_observations_descriptions()
         # Make sure the text field is valid for Solr
