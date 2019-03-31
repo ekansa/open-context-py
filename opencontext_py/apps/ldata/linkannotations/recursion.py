@@ -89,7 +89,7 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
                 0
             )
         if not len(raw_parents):
-            # No parens. Returns false.
+            # No parents. Returns false.
             return output
         # Make the output.
         # reverse the order of the list, to make top most concept
