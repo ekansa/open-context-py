@@ -169,9 +169,20 @@ sd_a = sd_obj.fields
             if not label_pred in self.oc_item.json_ld:
                 continue
             self.fields['text'] += lang_obj.get_all_value_str(
-                    self.oc_item.json_ld[label_pred]
-                )
+                self.oc_item.json_ld[label_pred]
+            )
             self.fields['text'] += ' \n'
+    
+    def _add_text_content(self):
+        """ Gets text content for indexing
+        """
+        for pred in settings.TEXT_CONTENT_PREDICATES:
+            if not pred in self.oc_item.json_ld:
+                continue
+            lang_obj = Languages()
+            self.fields['text'] += lang_obj.get_all_value_str(
+                self.oc_item.json_ld[pred]
+            ) + '\n'
     
     def _make_slug_type_uri_label(self):
         """Makes a slug_type_uri_label field for solr """
@@ -714,6 +725,15 @@ sd_a = sd_obj.fields
         # keyed by a predicate.
         obs_list = self.oc_item.json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]
         for obs in obs_list:
+             # Get the status of the observation, defaulting to 'active'.
+             # We are OK to index observation assertions if the observation is
+             # active, otherwise we should skip it to so that the inactive
+             # observations do not get indexed.
+            obs_status = obs.get(ItemKeys.PREDICATES_OCGEN_OBSTATUS, 'active')
+            if obs_status != 'active':
+                # Skip this observation. It's there but has a deprecated
+                # status.
+                continue
             for pred_key, pred_value_objects in obs.items():
                 if pred_key in projGraph.LINKDATA_OBS_PREDS_SKIP:
                     # Skip, since these are metadata about the observation itself,
@@ -731,6 +751,60 @@ sd_a = sd_obj.fields
                     pred_value_objects
                 )
 
+    def _add_infered_descriptions(self):
+        """Adds inferred linked data descriptions to the Solr doc."""
+        inferred_assertions = self.proj_graph_obj\
+                                  .infer_assertions_for_item_json_ld(
+                                      self.oc_item.json_ld
+                                    )
+        if not inferred_assertions:
+            # No inferred assertions from liked data, so skip out.
+            return None
+        for assertion in inferred_assertions:
+            # Get any hiearchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hiearchy.
+            pred_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                assertion['id']
+            )
+            # This adds the parents of the link data predicate to the solr document,
+            # starting at the self.ROOT_LINK_DATA_SOLR
+            self._add_predicate_hiearchy(
+                pred_hiearchy_items,
+                self.ROOT_LINK_DATA_SOLR
+            )
+            
+            # Set up the solr field name for the link data predicate.
+            solr_field_name = self._convert_slug_to_solr(
+                assertion['slug'] +
+                self._get_solr_predicate_type_from_dict(
+                    assertion, prefix=(self.SOLR_VALUE_DELIM + 'pred_')
+                )
+            )
+            # Make sure the solr_field_name is in the solr document's
+            # dictionary of fields.
+            if solr_field_name not in self.fields:
+                self.fields[solr_field_name] = []
+            
+            # Add the dicts of linked data entity objects
+            # together with the list of object literal values to make
+            # a consoloidated linked data object list.
+            ld_object_list = [obj for _, obj in assertion['ld_objects'].items()]
+            ld_object_list += [obj for _, obj in assertion['oc_objects'].items()]
+            ld_object_list += assertion['literals']
+            
+            # Add the predicate label to the text string to help
+            # make full-text search snippets more meaningful.
+            self.fields['text'] += assertion['label'] + ': '
+            # Add the predicate's value objects, including hiearchy parents
+            # of those value objects, to the solr document.
+            self._add_solr_field_values(
+                solr_field_name,
+                self._get_solr_predicate_type_from_dict(
+                    assertion, prefix=''
+                ),
+                ld_object_list
+            )
+
     def make_solr_doc(self):
         """Make a solr document """
         self._set_solr_field_prefix()
@@ -746,6 +820,11 @@ sd_a = sd_obj.fields
         self._add_category()
         # Add descriptions from the item observations
         self._add_observations_descriptions()
+        # Add infered assertions via linked data equivalences to
+        # descriptions in the item observations.
+        self._add_infered_descriptions()
+        # Add general text content (esp for projects, documents)
+        self._add_text_content()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
         

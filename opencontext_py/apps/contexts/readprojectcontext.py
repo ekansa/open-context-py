@@ -1,4 +1,5 @@
 from django.conf import settings
+from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
@@ -198,6 +199,7 @@ class ReadProjectContextVocabGraph():
 
     def infer_assertions_for_item_json_ld(self, json_ld):
         """Makes a list of inferred assertions from item json ld """
+        lang_obj = Languages()
         inferred_assertions = []
         if not isinstance(json_ld, dict):
             return inferred_assertions
@@ -205,6 +207,14 @@ class ReadProjectContextVocabGraph():
             return inferred_assertions
         unique_pred_assertions = LastUpdatedOrderedDict()
         for obs_dict in json_ld[ItemKeys.PREDICATES_OCGEN_HASOBS]:
+            # Get the status of the observation, defaulting to 'active'. If
+            # active, then it's OK to infer assertions, otherwise skip the
+            # observation.
+            obs_status = obs_dict.get(ItemKeys.PREDICATES_OCGEN_OBSTATUS, 'active')
+            if obs_status != 'active':
+                # Skip this observation. It's there but has a deprecated
+                # status.
+                continue
             for obs_pred_key, obj_values in obs_dict.items():
                 if obs_pred_key in self.LINKDATA_OBS_PREDS_SKIP:
                     # Skip this obs_pred_key, it is a general
@@ -212,6 +222,7 @@ class ReadProjectContextVocabGraph():
                     # not have any linked assertions to infer.
                     continue
                 obs_pred_info = self.lookup_predicate(obs_pred_key)
+                pred_data_type = self.get_predicate_datatype_for_graph_obj(obs_pred_info)
                 equiv_pred_objs = self.get_equivalent_objects(obs_pred_info)
                 if not equiv_pred_objs:
                     # No linked data equivalence for the obs_pred_key
@@ -228,6 +239,7 @@ class ReadProjectContextVocabGraph():
                 # sure the LOD predicates are used only once.
                 if not equiv_pred_uri in unique_pred_assertions:
                     assertion = equiv_pred_obj
+                    assertion['type'] = pred_data_type
                     assertion['ld_objects'] = LastUpdatedOrderedDict()
                     assertion['oc_objects'] = LastUpdatedOrderedDict()
                     assertion['literals'] = []
@@ -246,7 +258,7 @@ class ReadProjectContextVocabGraph():
                             if obj_val not in assertion['literals']:
                                 assertion['literals'].append(obj_val)
                         elif 'xsd:string' in obj_val:
-                            literal_val = obj_val['xsd:string']
+                            literal_val = lang_obj.get_all_value_str(obj_val['xsd:string'])
                         if literal_val and literal_val not in assertion['literals']:
                             assertion['literals'].append(literal_val)
                         if literal_val is None:
