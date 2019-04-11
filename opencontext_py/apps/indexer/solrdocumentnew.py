@@ -751,6 +751,19 @@ sd_a = sd_obj.fields
                     pred_value_objects
                 )
 
+    def _add_object_uri(self, object_uri):
+        """ Processes object URIs for inferred linked object entities"""
+        # NOTE: It is useful to have a simple field that records all
+        # the linked data objects related to a subject (the document
+        # indexed by solr).
+        if not object_uri:
+            # We don't have an object_uri to add.
+            return None
+        if 'object_uri' not in self.fields:
+            self.fields['object_uri'] = []
+        if object_uri not in self.fields['object_uri']:
+            self.fields['object_uri'].append(object_uri)
+
     def _add_infered_descriptions(self):
         """Adds inferred linked data descriptions to the Solr doc."""
         inferred_assertions = self.proj_graph_obj\
@@ -784,6 +797,10 @@ sd_a = sd_obj.fields
             # dictionary of fields.
             if solr_field_name not in self.fields:
                 self.fields[solr_field_name] = []
+            
+            # Add linked data 
+            for _, obj in assertion['ld_objects'].items():
+                self._add_object_uri(obj.get('id'))
             
             # Add the dicts of linked data entity objects
             # together with the list of object literal values to make
