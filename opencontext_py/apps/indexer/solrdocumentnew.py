@@ -81,6 +81,7 @@ sd_a = sd_obj.fields
     ROOT_PREDICATE_SOLR = 'root___pred_id'
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
     ROOT_PROJECT_SOLR = 'root___project_id'
+    ALL_PROJECT_SOLR = 'obj_all___project_id'
     FILE_SIZE_SOLR = 'filesize___pred_numeric'
     FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
     RELATED_SOLR_FIELD_PREFIX = 'rel--'
@@ -121,7 +122,7 @@ sd_a = sd_obj.fields
         self.geo_specified = False
         self.chrono_specified = False
         # Store values here
-        self.fields = {}
+        self.fields = LastUpdatedOrderedDict()
         self.fields['text'] = ''  # Start of full-text field
         self.fields['human_remains'] = 0  # Default, item is not about human remains.
         # The solr field for joins by uuid.
@@ -238,7 +239,8 @@ sd_a = sd_obj.fields
             self,
             solr_id_field,
             concat_val,
-            slug
+            slug,
+            do_fq_only=False
         ):
         """Adds values for an id field, and the associated slug
            value for the related _fq field
@@ -248,9 +250,11 @@ sd_a = sd_obj.fields
             return None
         # Add the main solr id field if not present,
         # then append the concat_val
-        if solr_id_field not in self.fields:
+        if do_fq_only is False and solr_id_field not in self.fields:
             self.fields[solr_id_field] = []
-        if len(concat_val) > 0 and concat_val not in self.fields[solr_id_field]:
+        if (do_fq_only is False and
+            len(concat_val) > 0 and
+            concat_val not in self.fields[solr_id_field]):
             # Only add it if we don't already have it
             self.fields[solr_id_field].append(concat_val)
         # Add the solr id field's _fq field if not present.
@@ -266,6 +270,50 @@ sd_a = sd_obj.fields
         if slug not in self.fields[solr_id_field_fq]:
             # only add it if we don't already have it
             self.fields[solr_id_field_fq].append(slug)
+    
+    def _set_solr_project_fields(self):
+        """
+        Creates a hierarchy of projects in the same way as a hierarchy of predicates
+        """
+        solr_field_name = self.ROOT_PROJECT_SOLR
+        proj_rel = ProjectRels()
+        proj_hierarchy = proj_rel.get_jsonldish_parents(
+            self.oc_item.manifest.project_uuid
+        )
+        for proj in proj_hierarchy:
+            # Compose the solr_value for this item in the context
+            # hiearchy.
+            self.fields['text'] += ' ' + str(proj['label']) + '\n'
+            act_solr_value = self._concat_solr_string_value(
+                proj['slug'],
+                'id',
+                proj['id'],
+                proj['label']
+            )
+            # The self.ALL_PROJECT_SOLR takes values for
+            # each project item in project hiearchy, thereby
+            # facilitating queries at all levels of the project
+            # hierarchy. Without the self.ALL_PROJECT_SOLR, we would need
+            # to know the full hiearchy path of project items in order
+            # to query for a given project.
+            self._add_id_field_fq_field_values(
+                self.ALL_PROJECT_SOLR,
+                act_solr_value,
+                proj['slug'],
+                do_fq_only=True
+            )
+            # Now add the current proj. to the solr field for the current
+            # level of the project hiearchy.
+            self._add_id_field_fq_field_values(
+                solr_field_name,
+                act_solr_value,
+                proj['slug']
+            )
+            # Make the new solr_field_name for the next iteration of the loop.
+            solr_field_name = (
+                self._convert_slug_to_solr(proj['slug']) +
+                '___project_id'
+            )
 
     def _get_oc_item_uuid(self, uri, match_type='subjects'):
         """Returns a uuid from an URI referencing an Open Context item,
@@ -338,7 +386,8 @@ sd_a = sd_obj.fields
             self._add_id_field_fq_field_values(
                 self.ALL_CONTEXT_SOLR,
                 act_solr_value,
-                context['slug']
+                context['slug'],
+                do_fq_only=True
             )
             if index == 0:
                 # We are at the top of the spatial hiearchy
@@ -438,7 +487,8 @@ sd_a = sd_obj.fields
             self._add_id_field_fq_field_values(
                 all_obj_solr_field,
                 act_solr_value,
-                item['slug']
+                item['slug'],
+                do_fq_only=True
             )
             # Make the next act_solr_field for the next
             # iteration through the loop.
@@ -831,6 +881,8 @@ sd_a = sd_obj.fields
         self._set_required_solr_fields()
         # Add (multilingual) labels and titles to the text field
         self._add_labels_titles_to_text_field()
+        # Add the project hiearchy to the solr document
+        self._set_solr_project_fields()
         # Add the spatial context hiearchy to the solr document
         self._add_solr_spatial_context()
         # Add the item's category (class_uri) to the solr document
