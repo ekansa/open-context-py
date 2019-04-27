@@ -23,10 +23,29 @@ class SolrDocumentNew:
     fields are stored in a Solr Document's "fields" property.
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+# Example Bone (subjects)
 uuid = '9095FCBB-35A8-452E-64A3-B8D52A0B2DB3'
 sd_obj = SolrDocumentNew(uuid)
 sd_obj.make_solr_doc()
-sd_a = sd_obj.fields
+sd_obj.fields
+
+# Example coin (subjects)
+uuid_a = 'BB35B081-FD20-4339-67F4-00DB99079338'
+sd_obj_a = SolrDocumentNew(uuid_a)
+sd_obj_a.make_solr_doc()
+sd_obj_a.fields
+
+# Example Predicate
+uuid_b = '04909421-C28E-46AF-98FA-10F888B64A4D'
+sd_obj_b = SolrDocumentNew(uuid_b)
+sd_obj_b.make_solr_doc()
+sd_obj_b.fields
+
+# Example Predicate
+uuid_b = '04909421-C28E-46AF-98FA-10F888B64A4D'
+sd_obj_b = SolrDocumentNew(uuid)
+sd_obj_b.make_solr_doc()
+sd_obj_b.fields
 
     '''
 
@@ -47,9 +66,12 @@ sd_a = sd_obj.fields
 
     LD_DIRECT_PREDICATES = [
         'http://nomisma.org/ontology#hasTypeSeriesItem',
-        'nmo:hasTypeSeriesItem',
         'http://erlangen-crm.org/current/P2_has_type',
-        'cidoc-crm:P2_has_type'
+        'http://www.wikidata.org/wiki/Property:P3328',
+        'oc-gen:has-technique',
+        'rdfs:range',
+        'skos:example',
+        'skos:related',
     ]
 
     PERSISTENT_ID_ROOTS = [
@@ -82,6 +104,7 @@ sd_a = sd_obj.fields
     ROOT_LINK_DATA_SOLR = 'ld___pred_id'
     ROOT_PROJECT_SOLR = 'root___project_id'
     ALL_PROJECT_SOLR = 'obj_all___project_id'
+    EQUIV_LD_SOLR = 'skos_closematch___pred_id'
     FILE_SIZE_SOLR = 'filesize___pred_numeric'
     FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
     RELATED_SOLR_FIELD_PREFIX = 'rel--'
@@ -194,7 +217,7 @@ sd_a = sd_obj.fields
             if self.oc_item.json_ld['oc-gen:data-type']:
                 # Looks up the predicte type mapped to Solr types
                 parts.append(
-                    self._get_predicate_type_string(
+                    self._get_solr_predicate_type_string(
                         self.oc_item.json_ld['oc-gen:data-type']
                     )
                 )
@@ -871,6 +894,77 @@ sd_a = sd_obj.fields
                 ),
                 ld_object_list
             )
+    
+    def _add_equivalent_linked_data(self):
+        """ This associates the item getting indexed with an equivalent
+        linked data entity and its hierarchy.
+        """
+        for equiv_uri in self.LD_EQUIVALENT_PREDICATES:
+            if equiv_uri not in self.oc_item.json_ld:
+                continue
+            # We will just "force-fit" all equivalent predicates
+            # to be a skos:closeMatch.
+            for obj in self.oc_item.json_ld[equiv_uri]:
+                # Add linked data object.
+                self._add_object_uri(obj.get('id'))
+                hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                    obj['id']
+                )
+                self._add_object_value_hiearchy(
+                    self.EQUIV_LD_SOLR,
+                    hiearchy_items
+                )
+                # A little stying for different value objects in the text field.
+                self.fields['text'] += '\n'
+    
+    def _add_direct_linked_data(self):
+        """ Adds linked data directly asserted to an item.
+        """
+        # Get a list of all the equivalent identifiers (full URIs or
+        # namespaced equivalents) of predicates that are directly
+        # asserted about different items.
+        le = LinkEquivalence()
+        direct_preds = le.get_identifier_list_variants(
+            self.LD_DIRECT_PREDICATES
+        )
+        for pred_uri in direct_preds:
+            if pred_uri not in self.oc_item.json_ld:
+                continue
+            # Get any hiearchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hiearchy.
+            pred_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                pred_uri
+            )
+            # This adds the parents of the link data predicate to the solr document,
+            # starting at the self.ROOT_LINK_DATA_SOLR
+            self._add_predicate_hiearchy(
+                pred_hiearchy_items,
+                self.ROOT_LINK_DATA_SOLR
+            )
+            
+            # Set up the solr field name for the link data predicate.
+            solr_field_name = self._convert_slug_to_solr(
+                pred_hiearchy_items[-1]['slug'] +
+                self.SOLR_VALUE_DELIM +
+                'pred_id'
+            )
+            
+            for obj in self.oc_item.json_ld[pred_uri]:
+                # Add linked data object.
+                self._add_object_uri(obj.get('id'))
+                
+                # Get the hierarchy for the objects of this equivalence
+                # relationship.
+                hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                    obj['id']
+                )
+                self._add_object_value_hiearchy(
+                    solr_field_name,
+                    hiearchy_items
+                )
+                # A little stying for different value objects in the text field.
+                self.fields['text'] += '\n'
+           
 
     def make_solr_doc(self):
         """Make a solr document """
@@ -892,6 +986,10 @@ sd_a = sd_obj.fields
         # Add infered assertions via linked data equivalences to
         # descriptions in the item observations.
         self._add_infered_descriptions()
+        # Add equivalences to other linked data
+        self._add_equivalent_linked_data()
+        # Add linked data made directly on an item
+        self._add_direct_linked_data()
         # Add general text content (esp for projects, documents)
         self._add_text_content()
         # Make sure the text field is valid for Solr
