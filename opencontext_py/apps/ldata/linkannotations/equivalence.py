@@ -95,10 +95,10 @@ class LinkEquivalence():
             output_list.append(identifier)
             if(identifier.startswith('http://') or identifier.startswith('https://')):
                 oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
-                if oc_uuid is not False:
+                if oc_uuid:
                     output_list.append(oc_uuid)
-                else:
-                    prefix_id = URImanagement.prefix_common_uri(identifier)
+                prefix_id = URImanagement.prefix_common_uri(identifier)
+                if prefix_id:
                     output_list.append(prefix_id)
             elif ':' in identifier:
                 full_uri = URImanagement.convert_prefix_to_full_uri(identifier)

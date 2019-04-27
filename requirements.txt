@@ -4,7 +4,7 @@ coverage==4.0.3
 
 coveralls==1.1
 
-Django==1.11.15
+Django==1.11.19
 
 django-debug-toolbar==1.8
 
@@ -40,7 +40,7 @@ python-dateutil==2.5.3
 
 pytz==2016.4
 
-PyYAML==3.11
+PyYAML==4.2b1
 
 rdflib==4.2.1
 

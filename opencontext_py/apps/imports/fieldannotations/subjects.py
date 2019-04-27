@@ -836,6 +836,7 @@ class CandidateSubject():
 
     def reconcile_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the subjects table """
+        match_found = False
         self.imp_cell_obj = imp_cell_obj
         self.item_field_num = imp_cell_obj.field_num
         if len(imp_cell_obj.record) > 0:
@@ -857,7 +858,7 @@ class CandidateSubject():
                 self.context = self.parent_context + Subject.HIEARCHY_DELIM + self.label
             else:
                 self.context = self.label
-            # print('Reconcile context: ' + self.context)
+            print('Reconcile context: ' + self.context)
             match_found = self.match_against_subjects(self.context)
             if match_found is False:
                 # create new subject, manifest objects. Need new UUID, since we can't assume
@@ -876,7 +877,7 @@ class CandidateSubject():
                 self.is_new = True
         else:
             if self.metadata_obj is not None:
-                # Check if we've alreadu specified the UUID with some associated
+                # Check if we've already specified the UUID with some associated
                 # metadata for the item.
                 sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
                                                               imp_cell_obj.row_num)
@@ -886,7 +887,7 @@ class CandidateSubject():
                     self.uuid = meta_uuid
                     match_found = True
             if self.label and not match_found:
-                # only allow matches on non-blank items when not creating a record
+                # Only allow matches on non-blank items when not creating a record
                 match_found = self.match_against_manifest(self.label,
                                                           self.class_uri)
         self.update_import_cell_uuid()
@@ -980,14 +981,20 @@ class CandidateSubject():
                                    .get(hash_id=hash_id)
         except Subject.DoesNotExist:
             subject_match = False
-        if subject_match is False:
+        if not subject_match:
             hash_id = Subject().make_hash_id('0', context)
             try:
                 subject_match = Subject.objects\
                                        .get(hash_id=hash_id)
             except Subject.DoesNotExist:
                 subject_match = False
+        if not subject_match:
+            try:
+                subject_match = Subject.objects.get(context=context)
+            except Subject.DoesNotExist:
+                subject_match = False
         if subject_match is not False:
+            print('Found: {} as {}'.format(context, subject_match.uuid))
             match_found = True
             self.uuid = subject_match.uuid
         else:
