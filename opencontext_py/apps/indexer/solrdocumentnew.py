@@ -75,9 +75,14 @@ sd_obj_b.fields
     ]
 
     PERSISTENT_ID_ROOTS = [
-        'doi.org',
-        'n2t.net/ark:/',
-        'orcid.org'
+        'https://doi.org',
+        'http://doi.org',
+        'https://dx.doi.org',
+        'http://dx.doi.org',
+        'https://n2t.net/ark:/',
+        'http://n2t.net/ark:/',
+        'https://orcid.org',
+        'http://orcid.org'
     ]
     
     LABELING_PREDICATES = [
@@ -96,7 +101,7 @@ sd_obj_b.fields
     # This should ONLY be the case for the very first example
     # datasets in Open Context, before we got our metadata
     # house in better order.
-    DEFAULT_PUBISHED_DATETIME = datetime.date(2007, 1, 1)
+    DEFAULT_PUBLISHED_DATETIME = datetime.date(2007, 1, 1)
 
     ALL_CONTEXT_SOLR = 'obj_all___context_id'
     ROOT_CONTEXT_SOLR = 'root___context_id'
@@ -117,6 +122,12 @@ sd_obj_b.fields
         'False'
     ]
 
+
+    # Maximum depth of geotile zoom
+    MAX_GEOTILE_ZOOM = 30
+    # Minimum allowed geotile zoom
+    MIN_GEOTILE_ZOOM = 6
+    
     # The delimiter for parts of an object value added to a
     # solr field.
     SOLR_VALUE_DELIM = '___'
@@ -236,7 +247,7 @@ sd_obj_b.fields
         self.fields['slug_type_uri_label'] = self._make_slug_type_uri_label()
         self.fields['project_uuid'] = self.oc_item.manifest.project_uuid
         if not self.oc_item.manifest.published:
-            published_datetime = self.DEFAULT_PUBISHED_DATETIME
+            published_datetime = self.DEFAULT_PUBLISHED_DATETIME
         else:
             published_datetime = self.oc_item.manifest.published
         self.fields['published'] = published_datetime.strftime(
@@ -364,7 +375,6 @@ sd_obj_b.fields
         if not isinstance(uri_parsed, dict):
             return None
         return uri_parsed['item_type']
-
 
     def _get_context_path_items(self):
         """Gets the context path items from the oc_item.json_ld."""
@@ -965,7 +975,253 @@ sd_obj_b.fields
                 # A little stying for different value objects in the text field.
                 self.fields['text'] += '\n'
            
+    def _validate_add_geo_point(
+            self,
+            latitude,
+            longitude,
+            location_precision
+        ):
+        """Validates and adds geo point to solr if valid."""
+        gm = GlobalMercator()
+        lat_ok = gm.validate_geo_coordinate(latitude, 'lat')
+        lon_ok = gm.validate_geo_coordinate(longitude, 'lon')
+        if not lat_ok or not lon_ok:
+            raise ValueError('Coordinate problem: lat {}, lon {}'.format(
+                    latitude,
+                    longitude
+                )
+            )
+        # The coordinates appear valid, add to the solr doc
+        coords_str = '{},{}'.format(latitude, longitude)
+        self.fields['discovery_geolocation'] = coords_str
+        if not isinstance(location_precision, int):
+            raise ValueError(
+                'Location precision {} must be an integer.'.format(
+                        location_precision
+                    )
+            )
+        if location_precision < self.MIN_GEOTILE_ZOOM:
+            location_precision = self.MIN_GEOTILE_ZOOM
+        if location_precision > self.MAX_GEOTILE_ZOOM:
+            location_precision = self.MAX_GEOTILE_ZOOM
+        gm = GlobalMercator()
+        tile = gm.lat_lon_to_quadtree(
+            latitude,
+            longitude,
+            location_precision
+        )
+        if len(tile) <= (location_precision - 2):
+            print('Problem with location precision {} and tile: {}'.format(
+                    location_precision,
+                    tile
+                )
+            )
+            return False
+        self.fields['discovery_geotile'] = tile
+        return True
 
+    def _add_predicates_types_geo(self):
+        """Adds solr geo data for predicates and types"""
+        if not self.oc_item.manifest.item_type in ['types', 'predicates']:
+            # Skip out, this is for predicates and types.
+            return None
+        self.geo_specified = False
+        gcq = GeoChronoQueries()
+        geo_meta = gcq.get_project_geo_meta(
+            self.oc_item.manifest.project_uuid
+        )
+        if not geo_meta:
+            # Skip out, no spatial information found.
+            return None
+        geo = geo_meta[0]
+        if not isinstance(geo.specificity, int):
+            # Unset geo specificity, so assume it is max precision
+            geo.specificity = self.MAX_GEOTILE_ZOOM
+        location_precision = abs(geo.specificity)
+        valid_geo = self._validate_add_geo_point(
+            geo.latitude,
+            geo.longitude,
+            location_precision=location_precision
+        )
+        self.geo_specified = valid_geo
+    
+    def _add_geospatial(self):
+        """Adds solr geo spatial data from the feature (GeoJSON) if present."""
+        features = self.oc_item.json_ld.get('features')
+        if not features:
+            # The item does not have geospatial features, so add
+            # geo data to the solr doc specific to predicates and types.
+            self._add_predicates_types_geo()
+            return None
+        for feature in features:
+            geometry_type = feature['geometry'].get('type')
+            loc_type = feature['properties'].get('type')
+            ref_type = feature['properties'].get('reference-type')
+            contained_in_region = feature['properties'].get('contained-in-region')
+            location_precision = feature['properties'].get(
+                'location-precision',
+                self.MAX_GEOTILE_ZOOM
+            )
+            if (ref_type == 'specified' and
+                geometry_type != 'Point' and
+                loc_type in ['oc-gen:discovey-location', 'oc-gen:geo-coverage'] and
+                'slug_type_uri_label' in self.fields):
+                # The discovery geosource is this item it self.
+                self.geo_specified = True
+                self.fields['disc_geosource'] = self.fields['slug_type_uri_label']
+            elif (contained_in_region and
+                  loc_type in ['oc-gen:discovey-location', 'oc-gen:geo-coverage']):
+                # The discovery geosource is another (likely parent) item.
+                self.geo_specified = False
+                ref_label = feature['properties'].get('reference-label')
+                ref_uri = feature['properties'].get('reference-uri')
+                ref_slug = feature['properties'].get('reference-slug')
+                if not ref_label or not ref_uri or not ref_slug:
+                    # We're missing data needed for a disc_geosource
+                    # value, so skip.
+                    continue
+                self.fields['disc_geosource'] = self._concat_solr_string_value(
+                    ref_slug,
+                    'id',
+                    ref_uri,
+                    ref_label
+                )
+            if 'discovery_geolocation' in self.fields:
+                # Continue the loop, since we already have a disovery
+                # location for this item, but still neet to loop
+                # through features to populate geosource issues.
+                continue
+            if (geometry_type == 'Point' and
+                loc_type in ['oc-gen:discovey-location', 'oc-gen:geo-coverage']):
+                # Get point data to add geoloaction to solr.
+                coords = feature['geometry'].get('coordinates')
+                if not coords or len(coords) != 2:
+                    raise ValueError('No or bad coordinates in feature point geometry.')
+                valid_geo = self._validate_add_geo_point(
+                    # Note the GeoJSON ordering of coordinates (lon/lat!)
+                    latitude=coords[1],
+                    longitude=coords[0],
+                    location_precision=location_precision
+                )
+                self.geo_specified = valid_geo          
+
+    def _validate_add_chrono(self, date_start, date_stop):
+        """Validates and adds date ranges to Solr"""
+        if date_start is None or date_stop is None:
+            raise ValueError('Start: {}, stop: {} must be numbers.'.format(
+                    date_start,
+                    date_stop
+                )
+            )
+        chrono_tile = ChronoTile()
+        if 'form_use_life_chrono_tile' not in self.fields:
+            self.fields['form_use_life_chrono_tile'] = []
+        if 'form_use_life_chrono_earliest' not in self.fields:
+                self.fields['form_use_life_chrono_earliest'] = []
+        if 'form_use_life_chrono_latest' not in self.fields:
+            self.fields['form_use_life_chrono_latest'] = []
+        self.fields['form_use_life_chrono_tile'].append(
+            chrono_tile.encode_path_from_bce_ce(
+                date_start, date_stop, '10M-'
+            )
+        )
+        self.fields['form_use_life_chrono_earliest'].append(
+            date_start
+        )
+        self.fields['form_use_life_chrono_latest'].append(
+            date_stop
+        )
+
+    def _add_predicates_types_chrono(self):
+        """Adds chronological information for predicates or types items"""
+        if not self.oc_item.manifest.item_type in ['types', 'predicates']:
+            # Skip out, this is for predicates and types.
+            return None 
+        gcq = GeoChronoQueries()
+        if self.oc_item.manifest.item_type  == 'types':
+            # Get a date range dict, using a method for types
+            date_range = gcq.get_type_date_range(
+                self.oc_item.manifest.uuid,
+                self.oc_item.manifest.project_uuid
+            )
+        else:
+            # Get a date range dict, using the method for the project
+            date_range = gcq.get_project_date_range(
+                self.oc_item.manifest.project_uuid
+            )
+        if not date_range:
+            # We don't have chronology information to index, so
+            # skip
+            return None
+        # We have date range information we can index!!
+        self.chrono_specified = True
+        self._validate_add_chrono(
+            date_range['start'],
+            date_range['stop']
+        )
+
+    def _add_chronological(self):
+        """Adds solr chronologica from the feature (GeoJSON) if present."""
+        features = self.oc_item.json_ld.get('features')
+        if not features:
+            # The item does not have geospatial features, so add
+            # geo data to the solr doc specific to predicates and types.
+            self._add_predicates_types_chrono()
+            return None
+        for feature in features:
+            when_dict = feature.get('when')
+            if not when_dict:
+                # This feature has no chronology, so continue
+                continue
+            # Start and stop times are in ISO 8601 time
+            iso_start = when_dict.get('start')
+            iso_stop = when_dict.get('stop')
+            when_type = when_dict.get('type')
+            ref_type = when_dict.get('reference-type')
+            if (when_type == 'oc-gen:formation-use-life' and
+                iso_start is not None and
+                iso_stop is not None):
+                if when_type == 'specified':
+                    self.chrono_specified = True 
+                date_start = ISOyears().make_float_from_iso(iso_start)
+                date_stop = ISOyears().make_float_from_iso(iso_stop)
+                self._validate_add_chrono(
+                    date_start,
+                    date_stop
+                )
+    
+    def _add_persistent_ids(self):
+        """Adds persistent IDs to the solr doc for indexing."""
+        for id_pred in self.LD_IDENTIFIER_PREDICATES:
+            if not id_pred in self.oc_item.json_ld:
+                # This predicate is not in the json_ld, so
+                # continue through the loop.
+                continue
+            for id_obj in self.oc_item.json_ld[id_pred]:
+                if isinstance(id_obj, str):
+                    id = id_obj
+                else:
+                    id = projGraph().get_id_from_g_obj(id_obj)
+                if not id:
+                    # No id found (something weird?)
+                    continue
+                # Check to see if this is an ID we should index
+                # as a general linked data object of this item?
+                if (id.startswith('https://') or
+                    id.startswith('http://')):
+                    # Even if it's not a persistent ID add it.
+                    self._add_object_uri(id)
+                # Now check to see if the id has the root of one of
+                # the persistent ID URIs that we use.
+                for act_root in self.PERSISTENT_ID_ROOTS:
+                    if not id.startswith(act_root):
+                        # The ID does not seem to have 
+                        continue
+                    if 'persistent_uri' not in self.fields:
+                        self.fields['persistent_uri'] = []
+                    self.fields['persistent_uri'].append(id)
+                    self.fields['text'] += id + '\n'
+    
     def make_solr_doc(self):
         """Make a solr document """
         self._set_solr_field_prefix()
@@ -992,6 +1248,12 @@ sd_obj_b.fields
         self._add_direct_linked_data()
         # Add general text content (esp for projects, documents)
         self._add_text_content()
+        # Add geospatial information to the solr doc
+        self._add_geospatial()
+        # Add chronolgical information to the solr doc
+        self._add_chronological()
+        # Add persistent identifiers that may be associated to this item.
+        self._add_persistent_ids()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
         
