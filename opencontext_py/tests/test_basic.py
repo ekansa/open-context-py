@@ -25,6 +25,22 @@ def test_main_page():
     response = client.get('/')
     assert response.status_code == 200
 
+def test_ssearch():
+
+    client = Client()
+
+    response = client.get('/subjects-search/.json?response=geo-project')
+    assert response.status_code == 200
+
+def test_index_solr_doc():
+
+    from opencontext_py.apps.ocitems.manifest.models import Manifest
+    from opencontext_py.apps.indexer.reindex import SolrReIndex
+    uuids = ['3FAAA477-5572-4B05-8DC1-CA264FE1FC10']
+    sri = SolrReIndex()
+    sri.reindex_uuids(uuids)
+
+
 def test_other_pages():
     """
     a basic way to test functionality of the overall system by loading various pages
