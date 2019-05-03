@@ -61,22 +61,22 @@
     - name: do apt-get update --fix-missing
       command: apt-get update --fix-missing
 
-    - name: install dirmngr
-      apt:
-        pkg: dirmngr
-        update_cache: yes
-        state: present
+    # - name: install dirmngr
+    #   apt:
+    #     pkg: dirmngr
+    #     update_cache: yes
+    #     state: present
 
-    - name: Add an apt key by id from a keyserver
-      apt_key:
-         keyserver: keyserver.ubuntu.com
-         id: C2518248EEA14886
-      become: yes
+    # - name: Add an apt key by id from a keyserver
+    #   apt_key:
+    #      keyserver: keyserver.ubuntu.com
+    #      id: C2518248EEA14886
+    #   become: yes
 
-    - name: Installing repo for Java 8
-      apt_repository:
-        repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
-      become: true
+    # - name: Installing repo for Java 8
+    #   apt_repository:
+    #     repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
+    #   become: true
 
     - name: apt-get update
       apt:
@@ -97,8 +97,9 @@
         - python3-pip
         - python-dev
         - python3-dev
-        - oracle-java8-installer
-        - oracle-java8-set-default
+        - default-jdk
+        # - oracle-java8-installer
+        # - oracle-java8-set-default
         - ca-certificates
         - libpq-dev
         - liblapack-dev
@@ -548,14 +549,12 @@
     # TO DO -- parameterize oc-solr-6
     - name: Move solr backup to solr data directory
       command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
-      when: oc_stat.stat.exists and install_solr_data
+      # when: oc_stat.exists and install_solr_data
       when: install_solr_data
-
 
     # issue command to reload core
     - name: issue command to reload core
       command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
-      when: install_solr_data
       when: install_solr_data
 
 
