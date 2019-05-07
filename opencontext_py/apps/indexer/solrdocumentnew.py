@@ -839,7 +839,7 @@ sd_obj_b.fields
         # NOTE: It is useful to have a simple field that records all
         # the linked data objects related to a subject (the document
         # indexed by solr).
-        if not object_uri:
+        if not object_uri or not object_uri.startswith('http'):
             # We don't have an object_uri to add.
             return None
         if 'object_uri' not in self.fields:
@@ -975,6 +975,65 @@ sd_obj_b.fields
                 # A little stying for different value objects in the text field.
                 self.fields['text'] += '\n'
            
+    def _process_dc_metadata_objects(
+        self,
+        dc_predicate,
+        solr_field_name,
+        add_object_uris=False
+        ):
+        """Processes Dublin Core metadata objects with special handeling."""
+        if not dc_predicate in self.oc_item.json_ld:
+            # Skip out, this predicate does not exist.
+            return None
+        index_metas = []
+        for meta in self.oc_item.json_ld[dc_predicate]:
+            if (not meta['id'].startswith('http') and
+                meta.get('rdfs:isDefinedBy')):
+                meta['id'] = meta['rdfs:isDefinedBy']
+            if dc_predicate == 'foaf:depection':
+                if ('type' in meta and meta['type'] == 'oc-gen:hero' and
+                    'thumbnail_uri' not in self.fields):
+                    # We only do this once, get the first hero to store as a thumbail in solr
+                    self.fields['thumbnail_uri'] = meta['id']
+                if ('oc-gen:iiif-json-uri' in meta and
+                    'iiif_json_uri' not in self.fields):
+                    # We only do this once, get the first iiif-json in solr
+                    self.fields['iiif_json_uri'] = meta['oc-gen:iiif-json-uri']
+                continue
+            if (self.oc_item.manifest.item_type != 'projects' and
+                'opencontext.org/tables/' in meta['id']):
+                # Skip indexing of related tables.
+                continue
+            if self.oc_item.manifest.item_type == 'projects' or add_object_uris:
+                # We need to add the object_uri for easy indexing.
+                self._add_object_uri(meta['id'])
+            # Add to the list of items to actually index
+            index_metas.append(meta)
+        if not index_metas:
+            # Skip the rest, nothing to add.
+            return None
+        if not solr_field_name in self.fields:
+            self.fields[solr_field_name] = []
+        # Now add the index_metas to the index.
+        self._add_solr_id_field_values(solr_field_name, index_metas)
+
+    def _add_dublin_core(self):
+        """Adds Dublin Core metadata"""
+        for dc_predicate, solr_field_name in DCterms.DC_META_PREDICATES.items():
+            self._process_dc_metadata_objects(
+                dc_predicate,
+                solr_field_name
+            )
+
+    def _add_dublin_core_authors(self):
+        """Adds Dublin Core authorship metadata"""
+        for dc_predicate, solr_field_name in DCterms.DC_AUTHOR_PREDICATES.items():
+            self._process_dc_metadata_objects(
+                dc_predicate,
+                solr_field_name,
+                add_object_uris=True
+            )
+    
     def _validate_add_geo_point(
             self,
             latitude,
@@ -1246,6 +1305,10 @@ sd_obj_b.fields
         self._add_equivalent_linked_data()
         # Add linked data made directly on an item
         self._add_direct_linked_data()
+        # Add Dublin Core metadata
+        self._add_dublin_core()
+        # Add Dublin Core Authors
+        self._add_dublin_core_authors()
         # Add general text content (esp for projects, documents)
         self._add_text_content()
         # Add geospatial information to the solr doc
