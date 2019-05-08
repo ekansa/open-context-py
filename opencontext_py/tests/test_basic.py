@@ -51,7 +51,7 @@ def test_other_pages():
         '/projects-search/',
         '/subjects-search/#1/-10/13/6/any/Google-Satellite',
         '/search/#2/45.0/0.0/6/any/Google-Satellite',
-        '/projects/416A274C-CF88-4471-3E31-93DB825E9E4A'
+        '/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10'
     ]
 
     client = Client()
@@ -110,7 +110,7 @@ def test_projects_feed():
         m_json_ld.request_full_path = '/projects-search/'
         m_json_ld.spatial_context = spatial_context
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
-        assert json_ld['totalResults'] == 108
+        assert json_ld['totalResults'] == 2
 
 
 
