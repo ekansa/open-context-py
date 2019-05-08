@@ -13,4 +13,4 @@ class TestPredicateValues(TestCase):
 
     def test_get_oc_item_label(self):
         #oc_label = self.json_ld['label']
-        self.assertEqual(self.oc_label, 'Bone 4502')
+        self.assertEqual(self.oc_label, 'CAT # 20')
