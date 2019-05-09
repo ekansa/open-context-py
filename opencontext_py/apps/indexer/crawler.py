@@ -31,7 +31,7 @@ crawler.crawl(100)
         index_single_document method. Just provide the document's UUID.
         For example:
 
-        crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
+        crawler.index_single_document('FA6BFBFD-39EB-4474-A2D9-860B2D1B81A6')
         '''
         # The list of Open Context items to crawl
         self.uuidlist = UUIDList().uuids
@@ -203,7 +203,7 @@ crawler.crawl(100)
         UUID as an argument. For example:
 
         crawler = Crawler()
-        crawler.index_single_document('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
+        crawler.index_single_document('FA6BFBFD-39EB-4474-A2D9-860B2D1B81A6')
         '''
         print('\nAttempting to index document ' + uuid + '...\n')
         start_time = time.time()

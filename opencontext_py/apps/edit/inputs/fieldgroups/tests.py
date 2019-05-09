@@ -7,10 +7,10 @@ class TestPredicateValues(TestCase):
 
     def setUp(self):
         self.oc_item = OCitem(
-            ).get_item('9E474B89-E36B-4B9D-2D38-7C7CCBDBB030')
+            ).get_item('FA6BFBFD-39EB-4474-A2D9-860B2D1B81A6')
         self.json_ld = self.oc_item.json_ld
         self.oc_label = self.json_ld['label']
 
     def test_get_oc_item_label(self):
         #oc_label = self.json_ld['label']
-        self.assertEqual(self.oc_label, 'Bone 4502')
+        self.assertEqual(self.oc_label, 'CAT # 20')
