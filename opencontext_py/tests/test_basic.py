@@ -32,6 +32,12 @@ def test_ssearch():
     response = client.get('/subjects-search/.json?response=geo-project')
     assert response.status_code == 200
 
+def test_project_context():
+
+    client = Client()
+    response = client.get('/contexts/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10.json')
+    assert response.status_code == 200
+
 def test_index_solr_doc():
 
     from opencontext_py.apps.ocitems.manifest.models import Manifest
