@@ -205,6 +205,7 @@ class Create():
 
     def get_parents_context_metadata(self, uuid):
         """ get all parents from memory or by DB lookups """
+        context_metadata = None
         if len(self.parents) >= 5000:
             self.parents = {}
         par_res = Assertion.objects\
@@ -231,6 +232,12 @@ class Create():
                 context_metadata = self.parents[parent_uuid]
         else:
             parent_uuid = False
+        if not context_metadata:
+            raise RuntimeError('We have a context problem in table {} with subject {}'.format(
+                self.table_id,
+                uuid
+                )
+            )
         # now get geo and chrono metadata
         context_metadata = self.get_geo_chrono_metadata(uuid,
                                                         parent_uuid,
