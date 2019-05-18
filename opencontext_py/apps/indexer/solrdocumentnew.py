@@ -1398,6 +1398,53 @@ sd_obj_h.fields
                 # about human remains.
                 self.fields['human_remains'] += 1
     
+    def _calculate_interest_score(self):
+        """ Calculates the 'interest score' for sorting items with more
+        documentation / description to a higher rank.
+        """
+        score = 0
+        type_scores = {
+            'subjects': 0,
+            'media': 5,
+            'documents': 5,
+            'persons': 2,
+            'types': 2,
+            'predicates': 2,
+            'projects': 100,
+            'vocabularies': 25,
+            'tables': 25
+        }
+        # Add a value for the item_type.
+        score += type_scores.get(
+            self.oc_item.manifest.item_type,
+            0
+        )
+        rel_solr_field_prefix = self._convert_slug_to_solr(
+            self.RELATED_SOLR_DOC_PREFIX
+        )
+        for field_key, value in self.fields.items():
+            if (field_key.startswith(rel_solr_field_prefix) and
+                '__pred_' in field_key):
+                # The more richly related items are described, the
+                # more interesting.
+                score += 0.1
+            elif '__pred_' in field_key:
+                score += 1
+
+        score += len(self.fields['text']) / 200
+        score += self.fields['image_media_count'] * 4
+        score += self.fields['other_binary_media_count'] * 5
+        score += self.fields['document_count'] * 4
+        if self.geo_specified:
+        # geo data specified, more interesting
+            score += 5
+        if self.chrono_specified:
+        # chrono data specified, more interesting
+            score += 5
+        # Add to the score based on the file size of a media file.
+        score += self.fields.get(self.FILE_SIZE_SOLR, 0 ) / 10000
+        self.fields['interest_score'] = score
+    
     def _add_linked_subjects(self):
         """Adds fields from related subject items to the solr document."""
         
@@ -1512,6 +1559,8 @@ sd_obj_h.fields
         self._flag_human_remains()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
+        # Calculate the interest score based on richness of description
+        self._calculate_interest_score()
     
     def make_related_solr_doc(self):
         """Make a related solr document """
