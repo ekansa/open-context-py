@@ -1080,7 +1080,7 @@ class PropValue():
                 if(val_item['id'][:7] == 'http://' or val_item['id'][:8] == 'https://'):
                     self.uri = val_item['id']
                     uri_item = URImanagement.get_uuid_from_oc_uri(val_item['id'], True)
-                    if uri_item is not False:
+                    if isinstance(uri_item, dict):
                         self.item_type = uri_item['item_type']
                         self.uuid = uri_item['uuid']
                     else:

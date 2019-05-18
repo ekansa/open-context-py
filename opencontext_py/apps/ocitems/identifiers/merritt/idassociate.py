@@ -52,7 +52,7 @@ class StableIDassociate():
                 id_and_type = self.parse_stable_id(id_rec['stable_id'])
                 manifest = False
                 uuid = URImanagement.get_uuid_from_oc_uri(id_rec['id'])
-                if uuid is not False and id_and_type is not False:
+                if uuid and id_and_type:
                     try:
                         manifest = Manifest.objects.get(uuid=uuid)
                     except Manifest.DoesNotExist:
@@ -121,7 +121,7 @@ class StableIDassociate():
                 i += 0
                 if i >= after:
                     uuid = URImanagement.get_uuid_from_oc_uri(row[1])
-                    if uuid is not False:
+                    if uuid:
                         try:
                             manifest = Manifest.objects.get(uuid=uuid,
                                                             archived__isnull=True)

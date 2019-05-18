@@ -68,7 +68,7 @@ class ManageReferencesBy():
         if 'http://opencontext.' in cell\
            or 'https://opencontext.' in cell:
             uuid = URImanagement.get_uuid_from_oc_uri(cell)
-            if uuid is not False:
+            if isinstance(uuid, str):
                 # appears to be an Open Context URI
                 # now check we actually have that entity in the database
                 try:

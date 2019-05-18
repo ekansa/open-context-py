@@ -803,7 +803,7 @@ class ItemConstruction():
         if(len(link_annotations) > 0):
             for la in link_annotations:
                 tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
-                if(tcheck is False):
+                if not tcheck:
                     item_type = False
                 else:
                     item_type = tcheck['item_type']

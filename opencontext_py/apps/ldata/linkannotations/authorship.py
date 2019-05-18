@@ -90,7 +90,7 @@ class Authorship():
         if len(creator_links) > 0:
             for creator in creator_links:
                 pid = URImanagement.get_uuid_from_oc_uri(creator.object_uri)
-                if pid is False:
+                if not pid:
                     pid = creator.object_uri
                 if pid not in self.creators:
                     self.creators.append(pid)
@@ -101,7 +101,7 @@ class Authorship():
                                       .order_by('sort')
         for contrib in contrib_links:
             pid = URImanagement.get_uuid_from_oc_uri(contrib.object_uri)
-            if pid is False:
+            if not pid:
                 pid = contrib.object_uri
             if pid not in self.contributors:
                 if pid not in self.creators \

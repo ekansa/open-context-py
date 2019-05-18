@@ -257,7 +257,7 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
                 for child_id in act_children:
                     if child_id.count('/') > 1:
                         oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
-                        if oc_uuid is not False:
+                        if oc_uuid:
                             child_id = oc_uuid
                     identifier_children.append(child_id)
                     # recursively get the children of the child
