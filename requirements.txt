@@ -36,6 +36,10 @@ psycopg2==2.6.1
 
 pyparsing==2.1.1
 
+pytest-django==3.4.3
+
+pytest==3.9.3
+
 python-dateutil==2.5.3
 
 pytz==2016.4
