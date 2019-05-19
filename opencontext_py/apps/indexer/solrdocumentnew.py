@@ -53,18 +53,6 @@ sd_obj_d = SolrDocumentNew(uuid_d)
 sd_obj_d.make_solr_doc()
 sd_obj_d.fields
 
-# Example Subject of Human Remains
-uuid_e = '7BA0D599-1ADB-448C-D80E-0BD89BCF7E23'
-sd_obj_e = SolrDocumentNew(uuid_e)
-sd_obj_e.make_solr_doc()
-sd_obj_e.fields
-
-# Example of Subject of Human Remains
-uuid_f = '44f2f90e-3e9b-4bcb-8003-1ad7bddc070d'
-sd_obj_f = SolrDocumentNew(uuid_f)
-sd_obj_f.make_solr_doc()
-sd_obj_f.fields
-
 # Example of Subject of Human Remains
 uuid_f = '44f2f90e-3e9b-4bcb-8003-1ad7bddc070d'
 sd_obj_fr = SolrDocumentNew(uuid_f)
@@ -84,6 +72,23 @@ sd_obj_h = SolrDocumentNew(uuid_h)
 sd_obj_h.make_solr_doc()
 sd_obj_h.fields
 
+# Example Project
+uuid_i = '3F6DCD13-A476-488E-ED10-47D25513FCB2'
+sd_obj_i = SolrDocumentNew(uuid_i)
+sd_obj_i.make_solr_doc()
+sd_obj_i.fields
+
+# Example Project with Subprojects
+uuid_j = '416A274C-CF88-4471-3E31-93DB825E9E4A'
+sd_obj_j = SolrDocumentNew(uuid_j)
+sd_obj_j.make_solr_doc()
+sd_obj_j.fields
+
+# Example Project of a Subproject
+uuid_k = '0cea2f4a-84cb-4083-8c66-5191628abe67'
+sd_obj_k = SolrDocumentNew(uuid_k)
+sd_obj_k.make_solr_doc()
+sd_obj_k.fields
     '''
 
     # the list below defines predicates used for
