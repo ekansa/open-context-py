@@ -30,6 +30,8 @@ mysolr==0.8.3
 
 numpy==1.11.0
 
+pandas>=0.22.0
+
 Pillow==5.2.0
 
 psycopg2==2.6.1
