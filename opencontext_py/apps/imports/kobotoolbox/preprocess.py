@@ -7,19 +7,37 @@ import pandas as pd
 import xlrd
 
 from django.conf import settings
+from opencontext_py.apps.imports.kobotoolbox.media import (
+    make_diretory_files_df,
+    make_dfs_media_df,
+)
+from opencontext_py.apps.imports.kobotoolbox.utilities import (
+    make_diretory_files_df,
+    list_excel_files,
+    read_excel_to_dataframes,
+    drop_empty_cols,
+)
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
 
 from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
+    list_excel_files,
     read_excel_to_dataframes,
     make_locus_stratigraphy_df,
     drop_empty_cols,
     update_multivalue_columns
 )
+from opencontext_py.apps.imports.kobotoolbox.media import (
+    make_diretory_files_df
+    make_dfs_media_df,
+)
 
+excels_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
+excels = list_excel_files(excels_filepath)
 excel_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/Locus Summary Entry - latest version - labels - 2019-05-27-22-32-06.xlsx'
+
 dfs = read_excel_to_dataframes(excel_filepath)
 df_strat = make_locus_stratigraphy_df(dfs)
 strat_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-stratigraphy.csv'
@@ -58,25 +76,6 @@ MULTI_VALUE_COL_PREFIXES = [
     'Modification/',
     'Type of Composition Subject/',
 ]
-
-def read_excel_to_dataframes(excel_filepath):
-    """Reads an Excel workbook into a dictionary of dataframes keyed by sheet names."""
-    dfs = {}
-    xls = xlrd.open_workbook(excel_filepath)
-    for sheet_name in xls.sheet_names():
-        print('Reading sheet ' + sheet_name)
-        # This probably needs an upgraded pandas
-        # dfs[sheet_name] = pd.read_excel(xls, sheet_name=sheet_name, engine='xlrd')
-        dfs[sheet_name] = pd.read_excel(xls, sheet_name, engine='xlrd')
-    return dfs
-
-def drop_empty_cols(df):
-    """Drops columns with empty or null values."""
-    for col in df.columns:
-        df[col].replace('', np.nan, inplace=True)
-    df_output = df.dropna(axis=1,how='all').copy()
-    df_output.reset_index(drop=True, inplace=True)
-    return df_output
 
 def update_multivalue_col_vals(df, multi_col_prefix):
     """Updates the values of multi-value nominal columns"""
