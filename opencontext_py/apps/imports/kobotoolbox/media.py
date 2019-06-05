@@ -21,7 +21,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
-
+import csv
 from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.media import (
     make_all_export_media_df,
@@ -36,6 +36,7 @@ files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
 excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2018/'
 oc_media_root_dir = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
 all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/all-media-files.csv'
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 
 df_media = make_all_export_media_df(excels_filepath)
 df_files = make_directory_files_df(files_path)
@@ -46,8 +47,13 @@ print('All recs {} paths {}'.format(
     )
 )
 
-df_all = prepare_media(excels_filepath, files_path, oc_media_root_dir)
-df_all.to_csv(all_media_csv_path, index=False)
+df_all = prepare_media(
+    excels_filepath,
+    files_path,
+    oc_media_root_dir,
+    project_uuid
+)
+df_all.to_csv(all_media_csv_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 """
 
@@ -321,6 +327,8 @@ def make_image_versions_src_and_new_file(
     thumbnail_width=MAX_THUMBNAIL_WIDTH
 ):
     """Make different file versions in different directories."""
+    if not isinstance(src_file, str):
+        return None
     if not os.path.exists(src_file):
         raise RuntimeError('Cannot find {}'.format(src_file))
     full_file = os.path.join(dirs['full'], new_file_name)
@@ -344,18 +352,68 @@ def make_opencontext_file_versions(
 ):
     """Makes different file versions expected by Open Context."""
     dirs = get_make_directories(oc_media_root_dir, oc_sub_dirs=oc_sub_dirs)
+    df_all_use = df_all[
+        df_all['path'].notnull() &
+        df_all['new-filename'].notnull()
+    ]
     print(df_all.head(10))
-    for _, row in df_all.iterrows():
+    for _, row in df_all_use.iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             dirs,
             row['path'],
             row['new-filename']
         )
 
-def prepare_media(excels_filepath, files_path, oc_media_root_dir):
+def check_prepare_media_uuid(df_all, project_uuid):
+    """Checks on the media-uuid, adding uuids that are needing."""
+    df_all['media-created'] = np.nan
+    df_all['media-uuid-source'] = np.nan
+    df_working = df_all.copy()
+    for i, row in df_working.iterrows():
+        man_obj = None
+        update_indx = (
+            df_all['filename']==row['filename']
+        )
+        if isinstance(row['media-uuid'], str):
+            man_obj = Manifest.objects.filter(
+                uuid=row['media-uuid'],
+                item_type='media',
+                project_uuid=project_uuid
+            ).first()
+        else:
+            # Check by matching the Kobo given file name and
+            # link-uuid.
+            man_obj = Manifest.objects.filter(
+                item_type='media',
+                project_uuid=project_uuid,
+                sup_json__contains=row['filename'],
+            ).filter(
+                sup_json__contains=row['link-uuid']
+            ).first()
+        
+        if man_obj is not None:
+            df_all.loc[update_indx, 'media-uuid-source'] = man_obj.source_id
+            df_all.loc[update_indx, 'media-created'] = man_obj.revised
+            if not isinstance(row['media-uuid'], str):
+                df_all.loc[update_indx, 'media-uuid'] = man_obj.uuid
+        else:
+            if not isinstance(row['media-uuid'], str):
+                df_all.loc[update_indx, 'media-uuid'] = str(GenUUID.uuid4())
+                df_all.loc[update_indx, 'media-uuid-source'] = 'oc-import'
+            else:
+                df_all.loc[update_indx, 'media-uuid-source'] = 'kobotoolbox'
+    return df_all
+
+def prepare_media(
+    excels_filepath,
+    files_path,
+    oc_media_root_dir,
+    project_uuid
+):
     """Prepares a dataframe consolidating media from all export excels."""
     df_media = make_all_export_media_df(excels_filepath)
     df_files = make_directory_files_df(files_path)
     df_all = combine_media_with_files(df_media, df_files)
+    df_all = check_prepare_media_uuid(df_all, project_uuid)
     make_opencontext_file_versions(df_all, oc_media_root_dir)
     return df_all
