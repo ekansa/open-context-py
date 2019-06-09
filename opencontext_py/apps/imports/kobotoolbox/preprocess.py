@@ -15,6 +15,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
+    reorder_first_columns,
     parse_opencontext_uuid,
     parse_opencontext_type
 )
@@ -26,6 +27,8 @@ from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
     make_locus_stratigraphy_df,
     prep_field_tables,
+    prep_trench_book_related,
+    add_trench_book_related_uuids,
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
@@ -36,14 +39,19 @@ excels_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
 excels = list_excel_files(excels_filepath)
 excel_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/Locus Summary Entry - latest version - labels - 2019-05-27-22-32-06.xlsx'
 
-dfs = read_excel_to_dataframes(excel_filepath)
-df_strat = make_locus_stratigraphy_df(dfs)
-strat_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-stratigraphy.csv'
-df_strat.to_csv(strat_path, index=False)
-field_dfs = prep_field_tables(excels_filepath, 2018)
-for file_name, df in field_dfs.items():
-    file_path =  excels_filepath + file_name
+# dfs = read_excel_to_dataframes(excel_filepath)
+# df_strat = make_locus_stratigraphy_df(dfs)
+# strat_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-stratigraphy.csv'
+# df_strat.to_csv(strat_path, index=False)
+field_config_dfs = prep_field_tables(excels_filepath, 2018)
+for act_sheet, act_dict_dfs in field_config_dfs.items():
+    file_path =  excels_filepath + act_dict_dfs['file']
+    df = act_dict_dfs['dfs'][act_sheet]
     df.to_csv(file_path, index=False)
+
+tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
+tb_rel_dfs = prep_trench_book_related(tb_dfs)
+tb_rel_dfs = add_trench_book_related_uuids(tb_rel_dfs, field_config_dfs)
 
 
 
@@ -65,6 +73,9 @@ FIELD_DATA_PREPS = {
     'Trench Book Entry':   {
         'file': 'field-trench-book-summary.csv',
         'child_context_cols': [],
+        'tb_new_title': 'Trench Book Title',
+        'tb_doc_type': ('Document Type', 'Trench Book Entry',),
+        'tb_entry_year': 'Entry Year',
     },
 }
 
@@ -82,8 +93,56 @@ LOCUS_STRAT_FIELDS = [
 LOCUS_CONTEXT_COLS = [
     'Trench',
     'Trench ID',
+    'Unit ID',
     'Locus ID',
 ]
+
+TRENCH_BOOK_CONTEXT_COLS = [
+    'Trench ID',
+    'Unit ID'
+]
+
+# These columns uniquely describe a trench book entry.
+# They are useful for look ups of a given trench book.
+TRENCH_BOOK_INDEX_COLS = [
+    'Trench Book Title',
+    'Date Documented',
+    'Start Page',
+    'End Page',
+]
+
+TRENCH_BOOK_REL_CONFIGS = {
+    'tb-locus-links': {
+        'tb_entry_sheet': 'Trench Book Entry',
+        'tb_rel_sheet': 'group_rel_locus',
+        'tb_rel_col': 'Related Locus / Loci (Discussed in this entry)/Related Locus',
+        'tb_rel_col_rename': 'object__Locus ID',
+        'tb_rel_link_type': '',
+    },
+    'tb-finds-links': {
+        'tb_entry_sheet': 'Trench Book Entry',
+        'tb_rel_sheet': 'group_rel_find',
+        'tb_rel_col': 'Related Find(s) (Discussed in this entry)/Related Find',
+        'tb_rel_col_rename': 'object__Find Number',
+    },
+}
+
+TRENCH_BOOK_REL_UUID_CONFIGS = {
+    'tb-locus-links': {
+        'lookup_sheet': 'Locus Summary Entry',
+        'index_cols': {
+            'Unit ID': 'object__Unit ID',
+            'Locus ID': 'object__Locus ID',
+        }
+    },
+    'tb-finds-links': {
+        'lookup_sheet': 'Field Small Find Entry',
+        'index_cols': {
+            'Unit ID': 'object__Unit ID',
+            'Find Number': 'object__Find Number',
+        }
+    }
+}
 
 MULTI_VALUE_COL_PREFIXES = [
     'Preliminary Phasing/',
@@ -94,6 +153,15 @@ MULTI_VALUE_COL_PREFIXES = [
     'Vessel Part Present/',
     'Modification/',
     'Type of Composition Subject/',
+]
+
+# Columns found in related sheets that can be dropped
+RELATED_SHEET_DROP_COLS = [
+    '_index',
+    '_parent_table_name',
+    '_parent_index',
+    '_submission__id',
+    '_submission__submission_time',
 ]
 
 def update_multivalue_col_vals(df, multi_col_prefix):
@@ -229,7 +297,6 @@ def join_related_uri_loci_df(dfs, sheet, context_cols=None):
     final_cols = make_loci_stratigraph_cols(df, context_cols=context_cols)
     return df[final_cols]
     
-
 def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
     """Makes a locus stratigraph dataframe"""
     df = dfs[sheet].copy()
@@ -272,7 +339,7 @@ def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
         df_rels.append(df_rel)
     # Now combine all the related data
     df_all_parents = pd.concat(df_parents)
-    df_all_parents.drop_duplicates(inplace=True)
+    df_all_parents.drop_duplicates(subset=['_uuid'], inplace=True)
     df_all_rels = pd.concat(df_rels)
     df_all_rels.drop_duplicates(inplace=True)
     df_all_parents.rename(
@@ -334,19 +401,185 @@ def make_locus_stratigraphy_df(dfs, locus_strat_sheets=None, context_cols=None):
     df.drop_duplicates(inplace=True)
     return df
 
+
+def make_new_trench_book_titles(row):
+    """Makes a new trench book title for a row."""
+    if row['Start Page'] < row['End Page']:
+        page_part = '{}-{}'.format(
+            int(row['Start Page']),
+            int(row['End Page'])
+        )
+    elif row['Start Page'] == row['End Page']:
+        page_part = int(row['Start Page'])
+    elif row['Start Page'] > row['End Page']:
+        page_part = '{}-{}'.format(
+            int(row['End Page']),
+            int(row['Start Page'])
+        )
+    
+    return '{} ({}):{}; {}'.format(
+        row['Trench ID'],
+        row['Date Documented'],
+        page_part,
+        row['Entry Type']
+    )
+
+def add_make_new_trench_book_title_column(df, new_tb_title_col):
+    """Adds a new column with a new trench book title."""
+    df[new_tb_title_col] = df.apply(
+        make_new_trench_book_titles,
+        axis=1
+    )
+    return df
+
+def join_trenbook_entries_to_related_df(
+    tb_dfs,
+    tb_entry_sheet='Trench Book Entry',
+    tb_index_cols=None,
+    tb_rel_sheet='group_rel_locus',
+    tb_rel_col='Related Locus / Loci (Discussed in this entry)/Related Locus',
+    tb_rel_col_rename='object__Locus ID',
+    tb_rel_link_type='link',
+    context_cols=None,
+    rel_drop_cols=None
+):
+    """Joins trench book entries to a trench book related DF."""
+    df_output = tb_dfs[tb_rel_sheet]
+    df_output['Relation_type'] = tb_rel_link_type
+    df_output.rename(
+        columns={
+            tb_rel_col: tb_rel_col_rename,
+            '_submission__uuid': 'subject_uuid'
+        },
+        inplace=True
+    )
+    df_parents = []
+    if tb_index_cols is None:
+        tb_index_cols = TRENCH_BOOK_INDEX_COLS
+    if context_cols is None:
+        context_cols = TRENCH_BOOK_CONTEXT_COLS
+    for i, row in df_output.iterrows():
+        df_parent = look_up_parent(
+            row['_parent_table_name'],
+            row['subject_uuid'],
+            tb_dfs
+        )
+        df_parent = df_parent[(
+            context_cols +
+            ['_uuid'] +
+            tb_index_cols
+        )]
+        df_parents.append(df_parent)
+    # Now combine all the related data
+    df_all_parents = pd.concat(df_parents)
+    df_all_parents.drop_duplicates(subset=['_uuid'], inplace=True)
+    df_all_parents.rename(
+        columns={'_uuid': 'subject_uuid'},
+        inplace=True
+    )
+    # Make a dataframe that has the index columns
+    # of the trench book entries.
+    df_tb_index = df_all_parents[(
+        tb_index_cols +
+        ['subject_uuid']
+    )].copy()
+    # Now drop the trenchbook index colums from the df_all_parents,
+    # because we don't want to rename the columns when we merge it
+    # into the tb_locus_df.
+    df_all_parents.drop(tb_index_cols, axis=1, inplace=True, errors='ignore')
+    df_output = merge_context_df(
+        df_output,
+        df_all_parents,
+        ['subject_uuid'],
+        context_cols,
+        'object__'
+    )
+    # Merge in the index columns that uniquely describe a
+    # trench book entry
+    df_output = pd.merge(
+        df_output,
+        df_tb_index,
+        how='left',
+        on=['subject_uuid']
+    )
+    obj_context_cols = ['object__' + c for c in context_cols]
+    # Make sure the output df has the tb_index_cols first.
+    df_output = reorder_first_columns(
+        df_output, (
+            tb_index_cols +
+            ['subject_uuid', 'Relation_type'] +
+            obj_context_cols
+        )
+    )
+    if rel_drop_cols is None:
+        rel_drop_cols = RELATED_SHEET_DROP_COLS
+    # Drop columns that we don't want.
+    df_output.drop(rel_drop_cols, axis=1, inplace=True, errors='ignore')
+    return df_output
+
+def prep_trench_book_related(tb_dfs, related_config=None):
+    """Prepares trench book related relationship dfs"""
+    if related_config is None:
+        related_config = TRENCH_BOOK_REL_CONFIGS
+    tb_rel_dfs = {}
+    for rel_type, rel_config_args in related_config.items():
+        rel_config_args['tb_dfs'] = tb_dfs
+        tb_rel_dfs[rel_type] = join_trenbook_entries_to_related_df(
+            **rel_config_args
+        )
+    return tb_rel_dfs
+
+def add_trench_book_related_uuids(
+    tb_rel_dfs,
+    field_config_dfs,
+    tb_rel_uuid_configs=None
+):
+    """Adds UUIDS of trench book related entitites."""
+    if tb_rel_uuid_configs is None:
+        tb_rel_uuid_configs = TRENCH_BOOK_REL_UUID_CONFIGS
+    new_tb_rel_dfs = {}
+    for rel_type, tb_rel_df in tb_rel_dfs.items():
+        if not rel_type in tb_rel_uuid_configs:
+            # We do not have a configuation to look this up, so skip
+            new_tb_rel_dfs[rel_type] = tb_rel_df
+            continue
+        # Get the configuration for joining in UUIDs for this type of related entity
+        config = tb_rel_uuid_configs[rel_type]
+        join_cols = [join_col for _, join_col in config['index_cols'].items()]
+        keep_cols = [col for col in config['index_cols'].keys()]
+        keep_cols.append('_uuid')
+        lookup_sheet = config['lookup_sheet']
+        lookup_df = field_config_dfs[lookup_sheet]['dfs'][lookup_sheet]
+        lookup_df = lookup_df[keep_cols].copy()
+        lookup_df.rename(columns={'_uuid':'object_uuid'}, inplace=True)
+        lookup_df.rename(columns=config['index_cols'], inplace=True)
+        # Convert join columns to string to ensure joins.
+        for join_col in join_cols:
+            lookup_df[join_col] = lookup_df[join_col].astype(str)
+            tb_rel_df[join_col] = tb_rel_df[join_col].astype(str)
+        
+        # Now finally merge the data with UUIDs.
+        tb_rel_df = pd.merge(
+            tb_rel_df,
+            lookup_df,
+            how='left',
+            on=join_cols
+        )
+        new_tb_rel_dfs[rel_type] = tb_rel_df
+    return new_tb_rel_dfs
+
 def prep_field_tables(excels_filepath, year, field_data_preps=None):
     """Prepares main field created data tables."""
     if field_data_preps is None:
         field_data_preps = FIELD_DATA_PREPS
     excels = list_excel_files(excels_filepath)
-    field_dfs = {}
+    field_config_dfs = {}
     for excel_filepath in excels:
         dfs = read_excel_to_dataframes(excel_filepath)
         for act_sheet, config in field_data_preps.items():
             if not act_sheet in dfs:
                 # Not applicable.
                 continue
-            save_file = config['file']
             df_f = drop_empty_cols(dfs[act_sheet])
             df_f = update_multivalue_columns(df_f)
             df_f = prepare_trench_contexts(
@@ -354,7 +587,24 @@ def prep_field_tables(excels_filepath, year, field_data_preps=None):
                 year,
                 child_context_cols=config['child_context_cols']
             )
-            field_dfs[save_file] = df_f
-    return field_dfs
+            if config.get('tb_new_title') is not None:
+                # Do a Trench book specific change, making a new
+                # title column.
+                df_f = add_make_new_trench_book_title_column(
+                    df_f,
+                    config['tb_new_title']
+                )
+            if config.get('tb_doc_type') is not None:
+                # Note that all of the data (so far) are for 
+                doc_type_col, doc_type = config.get('tb_doc_type')
+                df_f[doc_type_col] = doc_type
+            if config.get('tb_entry_year') is not None:
+                # Add the Trench Book entry year. 
+                entry_year_col = config.get('tb_entry_year')
+                df_f[entry_year_col] = year
+            dfs[act_sheet] = df_f
+            config['dfs'] = dfs
+            field_config_dfs[act_sheet] = config
+    return field_config_dfs
 
     
