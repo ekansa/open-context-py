@@ -29,7 +29,8 @@ from opencontext_py.apps.imports.kobotoolbox.media import (
     prepare_media
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    make_directory_files_df
+    make_directory_files_df,
+    lookup_manifest_uuid
 )
 
 files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
@@ -105,6 +106,7 @@ MEDIA_SOURCE_FILE_PREFIXS = {
     'Media': '',
     'Trench Book': 'trench-book-',
 }
+
 
 OPENCONTEXT_MEDIA_DIRS = [
     'full',

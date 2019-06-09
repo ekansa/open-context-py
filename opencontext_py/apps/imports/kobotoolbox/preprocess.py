@@ -7,15 +7,16 @@ import pandas as pd
 import xlrd
 
 from django.conf import settings
-from opencontext_py.apps.imports.kobotoolbox.media import (
-    make_diretory_files_df,
-    make_dfs_media_df,
+from opencontext_py.apps.imports.kobotoolbox.contexts import (
+    prepare_trench_contexts
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
-    make_diretory_files_df,
+    make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
+    parse_opencontext_uuid,
+    parse_opencontext_type
 )
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
@@ -23,15 +24,12 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
 
 from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
+    make_locus_stratigraphy_df,
+    prep_field_tables,
+)
+from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
     read_excel_to_dataframes,
-    make_locus_stratigraphy_df,
-    drop_empty_cols,
-    update_multivalue_columns
-)
-from opencontext_py.apps.imports.kobotoolbox.media import (
-    make_diretory_files_df
-    make_dfs_media_df,
 )
 
 excels_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
@@ -42,13 +40,34 @@ dfs = read_excel_to_dataframes(excel_filepath)
 df_strat = make_locus_stratigraphy_df(dfs)
 strat_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-stratigraphy.csv'
 df_strat.to_csv(strat_path, index=False)
-df_loc = drop_empty_cols(dfs['Locus Summary Entry'])
-df_loc_sum = update_multivalue_columns(df_loc)
-loc_sum_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-summary.csv'
-df_loc_sum.to_csv(loc_sum_path, index=False)
+field_dfs = prep_field_tables(excels_filepath, 2018)
+for file_name, df in field_dfs.items():
+    file_path =  excels_filepath + file_name
+    df.to_csv(file_path, index=False)
+
 
 
 """
+
+FIELD_DATA_PREPS = {
+    'Locus Summary Entry': {
+        'file': 'field-locus-summary.csv',
+        'child_context_cols': ['Locus ID'],
+    },
+    'Field Bulk Finds Entry': {
+        'file': 'field-bulk-finds-summary.csv',
+        'child_context_cols': ['Locus ID', 'Bulk ID'],
+    },
+    'Field Small Find Entry':  {
+        'file': 'field-small-finds-summary.csv',
+        'child_context_cols': ['Locus ID', 'Find Number'],
+    },
+    'Trench Book Entry':   {
+        'file': 'field-trench-book-summary.csv',
+        'child_context_cols': [],
+    },
+}
+
 
 LOCUS_STRAT_FIELDS = [
     'group_strat_same',
@@ -159,31 +178,6 @@ def merge_context_df(
         on=key_cols
     )
     return df_output
-
-def parse_opencontext_url(s):
-    """Returns a tuple of the item_type and uuid for an Open Context url"""
-    if ((not s.startswith('https://opencontext.org')) and
-       (not s.startswith('http://opencontext.org'))):
-        return None, None
-    oc_split = s.split('opencontext.org/')
-    id_part = oc_split[-1]
-    id_parts = id_part.split('/')
-    if len(id_parts) < 2:
-        # The ID parts is not complete
-        return None, None
-    item_type = id_parts[0]
-    uuid = id_parts[1]
-    return item_type, uuid
-
-def parse_opencontext_uuid(s):
-    """Returns an Open Context UUID from an OC URL"""
-    _, uuid = parse_opencontext_url(s)
-    return uuid
-
-def parse_opencontext_type(s):
-    """Returns the Open Context item type from an OC URL"""
-    item_type, _ = parse_opencontext_url(s)
-    return item_type
 
 def make_loci_stratigraph_cols(df, context_cols=None):
     """Makes a list of loci stratigraphy columns in the expected order"""
@@ -339,7 +333,28 @@ def make_locus_stratigraphy_df(dfs, locus_strat_sheets=None, context_cols=None):
     return df[final_cols]
     df.drop_duplicates(inplace=True)
     return df
-    
 
+def prep_field_tables(excels_filepath, year, field_data_preps=None):
+    """Prepares main field created data tables."""
+    if field_data_preps is None:
+        field_data_preps = FIELD_DATA_PREPS
+    excels = list_excel_files(excels_filepath)
+    field_dfs = {}
+    for excel_filepath in excels:
+        dfs = read_excel_to_dataframes(excel_filepath)
+        for act_sheet, config in field_data_preps.items():
+            if not act_sheet in dfs:
+                # Not applicable.
+                continue
+            save_file = config['file']
+            df_f = drop_empty_cols(dfs[act_sheet])
+            df_f = update_multivalue_columns(df_f)
+            df_f = prepare_trench_contexts(
+                df_f,
+                year,
+                child_context_cols=config['child_context_cols']
+            )
+            field_dfs[save_file] = df_f
+    return field_dfs
 
     
