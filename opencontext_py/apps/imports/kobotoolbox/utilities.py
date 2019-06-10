@@ -15,6 +15,9 @@ LABEL_ALTERNATIVE_PARTS = {
     }
 }
 
+UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox'
+UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl'
+UUID_SOURCE_OC_LOOKUP = 'open-context'
 
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""

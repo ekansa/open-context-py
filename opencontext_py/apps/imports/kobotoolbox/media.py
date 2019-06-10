@@ -13,6 +13,8 @@ from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
+    UUID_SOURCE_KOBOTOOLBOX,
+    UUID_SOURCE_OC_KOBO_ETL,
     make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
@@ -401,9 +403,9 @@ def check_prepare_media_uuid(df_all, project_uuid):
         else:
             if not isinstance(row['media-uuid'], str):
                 df_all.loc[update_indx, 'media-uuid'] = str(GenUUID.uuid4())
-                df_all.loc[update_indx, 'media-uuid-source'] = 'oc-import'
+                df_all.loc[update_indx, 'media-uuid-source'] = UUID_SOURCE_OC_KOBO_ETL
             else:
-                df_all.loc[update_indx, 'media-uuid-source'] = 'kobotoolbox'
+                df_all.loc[update_indx, 'media-uuid-source'] = UUID_SOURCE_KOBOTOOLBOX
     return df_all
 
 def prepare_media(

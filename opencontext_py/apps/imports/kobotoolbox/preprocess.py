@@ -11,18 +11,23 @@ from opencontext_py.apps.imports.kobotoolbox.contexts import (
     prepare_trench_contexts
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
+    UUID_SOURCE_KOBOTOOLBOX,
+    UUID_SOURCE_OC_KOBO_ETL,
+    UUID_SOURCE_OC_LOOKUP,
     make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
     reorder_first_columns,
     parse_opencontext_uuid,
-    parse_opencontext_type
+    parse_opencontext_type,
+    lookup_manifest_uuid
 )
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
 
+import csv
 from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
     make_locus_stratigraphy_df,
@@ -35,6 +40,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     read_excel_to_dataframes,
 )
 
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 excels_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
 excels = list_excel_files(excels_filepath)
 excel_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/Locus Summary Entry - latest version - labels - 2019-05-27-22-32-06.xlsx'
@@ -43,13 +49,14 @@ excel_filepath = settings.STATIC_IMPORTS_ROOT +  'pc-2018/Locus Summary Entry - 
 # df_strat = make_locus_stratigraphy_df(dfs)
 # strat_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/locus-stratigraphy.csv'
 # df_strat.to_csv(strat_path, index=False)
-field_config_dfs = prep_field_tables(excels_filepath, 2018)
+field_config_dfs = prep_field_tables(excels_filepath, project_uuid, 2018)
 for act_sheet, act_dict_dfs in field_config_dfs.items():
     file_path =  excels_filepath + act_dict_dfs['file']
     df = act_dict_dfs['dfs'][act_sheet]
-    df.to_csv(file_path, index=False)
+    df.to_csv(file_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
+df = tb_dfs['Trench Book Entry']
 tb_rel_dfs = prep_trench_book_related(tb_dfs)
 tb_rel_dfs = add_trench_book_related_uuids(tb_rel_dfs, field_config_dfs)
 
@@ -75,7 +82,21 @@ FIELD_DATA_PREPS = {
         'child_context_cols': [],
         'tb_new_title': 'Trench Book Title',
         'tb_doc_type': ('Document Type', 'Trench Book Entry',),
+        'tb_doc_type_root': ('Document Type', 'Trench Book',),
         'tb_entry_year': 'Entry Year',
+        'tb_root_year': 'Book Year',
+        'tb_root_entry': ('Entry Text', (
+            '<p>A "trench book" provides a narrative account of '+
+            'excavations activities and initial (preliminary) ' +
+            'interpretations. Trench book documentation can provide ' +
+            'key information about archaeological context. To ' +
+            'facilitate discovery, access, and use, the project\'s ' +
+            'hand-written trench books have been transcribed and ' +
+            'associated with other data.</p> ' +
+            '<br/> ' +
+            '<p>The links below provide transcriptions of the entries ' +
+            'for this trench book.</p>'
+        )),
     },
 }
 
@@ -100,6 +121,16 @@ LOCUS_CONTEXT_COLS = [
 TRENCH_BOOK_CONTEXT_COLS = [
     'Trench ID',
     'Unit ID'
+]
+
+TRENCH_BOOK_ROOT_GROUPS = [
+    'region',
+    'site',
+    'area',
+    'trench-name',
+    'Trench ID',
+    'Unit ID',
+    'Trench Supervisor'
 ]
 
 # These columns uniquely describe a trench book entry.
@@ -565,10 +596,65 @@ def add_trench_book_related_uuids(
             how='left',
             on=join_cols
         )
+        # Now indicate where we got the UUID
+        good_index = (tb_rel_df['object_uuid'] != np.nan)
+        tb_rel_df.loc[good_index, 'object_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+        # Add the revised tb_rel_df to the output dict.
         new_tb_rel_dfs[rel_type] = tb_rel_df
     return new_tb_rel_dfs
 
-def prep_field_tables(excels_filepath, year, field_data_preps=None):
+def add_trench_book_parents(
+    df,
+    project_uuid,
+    year,
+    config
+):
+    """Adds root-level trench book parent records."""
+    df_grp = df.groupby(TRENCH_BOOK_ROOT_GROUPS, as_index=False).first()
+    df_grp = df_grp[TRENCH_BOOK_ROOT_GROUPS]
+    doc_type_col, doc_type = config.get('tb_doc_type_root')
+    entry_text_col, entry_text = config.get('tb_root_entry')
+    # Add columns and values that apply to ALL the root documents
+    df_grp[entry_text_col] = entry_text    
+    df_grp[doc_type_col] = doc_type
+    df_grp[config['tb_root_year']] = year
+    #
+    # Now iterate through the root documents to get or make their UUIDs
+    # and titles.
+    df_working = df_grp.copy()
+    for i, row in df_working.iterrows():
+        indx = (
+            (df_grp['Unit ID'] == row['Unit ID']) &
+            (df_grp['Trench Supervisor'] == row['Trench Supervisor'])
+        )
+        tb_title = doc_type + ' ' + row['Unit ID']
+        df_grp.loc[indx, config['tb_new_title']] = doc_type + ' ' + row['Unit ID']
+        uuid = lookup_manifest_uuid(
+            tb_title,
+            project_uuid,
+            item_type='documents',
+            label_alt_configs=[]
+        )
+        if uuid is not None:
+            df_grp.loc[indx, '_uuid'] = uuid
+            df_grp.loc[indx, 'subject_uuid_source'] = UUID_SOURCE_OC_LOOKUP
+        else:
+            df_grp.loc[indx, '_uuid'] = str(GenUUID.uuid4())
+            df_grp.loc[indx, 'subject_uuid_source'] = UUID_SOURCE_OC_KOBO_ETL
+    
+    # Add the new root document records to the general trench book description
+    # dataframe.
+    df_first_cols = df.columns.tolist()
+    df = df.append(df_grp, ignore_index=True)
+    df = reorder_first_columns(df, df_first_cols)
+    return df
+
+def prep_field_tables(
+    excels_filepath,
+    project_uuid,
+    year,
+    field_data_preps=None
+):
     """Prepares main field created data tables."""
     if field_data_preps is None:
         field_data_preps = FIELD_DATA_PREPS
@@ -602,6 +688,14 @@ def prep_field_tables(excels_filepath, year, field_data_preps=None):
                 # Add the Trench Book entry year. 
                 entry_year_col = config.get('tb_entry_year')
                 df_f[entry_year_col] = year
+            if config.get('tb_doc_type_root') is not None:
+                df_f['subject_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+                df_f = add_trench_book_parents(
+                    df_f,
+                    project_uuid,
+                    year,
+                    config
+                )
             dfs[act_sheet] = df_f
             config['dfs'] = dfs
             field_config_dfs[act_sheet] = config
