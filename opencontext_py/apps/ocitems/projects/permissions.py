@@ -56,7 +56,7 @@ pp.publish_project('d1c85af4-c870-488a-865b-b3cf784cfc60', '2016-03-01')
     def edit_allowed(self, request):
         """ Checks to see if a user is allowed to edit a project """
         output = False
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             if request.user.is_superuser:
                 # super users are super!
                 output = True
