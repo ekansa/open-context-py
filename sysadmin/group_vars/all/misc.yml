@@ -1,0 +1,4 @@
+oc_install_dir: /opt/oc
+oc_static_dir: /opt/ocstatic
+allowed_host: octest.raymondyee.net
+deployed_host: http://octest.raymondyee.net
