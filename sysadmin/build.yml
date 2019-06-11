@@ -1,0 +1,583 @@
+- name: opencontext setup
+  hosts: '{{vname}}'
+  vars:
+    user: "{{ ansible_ssh_user }}"
+    target: '{{vname}}'
+    migrate: "{{do_migrate | default('true')}}"
+    install_db: "{{install_db | default('true')}}"
+    install_solr_data: "{{install_solr_data | default('true')}}"
+
+    # postgres vars
+    postgresql_python_library: python-psycopg2
+    postgresql_user: postgres
+    postgresql_group: postgres
+    postgresql_databases:
+      - name: opencontextdb
+    postgresql_users:
+      - name: opencontextuser
+        password: opencontextpw
+
+    # https://github.com/whiskerlabs/ansible-python
+    python_version: 3.7.3
+    python_bin: /usr/bin
+    python_pip_version: 18.0
+    python_upgrade_packaging_tools: false
+    # python_setuptools_version: 40.4.2
+    # python_virtualenv_version: 16.0.0
+
+    # git parameters
+    git_user_name: "Raymond Yee"
+    git_user_email: "raymond.yee@gmail.com"
+
+
+    # python_setuptools_version: 40.2.0
+    # python_pip_version: 10.0
+    # python_virtualenv_version: 16.0.0
+    # python_upgrade_packaging_tools: yes
+    # python_install_root: /usr/local
+    # python_apt_package_deps (default: [build-essential, libbz2-dev, libssl-dev, openssl, zlib1g-dev])
+    # python_dnf_package_deps (default: [@Development tools, ncurses-devel, openssl-devel, zlib-devel])
+
+  sudo: yes
+
+  gather_facts: False
+  pre_tasks:
+    - name: Install python for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      register: output
+      changed_when: output.stdout != ""
+      tags: always
+
+    - setup: # aka gather_facts
+
+    - name: check apt last update
+      stat: path=/var/cache/apt
+      register: apt_cache_stat
+
+    - name: update apt if needed
+      apt: update_cache=yes
+      when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
+
+    - name: do apt-get update --fix-missing
+      command: apt-get update --fix-missing
+
+    # - name: install dirmngr
+    #   apt:
+    #     pkg: dirmngr
+    #     update_cache: yes
+    #     state: present
+
+    # - name: Add an apt key by id from a keyserver
+    #   apt_key:
+    #      keyserver: keyserver.ubuntu.com
+    #      id: C2518248EEA14886
+    #   become: yes
+
+    # - name: Installing repo for Java 8
+    #   apt_repository:
+    #     repo: deb http://ppa.launchpad.net/webupd8team/java/ubuntu trusty main
+    #   become: true
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Accept Java 8 License
+      become: yes
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+      
+    - name: installing dependencies
+      apt: pkg={{ item }} update_cache=yes state=present
+      with_items:
+        - git-core
+        - python
+        - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
+        - python-pip
+        - python3-pip
+        - python-dev
+        - python3-dev
+        - default-jdk
+        # - oracle-java8-installer
+        # - oracle-java8-set-default
+        - ca-certificates
+        - libpq-dev
+        - liblapack-dev
+        - libblas-dev
+        - make
+        - gcc
+        - libpcre3
+        - libpcre3-dev
+        - nginx
+        - libgeos-c1v5
+        - libxml2-dev
+        - libxslt1-dev
+        - ufw
+        - unzip
+      tags: install
+
+  roles:
+      # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
+    - role: geerlingguy.postgresql
+      become: yes
+
+    # ansible-galaxy install git+https://github.com/rdhyee/ansible-python.git,dev
+
+    - role: ansible-python
+      # https://github.com/whiskerlabs/ansible-python/blob/8a2f027c2539e7da70ada44412376beee217cbbf/vars/main.yml#L25
+      python_readline_6_2_tgz_url: https://mirrors.sjtug.sjtu.edu.cn/gnu/readline/readline-6.2.tar.gz
+      python_apt_package_deps:
+        - build-essential
+        - libbz2-dev
+        - libncurses5-dev
+        - libssl-dev
+        - openssl
+        - zlib1g-dev
+        - libgdbm-dev
+        - libnss3-dev
+        - libreadline-dev
+        - libffi-dev
+        - wget
+      become: yes
+
+    # # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
+    - role: geerlingguy.solr
+
+    - role: DavidWittman.redis
+      redis_version: 3.0.7
+      redis_verify_checksum: true
+      redis_install_dir:  /etc/redis
+      redis_checksum: "sha256:b2a791c4ea3bb7268795c45c6321ea5abcc24457178373e6a6e3be6372737f23"
+
+  tasks:
+
+
+    - name: install virtualenv
+      pip: 
+        name: virtualenv
+        executable: /usr/local/bin/pip3
+      become: yes
+
+    - name: upgrade pip3
+      pip: >
+           name={{item}}
+           executable=/usr/local/bin/pip3
+           extra_args="--upgrade"
+      with_items:
+        - pip
+      become: yes
+
+    - name: install pipenv
+      pip: >
+           name={{item}}
+           executable=/usr/local/bin/pip3
+      with_items:
+        - pipenv
+      become: yes
+
+    - name: create {{oc_install_dir}}
+      file: path={{oc_install_dir}} state=directory owner={{user}} group={{user}} mode=0745
+    
+
+    - name: git config
+      command: "{{item}}"
+      with_items:
+        - git config --global user.name "{{git_user_name}}"
+        - git config --global user.email "{{git_user_email}}"
+ 
+    - name: ssh-keygen
+      #command: pwd
+      command: ssh-keygen -b 2048 -t rsa -f /home/{{user}}/.ssh/id_rsa -P ""
+      become: no
+      args:
+        creates: /home/{{user}}/.ssh/id_rsa
+
+    - name: clone the oc git repo into {{oc_install_dir}}
+      become: no
+      git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
+
+    # use pipenv to install dependencies
+    # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
+    - name: initialize the virtualenv using pipenv
+      become: no
+      shell: "PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.7 --site-packages"
+      args:
+        chdir: "{{oc_install_dir}}"
+
+    # - name: pip requirements
+    #   pip: >
+    #        requirements="{{oc_install_dir}}/requirements.txt"
+    #        virtualenv="{{oc_install_dir}}/ENV"
+    #        virtualenv_command=/usr/local/bin/virtualenv
+    #        virtualenv_site_packages=no
+    #   become: no
+
+    # install pipenv requirements
+    - name: pipenv install
+      become: no
+      command: "/usr/local/bin/pipenv install"
+      args:
+        chdir: "{{oc_install_dir}}"
+
+    # uwsgi
+
+    # - name: install uwsgi in ENV
+    #   pip:
+    #     name: uwsgi
+    #     virtualenv: "{{oc_install_dir}}/ENV"
+    #     virtualenv_command: /usr/local/bin/virtualenv
+
+    - name: install uwsgi using pipenv
+      become: no
+      command: "/usr/local/bin/pipenv install uwsgi"
+      args:
+        chdir: "{{oc_install_dir}}"
+
+
+    # TO DO:  be more restrictive once we get this into production
+    - name: turn on ports
+      ufw: rule=allow port={{ item }} proto=tcp
+      with_items:
+      - 22
+      - 80
+      - 443
+      - 8000
+      - 8983
+
+    - name: enable ufw
+      ufw: state=enabled
+
+    - name: create "{{oc_install_dir}}/logs"
+      file: path="{{oc_install_dir}}/logs" state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create "{{oc_install_dir}}/cache"
+      file: path="{{oc_install_dir}}/cache" state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create "{{oc_static_dir}}"
+      file: path="{{oc_static_dir}}" state=directory owner={{user}} group={{user}} mode=0745
+
+    - name: create secrets.json from template
+      template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user}} group={{user}} mode=0664
+
+    # - name: run migrations
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+    #   when: migrate
+
+    # - name: run migrations (syncdb)
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate --run-syncdb"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+    #   when: migrate
+
+    - name: run migrations 
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate"
+      args:
+        chdir: "{{oc_install_dir}}"
+      become: no
+      when: migrate
+
+    - name: run migrations (syncdb)
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate --run-syncdb"
+      args:
+        chdir: "{{oc_install_dir}}"
+      become: no
+      when: migrate
+
+
+    # - name: collectstatic
+    #   command: "{{oc_install_dir}}/ENV/bin/python manage.py collectstatic"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: no
+
+    # # - name: django migrations
+    # #   django_manage: >
+    # #       command=migrate
+    # #       app_path=
+    # #       settings="regluit.settings.{{class}}"
+    # #       virtualenv=/opt/regluit/ENV
+    # #   become: no
+    # #   when: migrate
+    # #   notify:
+    # #     - restart apache2
+
+    - name: create cachetable
+      command: "{{oc_install_dir}}/.venv/bin/python manage.py createcachetable"
+      args:
+        chdir: "{{oc_install_dir}}"
+      when: migrate
+
+
+    # - name: install bootstrap
+    #   command: cd /opt/oc
+    #   command: wget https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
+    #   command: unzip bootstrap-3.3.4-dist.zip
+    #   command: mkdir /opt/oc/static/bootstrap/
+    #   command: mkdir /opt/oc/static/bootstrap/3.3.4/
+    #   command: mv bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+    #   command: rm bootstrap-3.3.4-dist.zip
+    #   command: rm -rf bootstrap-3.3.4-dist/
+
+
+    # - name: Download bootstrap
+    #   get_url:
+    #     url: https://github.com/twbs/bootstrap/releases/download/v3.3.4/bootstrap-3.3.4-dist.zip
+    #     dest: /opt/oc
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+
+    # - name: unzip bootstrap file
+    #   unarchive:
+    #     src: /opt/oc/bootstrap-3.3.4-dist.zip
+    #     dest: /opt/oc/
+    #     remote_src: true
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+
+    # - name: empty /opt/oc/static/bootstrap/3.3.4/ if it was already there
+    #   file: path=/opt/oc/static/bootstrap/3.3.4/  state=absent
+
+    # - name: create /opt/oc/static/bootstrap/3.3.4/
+    #   file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user}} group={{user}} mode=0745
+
+    # - name: make sure /opt/oc/static/bootstrap/3.3.4/ is empty
+    #   shell: rm -rf /opt/oc/static/bootstrap/3.3.4/*
+
+    #  mv bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+    # 
+    # https://stackoverflow.com/questions/36696952/copy-multiple-files-with-ansible
+    # doesn't work: "Remote copy does not support recursive copy of directory"
+    # - name: copy bootstrap directories to static
+    #   copy:  
+    #     src: /opt/oc/bootstrap-3.3.4-dist/
+    #     dest: /opt/oc/static/bootstrap/3.3.4/
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #     mode: 0644
+    #     remote_src: true
+
+    # figure out the files in a the bootstrap dir to move
+    # - name: compute the files to move
+    #   find: paths="/opt/oc/bootstrap-3.3.4-dist/" recurse=no file_type=any
+    #   register: file_to_copy
+
+    # - name: log file_to_copy
+    #   debug: msg="file_to_copy {{file_to_copy}}"
+
+    # - meta: end_play
+
+    # works, but not idempotent
+    # could come back to with_fileglob to use find to get a list of files to move ()
+    # but workaround right now https://github.com/ansible/ansible/issues/14131#issuecomment-367877670
+    # isn't that much better for now. 
+
+    # - name: mv bootstrap files using mv
+    #   shell: mv -f /opt/oc/bootstrap-3.3.4-dist/* /opt/oc/static/bootstrap/3.3.4/
+
+    # - name: rm bootstrap-3.3.4-dist.zip
+    #   file: path="{{item}}" state=absent
+    #   with_items:
+    #     - /opt/oc/bootstrap-3.3.4-dist.zip 
+    #     - /opt/oc/bootstrap-3.3.4-dist
+
+
+    # - name: copy over the static files
+    #   copy:
+    #     src: static/
+    #     dest: /opt/oc/static
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #     force: yes
+    #     mode: 0765
+
+
+    - name: copy over static files
+      unarchive:
+        src: static.tar.gz
+        dest: "{{oc_install_dir}}"
+        keep_newer: no
+
+
+    - name: create /opt/ocweb
+      file: path=/opt/ocweb state=directory owner={{user}} group={{user}} mode=0745
+
+    # cp templates/uwsgi.ini.j2 to /opt/ocweb/uwsgi.ini
+    - name: create uwsgi.ini from template
+      template: src=templates/uwsgi.ini.j2  dest="/opt/ocweb/uwsgi_oc.ini" owner={{user}} group={{user}} mode=0664
+
+
+    # cp templates/nginx_conf.j2 to /etc/nginx/sites-available/oc_nginx.conf
+    - name: create oc_nginx.conf from template
+      template: src=templates/nginx_conf.j2  dest="/etc/nginx/sites-available/oc_nginx.conf"
+      become: yes
+
+    # sudo rm /etc/nginx/sites-enabled/default
+    - name: remove the default nginx sites 
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      become: yes
+   
+    # sudo ln -s /etc/nginx/sites-available/oc_nginx.conf to /etc/nginx/sites-enabled/oc_nginx.conf
+    - name: enable nginx oc_nginx site
+      file: 
+        src: /etc/nginx/sites-available/oc_nginx.conf
+        dest: /etc/nginx/sites-enabled/oc_nginx.conf
+        state: link 
+      become: yes
+      notify:
+        - restart nginx
+
+    - name: run uwsgi
+      shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8000 --ini /opt/ocweb/uwsgi_oc.ini"
+      become: no
+
+    # - name: launch dev server
+    #   command: cd /opt/oc; /opt/oc/ENV/bin/python manage.py runserver  0.0.0.0:8000
+
+    # # make sure we can read off the auth token
+    # - name: show bucket
+    #   debug: msg="{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}"   
+
+    # # download test image from GS 
+    # - name: download test image from GS
+    #   gc_storage: 
+    #     bucket: "{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}"
+    #     object: oc.png
+    #     dest: /tmp/oc.png
+    #     mode: get
+    #     gs_access_key: "{{GROUP_SECRETS.GOOGLE_STORAGE_ACCESS_KEY}}"
+    #     gs_secret_key: "{{GROUP_SECRETS.GOOGLE_STORAGE_SECRET_KEY}}"
+    #   become: no
+
+
+    # # make sure we can read off the auth token
+    # - name: show auth token
+    #   debug: msg="{{GROUP_SECRETS.GOOGLE_STORAGE_READ_TOKEN}}"
+
+    # # download the postgres database 
+    # - name: download postgres database 
+    #   get_url:
+    #     url: "https://www.googleapis.com/storage/v1/b/{{GROUP_SECRETS.GOOGLE_STORAGE_BUCKET}}/o/{{GROUP_SECRETS.POSTGRES_BACKUP}}?alt=media"
+    #     dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
+    #     headers: "Authorization: Bearer {{GROUP_SECRETS.GOOGLE_STORAGE_READ_TOKEN}}"
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+
+
+
+    # # download the postgres database
+    # - name: download postgres database
+    #   get_url:
+    #     url: "{{GROUP_SECRETS.DATABASE_BACKUP_URL}}"
+    #     dest: "/tmp/{{GROUP_SECRETS.POSTGRES_BACKUP}}"
+    #     mode: 0640
+    #     owner: "{{user}}"
+    #     group: "{{user}}"
+    #   when: install_db
+
+    - name: restart_here
+      debug: msg="provision restart here"
+
+    # solr configuration
+
+    # create core using /opt/solr/bin/solr with ? parameters
+    # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+    - name: create open-context core 
+      command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+
+
+    # if install_solr_data is true: we get the solr index dump
+    # otherwise: configure with 
+    # ../solr-config/Solr-7/solrconfig.xml --> /var/solr/data/open-context/conf/solrconfig.xml
+
+    - name: copy over solrconfig.xml
+      copy:
+        src: "../solr-config/Solr-7/solrconfig.xml"
+        dest: /var/solr/data/open-context/conf/solrconfig.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
+    - name: copy over schema.xml
+      copy:
+        src: "../solr-config/Solr-7/schema.xml"
+        dest: /var/solr/data/open-context/conf/schema.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
+    # download the solr backup 
+    - name: download solr backup 
+      get_url:
+        url: "{{GROUP_SECRETS.SOLR_BACKUP_URL}}"
+        dest: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        mode: 0640
+        owner: "{{user}}"
+        group: "{{user}}"
+      when: install_solr_data
+
+    - name: create /tmp/solr_backup
+      file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0745
+      become: yes
+      when: install_solr_data
+
+    # unarchive the solr zip file
+    - name: unzip solr zip file
+      unarchive:
+        src: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        dest: /tmp/solr_backup
+        remote_src: true
+        owner: solr
+        group: solr
+      when: install_solr_data
+
+
+    # # this didn't work -- time out on some privilege escalation
+    # - name: create open-context core 
+    #   command: "/opt/solr/bin/solr create_core -c open-context"
+    #   become: true
+    #   become_method: su
+    #   become_user: solr
+    #   become_flags: '-s /bin/bash'    
+
+    # mv /tmp/solr_backup/oc-solr-6/server/solr/open-context/* /var/solr/data/open-context/
+
+
+    - name: stat solr backup data 
+      stat: path=/tmp/solr_backup/oc-solr-6/server/solr/open-context
+      register: oc_stat
+      become: yes
+      when: install_solr_data
+
+    # TO DO -- parameterize oc-solr-6
+    - name: Move solr backup to solr data directory
+      command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
+      # when: oc_stat.exists and install_solr_data
+      when: install_solr_data
+
+    # issue command to reload core
+    - name: issue command to reload core
+      command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+      when: install_solr_data
+
+
+    # then need a reload https://serverfault.com/questions/703031/how-do-i-add-a-solr-core-without-restarting-the-solr-server
+    # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+    # curl "http://octest.raymondyee.net:8983/solr/admin/cores?action=RELOAD&core=collection1&wt=json"
+
+    # - name: end play
+    #   meta: end_play
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
+      become: yes
