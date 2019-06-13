@@ -32,8 +32,7 @@ from django.conf import settings
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
     make_locus_stratigraphy_df,
     prep_field_tables,
-    prep_trench_book_related,
-    add_trench_book_related_uuids,
+    make_final_trench_book_relations_df
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
@@ -56,10 +55,9 @@ for act_sheet, act_dict_dfs in field_config_dfs.items():
     df.to_csv(file_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
-df = tb_dfs['Trench Book Entry']
-tb_rel_dfs = prep_trench_book_related(tb_dfs)
-tb_rel_dfs = add_trench_book_related_uuids(tb_rel_dfs, field_config_dfs)
-
+tb_all_rels_df = make_final_trench_book_relations_df(field_config_dfs)
+tb_all_rels_path = settings.STATIC_IMPORTS_ROOT +  'pc-2018/trench-book-relations.csv'
+tb_all_rels_df.to_csv(tb_all_rels_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 
 """
@@ -148,7 +146,6 @@ TRENCH_BOOK_REL_CONFIGS = {
         'tb_rel_sheet': 'group_rel_locus',
         'tb_rel_col': 'Related Locus / Loci (Discussed in this entry)/Related Locus',
         'tb_rel_col_rename': 'object__Locus ID',
-        'tb_rel_link_type': '',
     },
     'tb-finds-links': {
         'tb_entry_sheet': 'Trench Book Entry',
@@ -164,16 +161,46 @@ TRENCH_BOOK_REL_UUID_CONFIGS = {
         'index_cols': {
             'Unit ID': 'object__Unit ID',
             'Locus ID': 'object__Locus ID',
-        }
+        },
+        'final_renames': {
+            'Trench Book Title': 'subject__Trench Book Title'
+        },
     },
     'tb-finds-links': {
         'lookup_sheet': 'Field Small Find Entry',
         'index_cols': {
             'Unit ID': 'object__Unit ID',
             'Find Number': 'object__Find Number',
-        }
+        },
+        'final_renames': {
+            'Trench Book Title': 'subject__Trench Book Title'
+        },
     }
 }
+
+TRENCH_BOOK_FINAL_REL_COLS = [
+    'Date Documented',
+    'Start Page',
+    'End Page',
+    'Trench Book Title',
+    
+    'subject__Trench Book Title',
+    'subject__Trench Supervisor',
+    'subject__Unit ID',
+    'subject_uuid_source',
+    'subject_uuid',
+    
+    'Relation_type',
+    
+    'object_uuid',
+    'object_uuid_source',
+    'object__Trench Supervisor',
+    'object__Unit ID',
+    'object__Trench ID',
+    'object__Locus ID',
+    'object__Find Number',
+    'object__subject__Trench Book Title'
+]
 
 MULTI_VALUE_COL_PREFIXES = [
     'Preliminary Phasing/',
@@ -194,6 +221,7 @@ RELATED_SHEET_DROP_COLS = [
     '_submission__id',
     '_submission__submission_time',
 ]
+
 
 def update_multivalue_col_vals(df, multi_col_prefix):
     """Updates the values of multi-value nominal columns"""
@@ -475,7 +503,7 @@ def join_trenbook_entries_to_related_df(
     rel_drop_cols=None
 ):
     """Joins trench book entries to a trench book related DF."""
-    df_output = tb_dfs[tb_rel_sheet]
+    df_output = tb_dfs[tb_rel_sheet].copy()
     df_output['Relation_type'] = tb_rel_link_type
     df_output.rename(
         columns={
@@ -558,6 +586,7 @@ def prep_trench_book_related(tb_dfs, related_config=None):
         tb_rel_dfs[rel_type] = join_trenbook_entries_to_related_df(
             **rel_config_args
         )
+    
     return tb_rel_dfs
 
 def add_trench_book_related_uuids(
@@ -599,9 +628,116 @@ def add_trench_book_related_uuids(
         # Now indicate where we got the UUID
         good_index = (tb_rel_df['object_uuid'] != np.nan)
         tb_rel_df.loc[good_index, 'object_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+        tb_rel_df.loc[~good_index, 'object_uuid_source'] = np.nan
+        
+        # Rename columns as needed.
+        if 'final_renames' in config:
+            tb_rel_df.rename(columns=config['final_renames'], inplace=True)
+        
         # Add the revised tb_rel_df to the output dict.
         new_tb_rel_dfs[rel_type] = tb_rel_df
     return new_tb_rel_dfs
+
+def make_trench_book_parent_relations_df(
+    df_f,
+    config=FIELD_DATA_PREPS['Trench Book Entry']
+):
+    """Adds UUIDS of trench book related entitites.
+    
+    :param dataframe df_f: Trench book description dataframe
+    :parma dict tb_rel_dfs: Dictionary of trench book relations
+        dataframes.
+    """
+    # Configures columns and how columns get renamed for subject_df and
+    # object_df.
+    mapping_tups = [
+        (
+            'Trench Supervisor',
+            'subject__Trench Supervisor',
+            'object__Trench Supervisor'
+        ),
+        ('Unit ID', 'subject__Unit ID', 'object__Unit ID'),
+        (
+            config['tb_new_title'],
+            'subject__' + config['tb_new_title'],
+            'object__' + 'subject__' + config['tb_new_title']
+        ),
+        ('subject_uuid_source', 'subject_uuid_source', 'object_uuid_source'),
+        ('_uuid', 'subject_uuid', 'object_uuid'),
+    ]
+    
+    # The columns used to join parent_df and child_df
+    join_cols = [
+        'Trench Supervisor',
+        'Unit ID',
+    ]
+    doc_type_col, doc_type = config.get('tb_doc_type_root')
+    parent_df = df_f[df_f[doc_type_col] == doc_type].copy().reset_index(drop=True)
+    child_df = df_f[df_f[doc_type_col] != doc_type].copy().reset_index(drop=True)
+    
+    # Copy the join columns to make temporary join columns that
+    # will be common in the parent_df and child_df and will not
+    # get renamed.
+    temp_join_cols = []
+    for i, join_col in enumerate(join_cols, 1):
+        temp_join = 'TEMP_JOIN_COL_{}'.format(i)
+        parent_df[temp_join] = parent_df[join_col].astype(str)
+        child_df[temp_join] = child_df[join_col].astype(str)
+        temp_join_cols.append(temp_join)
+    
+    subset_cols = [col for col, _, _ in mapping_tups] + temp_join_cols
+    subject_df_cols = [col for _, col, _ in mapping_tups]
+    object_df_cols = [col for _, _, col in mapping_tups]
+    rel_df_cols = subject_df_cols + ['Relation_type'] + object_df_cols
+    
+    # Now iterate through and actually do the joins
+    rel_dfs = []
+    linking_rels = [
+        ('Is Part of', child_df, parent_df, 'left'),
+        ('Has Part', parent_df, child_df, 'right'),
+    ]
+    for link_rel, subject_df, object_df, join_how in linking_rels:
+        subject_df = subject_df[subset_cols].copy()
+        object_df = object_df[subset_cols].copy()
+        # Now rename the columns
+        subject_df.rename(
+            columns={old:new for old, new, _ in mapping_tups},
+            inplace=True
+        )
+        object_df.rename(
+            columns={old:new for old, _, new in mapping_tups},
+            inplace=True
+        )
+        # Do the join, as a left or right join depending
+        # on if the child_df is the object_df or subject_df.
+        rel_df = pd.merge(
+            subject_df,
+            object_df,
+            how=join_how,
+            on=temp_join_cols
+        )
+        rel_df['Relation_type'] = link_rel
+        rel_dfs.append(rel_df)
+    # Make the TB parent relation dataframe
+    tb_parent_rels = pd.concat(rel_dfs)
+    tb_parent_rels = tb_parent_rels[rel_df_cols]
+    return tb_parent_rels
+
+def make_final_trench_book_relations_df(field_config_dfs):
+    """Makes final consolidated dataframe of Trench Book link relations."""
+    tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
+    df_f = tb_dfs['Trench Book Entry']
+    tb_rel_dfs = prep_trench_book_related(tb_dfs)
+    tb_rel_dfs = add_trench_book_related_uuids(tb_rel_dfs, field_config_dfs)
+    all_rel_dfs = [rel_df for _, rel_df in tb_rel_dfs.items()]
+    tb_parent_rels = make_trench_book_parent_relations_df(df_f)
+    all_rel_dfs.append(tb_parent_rels)
+    tb_all_rels_df = pd.concat(all_rel_dfs)
+    # Reorder and limit final output columns to a pre-determined config.
+    use_cols = [c for c in TRENCH_BOOK_FINAL_REL_COLS if c in tb_all_rels_df.columns]
+    tb_all_rels_df = tb_all_rels_df[use_cols]
+    return tb_all_rels_df
+
 
 def add_trench_book_parents(
     df,
