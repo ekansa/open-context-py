@@ -125,7 +125,7 @@ TRENCH_BOOK_ROOT_GROUPS = [
     'region',
     'site',
     'area',
-    'trench-name',
+    'trench_name',
     'Trench ID',
     'Unit ID',
     'Trench Supervisor'
