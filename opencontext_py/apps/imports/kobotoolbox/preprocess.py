@@ -14,14 +14,17 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    MULTI_VALUE_COL_PREFIXES,
     make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
     reorder_first_columns,
+    update_multivalue_col_vals,
+    update_multivalue_columns,
     parse_opencontext_uuid,
     parse_opencontext_type,
-    lookup_manifest_uuid
+    lookup_manifest_uuid,
 )
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
@@ -64,19 +67,19 @@ tb_all_rels_df.to_csv(tb_all_rels_path, index=False, quoting=csv.QUOTE_NONNUMERI
 
 FIELD_DATA_PREPS = {
     'Locus Summary Entry': {
-        'file': 'field-locus-summary.csv',
+        'file': 'attributes--field-locus.csv',
         'child_context_cols': ['Locus ID'],
     },
     'Field Bulk Finds Entry': {
-        'file': 'field-bulk-finds-summary.csv',
+        'file': 'attributes--field-bulk-finds.csv',
         'child_context_cols': ['Locus ID', 'Bulk ID'],
     },
     'Field Small Find Entry':  {
-        'file': 'field-small-finds-summary.csv',
+        'file': 'attributes--field-small-finds.csv',
         'child_context_cols': ['Locus ID', 'Find Number'],
     },
     'Trench Book Entry':   {
-        'file': 'field-trench-book-summary.csv',
+        'file': 'attributes--field-trench-book.csv',
         'child_context_cols': [],
         'tb_new_title': 'Trench Book Title',
         'tb_doc_type': ('Document Type', 'Trench Book Entry',),
@@ -202,17 +205,6 @@ TRENCH_BOOK_FINAL_REL_COLS = [
     'object__subject__Trench Book Title'
 ]
 
-MULTI_VALUE_COL_PREFIXES = [
-    'Preliminary Phasing/',
-    'Trench Supervisor/',
-    'Decorative Techniques and Motifs/Decorative Technique/',
-    'Decorative Techniques and Motifs/Motif/',
-    'Fabric Category/',
-    'Vessel Part Present/',
-    'Modification/',
-    'Type of Composition Subject/',
-]
-
 # Columns found in related sheets that can be dropped
 RELATED_SHEET_DROP_COLS = [
     '_index',
@@ -222,43 +214,6 @@ RELATED_SHEET_DROP_COLS = [
     '_submission__submission_time',
 ]
 
-
-def update_multivalue_col_vals(df, multi_col_prefix):
-    """Updates the values of multi-value nominal columns"""
-    multi_cols = [c for c in df.columns.tolist() if c.startswith(multi_col_prefix)]
-    drop_cols = []
-    for col in multi_cols:
-        df[col] = df[col].astype(str)
-        val_index = ((df[col] == '1')|(df[col] == '1.0')|(df[col] == 'True'))
-        if df[val_index].empty:
-            drop_cols.append(col)
-            continue
-        # Set rows to the column's value if "True" (1).
-        df.loc[val_index, col] = col.split(
-            multi_col_prefix
-        )[-1].strip()
-        # Set rows to blank if the column is not True (1).
-        df.loc[~val_index, col] = np.nan
-    # Drop the columns that where not actually used.
-    df.drop(drop_cols, axis=1, inplace=True, errors='ignore')
-    rename_cols = {}
-    i = 0
-    for col in multi_cols:
-        if col in drop_cols:
-            continue
-        i += 1
-        rename_cols[col] = multi_col_prefix + str(i)
-    # Rename the columns that were used.
-    df.rename(columns=rename_cols, inplace=True)
-    return drop_empty_cols(df)
-
-def update_multivalue_columns(df, multival_col_prefixes=None):
-    """Updates mulivalue columns, removing the ones not in use"""
-    if multival_col_prefixes is None:
-        multival_col_prefixes = MULTI_VALUE_COL_PREFIXES
-    for multi_col_prefix in multival_col_prefixes:
-        df = update_multivalue_col_vals(df, multi_col_prefix)
-    return df
         
 def look_up_parent(parent_sheet, parent_uuid, dfs):
     """Looks up and returns a 1 record dataframe of the record for the parent item."""
@@ -804,11 +759,12 @@ def prep_field_tables(
                 continue
             df_f = drop_empty_cols(dfs[act_sheet])
             df_f = update_multivalue_columns(df_f)
-            df_f = prepare_trench_contexts(
-                df_f,
-                year,
-                child_context_cols=config['child_context_cols']
-            )
+            if 'child_context_cols' in config:
+                df_f = prepare_trench_contexts(
+                    df_f,
+                    year,
+                    child_context_cols=config['child_context_cols']
+                )
             if config.get('tb_new_title') is not None:
                 # Do a Trench book specific change, making a new
                 # title column.

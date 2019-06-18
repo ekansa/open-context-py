@@ -15,6 +15,17 @@ LABEL_ALTERNATIVE_PARTS = {
     }
 }
 
+MULTI_VALUE_COL_PREFIXES = [
+    'Preliminary Phasing/',
+    'Trench Supervisor/',
+    'Decorative Techniques and Motifs/Decorative Technique/',
+    'Decorative Techniques and Motifs/Motif/',
+    'Fabric Category/',
+    'Vessel Part Present/',
+    'Modification/',
+    'Type of Composition Subject/',
+]
+
 UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox'
 UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl'
 UUID_SOURCE_OC_LOOKUP = 'open-context'
@@ -78,6 +89,43 @@ def drop_empty_cols(df):
     df_output = df.dropna(axis=1,how='all').copy()
     df_output.reset_index(drop=True, inplace=True)
     return df_output
+
+def update_multivalue_col_vals(df, multi_col_prefix):
+    """Updates the values of multi-value nominal columns"""
+    multi_cols = [c for c in df.columns.tolist() if c.startswith(multi_col_prefix)]
+    drop_cols = []
+    for col in multi_cols:
+        df[col] = df[col].astype(str)
+        val_index = ((df[col] == '1')|(df[col] == '1.0')|(df[col] == 'True'))
+        if df[val_index].empty:
+            drop_cols.append(col)
+            continue
+        # Set rows to the column's value if "True" (1).
+        df.loc[val_index, col] = col.split(
+            multi_col_prefix
+        )[-1].strip()
+        # Set rows to blank if the column is not True (1).
+        df.loc[~val_index, col] = np.nan
+    # Drop the columns that where not actually used.
+    df.drop(drop_cols, axis=1, inplace=True, errors='ignore')
+    rename_cols = {}
+    i = 0
+    for col in multi_cols:
+        if col in drop_cols:
+            continue
+        i += 1
+        rename_cols[col] = multi_col_prefix + str(i)
+    # Rename the columns that were used.
+    df.rename(columns=rename_cols, inplace=True)
+    return drop_empty_cols(df)
+
+def update_multivalue_columns(df, multival_col_prefixes=None):
+    """Updates mulivalue columns, removing the ones not in use"""
+    if multival_col_prefixes is None:
+        multival_col_prefixes = MULTI_VALUE_COL_PREFIXES
+    for multi_col_prefix in multival_col_prefixes:
+        df = update_multivalue_col_vals(df, multi_col_prefix)
+    return df
 
 def get_alternate_labels(label, project_uuid, config=None):
     """Returns a list of a label and alternative versions based on project config"""
