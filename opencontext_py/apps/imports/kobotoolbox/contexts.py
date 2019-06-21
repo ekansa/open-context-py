@@ -91,6 +91,15 @@ UNIT_LABEL_REPLACES = [
       ('tr7', 'Tesoro Rectangle 7'),
 ]
 
+# Override the general class_uri with a tuple of
+# column - value -> class_uri mappings
+COL_CLASS_URI_MAPPINGS = {
+    'Object General Type': [
+        ('Architectural', 'oc-gen:cat-arch-element',),
+        ('Vessel', 'oc-gen:cat-pottery',),
+    ],
+}
+
 CONTEXT_SOURCES = {
     'Locus Summary Entry': {
         'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID'],
@@ -145,7 +154,7 @@ CONTEXT_SOURCES = {
         'last_context_col': 'locus_content_name',
     },
     'Catalog Entry': {
-        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID', 'Catalog ID (PC)'],
+        'cols': ['Year', 'Trench ID', 'Unit ID', 'Locus ID', 'Catalog ID (PC)', 'Object General Type'],
         'class_uri': 'oc-gen:cat-object',
         'templates': {
             'label': {
@@ -352,7 +361,7 @@ def get_manifest_obj_from_parent(project_uuids, label, class_uri, parent_uuid):
         item_type='subjects'
     ).first()
     return man_obj
-    
+
 def get_unit_manifest_obj(project_uuids, label, class_uri, contexts):
     if class_uri != 'oc-gen:cat-exc-unit':
         return None
@@ -371,8 +380,6 @@ def get_unit_manifest_obj(project_uuids, label, class_uri, contexts):
 
     # De-duplicate the parts.
     parts = list(set(parts))
-    if label == 'VT10 2015' and False:
-        import pdb; pdb.set_trace()
     print('Check Unit {}, year {} with parts {}'.format(label, year, parts))
     sub_uuids = []
     for part in parts:
@@ -383,7 +390,7 @@ def get_unit_manifest_obj(project_uuids, label, class_uri, contexts):
             context__contains=year
         )
         sub_uuids += [s.uuid for s in subs]
-
+    # Now query for the manifest items that may be related.
     man_objs = Manifest.objects.filter(
         (Q(label__contains=label)|Q(label__contains=year)),
         uuid__in=sub_uuids,
@@ -761,6 +768,14 @@ def prepare_all_contexts(
         source_df['context_uuid'] = source_df['_uuid']
         source_df['uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
         source_df['class_uri'] = source_config['class_uri']
+        # Update class_uri values from the default depending on
+        # onfigured mappings for different columns.
+        for col, class_mappings in COL_CLASS_URI_MAPPINGS.items():
+            if not col in source_df.columns:
+                continue
+            for col_value, new_class_uri in class_mappings:
+                ch_indx = (source_df[col] == col_value)
+                source_df.loc[ch_indx, 'class_uri'] = new_class_uri
         # Use tempate rules defined in source_config to and the
         # compose_label_from_row function to make an item label
         for label_col, template_config in source_config['templates'].items():

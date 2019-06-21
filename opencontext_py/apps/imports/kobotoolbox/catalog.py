@@ -7,8 +7,14 @@ import pandas as pd
 import xlrd
 
 from django.conf import settings
+from django.db.models import Q
+from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.ocitems.subjects.models import Subject
+
 from opencontext_py.apps.imports.kobotoolbox.contexts import (
-    prepare_trench_contexts
+    UNIT_LABEL_REPLACES,
+    prepare_trench_contexts,
 )
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
@@ -45,6 +51,133 @@ catalog_dfs = prepare_catalog(project_uuid, excel_dirpath)
 
 
 """
+
+ENTRY_DATE_PRED_UUID = '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa'
+START_PAGE_PRED_UUID = 'BECAD1AF-0245-44E0-CD2A-F2F7BD080443'
+END_PAGE_PRED_UUID = '506924AA-B53D-41B5-9D02-9A7929EA6D6D'
+
+
+
+def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, end_page):
+    """Look up trenchbook entries via database queries."""
+    # Get mappings for the trench_id and more canonical names
+    parts = [trench_id]
+    for f, r in UNIT_LABEL_REPLACES:
+        parts.append((trench_id.lower().replace(f, r).strip()))
+    # Get UUIDs for subject items that are in the trench_id and its path
+    sub_uuids = []
+    for part in parts:
+        subs = Subject.objects.filter(
+            project_uuid=project_uuid,
+            context__contains=part
+        )
+        sub_uuids += [s.uuid for s in subs]
+    # Now get the document items that are related to the trench_id and
+    # its child items
+    sub_linked_docs = Assertion.objects.filter(
+        uuid__in=sub_uuids,
+        object_type='documents'
+    )
+    # Make a list of the document uuids
+    doc_uuids = [a.object_uuid for a in sub_linked_docs]
+    # Further filter the documents for the ones on the correct date.
+    tbs = Manifest.objects.filter(
+        project_uuid=project_uuid,
+        uuid__in=doc_uuids,
+        item_type='documents',
+        label__contains=entry_date,
+    )
+    if len(tbs) == 0:
+        print('No trench book for trench id: {}, year: {}'.format(trench_id, entry_date))
+        # Sad case, not found at all.
+        return None
+    if len(tbs) == 1:
+        # Happy case, no need to match pages.
+        print('Match 1 on trench id: {}, year: {}'.format(trench_id, entry_date))
+        return tbs[0].uuid
+    # OK, now try to narrow down by pages
+    tb_uuids = [m.uuid for m in tbs]
+    ass_starts = Assertion.objects.filter(
+        uuid__in=tb_uuids,
+        predicate_uuid=START_PAGE_PRED_UUID,
+        data_num__gte=start_page
+    )
+    st_uuids = [a.uuid for a in ass_starts]
+    if len(st_uuids) == 1:
+        # We found it by the only matched page start
+        return st_uuids[0]
+    ass_ends = Assertion.objects.filter(
+        uuid__in=tb_uuids,
+        predicate_uuid=START_PAGE_PRED_UUID,
+        data_num__gte=start_page
+    )
+    end_uuids = [a.uuid for a in ass_ends]
+    if len(end_uuid) == 1:
+        # We found it by the only matched page end
+        return end_uuids[0]
+    both_uuids = [uuid for uuid in st_uuids if uuid in end_uuids]
+    if len(both_uuids) > 0:
+        # Return the first match
+        return both_uuids[0]
+    return None
+
+
+def make_catalog_links_df(project_uuid, dfs, tb_df):
+    """Makes dataframe for a catalog"""
+    obj_prop_cols = [
+        'Trench ID',
+        'Year',
+        'Trench Book Entry Date',
+        'Trench Book Start Page',
+        'Trench Book End Page'
+    ]
+    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_link['subject_uuid'] = df_link['_uuid']
+    df_link['Relation_type'] = 'link'
+    for i, row in df_link.iterrows():
+        object_uuid = None
+        object_source = None
+        tb_indx = (
+            (tb_df['Trench ID'] == row['Trench ID'])
+            & (tb_df['Entry Year'] == row['Year'])
+            # & (tb_df['Date Documented'] == row['Trench Book Entry Date'])
+            & (tb_df['Start Page'] >= row['Trench Book Start Page'])
+            & (tb_df['End Page'] <= row['Trench Book End Page'])
+        )
+        if not tb_df[tb_indx].empty:
+            # Choose the first match, no need to get too fussy if
+            # there are multiple matches.
+            object_uuid = tb_df[tb_indx]['_uuid'].iloc[0]
+            object_source = UUID_SOURCE_KOBOTOOLBOX
+        else:
+            # Try looking in the database for a match
+            object_uuid = db_lookup_trenchbook(
+                project_uuid,
+                row['Trench ID'],
+                row['Year'],
+                row['Trench Book Entry Date'],
+                row['Trench Book Start Page'],
+                row['Trench Book End Page']
+            )
+            if object_uuid is not None:
+                object_source = UUID_SOURCE_OC_LOOKUP
+        if object_uuid is None:
+            # No match, just continue
+            continue
+        sub_indx = (df_link['subject_uuid'] == row['subject_uuid'])
+        df_link.loc[sub_indx, 'object_uuid'] = object_uuid
+        df_link.loc[sub_indx, 'object_uuid_source'] = object_source
+    
+    df_link = df_link[
+        (
+            ['label', 'class_uri', 'uuid_source', 'subject_uuid']
+            + ['Relation_type']
+            + ['object_uuid', 'object_uuid_source']
+            + obj_prop_cols
+        )
+    ]
+    return df_link
+    
 
 def prepare_catalog(project_uuid, excel_dirpath):
     """Prepares catalog dataframes."""

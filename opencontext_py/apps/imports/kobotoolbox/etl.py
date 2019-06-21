@@ -11,6 +11,12 @@ from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.subjects.models import Subject
+
+from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
+from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.imports.sources.models import ImportSource
+
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
@@ -22,8 +28,12 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     reorder_first_columns,
     lookup_manifest_uuid,
 )
+from opencontext_py.apps.imports.kobotoolbox.attributes import (
+    process_hiearchy_col_values
+)
 from opencontext_py.apps.imports.kobotoolbox.catalog import (
     CATALOG_ATTRIBUTES_SHEET,
+    make_catalog_links_df,
     prepare_catalog
 )
 from opencontext_py.apps.imports.kobotoolbox.contexts import (
@@ -58,7 +68,24 @@ FILENAME_ALL_CONTEXTS = 'all-contexts-subjects.csv'
 FILENAME_ATTRIBUTES_CATALOG = 'attributes--catalog.csv'
 FILENAME_LINKS_TRENCHBOOKS = 'links--trench-books.csv'
 FILENAME_LINKS_STRATIGRAPHY = 'links--locus-stratigraphy.csv'
+FILENAME_LINKS_CATALOG = 'links--catalog.csv'
 
+
+def add_context_subjects_label_class_uri(df, all_contexts_df):
+    """Adds label and class_uri to df from all_contexts_df based on uuid join"""
+    join_df = all_contexts_df[['label', 'class_uri', 'uuid_source', 'context_uuid']].copy()
+    join_df.rename(columns={'context_uuid': '_uuid'}, inplace=True)
+    df_output = pd.merge(
+        df,
+        join_df,
+        how='left',
+        on=['_uuid']
+    )
+    df_output = reorder_first_columns(
+        df_output,
+        ['label', 'class_uri', 'uuid_source']
+    )
+    return df_output
 
 def make_kobo_to_open_context_etl_files(
     project_uuid=PROJECT_UUID,
@@ -80,19 +107,21 @@ def make_kobo_to_open_context_etl_files(
         quoting=csv.QUOTE_NONNUMERIC
     )
     
-    catalog_dfs = prepare_catalog(project_uuid, source_path)
-    attribs_catalog_path = destination_path + FILENAME_ATTRIBUTES_CATALOG
-    catalog_dfs[CATALOG_ATTRIBUTES_SHEET].to_csv(
-        attribs_catalog_path,
-        index=False,
-        quoting=csv.QUOTE_NONNUMERIC
-    )
-    
     field_config_dfs = prep_field_tables(source_path, project_uuid, year)
     for act_sheet, act_dict_dfs in field_config_dfs.items():
         file_path =  destination_path + act_dict_dfs['file']
         df = act_dict_dfs['dfs'][act_sheet]
+        df = add_context_subjects_label_class_uri(
+            df,
+            all_contexts_df
+        )
         df.to_csv(file_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
+    
+    # Now do the stratigraphy.
+    locus_dfs = field_config_dfs['Locus Summary Entry']['dfs']
+    df_strat = make_locus_stratigraphy_df(locus_dfs)
+    strat_path = destination_path +  FILENAME_LINKS_STRATIGRAPHY
+    df_strat.to_csv(strat_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
     # Prepare Trench Book relations    
     tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
@@ -100,11 +129,33 @@ def make_kobo_to_open_context_etl_files(
     tb_all_rels_path = destination_path + FILENAME_LINKS_TRENCHBOOKS
     tb_all_rels_df.to_csv(tb_all_rels_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
     
-    # Now do the stratigraphy.
-    locus_dfs = field_config_dfs['Locus Summary Entry']['dfs']
-    df_strat = make_locus_stratigraphy_df(locus_dfs)
-    strat_path = destination_path +  FILENAME_LINKS_STRATIGRAPHY
-    df_strat.to_csv(strat_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
+    # Prepare the catalog
+    catalog_dfs = prepare_catalog(project_uuid, source_path)
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = add_context_subjects_label_class_uri(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET],
+        all_contexts_df
+    )
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = process_hiearchy_col_values(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
+    )
+    attribs_catalog_path = destination_path + FILENAME_ATTRIBUTES_CATALOG
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET].to_csv(
+        attribs_catalog_path,
+        index=False,
+        quoting=csv.QUOTE_NONNUMERIC
+    )
+    catalog_links_df = make_catalog_links_df(
+        project_uuid,
+        catalog_dfs,
+        tb_dfs['Trench Book Entry']
+    )
+    links_catalog_path = destination_path + FILENAME_LINKS_CATALOG
+    catalog_links_df.to_csv(
+        links_catalog_path,
+        index=False,
+        quoting=csv.QUOTE_NONNUMERIC
+    )
+    
     
 
 

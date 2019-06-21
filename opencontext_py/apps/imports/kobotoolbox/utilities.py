@@ -26,9 +26,9 @@ MULTI_VALUE_COL_PREFIXES = [
     'Type of Composition Subject/',
 ]
 
-UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox'
-UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl'
-UUID_SOURCE_OC_LOOKUP = 'open-context'
+UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox
+UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl' # UUID minted by this ETL process
+UUID_SOURCE_OC_LOOKUP = 'open-context' # UUID existing in Open Context
 
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
