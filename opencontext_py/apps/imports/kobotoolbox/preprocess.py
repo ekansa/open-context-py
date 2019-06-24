@@ -14,6 +14,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     MULTI_VALUE_COL_PREFIXES,
     make_directory_files_df,
     list_excel_files,
@@ -193,7 +194,7 @@ TRENCH_BOOK_FINAL_REL_COLS = [
     'subject_uuid_source',
     'subject_uuid',
     
-    'Relation_type',
+    LINK_RELATION_TYPE_COL,
     
     'object_uuid',
     'object_uuid_source',
@@ -215,7 +216,7 @@ RELATED_SHEET_DROP_COLS = [
 ]
 
         
-def look_up_parent(parent_sheet, parent_uuid, dfs):
+def look_up_parent(parent_sheet, parent_uuid, dfs, parent_uuid_col='_uuid'):
     """Looks up and returns a 1 record dataframe of the record for the parent item."""
     df_parent = dfs[parent_sheet][
         dfs[parent_sheet]['_uuid'] == parent_uuid
@@ -266,7 +267,7 @@ def make_loci_stratigraph_cols(df, context_cols=None):
     if context_cols is None:
         context_cols = LOCUS_CONTEXT_COLS
     strata_cols = [('subject__' + c) for c in context_cols]
-    strata_cols += ['subject_uuid', 'Relation_type']
+    strata_cols += ['subject_uuid', LINK_RELATION_TYPE_COL]
     strata_cols += [('object__' + c) for c in context_cols]
     strata_cols += ['object_uuid']
     final_cols = [c for c in strata_cols if c in df.columns]
@@ -276,7 +277,7 @@ def join_related_uri_loci_df(dfs, sheet, context_cols=None):
     df = dfs[sheet].copy()
     df.rename(
         columns={
-            'Stratigraphy: Relation with Prior Season Locus/Relation Type': 'Relation_type',
+            'Stratigraphy: Relation with Prior Season Locus/Relation Type': LINK_RELATION_TYPE_COL,
             'Stratigraphy: Relation with Prior Season Locus/URL to Locus': 'rel_uri',
             '_submission__uuid': 'subject_uuid',
         },
@@ -321,7 +322,7 @@ def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
         rel_column = c
     if rel_column is None:
         return None
-    df['Relation_type'] = rel_column
+    df[LINK_RELATION_TYPE_COL] = rel_column
     df.rename(
         columns={
             rel_column: 'object__Locus ID',
@@ -459,7 +460,7 @@ def join_trenbook_entries_to_related_df(
 ):
     """Joins trench book entries to a trench book related DF."""
     df_output = tb_dfs[tb_rel_sheet].copy()
-    df_output['Relation_type'] = tb_rel_link_type
+    df_output[LINK_RELATION_TYPE_COL] = tb_rel_link_type
     df_output.rename(
         columns={
             tb_rel_col: tb_rel_col_rename,
@@ -521,7 +522,7 @@ def join_trenbook_entries_to_related_df(
     df_output = reorder_first_columns(
         df_output, (
             tb_index_cols +
-            ['subject_uuid', 'Relation_type'] +
+            ['subject_uuid', LINK_RELATION_TYPE_COL] +
             obj_context_cols
         )
     )
@@ -643,7 +644,7 @@ def make_trench_book_parent_relations_df(
     subset_cols = [col for col, _, _ in mapping_tups] + temp_join_cols
     subject_df_cols = [col for _, col, _ in mapping_tups]
     object_df_cols = [col for _, _, col in mapping_tups]
-    rel_df_cols = subject_df_cols + ['Relation_type'] + object_df_cols
+    rel_df_cols = subject_df_cols + [LINK_RELATION_TYPE_COL] + object_df_cols
     
     # Now iterate through and actually do the joins
     rel_dfs = []
@@ -671,7 +672,7 @@ def make_trench_book_parent_relations_df(
             how=join_how,
             on=temp_join_cols
         )
-        rel_df['Relation_type'] = link_rel
+        rel_df[LINK_RELATION_TYPE_COL] = link_rel
         rel_dfs.append(rel_df)
     # Make the TB parent relation dataframe
     tb_parent_rels = pd.concat(rel_dfs)

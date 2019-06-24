@@ -30,6 +30,8 @@ UUID_SOURCE_KOBOTOOLBOX = 'kobotoolbox' # UUID minted by kobotoolbox
 UUID_SOURCE_OC_KOBO_ETL = 'oc-kobo-etl' # UUID minted by this ETL process
 UUID_SOURCE_OC_LOOKUP = 'open-context' # UUID existing in Open Context
 
+LINK_RELATION_TYPE_COL = 'Relation_type'
+
 def make_directory_files_df(attachments_path):
     """Makes a dataframe listing all the files a Kobo Attachments directory."""
     file_data = {
@@ -129,12 +131,14 @@ def update_multivalue_columns(df, multival_col_prefixes=None):
 
 def get_alternate_labels(label, project_uuid, config=None):
     """Returns a list of a label and alternative versions based on project config"""
+    label = str(label)
     if config is None:
         config = LABEL_ALTERNATIVE_PARTS
     if not project_uuid in config:
         return [label]
     label_variations = []
-    for label_part, label_alts in config[project_uuid]:
+    for label_part, label_alts in config[project_uuid].items():
+        label_part = str(label_part)
         if not label_part in label:
             label_variations.append(label)
         for label_alt in label_alts:
@@ -172,7 +176,8 @@ def lookup_manifest_obj(
     label,
     project_uuid,
     item_type,
-    label_alt_configs=None
+    label_alt_configs=None,
+    class_uris=None
 ):
     """Returns a manifest object based on label variations"""
     label_variations = get_alternate_labels(
@@ -180,25 +185,31 @@ def lookup_manifest_obj(
         project_uuid,
         config=label_alt_configs
     )
-    man_obj = Manifest.objects.filter(
+    man_objs = Manifest.objects.filter(
         label__in=label_variations,
         item_type=item_type,
         project_uuid=project_uuid
-    ).first()
+    )
+    if class_uris is not None:
+        # Further filter if we have class_uris
+       man_objs = man_objs.filter(class_uri__in=class_uris) 
+    man_obj = man_objs.first()
     return man_obj
 
 def lookup_manifest_uuid(
     label,
     project_uuid,
     item_type,
-    label_alt_configs=None
+    label_alt_configs=None,
+    class_uris=None
 ):
     """Returns a manifest object uuid on label variations"""
     man_obj = lookup_manifest_obj(
         label,
         project_uuid,
         item_type,
-        label_alt_configs=label_alt_configs
+        label_alt_configs=label_alt_configs,
+        class_uris=class_uris
     )
     if man_obj is None:
         return None

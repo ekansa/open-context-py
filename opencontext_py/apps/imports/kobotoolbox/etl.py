@@ -21,6 +21,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     list_excel_files,
     read_excel_to_dataframes,
     make_directory_files_df,
@@ -44,28 +45,37 @@ from opencontext_py.apps.imports.kobotoolbox.contexts import (
 from opencontext_py.apps.imports.kobotoolbox.media import (
     make_all_export_media_df,
     combine_media_with_files,
-    prepare_media
+    prepare_media,
+    prepare_media_links_df
 )
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
     make_locus_stratigraphy_df,
     prep_field_tables,
     make_final_trench_book_relations_df
 )
+from opencontext_py.apps.imports.kobotoolbox.dbupdate import (
+    update_contexts_subjects
+)
 
 """
 from opencontext_py.apps.imports.kobotoolbox.etl import (
-    make_kobo_to_open_context_etl_files
+    make_kobo_to_open_context_etl_files,
+    update_open_context_db
 )
-make_kobo_to_open_context_etl_files()
+# make_kobo_to_open_context_etl_files()
+update_open_context_db()
 
 """
 
 PROJECT_UUID = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 SOURCE_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
 DESTINATION_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/2018-oc-etl/'
+SOURCE_ID_PREFIX = 'kobo-pc-2018-'
 
 FILENAME_ALL_CONTEXTS = 'all-contexts-subjects.csv'
+FILENAME_LOADED_CONTEXTS = 'loaded-contexts-subjects.csv'
 FILENAME_ATTRIBUTES_CATALOG = 'attributes--catalog.csv'
+FILENAME_LINKS_MEDIA = 'links--media.csv'
 FILENAME_LINKS_TRENCHBOOKS = 'links--trench-books.csv'
 FILENAME_LINKS_STRATIGRAPHY = 'links--locus-stratigraphy.csv'
 FILENAME_LINKS_CATALOG = 'links--catalog.csv'
@@ -107,6 +117,20 @@ def make_kobo_to_open_context_etl_files(
         quoting=csv.QUOTE_NONNUMERIC
     )
     
+    # Now prepare a media links dataframe.
+    df_media_link = prepare_media_links_df(
+        source_path,
+        project_uuid,
+        all_contexts_df
+    )
+    if df_media_link is not None:
+        links_media_path = destination_path + FILENAME_LINKS_MEDIA
+        df_media_link.to_csv(
+            links_media_path,
+            index=False,
+            quoting=csv.QUOTE_NONNUMERIC
+        )
+    
     field_config_dfs = prep_field_tables(source_path, project_uuid, year)
     for act_sheet, act_dict_dfs in field_config_dfs.items():
         file_path =  destination_path + act_dict_dfs['file']
@@ -147,7 +171,8 @@ def make_kobo_to_open_context_etl_files(
     catalog_links_df = make_catalog_links_df(
         project_uuid,
         catalog_dfs,
-        tb_dfs['Trench Book Entry']
+        tb_dfs['Trench Book Entry'],
+        all_contexts_df
     )
     links_catalog_path = destination_path + FILENAME_LINKS_CATALOG
     catalog_links_df.to_csv(
@@ -160,3 +185,18 @@ def make_kobo_to_open_context_etl_files(
 
 
     
+    
+def update_open_context_db(project_uuid=PROJECT_UUID, source_prefix=SOURCE_ID_PREFIX, load_files=DESTINATION_PATH):
+    """"Updates the Open Context database with ETL load files"""
+    all_contexts_df = pd.read_csv((load_files + FILENAME_ALL_CONTEXTS))
+    new_contexts_df = update_contexts_subjects(
+        project_uuid,
+        (source_prefix + FILENAME_ALL_CONTEXTS),
+        all_contexts_df
+    )
+    loaded_contexts_path = (load_files + FILENAME_LOADED_CONTEXTS)
+    new_contexts_df.to_csv(
+        loaded_contexts_path,
+        index=False,
+        quoting=csv.QUOTE_NONNUMERIC
+    )

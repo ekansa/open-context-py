@@ -16,6 +16,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
@@ -720,6 +721,7 @@ def update_all_context_df_with_missing_locus_rows(
         df_grp.loc[locus_indx, 'uuid_source'] = uuid_source
         df_grp.loc[locus_indx, 'parent_uuid'] = parent_uuid
         df_grp.loc[locus_indx, 'parent_uuid_source'] = parent_uuid_source
+        df_grp.loc[locus_indx, 'locus_content_name'] = np.nan
         df_grp = fill_in_oc_context_paths(uuid, locus_indx, df_grp)
     
     # Append the units to the main dataframe. 

@@ -13,12 +13,17 @@ from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
+    LABEL_ALTERNATIVE_PARTS,
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
+    UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     make_directory_files_df,
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
+    get_alternate_labels,
+    lookup_manifest_uuid,
 )
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
@@ -118,6 +123,47 @@ OPENCONTEXT_MEDIA_DIRS = [
 
 MAX_PREVIEW_WIDTH = 650
 MAX_THUMBNAIL_WIDTH = 150
+
+MEDIA_ATTRIBUTES_SHEET = 'Media File Metadata Entry'
+MEDIA_RELS_SHEET = 'Rel_ID_Group_Rep'
+
+RELS_RENAME_COLS = {
+    '_submission__uuid': 'subject_uuid',
+    'Related Identifiers/Add related identifier/Related ID': 'object__Related ID',
+    'Related Identifiers/Add related identifier/Type of Related ID': 'object__Related Type',
+}
+
+REL_PREFIXES = {
+    'Small Find': (
+        ['SF '],
+        ['oc-gen:cat-sample'],
+    ),
+    'Cataloged Object': (
+        ['PC ', 'VdM '],
+        ['oc-gen:cat-arch-element', 'oc-gen:cat-object', 'oc-gen:cat-pottery']
+    ),
+    'Supplemental Find': (
+        [
+            'Bulk Architecture-',
+            'Bulk Bone-',
+            'Bulk Ceramic-',
+            'Bulk Metal-',
+            'Bulk Other-',
+            'Bulk Tile-',
+        ],
+        ['oc-gen:cat-sample-col'],
+    ),
+}
+REL_COLS = [
+    'File Upload/Image File',
+    'subject_uuid',
+    'subject_uuid_source',
+    LINK_RELATION_TYPE_COL,
+    'object_uuid',
+    'object_uuid_source',
+    'object__Related ID',
+    'object__Related Type',
+]
 
 def revise_filename(filename):
     """Revises a filename to be URL friendly."""
@@ -421,3 +467,78 @@ def prepare_media(
     df_all = check_prepare_media_uuid(df_all, project_uuid)
     make_opencontext_file_versions(df_all, oc_media_root_dir)
     return df_all
+
+def prepare_media_links_from_dfs(project_uuid, dfs, all_contexts_df):
+    """Prepares a dataframe of links between media items and related objects"""
+    df_link = dfs[MEDIA_RELS_SHEET].copy()
+    df_link.rename(columns=RELS_RENAME_COLS, inplace=True)
+    media_subject_uuids = df_link['subject_uuid'].unique().tolist()
+    df_all_parents = dfs[MEDIA_ATTRIBUTES_SHEET].copy()
+    df_all_parents['subject_uuid'] = df_all_parents['_uuid']
+    df_all_parents['subject_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+    df_all_parents = df_all_parents[df_all_parents['subject_uuid'].isin(media_subject_uuids)]
+    df_all_parents = df_all_parents[['File Upload/Image File', 'subject_uuid', 'subject_uuid_source']]
+    df_link = pd.merge(
+        df_link,
+        df_all_parents,
+        how='left',
+        on=['subject_uuid']
+    )
+    # Now look up the UUIDs for the objects.
+    df_link['object__Related ID'] = df_link['object__Related ID'].astype(str)
+    df_link['object_uuid'] = np.nan
+    df_link['object_uuid_source'] = np.nan
+    df_link[LINK_RELATION_TYPE_COL] = 'link'
+    for i, row in df_link.iterrows():
+        object_uuid = None
+        object_uuid_source = None
+        raw_object_id = row['object__Related ID']
+        object_type = row['object__Related Type']
+        if not raw_object_id:
+            # Empty string, so skip.
+            continue
+        act_labels = get_alternate_labels(
+            label=raw_object_id,
+            project_uuid=project_uuid
+        )
+        _, act_classes = REL_PREFIXES.get(object_type, ([], []))
+        context_indx = (all_contexts_df['label'].isin(act_labels))
+        if len(act_classes) > 0:
+            context_indx &= (all_contexts_df['class_uri'].isin(act_classes))
+        if not all_contexts_df[context_indx].empty:
+            object_uuid = all_contexts_df[context_indx]['context_uuid'].iloc[0]
+            object_uuid_source = all_contexts_df[context_indx]['uuid_source'].iloc[0]
+        else:
+            object_uuid = lookup_manifest_uuid(
+                label=raw_object_id,
+                project_uuid=project_uuid,
+                item_type='subjects',
+                class_uris=act_classes
+            )
+            if object_uuid is not None:
+                object_uuid_source = UUID_SOURCE_OC_LOOKUP
+        if object_uuid is None:
+            # Don't do an update if we don't have an object_uuid.
+            continue
+        update_indx = (
+            (df_link['object__Related ID'] == raw_object_id)
+            & (df_link['object__Related Type'] == object_type)
+        )
+        df_link.loc[update_indx, 'object_uuid'] = object_uuid
+        df_link.loc[update_indx, 'object_uuid_source'] = object_uuid_source
+    df_link = df_link[REL_COLS]
+    return df_link
+
+def prepare_media_links_df(excel_dirpath, project_uuid, all_contexts_df):
+    """Prepares a media link dataframe."""
+    df_link = None
+    for excel_filepath in list_excel_files(excel_dirpath):
+        if not 'Media' in excel_filepath:
+            continue
+        dfs = read_excel_to_dataframes(excel_filepath)
+        df_link = prepare_media_links_from_dfs(
+            project_uuid,
+            dfs,
+            all_contexts_df
+        )
+    return df_link

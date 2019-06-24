@@ -16,10 +16,14 @@ from opencontext_py.apps.imports.kobotoolbox.contexts import (
     UNIT_LABEL_REPLACES,
     prepare_trench_contexts,
 )
+from opencontext_py.apps.imports.kobotoolbox.preprocess import (
+    look_up_parent,
+)
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     MULTI_VALUE_COL_PREFIXES,
     make_directory_files_df,
     list_excel_files,
@@ -33,7 +37,6 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     lookup_manifest_uuid,
 )
 
-CATALOG_ATTRIBUTES_SHEET = 'Catalog Entry'
 
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
@@ -52,11 +55,52 @@ catalog_dfs = prepare_catalog(project_uuid, excel_dirpath)
 
 """
 
+CATALOG_ATTRIBUTES_SHEET = 'Catalog Entry'
+CATALOG_RELS_SHEET = 'rel_ids_repeat'
+
 ENTRY_DATE_PRED_UUID = '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa'
 START_PAGE_PRED_UUID = 'BECAD1AF-0245-44E0-CD2A-F2F7BD080443'
 END_PAGE_PRED_UUID = '506924AA-B53D-41B5-9D02-9A7929EA6D6D'
 
+FIRST_LINK_REL_COLS = [
+    'label',
+    'class_uri',
+    'uuid_source',
+    'subject_uuid',
+    LINK_RELATION_TYPE_COL,
+    'object_uuid',
+    'object_uuid_source'
+]
 
+RELS_RENAME_COLS = {
+    '_submission__uuid': 'subject_uuid',
+    'Related Identifiers/Related Record Object/Type of Relationship': LINK_RELATION_TYPE_COL,
+    'Related Identifiers/Related Record Object/Related ID': 'object__Related ID',
+    'Related Identifiers/Related Record Object/Type of Related ID': 'object__Related Type',
+    'Related Identifiers/Related Record Object/Note about Relationship': 'object__Relation Note',
+}
+
+REL_PREFIXES = {
+    'Small Find': (
+        ['SF '],
+        ['oc-gen:cat-sample'],
+    ),
+    'Cataloged Object': (
+        ['PC ', 'VdM '],
+        ['oc-gen:cat-arch-element', 'oc-gen:cat-object', 'oc-gen:cat-pottery']
+    ),
+    'Supplemental Find': (
+        [
+            'Bulk Architecture-',
+            'Bulk Bone-',
+            'Bulk Ceramic-',
+            'Bulk Metal-',
+            'Bulk Other-',
+            'Bulk Tile-',
+        ],
+        ['oc-gen:cat-sample-col'],
+    ),
+}
 
 def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, end_page):
     """Look up trenchbook entries via database queries."""
@@ -122,8 +166,8 @@ def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, 
     return None
 
 
-def make_catalog_links_df(project_uuid, dfs, tb_df):
-    """Makes dataframe for a catalog"""
+def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
+    """Makes dataframe for a catalog links to trench book entries"""
     obj_prop_cols = [
         'Trench ID',
         'Year',
@@ -133,7 +177,7 @@ def make_catalog_links_df(project_uuid, dfs, tb_df):
     ]
     df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
     df_link['subject_uuid'] = df_link['_uuid']
-    df_link['Relation_type'] = 'link'
+    df_link[LINK_RELATION_TYPE_COL] = 'link'
     for i, row in df_link.iterrows():
         object_uuid = None
         object_source = None
@@ -171,13 +215,90 @@ def make_catalog_links_df(project_uuid, dfs, tb_df):
     df_link = df_link[
         (
             ['label', 'class_uri', 'uuid_source', 'subject_uuid']
-            + ['Relation_type']
+            + [LINK_RELATION_TYPE_COL]
             + ['object_uuid', 'object_uuid_source']
             + obj_prop_cols
         )
     ]
     return df_link
-    
+
+def get_links_from_rel_ids(project_uuid, dfs, all_contexts_df):
+    """Gets links from the related links sheet"""
+    df_rel = dfs[CATALOG_RELS_SHEET]
+    df_rel.rename(
+        columns=RELS_RENAME_COLS,
+        inplace=True
+    )
+    # Join in metadata about the subjects (the catalog object entities)
+    subject_uuids = df_rel['subject_uuid'].unique().tolist()
+    df_all_parents = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_all_parents['subject_uuid'] = df_all_parents['_uuid']
+    df_all_parents = df_all_parents[df_all_parents['subject_uuid'].isin(subject_uuids)]
+    df_all_parents = df_all_parents[['label', 'class_uri', 'uuid_source', 'subject_uuid']]
+    df_rel = pd.merge(
+        df_rel,
+        df_all_parents,
+        how='left',
+        on=['subject_uuid']
+    )
+    # Now look up the UUIDs for the objects.
+    for i, row in df_rel.iterrows():
+        object_uuid = None
+        object_uuid_source = None
+        raw_object_id = row['object__Related ID']
+        object_type = row['object__Related Type']
+        act_labels = [str(raw_object_id)]
+        act_prefixes, act_classes = REL_PREFIXES.get(object_type, ([], []))
+        if len(act_classes) == 0:
+            # Didn't find any classes in our object type lookup, so continue
+            continue
+        act_labels += [p + str(raw_object_id) for p in act_prefixes]
+        context_indx = (
+            all_contexts_df['label'].isin(act_labels)
+            & all_contexts_df['class_uri'].isin(act_classes)
+        )
+        if not all_contexts_df[context_indx].empty:
+            object_uuid = all_contexts_df[context_indx]['context_uuid'].iloc[0]
+            object_uuid_source = all_contexts_df[context_indx]['uuid_source'].iloc[0]
+        if object_uuid is None:
+            man_obj = Manifest.objects.filter(
+                project_uuid=project_uuid,
+                label__in=act_labels,
+                class_uri__in=act_classes
+            ).first()
+            if man_obj is not None:
+                object_uuid = man_obj.uuid
+                object_uuid_source = UUID_SOURCE_OC_LOOKUP
+        # Now update the df_rel values.
+        if object_uuid is None:
+            object_uuid = np.nan
+            object_uuid_source = np.nan
+        update_indx = (
+            (df_rel['object__Related ID'] == raw_object_id)
+            & (df_rel['object__Related Type'] == object_type)
+        )
+        df_rel.loc[update_indx, 'object_uuid'] = object_uuid
+        df_rel.loc[update_indx, 'object_uuid_source'] = object_uuid_source
+    return df_rel
+
+def make_catalog_links_df(project_uuid, dfs, tb_df, all_contexts_df):
+    """Makes a dataframe for catalog object linking relations"""
+    df_link = make_catalog_tb_links_df(
+        project_uuid,
+        dfs,
+        tb_df
+    )
+    df_rel = get_links_from_rel_ids(
+        project_uuid,
+        dfs,
+        all_contexts_df
+    )
+    df_all_links = pd.concat([df_link, df_rel])
+    df_all_links = reorder_first_columns(
+        df_all_links,
+        FIRST_LINK_REL_COLS
+    )
+    return df_all_links
 
 def prepare_catalog(project_uuid, excel_dirpath):
     """Prepares catalog dataframes."""
