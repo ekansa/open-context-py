@@ -14,10 +14,13 @@ from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 
-from opencontext_py.apps.imports.fields.models import ImportField
-from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.records.models import ImportCell
+from opencontext_py.apps.imports.records.create import ImportRecords
+from opencontext_py.apps.imports.fields.models import ImportField
+from opencontext_py.apps.imports.fields.create import ImportFields
+from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnotation
 from opencontext_py.apps.imports.sources.models import ImportSource
+from opencontext_py.apps.imports.sources.create import ImportRefineSource
 from opencontext_py.apps.imports.sources.unimport import UnImport
 
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
@@ -53,6 +56,194 @@ CLASS_CONTEXT_IMPORT_ORDER = [
     'oc-gen:cat-pottery',
 ]
 
+DF_ATTRIBUTE_CONFIGS = [
+    {
+        'source-column': 'Data Entry Person',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Data Entry Person',
+            'f_uuid': '',
+            'field_type': 'persons',
+            'field_data_type': 'id',
+            'field_value_cat': ''
+        },
+        'field_rels': {
+            
+        },
+    },
+
+    {
+        'source-column': 'Object Type, Title',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Catalog ID Note',
+            'f_uuid': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Size (Notes)',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Size',
+            'f_uuid': 'B6D48580-AF49-409C-1172-E27CBA31F235',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Condition (Notes)',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Condition',
+            'f_uuid': '4909306F-3102-47A2-66A3-561C296147BB',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Description',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Description',
+            'f_uuid': 'DBB5CB7-599F-42D5-61EE-1955CF898990',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Trench ID',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Trench',
+            'f_uuid': 'bd3aba0c-672a-4a1e-81ea-5408768ce407',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Date Cataloged',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Date Cataloged',
+            'f_uuid': '2d60965b-5151-446c-99b7-402e94e44c25',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Year',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Year',
+            'f_uuid': '2C7FE888-C431-4FBD-39F4-38B7D969A811',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Record Type',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Record Type',
+            'f_uuid': '609ff344-7304-48e3-8db4-64b47dd12215',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Supplemental Find Identification Note',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Supplemental Find Identification Note',
+            'f_uuid': None,
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Munsell Color',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Munsell Color',
+            'f_uuid': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Fabric Category',
+        'sources': ['catalog',]
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Fabric Category',
+            'f_uuid': 'A70236CA-1599-42F5-4A12-ACEC8C423850',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+
+]
+
+
+# ---------------------------------------------------------------------
+# CONTEXT (item_type: subjects) RELATED FUNCTIONS
+# ---------------------------------------------------------------------
 
 def load_context_row(project_uuid, source_id, row):
     """Loads a context record row into the database"""
@@ -186,9 +377,72 @@ def update_contexts_subjects(project_uuid, source_id, all_contexts_df):
         )
     return new_contexts_df
     
-    
-    
-    
 
+# ---------------------------------------------------------------------
+# ATTRIBUTES RELATED FUNCTIONS
+# Attributes are loaded into the importer that normally gets data from
+# an Open Refine source. The following functions load data from a
+# dataframe with attributes, sets up the field types and relationships,
+# assigns UUIDs where feasible, and imports the data into Open Context.
+# The main expecation is that entities receiving attributes have been
+# already created. 
+# ---------------------------------------------------------------------
 
+def purge_data_from_source(project_uuid, source_id):
+    print('Unimport project: {}, source: {}'.format(project_uuid, source_id))
+    unimp = UnImport(source_id, project_uuid)
+    unimp.delete_ok = True
+    unimp.delete_all()
+    print('Unimport data from importer project: {}, source: {}'.format(project_uuid, source_id))
+    ImportCell.objects.filter(
+        project_uuid=project_uuid,
+        source_id=source_id,
+    ).delete()
+    ImportField.objects.filter(
+        project_uuid=project_uuid,
+        source_id=source_id,
+    ).delete()
+    ImportFieldAnnotation.objects.filter(
+        project_uuid=project_uuid,
+        source_id=source_id,
+    ).delete()
+    ImportSource.objects.filter(
+        project_uuid=project_uuid,
+        source_id=source_id,
+    ).delete()
+
+def load_attribute_df_configs(project_uuid,
+    source_id,
+    df_configs,
+    df
+):
+    cols = df.columns.tolist()
+    
+    
+    
+def load_attribute_df_into_importer(
+    project_uuid,
+    source_id,
+    source_label,
+    df
+):
+    """Loads a dataframe with attribute data into the importer"""
+    # Purge any data from a prior import attempt from this source.
+    purge_data_from_source(project_uuid, source_id)
+    # 1st, make the source object
+    impsrc = ImportRefineSource()
+    impsrc.source_id = source_id
+    impsrc.project_uuid = project_uuid
+    impsrc.create_new_dataframe_source(source_label, df)
+    # 2nd, add the fields.
+    impfields = ImportFields()
+    impfields.source_id = source_id
+    impfields.project_uuid = project_uuid
+    impfields.save_dataframe_fields(source_id, df)
+    # 3rd, add the record cells
+    imprecs = ImportRecords()
+    imprecs.source_id = source_id
+    imprecs.project_uuid = project_uuid
+    imprecs.save_dataframe_records(source_id, df)
+    
     
