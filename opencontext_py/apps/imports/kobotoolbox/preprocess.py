@@ -28,6 +28,12 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     lookup_manifest_uuid,
 )
 
+FILENAME_ATTRIBUTES_LOCUS ='attributes--field-locus.csv'
+FILENAME_ATTRIBUTES_BULK_FINDS = 'attributes--field-bulk-finds.csv'
+FILENAME_ATTRIBUTES_SMALL_FINDS = 'attributes--field-small-finds.csv'
+FILENAME_ATTRIBUTES_TRENCH_BOOKS = 'attributes--field-trench-book.csv'
+
+
 """Uses Pandas to prepare Kobotoolbox exports for Open Context import
 
 
@@ -72,15 +78,15 @@ FIELD_DATA_PREPS = {
         'child_context_cols': ['Locus ID'],
     },
     'Field Bulk Finds Entry': {
-        'file': 'attributes--field-bulk-finds.csv',
+        'file': FILENAME_ATTRIBUTES_BULK_FINDS,
         'child_context_cols': ['Locus ID', 'Bulk ID'],
     },
     'Field Small Find Entry':  {
-        'file': 'attributes--field-small-finds.csv',
+        'file': FILENAME_ATTRIBUTES_SMALL_FINDS,
         'child_context_cols': ['Locus ID', 'Find Number'],
     },
     'Trench Book Entry':   {
-        'file': 'attributes--field-trench-book.csv',
+        'file': FILENAME_ATTRIBUTES_TRENCH_BOOKS,
         'child_context_cols': [],
         'tb_new_title': 'Trench Book Title',
         'tb_doc_type': ('Document Type', 'Trench Book Entry',),

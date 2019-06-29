@@ -49,12 +49,17 @@ from opencontext_py.apps.imports.kobotoolbox.media import (
     prepare_media_links_df
 )
 from opencontext_py.apps.imports.kobotoolbox.preprocess import (
+    FILENAME_ATTRIBUTES_LOCUS,
+    FILENAME_ATTRIBUTES_BULK_FINDS,
+    FILENAME_ATTRIBUTES_SMALL_FINDS,
+    FILENAME_ATTRIBUTES_TRENCH_BOOKS,
     make_locus_stratigraphy_df,
     prep_field_tables,
     make_final_trench_book_relations_df
 )
 from opencontext_py.apps.imports.kobotoolbox.dbupdate import (
-    update_contexts_subjects
+    update_contexts_subjects,
+    load_attribute_df_into_importer,
 )
 
 """
@@ -67,6 +72,7 @@ update_open_context_db()
 
 """
 
+ETL_LABEL = 'PC-2018'
 PROJECT_UUID = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 SOURCE_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
 DESTINATION_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/2018-oc-etl/'
@@ -79,6 +85,16 @@ FILENAME_LINKS_MEDIA = 'links--media.csv'
 FILENAME_LINKS_TRENCHBOOKS = 'links--trench-books.csv'
 FILENAME_LINKS_STRATIGRAPHY = 'links--locus-stratigraphy.csv'
 FILENAME_LINKS_CATALOG = 'links--catalog.csv'
+
+
+ATTRIBUTE_SOURCES = [
+    # (source_id, source_type, source_label, filename)
+    (SOURCE_ID_PREFIX + 'catalog', 'catalog', '{} Catalog'.format(ETL_LABEL), FILENAME_ATTRIBUTES_CATALOG,),
+    (SOURCE_ID_PREFIX + 'locus', 'locus', '{} Locus'.format(ETL_LABEL), FILENAME_ATTRIBUTES_LOCUS,),
+    (SOURCE_ID_PREFIX + 'bulk-finds', 'bulk-finds', '{} Bulk Finds'.format(ETL_LABEL), FILENAME_ATTRIBUTES_BULK_FINDS,),
+    (SOURCE_ID_PREFIX + 'small-finds',  'small-finds', '{} Small Finds'.format(ETL_LABEL), FILENAME_ATTRIBUTES_SMALL_FINDS,),
+    (SOURCE_ID_PREFIX + 'trench-book', 'trench-book', '{} Trench Book'.format(ETL_LABEL), FILENAME_ATTRIBUTES_TRENCH_BOOKS,),
+]
 
 
 def add_context_subjects_label_class_uri(df, all_contexts_df):
@@ -186,8 +202,15 @@ def make_kobo_to_open_context_etl_files(
 
     
     
-def update_open_context_db(project_uuid=PROJECT_UUID, source_prefix=SOURCE_ID_PREFIX, load_files=DESTINATION_PATH):
+def update_open_context_db(
+    project_uuid=PROJECT_UUID,
+    source_prefix=SOURCE_ID_PREFIX,
+    load_files=DESTINATION_PATH,
+    attribute_sources=ATTRIBUTE_SOURCES
+):
     """"Updates the Open Context database with ETL load files"""
+    # First add subjects / contexts and their containment relations
+    """
     all_contexts_df = pd.read_csv((load_files + FILENAME_ALL_CONTEXTS))
     new_contexts_df = update_contexts_subjects(
         project_uuid,
@@ -200,3 +223,15 @@ def update_open_context_db(project_uuid=PROJECT_UUID, source_prefix=SOURCE_ID_PR
         index=False,
         quoting=csv.QUOTE_NONNUMERIC
     )
+    """
+    # Load attribute data into the importer
+    for source_id, source_type, source_label, filename in attribute_sources:
+        df =  pd.read_csv((load_files + filename))
+        load_attribute_df_into_importer(
+            project_uuid,
+            source_id,
+            source_type,
+            source_label,
+            df
+        )
+        

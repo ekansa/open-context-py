@@ -83,7 +83,7 @@ class ImportFields():
         )
         kobo_fields = KoboFields()
         new_fields = []
-        for col_index, col in enuerate(cols, 1):
+        for col_index, col in enumerate(cols, 1):
             imp_f = ImportField()
             imp_f.project_uuid = self.project_uuid
             imp_f.source_id = self.source_id

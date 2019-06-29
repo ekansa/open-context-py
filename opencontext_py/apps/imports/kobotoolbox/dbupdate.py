@@ -37,6 +37,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
 from opencontext_py.apps.imports.kobotoolbox.contexts import (
     PATH_CONTEXT_COLS
 )
+from opencontext_py.apps.imports.kobotoolbox.kobofields import KoboFields
 
 
 DB_ERROR_COL = 'OC_DB_LOAD_OK'
@@ -57,13 +58,111 @@ CLASS_CONTEXT_IMPORT_ORDER = [
 ]
 
 DF_ATTRIBUTE_CONFIGS = [
+    
+    {
+        'source-column': 'label',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Locus Label',
+            
+            'field_type': 'subjects',
+            'field_value_cat': 'oc-gen:cat-locus'
+        },
+        'subject_col': True,
+        'field_rels': {
+            
+        },
+    },
+    
+    {
+        'source-column': 'label',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Bulk Find Label',
+            
+            'field_type': 'subjects',
+            'field_value_cat': 'oc-gen:cat-sample-col'
+        },
+        'subject_col': True,
+        'field_rels': {
+            
+        },
+    },
+    
+    {
+        'source-column': 'label',
+        'sources': ['small-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Small Find Label',
+            
+            'field_type': 'subjects',
+            'field_value_cat': 'oc-gen:cat-sample'
+        },
+        'subject_col': True,
+        'field_rels': {
+            
+        },
+    },
+    
+    {
+        'source-column': 'label',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Label',
+            
+            'field_type': 'subjects',
+            'field_value_cat': 'oc-gen:cat-object'
+        },
+        'subject_col': True,
+        'field_rels': {
+            
+        },
+    },
+    
+    {
+        'source-column': 'Trench Book Title',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Trench Book Title',
+            
+            'field_type': 'documents',
+            'field_value_cat': ''
+        },
+        'subject_col': True,
+        'field_rels': {
+            
+        },
+    },
+    
+    
     {
         'source-column': 'Data Entry Person',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Data Entry Person',
-            'f_uuid': '',
+            
+            'field_type': 'persons',
+            'field_data_type': 'id',
+            'field_value_cat': ''
+        },
+        'field_rels': {
+            
+        },
+    },
+    
+    {
+        'source-column': 'Trench Supervisor',
+        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Trench Supervisor',
+            
             'field_type': 'persons',
             'field_data_type': 'id',
             'field_value_cat': ''
@@ -75,7 +174,7 @@ DF_ATTRIBUTE_CONFIGS = [
 
     {
         'source-column': 'Object Type, Title',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Catalog ID Note',
@@ -90,7 +189,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Size (Notes)',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Size',
@@ -105,7 +204,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Condition (Notes)',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Condition',
@@ -120,7 +219,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Description',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
@@ -135,7 +234,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Trench ID',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench',
@@ -150,7 +249,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Date Cataloged',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Date Cataloged',
@@ -165,7 +264,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Year',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Year',
@@ -180,7 +279,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Record Type',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Record Type',
@@ -195,11 +294,11 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Supplemental Find Identification Note',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Supplemental Find Identification Note',
-            'f_uuid': None,
+            
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
@@ -210,7 +309,7 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Munsell Color',
-        'sources': ['catalog',]
+        'sources': ['catalog',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Munsell Color',
@@ -225,8 +324,8 @@ DF_ATTRIBUTE_CONFIGS = [
     
     {
         'source-column': 'Fabric Category',
-        'sources': ['catalog',]
-        'match_type': 'exact',
+        'sources': ['catalog',],
+        'match_type': 'startswith',
         'field_args': {
             'label': 'Fabric Category',
             'f_uuid': 'A70236CA-1599-42F5-4A12-ACEC8C423850',
@@ -237,7 +336,502 @@ DF_ATTRIBUTE_CONFIGS = [
                 
         },
     },
+    
+    {
+        'source-column': 'Other Fabric Note',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Other Fabric Note',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Object General Type',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Type',  # Note the difference from the source-column!
+            'f_uuid': '7DB79382-7432-42A4-FBC5-EF760691905A',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Object Type',
+        'sources': ['catalog', 'small-finds',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Object Type', 
+            'f_uuid': '7DB79382-7432-42A4-FBC5-EF760691905A',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Decorative Techniques and Motifs/Decorative Technique',
+        'sources': ['catalog',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Decorative Technique',
+            'f_uuid': 'F07C30BC-6C71-4C97-7893-D61FF6D0B59B',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Decorative Techniques and Motifs/Other Decorative Technique Note',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Other Decorative Technique Note',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Decorative Techniques and Motifs/Motif',
+        'sources': ['catalog',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Motif',
+            'f_uuid': '9B260671-CBBD-490E-48B0-CDC48F5DF62D',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Decorative Techniques and Motifs/Other Motif Note',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Other Motif Note',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Vessel Form',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Vessel Form',
+            'f_uuid': '6A890B60-3811-44AE-A554-CC8245C4D946',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Vessel Part Present',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Vessel Part Present',
+            
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Vessel Part Present',
+        'sources': ['catalog',],
+        'match_type': 'startswith',
+        'field_args': {
+            'label': 'Vessel Part Present',
+            
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
 
+    {
+        'source-column': 'Find Spot/Grid X',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid (X)',
+            'f_uuid': 'b428ff04-670b-4912-a237-ad8ff9635f5a',
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Grid Y',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid (Y)',
+            'f_uuid': '3e0c2eb3-266b-4fa4-ba59-c5c793a1e96d',
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Elevation',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation',
+            'f_uuid': 'aaa910a0-51c1-472e-9bd6-67e333e63bbd',
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Measurement Uncertainties/Grid X Uncertainty (+/- cm)',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid X Uncertainty (+/- cm)',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Measurement Uncertainties/Grid Y Uncertainty (+/- cm)',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Grid Y Uncertainty (+/- cm)',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Measurement Uncertainties/Elevation Uncertainty (+/- cm)',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Elevation Uncertainty (+/- cm)',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Spot/Measurement Uncertainties/Uncertainty Comment',
+        'sources': ['catalog', 'small-find',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Measurement Uncertainties Comment',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Type',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Find Type',
+            'f_uuid': '464b90e2-ce62-4570-bcea-58b7f9b5bb33',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Find Type (Other)',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Find Type (Other)',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Object Count',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Count',
+            'f_uuid': '84525f14-5e20-4765-a74e-303a5dbb4db8',
+            'field_type': 'description',
+            'field_data_type': 'xsd:decimal',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Count Type',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Count Type',
+            'f_uuid': 'fa2e0286-de17-45e6-959f-9dab8c8cc5f5',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Count Type (Other)',
+        'sources': ['bulk-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Count Type (Other)',
+            
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'General Description',
+        'sources': ['bulk-finds', 'locus'],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Description',
+            'f_uuid': '7DBB5CB7-599F-42D5-61EE-1955CF898990',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Date Discovered',
+        'sources': ['bulk-finds', 'small-finds'],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Date Discovered',
+            'f_uuid': '23ff0204-2b40-47b4-909a-66ec8d150528',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Preliminary Phasing',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Preliminary Phasing',
+            'f_uuid': 'c2b40ac1-3b8d-4307-b217-c61732236d68',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Munsell Color',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Munsell Color',
+            'f_uuid': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Date Opened',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Date Opened',
+            'f_uuid': '0ea21cdb-ffab-4b68-9d47-78b180f08162',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Date Closed',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Date Closed',
+            'f_uuid': '99684fbb-55d5-447a-8159-7d54fea80b50',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Trench',
+        'sources': ['locus',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Trench',
+            'f_uuid': 'bd3aba0c-672a-4a1e-81ea-5408768ce407',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Field Season',
+        'sources': ['small-finds',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Year',
+            'f_uuid': '2C7FE888-C431-4FBD-39F4-38B7D969A811',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Date Documented',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Trench Book Entry Date',
+            'f_uuid': '8b812e4f-edc4-44f1-a88d-4ad358aaf9aa',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'Start Page',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Start Page',
+            'f_uuid': 'BECAD1AF-0245-44E0-CD2A-F2F7BD080443',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
+    {
+        'source-column': 'End Page',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'End Page',
+            'f_uuid': '506924AA-B53D-41B5-9D02-9A7929EA6D6D',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
+        },
+        'field_rels': {
+                
+        },
+    },
+    
 ]
 
 
@@ -411,18 +1005,51 @@ def purge_data_from_source(project_uuid, source_id):
         source_id=source_id,
     ).delete()
 
-def load_attribute_df_configs(project_uuid,
+def load_attribute_df_configs(
+    project_uuid,
     source_id,
-    df_configs,
-    df
+    source_type,
+    df,
+    attribute_col_configs=DF_ATTRIBUTE_CONFIGS
 ):
+    """Updates ImportFields with configurations"""
+    defalut_field_args = {
+        'field_type': 'ignore',
+        'field_data_type': '',
+    }
+    kfs = KoboFields()
     cols = df.columns.tolist()
-    
-    
+    for field_num, col in enumerate(cols, 1):
+        if col in kfs.fields:
+            # Skip fields configured in KoboFields.
+            continue
+        field_args = None
+        for config in attribute_col_configs:
+            # Default to ignore
+            if (source_type in config['sources']
+                and (col == config['source-column']
+                    or (col.startswith(config['source-column'])
+                        and config['match_type'] == 'startswith')
+                    )
+                ):
+                print('Use config for {}'.format(col))
+                field_args = config['field_args'].copy()
+                break
+        if field_args is None:
+            field_args = defalut_field_args.copy()
+            
+        ImportField.objects.filter(
+            project_uuid=project_uuid,
+            source_id=source_id,
+            ref_orig_name=col,
+            field_num=field_num,
+        ).update(**field_args)
+            
     
 def load_attribute_df_into_importer(
     project_uuid,
     source_id,
+    source_type,
     source_label,
     df
 ):
@@ -444,5 +1071,12 @@ def load_attribute_df_into_importer(
     imprecs.source_id = source_id
     imprecs.project_uuid = project_uuid
     imprecs.save_dataframe_records(source_id, df)
+    # Now pre-configure the fields
+    load_attribute_df_configs(
+        project_uuid,
+        source_id,
+        source_type,
+        df
+    )
     
     
