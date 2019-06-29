@@ -15,24 +15,24 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-  required_plugins = %w( vagrant-vbguest vagrant-disksize )
-  _retry = false
-  required_plugins.each do |plugin|
-      unless Vagrant.has_plugin? plugin
-          system "vagrant plugin install #{plugin}"
-          _retry=true
-      end
-  end
+  # required_plugins = %w( vagrant-vbguest vagrant-disksize )
+  # _retry = false
+  # required_plugins.each do |plugin|
+  #       unless Vagrant.has_plugin? plugin
+  #           system "vagrant plugin install #{plugin}"
+  #          _retry=true
+  #       end
+  # end
 
-  if (_retry)
-      exec "vagrant " + ARGV.join(' ')
-  end
+  # if (_retry)
+  #       exec "vagrant " + ARGV.join(' ')
+  # end
 
   config.vm.define "opencontext" do |node|
     
     # Every Vagrant virtual environment requires a box to build off of.
     node.vm.box = settings['opencontext_vm']['vm_box']
-    node.disksize.size = "20GB"
+    # node.disksize.size = "20GB"
 
     # node.vm.network "forwarded_port", guest: 80, host: 8080
     node.vm.network "private_network", ip: "192.168.33.10"
@@ -76,7 +76,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
     node.vm.provider :google do |google, override|
       google.google_project_id = settings['opencontext_vm']['google_provider']['project_id']
-      google.google_client_email = settings['opencontext_vm']['google_provider']['client_email']
+      # google.google_client_email = settings['opencontext_vm']['google_provider']['client_email']
       google.google_json_key_location = settings['google_compute']['json_key_location'] 
 
       # Make sure to set this to trigger the zone_config
@@ -107,7 +107,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # predefined db
     # Every Vagrant virtual environment requires a box to build off of.
     node.vm.box = "debian/stretch64"
-    node.disksize.size = "20GB"
+    # node.disksize.size = "20GB"
 
     # node.vm.network "forwarded_port", guest: 80, host: 8080
     node.vm.network "private_network", ip: "192.168.33.10"
@@ -140,20 +140,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   
    # 512MB not enough for compiling lxml: https://stackoverflow.com/a/25916353/7782
    # https://stackoverflow.com/a/26468913/7782 --> for how to get to this setting
-    node.vm.provider "virtualbox" do |v|
-        v.memory = 2048
-        v.cpus = 2
-        v.name = "opencontext"
-    end
+   #  node.vm.provider "virtualbox" do |v|
+   #        v.memory = 2048
+   #        v.cpus = 2
+   #     v.name = "opencontext"
+   #  end
 
 
     # GCE
 
     node.vm.provider :google do |google, override|
       google.google_project_id = "opencontext2018"
-      google.google_client_email = "raymond.yee@gmail.com"
-      google.google_json_key_location = "/Volumes/ryvault1/opencontext/keys/opencontext2018-gce.json"
-      
+      #google.google_client_email = "raymond.yee@gmail.com"
+      google.google_json_key_location = settings['google_compute']['json_key_location']
       # Make sure to set this to trigger the zone_config
       google.zone = "us-central1-f"
 

@@ -20,7 +20,7 @@
     # https://github.com/whiskerlabs/ansible-python
     python_version: 3.7.3
     python_bin: /usr/bin
-    python_pip_version: 18.0
+    python_pip_version: 19.1.1
     python_upgrade_packaging_tools: false
     # python_setuptools_version: 40.4.2
     # python_virtualenv_version: 16.0.0
@@ -126,6 +126,7 @@
     - role: ansible-python
       # https://github.com/whiskerlabs/ansible-python/blob/8a2f027c2539e7da70ada44412376beee217cbbf/vars/main.yml#L25
       python_readline_6_2_tgz_url: https://mirrors.sjtug.sjtu.edu.cn/gnu/readline/readline-6.2.tar.gz
+      python_pip_tgz_url: https://files.pythonhosted.org/packages/93/ab/f86b61bef7ab14909bd7ec3cd2178feb0a1c86d451bc9bccd5a1aedcde5f/pip-19.1.1.tar.gz
       python_apt_package_deps:
         - build-essential
         - libbz2-dev
