@@ -1,0 +1,21 @@
+google_compute:
+    json_key_location: "/Volumes/ryvault1/opencontext/keys/opencontext2018-gce.json"
+
+opencontext_vm:
+    vm_box: "debian/stretch64"
+    repo_branch: "vagrant_ansible_update"
+
+    google_provider:
+      project_id: "opencontext2018"
+      client_email: "raymond.yee@gmail.com"
+      zone: "us-central1-f"
+      name: "oc-stretch20190629-oc"
+      image: "debian-9-stretch-v20190618"
+      machine_type: "n1-standard-2"
+      disk_size: 100
+      vm_box: gce
+      ssh_username: 'raymond.yee'
+      ssh_private_key_path: "~/.ssh/id_rsa"
+
+
+

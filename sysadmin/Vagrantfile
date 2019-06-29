@@ -6,6 +6,10 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 
+require 'yaml'
+settings = YAML.load_file 'vagrant_settings.yml'
+
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
@@ -27,7 +31,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.define "opencontext" do |node|
     
     # Every Vagrant virtual environment requires a box to build off of.
-    node.vm.box = "debian/stretch64"
+    node.vm.box = settings['opencontext_vm']['vm_box']
     node.disksize.size = "20GB"
 
     # node.vm.network "forwarded_port", guest: 80, host: 8080
@@ -50,7 +54,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--limit=opencontext, 127.0.0.1",
           "-e vname=opencontext",
           "-e hostname=devv", 
-          "-e branch=django_update",
+          "-e branch="+settings['opencontext_vm']['repo_branch'],
           "-e install_db=true",
           "-e do_migrate=true",
           "-e install_solr_data=false", 
@@ -71,29 +75,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # GCE
 
     node.vm.provider :google do |google, override|
-      google.google_project_id = "opencontext2018"
-      google.google_client_email = "raymond.yee@gmail.com"
-      google.google_json_key_location = "/Volumes/ryvault1/opencontext/keys/opencontext2018-gce.json"
-      
-      # Make sure to set this to trigger the zone_config
-      google.zone = "us-central1-f"
+      google.google_project_id = settings['opencontext_vm']['google_provider']['project_id']
+      google.google_client_email = settings['opencontext_vm']['google_provider']['client_email']
+      google.google_json_key_location = settings['google_compute']['json_key_location'] 
 
-      google.zone_config "us-central1-f" do |zone1f|
-          zone1f.name = "oc-stretch20190627-oc"
-          zone1f.image = "debian-9-stretch-v20190618"
+      # Make sure to set this to trigger the zone_config
+      google.zone =  settings['opencontext_vm']['google_provider']['zone']
+
+      google.zone_config google.zone do |zone1f|
+          zone1f.name = settings['opencontext_vm']['google_provider']['name']  
+          zone1f.image = settings['opencontext_vm']['google_provider']['image']
           #zone1f.machine_type = "f1-micro"
-          zone1f.machine_type = "n1-standard-2"
-          zone1f.disk_size = 100
-          zone1f.zone = "us-central1-f"
+          zone1f.machine_type = settings['opencontext_vm']['google_provider']['machine_type']
+          zone1f.disk_size = settings['opencontext_vm']['google_provider']['disk_size']
+          zone1f.zone = settings['opencontext_vm']['google_provider']['zone']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
           # zone1f.tags = ['web', 'app1']
       end
       
-      override.vm.box = "gce"
-      # override.ssh.username = "raymond_yee_gmail_com"
-      override.ssh.username = "raymond.yee"
-      override.ssh.private_key_path = "~/.ssh/id_rsa"
+      override.vm.box = settings['opencontext_vm']['google_provider']['vm_box']
+      override.ssh.username =  settings['opencontext_vm']['google_provider']['ssh_username']
+      override.ssh.private_key_path = settings['opencontext_vm']['google_provider']['ssh_private_key_path']
     end
 
   end  
