@@ -22,6 +22,9 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     list_excel_files,
     read_excel_to_dataframes,
     drop_empty_cols,
+    reorder_first_columns,
+    update_multivalue_col_vals,
+    update_multivalue_columns,
     get_alternate_labels,
     lookup_manifest_uuid,
 )
@@ -43,8 +46,9 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
 files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
 excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2018/'
 oc_media_root_dir = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
-all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/all-media-files.csv'
+all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-oc-etl/all-media-files.csv'
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+base_url = 'https://artiraq.org/static/opencontext/poggio-civitate/2018-media/'
 
 df_media = make_all_export_media_df(excels_filepath)
 df_files = make_directory_files_df(files_path)
@@ -59,7 +63,8 @@ df_all = prepare_media(
     excels_filepath,
     files_path,
     oc_media_root_dir,
-    project_uuid
+    project_uuid,
+    base_url
 )
 df_all.to_csv(all_media_csv_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
@@ -67,11 +72,11 @@ df_all.to_csv(all_media_csv_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
 
 
 MEDIAFILE_COLS_ENDSWITH = [
-    ('/Primary Image', 'link-primary', '_uuid', 'link-uuid'),
-    ('/Supplemental Image', 'link-supplemental', '_submission__uuid', 'link-uuid'),
-    ('/Image File', 'primary', '_uuid', 'media-uuid'),
-    ('/Video File', 'primary', '_uuid', 'media-uuid'),
-    ('/Audio File', 'primary', '_uuid', 'media-uuid'),
+    ('/Primary Image', 'link-primary', '_uuid', 'link_uuid'),
+    ('/Supplemental Image', 'link-supplemental', '_submission__uuid', 'link_uuid'),
+    ('/Image File', 'primary', '_uuid', 'media_uuid'),
+    ('/Video File', 'primary', '_uuid', 'media_uuid'),
+    ('/Audio File', 'primary', '_uuid', 'media_uuid'),
 ]
 
 MEDIA_DESCRIPTION_COLS_ENDSWITH = [
@@ -80,7 +85,8 @@ MEDIA_DESCRIPTION_COLS_ENDSWITH = [
     'File Title', 
     'Date Metadata Recorded', 
     'Date Created', 
-    'File Creator',  
+    'File Creator',
+    'Data Entry Person',
     'Media Type', 
     'Image Type', 
     'Other Image Type Note', 
@@ -114,12 +120,45 @@ MEDIA_SOURCE_FILE_PREFIXS = {
     'Trench Book': 'trench-book-',
 }
 
+MEDIA_SOURCE_COMPOSITION_TYPES = {
+    'Catalog': 'Object (artifact, ecofact)',
+    'Conservation': 'Conservation',
+    'Field Bulk': 'Field',
+    'Field Small': 'Field',
+    'Locus': 'Field',
+    'Trench Book': 'Field',
+}
+
+OPENCONTEXT_MEDIA_FULL_DIR = 'full'
+OPENCONTEXT_MEDIA_PREVIEW_DIR = 'preview'
+OPENCONTEXT_MEDIA_THUMBS_DIR = 'thumbs'
 
 OPENCONTEXT_MEDIA_DIRS = [
-    'full',
-    'preview',
-    'thumbs',
+    OPENCONTEXT_MEDIA_FULL_DIR,
+    OPENCONTEXT_MEDIA_PREVIEW_DIR,
+    OPENCONTEXT_MEDIA_THUMBS_DIR,
 ]
+
+OPENCONTEXT_MEDIA_TYPES = [
+    {
+        'dir': OPENCONTEXT_MEDIA_FULL_DIR,
+        'col': 'MEDIA_URL_{}'.format(OPENCONTEXT_MEDIA_FULL_DIR),
+        'file_type': Mediafile.MEDIA_FULL_TYPE,
+    },
+    {
+        'dir': OPENCONTEXT_MEDIA_PREVIEW_DIR,
+        'col': 'MEDIA_URL_{}'.format(OPENCONTEXT_MEDIA_PREVIEW_DIR),
+        'file_type': Mediafile.MEDIA_PREVIEW_TYPE,
+    },
+    {
+        'dir': OPENCONTEXT_MEDIA_THUMBS_DIR,
+        'col': 'MEDIA_URL_{}'.format(OPENCONTEXT_MEDIA_THUMBS_DIR),
+        'file_type': Mediafile.MEDIA_THUMB_TYPE,
+    },
+]
+
+OPENCONTEXT_URL_COLS = [('URL_{}'.format(d_type), d_type,) for d_type in OPENCONTEXT_MEDIA_DIRS]
+
 
 MAX_PREVIEW_WIDTH = 650
 MAX_THUMBNAIL_WIDTH = 150
@@ -182,7 +221,7 @@ def make_dfs_media_df(
         media_cols_endswith = MEDIAFILE_COLS_ENDSWITH
     if describe_cols_endswith is None:
         describe_cols_endswith = MEDIA_DESCRIPTION_COLS_ENDSWITH
-    for media_col_end, media_type, act_uuid, new_uuid in media_cols_endswith:
+    for media_col_end, media_source_type, act_uuid, new_uuid in media_cols_endswith:
         for sheet, df in dfs.items():
             media_col = None
             if not act_uuid in df.columns:
@@ -202,6 +241,11 @@ def make_dfs_media_df(
                 for col in df.columns:
                     if not col.endswith(des_col_end):
                         continue
+                    if (sheet != MEDIA_ATTRIBUTES_SHEET
+                        and col in ['Description', 'General Description']):
+                        # A total hack. We don't want to describe media
+                        # with field used to describe catalog objects.
+                        continue
                     sheet_des_cols.append(col)
             # Make a df_sheet_media dataframe that has the
             # media file name column, uuid column, and the
@@ -211,7 +255,7 @@ def make_dfs_media_df(
             ].copy()
             df_sheet_media[media_col].replace('', np.nan, inplace=True)
             df_sheet_media.dropna(subset=[media_col], inplace=True)
-            df_sheet_media['media-type'] = media_type
+            df_sheet_media['media_source_type'] = media_source_type
             df_sheet_media['sheet'] = sheet
             df_sheet_media.rename(
                 columns={media_col: 'filename', act_uuid: new_uuid},
@@ -247,11 +291,13 @@ def make_all_export_media_df(
         if df_media is None:
             continue
         df_media['source_file'] = excel_file
-        df_media['new-filename'] = df_media['filename'].apply(revise_filename)
+        df_media['new_filename'] = df_media['filename'].apply(revise_filename)
         for file_start, prefix in new_file_prefixes.items():
             if not excel_file.startswith(file_start):
                 continue
-            df_media['new-filename'] = prefix + df_media['new-filename']
+            df_media['new_filename'] = prefix + df_media['new_filename']
+            if MEDIA_SOURCE_COMPOSITION_TYPES.get(file_start):
+                df_media['Type of Composition Subject'] = MEDIA_SOURCE_COMPOSITION_TYPES[file_start]
         df_all_media_list.append(df_media)
     if not len(df_all_media_list):
         return None
@@ -259,13 +305,13 @@ def make_all_export_media_df(
     if df_all_media.empty:
         return None
     expected_len = len(df_all_media.index)
-    if (len(df_all_media['new-filename'].unique().tolist()) != expected_len or
+    if (len(df_all_media['new_filename'].unique().tolist()) != expected_len or
         len(df_all_media['filename'].unique().tolist()) != expected_len):
         raise RuntimeError(
             'Expected {}, but have {} filenames, and {} new-filenames'.format(
                 expected_len,
                 len(df_all_media['filename'].unique().tolist()),
-                len(df_all_media['new-filename'].unique().tolist())
+                len(df_all_media['new_filename'].unique().tolist())
             )
         )
     return df_all_media
@@ -404,29 +450,29 @@ def make_opencontext_file_versions(
     dirs = get_make_directories(oc_media_root_dir, oc_sub_dirs=oc_sub_dirs)
     df_all_use = df_all[
         df_all['path'].notnull() &
-        df_all['new-filename'].notnull()
+        df_all['new_filename'].notnull()
     ]
     print(df_all.head(10))
     for _, row in df_all_use.iterrows():
         full_file, prev_file, thumb_file = make_image_versions_src_and_new_file(
             dirs,
             row['path'],
-            row['new-filename']
+            row['new_filename']
         )
 
 def check_prepare_media_uuid(df_all, project_uuid):
     """Checks on the media-uuid, adding uuids that are needing."""
-    df_all['media-created'] = np.nan
-    df_all['media-uuid-source'] = np.nan
+    df_all['media_created'] = np.nan
+    df_all['media_uuid_source'] = np.nan
     df_working = df_all.copy()
     for i, row in df_working.iterrows():
         man_obj = None
         update_indx = (
             df_all['filename']==row['filename']
         )
-        if isinstance(row['media-uuid'], str):
+        if isinstance(row['media_uuid'], str):
             man_obj = Manifest.objects.filter(
-                uuid=row['media-uuid'],
+                uuid=row['media_uuid'],
                 item_type='media',
                 project_uuid=project_uuid
             ).first()
@@ -438,33 +484,89 @@ def check_prepare_media_uuid(df_all, project_uuid):
                 project_uuid=project_uuid,
                 sup_json__contains=row['filename'],
             ).filter(
-                sup_json__contains=row['link-uuid']
+                sup_json__contains=row['link_uuid']
             ).first()
         
         if man_obj is not None:
-            df_all.loc[update_indx, 'media-uuid-source'] = man_obj.source_id
-            df_all.loc[update_indx, 'media-created'] = man_obj.revised
-            if not isinstance(row['media-uuid'], str):
-                df_all.loc[update_indx, 'media-uuid'] = man_obj.uuid
+            df_all.loc[update_indx, 'media_uuid_source'] = man_obj.source_id
+            df_all.loc[update_indx, 'media_created'] = man_obj.revised
+            if not isinstance(row['media_uuid'], str):
+                df_all.loc[update_indx, 'media_uuid'] = man_obj.uuid
         else:
-            if not isinstance(row['media-uuid'], str):
-                df_all.loc[update_indx, 'media-uuid'] = str(GenUUID.uuid4())
-                df_all.loc[update_indx, 'media-uuid-source'] = UUID_SOURCE_OC_KOBO_ETL
+            if not isinstance(row['media_uuid'], str):
+                df_all.loc[update_indx, 'media_uuid'] = str(GenUUID.uuid4())
+                df_all.loc[update_indx, 'media_uuid_source'] = UUID_SOURCE_OC_KOBO_ETL
             else:
-                df_all.loc[update_indx, 'media-uuid-source'] = UUID_SOURCE_KOBOTOOLBOX
+                df_all.loc[update_indx, 'media_uuid_source'] = UUID_SOURCE_KOBOTOOLBOX
+    return df_all
+
+def compose_file_title(filename, prefix="Working "):
+    name_part = filename
+    if '.' in filename:
+        name_part = '.'.join(filename.split('.')[:-1])
+    return prefix + name_part
+    
+
+def finalize_combined_media_df(
+    df_all,
+    base_url,
+    dir_url_configs={},
+    media_title_col='File Title',
+    media_filename_col='new_filename'):
+    """Updates the combined all media dataframe to have final descriptions, names, URLs"""
+    ft_indx = (
+        df_all[media_title_col].isnull()
+        & (df_all['media_source_type'] != 'primary')
+    )
+    df_all.loc[
+        ft_indx,
+        media_title_col
+    ] = df_all[media_filename_col].apply(compose_file_title)
+    # Default the Image Type for non-primary media to working, informal.
+    if 'Image Type' in df_all.columns:
+        img_type_indx = (
+            df_all['Image Type'].isnull()
+            & (df_all['media_source_type'] != 'primary')
+        )
+        df_all['Image Type'] = 'Working, informal'
+    # Default the Media Type for non-primary media files as Image.
+    if 'Media Type' in df_all.columns:
+        media_type_indx = (
+            df_all['Media Type'].isnull()
+            & (df_all['media_source_type'] != 'primary')
+        )
+        df_all['Media Type'] = 'Image'
+    # Add columns with the URls to different types of versions of
+    # the media item.
+    for oc_media_type in OPENCONTEXT_MEDIA_TYPES:
+        dir_type = oc_media_type['dir']
+        type_col = oc_media_type['col']
+        type_base_url = dir_url_configs.get(
+            dir_type,
+            # Defaullt to the normal OC template for media urls
+            (base_url + dir_type + '/')
+        )
+        df_all[type_col] = type_base_url + df_all[media_filename_col]
+    # Finally, add the _uuid column so that it is clear what we should
+    # create for a media uuid.
+    df_all['_uuid'] = df_all['media_uuid']
     return df_all
 
 def prepare_media(
     excels_filepath,
     files_path,
     oc_media_root_dir,
-    project_uuid
+    project_uuid,
+    base_url
 ):
     """Prepares a dataframe consolidating media from all export excels."""
     df_media = make_all_export_media_df(excels_filepath)
     df_files = make_directory_files_df(files_path)
     df_all = combine_media_with_files(df_media, df_files)
     df_all = check_prepare_media_uuid(df_all, project_uuid)
+    df_all = finalize_combined_media_df(df_all, base_url)
+    df_all = drop_empty_cols(df_all)
+    df_all = update_multivalue_columns(df_all)
     make_opencontext_file_versions(df_all, oc_media_root_dir)
     return df_all
 
