@@ -11,10 +11,14 @@ from django.db import models
 @reversion.register  # records in this model under version control
 class Mediafile(models.Model):
 
+    MEDIA_FULL_TYPE = 'oc-gen:fullfile'
+    MEDIA_PREVIEW_TYPE = 'oc-gen:preview'
+    MEDIA_THUMB_TYPE = 'oc-gen:thumbnail'
+
     FILE_TYPES = [
-        'oc-gen:fullfile',
-        'oc-gen:preview',
-        'oc-gen:thumbnail',
+        MEDIA_FULL_TYPE,
+        MEDIA_PREVIEW_TYPE,
+        MEDIA_THUMB_TYPE,
         'oc-gen:hero',
         'oc-gen:iiif',
         'oc-gen:archive',

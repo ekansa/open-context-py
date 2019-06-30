@@ -30,7 +30,8 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     lookup_manifest_uuid,
 )
 from opencontext_py.apps.imports.kobotoolbox.attributes import (
-    process_hiearchy_col_values
+    create_global_lat_lon_columns,
+    process_hiearchy_col_values,
 )
 from opencontext_py.apps.imports.kobotoolbox.catalog import (
     CATALOG_ATTRIBUTES_SHEET,
@@ -43,8 +44,6 @@ from opencontext_py.apps.imports.kobotoolbox.contexts import (
     prepare_all_contexts
 )
 from opencontext_py.apps.imports.kobotoolbox.media import (
-    make_all_export_media_df,
-    combine_media_with_files,
     prepare_media,
     prepare_media_links_df
 )
@@ -67,7 +66,7 @@ from opencontext_py.apps.imports.kobotoolbox.etl import (
     make_kobo_to_open_context_etl_files,
     update_open_context_db
 )
-# make_kobo_to_open_context_etl_files()
+make_kobo_to_open_context_etl_files()
 update_open_context_db()
 
 """
@@ -77,8 +76,12 @@ PROJECT_UUID = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 SOURCE_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
 DESTINATION_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/2018-oc-etl/'
 SOURCE_ID_PREFIX = 'kobo-pc-2018-'
+MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2018-media/'
+MEDIA_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
+OC_TRANSFORMED_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
 
 FILENAME_ALL_CONTEXTS = 'all-contexts-subjects.csv'
+FILENAME_ALL_MEDIA = 'all-media-files.csv'
 FILENAME_LOADED_CONTEXTS = 'loaded-contexts-subjects.csv'
 FILENAME_ATTRIBUTES_CATALOG = 'attributes--catalog.csv'
 FILENAME_LINKS_MEDIA = 'links--media.csv'
@@ -94,6 +97,7 @@ ATTRIBUTE_SOURCES = [
     (SOURCE_ID_PREFIX + 'bulk-finds', 'bulk-finds', '{} Bulk Finds'.format(ETL_LABEL), FILENAME_ATTRIBUTES_BULK_FINDS,),
     (SOURCE_ID_PREFIX + 'small-finds',  'small-finds', '{} Small Finds'.format(ETL_LABEL), FILENAME_ATTRIBUTES_SMALL_FINDS,),
     (SOURCE_ID_PREFIX + 'trench-book', 'trench-book', '{} Trench Book'.format(ETL_LABEL), FILENAME_ATTRIBUTES_TRENCH_BOOKS,),
+    (SOURCE_ID_PREFIX + 'all-media', 'all-media', '{} All Media'.format(ETL_LABEL), FILENAME_ALL_MEDIA,),
 ]
 
 
@@ -117,7 +121,10 @@ def make_kobo_to_open_context_etl_files(
     project_uuid=PROJECT_UUID,
     year=2018,
     source_path=SOURCE_PATH,
-    destination_path=DESTINATION_PATH
+    destination_path=DESTINATION_PATH,
+    base_url=MEDIA_BASE_URL,
+    files_path=MEDIA_FILES_PATH,
+    oc_media_root_dir=OC_TRANSFORMED_FILES_PATH,
 ):
     """Prepares files for Open Context ingest."""
     source_dfs = context_sources_to_dfs(source_path)
@@ -132,6 +139,18 @@ def make_kobo_to_open_context_etl_files(
         index=False,
         quoting=csv.QUOTE_NONNUMERIC
     )
+    
+    # Now prepare a consolidated, all media dataframe for all the media
+    # files referenced in all of the source datasets.
+    df_media_all = prepare_media(
+        source_path,
+        files_path,
+        oc_media_root_dir,
+        project_uuid,
+        base_url
+    )
+    all_media_csv_path = destination_path + FILENAME_ALL_MEDIA
+    df_media_all.to_csv(all_media_csv_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
     
     # Now prepare a media links dataframe.
     df_media_link = prepare_media_links_df(
@@ -155,6 +174,8 @@ def make_kobo_to_open_context_etl_files(
             df,
             all_contexts_df
         )
+        # Add global coordinates if applicable.
+        df = create_global_lat_lon_columns(df)
         df.to_csv(file_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
     
     # Now do the stratigraphy.
@@ -176,6 +197,10 @@ def make_kobo_to_open_context_etl_files(
         all_contexts_df
     )
     catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = process_hiearchy_col_values(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
+    )
+    # Add global coordinates to the catalog data.
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = create_global_lat_lon_columns(
         catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
     )
     attribs_catalog_path = destination_path + FILENAME_ATTRIBUTES_CATALOG
@@ -210,20 +235,19 @@ def update_open_context_db(
 ):
     """"Updates the Open Context database with ETL load files"""
     # First add subjects / contexts and their containment relations
-    """
-    all_contexts_df = pd.read_csv((load_files + FILENAME_ALL_CONTEXTS))
-    new_contexts_df = update_contexts_subjects(
-        project_uuid,
-        (source_prefix + FILENAME_ALL_CONTEXTS),
-        all_contexts_df
-    )
-    loaded_contexts_path = (load_files + FILENAME_LOADED_CONTEXTS)
-    new_contexts_df.to_csv(
-        loaded_contexts_path,
-        index=False,
-        quoting=csv.QUOTE_NONNUMERIC
-    )
-    """
+    if True:
+        all_contexts_df = pd.read_csv((load_files + FILENAME_ALL_CONTEXTS))
+        new_contexts_df = update_contexts_subjects(
+            project_uuid,
+            (source_prefix + FILENAME_ALL_CONTEXTS),
+            all_contexts_df
+        )
+        loaded_contexts_path = (load_files + FILENAME_LOADED_CONTEXTS)
+        new_contexts_df.to_csv(
+            loaded_contexts_path,
+            index=False,
+            quoting=csv.QUOTE_NONNUMERIC
+        )
     # Load attribute data into the importer
     for source_id, source_type, source_label, filename in attribute_sources:
         df =  pd.read_csv((load_files + filename))

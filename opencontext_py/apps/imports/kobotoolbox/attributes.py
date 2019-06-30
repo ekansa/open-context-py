@@ -8,6 +8,10 @@ import pandas as pd
 from django.db import models
 from django.db.models import Q
 from django.conf import settings
+
+# Needed to repoject the site grid
+from opencontext_py.libs.reprojection import ReprojectUtilities
+
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
 from opencontext_py.apps.ocitems.subjects.models import Subject
@@ -29,7 +33,11 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     lookup_manifest_uuid,
 )
 
-
+REPROJECTED_LAT_COL = 'REPROJ_LAT'
+REPROJECTED_LON_COL = 'REPROJ_LON'
+X_Y_GRID_COLS = [
+    ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
+]
 
 
 def process_hiearchy_col_values(df, delim='::'):
@@ -54,7 +62,72 @@ def process_hiearchy_col_values(df, delim='::'):
             inplace=True
         )
     return df
-    
+
+
+def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='poggio-civitate'):
+    """Makes global lat lon coordinates from local coordinates"""
+    if (not grid_x_col in df.columns) or (not grid_y_col in df.columns):
+        # No local coordinate columns to process for lat, lon columns.
+        return df
+    df[REPROJECTED_LAT_COL] = np.nan
+    df[REPROJECTED_LON_COL] = np.nan
+    coord_indx = (
+        (~df[grid_x_col].isnull()) & (~df[grid_y_col].isnull())
+    )
+    print('Creating Lat, Lon columns for {} rows based on {}, {}'.format(
+            len(df[coord_indx].index),
+            grid_x_col,
+            grid_y_col,
+        )
+    )
+    for i, row in df[coord_indx].iterrows():
+        reproj = ReprojectUtilities()
+        site_proj = default_site_proj
+        if 'site' in row and row['site'].startswith('Vescovado'):
+            site_proj = 'vescovado-di-murlo'
+        if row['label'].startswith('VdM'):
+            site_proj = 'vescovado-di-murlo'
+        if site_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
+            # A Murlo Project local coordinate system
+            # we can transform it to global, by first changing the values
+            # of the x and y coordinates.
+            proj_x_vals, proj_y_vals = reproj.murlo_pre_transform(
+                [row[grid_x_col]],
+                [row[grid_y_col]],
+                site_proj
+            )
+            site_proj = ReprojectUtilities.MURLO_PRE_TRANSFORMS[site_proj]
+        else:
+            proj_x_vals = [row[grid_x_col]]
+            proj_y_vals = [row[grid_y_col]]
+        # Set the input and the output projections.
+        reproj.set_in_out_crs(site_proj, 'EPSG:4326')
+        out_x, out_y = reproj.reproject_coordinates(
+            proj_x_vals,
+            proj_y_vals
+        )
+        # Remember that lat, Lon is the same as y, x !
+        update_indx = (df['_uuid'] == row['_uuid'])
+        df.loc[update_indx, REPROJECTED_LAT_COL] = out_y[0]
+        df.loc[update_indx, REPROJECTED_LON_COL] = out_x[0]
+    return df
+
+def create_global_lat_lon_columns(
+    df,
+    x_y_cols=X_Y_GRID_COLS,
+    default_site_proj='poggio-civitate'
+):
+    """Iterates through configured x, y local grid columns to make global lat, lon columns"""
+    for grid_x_col, grid_y_col in x_y_cols:
+        if (not grid_x_col in df.columns) or (not grid_y_col in df.columns):
+            continue
+        df = add_global_lat_lon_columns(
+            df,
+            grid_x_col,
+            grid_y_col,
+            default_site_proj=default_site_proj
+        )
+    return df
 
 def load_attribute_data_to_importer(df):
     pass
