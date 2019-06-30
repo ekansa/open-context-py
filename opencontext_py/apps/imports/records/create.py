@@ -77,9 +77,11 @@ class ImportRecords():
             row_num = i + 1
             for field_num, col in enumerate(cols, 1):
                 cell_value = row[col]
-                if cell_value in [np.nan, None]:
+                if cell_value in [np.nan, None, 'nan']:
                     cell_value = ''
-                cell_value = str(cell_value)
+                cell_value = str(cell_value).strip()
+                if cell_value == 'nan':
+                     cell_value = ''
                 imp_cell = ImportCell()
                 imp_cell.source_id = self.source_id
                 imp_cell.project_uuid = self.project_uuid
