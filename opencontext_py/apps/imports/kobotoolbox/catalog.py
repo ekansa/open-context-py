@@ -187,9 +187,8 @@ def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
     obj_prop_cols = [
         'Trench ID',
         'Year',
-        'Trench Book Entry Date',
-        'Trench Book Start Page',
-        'Trench Book End Page'
+        'Locus ID',
+        'Field Given Find ID',
     ]
     df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
     df_link['subject_uuid'] = df_link['_uuid']
