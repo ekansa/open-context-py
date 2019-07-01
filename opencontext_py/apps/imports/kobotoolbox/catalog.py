@@ -32,6 +32,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     reorder_first_columns,
     update_multivalue_col_vals,
     update_multivalue_columns,
+    clean_up_multivalue_cols,
     parse_opencontext_uuid,
     parse_opencontext_type,
     lookup_manifest_uuid,
@@ -165,6 +166,75 @@ def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, 
         return both_uuids[0]
     return None
 
+def db_lookup_smallfind(project_uuid, trench_id, year, locus_id, find_number):
+    """Looks up a small find record from the Manifest."""
+    man_obj = Manifest.objects.filter(
+        project_uuid=project_uuid,
+        item_type='subjects',
+        class_uri='oc-gen:cat-sample',
+        label__contains=year
+    ).filter(
+        label__contains=trench_id
+    ).filter(
+        label__endswith='{}-{}'.format(locus_id, find_number)
+    ).first()
+    if man_obj:
+        return man_obj.uuid
+    return None
+
+def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
+    """Makes dataframe for a catalog links to trench book entries"""
+    obj_prop_cols = [
+        'Trench ID',
+        'Year',
+        'Trench Book Entry Date',
+        'Trench Book Start Page',
+        'Trench Book End Page'
+    ]
+    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_link['subject_uuid'] = df_link['_uuid']
+    df_link[LINK_RELATION_TYPE_COL] = 'Initially documented as'
+    for i, row in df_link.iterrows():
+        object_uuid = None
+        object_source = None
+        small_finds_indx = (
+            (all_contexts_df['Trench ID'] == row['Trench ID'])
+            & (all_contexts_df['Year'] == row['Year'])
+            & (all_contexts_df['Locus ID'] == row['Locus ID'])
+            & (all_contexts_df['Find Number'] >= row['Field Given Find ID'])
+        )
+        if not all_contexts_df[small_finds_indx].empty:
+            # Choose the first match, no need to get too fussy if
+            # there are multiple matches.
+            object_uuid = all_contexts_df[small_finds_indx]['context_uuid'].iloc[0]
+            object_source = all_contexts_df[small_finds_indx]['uuid_source'].iloc[0]
+        else:
+            # Try looking in the database for a match
+            object_uuid = db_lookup_smallfind(
+                project_uuid,
+                row['Trench ID'],
+                row['Year'],
+                row['Locus ID'],
+                row['Field Given Find ID']
+            )
+            if object_uuid is not None:
+                object_source = UUID_SOURCE_OC_LOOKUP
+        if object_uuid is None:
+            # No match, just continue
+            continue
+        sub_indx = (df_link['subject_uuid'] == row['subject_uuid'])
+        df_link.loc[sub_indx, 'object_uuid'] = object_uuid
+        df_link.loc[sub_indx, 'object_uuid_source'] = object_source
+    
+    df_link = df_link[
+        (
+            ['label', 'class_uri', 'uuid_source', 'subject_uuid']
+            + [LINK_RELATION_TYPE_COL]
+            + ['object_uuid', 'object_uuid_source']
+            + obj_prop_cols
+        )
+    ]
+    return df_link
 
 def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
     """Makes dataframe for a catalog links to trench book entries"""
@@ -177,7 +247,7 @@ def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
     ]
     df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
     df_link['subject_uuid'] = df_link['_uuid']
-    df_link[LINK_RELATION_TYPE_COL] = 'link'
+    df_link[LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
     for i, row in df_link.iterrows():
         object_uuid = None
         object_source = None
@@ -283,17 +353,22 @@ def get_links_from_rel_ids(project_uuid, dfs, all_contexts_df):
 
 def make_catalog_links_df(project_uuid, dfs, tb_df, all_contexts_df):
     """Makes a dataframe for catalog object linking relations"""
-    df_link = make_catalog_tb_links_df(
+    df_tb_link = make_catalog_tb_links_df(
         project_uuid,
         dfs,
         tb_df
+    )
+    df_small_finds_link = make_catalog_small_finds_links_df(
+        project_uuid,
+        dfs,
+        all_contexts_df
     )
     df_rel = get_links_from_rel_ids(
         project_uuid,
         dfs,
         all_contexts_df
     )
-    df_all_links = pd.concat([df_link, df_rel])
+    df_all_links = pd.concat([df_link, df_small_finds_link, df_rel])
     df_all_links = reorder_first_columns(
         df_all_links,
         FIRST_LINK_REL_COLS
@@ -310,6 +385,7 @@ def prepare_catalog(project_uuid, excel_dirpath):
         df_f = dfs[CATALOG_ATTRIBUTES_SHEET]
         df_f = drop_empty_cols(df_f)
         df_f = update_multivalue_columns(df_f)
+        df_f = clean_up_multivalue_cols(df_f)
         dfs[CATALOG_ATTRIBUTES_SHEET] = df_f
     return dfs
         

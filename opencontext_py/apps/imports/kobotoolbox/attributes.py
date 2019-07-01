@@ -39,6 +39,7 @@ X_Y_GRID_COLS = [
     ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
 ]
 
+    
 
 def process_hiearchy_col_values(df, delim='::'):
     """Processes columns with hierarchy values."""
@@ -62,6 +63,7 @@ def process_hiearchy_col_values(df, delim='::'):
             inplace=True
         )
     return df
+
 
 
 def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='poggio-civitate'):
@@ -128,9 +130,6 @@ def create_global_lat_lon_columns(
             default_site_proj=default_site_proj
         )
     return df
-
-def load_attribute_data_to_importer(df):
-    pass
 
 
     

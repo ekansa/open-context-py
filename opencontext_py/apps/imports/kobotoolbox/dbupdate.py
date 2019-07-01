@@ -22,11 +22,13 @@ from opencontext_py.apps.imports.fieldannotations.models import ImportFieldAnnot
 from opencontext_py.apps.imports.sources.models import ImportSource
 from opencontext_py.apps.imports.sources.create import ImportRefineSource
 from opencontext_py.apps.imports.sources.unimport import UnImport
+from opencontext_py.apps.imports.sources.finalize import FinalizeImport
 
 from opencontext_py.apps.imports.kobotoolbox.utilities import (
     UUID_SOURCE_KOBOTOOLBOX,
     UUID_SOURCE_OC_KOBO_ETL,
     UUID_SOURCE_OC_LOOKUP,
+    LINK_RELATION_TYPE_COL,
     list_excel_files,
     read_excel_to_dataframes,
     make_directory_files_df,
@@ -34,11 +36,17 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     reorder_first_columns,
     lookup_manifest_uuid,
 )
+from opencontext_py.apps.imports.kobotoolbox.attributes import (
+    REPROJECTED_LAT_COL,
+    REPROJECTED_LON_COL,
+)
 from opencontext_py.apps.imports.kobotoolbox.contexts import (
     PATH_CONTEXT_COLS
 )
 from opencontext_py.apps.imports.kobotoolbox.kobofields import KoboFields
-
+from  opencontext_py.apps.imports.kobotoolbox.media import (
+    OPENCONTEXT_MEDIA_TYPES
+)
 
 DB_ERROR_COL = 'OC_DB_LOAD_OK'
 DEFAULT_OBS_NUM = 1
@@ -57,7 +65,53 @@ CLASS_CONTEXT_IMPORT_ORDER = [
     'oc-gen:cat-pottery',
 ]
 
-DF_ATTRIBUTE_CONFIGS = [
+MEDIA_FILETYPE_ATTRIBUTE_CONFIGS = [
+    {
+        'source-column': file_type['col'],
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': file_type['col'],
+            'field_type': 'media',
+            'field_value_cat': file_type['file_type']
+        },
+        'field_rel': {
+            'predicate': ImportFieldAnnotation.PRED_MEDIA_PART_OF,
+        },
+    }
+    for file_type in OPENCONTEXT_MEDIA_TYPES
+]
+
+GEO_ATTRIBUTE_CONFIGS = [
+    {
+        'source-column': REPROJECTED_LAT_COL,
+        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': REPROJECTED_LAT_COL,
+            'field_type': 'lat',
+            'field_value_cat': 'xsd:double',
+        },
+        'field_rel': {
+            'predicate': ImportFieldAnnotation.PRED_GEO_LOCATION,
+        },
+    },
+    {
+        'source-column': REPROJECTED_LON_COL,
+        'sources': ['catalog', 'locus', 'bulk-finds', 'small-finds', 'trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': REPROJECTED_LON_COL,
+            'field_type': 'lon',
+            'field_value_cat': 'xsd:double',
+        },
+        'field_rel': {
+            'predicate': ImportFieldAnnotation.PRED_GEO_LOCATION,
+        },
+    },
+]
+
+DF_ATTRIBUTE_CONFIGS = MEDIA_FILETYPE_ATTRIBUTE_CONFIGS + GEO_ATTRIBUTE_CONFIGS + [
     
     {
         'source-column': 'label',
@@ -65,14 +119,11 @@ DF_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': 'Locus Label',
-            
+            'is_keycell': True,
             'field_type': 'subjects',
             'field_value_cat': 'oc-gen:cat-locus'
         },
-        'subject_col': True,
-        'field_rels': {
-            
-        },
+        'subject_pk': True,
     },
     
     {
@@ -81,14 +132,11 @@ DF_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': 'Bulk Find Label',
-            
+            'is_keycell': True,
             'field_type': 'subjects',
             'field_value_cat': 'oc-gen:cat-sample-col'
         },
-        'subject_col': True,
-        'field_rels': {
-            
-        },
+        'subject_pk': True,
     },
     
     {
@@ -97,14 +145,11 @@ DF_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': 'Small Find Label',
-            
+            'is_keycell': True,
             'field_type': 'subjects',
             'field_value_cat': 'oc-gen:cat-sample'
         },
-        'subject_col': True,
-        'field_rels': {
-            
-        },
+        'subject_pk': True,
     },
     
     {
@@ -113,14 +158,11 @@ DF_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': 'Object Label',
-            
+            'is_keycell': True,
             'field_type': 'subjects',
             'field_value_cat': 'oc-gen:cat-object'
         },
-        'subject_col': True,
-        'field_rels': {
-            
-        },
+        'subject_pk': True,
     },
     
     {
@@ -129,16 +171,40 @@ DF_ATTRIBUTE_CONFIGS = [
         'match_type': 'exact',
         'field_args': {
             'label': 'Trench Book Title',
-            
+            'is_keycell': True,
             'field_type': 'documents',
             'field_value_cat': ''
         },
-        'subject_col': True,
-        'field_rels': {
+        'subject_pk': True,
+    },
+    
+    {
+        'source-column': 'Entry Text',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Entry Text',
             
+            'field_type': 'documents',
+            'field_value_cat': 'oc-gen:document-text'
+        },
+        'field_rel': {
+            'predicate': 'oc-gen:document-text',
         },
     },
     
+    {
+        'source-column': 'File Title',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'File Title',
+            'is_keycell': True,
+            'field_type': 'media',
+            'field_value_cat': ''
+        },
+        'subject_pk': True,
+    },
     
     {
         'source-column': 'Data Entry Person',
@@ -151,8 +217,38 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_data_type': 'id',
             'field_value_cat': ''
         },
-        'field_rels': {
-            
+        'field_rel': {
+            'predicate': 'oc-9',  # Catalogued by
+        },
+    },
+    
+    {
+        'source-column': 'Data Entry Person',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'File Creator',
+            'field_type': 'persons',
+            'field_data_type': 'id',
+            'field_value_cat': ''
+        },
+        'field_rel': {
+            'predicate': 'oc-14',  # Photographed by
+        },
+    },
+    
+    {
+        'source-column': 'File Creator',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'File Creator',
+            'field_type': 'persons',
+            'field_data_type': 'id',
+            'field_value_cat': ''
+        },
+        'field_rel': {
+            'predicate': 'oc-14',  # Photographed by
         },
     },
     
@@ -167,23 +263,8 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_data_type': 'id',
             'field_value_cat': ''
         },
-        'field_rels': {
-            
-        },
-    },
-
-    {
-        'source-column': 'Object Type, Title',
-        'sources': ['catalog',],
-        'match_type': 'exact',
-        'field_args': {
-            'label': 'Catalog ID Note',
-            'f_uuid': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
-            'field_type': 'description',
-            'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
+        'field_rel': {
+            'predicate': 'oc-28',  # Principal Author / Analyst
         },
     },
     
@@ -197,9 +278,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -212,23 +290,17 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
         'source-column': 'Description',
-        'sources': ['catalog',],
+        'sources': ['catalog', 'all-media',],
         'match_type': 'exact',
         'field_args': {
             'label': 'Description',
-            'f_uuid': 'DBB5CB7-599F-42D5-61EE-1955CF898990',
+            'f_uuid': '7DBB5CB7-599F-42D5-61EE-1955CF898990',
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -242,9 +314,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -256,9 +325,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '2d60965b-5151-446c-99b7-402e94e44c25',
             'field_type': 'description',
             'field_data_type': 'xsd:date',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -272,9 +338,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:integer',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -286,9 +349,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '609ff344-7304-48e3-8db4-64b47dd12215',
             'field_type': 'description',
             'field_data_type': 'id',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -302,9 +362,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -316,9 +373,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -332,9 +386,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -346,9 +397,6 @@ DF_ATTRIBUTE_CONFIGS = [
             
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -362,9 +410,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -377,8 +422,17 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
+    },
+    
+    {
+        'source-column': 'Object Type, Title',
+        'sources': ['catalog',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Catalog ID Note',
+            'f_uuid': '46c4ea6d-232f-45ec-97f8-3dd2762bcb56',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
         },
     },
     
@@ -392,9 +446,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -406,9 +457,6 @@ DF_ATTRIBUTE_CONFIGS = [
             
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -422,9 +470,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -436,9 +481,6 @@ DF_ATTRIBUTE_CONFIGS = [
             
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -452,9 +494,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -466,9 +505,6 @@ DF_ATTRIBUTE_CONFIGS = [
             
             'field_type': 'description',
             'field_data_type': 'id',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -482,9 +518,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
 
     {
@@ -495,10 +528,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Grid (X)',
             'f_uuid': 'b428ff04-670b-4912-a237-ad8ff9635f5a',
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -510,10 +540,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Grid (Y)',
             'f_uuid': '3e0c2eb3-266b-4fa4-ba59-c5c793a1e96d',
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -525,10 +552,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Elevation',
             'f_uuid': 'aaa910a0-51c1-472e-9bd6-67e333e63bbd',
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -540,10 +564,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Grid X Uncertainty (+/- cm)',
             
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -555,10 +576,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Grid Y Uncertainty (+/- cm)',
             
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -570,10 +588,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Elevation Uncertainty (+/- cm)',
             
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -587,9 +602,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -601,9 +613,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '464b90e2-ce62-4570-bcea-58b7f9b5bb33',
             'field_type': 'description',
             'field_data_type': 'id',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -617,9 +626,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -630,10 +636,7 @@ DF_ATTRIBUTE_CONFIGS = [
             'label': 'Object Count',
             'f_uuid': '84525f14-5e20-4765-a74e-303a5dbb4db8',
             'field_type': 'description',
-            'field_data_type': 'xsd:decimal',
-        },
-        'field_rels': {
-                
+            'field_data_type': 'xsd:double',
         },
     },
     
@@ -647,9 +650,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -661,9 +661,6 @@ DF_ATTRIBUTE_CONFIGS = [
             
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -677,9 +674,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -691,9 +685,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '23ff0204-2b40-47b4-909a-66ec8d150528',
             'field_type': 'description',
             'field_data_type': 'xsd:date',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -707,9 +698,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'id',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -721,9 +709,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '9b99354c-55a2-45e0-9bfd-79bd7f2a801a',
             'field_type': 'description',
             'field_data_type': 'xsd:string',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -737,9 +722,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:date',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -751,9 +733,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'f_uuid': '99684fbb-55d5-447a-8159-7d54fea80b50',
             'field_type': 'description',
             'field_data_type': 'xsd:date',
-        },
-        'field_rels': {
-                
         },
     },
     
@@ -767,9 +746,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:string',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -782,8 +758,29 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:integer',
         },
-        'field_rels': {
-                
+    },
+    
+    {
+        'source-column': 'Entry Type',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Entry Type',
+            
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+    },
+    
+    {
+        'source-column': 'Document Type',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Document Type',
+            
+            'field_type': 'description',
+            'field_data_type': 'id',
         },
     },
     
@@ -797,8 +794,27 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:date',
         },
-        'field_rels': {
-                
+    },
+    
+    {
+        'source-column': 'Entry Year',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Entry Year',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
+        },
+    },
+    
+    {
+        'source-column': 'Book Year',
+        'sources': ['trench-book',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Book Year',
+            'field_type': 'description',
+            'field_data_type': 'xsd:integer',
         },
     },
     
@@ -812,9 +828,6 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:integer',
         },
-        'field_rels': {
-                
-        },
     },
     
     {
@@ -827,12 +840,127 @@ DF_ATTRIBUTE_CONFIGS = [
             'field_type': 'description',
             'field_data_type': 'xsd:integer',
         },
-        'field_rels': {
-                
+    },
+    
+    {
+        'source-column': 'Date Created',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Date Created',
+            'f_uuid': 'e4671bb6-094d-4001-bb10-32685a168bc1',
+            'field_type': 'description',
+            'field_data_type': 'xsd:date',
+        },
+    },
+    
+    {
+        'source-column': 'Direction or Orientation Notes/Direction Faced in Field',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Direction Faced in Field',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+    },
+    
+    {
+        'source-column': 'Direction or Orientation Notes/Object Orientation Note',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Orientation Note',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+    },
+    
+    {
+        'source-column': 'Direction or Orientation Notes/Object Orientation Note',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Object Orientation Note',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+    },
+    
+    {
+        'source-column': 'Image Type',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Image Type',
+            'f_uuid': 'B8556EAA-CF52-446B-39FA-AE4798C13A6B',
+            'field_type': 'description',
+            'field_data_type': 'id',
+        },
+    },
+    
+    {
+        'source-column': 'Images/Note about Primary Image',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Description',
+            'f_uuid': '7DBB5CB7-599F-42D5-61EE-1955CF898990',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+    },
+    
+    {
+        'source-column': 'Images/Supplemental Files/Note about Supplemental Image',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Description',
+            'f_uuid': '7DBB5CB7-599F-42D5-61EE-1955CF898990',
+            'field_type': 'description',
+            'field_data_type': 'xsd:string',
+        },
+    },
+    
+    {
+        'source-column': 'Media Type',
+        'sources': ['all-media',],
+        'match_type': 'exact',
+        'field_args': {
+            'label': 'Media Type',
+            'field_type': 'description',
+            'field_data_type': 'id',
         },
     },
     
 ]
+
+LINK_REL_PRED_MAPPINGS = {
+    # This describes mappings between link/relation types extrated and derived from the
+    # source data from Kobo and predicate_uuid identifiers for use in the Open Context
+    # Assertions table. This dictionary is keyed by a text string of link/relation types.
+    # The tuple value for each key expresses the predicate_uuid for the
+    # subject -> pred[0] -> object relation, as well as the inverse assertion for a relationship
+    # between an object -> pred[1] -> subject relationship.
+    'link': (Assertion.PREDICATES_LINK, Assertion.PREDICATES_LINK),
+    'Is Part of': ('0BB889F9-54DD-4F70-5B63-F5D82425F0DB', 'BD384F1F-FB29-4A9D-7ACA-D8F6B4AF0AF9'),
+    'Has Part': ('BD384F1F-FB29-4A9D-7ACA-D8F6B4AF0AF9', '0BB889F9-54DD-4F70-5B63-F5D82425F0DB'),
+    'Stratigraphy: Same/Same as Locus': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
+    'Same as': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
+    'Stratigraphy: Contemporary/Contemporary with Locus': ('eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53', 'eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53'),
+    'Stratigraphy: Above/Above Locus': ('7895f4a8-d7e0-4219-bb47-9eef76c4acc0', '04a9d0b0-0ff8-412e-b134-23f705e666ca'),
+    'Stratigraphy: Below/Below Locus': ('04a9d0b0-0ff8-412e-b134-23f705e666ca', '7895f4a8-d7e0-4219-bb47-9eef76c4acc0'),
+    'Stratigraphy: Overlies/Overlies Locus': ('f2fd2edb-4505-447a-9403-13c18150d1d2', None),
+    'Stratigraphic Relations: Cuts/Cuts Locus': ('0d5daed7-873d-4415-a0eb-3e7ddf7f25f7', None),
+    'Objects join, refit together': ('5E41E490-0618-4D15-0826-38E3B4681C58', '5E41E490-0618-4D15-0826-38E3B4681C58'),
+    'Additional ID': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
+    'Associated in Context': ('3d4a7baa-8b52-4363-9a10-3f3a70cf919c', '3d4a7baa-8b52-4363-9a10-3f3a70cf919c'),
+    'Has Related Trench Book Entry': ('f20e9e2e-246f-4421-b1dd-e31e8b58805c', Assertion.PREDICATES_LINK),
+    'Related Open Locus': ('b0149b7c-88c8-4913-b6c8-81375239e71f', 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
+    'Related Small Find': (Assertion.PREDICATES_LINK, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
+    'Initially documented as': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
+}
 
 
 # ---------------------------------------------------------------------
@@ -845,9 +973,10 @@ def load_context_row(project_uuid, source_id, row):
         uuid=row['parent_uuid']
     ).first()
     if parent_man_obj is None:
-        print('Cannot find parent_uuid {} for uuid {}').format(
-            row['parent_uuid'],
-            row['context_uuid']
+        print('Cannot find parent_uuid {} for uuid {}'.format(
+                row['parent_uuid'],
+                row['context_uuid']
+            )
         )
         # Skip the rest.
         return False
@@ -912,8 +1041,15 @@ def load_context_dataframe(
         na_position='first',
         inplace=True,
     )
+    existing_man_objs = Manifest.objects.filter(
+        uuid__in=context_df[p_index]['context_uuid'].unique().tolist()
+    )
+    existing_uuids = [m.uuid for m in existing_man_objs]
     for i, row in context_df[p_index].iterrows():
         uuid = row['context_uuid']
+        if uuid in existing_uuids:
+            # This uuid already exists, so do NOT import it.
+            continue
         act_indx = (context_df['context_uuid'] == uuid)
         load_ok = load_context_row(project_uuid, source_id, row)
         context_df.loc[act_indx, DB_ERROR_COL] = load_ok
@@ -925,13 +1061,8 @@ def update_contexts_subjects(project_uuid, source_id, all_contexts_df):
     unimp = UnImport(source_id, project_uuid)
     unimp.delete_ok = True
     unimp.delete_all()
-    # Now start the load.
-    unimp = UnImport(source_id, project_uuid)
-    unimp.delete_ok = True
-    unimp.delete_all()
     update_indx = (
-        all_contexts_df['uuid_source'].isin([UUID_SOURCE_KOBOTOOLBOX, UUID_SOURCE_OC_KOBO_ETL])
-        & all_contexts_df['parent_uuid'].notnull()
+        all_contexts_df['parent_uuid'].notnull()
     )
     new_contexts_df = all_contexts_df[update_indx].copy()
     ordered_classes = CLASS_CONTEXT_IMPORT_ORDER.copy()
@@ -1013,17 +1144,32 @@ def load_attribute_df_configs(
     attribute_col_configs=DF_ATTRIBUTE_CONFIGS
 ):
     """Updates ImportFields with configurations"""
+    # NOTE: This has the assumption that a column has a "primary key",
+    # of the main entity that gets description. Descriptions and other
+    # relationships between columns by default use the "primary key"
+    # column as subject of a relationship.
     defalut_field_args = {
         'field_type': 'ignore',
         'field_data_type': '',
     }
+    
     kfs = KoboFields()
     cols = df.columns.tolist()
+    pk_field_num = None
+    field_rels = []
     for field_num, col in enumerate(cols, 1):
         if col in kfs.fields:
+            # This is a kobo metadata field, to be 
+            field_rels.append(
+                {
+                    'predicate': ImportFieldAnnotation.PRED_METADATA,
+                    'subject_field_num': field_num,
+                }
+            )
             # Skip fields configured in KoboFields.
             continue
         field_args = None
+        field_rel = None
         for config in attribute_col_configs:
             # Default to ignore
             if (source_type in config['sources']
@@ -1032,18 +1178,72 @@ def load_attribute_df_configs(
                         and config['match_type'] == 'startswith')
                     )
                 ):
-                print('Use config for {}'.format(col))
                 field_args = config['field_args'].copy()
-                break
+                if config.get('subject_pk'):
+                    pk_field_num = field_num
+                if config.get('field_rel'):
+                    field_rel = config['field_rel']
+                    if field_rel.get('predicate') == ImportFieldAnnotation.PRED_MEDIA_PART_OF:
+                        # A media file type column is the subject, the primary key field is obj.
+                        field_rel['subject_field_num'] = field_num
+                    elif field_rel.get('predicate') == ImportFieldAnnotation.PRED_GEO_LOCATION:
+                        # A geospatial type column is the subject, the primary key field is obj.
+                        field_rel['subject_field_num'] = field_num
+                    else:
+                        field_rel['object_field_num'] = field_num
+                elif field_args.get('field_type') == 'description':
+                    field_rel = {
+                        'predicate': ImportFieldAnnotation.PRED_DESCRIBES,
+                        'subject_field_num': field_num,
+                    }
+                # Don't break, incase a more specific config
+                # is waiting.
+        # Now update the field.
         if field_args is None:
+            # We didn't find any specific config, so we will ignore
+            # the column.
             field_args = defalut_field_args.copy()
-            
+        else:
+            print('Found {} config for {}'.format(source_type, col))
+        
+        # Update the column with configutations 
         ImportField.objects.filter(
             project_uuid=project_uuid,
             source_id=source_id,
             ref_orig_name=col,
             field_num=field_num,
         ).update(**field_args)
+        
+        if field_rel is not None:
+            field_rels.append(field_rel)
+    
+    # Now add configured relationship annotations between fields
+    if pk_field_num is None or not len(field_rels):
+        return None
+    for field_rel in field_rels:
+        # Use the specified subject field num, or default to the
+        # source table's pk_field_num.
+        subject_field_num = field_rel.get('subject_field_num', pk_field_num)
+        object_field_num = field_rel.get('object_field_num', pk_field_num)
+        # Just to be sure, delete prior links between these fields for
+        # this source.
+        ImportFieldAnnotation.objects.filter(
+            source_id=source_id,
+            project_uuid=project_uuid,
+            field_num=subject_field_num,
+            object_field_num=object_field_num,
+        ).delete()
+        # Now create the linkage
+        imp_fa = ImportFieldAnnotation()
+        imp_fa.source_id = source_id
+        imp_fa.project_uuid = project_uuid
+        # Use the specified subject field num, or default to the
+        # source table's pk_field_num.
+        imp_fa.field_num = subject_field_num
+        imp_fa.predicate = field_rel['predicate']
+        imp_fa.predicate_field_num = field_rel.get('predicate_field_num', 0)
+        imp_fa.object_field_num = object_field_num
+        imp_fa.save()
             
     
 def load_attribute_df_into_importer(
@@ -1078,5 +1278,31 @@ def load_attribute_df_into_importer(
         source_type,
         df
     )
-    
-    
+
+def load_attribute_data_into_oc(
+    project_uuid,
+    source_id,
+):
+    fi = FinalizeImport(source_id)
+    if not fi.project_uuid:
+        raise RuntimeError('Problem with import source: {}'.format(source_id))
+    fi.reset_state()
+    import_done = False
+    print('Start import into Open Context: {}'.format(source_id))
+    while not import_done:
+        fi = FinalizeImport(source_id)
+        fi.batch_size = (settings.IMPORT_BATCH_SIZE * 10)
+        output = fi.process_current_batch()
+        import_done = fi.done
+    print('Completed import into Open Context: {}'.format(source_id))
+
+def load_link_relations_df_into_oc(
+    project_uuid,
+    source_id,
+    df,
+    subject_uuid_col='subject_uuid',
+    link_rel_col=LINK_RELATION_TYPE_COL,
+    object_uuid_col='object_uuid',
+    link_rel_pred_mappings=LINK_REL_PRED_MAPPINGS,
+):
+    """Loads a link relations dataframe into Open Context."""

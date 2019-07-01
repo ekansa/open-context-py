@@ -311,10 +311,12 @@ def get_parent_context(context_key, parent_type, config=None):
 
 def make_trench_year_unit(trench_id, year):
     """Makes a trench_year excavation unit."""
+    trench_id = trench_id.replace('-', '')
     return '{} {}'.format(trench_id, year)
 
 def make_trench_year_unit_for_row(row):
     """Makes a trench_year excavation unit."""
+    row['Trench ID'] = row['Trench ID'].replace('-', '')
     return '{} {}'.format(row['Trench ID'], row['Year'])
 
 def prepare_trench_contexts(
@@ -733,9 +735,9 @@ def update_all_context_df_with_missing_locus_rows(
     
 
 def compose_label_from_row(row, template, temp_cols):
-    """Composes a label frow a row based on a teplate and template cols"""
+    """Composes a label frow a row based on a template and template cols"""
     label_args = [
-        str(row[c]).strip() for c in temp_cols if c in row
+        str(row[c]).replace('-', '').strip() for c in temp_cols if c in row
     ]
     if len(label_args) != len(temp_cols):
         return np.nan
