@@ -377,7 +377,7 @@ def make_catalog_links_df(project_uuid, dfs, tb_df, all_contexts_df):
         dfs,
         all_contexts_df
     )
-    df_all_links = pd.concat([df_link, df_small_finds_link, df_rel])
+    df_all_links = pd.concat([df_small_finds_link, df_tb_link, df_rel])
     df_all_links = reorder_first_columns(
         df_all_links,
         FIRST_LINK_REL_COLS
