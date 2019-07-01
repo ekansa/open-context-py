@@ -103,8 +103,8 @@ REL_PREFIXES = {
     ),
 }
 
-def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, end_page):
-    """Look up trenchbook entries via database queries."""
+def db_lookup_trenchbooks_linked_to_trench_id(project_uuid, trench_id):
+    """Gets a list of documents uuids that are linked to a given trench id."""
     # Get mappings for the trench_id and more canonical names
     parts = [trench_id]
     for f, r in UNIT_LABEL_REPLACES:
@@ -125,6 +125,10 @@ def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, 
     )
     # Make a list of the document uuids
     doc_uuids = [a.object_uuid for a in sub_linked_docs]
+    return doc_uuids
+    
+def db_lookup_trenchbook(project_uuid, doc_uuids, trench_id, year, entry_date, start_page, end_page):
+    """Look up trenchbook entries via database queries."""
     # Further filter the documents for the ones on the correct date.
     tbs = Manifest.objects.filter(
         project_uuid=project_uuid,
@@ -257,6 +261,7 @@ def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
     df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
+    trench_doc_uuids = {}
     for i, row in df_link.iterrows():
         object_uuid = None
         object_source = None
@@ -274,8 +279,16 @@ def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
             object_source = UUID_SOURCE_KOBOTOOLBOX
         else:
             # Try looking in the database for a match
+            trench_id = row['Trench ID']
+            if not trench_id in trench_doc_uuids:
+                trench_doc_uuids[trench_id] = db_lookup_trenchbooks_linked_to_trench_id(
+                    project_uuid,
+                    trench_id
+                )
+            doc_uuids = trench_doc_uuids[trench_id]
             object_uuid = db_lookup_trenchbook(
                 project_uuid,
+                doc_uuids,
                 row['Trench ID'],
                 row['Year'],
                 row['Trench Book Entry Date'],
