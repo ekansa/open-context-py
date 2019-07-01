@@ -25,6 +25,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     reorder_first_columns,
     update_multivalue_col_vals,
     update_multivalue_columns,
+    clean_up_multivalue_cols,
     get_alternate_labels,
     lookup_manifest_uuid,
 )
@@ -567,6 +568,7 @@ def prepare_media(
     df_all = finalize_combined_media_df(df_all, base_url)
     df_all = drop_empty_cols(df_all)
     df_all = update_multivalue_columns(df_all)
+    df_all = clean_up_multivalue_cols(df_all)
     make_opencontext_file_versions(df_all, oc_media_root_dir)
     return df_all
 

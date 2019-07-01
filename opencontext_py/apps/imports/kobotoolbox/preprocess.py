@@ -23,6 +23,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     reorder_first_columns,
     update_multivalue_col_vals,
     update_multivalue_columns,
+    clean_up_multivalue_cols,
     parse_opencontext_uuid,
     parse_opencontext_type,
     lookup_manifest_uuid,
@@ -156,12 +157,14 @@ TRENCH_BOOK_REL_CONFIGS = {
         'tb_rel_sheet': 'group_rel_locus',
         'tb_rel_col': 'Related Locus / Loci (Discussed in this entry)/Related Locus',
         'tb_rel_col_rename': 'object__Locus ID',
+        'tb_rel_link_type': 'Related Open Locus',
     },
     'tb-finds-links': {
         'tb_entry_sheet': 'Trench Book Entry',
         'tb_rel_sheet': 'group_rel_find',
         'tb_rel_col': 'Related Find(s) (Discussed in this entry)/Related Find',
         'tb_rel_col_rename': 'object__Find Number',
+        'tb_rel_link_type': 'Related Small Find',
     },
 }
 
@@ -221,6 +224,9 @@ RELATED_SHEET_DROP_COLS = [
     '_submission__submission_time',
 ]
 
+SKIP_MULTI_VALUE_REDACTIONS = [
+    'Trench Supervisor'
+]
         
 def look_up_parent(parent_sheet, parent_uuid, dfs, parent_uuid_col='_uuid'):
     """Looks up and returns a 1 record dataframe of the record for the parent item."""
@@ -460,7 +466,7 @@ def join_trenbook_entries_to_related_df(
     tb_rel_sheet='group_rel_locus',
     tb_rel_col='Related Locus / Loci (Discussed in this entry)/Related Locus',
     tb_rel_col_rename='object__Locus ID',
-    tb_rel_link_type='link',
+    tb_rel_link_type='Related Open Locus',
     context_cols=None,
     rel_drop_cols=None
 ):
@@ -766,6 +772,7 @@ def prep_field_tables(
                 continue
             df_f = drop_empty_cols(dfs[act_sheet])
             df_f = update_multivalue_columns(df_f)
+            df_f = clean_up_multivalue_cols(df_f, skip_cols=SKIP_MULTI_VALUE_REDACTIONS)
             if 'child_context_cols' in config:
                 df_f = prepare_trench_contexts(
                     df_f,

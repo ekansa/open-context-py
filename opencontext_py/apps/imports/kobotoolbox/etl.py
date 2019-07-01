@@ -59,6 +59,7 @@ from opencontext_py.apps.imports.kobotoolbox.preprocess import (
 from opencontext_py.apps.imports.kobotoolbox.dbupdate import (
     update_contexts_subjects,
     load_attribute_df_into_importer,
+    load_attribute_data_into_oc,
 )
 
 """
@@ -258,4 +259,7 @@ def update_open_context_db(
             source_label,
             df
         )
+    # Now actually import the data into Open Context
+    for source_id, _, _, _ in attribute_sources:
+        load_attribute_data_into_oc(project_uuid, source_id)
         

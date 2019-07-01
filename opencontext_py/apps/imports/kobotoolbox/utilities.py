@@ -122,12 +122,56 @@ def update_multivalue_col_vals(df, multi_col_prefix):
     return drop_empty_cols(df)
 
 def update_multivalue_columns(df, multival_col_prefixes=None):
-    """Updates mulivalue columns, removing the ones not in use"""
+    """Updates multivalue columns, removing the ones not in use"""
     if multival_col_prefixes is None:
         multival_col_prefixes = MULTI_VALUE_COL_PREFIXES
     for multi_col_prefix in multival_col_prefixes:
         df = update_multivalue_col_vals(df, multi_col_prefix)
     return df
+
+def clean_up_multivalue_cols(df, skip_cols=[]):
+    """Cleans up multivalue columns where one column has values that concatenate values from other columns"""
+    poss_multi_value_cols = {}
+    cols = df.columns.tolist()
+    sub_cols = []
+    for col in cols:
+        if col in skip_cols:
+            continue
+        for other_col in cols:
+            if other_col == col:
+                # Same column, skip it.
+                continue
+            if not other_col.startswith(col) or not '/' in other_col:
+                # This other column is not prefixed by col
+                continue
+            if other_col in sub_cols:
+                # We want to avoid a situation where something/1 is considered to be a
+                # parent of something/10
+                continue
+            other_col_vals = df[df[other_col].notnull()][other_col].unique().tolist()
+            if len(other_col_vals) > 1:
+                # This is not a column with a single value, so skip.
+                continue
+            sub_cols.append(other_col)
+            if col not in poss_multi_value_cols:
+                poss_multi_value_cols[col] = []
+            # Add a tuple of the other column name, and it's unique value.
+            poss_multi_value_cols[col].append((other_col, other_col_vals[0],))
+    for col, rel_cols_vals in poss_multi_value_cols.items():
+        for act_rel_col, act_val  in rel_cols_vals:
+            # Update the col by filtering for non null values for col,
+            # and for where the act_rel_col has it's act_val.
+            print('Remove the column {} value "{}" in the column {}'.format(act_rel_col, act_val, col))
+            rep_indx = (df[col].notnull() & (df[act_rel_col] == act_val))
+            # Remove the string we don't want, from col, which concatenates multiple
+            # values.
+            df.loc[rep_indx, col] = df[col].str.replace(act_val, '')
+            # Now do final cleanup
+            df.loc[rep_indx, col] = df[col].str.strip()
+    # Now do a file cleanup, removing anything that's no longer present.
+    df = drop_empty_cols(df)
+    return df
+            
 
 def get_alternate_labels(label, project_uuid, config=None):
     """Returns a list of a label and alternative versions based on project config"""
