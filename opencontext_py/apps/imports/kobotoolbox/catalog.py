@@ -168,7 +168,7 @@ def db_lookup_trenchbook(project_uuid, trench_id, year, entry_date, start_page, 
 
 def db_lookup_smallfind(project_uuid, trench_id, year, locus_id, find_number):
     """Looks up a small find record from the Manifest."""
-    man_obj = Manifest.objects.filter(
+    man_objs = Manifest.objects.filter(
         project_uuid=project_uuid,
         item_type='subjects',
         class_uri='oc-gen:cat-sample',
@@ -176,10 +176,11 @@ def db_lookup_smallfind(project_uuid, trench_id, year, locus_id, find_number):
     ).filter(
         label__contains=trench_id
     ).filter(
-        label__endswith='{}-{}'.format(locus_id, find_number)
-    ).first()
-    if man_obj:
-        return man_obj.uuid
+        label__endswith='-{}-{}'.format(locus_id, find_number)
+    )
+    if len(man_objs) == 1:
+        # We have an exact match.
+        return man_objs[0].uuid
     return None
 
 def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
@@ -193,14 +194,15 @@ def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
     df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[LINK_RELATION_TYPE_COL] = 'Initially documented as'
-    for i, row in df_link.iterrows():
+    for i, row in df_link[df_link['Field Given Find ID'].notnull()].iterrows():
         object_uuid = None
         object_source = None
+        find_num = int(float(row['Field Given Find ID']))
         small_finds_indx = (
             (all_contexts_df['Trench ID'] == row['Trench ID'])
             & (all_contexts_df['Year'] == row['Year'])
             & (all_contexts_df['Locus ID'] == row['Locus ID'])
-            & (all_contexts_df['Find Number'] >= row['Field Given Find ID'])
+            & (all_contexts_df['Find Number'] == find_num)
         )
         if not all_contexts_df[small_finds_indx].empty:
             # Choose the first match, no need to get too fussy if
@@ -214,10 +216,18 @@ def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
                 row['Trench ID'],
                 row['Year'],
                 row['Locus ID'],
-                row['Field Given Find ID']
+                find_num
             )
             if object_uuid is not None:
                 object_source = UUID_SOURCE_OC_LOOKUP
+        print('Catalog small find lookup: {}-{}-{}-{} -> {}'.format(
+                row['Year'],
+                row['Trench ID'],
+                row['Locus ID'],
+                find_num,
+                object_uuid,
+            )
+        )
         if object_uuid is None:
             # No match, just continue
             continue
@@ -352,15 +362,15 @@ def get_links_from_rel_ids(project_uuid, dfs, all_contexts_df):
 
 def make_catalog_links_df(project_uuid, dfs, tb_df, all_contexts_df):
     """Makes a dataframe for catalog object linking relations"""
-    df_tb_link = make_catalog_tb_links_df(
-        project_uuid,
-        dfs,
-        tb_df
-    )
     df_small_finds_link = make_catalog_small_finds_links_df(
         project_uuid,
         dfs,
         all_contexts_df
+    )
+    df_tb_link = make_catalog_tb_links_df(
+        project_uuid,
+        dfs,
+        tb_df
     )
     df_rel = get_links_from_rel_ids(
         project_uuid,
