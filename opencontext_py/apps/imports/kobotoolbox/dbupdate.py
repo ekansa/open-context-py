@@ -1350,9 +1350,9 @@ def load_link_relations_df_into_oc(
     purge_prior_link_rel_import(project_uuid, source_id)
     
     # Make a list of all uuids, and associate manifest objects to them if found.
+    uuid_manifest_objs = {}
     all_uuids = df[df[subject_uuid_col].notnull()][subject_uuid_col].unique().tolist()
     all_uuids += df[df[object_uuid_col].notnull()][object_uuid_col].unique().tolist()
-    uuid_manifest_objs = {uuid: None for uuid in all_uuids}
     man_objs = Manifest.objects.filter(uuid__in=all_uuids)
     for man_obj in man_objs:
         uuid_manifest_objs[man_obj.uuid] = man_obj
