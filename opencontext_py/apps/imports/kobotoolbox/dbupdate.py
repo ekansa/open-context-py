@@ -1296,6 +1296,41 @@ def load_attribute_data_into_oc(
         import_done = fi.done
     print('Completed import into Open Context: {}'.format(source_id))
 
+
+def purge_prior_link_rel_import(project_uuid, source_id):
+    """Deletes a prior import of linking relation data from a source"""
+    Assertion.objects.filter(
+        project_uuid=project_uuid,
+        source_id=source_id
+    ).delete()
+
+
+def validate_pred_uuid(predicate_uuid):
+    """Validates a predicate_uuid to make sure it is actually usable"""
+    pred_man = Manifest.object.filter(uuid=predicate_uuid, item_type='predicates').first()
+    if pred_man:
+        return True
+    pred_ok = Asserion.objects.filter(predicate_uuid=predicate_uuid).first()
+    if pred_ok:
+        return True
+    # We could not validate the use of this predicate uuid.
+    return False
+
+
+def add_link_assertion(
+    project_uuid,
+    source_id,
+    subj_man_obj,
+    predicate_uuid,
+    obj_man_obj
+):
+
+    if not subj_man_obj or not obj_man_obj:
+        # Skip out, we can't find the subject or object entity
+        return None
+    
+        
+
 def load_link_relations_df_into_oc(
     project_uuid,
     source_id,
@@ -1306,3 +1341,51 @@ def load_link_relations_df_into_oc(
     link_rel_pred_mappings=LINK_REL_PRED_MAPPINGS,
 ):
     """Loads a link relations dataframe into Open Context."""
+    # First, purge any prior import of this source
+    print('Purge any prior import of {} to project_uuid: {}'.format(
+            source_id,
+            project_uuid
+        )
+    )
+    purge_prior_link_rel_import(project_uuid, source_id)
+    
+    # Make a list of all uuids, and associate manifest objects to them if found.
+    all_uuids = df[df[subject_uuid_col].notnull()][subject_uuid_col].unique().tolist()
+    all_uuids += df[df[object_uuid_col].notnull()][object_uuid_col].unique().tolist()
+    uuid_manifest_objs = {uuid: None for uuid in all_uuids}
+    man_objs = Manifest.objects.filter(uuid__in=all_uuids)
+    for man_obj in man_objs:
+        uuid_manifest_objs[man_obj.uuid] = man_obj
+
+    
+    uuid_manifest_objs = {
+        uuid:Manifest.objects.filter(uuid=uuid).first() for uuid in all_uuids
+    } # cached manifest objects
+    # Now process the import.
+    valid_predicte_uuids = {}  # validation results for predicate_uuids
+    link_types = df[df[link_rel_col].notnull()][link_rel_col].unique().tolist()
+    for link_type in link_types:
+        if not link_type in link_rel_pred_mappings:
+            raise RuntimeError('Need to configure predicate(s) for link_type: {}'.format(
+                    link_type
+                )
+            )
+        pred_a, pred_b = link_rel_pred_mappings[link_type]
+        poss_ass_indx = (
+            (df[link_rel_col] == link_type)
+            & (df[subject_uuid_col].notnull())
+            & (df[object_uuid_col].notnull())
+        )
+        if df[poss_ass_indx].empty:
+            continue
+        # Now proceed with loading.
+        print('Load {} records for link_type: {}'.format(
+                len(df[poss_ass_indx].index),
+                link_type
+            )
+        )
+        for i, row in df[poss_ass_indx].iterrows():
+            subj_uuid = row[subject_uuid_col]
+            obj_uuid = row[object_uuid_col]
+            subj_man_obj = uuid_manifest_objs.get(subj_uuid)
+            obj_man_obj = uuid_manifest_objs.get(obj_uuid)

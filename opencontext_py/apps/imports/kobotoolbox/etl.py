@@ -60,15 +60,18 @@ from opencontext_py.apps.imports.kobotoolbox.dbupdate import (
     update_contexts_subjects,
     load_attribute_df_into_importer,
     load_attribute_data_into_oc,
+    load_link_relations_df_into_oc,
 )
 
 """
 from opencontext_py.apps.imports.kobotoolbox.etl import (
     make_kobo_to_open_context_etl_files,
-    update_open_context_db
+    update_open_context_db,
+    update_link_rel_open_context_db
 )
-make_kobo_to_open_context_etl_files()
-update_open_context_db()
+# make_kobo_to_open_context_etl_files()
+# update_open_context_db()
+update_link_rel_open_context_db()
 
 """
 
@@ -99,6 +102,13 @@ ATTRIBUTE_SOURCES = [
     (SOURCE_ID_PREFIX + 'small-finds',  'small-finds', '{} Small Finds'.format(ETL_LABEL), FILENAME_ATTRIBUTES_SMALL_FINDS,),
     (SOURCE_ID_PREFIX + 'trench-book', 'trench-book', '{} Trench Book'.format(ETL_LABEL), FILENAME_ATTRIBUTES_TRENCH_BOOKS,),
     (SOURCE_ID_PREFIX + 'all-media', 'all-media', '{} All Media'.format(ETL_LABEL), FILENAME_ALL_MEDIA,),
+]
+
+LINK_RELATIONS_SOURCES = [
+     (SOURCE_ID_PREFIX + 'links-media', FILENAME_LINKS_MEDIA,),
+     (SOURCE_ID_PREFIX + 'links-tremch-book', FILENAME_LINKS_TRENCHBOOKS,),
+     (SOURCE_ID_PREFIX + 'links-locus-strat', FILENAME_LINKS_STRATIGRAPHY,),
+     (SOURCE_ID_PREFIX + 'links-catalog', FILENAME_LINKS_CATALOG,),
 ]
 
 
@@ -222,36 +232,38 @@ def make_kobo_to_open_context_etl_files(
         index=False,
         quoting=csv.QUOTE_NONNUMERIC
     )
-    
-    
 
 
-    
-    
-def update_open_context_db(
+def update_subjects_context_open_context_db(
+    project_uuid=PROJECT_UUID,
+    source_prefix=SOURCE_ID_PREFIX,
+    load_files=DESTINATION_PATH,
+    all_contexts_file=FILENAME_ALL_CONTEXTS,
+    loaded_contexts_file=FILENAME_LOADED_CONTEXTS,
+):
+    """Loads subjects, contexts items and containment relations"""
+    all_contexts_df = pd.read_csv((load_files + all_contexts_file))
+    new_contexts_df = update_contexts_subjects(
+        project_uuid,
+        (source_prefix + all_contexts_file),
+        all_contexts_df
+    )
+    loaded_contexts_path = (load_files + loaded_contexts_file)
+    new_contexts_df.to_csv(
+        loaded_contexts_path,
+        index=False,
+        quoting=csv.QUOTE_NONNUMERIC
+    )
+
+def update_attributes_open_context_db(
     project_uuid=PROJECT_UUID,
     source_prefix=SOURCE_ID_PREFIX,
     load_files=DESTINATION_PATH,
     attribute_sources=ATTRIBUTE_SOURCES
 ):
-    """"Updates the Open Context database with ETL load files"""
-    # First add subjects / contexts and their containment relations
-    if True:
-        all_contexts_df = pd.read_csv((load_files + FILENAME_ALL_CONTEXTS))
-        new_contexts_df = update_contexts_subjects(
-            project_uuid,
-            (source_prefix + FILENAME_ALL_CONTEXTS),
-            all_contexts_df
-        )
-        loaded_contexts_path = (load_files + FILENAME_LOADED_CONTEXTS)
-        new_contexts_df.to_csv(
-            loaded_contexts_path,
-            index=False,
-            quoting=csv.QUOTE_NONNUMERIC
-        )
     # Load attribute data into the importer
     for source_id, source_type, source_label, filename in attribute_sources:
-        df =  pd.read_csv((load_files + filename))
+        df = pd.read_csv((load_files + filename))
         load_attribute_df_into_importer(
             project_uuid,
             source_id,
@@ -262,4 +274,55 @@ def update_open_context_db(
     # Now actually import the data into Open Context
     for source_id, _, _, _ in attribute_sources:
         load_attribute_data_into_oc(project_uuid, source_id)
-        
+    
+def update_link_rel_open_context_db(
+    project_uuid=PROJECT_UUID,
+    source_prefix=SOURCE_ID_PREFIX,
+    load_files=DESTINATION_PATH,
+    link_sources=LINK_RELATIONS_SOURCES
+):
+    """Loads linking relationships into the database"""
+    for source_id, filename in link_sources:
+        df = pd.read_csv((load_files + filename))
+        load_link_relations_df_into_oc(
+            project_uuid,
+            source_id,
+            df
+        )
+
+
+def update_open_context_db(
+    project_uuid=PROJECT_UUID,
+    source_prefix=SOURCE_ID_PREFIX,
+    load_files=DESTINATION_PATH,
+    all_contexts_file=FILENAME_ALL_CONTEXTS,
+    loaded_contexts_file=FILENAME_LOADED_CONTEXTS,
+    attribute_sources=ATTRIBUTE_SOURCES,
+    link_sources=LINK_RELATIONS_SOURCES
+):
+    """"Updates the Open Context database with ETL load files"""
+    # First add subjects / contexts and their containment relations
+    update_subjects_context_open_context_db(
+        project_uuid=project_uuid,
+        source_prefix=source_prefix,
+        load_files=load_files,
+        all_contexts_file=all_contexts_file,
+        loaded_contexts_file=loaded_contexts_file,
+    )
+
+    # Load attribute data into the importer, then import them into
+    # Open Context.
+    update_attributes_open_context_db(
+        project_uuid=project_uuid,
+        source_prefix=source_prefix,
+        load_files=load_files,
+        attribute_sources=attribute_sources
+    )
+    
+    # Load link relationships into the Open Context database.
+    update_link_rel_open_context_db(
+        project_uuid=project_uuid,
+        source_prefix=source_prefix,
+        load_files=load_files,
+        link_sources=link_sources
+    )
