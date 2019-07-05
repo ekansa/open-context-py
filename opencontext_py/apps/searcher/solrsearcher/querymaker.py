@@ -786,7 +786,7 @@ class QueryMaker():
             escaped_uri = self.escape_solr_arg(uri)
             fq_terms.append('persistent_uri:' + escaped_uri)
         tcheck = URImanagement.get_uuid_from_oc_uri(identifier, True)
-        if isinstance(tcheck, dict):
+        if tcheck is not False:
             uuid = tcheck['uuid']
             fq_terms.append('uuid:' + uuid)
         fq_final = ' OR '.join(fq_terms)

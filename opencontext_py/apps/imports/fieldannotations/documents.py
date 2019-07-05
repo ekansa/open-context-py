@@ -166,70 +166,41 @@ class CandidateDocument():
                 check_list = self.import_rows
             else:
                 check_list = [imp_cell_obj.row_num]
-        
-        # Set up to check for a preconfigured metadata UUID.
-        meta_uuid = None
-        sup_metadata = None
-        if self.metadata_obj is not None:
-            # Get the suplemental metadata that may exist.
-            sup_metadata = self.metadata_obj.get_metadata(
-                imp_cell_obj.field_num,
-                imp_cell_obj.row_num
-            )
-            meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
-            if not isinstance(meta_uuid, str):
-                meta_uuid = None
-        
-        # Handle reconciliation cases where we have a pre-configured UUID to use
-        # in the metadata_obj. Only do this if there's actually a label (not a blank).
-        if meta_uuid and self.label:
-            # Check to see if this already exists.
-            man_obj = Manifest.objects.filter(uuid=meta_uuid).first()
-            if man_obj:
-                print('Found manifest object {} ({}) for pre-specified uuid: {}'.format(
-                        man_obj.label,
-                        man_obj.item_type,
-                        meta_uuid
-                    )
-                )
-                self.uuid = meta_uuid
-                self.new_entity = False
-                match_found = True
-            else:
-                print('Create new manifest object {} (documents) with pre-specified uuid: {}'.format(
-                        self.label,
-                        meta_uuid
-                    )
-                )
-                match_found = False
-                self.uuid = meta_uuid
-                self.new_entity = True
-                self.create_document_item(sup_metadata)
-        
-        elif self.label:
+        if self.label is not False:
             match_found = self.match_against_documents(self.label)
             if match_found is False:
                 # create new document, manifest objects.
                 self.new_entity = True
+                sup_metadata = None
                 self.uuid = GenUUID.uuid4()
-                self.create_document_item(None)
-        
-        if self.uuid:
-            act_doc = OCdocument.objects.filter(uuid=self.uuid).first()
-            if act_doc is None:
-                # We have a manifest record for the document, but no document record,
-                # so make one
-                act_doc = OCdocument()
-                act_doc.uuid = self.uuid  # use the previously assigned temporary UUID
-                act_doc.project_uuid = self.project_uuid
-                act_doc.source_id = self.source_id
-                act_doc.content = self.content
-                act_doc.save()
-
-            if act_doc.content != self.content and self.content != self.DEFAULT_NO_CONTENT:
-                # update the document content with the latest content
-                act_doc.content = self.content
-                act_doc.save()
+                if self.metadata_obj is not None:
+                    sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
+                                                                  imp_cell_obj.row_num)
+                    meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+                    if isinstance(meta_uuid, str):
+                        # use the uuid in the metadata!
+                        self.uuid = meta_uuid
+                self.create_document_item(sup_metadata)
+            else:
+                act_doc = None
+                exist_docs = OCdocument.objects\
+                                       .filter(uuid=self.uuid)[:1]
+                if len(exist_docs) < 1:
+                    # problem! We have a manifest record for the document, but no document record,
+                    # so make one
+                    act_doc = OCdocument()
+                    act_doc.uuid = self.uuid  # use the previously assigned temporary UUID
+                    act_doc.project_uuid = self.project_uuid
+                    act_doc.source_id = self.source_id
+                    act_doc.content = self.content
+                    act_doc.save()
+                else:
+                    act_doc = exist_docs[0]
+                if act_doc is not None:
+                    if act_doc.content != self.content and self.content != self.DEFAULT_NO_CONTENT:
+                        # update the document content with the latest content
+                        act_doc.content = self.content
+                        act_doc.save()
         self.update_import_cell_uuid()
 
     def create_document_item(self, sup_metadata=None):
