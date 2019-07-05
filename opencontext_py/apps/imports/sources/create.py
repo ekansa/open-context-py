@@ -1,8 +1,6 @@
 import uuid as GenUUID
 import datetime
 from dateutil.parser import parse
-import numpy as np
-import pandas as pd
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.sources.models import ImportSource
@@ -386,19 +384,3 @@ class ImportRefineSource():
                 self.imp_source_obj = imp_s
                 self.row_count = imp_s.row_count
                 self.imp_status = self.DEFAULT_LOADING_STATUS
-    
-    def create_new_dataframe_source(self, source_label, df):
-        """Creates a new Import Source from a dataframe. """
-        imp_s = ImportSource()
-        imp_s.source_id = self.source_id
-        imp_s.project_uuid = self.project_uuid
-        imp_s.label = source_label
-        imp_s.field_count = len(df.columns.tolist())
-        imp_s.row_count = len(df.index)
-        imp_s.source_type = 'dataframe'
-        imp_s.is_current = True
-        imp_s.imp_status = self.DEFAULT_LOADING_DONE_STATUS
-        imp_s.save()
-        self.imp_source_obj = imp_s
-        self.row_count = imp_s.row_count
-        self.imp_status = self.DEFAULT_LOADING_DONE_STATUS

@@ -454,7 +454,7 @@ class EntityEquivalents():
             output_list.append(identifier)
             if(identifier[:7] == 'http://' or identifier[:8] == 'https://'):
                 oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
-                if isinstance(oc_uuid, str):
+                if oc_uuid is not False:
                     output_list.append(oc_uuid)
                 else:
                     prefix_id = URImanagement.prefix_common_uri(identifier)
