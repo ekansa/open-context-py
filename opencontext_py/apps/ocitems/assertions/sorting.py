@@ -24,14 +24,20 @@ class AssertionSorting():
             print('Working on predicate: ' + predicate_uuid)
             self.re_rank_assertions_by_predicate(predicate_uuid)
 
-    def re_rank_assertions_by_predicate(self, predicate_uuid):
+    def re_rank_assertions_by_predicate(self, predicate_uuid, filter_args=None):
         type_rankings = self.get_ranked_types_for_pred(predicate_uuid)
-        max_type = max(type_rankings, key=type_rankings.get)
-        default_missing_rank = float(type_rankings[max_type] + 1)
+        if type_rankings:
+            max_type = max(type_rankings, key=type_rankings.get)
+            default_missing_rank = float(type_rankings[max_type] + 1)
+        else:
+            default_missing_rank = 0
         print('Predicate: ' + predicate_uuid + ' has ' + str(len(type_rankings)) + ' ranked types.')
         act_assertions = Assertion.objects\
                                   .filter(predicate_uuid=predicate_uuid)\
                                   .order_by('uuid', 'sort')
+        if filter_args is not None:
+            # Add additional optional filters.
+            act_assertions = act_assertions.filter(**filter_args)
         act_uuid = False
         print('Number of assertions to change: ' + str(len(act_assertions)))
         for act_ass in act_assertions:
@@ -44,6 +50,31 @@ class AssertionSorting():
                 type_rank = default_missing_rank
             act_ass.sort = float(start_sort) + (type_rank / 1000)
             act_ass.sort_save()
+    
+    def re_rank_assertions_by_source(self, project_uuid, source_id):
+        """Re-ranks assertions to items impacted by an import of source_id"""
+        pred_sources =  Assertion.objects.filter(
+            source_id=source_id,
+            object_uuid__isnull=False,
+        ).exclude(
+            object_uuid=''
+        ).values_list(
+            'predicate_uuid',
+            flat=True
+        ).distinct()
+        
+        for predicate_uuid in set(pred_sources):
+            # Now query to get the UUIDs that have been
+            # impacted by this source and predicate.
+            uuids = Assertion.objects.filter(
+                source_id=source_id,
+                predicate_uuid=predicate_uuid
+            ).values_list('uuid', flat=True).distinct()
+            self.re_rank_manifest_assertions_by_predicate(
+                predicate_uuid,
+                project_uuid,
+                subject_uuids=uuids
+            )
 
     def get_ranked_types_for_pred(self, predicate_uuid):
         """ Gets the ranked types used with a given predicate """
@@ -87,25 +118,28 @@ class AssertionSorting():
             self.re_rank_manifest_assertions_by_predicate(predicate_uuid,
                                                           project_uuid)
 
-    def re_rank_manifest_assertions_by_predicate(self,
-                                                 predicate_uuid,
-                                                 project_uuid,
-                                                 only_subject_uuid=None):
+    def re_rank_manifest_assertions_by_predicate(
+        self,
+        predicate_uuid,
+        project_uuid,
+        only_subject_uuid=None,
+        subject_uuids=[]
+    ):
         """ Reranks objects of assertions made using a given
         predicate for a given project by the order in the manifest
         table
         """
         change_count = 0
-        if only_subject_uuid:
-            act_subjects = [only_subject_uuid]
-        else:
-            act_subjects = Assertion.objects\
-                                    .values_list('uuid', flat=True)\
-                                    .filter(project_uuid=project_uuid,
-                                            predicate_uuid=predicate_uuid)\
-                                    .distinct('uuid')\
-                                    .iterator()
-        for uuid in act_subjects:
+        if len(subject_uuids) == 0 and only_subject_uuid:
+            subject_uuids.append(only_subject_uuid)
+        elif len(subject_uuids) == 0 and not only_subject_uuid:
+            subject_uuids = Assertion.objects\
+                                     .values_list('uuid', flat=True)\
+                                     .filter(project_uuid=project_uuid,
+                                             predicate_uuid=predicate_uuid)\
+                                     .distinct('uuid')\
+                                     .iterator()
+        for uuid in subject_uuids:
             print('Work - predicate: ' + predicate_uuid + ' - subject: ' + uuid)
             # get all assertions for this subject uuid and predicate_uuid
             presort_assertions = Assertion.objects\
