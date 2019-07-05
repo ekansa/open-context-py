@@ -29,6 +29,7 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     read_excel_to_dataframes,
     make_directory_files_df,
     drop_empty_cols,
+    clean_up_multivalue_cols,
     reorder_first_columns,
     lookup_manifest_uuid,
 )
@@ -39,9 +40,12 @@ X_Y_GRID_COLS = [
     ('Find Spot/Grid X', 'Find Spot/Grid Y', ),
 ]
 
+GRID_GROUPBY_COLS = ['Trench ID']
+GRID_PROBLEM_COL = 'GRID_PROBLEM_FLAG'
+ATTRIBUTE_HIERARCHY_DELIM = '::'
     
 
-def process_hiearchy_col_values(df, delim='::'):
+def process_hiearchy_col_values(df, delim=ATTRIBUTE_HIERARCHY_DELIM):
     """Processes columns with hierarchy values."""
     # NOTE: this assumes only 2 level hiearchies in column names
     hiearchy_preds = {}
@@ -129,6 +133,52 @@ def create_global_lat_lon_columns(
             grid_y_col,
             default_site_proj=default_site_proj
         )
+    return df
+
+def q_low(s):
+    return s.quantile(0.05)
+
+def q_high(s):
+    return s.quantile(0.95)
+
+def create_grid_validation_columns(
+    df,
+    x_y_cols=X_Y_GRID_COLS,
+    groupby_cols=['Trench ID'],
+    flag_col='GRID_PROBLEM_FLAG'
+):
+    """Iterates through configured x, y local grid columns to make global lat, lon columns"""
+    for grid_x_col, grid_y_col in x_y_cols:
+        if not set([grid_x_col, grid_y_col] + groupby_cols).issubset(set(df.columns.tolist())):
+            # We're missing the columns needed for this check.
+            continue
+        df_grp = df.groupby(groupby_cols, as_index=False).agg(
+            ({grid_x_col: ['min', 'max', 'mean', 'size', q_low, q_high], grid_y_col: ['min', 'max', 'mean', 'size', q_low, q_high]})
+        )
+        
+        df = pd.merge(
+            df,
+            df_grp,
+            how='left',
+            on=groupby_cols
+        )
+        df[flag_col] = np.nan
+        # flags based on extreme x and y values.
+        bad_indx = (
+            (
+                (df[(grid_x_col, 'size')] > 4)
+                & (df[(grid_y_col, 'size')] > 4)
+            )
+               & 
+            (
+                (df[grid_x_col] <= df[(grid_x_col, 'q_low')])
+                | (df[grid_x_col] >= df[(grid_x_col, 'q_high')])
+                | (df[grid_y_col] <= df[(grid_y_col, 'q_low')])
+                | (df[grid_y_col] >= df[(grid_y_col, 'q_high')])
+            )
+        )
+        df.loc[bad_indx, flag_col] = 'Check Grid X-Y'
+        
     return df
 
 

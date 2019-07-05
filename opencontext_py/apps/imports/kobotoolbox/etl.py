@@ -26,10 +26,16 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     read_excel_to_dataframes,
     make_directory_files_df,
     drop_empty_cols,
+    clean_up_multivalue_cols,
     reorder_first_columns,
     lookup_manifest_uuid,
 )
 from opencontext_py.apps.imports.kobotoolbox.attributes import (
+    ATTRIBUTE_HIERARCHY_DELIM,
+    GRID_GROUPBY_COLS,
+    GRID_PROBLEM_COL,
+    X_Y_GRID_COLS,
+    create_grid_validation_columns,
     create_global_lat_lon_columns,
     process_hiearchy_col_values,
 )
@@ -69,9 +75,23 @@ from opencontext_py.apps.imports.kobotoolbox.etl import (
     update_open_context_db,
     update_link_rel_open_context_db
 )
-# make_kobo_to_open_context_etl_files()
+make_kobo_to_open_context_etl_files()
 # update_open_context_db()
 update_link_rel_open_context_db()
+
+source_ids = {
+    'kobo-pc-2018-all-contexts-subjects.csv',
+    'kobo-pc-2018-all-media',
+    'kobo-pc-2018-bulk-finds',
+    'kobo-pc-2018-catalog',
+    'kobo-pc-2018-links-catalog',
+    'kobo-pc-2018-links-locus-strat',
+    'kobo-pc-2018-links-media',
+    'kobo-pc-2018-locus',
+    'kobo-pc-2018-small-finds',
+    'kobo-pc-2018-trench-book'
+}
+
 
 """
 
@@ -86,13 +106,19 @@ OC_TRANSFORMED_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
 
 FILENAME_ALL_CONTEXTS = 'all-contexts-subjects.csv'
 FILENAME_ALL_MEDIA = 'all-media-files.csv'
-FILENAME_LOADED_CONTEXTS = 'loaded-contexts-subjects.csv'
+FILENAME_LOADED_CONTEXTS = 'loaded--contexts-subjects.csv'
 FILENAME_ATTRIBUTES_CATALOG = 'attributes--catalog.csv'
 FILENAME_LINKS_MEDIA = 'links--media.csv'
 FILENAME_LINKS_TRENCHBOOKS = 'links--trench-books.csv'
 FILENAME_LINKS_STRATIGRAPHY = 'links--locus-stratigraphy.csv'
 FILENAME_LINKS_CATALOG = 'links--catalog.csv'
 
+GRID_PROBLEM_EXP_COLS = [
+    'label',
+    'class_uri',
+    '_uuid',
+    GRID_PROBLEM_COL,
+] + GRID_GROUPBY_COLS
 
 ATTRIBUTE_SOURCES = [
     # (source_id, source_type, source_label, filename)
@@ -106,11 +132,39 @@ ATTRIBUTE_SOURCES = [
 
 LINK_RELATIONS_SOURCES = [
      (SOURCE_ID_PREFIX + 'links-media', FILENAME_LINKS_MEDIA,),
-     (SOURCE_ID_PREFIX + 'links-tremch-book', FILENAME_LINKS_TRENCHBOOKS,),
+     (SOURCE_ID_PREFIX + 'links-trench-book', FILENAME_LINKS_TRENCHBOOKS,),
      (SOURCE_ID_PREFIX + 'links-locus-strat', FILENAME_LINKS_STRATIGRAPHY,),
      (SOURCE_ID_PREFIX + 'links-catalog', FILENAME_LINKS_CATALOG,),
 ]
 
+def write_grid_problem_csv(df,  destination_path, filename):
+    """Export the grid problem dataframe if needed """
+    if not GRID_PROBLEM_COL in df.columns:
+        # No grid problems in this DF
+        return None
+    bad_indx = (df[GRID_PROBLEM_COL].notnull())
+    if df[bad_indx].empty:
+        # No problem grid coordinates found
+        return None
+    df_report = df[bad_indx].copy()
+    all_tuple_cols = [(c[0] + ' ' + c[1]) for c in df_report.columns if isinstance(c, tuple)]
+    x_tuple_cols = [c for c in all_tuple_cols if 'Grid X' in c]
+    y_tuple_cols = [c for c in all_tuple_cols if 'Grid Y' in c]
+    tuple_renames = {
+        c:(c[0] + ' ' + c[1]) for c in df_report.columns if isinstance(c, tuple)
+    }
+    x_cols = [x for x, _ in X_Y_GRID_COLS if x in df_report.columns]
+    y_cols = [y for _, y in X_Y_GRID_COLS if y in df_report.columns]
+    df_report.rename(columns=tuple_renames, inplace=True)
+    df_report = df_report[(GRID_PROBLEM_EXP_COLS + x_cols + y_cols +  x_tuple_cols + y_tuple_cols)]
+    df_report.sort_values(by=GRID_GROUPBY_COLS, inplace=True)
+    report_path = destination_path + 'bad-grid--' + filename
+    df_report.to_csv(
+        report_path,
+        index=False,
+        quoting=csv.QUOTE_NONNUMERIC
+    )
+    
 
 def add_context_subjects_label_class_uri(df, all_contexts_df):
     """Adds label and class_uri to df from all_contexts_df based on uuid join"""
@@ -186,6 +240,8 @@ def make_kobo_to_open_context_etl_files(
             all_contexts_df
         )
         # Add global coordinates if applicable.
+        df = create_grid_validation_columns(df)
+        write_grid_problem_csv(df,  destination_path, act_dict_dfs['file'])
         df = create_global_lat_lon_columns(df)
         df.to_csv(file_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
     
@@ -197,7 +253,7 @@ def make_kobo_to_open_context_etl_files(
 
     # Prepare Trench Book relations    
     tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
-    tb_all_rels_df = make_final_trench_book_relations_df(field_config_dfs)
+    tb_all_rels_df = make_final_trench_book_relations_df(field_config_dfs, all_contexts_df)
     tb_all_rels_path = destination_path + FILENAME_LINKS_TRENCHBOOKS
     tb_all_rels_df.to_csv(tb_all_rels_path, index=False, quoting=csv.QUOTE_NONNUMERIC)
     
@@ -210,7 +266,20 @@ def make_kobo_to_open_context_etl_files(
     catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = process_hiearchy_col_values(
         catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
     )
+    # Clean up redundent data from the hierarchies
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = clean_up_multivalue_cols(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET],
+        delim=ATTRIBUTE_HIERARCHY_DELIM
+    )
     # Add global coordinates to the catalog data.
+    catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = create_grid_validation_columns(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
+    )
+    write_grid_problem_csv(
+        catalog_dfs[CATALOG_ATTRIBUTES_SHEET],
+        destination_path,
+        FILENAME_ATTRIBUTES_CATALOG
+    )
     catalog_dfs[CATALOG_ATTRIBUTES_SHEET] = create_global_lat_lon_columns(
         catalog_dfs[CATALOG_ATTRIBUTES_SHEET]
     )
@@ -259,7 +328,7 @@ def update_attributes_open_context_db(
     project_uuid=PROJECT_UUID,
     source_prefix=SOURCE_ID_PREFIX,
     load_files=DESTINATION_PATH,
-    attribute_sources=ATTRIBUTE_SOURCES
+    attribute_sources=ATTRIBUTE_SOURCES,
 ):
     # Load attribute data into the importer
     for source_id, source_type, source_label, filename in attribute_sources:
@@ -279,15 +348,21 @@ def update_link_rel_open_context_db(
     project_uuid=PROJECT_UUID,
     source_prefix=SOURCE_ID_PREFIX,
     load_files=DESTINATION_PATH,
-    link_sources=LINK_RELATIONS_SOURCES
+    link_sources=LINK_RELATIONS_SOURCES,
+    loaded_link_file_prefix='loaded--',
 ):
     """Loads linking relationships into the database"""
     for source_id, filename in link_sources:
         df = pd.read_csv((load_files + filename))
-        load_link_relations_df_into_oc(
+        df = load_link_relations_df_into_oc(
             project_uuid,
             source_id,
             df
+        )
+        df.to_csv(
+            (load_files + loaded_link_file_prefix + filename),
+            index=False,
+            quoting=csv.QUOTE_NONNUMERIC
         )
 
 
@@ -326,3 +401,4 @@ def update_open_context_db(
         load_files=load_files,
         link_sources=link_sources
     )
+    

@@ -11,6 +11,7 @@ from django.db.models import Q
 from django.conf import settings
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.assertions.sorting import AssertionSorting
 from opencontext_py.apps.ocitems.subjects.models import Subject
 from opencontext_py.apps.ocitems.subjects.generation import SubjectGeneration
 
@@ -48,7 +49,8 @@ from  opencontext_py.apps.imports.kobotoolbox.media import (
     OPENCONTEXT_MEDIA_TYPES
 )
 
-DB_ERROR_COL = 'OC_DB_LOAD_OK'
+DB_LOAD_RESULT_A_COL = 'OC_DB_LOAD_OK'
+DB_LOAD_RESULT_B_COL = 'OC_DB_LOAD_B_OK'
 DEFAULT_OBS_NUM = 1
 
 CLASS_CONTEXT_IMPORT_ORDER = [
@@ -946,6 +948,8 @@ LINK_REL_PRED_MAPPINGS = {
     'link': (Assertion.PREDICATES_LINK, Assertion.PREDICATES_LINK),
     'Is Part of': ('0BB889F9-54DD-4F70-5B63-F5D82425F0DB', 'BD384F1F-FB29-4A9D-7ACA-D8F6B4AF0AF9'),
     'Has Part': ('BD384F1F-FB29-4A9D-7ACA-D8F6B4AF0AF9', '0BB889F9-54DD-4F70-5B63-F5D82425F0DB'),
+    'Previous Entry': ('fd94db54-c6f8-484b-9aa6-e0aacc9d132d', None, ),
+    'Next Entry': ('50472e1c-2825-47cf-a69c-803b78f8891a', None, ),
     'Stratigraphy: Same/Same as Locus': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
     'Same as': ('254ea71a-ca2b-4568-bced-f82bf12cb2f9', '254ea71a-ca2b-4568-bced-f82bf12cb2f9'),
     'Stratigraphy: Contemporary/Contemporary with Locus': ('eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53', 'eee95a2a-c3f8-4637-b67a-f4ff6ea4ee53'),
@@ -1029,12 +1033,12 @@ def load_context_dataframe(
     if class_uri is not None:
         p_index = (
             (context_df['class_uri']==class_uri)
-            & (context_df[DB_ERROR_COL] != True)
+            & (context_df[DB_LOAD_RESULT_A_COL] != True)
         )
     elif parent_uuids is not None:
         p_index = (
             (context_df['parent_uuid'].isin(parent_uuids))
-            & (context_df[DB_ERROR_COL] != True)
+            & (context_df[DB_LOAD_RESULT_A_COL] != True)
         )
     context_df.sort_values(
         by=(PATH_CONTEXT_COLS + ['label']),
@@ -1052,7 +1056,7 @@ def load_context_dataframe(
             continue
         act_indx = (context_df['context_uuid'] == uuid)
         load_ok = load_context_row(project_uuid, source_id, row)
-        context_df.loc[act_indx, DB_ERROR_COL] = load_ok
+        context_df.loc[act_indx, DB_LOAD_RESULT_A_COL] = load_ok
     return context_df
 
 def update_contexts_subjects(project_uuid, source_id, all_contexts_df):
@@ -1075,7 +1079,7 @@ def update_contexts_subjects(project_uuid, source_id, all_contexts_df):
         inplace=True,
         na_position='first'
     )
-    new_contexts_df[DB_ERROR_COL] = np.nan
+    new_contexts_df[DB_LOAD_RESULT_A_COL] = np.nan
     # First Create records for data with a parent in Open Context
     oc_par_index = (new_contexts_df['parent_uuid_source']==UUID_SOURCE_OC_LOOKUP)
     parent_uuids = new_contexts_df[oc_par_index]['parent_uuid'].unique().tolist()
@@ -1100,6 +1104,12 @@ def update_contexts_subjects(project_uuid, source_id, all_contexts_df):
             new_contexts_df,
             class_uri=class_uri,
         )
+    
+    # Now sort the assertions we just created.
+    # Now sort the assertions for the items just impacted.
+    asor = AssertionSorting()
+    asor.re_rank_assertions_by_source(project_uuid, source_id)
+    
     return new_contexts_df
     
 
@@ -1307,10 +1317,13 @@ def purge_prior_link_rel_import(project_uuid, source_id):
 
 def validate_pred_uuid(predicate_uuid):
     """Validates a predicate_uuid to make sure it is actually usable"""
-    pred_man = Manifest.object.filter(uuid=predicate_uuid, item_type='predicates').first()
+    if predicate_uuid is None:
+        # We're OK with None, we just skip import.
+        return True
+    pred_man = Manifest.objects.filter(uuid=predicate_uuid, item_type='predicates').first()
     if pred_man:
         return True
-    pred_ok = Asserion.objects.filter(predicate_uuid=predicate_uuid).first()
+    pred_ok = Assertion.objects.filter(predicate_uuid=predicate_uuid).first()
     if pred_ok:
         return True
     # We could not validate the use of this predicate uuid.
@@ -1322,12 +1335,31 @@ def add_link_assertion(
     source_id,
     subj_man_obj,
     predicate_uuid,
-    obj_man_obj
+    obj_man_obj,
+    obs_num=1,
+    sort=0,
 ):
 
-    if not subj_man_obj or not obj_man_obj:
-        # Skip out, we can't find the subject or object entity
+    if not subj_man_obj or not obj_man_obj or not predicate_uuid:
+        # Skip out, we have some None objects, so no assertion
         return None
+    ass = Assertion()
+    ass.uuid = subj_man_obj.uuid
+    ass.subject_type = subj_man_obj.item_type
+    ass.project_uuid = project_uuid
+    ass.source_id = source_id
+    ass.obs_node = '#obs-' + str(obs_num)
+    ass.obs_num =  obs_num
+    ass.sort = sort
+    ass.visibility = 1
+    ass.predicate_uuid = predicate_uuid
+    ass.object_uuid = obj_man_obj.uuid
+    ass.object_type = obj_man_obj.item_type
+    try:
+        ass.save()
+        return True
+    except:
+        return False
     
         
 
@@ -1341,6 +1373,8 @@ def load_link_relations_df_into_oc(
     link_rel_pred_mappings=LINK_REL_PRED_MAPPINGS,
 ):
     """Loads a link relations dataframe into Open Context."""
+    df[DB_LOAD_RESULT_A_COL] = np.nan
+    df[DB_LOAD_RESULT_B_COL] = np.nan
     # First, purge any prior import of this source
     print('Purge any prior import of {} to project_uuid: {}'.format(
             source_id,
@@ -1349,34 +1383,51 @@ def load_link_relations_df_into_oc(
     )
     purge_prior_link_rel_import(project_uuid, source_id)
     
-    # Make a list of all uuids, and associate manifest objects to them if found.
+    # Make a list of all uuids, and associate manifest objects to them, if found
+    # in a dictionary, uuid_manifest_objs
     uuid_manifest_objs = {}
     all_uuids = df[df[subject_uuid_col].notnull()][subject_uuid_col].unique().tolist()
     all_uuids += df[df[object_uuid_col].notnull()][object_uuid_col].unique().tolist()
-    man_objs = Manifest.objects.filter(uuid__in=all_uuids)
-    for man_obj in man_objs:
+    for man_obj in Manifest.objects.filter(uuid__in=all_uuids):
         uuid_manifest_objs[man_obj.uuid] = man_obj
 
-    
-    uuid_manifest_objs = {
-        uuid:Manifest.objects.filter(uuid=uuid).first() for uuid in all_uuids
-    } # cached manifest objects
     # Now process the import.
     valid_predicte_uuids = {}  # validation results for predicate_uuids
     link_types = df[df[link_rel_col].notnull()][link_rel_col].unique().tolist()
     for link_type in link_types:
         if not link_type in link_rel_pred_mappings:
-            raise RuntimeError('Need to configure predicate(s) for link_type: {}'.format(
+            raise RuntimeError('Need to configure predicate(s) for {}: {}'.format(
+                    link_rel_col,
                     link_type
                 )
             )
+        # Get a tuple of predicate_uuids from the link_rel_pred_mappings configuration.
+        # How these get used for assertions (essentially, pred_b is for inverse
+        # relations):
+        #
+        # (1) pred_a is used for: subject_uuid_col -> pred_a -> object_uuid_col
+        # (2) pred_b is used for: object_uuid_col -> pred_b -> subject_uuid_col
+        #
         pred_a, pred_b = link_rel_pred_mappings[link_type]
+        if not validate_pred_uuid(pred_a) or not validate_pred_uuid(pred_b):
+            raise RuntimeError('Unrecognized config uuids for {}:{} -> {}, is ok {}; {}, is ok {}'.format(
+                    link_rel_col,
+                    link_type,
+                    pred_a,
+                    validate_pred_uuid(pred_a),
+                    pred_b,
+                    validate_pred_uuid(pred_b)
+                )
+            )
+        
+        # Filter the dataframe for subj, links, and objects that are not blank.
         poss_ass_indx = (
             (df[link_rel_col] == link_type)
             & (df[subject_uuid_col].notnull())
             & (df[object_uuid_col].notnull())
         )
         if df[poss_ass_indx].empty:
+            # Skip, we've got some blanks.
             continue
         # Now proceed with loading.
         print('Load {} records for link_type: {}'.format(
@@ -1385,7 +1436,34 @@ def load_link_relations_df_into_oc(
             )
         )
         for i, row in df[poss_ass_indx].iterrows():
-            subj_uuid = row[subject_uuid_col]
-            obj_uuid = row[object_uuid_col]
-            subj_man_obj = uuid_manifest_objs.get(subj_uuid)
-            obj_man_obj = uuid_manifest_objs.get(obj_uuid)
+            s_man_obj = uuid_manifest_objs.get(row[subject_uuid_col])
+            o_man_obj = uuid_manifest_objs.get(row[object_uuid_col])
+            # Add the main link assertion, if applicable 
+            ok_a = add_link_assertion(
+                project_uuid,
+                source_id,
+                s_man_obj,
+                pred_a,
+                o_man_obj,
+            )
+            # Now add the inverse link relation, if applicable
+            ok_b = add_link_assertion(
+                project_uuid,
+                source_id,
+                o_man_obj,
+                pred_b,
+                s_man_obj,
+                sort= (i * 0.01)
+            )
+            up_indx = (
+                (df[link_rel_col] == link_type)
+                & (df[subject_uuid_col] ==row [subject_uuid_col])
+                & (df[object_uuid_col] == row[object_uuid_col])
+            )
+            df.loc[up_indx, DB_LOAD_RESULT_A_COL] = ok_a
+            df.loc[up_indx, DB_LOAD_RESULT_B_COL] = ok_b
+       
+    # Now sort the assertions for the items just impacted.
+    asor = AssertionSorting()
+    asor.re_rank_assertions_by_source(project_uuid, source_id)
+    return df

@@ -195,7 +195,7 @@ def make_catalog_small_finds_links_df(project_uuid, dfs, all_contexts_df):
         'Locus ID',
         'Field Given Find ID',
     ]
-    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[LINK_RELATION_TYPE_COL] = 'Initially documented as'
     for i, row in df_link[df_link['Field Given Find ID'].notnull()].iterrows():
@@ -258,7 +258,7 @@ def make_catalog_tb_links_df(project_uuid, dfs, tb_df):
         'Trench Book Start Page',
         'Trench Book End Page'
     ]
-    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_link = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
     df_link['subject_uuid'] = df_link['_uuid']
     df_link[LINK_RELATION_TYPE_COL] = 'Has Related Trench Book Entry'
     trench_doc_uuids = {}
@@ -323,7 +323,7 @@ def get_links_from_rel_ids(project_uuid, dfs, all_contexts_df):
     )
     # Join in metadata about the subjects (the catalog object entities)
     subject_uuids = df_rel['subject_uuid'].unique().tolist()
-    df_all_parents = dfs[CATALOG_ATTRIBUTES_SHEET].copy()
+    df_all_parents = dfs[CATALOG_ATTRIBUTES_SHEET].copy().reset_index(drop=True)
     df_all_parents['subject_uuid'] = df_all_parents['_uuid']
     df_all_parents = df_all_parents[df_all_parents['subject_uuid'].isin(subject_uuids)]
     df_all_parents = df_all_parents[['label', 'class_uri', 'uuid_source', 'subject_uuid']]

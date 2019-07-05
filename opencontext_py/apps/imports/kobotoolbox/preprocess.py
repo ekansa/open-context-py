@@ -127,6 +127,8 @@ LOCUS_CONTEXT_COLS = [
     'Locus ID',
 ]
 
+TRENCH_BOOK_PREVIOUS_REL = ''
+
 TRENCH_BOOK_CONTEXT_COLS = [
     'Trench ID',
     'Unit ID'
@@ -195,6 +197,7 @@ TRENCH_BOOK_FINAL_REL_COLS = [
     'Date Documented',
     'Start Page',
     'End Page',
+    'Trench ID',
     'Trench Book Title',
     
     'subject__Trench Book Title',
@@ -235,19 +238,32 @@ def look_up_parent(parent_sheet, parent_uuid, dfs, parent_uuid_col='_uuid'):
     ].copy().reset_index(drop=True)
     return df_parent
 
-def lookup_related_locus(rel_locus_id, parent_sheet, parent_locus_uuid, dfs):
+def lookup_related_locus(
+    rel_locus_id,
+    parent_sheet,
+    parent_locus_uuid,
+    dfs,
+    context_delim='/'
+):
     """Looks up a related locus on the parent sheet, and returns a dictionary of relevant data for the locus"""
     df_parent = look_up_parent(parent_sheet, parent_locus_uuid, dfs)
     if df_parent.empty:
         raise RuntimeError('Parent locus uuid {} not found.'.format(parent_locus_uuid))
-    trench_id = df_parent['Trench ID'].iloc[0]
+    orig_rel_locus_id = rel_locus_id
+    rel_locus_id = str(rel_locus_id)
+    trench_id = str(df_parent['Trench ID'].iloc[0])
+    if context_delim in rel_locus_id:
+        locus_ex = rel_locus_id.split(context_delim)
+        trench_id = locus_ex[0].strip()
+        rel_locus_id = locus_ex[1].strip()
     df = dfs[parent_sheet]
     df['Trench ID'] = df['Trench ID'].astype(str)
     df['Locus ID'] = df['Locus ID'].astype(str)
     df_rel = df[
-        (df['Trench ID'] == str(trench_id)) & (df['Locus ID'] == str(rel_locus_id))
+        (df['Trench ID'] == trench_id) & (df['Locus ID'] == rel_locus_id)
     ].copy().reset_index(drop=True)
-    df_rel['object__Locus ID'] = rel_locus_id
+    df_rel['object__Locus ID'] = orig_rel_locus_id
+    df_rel['object__Locus ID'] = df_rel['object__Locus ID'].astype(str)
     df_rel['subject_uuid'] = parent_locus_uuid
     return df_rel
 
@@ -286,7 +302,7 @@ def make_loci_stratigraph_cols(df, context_cols=None):
     return final_cols
 
 def join_related_uri_loci_df(dfs, sheet, context_cols=None):
-    df = dfs[sheet].copy()
+    df = dfs[sheet].copy().reset_index(drop=True)
     df.rename(
         columns={
             'Stratigraphy: Relation with Prior Season Locus/Relation Type': LINK_RELATION_TYPE_COL,
@@ -326,7 +342,7 @@ def join_related_uri_loci_df(dfs, sheet, context_cols=None):
     
 def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
     """Makes a locus stratigraph dataframe"""
-    df = dfs[sheet].copy()
+    df = dfs[sheet].copy().reset_index(drop=True)
     rel_column = None
     for c in df.columns:
         if not 'Locus' in c:
@@ -342,6 +358,7 @@ def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
         },
         inplace=True
     )
+    df['object__Locus ID'] = df['object__Locus ID'].astype(str)
     df_parents = []
     df_rels = []
     if context_cols is None:
@@ -380,6 +397,8 @@ def join_related_loci_in_sheet_df(dfs, sheet, context_cols=None):
         context_cols,
         'subject__'
     )
+    df['object__Locus ID'] = df['object__Locus ID'].astype(str)
+    df_all_rels['object__Locus ID'] = df_all_rels['object__Locus ID'].astype(str)
     df = merge_context_df(
         df,
         df_all_rels,
@@ -471,7 +490,7 @@ def join_trenbook_entries_to_related_df(
     rel_drop_cols=None
 ):
     """Joins trench book entries to a trench book related DF."""
-    df_output = tb_dfs[tb_rel_sheet].copy()
+    df_output = tb_dfs[tb_rel_sheet].copy().reset_index(drop=True)
     df_output[LINK_RELATION_TYPE_COL] = tb_rel_link_type
     df_output.rename(
         columns={
@@ -509,7 +528,7 @@ def join_trenbook_entries_to_related_df(
     df_tb_index = df_all_parents[(
         tb_index_cols +
         ['subject_uuid']
-    )].copy()
+    )].copy().reset_index(drop=True)
     # Now drop the trenchbook index colums from the df_all_parents,
     # because we don't want to rename the columns when we merge it
     # into the tb_locus_df.
@@ -578,7 +597,7 @@ def add_trench_book_related_uuids(
         keep_cols.append('_uuid')
         lookup_sheet = config['lookup_sheet']
         lookup_df = field_config_dfs[lookup_sheet]['dfs'][lookup_sheet]
-        lookup_df = lookup_df[keep_cols].copy()
+        lookup_df = lookup_df[keep_cols].copy().reset_index(drop=True)
         lookup_df.rename(columns={'_uuid':'object_uuid'}, inplace=True)
         lookup_df.rename(columns=config['index_cols'], inplace=True)
         # Convert join columns to string to ensure joins.
@@ -606,11 +625,109 @@ def add_trench_book_related_uuids(
         new_tb_rel_dfs[rel_type] = tb_rel_df
     return new_tb_rel_dfs
 
+
+
+def make_previous_next_trench_book_rels_dfs(
+    df_f
+):
+    """Makes previous and next relations between entries"""
+
+    sort_cols = ['Trench ID', 'Date Documented', 'Start Page',  'End Page']
+    tb_ent_indx = (
+        (df_f['Trench ID'].notnull())
+        & ((df_f['Start Page']>0) | (df_f['End Page']>0))
+    )
+    df_tb_ents = df_f[tb_ent_indx].copy().reset_index(drop=True)
+    trench_ids = df_tb_ents['Trench ID'].unique().tolist()
+    
+    df_tb_ents.sort_values(by=['Trench ID', 'Date Documented', 'Start Page',  'End Page'], inplace=True)
+    
+    df_rels = []
+    rel_configs = [
+        ('Previous Entry', -1),
+        ('Next Entry', 1),
+    ]
+    for trench_id in trench_ids:
+        for rel_type, index_dif in rel_configs:
+            df_rel = df_tb_ents[
+                (df_tb_ents['Trench ID'] == trench_id)
+            ].copy().reset_index(drop=True)
+            len_df = len(df_rel.index)
+            df_rel.rename(
+                columns={
+                    '_uuid':'subject_uuid',
+                    'Trench Book Title': 'subject__Trench Book Title',
+                },
+                inplace=True
+            )
+            # Organize the columns that we want to keep for the df_p_n output.
+            df_rel_cols_temp = sort_cols + [c for c in TRENCH_BOOK_INDEX_COLS if not c in sort_cols]
+            df_rel_cols_temp += [c for c in TRENCH_BOOK_CONTEXT_COLS if not c in sort_cols]
+            df_rel_cols = [c for c in df_rel_cols_temp if c in df_rel.columns]
+            df_rel_cols += ['subject__Trench Book Title', 'subject_uuid']
+            df_rel = df_rel[df_rel_cols]
+            # Sort the df rel!
+            df_rel.sort_values(by=sort_cols, inplace=True)
+            df_rel[LINK_RELATION_TYPE_COL] = np.nan
+            df_rel['object_uuid'] = np.nan
+            df_rel['object__subject__Trench Book Title'] = np.nan
+            for i, row in df_rel.iterrows():
+                other_index = i + index_dif
+                if other_index < 0 or other_index >= len_df:
+                    # we're outside of the index range, so skip.
+                    continue
+                up_indx = (df_rel['subject_uuid'] == row['subject_uuid'])
+                df_rel.loc[up_indx, LINK_RELATION_TYPE_COL] = rel_type
+                df_rel.loc[up_indx, 'object_uuid'] = df_rel['subject_uuid'].iloc[other_index]
+                df_rel.loc[up_indx, 'object__subject__Trench Book Title'] = df_rel['subject__Trench Book Title'].iloc[other_index]
+
+            # Drop missing records.
+            df_rel = df_rel[df_rel[LINK_RELATION_TYPE_COL].notnull()]
+            df_rels.append(df_rel)
+
+    return df_rels
+
+def make_trench_book_unit_id_relations_df(df_f, all_contexts_df):
+    """Makes a dataframe of relations between trench books and Units"""
+    tb_first_cols = [
+        'Date Documented',
+        'Start Page',
+        'End Page',
+        'Trench ID',
+        'Unit ID',
+        'Trench Book Title',
+        'Document Type',
+    ]
+    rel_df = df_f[tb_first_cols + ['_uuid']].copy()
+    rel_df['subject__Trench Book Title'] = rel_df['Trench Book Title']
+    rel_df['subject_uuid'] = rel_df['_uuid']
+    rel_df[LINK_RELATION_TYPE_COL] = 'link'
+    unit_df = all_contexts_df[all_contexts_df['class_uri']=='oc-gen:cat-exc-unit'].copy()
+    unit_df = unit_df[['label',	'context_uuid',	'uuid_source']]
+    unit_df['object__Unit ID'] = unit_df['label']
+    unit_df.rename(
+        columns={
+            'label': 'Unit ID',
+            'context_uuid': 'object_uuid',
+            'uuid_source': 'object_uuid_source',
+        },
+        inplace=True
+    )
+    # Now join the Units to the trench books.
+    rel_df = pd.merge(
+        rel_df,
+        unit_df,
+        how='left',
+        on=['Unit ID']
+    )
+    return rel_df
+    
+    
 def make_trench_book_parent_relations_df(
     df_f,
     config=FIELD_DATA_PREPS['Trench Book Entry']
 ):
-    """Adds UUIDS of trench book related entitites.
+    """Makes relations between trench book entries and parent books
     
     :param dataframe df_f: Trench book description dataframe
     :parma dict tb_rel_dfs: Dictionary of trench book relations
@@ -640,8 +757,12 @@ def make_trench_book_parent_relations_df(
         'Unit ID',
     ]
     doc_type_col, doc_type = config.get('tb_doc_type_root')
-    parent_df = df_f[df_f[doc_type_col] == doc_type].copy().reset_index(drop=True)
-    child_df = df_f[df_f[doc_type_col] != doc_type].copy().reset_index(drop=True)
+    parent_df = df_f[
+        (df_f[doc_type_col] == doc_type)
+    ].copy().reset_index(drop=True)
+    child_df = df_f[
+        (df_f[doc_type_col] != doc_type)
+    ].copy().reset_index(drop=True)
     
     # Copy the join columns to make temporary join columns that
     # will be common in the parent_df and child_df and will not
@@ -665,8 +786,8 @@ def make_trench_book_parent_relations_df(
         ('Has Part', parent_df, child_df, 'right'),
     ]
     for link_rel, subject_df, object_df, join_how in linking_rels:
-        subject_df = subject_df[subset_cols].copy()
-        object_df = object_df[subset_cols].copy()
+        subject_df = subject_df[subset_cols].copy().reset_index(drop=True)
+        object_df = object_df[subset_cols].copy().reset_index(drop=True)
         # Now rename the columns
         subject_df.rename(
             columns={old:new for old, new, _ in mapping_tups},
@@ -690,20 +811,37 @@ def make_trench_book_parent_relations_df(
     tb_parent_rels = pd.concat(rel_dfs)
     tb_parent_rels = tb_parent_rels[rel_df_cols]
     return tb_parent_rels
+    
 
-def make_final_trench_book_relations_df(field_config_dfs):
+def make_final_trench_book_relations_df(field_config_dfs, all_contexts_df):
     """Makes final consolidated dataframe of Trench Book link relations."""
     tb_dfs = field_config_dfs['Trench Book Entry']['dfs']
     df_f = tb_dfs['Trench Book Entry']
+    # Make several dataframes of TB relations to loci, small finds.
     tb_rel_dfs = prep_trench_book_related(tb_dfs)
     tb_rel_dfs = add_trench_book_related_uuids(tb_rel_dfs, field_config_dfs)
     all_rel_dfs = [rel_df for _, rel_df in tb_rel_dfs.items()]
+    all_rel_dfs += make_previous_next_trench_book_rels_dfs(df_f)
+    # Add a single dataframe of TB entry and TB book relations
     tb_parent_rels = make_trench_book_parent_relations_df(df_f)
     all_rel_dfs.append(tb_parent_rels)
+    # Add a single dataframe of TB relations to Unit IDs.
+    tb_unit_rel_df = make_trench_book_unit_id_relations_df(df_f, all_contexts_df)
+    all_rel_dfs.append(tb_unit_rel_df)
+    # Now bring all of these individual TB relations dataframes into a single
+    # dataframe of TB relations.
     tb_all_rels_df = pd.concat(all_rel_dfs)
     # Reorder and limit final output columns to a pre-determined config.
     use_cols = [c for c in TRENCH_BOOK_FINAL_REL_COLS if c in tb_all_rels_df.columns]
     tb_all_rels_df = tb_all_rels_df[use_cols]
+    tb_all_rels_df.sort_values(by=[
+        LINK_RELATION_TYPE_COL,
+        'subject__Trench Book Title',
+        'object__subject__Trench Book Title',
+        'object__Unit ID',
+        'object__Locus ID',
+        'object__Find Number',
+    ], inplace=True)
     return tb_all_rels_df
 
 
@@ -725,7 +863,7 @@ def add_trench_book_parents(
     #
     # Now iterate through the root documents to get or make their UUIDs
     # and titles.
-    df_working = df_grp.copy()
+    df_working = df_grp.copy().reset_index(drop=True)
     for i, row in df_working.iterrows():
         indx = (
             (df_grp['Unit ID'] == row['Unit ID']) &

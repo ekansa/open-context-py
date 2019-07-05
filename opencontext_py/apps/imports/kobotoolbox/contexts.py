@@ -537,7 +537,7 @@ def update_all_context_df_with_parent_uuids(final_all_contexts_df):
     """Updates the all_context df to have parent uuids."""
     # Use the dataframe to assign parent uuids based on path lookups.
     context_uuid_parents = []
-    parents_df = final_all_contexts_df.copy()
+    parents_df = final_all_contexts_df.copy().reset_index(drop=True)
     for i, row in final_all_contexts_df.iterrows():
         if (row['parent_uuid_source'] == UUID_SOURCE_OC_LOOKUP
             and row['uuid_source'] == UUID_SOURCE_OC_LOOKUP):

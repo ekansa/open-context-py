@@ -129,7 +129,7 @@ def update_multivalue_columns(df, multival_col_prefixes=None):
         df = update_multivalue_col_vals(df, multi_col_prefix)
     return df
 
-def clean_up_multivalue_cols(df, skip_cols=[]):
+def clean_up_multivalue_cols(df, skip_cols=[], delim='::'):
     """Cleans up multivalue columns where one column has values that concatenate values from other columns"""
     poss_multi_value_cols = {}
     cols = df.columns.tolist()
@@ -166,6 +166,12 @@ def clean_up_multivalue_cols(df, skip_cols=[]):
             # Remove the string we don't want, from col, which concatenates multiple
             # values.
             df.loc[rep_indx, col] = df[col].str.replace(act_val, '')
+            if delim in act_val:
+                # Remove the first part of a hiearchy delimited value from a likely parent column.
+                df.loc[rep_indx, col] = df[col].str.replace(
+                    act_val.split(delim)[0],
+                    ''
+                )
             # Now do final cleanup
             df.loc[rep_indx, col] = df[col].str.strip()
     # Now do a file cleanup, removing anything that's no longer present.
