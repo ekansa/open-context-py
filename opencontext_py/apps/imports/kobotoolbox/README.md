@@ -1,6 +1,6 @@
 # Open Context KoboToolBox Imports
 
-This director holds a variety of functions to process data, exported from Kobotoolbox in the Excel (.xlsx) format.
+This directory holds a variety of functions to process data, exported from Kobotoolbox in the Excel (.xlsx) format.
 It uses Pandas to load the data into dictionaries of dataframes for processing.
 
 The main motivation for developing these functions was to serve the needs of the Poggio Civitate excavations. The
@@ -38,7 +38,39 @@ make_kobo_to_open_context_etl_files()
 update_open_context_db()
 ```
 
+## What Happens
+Data captured in the field typically has many implicit relationships and needs some contextualiztion to be
+intelligible, at least that's the main assumption in the workflows and transformations that go into
+Open Context's ETL (extract, transform, load) processes. Data from Kobotoolbox forms used for Poggio Civitate
+field recording similarly get several transformations and additions through this software process. These
+include:
 
+1. This ETL process preserves and reuses the UUIDs minted by Kobotoolbox. This will enable one to traceback
+the specific origin of specific records of data.
+2. All of the locations and objects (Open Context's `"item_type":"subjects"`) described and referenced in 
+the Kobotoolbox form dataget extracted and consolidated into the `all-contexts-subjects.csv` file. This file
+describes spatial containment hierarchies including containment relations with existing entities already in
+Open Context's database. The "Unit ID" entities, which are not explicit in the Poggio Civitate kobotoolbox
+data get generated in this process.
+3. This ETL process gathers all media files (typically images) and their descriptions from all of the 
+Kobotoolbox forms into a consolidated `all-media-files.csv` file. During this process, we check that each
+given media file is actually present in the attachments directory, and we make full, preview, and thumbnail
+versions of each file for upload to an image server. URLS to the images online are also generated.
+4. This process also makes cleaned up attribute data files. Empty unused attribute columns get dropped, and
+multivalue attribute columns get processed for easier review and import into Open Context's primary data
+import pipeline. Hiearchic taxonomies also get processed to be consistent with already imported controlled
+vocabularies.
+5. The Poggio Civitate ETL process also checks on coordinates for the project's local grid, and reports on
+outlier values that may be unreasonable data entry errors. It also reprojects the project's local grid
+coordinates to the global WGS84 EPSG:4326 system.
+6. The ETL process generates a general "trench book" entity and "Has Part", "Is Part of" relationships between
+different trench book entries. It also generates "Next Entry" and "Previous Entry" relationships between
+tench book entries to enable sequential navigation of trench book entries.
+7. Linking relationships, including stratigraphic relations, between loci, small finds, bulk finds, 
+trench book entries, media files, and cataloged objects get extracted, inferred, and validated. These get
+output in files starting with `links--`. Each of these links files will have different columns with attributes
+describing the entities getting linked. However, on import the only columns used are the `subject_uuid`, the
+link link relation column (defaults to: `LINK_RELATION_TYPE_COL = 'Relation_type'`), and the `object_uuid` column.
 
 ## TODO:
 1. Reorganize these functions. Move Poggio Civitate specific functions into a sub-directory "poggio_civitate".
