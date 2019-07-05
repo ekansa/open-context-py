@@ -529,14 +529,14 @@ def finalize_combined_media_df(
             df_all['Image Type'].isnull()
             & (df_all['media_source_type'] != 'primary')
         )
-        df_all['Image Type'] = 'Working, informal'
+        df_all.loc[img_type_indx, 'Image Type'] = 'Working, informal'
     # Default the Media Type for non-primary media files as Image.
     if 'Media Type' in df_all.columns:
         media_type_indx = (
             df_all['Media Type'].isnull()
             & (df_all['media_source_type'] != 'primary')
         )
-        df_all['Media Type'] = 'Image'
+        df_all.loc[media_type_indx, 'Media Type'] = 'Image'
     # Add columns with the URls to different types of versions of
     # the media item.
     for oc_media_type in OPENCONTEXT_MEDIA_TYPES:
