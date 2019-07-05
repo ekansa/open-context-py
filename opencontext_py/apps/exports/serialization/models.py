@@ -43,6 +43,26 @@ from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
 sj.dump_serialized_rel_tables()
 
+
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+sj = SerizializeJSON()
+sj.export_redirects = True
+sj.limit_source_ids = [
+    'kobo-pc-2018-all-contexts-subjects.csv',
+    'kobo-pc-2018-all-media',
+    'kobo-pc-2018-bulk-finds',
+    'kobo-pc-2018-catalog',
+    'kobo-pc-2018-links-catalog',
+    'kobo-pc-2018-links-locus-strat',
+    'kobo-pc-2018-links-media',
+    'kobo-pc-2018-locus',
+    'kobo-pc-2018-small-finds',
+    'kobo-pc-2018-trench-book'
+]
+sj.dump_serialized_data(project_uuid)
+
+
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
 sj = SerizializeJSON()
@@ -78,6 +98,7 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.chunk_size = 5000
         self.export_redirects = False
         self.act_export_dir = False
+        self.limit_source_ids = []
         self.limit_item_types = False
         self.limit_file_types = False  # limit media export to a few file_types
         self.limit_export_table_id = False # limit to data related to an export table
@@ -111,6 +132,22 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
         self.table_models = ['oc_manifest',
                              'exp_tables',
                              'link_annotations']
+        self.source_id_tabs = [
+            'oc_assertions',
+            'oc_documents',
+            'oc_events',
+            'oc_geospace',
+            'oc_manifest',
+            'oc_mediafiles',
+            'oc_obsmetadata',
+            'oc_persons',
+            'oc_predicates',
+            'oc_projects',
+            'oc_strings',
+            'oc_subjects',
+            'oc_types',
+            'link_annotations',
+        ]
 
     def check_table_qset(self,
                          table_name,
@@ -322,6 +359,10 @@ projects = Project.objects.filter(updated__gte="2015-06-01")
                 else:
                     # then we don't want any other outputs
                    table_name = False
+            
+            if (table_name in self.source_id_tabs
+                and self.limit_source_ids):
+                args['source_id__in'] = self.limit_source_ids
             if table_name == 'oc_assertions':
                 query_set = Assertion.objects\
                                      .filter(**args)
