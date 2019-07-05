@@ -76,7 +76,7 @@ from opencontext_py.apps.imports.kobotoolbox.etl import (
     update_link_rel_open_context_db
 )
 make_kobo_to_open_context_etl_files()
-# update_open_context_db()
+update_open_context_db()
 update_link_rel_open_context_db()
 
 source_ids = {
@@ -87,6 +87,7 @@ source_ids = {
     'kobo-pc-2018-links-catalog',
     'kobo-pc-2018-links-locus-strat',
     'kobo-pc-2018-links-media',
+    'kobo-pc-2018-links-trench-book',
     'kobo-pc-2018-locus',
     'kobo-pc-2018-small-finds',
     'kobo-pc-2018-trench-book'
