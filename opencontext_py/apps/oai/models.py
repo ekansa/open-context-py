@@ -423,7 +423,7 @@ icc.get_cache_object(cache_id)
         act_format = self.get_metadata_format_attributes('oai_dc')
         if act_format is not False:
             tcheck = URImanagement.get_uuid_from_oc_uri(json_ld['id'], True)
-            if tcheck is False:
+            if not tcheck:
                 item_type = False
             else:
                 item_type = tcheck['item_type']
@@ -521,7 +521,7 @@ icc.get_cache_object(cache_id)
             is also used in the oai_datacite specification
         """
         tcheck = URImanagement.get_uuid_from_oc_uri(json_ld['id'], True)
-        if tcheck is False:
+        if not tcheck:
             item_type = False
         else:
             item_type = tcheck['item_type']
@@ -973,7 +973,7 @@ icc.get_cache_object(cache_id)
             output = False
             if 'uri' in item:
                 tcheck = URImanagement.get_uuid_from_oc_uri(item['uri'], True)
-                if tcheck is False:
+                if not tcheck:
                     item_type = False
                 else:
                     uuid = tcheck['uuid']
@@ -996,7 +996,7 @@ icc.get_cache_object(cache_id)
         output = False
         if 'uri' in item:
             tcheck = URImanagement.get_uuid_from_oc_uri(item['uri'], True)
-            if tcheck is False:
+            if not tcheck:
                 item_type = False
             else:
                 uuid = tcheck['uuid']

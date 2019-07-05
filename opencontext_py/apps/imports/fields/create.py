@@ -1,6 +1,8 @@
 import uuid as GenUUID
 from unidecode import unidecode
 import datetime
+import numpy as np
+import pandas as pd
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -63,6 +65,49 @@ class ImportFields():
         else:
             print('Problem with refine schema: ' + refine_project)
         return output
+    
+    def save_dataframe_fields(
+        self,
+        source_id,
+        df
+    ):
+        """ Loads a schema from refine, saves it in the database """
+        self.source_id = source_id
+        if df.empty:
+            return None
+        cols = df.columns.tolist()
+        print('Importing {} columns from: {}'.format(
+                len(cols),
+                self.source_id
+            )
+        )
+        kobo_fields = KoboFields()
+        new_fields = []
+        for col_index, col in enumerate(cols, 1):
+            imp_f = ImportField()
+            imp_f.project_uuid = self.project_uuid
+            imp_f.source_id = self.source_id
+            imp_f.field_num = col_index
+            imp_f.is_keycell = False
+            imp_f.obs_num = 1
+            imp_f.label = col
+            imp_f.ref_name = col
+            imp_f.ref_orig_name = col
+            imp_f.unique_count = 0
+            imp_f = self.check_for_updated_field(
+                imp_f,
+                col,
+                col
+            )
+            imp_f = kobo_fields.classify_if_kobofield(imp_f)
+            new_fields.append(imp_f)
+        # Now that we've got likely related UUIDs, let's delete the old
+        ImportField.objects.filter(source_id=self.source_id).delete()
+        print('New fields to save: ' + str(len(new_fields)))
+        for new_imp_f in new_fields:
+            print('Saving field: ' + str(unidecode(new_imp_f.label)))
+            new_imp_f.save()
+        return True
 
     def check_for_updated_field(self,
                                 imp_f,

@@ -129,16 +129,16 @@ class ArchiveFiles():
             pred_keys = [pred_keys]
         if isinstance(item_dict, dict):
             for pred_key in pred_keys:
-                if pred_key in item_dict:
-                    items = item_dict[pred_key]
-                    if isinstance(items, list):
-                        for item in items:
-                            if isinstance(item, dict):
-                                if 'id' in item:
-                                    uuid = URImanagement.get_uuid_from_oc_uri(item['id'])
-                                    if isinstance(uuid, str):
-                                        if uuid not in uuids:
-                                            uuids.append(uuid)
+                items = item_dict.get(pred_key, [])
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if not isinstance(item, dict) or not 'id' in item:
+                        continue
+                    uuid = URImanagement.get_uuid_from_oc_uri(item['id'])
+                    if not uuid or uuid in uuids:
+                        continue
+                    uuids.append(uuid)
         return uuids
     
     def get_proj_manifest_obj(self, project_uuid):

@@ -34,8 +34,8 @@ class ReadProjectContextVocabGraph():
          '@type': '@id'},
         {'@id': Assertion.PREDICATES_NOTE,
          'label': 'Note',
-         'owl:sameAs': False,
-         'slug': False,
+         'owl:sameAs': 'http://opencontext.org/vocabularies/oc-general/has-note',
+         'slug': 'oc-gen-has-note',
          '@type': 'xsd:string'},
     ]
     

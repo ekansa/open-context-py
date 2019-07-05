@@ -209,27 +209,57 @@ class CandidateMedia():
 
     def reconcile_manifest_item(self, imp_cell_obj):
         """ Checks to see if the item exists in the manifest """
+        match_found = None
         self.imp_cell_obj = imp_cell_obj
         if len(imp_cell_obj.record) > 0:
             self.label = imp_cell_obj.record
-        if self.label is not False:
+            
+        # Set up to check for a preconfigured metadata UUID.
+        meta_uuid = None
+        sup_metadata = None
+        if self.metadata_obj is not None:
+            # Get the suplemental metadata that may exist.
+            sup_metadata = self.metadata_obj.get_metadata(
+                imp_cell_obj.field_num,
+                imp_cell_obj.row_num
+            )
+            meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
+            if not isinstance(meta_uuid, str):
+                meta_uuid = None
+        
+        # Handle reconciliation cases where we have a pre-configured UUID to use
+        # in the metadata_obj. Only do this if there's actually a label (not a blank).
+        if meta_uuid and self.label:
+            # Check to see if this already exists.
+            man_obj = Manifest.objects.filter(uuid=meta_uuid).first()
+            if man_obj:
+                print('Found manifest object {} ({}) for pre-specified uuid: {}'.format(
+                        man_obj.label,
+                        man_obj.item_type,
+                        meta_uuid
+                    )
+                )
+                self.uuid = meta_uuid
+                self.new_entity = False
+                match_found = True
+            elif self.mint_new_entity_ok:
+                print('Create new manifest object {} (media) with pre-specified uuid: {}'.format(
+                        self.label,
+                        meta_uuid
+                    )
+                )
+                match_found = False
+                self.uuid = meta_uuid
+                self.new_entity = True
+                self.create_media_item(sup_metadata)
+                
+        elif self.label:
+            # Case where we don't have a pre-confiured metadata uuid.
             match_found = self.match_against_manifest(self.label)
-            if match_found is False:
-                # create new subject, manifest objects. Need new UUID, since we can't assume
-                # the fl_uuid for the ImportCell reflects unique entities in a field, since
-                # uniqueness depends on context (values in other cells)
-                if self.mint_new_entity_ok:
-                    self.new_entity = True
-                    sup_metadata = None
-                    self.uuid = GenUUID.uuid4()
-                    if self.metadata_obj is not None:
-                        sup_metadata = self.metadata_obj.get_metadata(imp_cell_obj.field_num,
-                                                                      imp_cell_obj.row_num)
-                        meta_uuid = self.metadata_obj.get_uuid_from_metadata_dict(sup_metadata)
-                        if isinstance(meta_uuid, str):
-                            # use the uuid in the metadata!
-                            self.uuid = meta_uuid
-                    self.create_media_item(sup_metadata)
+            if not match_found and self.mint_new_entity_ok:
+                self.new_entity = True
+                self.uuid = GenUUID.uuid4()
+                self.create_media_item()
         self.update_import_cell_uuid()
 
     def create_media_item(self, sup_metadata=None):

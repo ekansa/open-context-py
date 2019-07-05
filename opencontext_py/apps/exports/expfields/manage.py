@@ -14,6 +14,22 @@ class ExpFieldManage():
     certain fields from an export table. These methods
     accomplish those tasks.
 
+from opencontext_py.apps.exports.expfields.manage import ExpFieldManage
+xpFieldMan = ExpFieldManage()
+table_id = 'a1c445f9-6bba-48c9-8a56-e5f49aae6c61'
+old_to_new_map = xpFieldMan.map_old_to_new_fields(
+    table_id,
+    old_field_num=36,
+    new_field_num=29,
+    old_to_new_map=None
+)
+print(str(old_to_new_map))
+old_to_new_map = xpFieldMan.map_old_to_new_fields(
+    table_id,
+    old_to_new_map={28:74, 36:29, 40:75, 44:76, 52:77}
+)
+xpFieldMan.change_field_number(table_id, old_to_new_map={28:74, 36:29, 40:75, 44:76, 52:77})
+
     """
 
     def __init__(self):
@@ -162,76 +178,128 @@ class ExpFieldManage():
                 print('Checking and cleaning up table...')
                 self.update_field_numbering(table_id)
 
-    def change_field_number(self, table_id, old_field_num, new_field_num):
+    def map_old_to_new_fields(
+        self,
+        table_id,
+        old_field_num=None,
+        new_field_num=None,
+        old_to_new_map=None
+    ):
+        """Makes a dict of {old_field_num: new_field_num} to map updates to a table field num order"""
+        if old_to_new_map is None:
+            old_to_new_map = {old_field_num: new_field_num}
+            
+        # Get the fields for the table we want to modify.
+        fields = ExpField.objects.filter(table_id=table_id).order_by('field_num')
+
+        # Get the maximum field number, which is from the last object because we
+        # ordered the query set by field_num.
+        max_field_num = fields.last().field_num
+
+        # Now do some checks to make sure our old_to_new_map dictionary
+        # is OK.
+        new_field_nums = set()
+        for old, new in old_to_new_map.items():
+            # Make sure that the new_field_num is no greater than
+            # the maximum field number
+            if old > max_field_num:
+                raise ValueError('Field_num {} does not exist in {}'.format(old, table_id))
+            if new > max_field_num:
+                raise RuntimeWarning('Field_num {} does not exist in {}, setting to {}'.format(
+                        new,
+                        table_id,
+                        max_field_num
+                    )
+                )
+                old_to_new_map[old] = max_field_num
+            new_field_nums.add(old_to_new_map[old])
+        assert len(old_to_new_map) == len(new_field_nums), 'Invalid old_to_new mappings'
+       
+        # Now iterate through and create mappings for all the fields. This
+        # makes sure that the old_to_new_map dictionary completely specifies
+        # all of the field_numbers, including the ones that DON'T change.
+        new_field_num = 0
+        for field in fields:
+            if field.field_num in old_to_new_map:
+                continue
+            # Get the first unused new_index in the range of available
+            # values.
+            for new_field_num in range(1, (max_field_num + 1)):
+                if not new_field_num in new_field_nums:
+                    break
+            new_field_nums.add(new_field_num)
+            old_to_new_map[field.field_num] = new_field_num
+        
+        # Do some checking to make sure the logic worked and we have a complete
+        # set of mappings.
+        all_old = set()
+        all_new = set()
+        for old, new in old_to_new_map.items():
+            all_old.add(old)
+            all_new.add(new)
+        # The set of old field number and new field numbers needs
+        # to be identical, otherwise we did something horrible.
+        assert all_old == all_new, 'The field mappings failed!'
+        return old_to_new_map
+
+    def change_field_number(
+        self,
+        table_id,
+        old_field_num=None,
+        new_field_num=None,
+        old_to_new_map=None
+    ):
         """ changes the field number to a new field number,
             this will change field numbering for the whole table
             so it gets complicated
         """
-        # first put the field we're moving into a temporary location
-        # for the time being it will be field_num -1
-        to_move_field = None
-        to_move_f_list = ExpField.objects\
-                                 .filter(table_id=table_id,
-                                         field_num=old_field_num)[:1]
-        if len(to_move_f_list) > 0:
-            # temporarily save the to_move_field to field_num -1
-            to_move_field = to_move_f_list[0]
-            to_move_field.field_num = -1
-            to_move_field.save()
-            # now temporarily move cell records for the to_move_field to field_num -1
-            num_updated = ExpCell.objects\
-                                 .filter(table_id=table_id,
-                                         field_num=old_field_num)\
-                                 .update(field_num=-1)
-            print('Staged move of ' + str(num_updated) + ' cell records')
-            # now update everything that currently has a new_field_num
-            # and higher to increment up 1 so we make space to for
-            # the field to be moved.
-            # NOTE! Need to order by cells in descending order of field_nums
-            # so we don't get update a cell into a field that's is already occupied
-            move_fields = ExpField.objects\
-                                  .filter(table_id=table_id,
-                                          field_num__gte=new_field_num)\
-                                  .order_by('-field_num')
-            for move_field in move_fields:
-                act_old_field_num = move_field.field_num
-                act_new_field_num = act_old_field_num + 1
-                # mass update the cell records to add 1 to the field_num
-                if act_old_field_num != old_field_num:
-                    num_move_cells = ExpCell.objects\
-                                            .filter(table_id=table_id,
-                                                    field_num=act_old_field_num)\
-                                            .update(field_num=act_new_field_num)
-                    message = 'Shifted ' + str(num_move_cells) + ' from field: '
-                    message += str(act_old_field_num) + ' to: ' + str(act_new_field_num)
-                    print(message)
-                    move_field.field_num = act_new_field_num
-                    print('Completed moving field: ' + str(act_old_field_num) + ' to ' + str(act_new_field_num))
-                else:
-                    # delete the move field, since we have it stored in
-                    # memory and in field_num -1
-                    move_field.delete()
-            # now, finally move the field we set aside to
-            # its new field number
-            num_updated = ExpCell.objects\
-                                 .filter(table_id=table_id,
-                                         field_num=-1)\
-                                 .update(field_num=new_field_num)
-            print('Completed move of ' + str(num_updated) + ' cell records')
-            # now delete the field record for new_field_num,
-            # since it was copied to have a new_field_num + 1 field_num
-            ok = ExpField.objects\
-                         .filter(table_id=table_id,
-                                 field_num=new_field_num)\
-                         .delete()
-            # now save the field to be moved with the appropriate field number made vacant above
-            to_move_field.field_num = new_field_num
-            to_move_field.save()
-            print('Completed move of field: ' + str(old_field_num) + ' to: ' + str(new_field_num))
-            # now that is done, we do some clean up to make sure
-            # the field numbers have no gaps
-            print('Doing final checks and cleanup...')
-            self.update_field_numbering(table_id)
+        old_to_new_map = self.map_old_to_new_fields(
+            table_id,
+            old_field_num=old_field_num,
+            new_field_num=new_field_num,
+            old_to_new_map=old_to_new_map
+        )
+        # Now move the fields that are getting moved to a new order.
+        # First, set the new_field_num to be temporarily a negative number
+        # so as to make sure we don't overwrite things by shifting them
+        # around.
+        for act_old_field_num, act_new_field_num in old_to_new_map.items():
+            if (act_old_field_num == act_new_field_num):
+                # No change in the fields.
+                continue
+            self.change_field_cell_field_numbers(
+                table_id,
+                act_old_field_num,
+                (act_new_field_num * -1)
+            )
+        # Now finish reorder the field numbers, changing the temporary
+        # order back to the preferred final order
+        for act_old_field_num, act_new_field_num in old_to_new_map.items():
+            if (act_old_field_num == act_new_field_num):
+                # No change in the fields.
+                continue
+            self.change_field_cell_field_numbers(
+                table_id,
+                (act_new_field_num * -1),
+                act_new_field_num
+            )
+
+    def change_field_cell_field_numbers(self, table_id, old_num, new_num):
+        num_move_cells = ExpCell.objects.filter(
+            table_id=table_id,
+            field_num=old_num
+        ).update(field_num=new_num)
+        message = 'Shifted {} from field: {} to {}'.format(num_move_cells, old_num, new_num)
+        ok_field = ExpField.objects.filter(
+            table_id=table_id,
+            field_num=old_num
+        ).update(field_num=new_num)
+        if old_num > 0 and new_num < 0:
+            change_type = '[Temporary Update]'
+        else:
+            change_type = 'Finished Update'
+        message += '\n{} of {} from field: {} to {}'.format(change_type, ok_field, old_num, new_num)
+        print(message)
 
     def update_field_numbering(self, table_id):
         """ updates the numbering for fields after the
