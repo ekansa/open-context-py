@@ -75,6 +75,7 @@ class ReadProjectContextVocabGraph():
     def __init__(self, proj_context_json_ld=None):
         self.context = None
         self.graph = self.GLOBAL_VOCAB_GRAPH
+        self.fail_on_missing_entities = False
         if not isinstance(proj_context_json_ld, dict):
             return None
         if '@context' in proj_context_json_ld:
@@ -124,11 +125,14 @@ class ReadProjectContextVocabGraph():
             isinstance(id, str)):
             for g_obj in self.graph:
                 id_list = self.get_id_list_for_g_obj(g_obj)
-                if id in id_list:
-                    output = g_obj
-                    if item_type == 'predicates' and '@type' not in g_obj:
-                        output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
+                if not id in id_list:
+                    continue
+                output = g_obj
+                if item_type == 'predicates' and '@type' not in g_obj:
+                    output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
                     break
+        if self.fail_on_missing_entities and not output:
+            raise RuntimeError('Cannot find {}, item_type: {}'.format(id, item_type))
         return output
     
     def get_predicate_datatype_for_graph_obj(self, g_obj):

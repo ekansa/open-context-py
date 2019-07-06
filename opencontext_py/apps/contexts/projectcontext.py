@@ -157,33 +157,32 @@ class ProjectContext():
         """
         pred_sql_dict_list = self.get_working_project_predicates()
         la_preds = self.get_link_annotations_for_preds(pred_sql_dict_list)
-        if isinstance(pred_sql_dict_list, list):
-            for sql_dict in pred_sql_dict_list:
-                act_pred = LastUpdatedOrderedDict()
-                act_pred['@id'] = 'oc-pred:' + str(sql_dict['slug'])
-                act_pred['owl:sameAs'] = URImanagement.make_oc_uri(sql_dict['predicate_uuid'],
-                                                                   'predicates')
-                act_pred['label'] = sql_dict['label']
-                act_pred['uuid'] = sql_dict['predicate_uuid']
-                act_pred['slug'] = sql_dict['slug']
-                if isinstance(sql_dict['class_uri'], str):
-                    if len(sql_dict['class_uri']) > 0:
-                        act_pred['oc-gen:predType'] = sql_dict['class_uri']
-                pred_found = False
-                for la_pred in la_preds:
-                    if la_pred.subject == sql_dict['predicate_uuid']:
-                        pred_found = True
-                        # prefix common URIs for the predicate of the link annotation
-                        la_pred_uri = URImanagement.prefix_common_uri(la_pred.predicate_uri)
-                        act_pred = self.add_unique_object_dict_to_pred(act_pred,
-                                                                       la_pred_uri,
-                                                                       la_pred.object_uri)
-                    else:
-                        if pred_found:
-                            # because this list is sorted by la_pred.subject, we're done
-                            # finding any more annotations on act_pred item
-                            break
-                graph.append(act_pred)
+        if not isinstance(pred_sql_dict_list, list):
+            # No predicates in the project. Wierd, but possible
+            return graph
+        annotated_pred_uuids = {la.subject:la for la in la_preds}
+        for sql_dict in pred_sql_dict_list:
+            act_pred = LastUpdatedOrderedDict()
+            act_pred['@id'] = 'oc-pred:' + str(sql_dict['slug'])
+            act_pred['owl:sameAs'] = URImanagement.make_oc_uri(
+                sql_dict['predicate_uuid'],
+                'predicates'
+            )
+            act_pred['label'] = sql_dict['label']
+            act_pred['uuid'] = sql_dict['predicate_uuid']
+            act_pred['slug'] = sql_dict['slug']
+            if isinstance(sql_dict['class_uri'], str) and len(sql_dict['class_uri']) > 0:
+                act_pred['oc-gen:predType'] = sql_dict['class_uri']
+            if sql_dict['predicate_uuid'] in annotated_pred_uuids:
+                # prefix common URIs for the predicate of the link annotation
+                la_pred = annotated_pred_uuids[sql_dict['predicate_uuid']]
+                la_pred_uri = URImanagement.prefix_common_uri(la_pred.predicate_uri)
+                act_pred = self.add_unique_object_dict_to_pred(
+                    act_pred,
+                    la_pred_uri,
+                    la_pred.object_uri
+                )
+            graph.append(act_pred)
         return graph
 
     def get_working_project_predicates(self):
