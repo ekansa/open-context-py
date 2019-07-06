@@ -1,7 +1,10 @@
 import pytest
+import logging
+import random
+from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
-
+logger = logging.getLogger("tests-regression-logger")
 
 
 @pytest.mark.django_db
@@ -144,5 +147,19 @@ def test_projects_is_sub_project():
     sd_obj.make_solr_doc()
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'projects'
+    assert '52-digital-index-of-north-american-archaeology-dinaa' in sd_obj.fields['root___project_id_fq']
     assert not 'obj_all___context_id_fq' in sd_obj.fields
-    # NOTE: Do more tests. Fix the project hierarchy lookup.
+
+
+def test_random_items(random_sample_items):
+    """Tests solr_document creation a random sample of entities from each project, item_type, and class"""
+    for project_uuid, item_type, class_uri, uuid in random_sample_items:
+        logger.info('Test of project_uuid="{}", item_type="{}", class_uri="{}", uuid="{}"'.format(project_uuid, item_type, class_uri, uuid))
+        sd_obj = SolrDocument(uuid)
+        sd_obj.make_solr_doc()
+        assert sd_obj.fields['uuid'] == uuid
+        assert sd_obj.fields['item_type'] == item_type
+        if item_type != 'subjects':
+            continue
+        # Only do this if we're in a subject item.
+        assert len(sd_obj.fields['obj_all___oc_gen_subjects___pred_id_fq']) > 0

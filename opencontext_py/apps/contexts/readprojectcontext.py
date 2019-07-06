@@ -227,6 +227,8 @@ class ReadProjectContextVocabGraph():
                     continue
                 obs_pred_info = self.lookup_predicate(obs_pred_key)
                 pred_data_type = self.get_predicate_datatype_for_graph_obj(obs_pred_info)
+                if not obs_pred_info:
+                    continue
                 equiv_pred_objs = self.get_equivalent_objects(obs_pred_info)
                 if not equiv_pred_objs:
                     # No linked data equivalence for the obs_pred_key
