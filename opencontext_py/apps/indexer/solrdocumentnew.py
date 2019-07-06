@@ -17,6 +17,24 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
+
+
+
+def general_get_jsonldish_entity_parents(identifier, add_original=True):
+    """Wrapper for getting parent entities for oc items and parent projects"""
+    raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+        identifier,
+        add_original=add_original
+    )
+    if raw_hiearchy_items:
+        return raw_hiearchy_items
+    raw_hiearchy_items = ProjectRels().get_jsonldish_parents(
+        uuid=identifier,
+        add_original=add_original
+    )
+    return raw_hiearchy_items
+
+
 class SolrDocumentNew:
     '''
     Defines the Solr Document objects that the crawler will crawl. Solr
@@ -28,6 +46,14 @@ uuid = '9095FCBB-35A8-452E-64A3-B8D52A0B2DB3'
 sd_obj = SolrDocumentNew(uuid)
 sd_obj.make_solr_doc()
 sd_obj.fields
+
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+# Example with missing predicate
+uuid = '775b5d81-81ae-45ee-b622-6f9257c4bedd'
+sd_obj = SolrDocumentNew(uuid)
+sd_obj.make_solr_doc()
+sd_obj.fields
+
 
 # Example coin (subjects)
 uuid_a = 'BB35B081-FD20-4339-67F4-00DB99079338'
@@ -611,7 +637,7 @@ sd_obj_k.fields
             return None
         for category in self.oc_item.json_ld['category']:
             # get the parent entities of the current category
-            raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            raw_hiearchy_items = general_get_jsonldish_entity_parents(
                 category
             )
             solr_field_name = None
@@ -695,7 +721,7 @@ sd_obj_k.fields
             self._add_solr_fields_for_linked_media_documents(val_obj)
             # Now add the val_obj item (and parents) to the
             # solr document.
-            hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            hiearchy_items = general_get_jsonldish_entity_parents(
                 val_obj['id']
             )
             self._add_object_value_hiearchy(solr_field_name, hiearchy_items)
@@ -821,7 +847,7 @@ sd_obj_k.fields
         else:
             # Get any hiearchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hiearchy.
-            hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            hiearchy_items = general_get_jsonldish_entity_parents(
                 predicate['uuid']
             )
         # This adds the parents of the predicate to the solr document,
@@ -932,7 +958,7 @@ sd_obj_k.fields
         for assertion in inferred_assertions:
             # Get any hiearchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hiearchy.
-            pred_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            pred_hiearchy_items = general_get_jsonldish_entity_parents(
                 assertion['id']
             )
             # This adds the parents of the link data predicate to the solr document,
@@ -990,7 +1016,7 @@ sd_obj_k.fields
             for obj in self.oc_item.json_ld[equiv_uri]:
                 # Add linked data object.
                 self._add_object_uri(obj.get('id'))
-                hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                hiearchy_items = general_get_jsonldish_entity_parents(
                     obj['id']
                 )
                 self._add_object_value_hiearchy(
@@ -1015,7 +1041,7 @@ sd_obj_k.fields
                 continue
             # Get any hiearchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hiearchy.
-            pred_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            pred_hiearchy_items = general_get_jsonldish_entity_parents(
                 pred_uri
             )
             # This adds the parents of the link data predicate to the solr document,
@@ -1038,7 +1064,7 @@ sd_obj_k.fields
                 
                 # Get the hierarchy for the objects of this equivalence
                 # relationship.
-                hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
+                hiearchy_items = general_get_jsonldish_entity_parents(
                     obj['id']
                 )
                 self._add_object_value_hiearchy(
