@@ -34,6 +34,14 @@ def general_get_jsonldish_entity_parents(identifier, add_original=True):
     )
     return raw_hiearchy_items
 
+def get_id(dict_obj, id_keys=['id', '@id']):
+    """Gets an ID from a dictionary object."""
+    # NOTE: this uses a ranked ordered list of keys
+    for id_key in id_keys:
+        if id_key in dict_obj:
+            return dict_obj[id_key]
+    return None
+
 
 class SolrDocumentNew:
     '''
@@ -50,6 +58,13 @@ sd_obj.fields
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 # Example with missing predicate
 uuid = '775b5d81-81ae-45ee-b622-6f9257c4bedd'
+sd_obj = SolrDocumentNew(uuid)
+sd_obj.make_solr_doc()
+sd_obj.fields
+
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+# Example with missing predicate
+uuid = 'EC4E750C-BEF8-46BE-0398-CB4C6464DF71'
 sd_obj = SolrDocumentNew(uuid)
 sd_obj.make_solr_doc()
 sd_obj.fields
@@ -414,7 +429,7 @@ sd_obj_k.fields
             act_solr_value = self._concat_solr_string_value(
                 proj['slug'],
                 'id',
-                proj['id'],
+                get_id(proj),
                 proj['label']
             )
             # The self.ALL_PROJECT_SOLR takes values for
@@ -488,7 +503,7 @@ sd_obj_k.fields
         # Iterate through the spatial context items.
         for index, context in enumerate(context_items):
             context_uuid = self._get_oc_item_uuid(
-                context['id'],
+                get_id(context),
                 match_type='subjects'
             )
             if not context_uuid:
@@ -603,7 +618,7 @@ sd_obj_k.fields
             act_solr_value = self._concat_solr_string_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
-                item['id'],
+                get_id(item),
                 item['label']
             )
             # Add to the solr document the object value to the
@@ -692,7 +707,7 @@ sd_obj_k.fields
 
     def _add_solr_fields_for_linked_media_documents(self, val_obj):
         """Adds standard solr fields relating to media and document links."""
-        val_obj_oc_type = self._get_oc_item_type(val_obj['id'])
+        val_obj_oc_type = self._get_oc_item_type(get_id(val_obj))
         if val_obj_oc_type == 'media':
             if 'image' in val_obj['type']:
                 self.fields['image_media_count'] += 1
@@ -715,14 +730,14 @@ sd_obj_k.fields
         """
         for val_obj in pred_value_objects:
             # Add subject uuid joins, if applicable.
-            self._add_joined_subject_uuid(val_obj['id'])
+            self._add_joined_subject_uuid(get_id(val_obj))
             # Add standard solr fields that summarize linked media,
             # documents.
             self._add_solr_fields_for_linked_media_documents(val_obj)
             # Now add the val_obj item (and parents) to the
             # solr document.
             hiearchy_items = general_get_jsonldish_entity_parents(
-                val_obj['id']
+                get_id(val_obj)
             )
             self._add_object_value_hiearchy(solr_field_name, hiearchy_items)
             # A little stying for different value objects in the text field.
@@ -804,7 +819,7 @@ sd_obj_k.fields
             act_solr_value = self._concat_solr_string_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
-                item['id'],
+                get_id(item),
                 item['label']
             )
             
@@ -892,7 +907,7 @@ sd_obj_k.fields
         for val_obj in pred_value_objects:
             self.fields['text'] += str(val_obj['label']) + ' '
             # Add subject uuid joins, if applicable.
-            self._add_joined_subject_uuid(val_obj['id'])
+            self._add_joined_subject_uuid(get_id(val_obj))
             # Do updates, specific to the Open Context item_type,
             # to the solr document.
             self._add_solr_fields_for_linked_media_documents(val_obj)
@@ -959,7 +974,7 @@ sd_obj_k.fields
             # Get any hiearchy that may exist for the predicate. The
             # current predicate will be the LAST item in this hiearchy.
             pred_hiearchy_items = general_get_jsonldish_entity_parents(
-                assertion['id']
+                get_id(assertion)
             )
             # This adds the parents of the link data predicate to the solr document,
             # starting at the self.ROOT_LINK_DATA_SOLR
@@ -1017,7 +1032,7 @@ sd_obj_k.fields
                 # Add linked data object.
                 self._add_object_uri(obj.get('id'))
                 hiearchy_items = general_get_jsonldish_entity_parents(
-                    obj['id']
+                    get_id(obj)
                 )
                 self._add_object_value_hiearchy(
                     self.EQUIV_LD_SOLR,
@@ -1065,7 +1080,7 @@ sd_obj_k.fields
                 # Get the hierarchy for the objects of this equivalence
                 # relationship.
                 hiearchy_items = general_get_jsonldish_entity_parents(
-                    obj['id']
+                    get_id(obj)
                 )
                 self._add_object_value_hiearchy(
                     solr_field_name,
@@ -1086,7 +1101,7 @@ sd_obj_k.fields
             return None
         index_metas = []
         for meta in self.oc_item.json_ld[dc_predicate]:
-            if (not meta['id'].startswith('http') and
+            if (not get_id(meta).startswith('http') and
                 meta.get('rdfs:isDefinedBy')):
                 meta['id'] = meta['rdfs:isDefinedBy']
             if dc_predicate == 'foaf:depection':
@@ -1105,7 +1120,7 @@ sd_obj_k.fields
                 continue
             if self.oc_item.manifest.item_type == 'projects' or add_object_uris:
                 # We need to add the object_uri for easy indexing.
-                self._add_object_uri(meta['id'])
+                self._add_object_uri(get_id(meta))
             # Add to the list of items to actually index
             index_metas.append(meta)
         if not index_metas:
@@ -1502,7 +1517,7 @@ sd_obj_k.fields
         context_list = self._get_context_path_items()
         if context_list:
             subject_uuid = self._get_oc_item_uuid(
-                context_list[-1]['id'],
+                get_id(context_list[-1]),
                 match_type='subjects'
             )
             rel_subject_uuids.append(subject_uuid)
