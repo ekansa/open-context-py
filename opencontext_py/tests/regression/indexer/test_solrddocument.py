@@ -153,10 +153,17 @@ def test_projects_is_sub_project():
 
 def test_random_items(random_sample_items):
     """Tests solr_document creation a random sample of entities from each project, item_type, and class"""
+    num_tests = len(random_sample_items)
+    i = 0
     for project_uuid, item_type, class_uri, uuid in random_sample_items:
-        logger.info('Test of project_uuid="{}", item_type="{}", class_uri="{}", uuid="{}"'.format(project_uuid, item_type, class_uri, uuid))
+        i += 1
+        logger.info(
+            'Test {}/{}: project_uuid="{}", item_type="{}", class_uri="{}", uuid="{}"'.format(
+               i, num_tests, project_uuid, item_type, class_uri, uuid)
+        )
         sd_obj = SolrDocument(uuid)
         sd_obj.make_solr_doc()
+        logger.info('Number of solr fields made: {}'.format(len(sd_obj.fields)))
         assert sd_obj.fields['uuid'] == uuid
         assert sd_obj.fields['item_type'] == item_type
         if item_type != 'subjects':
