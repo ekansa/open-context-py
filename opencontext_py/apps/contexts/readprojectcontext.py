@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -21,6 +22,9 @@ rpg = ReadProjectContextVocabGraph(oc_item.proj_context_json_ld)
 ia = rpg.infer_assertions_for_item_json_ld(oc_item.json_ld)
 
 """
+
+logger = logging.getLogger("tests-regression-logger")
+
 
 class ReadProjectContextVocabGraph():
     """ Methods to read the project context vocabulary graph """
@@ -74,14 +78,17 @@ class ReadProjectContextVocabGraph():
     
     def __init__(self, proj_context_json_ld=None):
         self.context = None
-        self.graph = self.GLOBAL_VOCAB_GRAPH
+        self.graph = None
         self.fail_on_missing_entities = False
         if not isinstance(proj_context_json_ld, dict):
             return None
         if '@context' in proj_context_json_ld:
             self.context = proj_context_json_ld['@context']
         if '@graph' in proj_context_json_ld:
-            self.graph += proj_context_json_ld['@graph']
+            self.graph = self.GLOBAL_VOCAB_GRAPH + proj_context_json_ld['@graph']
+        else:
+            self.graph = self.GLOBAL_VOCAB_GRAPH
+        logger.info('Read project graph size: {}'.format(len(self.graph)))
     
     def lookup_predicate(self, id):
         """looks up an Open Context predicate by an identifier
@@ -103,18 +110,12 @@ class ReadProjectContextVocabGraph():
            by looking up the a type from how it is used as
            the object of a descriptive predicate in an observation
         """
-        output = type_obj
         type_ids = self.get_id_list_for_g_obj(type_obj)
-        found = False
         for type_id in type_ids:
-            if found:
-                break
             found_type_obj = self.lookup_type(type_id)
             if isinstance(found_type_obj, dict):
-                found = True
-                output = found_type_obj
-                break
-        return output
+                return found_type_obj
+        return type_obj
     
     def lookup_oc_descriptor(self, id, item_type):
         """looks up a predicate, or a type by an identifier
