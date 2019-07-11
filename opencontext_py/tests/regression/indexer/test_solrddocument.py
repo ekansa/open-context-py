@@ -152,7 +152,11 @@ def test_projects_is_sub_project():
 
 
 def test_random_items(random_sample_items):
-    """Tests solr_document creation a random sample of entities from each project, item_type, and class"""
+    """Tests solr_document creation a random sample of entities
+       from each project, item_type, and class
+    """
+    # NOTE: This test, as currently configured requires about 45 minutes or so
+    # to fully execute.
     num_tests = len(random_sample_items)
     i = 0
     for project_uuid, item_type, class_uri, uuid in random_sample_items:
