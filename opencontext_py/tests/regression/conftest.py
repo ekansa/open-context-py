@@ -18,7 +18,7 @@ def django_db_setup():
 
 @pytest.fixture
 def random_sample_items(db):
-    """Gets a random sample of items, from differernt projects, item_types, and classes"""
+    """Gets a random sample of items, from different projects, item_types, and classes"""
     # NOTE: This iterates through each project, item_types, and class_uri
     # to randomly select representative uuids for testing. Because it selects
     # uuids from such wide variety of sources and types, it helps in testing
@@ -60,7 +60,8 @@ def random_sample_items(db):
 
 @pytest.fixture
 def random_sample_items_by_predicate(db):
-    """Gets a random sample of items, from differernt projects, item_types, and classes"""
+    """Gets a random sample of items, from different projects and use of different predicates"""
+    # NOTE: I haven't actually tested this function yet. This is still in development.
     test_args = []
     all_test_uuids = set()
     combos = set(
