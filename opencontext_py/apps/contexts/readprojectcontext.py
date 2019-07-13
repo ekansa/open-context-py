@@ -1,7 +1,9 @@
 import logging
 from django.conf import settings
+from django.core.cache import caches
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -77,6 +79,7 @@ class ReadProjectContextVocabGraph():
     ]
     
     def __init__(self, proj_context_json_ld=None):
+        self.m_cache = MemoryCache()
         self.context = None
         self.graph = None
         self.fail_on_missing_entities = False
@@ -121,9 +124,15 @@ class ReadProjectContextVocabGraph():
         """looks up a predicate, or a type by an identifier
            (slud id, uri, slug, or uuid)
         """
-        output = None
-        if (isinstance(self.graph, list) and
-            isinstance(id, str)):
+        cache_key = self.m_cache.make_cache_key(
+            'lookup_oc_descriptor_{}'.format(item_type),
+            id
+        )
+        output = self.m_cache.get_cache_object(cache_key)
+        if (output is None
+            and isinstance(self.graph, list)
+            and isinstance(id, str)
+        ):
             for g_obj in self.graph:
                 id_list = self.get_id_list_for_g_obj(g_obj)
                 if not id in id_list:
@@ -132,6 +141,8 @@ class ReadProjectContextVocabGraph():
                 if item_type == 'predicates' and '@type' not in g_obj:
                     output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
                     break
+            if output:
+                self.m_cache.save_cache_object(cache_key, output)
         if self.fail_on_missing_entities and not output:
             raise RuntimeError('Cannot find {}, item_type: {}'.format(id, item_type))
         return output
