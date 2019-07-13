@@ -10,7 +10,8 @@ from django.utils import timezone
 class VersionMetadata(models.Model):
 
     # There must be a relationship with Revision called `revision`.
-    revision = models.ForeignKey(Revision, null=True)  # allow nulls so as to record deletes also
+    revision = models.ForeignKey(Revision, on_delete=models.CASCADE, 
+        null=True)  # allow nulls so as to record deletes also
     project_uuid = models.CharField(max_length=50, db_index=True)
     uuid = models.CharField(max_length=200, db_index=True, null=True)
     item_type = models.CharField(max_length=50, null=True)
