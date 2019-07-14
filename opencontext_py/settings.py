@@ -173,6 +173,10 @@ INSTALLED_APPS = (
     'opencontext_py.apps.ocitems.subjects',
     'opencontext_py.apps.ocitems.ocitem',
     'opencontext_py.apps.ocitems.manifest',
+    
+    # Save this for later.
+    # 'opencontext_py.apps.ocitems.newmanifest',
+    
     'opencontext_py.apps.ocitems.assertions',
     'opencontext_py.apps.ocitems.events',
     'opencontext_py.apps.ocitems.geospace',
@@ -484,7 +488,20 @@ if 'ZENODO_SANDBOX_TOKEN' in secrets:
     # API access / credential / authorization token for Zendo SANDBOX (testing) requests
     ZENODO_SANDBOX_TOKEN = get_secret('ZENODO_SANDBOX_TOKEN')
 else:
-    ZENODO_SANDBOX_TOKEN = None  
+    ZENODO_SANDBOX_TOKEN = None
+    
+if 'ORCID_CLIENT_ID' in secrets:
+    # ORCID service client ID.
+    ORCID_CLIENT_ID = get_secret('ORCID_CLIENT_ID')
+else:
+    ORCID_CLIENT_ID = None
+
+if 'ORCID_CLIENT_SECRET' in secrets:
+    # ORCID client secret, needed to access ORCID apis
+    ORCID_CLIENT_SECRET = get_secret('ORCID_CLIENT_SECRET')
+else:
+    ORCID_CLIENT_SECRET = None
+
 
 if 'CORS_OK_DOMAINS' in secrets:
     # password for the internet archive
