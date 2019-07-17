@@ -12,10 +12,11 @@
     postgresql_user: postgres
     postgresql_group: postgres
     postgresql_databases:
-      - name: opencontextdb
+      # - name: opencontextdb
+      - name: "{{SECRET_KEYS.DATABASES_NAME}}"
     postgresql_users:
-      - name: opencontextuser
-        password: opencontextpw
+      - name: "{{SECRET_KEYS.DATABASES_USER}}"
+        password: "{{SECRET_KEYS.DATABASES_PASSWORD}}"
 
     # https://github.com/whiskerlabs/ansible-python
     python_version: 3.7.3
@@ -26,8 +27,8 @@
     # python_virtualenv_version: 16.0.0
 
     # git parameters
-    git_user_name: "Raymond Yee"
-    git_user_email: "raymond.yee@gmail.com"
+    git_user_name: ""
+    git_user_email: ""
 
 
     # python_setuptools_version: 40.2.0
@@ -42,6 +43,20 @@
 
   gather_facts: False
   pre_tasks:
+
+    - name: Include vars of extra.yml
+      include_vars:
+        file: extra.yml
+      ignore_errors: yes
+
+    - name: log oc_install_dir
+      debug: msg="oc_install_dir {{oc_install_dir}}"
+
+    - name: Display all variables/facts known for a host
+      debug:
+        var: hostvars[inventory_hostname]
+      tags: debug_info
+
     - name: Install python for Ansible
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
       register: output
