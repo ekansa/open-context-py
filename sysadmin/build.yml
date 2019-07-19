@@ -19,7 +19,7 @@
         password: "{{SECRET_KEYS.DATABASES_PASSWORD}}"
 
     # https://github.com/whiskerlabs/ansible-python
-    python_version: 3.7.3
+    python_version: 3.7.4
     python_bin: /usr/bin
     python_pip_version: 19.1.1
     python_upgrade_packaging_tools: false
@@ -119,6 +119,7 @@
         - libpq-dev
         - liblapack-dev
         - libblas-dev
+        - liblzma-dev
         - make
         - gcc
         - libpcre3
