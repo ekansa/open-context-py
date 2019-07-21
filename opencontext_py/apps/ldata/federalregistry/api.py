@@ -21,7 +21,7 @@ fed_api = FederalRegistryAPI()
 fed_api.get_cache_keyword_searches()
 
     """
-    API_BASE_URL = 'http://www.federalregister.gov/api/v1/documents.json'
+    API_BASE_URL = 'https://www.federalregister.gov/api/v1/documents.json'
     SLEEP_TIME = .5
 
     def __init__(self):
@@ -30,7 +30,7 @@ fed_api.get_cache_keyword_searches()
         self.results = False
         self.best_match = False
         self.html_url = False
-        self.cache_batch_prefix = '2016-12-12'
+        self.cache_batch_prefix = '2019-07-20'
         self.delay_before_request = self.SLEEP_TIME
         self.root_act_dir = settings.STATIC_IMPORTS_ROOT
         self.working_search_dir = 'federal-reg-search'
@@ -43,24 +43,68 @@ fed_api.get_cache_keyword_searches()
             'archeological',
             'archaeology',
             'archaeological',
-            'NAGPRA'
+            'NAGPRA',
+            'cultural',
+            'heritage',
         ]
         self.keyword_bb_list = [
-            'Illinois',
-            'Georgia',
-            'Virginia',
-            'Indiana',
-            'Florida',
-            'Missouri',
-            'South Carolina',
-            'Alabama',
-            'Iowa',
-            'Louisiana',
-            'Kentucky'
+            'Alabama', 
+            'Alaska', 
+            'Arizona', 
+            'Arkansas', 
+            'California', 
+            'Colorado', 
+            'Connecticut', 
+            'Delaware', 
+            'Florida', 
+            'Georgia', 
+            'Idaho', 
+            'Illinois', 
+            'Indiana', 
+            'Iowa', 
+            'Kansas', 
+            'Kentucky', 
+            'Louisiana', 
+            'Maine', 
+            'Maryland', 
+            'Massachusetts', 
+            'Michigan', 
+            'Minnesota', 
+            'Mississippi', 
+            'Missouri', 
+            'Montana', 
+            'Nebraska', 
+            'Nevada', 
+            'New Hampshire', 
+            'New Jersey', 
+            'New Mexico', 
+            'New York', 
+            'North Carolina', 
+            'North Dakota', 
+            'Ohio', 
+            'Oklahoma', 
+            'Oregon', 
+            'Pennsylvania', 
+            'Rhode Island', 
+            'South Carolina', 
+            'South Dakota', 
+            'Tennessee', 
+            'Texas', 
+            'Texas', 
+            'Utah', 
+            'Vermont', 
+            'Virginia', 
+            'Virginia', 
+            'Washington', 
+            'West Virginia', 
+            'Wisconsin', 
+            'Wyoming', 
         ]
         self.keyword_b_list = [
            'site',
-           'sites'
+           'sites',
+           'place',
+           'places',
         ]
 
     def get_list_cached_keyword_searches(self):
