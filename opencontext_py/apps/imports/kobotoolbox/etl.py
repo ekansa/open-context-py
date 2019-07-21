@@ -75,7 +75,7 @@ from opencontext_py.apps.imports.kobotoolbox.etl import (
     update_open_context_db,
     update_link_rel_open_context_db
 )
-make_kobo_to_open_context_etl_files()
+# make_kobo_to_open_context_etl_files()
 update_open_context_db()
 update_link_rel_open_context_db()
 
