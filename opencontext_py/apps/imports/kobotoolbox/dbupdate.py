@@ -1261,7 +1261,8 @@ def load_attribute_df_into_importer(
     source_id,
     source_type,
     source_label,
-    df
+    df,
+    attribute_col_configs=DF_ATTRIBUTE_CONFIGS,
 ):
     """Loads a dataframe with attribute data into the importer"""
     # Purge any data from a prior import attempt from this source.
@@ -1286,7 +1287,8 @@ def load_attribute_df_into_importer(
         project_uuid,
         source_id,
         source_type,
-        df
+        df,
+        attribute_col_configs=attribute_col_configs,
     )
 
 def load_attribute_data_into_oc(
@@ -1301,7 +1303,7 @@ def load_attribute_data_into_oc(
     print('Start import into Open Context: {}'.format(source_id))
     while not import_done:
         fi = FinalizeImport(source_id)
-        fi.batch_size = (settings.IMPORT_BATCH_SIZE * 10)
+        fi.batch_size = (settings.IMPORT_BATCH_SIZE * 10000)
         output = fi.process_current_batch()
         import_done = fi.done
     print('Completed import into Open Context: {}'.format(source_id))
