@@ -129,10 +129,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "--limit=opencontext_predb, 127.0.0.1",
           "-e vname=opencontext_predb",
           "-e hostname=devv", 
-          "-e branch=django_update",
+          "-e branch="+settings['opencontext_predb_vm']['repo_branch'],
           "-e install_db=false",
           "-e do_migrate=false", 
-          "-e install_solr_data=true",
+          "-e install_solr_data=false",
           # "--start-at-task=restart_here"
       ]
     end
@@ -150,28 +150,28 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # GCE
 
     node.vm.provider :google do |google, override|
-      google.google_project_id = "opencontext2018"
+      google.google_project_id = settings['opencontext_predb_vm']['google_provider']['project_id']
       #google.google_client_email = "raymond.yee@gmail.com"
       google.google_json_key_location = settings['google_compute']['json_key_location']
       # Make sure to set this to trigger the zone_config
-      google.zone = "us-central1-f"
+      google.zone = settings['opencontext_predb_vm']['google_provider']['zone']
 
       google.zone_config "us-central1-f" do |zone1f|
-          zone1f.name = "oc-stretch20190717-predb"
-          zone1f.image = "debian-9-stretch-v20190618"
+          zone1f.name = settings['opencontext_predb_vm']['google_provider']['name']
+          zone1f.image = settings['opencontext_predb_vm']['google_provider']['image']
           #zone1f.machine_type = "f1-micro"
-          zone1f.machine_type = "n1-standard-2"
-          zone1f.disk_size = 100
-          zone1f.zone = "us-central1-f"
+          zone1f.machine_type = settings['opencontext_predb_vm']['google_provider']['machine_type']
+          zone1f.disk_size = settings['opencontext_predb_vm']['google_provider']['disk_size']
+          zone1f.zone = settings['opencontext_predb_vm']['google_provider']['zone']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
           # zone1f.tags = ['web', 'app1']
       end
       
-      override.vm.box = "gce"
+      override.vm.box = settings['opencontext_predb_vm']['google_provider']['vm_box']
       # override.ssh.username = "raymond_yee_gmail_com"
-      override.ssh.username = "raymond.yee"
-      override.ssh.private_key_path = "~/.ssh/id_rsa"
+      override.ssh.username = settings['opencontext_predb_vm']['google_provider']['ssh_username']
+      override.ssh.private_key_path = settings['opencontext_predb_vm']['google_provider']['ssh_private_key_path']
     end
       
   
