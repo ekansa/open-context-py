@@ -89,9 +89,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           zone1f.machine_type = settings['opencontext_vm']['google_provider']['machine_type']
           zone1f.disk_size = settings['opencontext_vm']['google_provider']['disk_size']
           zone1f.zone = settings['opencontext_vm']['google_provider']['zone']
+          zone1f.tags = settings['opencontext_vm']['google_provider']['tags']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
-          # zone1f.tags = ['web', 'app1']
       end
       
       override.vm.box = settings['opencontext_vm']['google_provider']['vm_box']
@@ -163,6 +163,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           zone1f.machine_type = settings['opencontext_predb_vm']['google_provider']['machine_type']
           zone1f.disk_size = settings['opencontext_predb_vm']['google_provider']['disk_size']
           zone1f.zone = settings['opencontext_predb_vm']['google_provider']['zone']
+          zone1f.tags = settings['opencontext_predb_vm']['google_provider']['tags']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
           # zone1f.tags = ['web', 'app1']
