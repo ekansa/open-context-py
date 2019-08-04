@@ -89,9 +89,9 @@ def add_global_lat_lon_columns(df, grid_x_col, grid_y_col, default_site_proj='po
     for i, row in df[coord_indx].iterrows():
         reproj = ReprojectUtilities()
         site_proj = default_site_proj
-        if 'site' in row and row['site'].startswith('Vescovado'):
+        if row.get('site') and row['site'].startswith('Vescovado'):
             site_proj = 'vescovado-di-murlo'
-        if row['label'].startswith('VdM'):
+        if row.get('label') and row['label'].startswith('VdM'):
             site_proj = 'vescovado-di-murlo'
         if site_proj in ReprojectUtilities.MURLO_PRE_TRANSFORMS:
             # A Murlo Project local coordinate system

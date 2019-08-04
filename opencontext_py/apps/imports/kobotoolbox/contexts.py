@@ -92,6 +92,11 @@ UNIT_LABEL_REPLACES = [
       ('tr7', 'Tesoro Rectangle 7'),
 ]
 
+TRENCH_UNIT_REPLACES = {
+    'SF3 2008': '2008, ID:601',
+    'SF4 2008': '2008, ID:602',
+}
+
 # Override the general class_uri with a tuple of
 # column - value -> class_uri mappings
 COL_CLASS_URI_MAPPINGS = {
@@ -258,6 +263,158 @@ PRELOAD_CONTEXTS = [
         'class_uri': 'oc-gen:cat-trench',
         'label': 'Tesoro 93',
     },
+    # PC 2019
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro South Flank',
+        'class_uri': 'oc-gen:cat-area',
+        'label': 'Tesoro South Flank',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro South Flank',
+        'trench_name': 'Tesoro 22',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro South Flank 3',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro South Flank',
+        'trench_name': 'Tesoro 22',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro South Flank 4',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 22',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 22',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 26',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 26',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 27',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 27',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 66',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 667',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 94',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 94',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 95',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 95',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 96',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 96',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 97',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 97',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 98',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 98',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 99',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 99',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 100',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 100',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 101',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 101',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 102',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 102',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 103',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 103',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 104',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 104',
+    },
+    {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 105',
+        'class_uri': 'oc-gen:cat-trench',
+        'label': 'Tesoro 105',
+    },
 ]
 
 PARENT_CONTEXTS = {
@@ -297,7 +454,115 @@ PARENT_CONTEXTS = {
         'area': 'Tesoro',
         'trench_name': 'Tesoro 93',
     },
-    
+    # PC 2019
+    'SF3': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro South Flank',
+        'trench_name': 'Tesoro South Flank 3',
+    },
+    'SF4': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro South Flank',
+        'trench_name': 'Tesoro South Flank 4',
+    },
+    'T22': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 22',
+    },
+    'T26': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 26',
+    },
+    'T27': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 27',
+    },
+    'T66': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 66',
+    },
+    'T94': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 94',
+    },
+    'T95': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 95',
+    },
+    'T96': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 96',
+    },
+    'T97': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 97',
+    },
+    'T98': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 98',
+    },
+    'T99': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 99',
+    },
+    'T100': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 100',
+    },
+    'T101': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 101',
+    },
+    'T102': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 102',
+    },
+    'T103': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 103',
+    },
+    'T104': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 104',
+    },
+    'T105': {
+        'region': 'Italy',
+        'site':'Poggio Civitate',
+        'area': 'Tesoro',
+        'trench_name': 'Tesoro 105',
+    },
 }
 
 def get_parent_context(context_key, parent_type, config=None):
@@ -309,15 +574,17 @@ def get_parent_context(context_key, parent_type, config=None):
         return None
     return key_dict.get(parent_type)
 
-def make_trench_year_unit(trench_id, year):
+def make_trench_year_unit(trench_id, year, replaces=TRENCH_UNIT_REPLACES):
     """Makes a trench_year excavation unit."""
     trench_id = trench_id.replace('-', '')
-    return '{} {}'.format(trench_id, year)
+    unit = '{} {}'.format(trench_id, year)
+    return replaces.get(unit, unit)
 
-def make_trench_year_unit_for_row(row):
+def make_trench_year_unit_for_row(row, replaces=TRENCH_UNIT_REPLACES):
     """Makes a trench_year excavation unit."""
     row['Trench ID'] = row['Trench ID'].replace('-', '')
-    return '{} {}'.format(row['Trench ID'], row['Year'])
+    unit = '{} {}'.format(row['Trench ID'], row['Year'])
+    return replaces.get(unit, unit)
 
 def prepare_trench_contexts(
     df,

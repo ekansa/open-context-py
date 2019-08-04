@@ -75,7 +75,7 @@ from opencontext_py.apps.imports.kobotoolbox.etl import (
     update_open_context_db,
     update_link_rel_open_context_db
 )
-# make_kobo_to_open_context_etl_files()
+make_kobo_to_open_context_etl_files()
 update_open_context_db()
 update_link_rel_open_context_db()
 
@@ -96,14 +96,15 @@ source_ids = {
 
 """
 
-ETL_LABEL = 'PC-2018'
+ETL_YEAR = 2019
+ETL_LABEL = 'PC-{}'.format(ETL_YEAR)
 PROJECT_UUID = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-SOURCE_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/'
-DESTINATION_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-2018/2018-oc-etl/'
-SOURCE_ID_PREFIX = 'kobo-pc-2018-'
-MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/2018-media/'
-MEDIA_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
-OC_TRANSFORMED_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
+SOURCE_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-{}/'.format(ETL_YEAR)
+DESTINATION_PATH = settings.STATIC_IMPORTS_ROOT +  'pc-{}/{}-oc-etl/'.format(ETL_YEAR, ETL_YEAR)
+SOURCE_ID_PREFIX = 'kobo-pc-{}-'.format(ETL_YEAR)
+MEDIA_BASE_URL = 'https://artiraq.org/static/opencontext/poggio-civitate/{}-media/'.format(ETL_YEAR)
+MEDIA_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-{}/attachments'.format(ETL_YEAR)
+OC_TRANSFORMED_FILES_PATH = settings.STATIC_IMPORTS_ROOT + 'pc-{}/{}-media'.format(ETL_YEAR, ETL_YEAR)
 
 FILENAME_ALL_CONTEXTS = 'all-contexts-subjects.csv'
 FILENAME_ALL_MEDIA = 'all-media-files.csv'
@@ -185,7 +186,7 @@ def add_context_subjects_label_class_uri(df, all_contexts_df):
 
 def make_kobo_to_open_context_etl_files(
     project_uuid=PROJECT_UUID,
-    year=2018,
+    year=ETL_YEAR,
     source_path=SOURCE_PATH,
     destination_path=DESTINATION_PATH,
     base_url=MEDIA_BASE_URL,

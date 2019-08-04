@@ -60,7 +60,8 @@ class ImportRecords():
     def save_dataframe_records(
         self,
         source_id,
-        df
+        df,
+        do_valiate=True
     ):
         """ Loads a schema from refine, saves it in the database """
         self.source_id = source_id
@@ -71,10 +72,11 @@ class ImportRecords():
                 self.source_id
             )
         )
-        bulk_list = []
+
         cols = df.columns.tolist()
         for i, row in df.iterrows():
             row_num = i + 1
+            bulk_list = []
             for field_num, col in enumerate(cols, 1):
                 cell_value = row[col]
                 if cell_value in [np.nan, None, 'nan']:
@@ -96,11 +98,28 @@ class ImportRecords():
                 imp_cell.cell_ok = True  # default to Import OK
                 imp_cell.record = cell_value
                 bulk_list.append(imp_cell)
-        ImportCell.objects.bulk_create(bulk_list)
-        bulk_list = None
+            # Now bulk create the list of records in this row
+            ImportCell.objects.bulk_create(bulk_list)
+            bulk_list = None
+        df_len = len(df.index)
         print('FINISHED import of {} records from: {}'.format(
                 len(df.index),
                 self.source_id
             )
         )
+        if not do_valiate:
+            return row_num
+        for field_num, col in enumerate(cols, 1):
+            rec_count = ImportCell.objects.filter(
+                source_id=self.source_id,
+                field_num=field_num
+            ).count()
+            print('Imported {} [{}]: {}, expected {}'.format(
+                    col,
+                    field_num,
+                    rec_count,
+                    df_len
+                )
+            )
+            assert rec_count == df_len
         return row_num

@@ -44,12 +44,12 @@ from opencontext_py.apps.imports.kobotoolbox.utilities import (
     lookup_manifest_uuid
 )
 
-files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/attachments'
-excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2018/'
-oc_media_root_dir = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-media'
-all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2018/2018-oc-etl/all-media-files.csv'
+files_path = settings.STATIC_IMPORTS_ROOT + 'pc-2019/attachments'
+excels_filepath = settings.STATIC_IMPORTS_ROOT + 'pc-2019/'
+oc_media_root_dir = settings.STATIC_IMPORTS_ROOT + 'pc-2019/2019-media'
+all_media_csv_path = settings.STATIC_IMPORTS_ROOT + 'pc-2019/2019-oc-etl/all-media-files.csv'
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-base_url = 'https://artiraq.org/static/opencontext/poggio-civitate/2018-media/'
+base_url = 'https://artiraq.org/static/opencontext/poggio-civitate/2019-media/'
 
 df_media = make_all_export_media_df(excels_filepath)
 df_files = make_directory_files_df(files_path)

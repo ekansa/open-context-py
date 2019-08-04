@@ -964,6 +964,11 @@ LINK_REL_PRED_MAPPINGS = {
     'Related Open Locus': ('b0149b7c-88c8-4913-b6c8-81375239e71f', 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Related Small Find': (Assertion.PREDICATES_LINK, 'f20e9e2e-246f-4421-b1dd-e31e8b58805c'),
     'Initially documented as': ('d58724ee-ecb9-4c2c-87a1-02f853edc2f2', '17012df0-ef2f-41a8-b8d6-ddf5b6687a7e'),
+    
+    # Added for PC 2019
+    'Other relation': (Assertion.PREDICATES_LINK, Assertion.PREDICATES_LINK),
+    'Comparanda, based on form': ('46037eb4-c4b7-432b-bebb-500aff0e4fe6', '46037eb4-c4b7-432b-bebb-500aff0e4fe6'),
+    'Comparanda, based on motif': ('1c5a1fca-0853-4612-9663-f908d9c081b2', '1c5a1fca-0853-4612-9663-f908d9c081b2'),
 }
 
 
@@ -1299,13 +1304,24 @@ def load_attribute_data_into_oc(
     if not fi.project_uuid:
         raise RuntimeError('Problem with import source: {}'.format(source_id))
     fi.reset_state()
+    row_count = fi.row_count
     import_done = False
     print('Start import into Open Context: {}'.format(source_id))
     while not import_done:
+        #fi = FinalizeImport(source_id, (settings.IMPORT_BATCH_SIZE + row_count))
         fi = FinalizeImport(source_id)
-        fi.batch_size = (settings.IMPORT_BATCH_SIZE * 10000)
         output = fi.process_current_batch()
-        import_done = fi.done
+        for key, val in output.items():
+            if key == 'details':
+                continue
+            print('{} -> {}: {}'.format(source_id, key, val))
+        import_done = output['done']
+        continue
+        print('Number of {} assertions: {}'.format(
+                source_id,
+                Assertion.objects.filter(project_uuid=fi.project_uuid, source_id=source_id).count()
+            )
+        )
     print('Completed import into Open Context: {}'.format(source_id))
 
 
