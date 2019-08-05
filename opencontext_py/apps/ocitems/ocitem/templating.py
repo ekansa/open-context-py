@@ -509,6 +509,10 @@ class TemplateItem():
                 if self.project.slug is not False:
                     self.predicate_query_link += '&proj=' + self.project.slug
                     self.predicate_query_json += '&proj=' + self.project.slug
+                if self.project.parent_project_slug:
+                    # || url encoded.
+                    self.predicate_query_link += '%7C%7C' + self.project.parent_project_slug
+                    self.predicate_query_json += '%7C%7C' + self.project.parent_project_slug
         elif self.act_nav == 'types':
             if 'skos:related' in json_ld:
                 if isinstance(json_ld['skos:related'], list):
@@ -520,6 +524,10 @@ class TemplateItem():
                         if self.project.slug is not False:
                             self.type_query_link += '&proj=' + self.project.slug
                             self.type_query_json += '&proj=' + self.project.slug
+                        if self.project.parent_project_slug:
+                            # || url encoded.
+                            self.type_query_link += '%7C%7C' + self.project.parent_project_slug
+                            self.type_query_json += '%7C%7C' + self.project.parent_project_slug
 
     def create_project_hero(self, json_ld):
         """ creates a link for displaying a hero image
@@ -1155,6 +1163,7 @@ class Project():
         self.slug = False
         self.label = False
         self.parent_project_uuid = False
+        self.parent_project_slug = False
         self.edit_status = False
         self.item_type = False
         self.view_authorized = False
@@ -1177,6 +1186,13 @@ class Project():
                             project = ModProject.objects.get(uuid=self.uuid)
                             self.edit_status = project.edit_status
                             self.parent_project_uuid = project.project_uuid
+                            parent_proj = None
+                            if self.parent_project_uuid != self.uuid:
+                                parent_proj = Manifest.objects.filter(
+                                    uuid=self.parent_project_uuid
+                                ).first()
+                            if parent_proj:
+                                self.parent_project_slug = parent_proj.slug
                             self.get_proj_geo_metadata(project)
                         except ModProject.DoesNotExist:
                             project = False
