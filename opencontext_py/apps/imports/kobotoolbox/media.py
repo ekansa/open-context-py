@@ -171,6 +171,8 @@ RELS_RENAME_COLS = {
     '_submission__uuid': 'subject_uuid',
     'Related Identifiers/Add related identifier/Related ID': 'object__Related ID',
     'Related Identifiers/Add related identifier/Type of Related ID': 'object__Related Type',
+    'Related Identifiers/Add related identifier/Year': 'Year',
+    'Related Identifiers/Add related identifier/Trench ID': 'Trench ID',
 }
 
 REL_PREFIXES = {
@@ -192,6 +194,14 @@ REL_PREFIXES = {
             'Bulk Tile-',
         ],
         ['oc-gen:cat-sample-col'],
+    ),
+    'Locus': (
+        ['Locus '],
+        ['oc-gen:cat-locus'],
+    ),
+    'Trench': (
+        [''],
+        ['oc-gen:cat-exc-unit'],
     ),
 }
 REL_COLS = [
@@ -305,6 +315,8 @@ def make_all_export_media_df(
     df_all_media = pd.concat(df_all_media_list)
     if df_all_media.empty:
         return None
+    df_all_media = df_all_media[df_all_media['new_filename'].notnull()]
+    df_all_media.drop_duplicates(subset=['new_filename'], inplace=True)
     expected_len = len(df_all_media.index)
     if (len(df_all_media['new_filename'].unique().tolist()) != expected_len or
         len(df_all_media['filename'].unique().tolist()) != expected_len):
@@ -605,8 +617,18 @@ def prepare_media_links_from_dfs(project_uuid, dfs, all_contexts_df):
             label=raw_object_id,
             project_uuid=project_uuid
         )
-        _, act_classes = REL_PREFIXES.get(object_type, ([], []))
-        context_indx = (all_contexts_df['label'].isin(act_labels))
+        act_prefixes, act_classes = REL_PREFIXES.get(object_type, ([], []))
+        if object_type in ['Locus', 'Trench']:
+            act_labels += [prefix + str(raw_object_id) for prefix in act_prefixes]
+            if object_type == 'Trench':
+                act_labels.append('{} {}'.format(raw_object_id, row['Year']))
+            context_indx = (
+                all_contexts_df['label'].isin(act_labels)
+                & (all_contexts_df['Trench ID'] == row['Trench ID'])
+            )
+        else:
+            context_indx = (all_contexts_df['label'].isin(act_labels))
+        
         if len(act_classes) > 0:
             context_indx &= (all_contexts_df['class_uri'].isin(act_classes))
         if not all_contexts_df[context_indx].empty:

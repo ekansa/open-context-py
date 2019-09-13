@@ -43,6 +43,25 @@ from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 sj = SerizializeJSON()
 sj.dump_serialized_rel_tables()
 
+from opencontext_py.apps.exports.serialization.models import SerizializeJSON
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+sj = SerizializeJSON()
+sj.export_redirects = True
+sj.limit_source_ids = [
+    'kobo-pc-2019-all-contexts-subjects.csv',
+    'kobo-pc-2019-all-media',
+    'kobo-pc-2019-bulk-finds',
+    'kobo-pc-2019-catalog',
+    'kobo-pc-2019-links-catalog',
+    'kobo-pc-2019-links-locus-strat',
+    'kobo-pc-2019-links-media',
+    'kobo-pc-2019-links-trench-book',
+    'kobo-pc-2019-locus',
+    'kobo-pc-2019-small-finds',
+    'kobo-pc-2019-trench-book',
+]
+sj.dump_serialized_data(project_uuid)
+
 
 from opencontext_py.apps.exports.serialization.models import SerizializeJSON
 project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'

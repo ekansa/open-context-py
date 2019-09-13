@@ -27,21 +27,46 @@ la = LinkAnnotation.objects.filter(subject='252A30E2-3F6C-4BB8-1148-FD2D27436185
 
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.indexer.reindex import SolrReIndex
-uuids = []
-project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
-items = Manifest.objects\
-                .filter(project_uuid=project_uuid).exclude(indexed__gt='2018-07-07')\
-                .order_by('sort')
-for item in items:
-    uuids.append(item.uuid)
 
-uuids += ['DF043419-F23B-41DA-7E4D-EE52AF22F92F']
+project_uuid = 'e0ea772b-a64f-4758-93aa-8db3b07564a3'
+items = Manifest.objects.filter(
+    project_uuid=project_uuid,
+).exclude(indexed__gt='2019-05-01').order_by('sort')
+uuids = [m.uuid for m in items]
+uuids += ['e0ea772b-a64f-4758-93aa-8db3b07564a3']
 print('Items to index: ' + str(len(uuids)))
-url = 'https://opencontext.org/search/.json?response=uuid&rows=1500&prop=24-fabric-category---24-bucchero&proj=24-murlo'
-
 sri = SolrReIndex()
-uuids += sri.get_uuids_oc_url(url)
 sri.reindex_uuids(uuids)
+
+
+from opencontext_py.apps.ocitems.manifest.models import Manifest
+from opencontext_py.apps.indexer.reindex import SolrReIndex
+
+project_uuid = 'DF043419-F23B-41DA-7E4D-EE52AF22F92F'
+source_ids = {
+    'kobo-pc-2019-all-contexts-subjects.csv',
+    'kobo-pc-2019-all-media',
+    'kobo-pc-2019-bulk-finds',
+    'kobo-pc-2019-catalog',
+    'kobo-pc-2019-links-catalog',
+    'kobo-pc-2019-links-locus-strat',
+    'kobo-pc-2019-links-media',
+    'kobo-pc-2019-links-trench-book',
+    'kobo-pc-2019-locus',
+    'kobo-pc-2019-small-finds',
+    'kobo-pc-2019-trench-book',
+}
+
+
+items = Manifest.objects.filter(
+    project_uuid=project_uuid,
+    source_id__in=source_ids,
+)
+uuids = [m.uuid for m in items]
+print('Items to index: ' + str(len(uuids)))
+sri = SolrReIndex()
+sri.reindex_uuids(uuids)
+
 
 
     """

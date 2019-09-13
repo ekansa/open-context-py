@@ -92,6 +92,19 @@ source_ids = {
     'kobo-pc-2018-small-finds',
     'kobo-pc-2018-trench-book'
 }
+source_ids = {
+    'kobo-pc-2019-all-contexts-subjects.csv',
+    'kobo-pc-2019-all-media',
+    'kobo-pc-2019-bulk-finds',
+    'kobo-pc-2019-catalog',
+    'kobo-pc-2019-links-catalog',
+    'kobo-pc-2019-links-locus-strat',
+    'kobo-pc-2019-links-media',
+    'kobo-pc-2019-links-trench-book',
+    'kobo-pc-2019-locus',
+    'kobo-pc-2019-small-finds',
+    'kobo-pc-2019-trench-book',
+}
 
 
 """
