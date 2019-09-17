@@ -4,7 +4,7 @@ upstream django {
 
 server {
     listen  80;
-    server_name localhost;
+    server_name {{server_name}};
     charset utf-8;
     access_log /opt/ocweb/nginx_access.log;
     error_log /opt/ocweb/nginx_error.log;
