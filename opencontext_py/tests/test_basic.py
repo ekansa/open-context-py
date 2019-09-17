@@ -4,10 +4,13 @@ import json
 from django.db import connection
 from django.test.utils import setup_test_environment
 from django.test.client import Client
+from django.conf import settings
 
 from opencontext_py.apps.ocitems.octypes import models
 from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
+
+settings.ALLOWED_HOSTS += ['testserver']
 
 def test_hello():
     """
@@ -22,20 +25,20 @@ def test_main_page():
 
     client = Client()
 
-    response = client.get('/')
+    response = client.get('/', follow=True)
     assert response.status_code == 200
 
 def test_ssearch():
 
     client = Client()
 
-    response = client.get('/subjects-search/.json?response=geo-project')
+    response = client.get('/subjects-search/.json?response=geo-project', follow=True)
     assert response.status_code == 200
 
 def test_project_context():
 
     client = Client()
-    response = client.get('/contexts/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10.json')
+    response = client.get('/contexts/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10.json', follow=True)
     assert response.status_code == 200
 
 def test_index_solr_doc():
@@ -65,7 +68,7 @@ def test_other_pages():
     bad_status_codes = {}
 
     for page in pages_to_test:
-        response = client.get(page)
+        response = client.get(page,follow=True)
         if response.status_code >= 400:
             bad_status_codes[page] = response.status_code
 
