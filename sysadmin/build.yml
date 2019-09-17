@@ -63,6 +63,11 @@
       changed_when: output.stdout != ""
       tags: always
 
+    # # Add specified repository into sources list.
+    # - apt_repository:
+    #     repo: http://deb.debian.org/debian stretch-backports main
+    #     state: present
+
     - setup: # aka gather_facts
 
     - name: check apt last update
@@ -131,6 +136,10 @@
         - ufw
         - unzip
       tags: install
+
+    - name: install certbot dependencies
+      become: yes
+      command: apt-get install -y certbot python-certbot-nginx -t stretch-backports
 
   roles:
       # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
