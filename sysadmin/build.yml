@@ -448,6 +448,17 @@
         path: /etc/nginx/sites-enabled/default
         state: absent
       become: yes
+
+    # copy over referral-spam.conf
+   - name: copy referral-spam.conf
+      copy: >
+        src=files/ral-spam.conf
+        dest={{oc_web_dir}}/referral-spam.conf
+        owner={{user}}
+        group={{user}}
+        mode=0770
+      notify:
+        - restart nginx
    
     # sudo ln -s /etc/nginx/sites-available/oc_nginx.conf to /etc/nginx/sites-enabled/oc_nginx.conf
     - name: enable nginx oc_nginx site
@@ -601,14 +612,14 @@
     # - name: end play
     #   meta: end_play
  
-    - name: grab ssh config ip
-      debug:
-         var: "hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]"
+    # - name: grab ssh config ip
+    #   debug:
+    #      var: "hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]"
 
-    - name: Display all variables/facts known for a host
-      debug:
-        var: hostvars[inventory_hostname]
-      tags: debug_info
+    # - name: Display all variables/facts known for a host
+    #   debug:
+    #     var: hostvars[inventory_hostname]
+    #   tags: debug_info
 
     # - name: Getting PYTHONPATH
     #   local_action: shell python -c 'import sys; print(":".join(sys.path))'
@@ -627,20 +638,22 @@
     - name: restart_here
       debug: msg="provision restart here"
 
-    - name: set dns record for the hostname!
-      gcp_dns_resource_record_set:
-        name: test123.opencontext.org 
-        managed_zone: 
-          name: "opencontext-zone"
-        type: A
-        ttl: 120
-        target:
-          - "{{ansible_host}}"
-        project: opencontext-py
-        auth_kind: serviceaccount
-        # service_account_file: "/home/raymond.yee/sysadmin/opencontext-py.json"
-        service_account_file: "/Volumes/ryvault1/opencontext/keys/opencontext-py-gce.json"
-        state: present
+    # TO DEBUG  
+
+    # - name: set dns record for the hostname!
+    #   gcp_dns_resource_record_set:
+    #     name: test123.opencontext.org 
+    #     managed_zone: 
+    #       name: "opencontext-zone"
+    #     type: A
+    #     ttl: 120
+    #     target:
+    #       - "{{ansible_host}}"
+    #     project: opencontext-py
+    #     auth_kind: serviceaccount
+    #     # service_account_file: "/home/raymond.yee/sysadmin/opencontext-py.json"
+    #     service_account_file: "/Volumes/ryvault1/opencontext/keys/opencontext-py-gce.json"
+    #     state: present
 
   handlers:
     - name: restart nginx
