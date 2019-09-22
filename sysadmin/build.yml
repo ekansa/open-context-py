@@ -39,7 +39,7 @@
     # python_apt_package_deps (default: [build-essential, libbz2-dev, libssl-dev, openssl, zlib1g-dev])
     # python_dnf_package_deps (default: [@Development tools, ncurses-devel, openssl-devel, zlib-devel])
 
-  sudo: yes
+  become: yes
 
   gather_facts: True
   pre_tasks:
@@ -601,9 +601,6 @@
     # - name: end play
     #   meta: end_play
  
-    - name: restart_here
-      debug: msg="provision restart here"
-
     - name: grab ssh config ip
       debug:
          var: "hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]"
@@ -613,12 +610,12 @@
         var: hostvars[inventory_hostname]
       tags: debug_info
 
-    - name: Getting PYTHONPATH
-      local_action: shell python -c 'import sys; print(":".join(sys.path))'
-      register: pythonpath
+    # - name: Getting PYTHONPATH
+    #   local_action: shell python -c 'import sys; print(":".join(sys.path))'
+    #   register: pythonpath
 
-    - debug:
-        msg: "PYTHONPATH: {{ pythonpath.stdout }}"
+    # - debug:
+    #     msg: "PYTHONPATH: {{ pythonpath.stdout }}"
 
         #- name: Getting HAS_GOOGLE_AUTH
         # local_action: shell python -c 'from ansible.module_utils import gcp; print(gcp.HAS_GOOGLE_AUTH)'
@@ -627,18 +624,22 @@
         #- debug:
         # msg: "HAS_GOOGLE_AUTH:  {{ has_google_auth.stdout }}"
 
+    - name: restart_here
+      debug: msg="provision restart here"
+
     - name: set dns record for the hostname!
       gcp_dns_resource_record_set:
         name: test123.opencontext.org 
         managed_zone: 
           name: "opencontext-zone"
         type: A
-        ttl: 60
+        ttl: 120
         target:
           - "{{ansible_host}}"
         project: opencontext-py
         auth_kind: serviceaccount
-        service_account_file: "/home/raymond.yee/sysadmin/opencontext-py.json"
+        # service_account_file: "/home/raymond.yee/sysadmin/opencontext-py.json"
+        service_account_file: "/Volumes/ryvault1/opencontext/keys/opencontext-py-gce.json"
         state: present
 
   handlers:

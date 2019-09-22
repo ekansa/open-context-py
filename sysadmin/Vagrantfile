@@ -47,7 +47,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node.vm.provision 'ansible' do |ansible|
       ansible.playbook = 'build.yml'
 
-      ansible.verbose = "vv"
+      ansible.verbose = "vvvv"
       # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
       ansible.raw_arguments  = [
           "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
