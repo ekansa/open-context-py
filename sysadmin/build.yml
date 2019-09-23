@@ -463,6 +463,28 @@
       notify:
         - restart nginx
    
+   # ssl certs
+
+    - name: copy server.crt
+      copy: >
+        src="files/ssl_certs/{{ansible_host}}/server.crt"
+        dest="{{oc_web_dir}}/certs/server.crt"
+        owner={{user}}
+        group={{user}}
+        mode=0644
+      notify:
+        - restart nginx
+
+    - name: copy server.key
+      copy: >
+        src="files/ssl_certs/{{ansible_host}}/server.key"
+        dest="{{oc_web_dir}}/certs/server.key"
+        owner={{user}}
+        group={{user}}
+        mode=0600
+      notify:
+        - restart nginx
+
     # sudo ln -s /etc/nginx/sites-available/oc_nginx.conf to /etc/nginx/sites-enabled/oc_nginx.conf
     - name: enable nginx oc_nginx site
       file: 
