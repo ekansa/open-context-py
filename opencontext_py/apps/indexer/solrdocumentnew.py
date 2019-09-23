@@ -17,19 +17,16 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
-
-
-
-def general_get_jsonldish_entity_parents(identifier, add_original=True):
+def general_get_jsonldish_entity_parents(identifier, add_original=True, is_project=False):
     """Wrapper for getting parent entities for oc items and parent projects"""
+    if is_project:
+        raw_hiearchy_items = ProjectRels().get_jsonldish_parents(
+            uuid=identifier,
+            add_original=add_original
+        )
+        return raw_hiearchy_items
     raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
         identifier,
-        add_original=add_original
-    )
-    if raw_hiearchy_items:
-        return raw_hiearchy_items
-    raw_hiearchy_items = ProjectRels().get_jsonldish_parents(
-        uuid=identifier,
         add_original=add_original
     )
     return raw_hiearchy_items
@@ -418,10 +415,17 @@ sd_obj_k.fields
         Creates a hierarchy of projects in the same way as a hierarchy of predicates
         """
         solr_field_name = self.ROOT_PROJECT_SOLR
-        proj_rel = ProjectRels()
-        proj_hierarchy = proj_rel.get_jsonldish_parents(
-            self.oc_item.manifest.project_uuid
-        )
+        if self.oc_item.manifest.item_type == 'projects':
+            # For project items, use the manifest uuid, which may be
+            # different from the project_uuid in cases of "sub-projects".
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.uuid,
+                is_project=True,
+            )    
+        else:
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.project_uuid
+            )
         for proj in proj_hierarchy:
             # Compose the solr_value for this item in the context
             # hiearchy.

@@ -148,6 +148,8 @@ def test_projects_is_sub_project():
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'projects'
     assert '52-digital-index-of-north-american-archaeology-dinaa' in sd_obj.fields['root___project_id_fq']
+    assert '52-digital-index-of-north-american-archaeology-dinaa' in sd_obj.fields['obj_all___project_id_fq']
+    assert '52-digital-index-of-north-american-archaeology-linking-si' in sd_obj.fields['obj_all___project_id_fq']
     assert not 'obj_all___context_id_fq' in sd_obj.fields
 
 
