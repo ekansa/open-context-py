@@ -449,11 +449,14 @@
         state: absent
       become: yes
 
+    - name: restart_here
+      debug: msg="provision restart here"
+
     # copy over referral-spam.conf
-   - name: copy referral-spam.conf
+    - name: copy referral-spam.conf
       copy: >
-        src=files/ral-spam.conf
-        dest={{oc_web_dir}}/referral-spam.conf
+        src=files/referral-spam.conf
+        dest="{{oc_web_dir}}/referral-spam.conf"
         owner={{user}}
         group={{user}}
         mode=0770
