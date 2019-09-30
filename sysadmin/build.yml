@@ -106,10 +106,13 @@
     - name: Accept Java 8 License
       become: yes
       debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
-      
+
     - name: installing dependencies
-      apt: pkg={{ item }} update_cache=yes state=present
-      with_items:
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
         - git-core
         - python
         - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
