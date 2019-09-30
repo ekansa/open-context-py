@@ -91,7 +91,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           zone1f.zone = settings['opencontext_vm']['google_provider']['zone']
           zone1f.tags = settings['opencontext_vm']['google_provider']['tags']
           zone1f.network = settings['opencontext_predb_vm']['google_provider']['network']
-          zone1f.subnetwork = settings['opencontext_predb_vm']['google_provider']['network']
+          zone1f.subnetwork = settings['opencontext_predb_vm']['google_provider']['subnetwork']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
       end
@@ -168,7 +168,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           zone1f.tags = settings['opencontext_predb_vm']['google_provider']['tags']
 
           zone1f.network = settings['opencontext_predb_vm']['google_provider']['network']
-          zone1f.subnetwork = settings['opencontext_predb_vm']['google_provider']['network']
+          zone1f.subnetwork = settings['opencontext_predb_vm']['google_provider']['subnetwork']
           # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
           # zone1f.scopes = []
           # zone1f.tags = ['web', 'app1']
