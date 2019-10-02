@@ -1,5 +1,8 @@
 oc_install_dir: /opt/oc
 oc_static_dir: /opt/ocstatic
 oc_web_dir: /opt/ocweb
+geoip_path: /var/oc-venv/open-context-py/assets
 allowed_host: octest.raymondyee.net
 deployed_host: http://octest.raymondyee.net
+deployed_site_name: "Open Context (Google-Cloud)"
+to_deployed_uris: 1
