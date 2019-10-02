@@ -1,5 +1,4 @@
 oc_install_dir: /var/oc-venv
-oc_static_dir: /opt/ocstatic
 oc_web_dir: /opt/ocweb
 geoip_path: /var/oc-venv/open-context-py/assets
 allowed_host: octest.raymondyee.net
