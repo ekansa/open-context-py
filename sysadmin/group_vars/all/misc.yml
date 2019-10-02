@@ -1,3 +1,4 @@
+oc_github_repo: ssh://git@github.com/rdhyee/open-context-py.git
 oc_install_dir: /var/oc-venv
 oc_web_dir: /opt/ocweb
 geoip_path: /var/oc-venv/open-context-py/assets

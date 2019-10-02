@@ -1,0 +1,14 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin 
+
+response=$(curl 'https://{{server_name}}/subjects-search/');
+echo "Get main subjects search...";
+sleep 1;
+response=$(curl 'https://{{server_name}}/subjects-search/.json?response=geo-facet&geodeep=6');
+echo "Get main subjects map...";
+sleep 1;
+response=$(curl 'https://{{server_name}}/search/');
+echo "Get main search...";
+sleep 1;
+response=$(curl 'https://{{server_name}}/search/.json?response=geo-facet&geodeep=6');
+echo "Get main  map...";

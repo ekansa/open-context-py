@@ -1,10 +1,11 @@
 cd {{oc_install_dir}}
 echo "STARTUP, but leave Database alone";
 echo "Preparing the Python virtual environment...";
-source bin/activate
+source {{oc_install_dir}}/.venv/bin/activate
 for (( iport=8081; iport<=8090; iport++ ))
 do
-    killall -s INT {{oc_install_dir}}/.venv/bin/uwsgi
+    # killall -s INT {{oc_install_dir}}/.venv/bin/uwsgi
+    pkill -INT {{oc_install_dir}}/.venv/bin/uwsgi
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.pid
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.sock
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.log

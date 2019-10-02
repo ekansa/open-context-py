@@ -223,7 +223,7 @@
 
     - name: clone the oc git repo into {{oc_install_dir}}
       become: no
-      git: repo=ssh://git@github.com/rdhyee/open-context-py.git dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
+      git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
     # use pipenv to install dependencies
     # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
@@ -438,10 +438,6 @@
     # cp templates/uwsgi.ini.j2 to /opt/ocweb/uwsgi.ini
     - name: create uwsgi.ini from template
       template: src=templates/uwsgi.ini.j2  dest="{{oc_web_dir}}/uwsgi_oc.ini" owner={{user}} group={{user}} mode=0664
-
-    - name: restart_here
-      debug: msg="provision restart here"
-
 
     # cp templates/nginx_conf.j2 to /etc/nginx/sites-available/oc_nginx.conf
     - name: create oc_nginx.conf from template
@@ -668,6 +664,24 @@
 
     - name: restart_here
       debug: msg="provision restart here"
+
+    # copy over some commands
+    - name: copy over some utilities commands from templates
+      template:
+        src: "templates/{{item}}.j2"
+        dest: "{{oc_install_dir}}/{{item}}"
+        mode: 0775
+      with_items:
+        - start-no-db.sh
+        - oc-check.sh
+        - oc-warm.sh
+        - redis-check.sh
+        - startup.sh
+        - oc-poke.sh
+        - rm-logs.sh
+        - update-oc.sh
+      become: no
+
 
     # TO DEBUG  
 
