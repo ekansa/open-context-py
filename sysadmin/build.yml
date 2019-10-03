@@ -67,8 +67,15 @@
     # - name: make {{user}} user
     #   user: name={{user}} shell=/bin/bash group={{user}} generate_ssh_key=yes
 
-    - name: Make sure there is a www-data user and group (yes for Debian)
-      group: name-www-data state=present
+    - name: Ensure group "www-data" exists
+      group:
+        name: www-data
+        state: present
+
+    - name: Ensure user "www-data" exists
+      user:
+        name: www-data
+        state: present
 
     - name: add {{user}} to www-data group
       user: name={{user}} groups=www-data append=yes
@@ -220,8 +227,11 @@
         - pipenv
       become: yes
 
+    - name: restart_here
+      debug: msg="provision restart here"
+
     - name: create {{oc_install_dir}}
-      file: path={{oc_install_dir}} state=directory owner={{user-owner}} gropu={{group_owner}} mode=0745
+      file: path={{oc_install_dir}} state=directory owner={{user_owner}} group={{group_owner}} mode=0775
     
 
     - name: git config
@@ -293,16 +303,16 @@
       ufw: state=enabled
 
     - name: create "{{oc_install_dir}}/logs"
-      file: path="{{oc_install_dir}}/logs" state=directory owner={{user-owner}} gropu={{group_owner}} mode=0745
+      file: path="{{oc_install_dir}}/logs" state=directory owner={{user_owner}} group={{group_owner}} mode=0775
 
     - name: create "{{oc_install_dir}}/cache"
-      file: path="{{oc_install_dir}}/cache" state=directory owner={{user-owner}} gropu={{group_owner}} mode=0745
+      file: path="{{oc_install_dir}}/cache" state=directory owner={{user_owner}} group={{group_owner}} mode=0775
 
     - name: create "{{oc_install_dir}}/static"
-      file: path="{{oc_install_dir}}/static" state=directory owner={{user-owner}} gropu={{group_owner}} mode=0745
+      file: path="{{oc_install_dir}}/static" state=directory owner={{user_owner}} group={{group_owner}} mode=0775
 
     - name: create secrets.json from template
-      template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user-owner}} gropu={{group_owner}} mode=0664
+      template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user_owner}} group={{group_owner}} mode=0664
 
     # - name: run migrations
     #   command: "{{oc_install_dir}}/ENV/bin/python manage.py migrate"
@@ -388,7 +398,7 @@
     #   file: path=/opt/oc/static/bootstrap/3.3.4/  state=absent
 
     # - name: create /opt/oc/static/bootstrap/3.3.4/
-    #   file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user-owner}} gropu={{group_owner}} mode=0745
+    #   file: path=/opt/oc/static/bootstrap/3.3.4/ state=directory owner={{user_owner}} group={{group_owner}} mode=0775
 
     # - name: make sure /opt/oc/static/bootstrap/3.3.4/ is empty
     #   shell: rm -rf /opt/oc/static/bootstrap/3.3.4/*
@@ -445,15 +455,18 @@
       unarchive:
         src: static.tar.gz
         dest: "{{oc_install_dir}}"
+        owner: {{user_owner}}
+        group: {{group_owner}}
+        mode: 0775
         keep_newer: no
 
 
     - name: create {{oc_web_dir}}
-      file: path="{{oc_web_dir}}" state=directory owner={{user_owner}} gropu={{group_owner}} mode=0745
+      file: path="{{oc_web_dir}}" state=directory owner={{user_owner}} group={{group_owner}} mode=0775
 
     # cp templates/uwsgi.ini.j2 to /opt/ocweb/uwsgi.ini
     - name: create uwsgi.ini from template
-      template: src=templates/uwsgi.ini.j2  dest="{{oc_web_dir}}/uwsgi_oc.ini" owner={{user_owner}} gropu={{group_owner}} mode=0664
+      template: src=templates/uwsgi.ini.j2  dest="{{oc_web_dir}}/uwsgi_oc.ini" owner={{user_owner}} group={{group_owner}} mode=0664
 
     # cp templates/nginx_conf.j2 to /etc/nginx/sites-available/oc_nginx.conf
     - name: create oc_nginx.conf from template
@@ -473,7 +486,7 @@
         src=files/referral-spam.conf
         dest="{{oc_web_dir}}/referral-spam.conf"
         owner={{user_owner}}
-        gropu={{group_owner}}
+        group={{group_owner}}
         mode=0770
       notify:
         - restart nginx
@@ -481,14 +494,14 @@
    # ssl certs
 
     - name: create "{{oc_web_dir}}/certs"
-      file: path="{{oc_web_dir}}/certs" state=directory owner={{user_owner}} gropu={{group_owner}} mode=0645
+      file: path="{{oc_web_dir}}/certs" state=directory owner={{user_owner}} group={{group_owner}} mode=0645
 
     - name: copy server.crt
       copy: >
         src="files/ssl-certs/{{inventory_hostname}}/server.crt"
         dest="{{oc_web_dir}}/certs/server.crt"
         owner={{user_owner}}
-        gropu={{group_owner}}
+        group={{group_owner}}
         mode=0644
       notify:
         - restart nginx
@@ -498,7 +511,7 @@
         src="files/ssl-certs/{{inventory_hostname}}/server.key"
         dest="{{oc_web_dir}}/certs/server.key"
         owner={{user_owner}}
-        gropu={{group_owner}}
+        group={{group_owner}}
         mode=0600
       notify:
         - restart nginx
@@ -604,7 +617,7 @@
       when: install_solr_data
 
     - name: create /tmp/solr_backup
-      file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0745
+      file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0775
       become: yes
       when: install_solr_data
 
@@ -677,9 +690,6 @@
 
         #- debug:
         # msg: "HAS_GOOGLE_AUTH:  {{ has_google_auth.stdout }}"
-
-    - name: restart_here
-      debug: msg="provision restart here"
 
     # copy over some commands
     - name: copy over some utilities commands from templates
