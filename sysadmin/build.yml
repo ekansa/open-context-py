@@ -1,7 +1,7 @@
 - name: opencontext setup
   hosts: '{{vname}}'
   vars:
-    user: "{{ ansible_ssh_user }}"
+    user: "{{ ansible_user }}"
     user_owner: www-data
     group_owner: www-data
     target: '{{vname}}'
@@ -14,7 +14,6 @@
     postgresql_user: postgres
     postgresql_group: postgres
     postgresql_databases:
-      # - name: opencontextdb
       - name: "{{SECRET_KEYS.DATABASES_NAME}}"
     postgresql_users:
       - name: "{{SECRET_KEYS.DATABASES_USER}}"
@@ -79,6 +78,10 @@
 
     - name: add {{user}} to www-data group
       user: name={{user}} groups=www-data append=yes
+
+      # https://stackoverflow.com/a/44753457/7782 -- to get the addition to take hold in script
+    - name: reset ssh connection to allow user changes to affect 'current login user'
+      meta: reset_connection
 
     - name: Install python for Ansible
       raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
@@ -227,13 +230,9 @@
         - pipenv
       become: yes
 
-    - name: restart_here
-      debug: msg="provision restart here"
-
     - name: create {{oc_install_dir}}
       file: path={{oc_install_dir}} state=directory owner={{user_owner}} group={{group_owner}} mode=0775
     
-
     - name: git config
       command: "{{item}}"
       with_items:
@@ -241,15 +240,37 @@
         - git config --global user.email "{{git_user_email}}"
  
     - name: ssh-keygen
-      #command: pwd
       command: ssh-keygen -b 2048 -t rsa -f /home/{{user}}/.ssh/id_rsa -P ""
       become: no
       args:
         creates: /home/{{user}}/.ssh/id_rsa
 
-    - name: clone the oc git repo into {{oc_install_dir}}
+    - name: list groups for "{{user}}"
       become: no
+      shell: groups
+      register: groups_output
+
+    - name: show groups for "{{user}}"
+      debug: msg="{{groups_output}}"
+
+    - name: clone the oc git repo into {{oc_install_dir}}
+      become: yes
+      become_user: "{{user}}"
       git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
+
+
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
+    # - name: end play
+    #   meta: end_play
+
+    - name: Change file ownership, group and permissions for git repo
+      file:
+        path: "{{oc_install_dir}}"
+        owner: "{{user_owner}}"
+        group: "{{group_owner}}"
+        mode: 0775
 
     # use pipenv to install dependencies
     # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
@@ -455,8 +476,8 @@
       unarchive:
         src: static.tar.gz
         dest: "{{oc_install_dir}}"
-        owner: {{user_owner}}
-        group: {{group_owner}}
+        owner: "{{user_owner}}"
+        group: "{{group_owner}}"
         mode: 0775
         keep_newer: no
 
