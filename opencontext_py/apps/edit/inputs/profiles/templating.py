@@ -68,14 +68,20 @@ class InputProfileTemplating():
             except InputProfile.DoesNotExist:
                 self.inp_prof = False
                 ok = False
-            if ok:
+            if ok and self.project_uuid == '0':
+                self.project_man = Manifest()
+                self.project_man.label = 'Open Context (General Project)'
+                self.project = Project()
+                self.project.label = self.project_man.label
+                self.project.slug = 'oc'
+            if ok and self.project_uuid != '0':
                 try:
                     self.project_man = Manifest.objects.get(uuid=self.project_uuid,
                                                             item_type='projects')
                 except Manifest.DoesNotExist:
                     self.project_man = False
                     ok = False
-            if ok:
+            if ok and self.project_uuid != '0':
                 try:
                     self.project = Project.objects.get(uuid=self.project_uuid)
                     self.project.label = self.project_man.label
