@@ -217,8 +217,8 @@
       command: "chmod -R g+s {{oc_install_dir}}"
       changed_when: false
 
-    - name: restart_here
-      debug: msg="provision restart here"      
+    # - name: restart_here
+    #   debug: msg="provision restart here"      
 
     - name: Change group permission to equal user permission
       command: "chmod -R g=u {{oc_install_dir}}"
