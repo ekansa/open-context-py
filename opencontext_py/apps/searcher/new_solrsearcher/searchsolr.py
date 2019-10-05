@@ -8,7 +8,9 @@ from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
+
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
+from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
 class SearchSolr():
@@ -82,8 +84,20 @@ class SearchSolr():
     
     
     def compose_query(self, request_dict):
-        pass
-     
+        """Composes a solr query by translating a client request_dict
+        
+        :param dict request_dict: The dictionary of keyed by client
+        request parameters and their request parameter values.
+        """
+        query = {}
+        
+        # Set solr sorting, either to a default or by translating the client
+        # request_dict.
+        sort_opts = SortingOptions()
+        query['sort'] = sort_opts.make_solr_sort_param_from_request_dict(
+            request_dict
+        )
+        
     
     
     def solr_connect(self):

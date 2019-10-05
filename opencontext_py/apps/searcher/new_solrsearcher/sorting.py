@@ -11,10 +11,12 @@ class SortingOptions():
 
     """ Methods to show sorting options """
 
-    IGNORE_PARAMS = ['geodeep',
-                     'chronodeep',
-                     'rows',
-                     'start']
+    IGNORE_PARAMS = [
+        'geodeep',
+        'chronodeep',
+        'rows',
+        'start'
+    ]
 
     SORT_OPTIONS = [
         {'type': 'oc-api:sort-item',
@@ -53,94 +55,10 @@ class SortingOptions():
         self.order_sep = '--'
         self.field_sep = '---'
         self.sort_links = []
-
-    def make_solr_sort_param(self, s_param):
-        """ makes a solr sort paramater
-            based on the current request's sort parameter
-        """
-        if not s_param:
-            # No sort indicated in the request, so use the default
-            return self.DEFAULT_SOLR_SORT
         
-        item_sort = False
-        sole_sort_list = []
-        if self.field_sep in s_param:
-            current_sorts = s_param.split(self.field_sep)
-        else:
-            current_sorts = [s_param]
-            
-        for cur_field_raw in current_sorts:
-            order = 'asc'  # the default sort order
-            if self.order_sep in cur_field_raw:
-                cur_field_ex = cur_field_raw.split(self.order_sep)
-                cur_field = cur_field_ex[0]
-                if len(cur_field_ex) == 2 and 'desc' == cur_field_ex[1]:
-                    order = 'desc'
-            else:
-                cur_field = cur_field_raw
-            if cur_field in self.SORT_SOLR_MAPPINGS:
-                # The current field is in the solr mappings, so
-                # it is a valid sort field
-                act_solr_sort = self.SORT_SOLR_MAPPINGS[cur_field]
-                if cur_field == 'item':
-                    item_sort = True
-                act_solr_sort += ' ' + order
-                sole_sort_list.append(act_solr_sort)
-        if len(sole_sort_list) == 0:
-            # We didn't find valid sort fields, so use the default
-            return self.DEFAULT_SOLR_SORT
-            
-        # We have valid sort fields, so make the solr sort
-        if item_sort:
-            # Add this so the sorting
-            sole_sort_list.append(self.DEFAULT_SOLR_SORT)
-        else:
-            # Only append this if we're not already sorting by items
-            sole_sort_list.append('sort_score asc')
-            sole_sort_list.append('slug_type_uri_label asc')
-        solr_sort = ', '.join(sole_sort_list)
-        return solr_sort
 
-    def make_current_sorting_list(self, request_dict):
-        """ makes a list indicating the current
-            sorting requested
-        """
-        if 'sort' not in request_dict:
-            # no sort indicated in the request, so use the default
-            self.set_default_current_sorting(request_dict)
-        else:
-            current_sort = request_dict['sort']
-            if isinstance(current_sort, list):
-                current_sort = current_sort[0]
-            if self.field_sep in current_sort:
-                current_sorts = current_sort.split(self.field_sep)
-            else:
-                current_sorts = [current_sort]
-            for cur_field_raw in current_sorts:
-                order = 'ascending'  # the default sort order
-                if self.order_sep in cur_field_raw:
-                    cur_field_ex = cur_field_raw.split(self.order_sep)
-                    cur_field = cur_field_ex[0]
-                    if len(cur_field_ex) == 2:
-                        if 'desc' in cur_field_ex[1]:
-                            order = 'descending'
-                else:
-                    cur_field = cur_field_raw
-                for check_sort in self.SORT_OPTIONS:
-                    if check_sort['value'] is not None:
-                        if check_sort['value'] == cur_field:
-                            self.using_default_sorting = False
-                            current_index = len(self.current_sorting) + 1
-                            current_sort_obj = LastUpdatedOrderedDict()
-                            current_sort_obj['id'] = '#current-sort-' + str(current_index)
-                            current_sort_obj['type'] = check_sort['type']
-                            current_sort_obj['label'] = check_sort['label']
-                            current_sort_obj['oc-api:sort-order'] = order
-                            self.current_sorting.append(current_sort_obj)
-        return self.current_sorting
-
-    def set_default_current_sorting(self, request_dict):
-        """ makes a default current sorting list
+    def set_default_current_sorting(self):
+        """ Makes a default current sorting list
         """
         current_sort_obj = LastUpdatedOrderedDict()
         current_sort_obj['id'] = '#current-sort-1'
@@ -149,62 +67,149 @@ class SortingOptions():
         current_sort_obj['oc-api:sort-order'] = 'descending'
         self.current_sorting.append(current_sort_obj)
 
+
+    def get_requested_sort_from_dict(self, request_dict):
+        """ makes a list indicating the current
+            sorting requested
+            
+        :param dict request_dict: The dictionary of keyed by client
+        request parameters and their request parameter values.
+        """
+        requested_sort = request_dict.get('sort')
+        # Check enforce that the requested_sort is not a list.
+        if isinstance(requested_sort, list) and len(requested_sort):
+            return requested_sort[0]
+        if not requested_sort:
+            return None
+        return requested_sort
+    
+
+    def make_sort_args_list(self, raw_sorting_str, field_sep=None):
+        """Makes a list of solr args by parsing a raw sorting string value
+        
+        :param str raw_sorting_str: The raw sorting order string.
+        :param str field_sep: The delimiter/seperator for different
+        sorting arguments.
+        """
+        if not field_sep:
+            field_sep = self.field_sep
+        if field_sep in raw_sorting_str:
+            sort_args = raw_sorting_str.split(field_sep)
+        else:
+            sort_args = [raw_sorting_str]
+        return sort_args
+    
+    
+    def make_solr_sort_param(self, requested_sort):
+        """ makes a solr sort paramater
+            based on the current request's sort parameter
+        """
+        if not requested_sort:
+            # No sort indicated in the request, so use the default
+            return self.DEFAULT_SOLR_SORT
+        
+        sort_fields = []
+        sole_sort_list = []
+        
+        # Iterate through a list of sorting arguments.
+        for cur_field_raw in self.make_sort_args_list(requested_sort):
+            order = 'asc'  # the default sort order
+            if self.order_sep in cur_field_raw:
+                cur_field_ex = cur_field_raw.split(self.order_sep)
+                cur_field = cur_field_ex[0]
+                if (len(cur_field_ex) == 2
+                    and 'desc' == cur_field_ex[1]):
+                    order = 'desc'
+            else:
+                cur_field = cur_field_raw
+            if cur_field in self.SORT_SOLR_MAPPINGS:
+                # The current field is in the solr mappings, so
+                # it is a valid sort field
+                act_solr_sort = self.SORT_SOLR_MAPPINGS[cur_field]
+                act_solr_sort += ' ' + order
+                sole_sort_list.append(act_solr_sort)
+                sort_fields.append(cur_field)
+        if len(sole_sort_list) == 0:
+            # We didn't find valid sort fields, so use the default
+            return self.DEFAULT_SOLR_SORT
+            
+        # We have valid sort fields, so make the solr sort
+        if 'item' in sort_fields and 'interest' not in sort_fields:
+            # Add interest sorting to sorting on items if
+            # iterest sorting is not already present.
+            sole_sort_list.append(self.DEFAULT_SOLR_SORT)
+        if 'item' not in sort_fields:
+            # Only append this if we're not already sorting by items
+            sole_sort_list.append('sort_score asc')
+            sole_sort_list.append('slug_type_uri_label asc')
+        solr_sort = ', '.join(sole_sort_list)
+        return solr_sort
+    
+    
+    def make_solr_sort_param_from_request_dict(self, request_dict):
+        """ Makes a solr sort parameter for a solr query.
+        
+        Returns either the default solr sorting or solr sorting
+        translated from the client request dict.
+        
+        :param dict request_dict: The dictionary of keyed by client
+        request parameters and their request parameter values.
+        """
+        requested_sort = self.get_requested_sort_from_dict(
+            request_dict
+        )
+        return self.make_solr_sort_param(requested_sort)
+    
+
+    def make_current_sorting_list(self, request_dict):
+        """ makes a list indicating the current
+            sorting requested
+        """
+        current_sort = self.get_requested_sort_from_dict(
+            request_dict
+        )
+        if not current_sort:
+            # No sort indicated in the request, so use the default
+            return self.set_default_current_sorting(self)
+        
+        # Iterate through a list of sorting arguments.
+        for cur_field_raw in self.make_sort_args_list(current_sort):
+            order = 'ascending'  # the default sort order
+            cur_field = cur_field_raw
+            if self.order_sep in cur_field_raw:
+                cur_field_ex = cur_field_raw.split(self.order_sep)
+                cur_field = cur_field_ex[0]
+                if (len(cur_field_ex) == 2
+                    and 'desc' in cur_field_ex[1]):
+                    order = 'descending'
+            for check_sort in self.SORT_OPTIONS:
+                if not check_sort['value'] != cur_field:
+                    continue
+                self.using_default_sorting = False
+                current_index = len(self.current_sorting) + 1
+                current_sort_obj = LastUpdatedOrderedDict()
+                current_sort_obj['id'] = '#current-sort-{}'.format(current_index)
+                current_sort_obj['type'] = check_sort['type']
+                current_sort_obj['label'] = check_sort['label']
+                current_sort_obj['oc-api:sort-order'] = order
+                self.current_sorting.append(current_sort_obj)
+        return self.current_sorting
+
+
     def make_sort_links_list(self, request_dict):
         """ makes a list of the links for sort options
         """
         if 'sort' in request_dict:
             request_dict.pop('sort')
+        
         order_opts = [
             {'key': 'asc',
              'order': 'ascending'},
             {'key': 'desc',
              'order': 'descending'}
         ]
+        
         for act_sort in self.SORT_OPTIONS:
-            if act_sort['opt']:
-                # only make sort_options if the 'opt' key is true
-                if act_sort['value'] is not None:
-                    for order_opt in order_opts:
-                        act_sort_val = act_sort['value'] + self.order_sep + order_opt['key']
-                        fl = FilterLinks()
-                        fl.base_search_link = self.base_search_link
-                        fl.base_request_json = json.dumps(request_dict,
-                                                          ensure_ascii=False,
-                                                          indent=4)
-                        fl.spatial_context = self.spatial_context
-                        sort_rparams = fl.add_to_request('sort',
-                                                         act_sort_val)
-                        links = fl.make_request_urls(sort_rparams)
-                        current_sort_obj = LastUpdatedOrderedDict()
-                        current_sort_obj['id'] = links['html']
-                        current_sort_obj['json'] = links['json']
-                        current_sort_obj['type'] = act_sort['type']
-                        current_sort_obj['label'] = act_sort['label']
-                        current_sort_obj['oc-api:sort-order'] = order_opt['order']
-                        in_active_list = False
-                        for cur_act_sort in self.current_sorting:
-                            if act_sort['type'] == cur_act_sort['type'] \
-                               and order_opt['order'] == cur_act_sort['oc-api:sort-order']:
-                                # the current sort option is ALREADY in use
-                                in_active_list = True
-                        if in_active_list is False:
-                            # only add the sort option if it's not already in use
-                            self.sort_links.append(current_sort_obj)
-                else:
-                    if self.using_default_sorting is False:
-                        # only add a link to the default sorting if
-                        # we are not currently using it
-                        fl = FilterLinks()
-                        fl.base_search_link = self.base_search_link
-                        fl.base_request_json = json.dumps(request_dict,
-                                                          ensure_ascii=False,
-                                                          indent=4)
-                        fl.spatial_context = self.spatial_context
-                        links = fl.make_request_urls(request_dict)
-                        current_sort_obj = LastUpdatedOrderedDict()
-                        current_sort_obj['id'] = links['html']
-                        current_sort_obj['json'] = links['json']
-                        current_sort_obj['type'] = act_sort['type']
-                        current_sort_obj['label'] = act_sort['label']
-                        current_sort_obj['oc-api:sort-order'] = 'descending'
-                        self.sort_links.append(current_sort_obj)
+            if not act_sort.get('opt') or act_sort.get('value') is None:
+                continue
+            
