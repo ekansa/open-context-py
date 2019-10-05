@@ -220,9 +220,6 @@
     # - name: restart_here
     #   debug: msg="provision restart here"      
 
-    - name: Change group permission to equal user permission
-      command: "chmod -R g=u {{oc_install_dir}}"
-      changed_when: false
 
     # use pipenv to install dependencies
     # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
@@ -526,6 +523,9 @@
       become: yes
       become_user: "{{user_owner}}"
 
+    - name: Change group permission to equal user permission
+      command: "chmod -R g=u {{oc_install_dir}}"
+      changed_when: false
 
     # TO DEBUG  
 
