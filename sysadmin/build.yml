@@ -182,7 +182,7 @@
         - pipenv
 
     - name: create {{oc_install_dir}}
-      file: path={{oc_install_dir}} state=directory owner={{user_owner}} group={{group_owner}} mode=0770
+      file: path={{oc_install_dir}} state=directory owner={{user_owner}} group={{group_owner}} mode=02770
     
     - name: git config
       command: "{{item}}"
