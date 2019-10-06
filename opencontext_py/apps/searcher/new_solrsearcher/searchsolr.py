@@ -9,73 +9,23 @@ from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
 class SearchSolr():
 
-    DEFAULT_FACET_FIELDS = [
-        SolrDocumentNew.ROOT_LINK_DATA_SOLR,
-        SolrDocumentNew.ROOT_PROJECT_SOLR,
-        'image_media_count',
-        'other_binary_media_count',
-        'document_count'
-    ]
-
-    PROJECT_FACET_FIELDS = [
-        # SolrDocument.ROOT_LINK_DATA_SOLR
-        'dc_terms_subject___pred_id',
-        'dc_terms_coverage___pred_id',
-        'dc_terms_temporal___pred_id'
-    ]
-
-    # the number of rows to display by default for different item types
-    ITEM_TYPE_ROWS = {'projects': 100}
-
-    # the miniumum number of facets to display for different item types
-    ITEM_TYPE_FACET_MIN = {'projects': 2}
-
-    #facet fields for different item_types
-    ITEM_TYPE_FACETFIELDS = {
-        'projects': [
-            'dc_terms_subject___pred_id',
-            # 'dc_terms_temporal___pred_id',
-            'dc_terms_spatial___pred_id',
-            'dc_terms_coverage___pred_id'
-        ],
-        'subjects': [
-            'oc_gen_subjects___pred_id'
-        ]
-    }
-
-    ITEM_CAT_FIELDS = [
-        'oc_gen_subjects___pred_id',
-        'oc_gen_media___pred_id',
-        'oc_gen_persons___pred_id',
-    ]
-
-    REL_CAT_FACET_FIELDS = ['rel__oc_gen_subjects___pred_id']
-    GENERAL_STATS_FIELDS = [
-        'updated',
-        'published',
-    ]
-    CHRONO_STATS_FIELDS =  [
-        'form_use_life_chrono_earliest',
-        'form_use_life_chrono_latest'
-    ]
-    MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
-
     def __init__(self):
-        self.solr = False
+        self.solr = None
         self.solr_connect()
-        self.solr_response = False
-        self.json_ld = False
-        self.facet_fields = self.DEFAULT_FACET_FIELDS
-        self.stats_fields = self.GENERAL_STATS_FIELDS
-        self.rows = 20
+        self.solr_response = None
+        self.json_ld = None
+        self.facet_fields = config.DEFAULT_FACET_FIELDS
+        self.stats_fields = config.GENERAL_STATS_FIELDS
+        self.rows = config.SOLR_DEFAULT_ROW_COUNT
         self.start = 0
-        self.max_rows = 10000
+        self.max_rows = config.SOLR_MAX_RESULT_ROW_COUNT
         self.prequery_stats = []
         self.item_type_limit = None  # limit searches to a specific item type
         self.do_context_paths = True  # make sure context paths are in the query
@@ -114,6 +64,7 @@ class SearchSolr():
         # client request_dict.
         # -------------------------------------------------------------
         sort_opts = SortingOptions()
+        # This method has unit tests.
         query['sort'] = sort_opts.make_solr_sort_param_from_request_dict(
             request_dict
         )
@@ -128,11 +79,13 @@ class SearchSolr():
             param='q',
             default=None,
             as_list=False,
-            solr_escape=True
+            solr_escape=False,
         )
         if raw_fulltext_search:
             # Client requested a fulltext search. First prepare a list
             # of solr escaped and quoted terms.
+            #
+            # This method has unit tests.
             escaped_terms = utilities.prep_string_search_term_list(
                 raw_fulltext_search
             )
@@ -143,3 +96,42 @@ class SearchSolr():
             query['hl.fl'] = 'text' # highlight the text field
             query['hl.q'] = 'text: {}'.format(solr_fulltext)
         
+        # -------------------------------------------------------------
+        # START and ROWS (Paging through results)
+        # Set the pointer to a position in the solr result list, and
+        # the number of rows to return from a solr search.
+        # -------------------------------------------------------------
+        start_pos = utilities.get_request_param_value(
+            request_dict, 
+            param='start',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if start_pos:
+            # Client has requested a valid, non-default start position
+            # for the solr results.
+            if start_pos < 0:
+                start_pos = 0
+            query['start'] = start_pos
+        
+        rows = utilities.get_request_param_value(
+            request_dict, 
+            param='rows',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+            require_int=True,
+        )
+        if rows:
+            # Client has requested a non-default number of number
+            # search result rows.
+            if rows > self.max_rows:
+                rows = self.max_rows
+            elif rows < 0:
+                rows = 0
+            query['rows'] = rows
+        
+        
+        return query
