@@ -81,8 +81,15 @@ class SearchSolr():
         self.do_context_paths = True  # make sure context paths are in the query
         self.is_bot = False
         self.do_bot_limit = False
+        self.solr_debug_query = 'false'
+        self.solr_stats_query = 'true'
     
     
+    def solr_connect(self):
+        """ Connects to solr """
+        self.solr = SolrConnection(False).connection
+    
+
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
         
@@ -90,16 +97,49 @@ class SearchSolr():
         request parameters and their request parameter values.
         """
         query = {}
+        query['facet'] = 'true'
+        query['facet.mincount'] = 1
+        query['rows'] = self.rows
+        query['start'] = self.start
+        query['debugQuery'] = self.solr_debug_query
+        query['fq'] = []
+        query['facet.field'] = []
+        query['facet.range'] = []
+        query['stats'] = self.solr_stats_query
+        query['stats.field'] = self.stats_fields
         
-        # Set solr sorting, either to a default or by translating the client
-        # request_dict.
+        # -------------------------------------------------------------
+        # SORTING
+        # Set solr sorting, either to a default or by translating the
+        # client request_dict.
+        # -------------------------------------------------------------
         sort_opts = SortingOptions()
         query['sort'] = sort_opts.make_solr_sort_param_from_request_dict(
             request_dict
         )
         
-    
-    
-    def solr_connect(self):
-        """ Connects to solr """
-        self.solr = SolrConnection(False).connection
+        # -------------------------------------------------------------
+        # FULLTEXT (Keyword)
+        # Set solr full text query and highlighting
+        # -------------------------------------------------------------
+        query['q'] = '*:*'  # default search for all
+        raw_fulltext_search = utilities.get_request_param_value(
+            request_dict, 
+            param='q',
+            default=None,
+            as_list=False,
+            solr_escape=True
+        )
+        if raw_fulltext_search:
+            # Client requested a fulltext search. First prepare a list
+            # of solr escaped and quoted terms.
+            escaped_terms = utilities.prep_string_search_term_list(
+                raw_fulltext_search
+            )
+            solr_fulltext = ' '.join(escaped_terms)
+            query['q'] = 'text: {}'.format(solr_fulltext)
+            query['q.op'] = 'AND'
+            query['hl'] = 'true'  # search term highlighting
+            query['hl.fl'] = 'text' # highlight the text field
+            query['hl.q'] = 'text: {}'.format(solr_fulltext)
+        
