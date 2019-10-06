@@ -1,59 +1,20 @@
-import json
-import django.utils.http as http
 from django.conf import settings
-from urllib.parse import urlparse, parse_qs
-from django.utils.http import urlquote, quote_plus, urlquote_plus
 from opencontext_py.libs.general import LastUpdatedOrderedDict
-from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
+
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 
 
 class SortingOptions():
 
     """ Methods to show sorting options """
 
-    IGNORE_PARAMS = [
-        'geodeep',
-        'chronodeep',
-        'rows',
-        'start'
-    ]
-
-    SORT_OPTIONS = [
-        {'type': 'oc-api:sort-item',
-         'value': 'item',
-         'label': 'Item (type, provenance, label)',
-         'opt': True},
-        {'type': 'oc-api:sort-updated',
-         'value': 'updated',
-         'label': 'Updated',
-         'opt': True},
-        {'type': 'oc-api:sort-published',
-         'value': 'published',
-         'label': 'Published',
-         'opt': False},  # don't make a sorting option available in the interface (hide this)
-        {'type': 'oc-api:sort-interest',
-         'value': None,
-         'label': 'Interest score',
-         'opt': True}
-    ]
-
-    SORT_SOLR_MAPPINGS = {
-        'item': 'slug_type_uri_label',
-        # 'item': 'sort_score',
-        'updated': 'updated',
-        'published': 'published',
-        'interest': 'interest_score'
-    }
-
-    DEFAULT_SOLR_SORT = 'interest_score desc'
-
     def __init__(self):
-        self.base_search_link = '/search/'
-        self.spatial_context = None
         self.using_default_sorting = True
         self.current_sorting = []
-        self.order_sep = '--'
-        self.field_sep = '---'
+        self.solr_sort_default = configs.SOLR_SORT_DEFAULT
+        self.request_sort_dir_delim = configs.REQUEST_SORT_DIR_DELIM
+        self.field_sep = configs.REQUEST_PROP_HIERARCHY_DELIM
+        self.request_solr_sort_mappings = configs.REQUEST_SOLR_SORT_MAPPINGS
         self.sort_links = []
         
 
@@ -101,12 +62,15 @@ class SortingOptions():
     
     
     def make_solr_sort_param(self, requested_sort):
-        """ makes a solr sort paramater
-            based on the current request's sort parameter
+        """ Translates a client request sort parameter to a solr
+            sorting parameter.
+        
+        :param str requested_sort: A string provided by a client with
+            a sorting value that needs translating for Solr.
         """
         if not requested_sort:
             # No sort indicated in the request, so use the default
-            return self.DEFAULT_SOLR_SORT
+            return self.solr_sort_default
         
         sort_fields = []
         sole_sort_list = []
@@ -114,30 +78,33 @@ class SortingOptions():
         # Iterate through a list of sorting arguments.
         for cur_field_raw in self.make_sort_args_list(requested_sort):
             order = 'asc'  # the default sort order
-            if self.order_sep in cur_field_raw:
-                cur_field_ex = cur_field_raw.split(self.order_sep)
+            if self.request_sort_dir_delim in cur_field_raw:
+                cur_field_ex = cur_field_raw.split(self.request_sort_dir_delim)
                 cur_field = cur_field_ex[0]
                 if (len(cur_field_ex) == 2
                     and 'desc' == cur_field_ex[1]):
                     order = 'desc'
             else:
                 cur_field = cur_field_raw
-            if cur_field in self.SORT_SOLR_MAPPINGS:
-                # The current field is in the solr mappings, so
-                # it is a valid sort field
-                act_solr_sort = self.SORT_SOLR_MAPPINGS[cur_field]
-                act_solr_sort += ' ' + order
-                sole_sort_list.append(act_solr_sort)
-                sort_fields.append(cur_field)
+            if not cur_field in self.request_solr_sort_mappings:
+                # Skip. We don't recognize the cur_field in our
+                # mappings for solr sorting.
+                continue
+            # The current field is in the solr mappings, so
+            # it is a valid sort field
+            act_solr_sort = self.request_solr_sort_mappings[cur_field]
+            act_solr_sort += ' ' + order
+            sole_sort_list.append(act_solr_sort)
+            sort_fields.append(cur_field)
         if len(sole_sort_list) == 0:
             # We didn't find valid sort fields, so use the default
-            return self.DEFAULT_SOLR_SORT
+            return self.solr_sort_default
             
         # We have valid sort fields, so make the solr sort
         if 'item' in sort_fields and 'interest' not in sort_fields:
             # Add interest sorting to sorting on items if
             # iterest sorting is not already present.
-            sole_sort_list.append(self.DEFAULT_SOLR_SORT)
+            sole_sort_list.append(self.solr_sort_default)
         if 'item' not in sort_fields:
             # Only append this if we're not already sorting by items
             sole_sort_list.append('sort_score asc')
@@ -176,8 +143,8 @@ class SortingOptions():
         for cur_field_raw in self.make_sort_args_list(current_sort):
             order = 'ascending'  # the default sort order
             cur_field = cur_field_raw
-            if self.order_sep in cur_field_raw:
-                cur_field_ex = cur_field_raw.split(self.order_sep)
+            if self.request_sort_dir_delim in cur_field_raw:
+                cur_field_ex = cur_field_raw.split(self.request_sort_dir_delim)
                 cur_field = cur_field_ex[0]
                 if (len(cur_field_ex) == 2
                     and 'desc' in cur_field_ex[1]):
