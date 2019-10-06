@@ -1,4 +1,5 @@
 import copy
+import re
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
@@ -81,6 +82,39 @@ def get_request_param_value(
         return [raw_val]
     else:
         return raw_val
+
+
+def prep_string_search_term_list(raw_fulltext_search):
+    """ Prepares a list of quoted, solr escaped search terms.
+    
+    :param str raw_term: The raw search term requested by the client.
+    """
+    # Make a temporary list of search terms.
+    act_terms = []
+    # Extract quoted parts of the raw search term
+    act_terms += re.findall(r'"([^"]*)"', raw_fulltext_search)
+    
+    # Remove the quoted parts to get unquoted parts.
+    not_quoted_part = raw_fulltext_search
+    for quoted_part in act_terms:
+        not_quoted_part = not_quoted_part.replace(
+            '"{}"'.format(quoted_part), ''
+        ).strip()
+    
+    # Use the space character to split the non-quoted parts into
+    # different token/works
+    act_terms += not_quoted_part.split(' ')
+    
+    # Now we can make the final list of quoted, escaped search
+    # terms.
+    terms = []
+    for act_term in act_terms:
+        act_term = act_term.strip()
+        if not act_term:
+            continue
+        term = '"{}"'.format(escape_solr_arg(act_term))
+        terms.append(term)
+    return terms
 
 
 def make_request_obj_dict(request, spatial_context=None):
