@@ -1,5 +1,6 @@
 import pytest
 import logging
+from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 logger = logging.getLogger("tests-unit-logger")
@@ -10,9 +11,9 @@ TESTS_REQUEST_TO_SOLR = [
     #
     # (request_dict, sort value for solr),
     #
-    ({}, SortingOptions.DEFAULT_SOLR_SORT,),
-    ({'sort':[]}, SortingOptions.DEFAULT_SOLR_SORT,),
-    ({'sort':False}, SortingOptions.DEFAULT_SOLR_SORT,),
+    ({}, configs.SOLR_SORT_DEFAULT,),
+    ({'sort':[]}, configs.SOLR_SORT_DEFAULT,),
+    ({'sort':False}, configs.SOLR_SORT_DEFAULT,),
     
     # Test cases on interest score sorting
     ({'sort':'interest'}, 'interest_score asc, sort_score asc, slug_type_uri_label asc',),
