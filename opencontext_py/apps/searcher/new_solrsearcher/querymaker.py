@@ -1,5 +1,7 @@
 from django.conf import settings
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
@@ -17,6 +19,17 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 # added to the utilities module.
 # ---------------------------------------------------------------------
 
+
+
+
+def process_hiearchic_query_path(
+    path,
+    hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM
+):
+    path_term = None
+    return path_term 
+
+
 def process_hiearchic_query(
     raw_path,
     hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
@@ -28,6 +41,13 @@ def process_hiearchic_query(
         hierarchy_delim=hierarchy_delim,
         or_delim=or_delim,
     )
+    path_terms = []
     for path in paths_list:
-        pass
+        path_term = process_hiearchic_query_path(
+            path,
+            hierarchy_delim=hierarchy_delim
+        )
+        path_terms.append(path_term)
+    return utilities.join_solr_query_terms(path_terms, operator='OR')
+    
     
