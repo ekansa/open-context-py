@@ -209,14 +209,6 @@
       become_user: "{{user}}"
       git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
 
-    - name: Change file ownership for git repo
-      command: "chown -R {{user_owner}}:{{group_owner}} {{oc_install_dir}}"
-      changed_when: false
-
-    - name: set default group to www-data
-      command: "chmod -R g+s {{oc_install_dir}}"
-      changed_when: false
-
     # - name: restart_here
     #   debug: msg="provision restart here"      
 
@@ -522,6 +514,14 @@
         - update-oc.sh
       become: yes
       become_user: "{{user_owner}}"
+
+    - name: Change file ownership for git repo
+      command: "chown -R {{user_owner}}:{{group_owner}} {{oc_install_dir}}"
+      changed_when: false
+
+    - name: set default group to www-data
+      command: "chmod -R g+s {{oc_install_dir}}"
+      changed_when: false
 
     - name: Change group permission to equal user permission
       command: "chmod -R g=u {{oc_install_dir}}"
