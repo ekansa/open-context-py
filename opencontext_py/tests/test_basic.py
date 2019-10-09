@@ -119,7 +119,7 @@ def test_projects_feed():
         m_json_ld.request_full_path = '/projects-search/'
         m_json_ld.spatial_context = spatial_context
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
-        assert json_ld['totalResults'] == 2
+        assert json_ld['totalResults'] > 0
 
 
 
