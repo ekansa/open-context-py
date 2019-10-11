@@ -35,8 +35,8 @@ t_json_ld.setUp()
         self.data_file = settings.STATIC_IMPORTS_ROOT + 'dt-bone.json'
         #self.context_str = self.request_json_str(self.proj_context_uri)
         client = Client()
-        response = client.get(self.proj_context_uri)
-        assert response.status_code == 200
+        response = client.get(self.proj_context_uri, follow=True)
+        assert response.status_code in [200,301]
         self.context_str = response.content
         self.data_str = self.load_json_file_str(self.data_file)
         g_context = ConjunctiveGraph(identifier=self.proj_context_uri)
