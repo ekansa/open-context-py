@@ -9,6 +9,9 @@
     install_db: "{{install_db | default('true')}}"
     install_solr_data: "{{install_solr_data | default('true')}}"
 
+    # calculate static_root
+    oc_static_root: "{{oc_install_dir}}/staticroot"
+
     # postgres vars -- for LOCAL postgres installation
     postgresql_python_library: python-psycopg2
     postgresql_user: postgres
@@ -276,8 +279,8 @@
     - name: create "{{oc_install_dir}}/cache/file-cache"
       file: path="{{oc_install_dir}}/cache/file-cache" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
 
-    - name: create "{{oc_install_dir}}/static"
-      file: path="{{oc_install_dir}}/static" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+    - name: create "{{oc_static_root}}"
+      file: path="{{oc_static_root}}" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
 
     - name: create secrets.json from template
       template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user_owner}} group={{group_owner}} mode=0660
@@ -304,14 +307,59 @@
         chdir: "{{oc_install_dir}}"
       when: migrate
 
-    - name: copy over static files
+    # - name: copy over static files
+    #   unarchive:
+    #     src: static.tar.gz
+    #     dest: "{{oc_install_dir}}"
+    #     owner: "{{user_owner}}"
+    #     group: "{{group_owner}}"
+    #     mode: 0770
+    #     keep_newer: no
+
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
+
+    - name: create temporary directory to unpack static file
+      tempfile:
+        state: directory
+        suffix: build
+      register: tempdir_1
+
+# tar -xvzf static.tar.gz  -C /tmp/ryt/ --strip-components=1 static
+
+
+    # download STATIC_FILES_URL
+    - name: unarchive static files tar file
       unarchive:
-        src: static.tar.gz
-        dest: "{{oc_install_dir}}"
+        src: "{{GROUP_SECRETS.STATIC_FILES_URL}}"
+        dest: "{{tempdir_1.path}}"
+        mode: 0640
         owner: "{{user_owner}}"
         group: "{{group_owner}}"
-        mode: 0770
-        keep_newer: no
+        remote_src: yes
+
+    - name: copy all files under the static folder to {{oc_static_root}}
+      shell: "cp -rp * {{oc_static_root}}/"
+      args:
+        chdir: "{{tempdir_1.path}}/static"
+
+    - name: Change file ownership for static files
+      command: "chown -R {{user_owner}}:{{group_owner}} {{oc_static_root}}"
+      changed_when: false
+
+    - name: set permissions for {{oc_static_root}}
+      command: "chmod -R 02770 {{oc_static_root}}"
+      changed_when: false
+
+    - name: Change group permission to equal user permission
+      command: "chmod -R g=u {{oc_static_root}}"
+      changed_when: false
+
+    - name: remove temp directory
+      file: 
+        path: "{{tempdir_1.path}}"
+        state: absent
 
     - name: create {{oc_web_dir}}
       file: path="{{oc_web_dir}}" state=directory owner={{user_owner}} group={{group_owner}} mode=0770
@@ -320,8 +368,6 @@
     - name: create uwsgi.ini from template
       template: src=templates/uwsgi.ini.j2  dest="{{oc_web_dir}}/uwsgi_oc.ini" owner={{user_owner}} group={{group_owner}} mode=0660
 
-    # - name: restart_here
-    #   debug: msg="provision restart here"
 
     # - name: end play
     #   meta: end_play
@@ -523,7 +569,7 @@
       changed_when: false
 
     - name: set default group to www-data
-      command: "chmod -R g+s {{oc_install_dir}}"
+      command: "chmod -R g+sX {{oc_install_dir}}"
       changed_when: false
 
     - name: Change group permission to equal user permission
