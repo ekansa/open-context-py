@@ -17,7 +17,47 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
+BAD_PREDICATE_TYPES_TO_STRING = [
+    False,
+    None,
+    '',
+    'None',
+    'False'
+]
 
+
+def get_solr_predicate_type_string(
+    predicate_type,
+    prefix='',
+    string_default_pred_types=None,
+):
+    '''
+    Defines whether our dynamic solr fields names for
+    predicates end with ___pred_id, ___pred_numeric, etc.
+    
+    :param str predicate_type: String data-type used by Open
+        Context
+    :param str prefix: String prefix to append before the solr type
+    :param list string_default_pred_types: list of values that
+        default to string without triggering an exception.
+    '''
+    if not string_default_pred_types:
+        # If not set, use the default
+        string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING
+    if predicate_type in ['@id', 'id', 'types', False]:
+        return prefix + 'id'
+    elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+        return prefix + 'numeric'
+    elif predicate_type == 'xsd:string':
+        return prefix + 'string'
+    elif predicate_type == 'xsd:date':
+        return prefix + 'date'
+    elif predicate_type in string_default_pred_types:
+        return prefix + 'string'
+    else:
+        raise Exception(
+            "Unknown predicate type: {}".format(predicate_type)
+        )
 
 
 def general_get_jsonldish_entity_parents(identifier, add_original=True):
@@ -196,14 +236,6 @@ sd_obj_k.fields
     FILE_SIZE_SOLR = 'filesize___pred_numeric'
     FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
     RELATED_SOLR_DOC_PREFIX = 'rel--'
-    
-    MISSING_PREDICATE_TYPES = [
-        False,
-        None,
-        '',
-        'None',
-        'False'
-    ]
 
 
     # Maximum depth of geotile zoom
@@ -336,7 +368,7 @@ sd_obj_k.fields
             if self.oc_item.json_ld['oc-gen:data-type']:
                 # Looks up the predicte type mapped to Solr types
                 parts.append(
-                    self._get_solr_predicate_type_string(
+                    get_solr_predicate_type_string(
                         self.oc_item.json_ld['oc-gen:data-type']
                     )
                 )
@@ -548,26 +580,6 @@ sd_obj_k.fields
                 context['slug']
             )
 
-    def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
-        '''
-        Defines whether our dynamic solr fields names for
-        predicates end with ___pred_id, ___pred_numeric, etc.
-        '''
-        if predicate_type in ['@id', 'id', 'types', False]:
-            return prefix + 'id'
-        elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-            return prefix + 'numeric'
-        elif predicate_type == 'xsd:string':
-            return prefix + 'string'
-        elif predicate_type == 'xsd:date':
-            return prefix + 'date'
-        elif predicate_type in self.MISSING_PREDICATE_TYPES:
-            return prefix + 'string'
-        else:
-            raise Exception(
-                "Unknown predicate type: {}".format(predicate_type)
-            )
-
     def _get_predicate_type_from_dict(self, predicate_dict):
         """Gets data type from a predicate dictionary object. """
         for key in ['type', '@type']:
@@ -579,7 +591,7 @@ sd_obj_k.fields
 
     def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
         """Gets the solr predicate type from a dictionary object. """
-        return self._get_solr_predicate_type_string(
+        return get_solr_predicate_type_string(
             self._get_predicate_type_from_dict(predicate_dict),
             prefix=prefix
         ) 
