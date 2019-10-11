@@ -4,6 +4,10 @@ import re
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
+from opencontext_py.apps.indexer.solrdocumentnew import (
+    get_solr_predicate_type_string
+)
+
 # ---------------------------------------------------------------------
 # This module contains general utility functions for the solr search
 # and query features.
@@ -47,6 +51,19 @@ def infer_multiple_or_hierarchy_paths(raw_path, hierarchy_delim='/', or_delim='|
     return paths
 
 
+def get_path_depth(self, path, delimiter='/'):
+    """Gets the depth of a (number of items) if split by a delimiter
+    
+    :param str path: A hierachic path, with levels separated by a
+        delimiter
+    :param str delimiter: A string delimiter between different levels
+        of a hiearchic path
+    """
+    # Remove a possible trailing delimiter before calculating
+    # the depth
+    return len(path.rstrip(delimiter).split(delimiter))
+
+
 def join_solr_query_terms(terms_list, operator='AND'):
     """Joins together a list of query terms into a string."""
     if not isinstance(terms_list, list):
@@ -54,6 +71,18 @@ def join_solr_query_terms(terms_list, operator='AND'):
     terms = ['({})'.format(term) for term in terms_list]
     terms_str = (' {} '.format(operator)).join(terms)
     return '({})'.format(terms_str)
+
+
+def get_solr_field_type(predicate_type, prefix=''):
+    '''Gets dynamic solr fields names for predicates of different
+    datatypes, ending with ___pred_id, ___pred_numeric, etc.
+    '''
+    # Currently, this is just a wrapper for a function from
+    # the solr document indexer.
+    return get_solr_predicate_type_string(
+        predicate_type=data_type,
+        prefix=prefix,
+    )
 
 
 def escaped_seq(term):
