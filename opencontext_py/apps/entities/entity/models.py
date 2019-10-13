@@ -185,16 +185,28 @@ class Entity():
         if not isinstance(identifier, str):
             return output
         identifier = URImanagement.convert_prefix_to_full_uri(identifier)
-        if (settings.CANONICAL_HOST + '/tables/') in identifier:
-            identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
-        link_entity_found = self.dereference_linked_data(
-            identifier,
-            link_entity_slug=link_entity_slug
-        )
-        if link_entity_found:
-            # Found what we want, so skip the rest and return True.
-            return True
+        oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
+        if not oc_uuid and (settings.CANONICAL_HOST + '/tables/') in identifier:
+            # Special case for probable open context table item.
+            oc_uuid = identifier.replace(
+                (settings.CANONICAL_HOST + '/tables/'), ''
+            )
+        
+        if not oc_uuid:
+            # We don't have an Open Context UUID, so look up a linked
+            # data entity.
+            link_entity_found = self.dereference_linked_data(
+                identifier,
+                link_entity_slug=link_entity_slug
+            )
+            if link_entity_found:
+                # Found what we want, so skip the rest and return True.
+                return True
         # If we haven't found a link_entity, check for manifest items.
+        if oc_uuid:
+            # We found an Open Context uuid by parsing a URI. So that
+            # should be the identifier to lookup.
+            identifier = oc_uuid
         manifest_item_found = self.dereference_manifest_item(identifier)
         if manifest_item_found:
             return True
