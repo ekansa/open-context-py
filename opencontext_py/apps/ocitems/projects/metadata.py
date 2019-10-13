@@ -5,13 +5,17 @@ from scipy.cluster.vq import kmeans,vq
 from math import radians, cos, sin, asin, sqrt
 from django.db import models
 from django.db.models import Avg, Max, Min
+
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
+from opencontext_py.libs.chronotiles import ChronoTile
+from opencontext_py.libs.globalmaptiles import GlobalMercator
+
 from opencontext_py.apps.ocitems.geospace.models import Geospace
 from opencontext_py.apps.ocitems.events.models import Event
 from opencontext_py.apps.ocitems.assertions.containment import Containment
 from opencontext_py.apps.ocitems.projects.models import Project
-from opencontext_py.libs.chronotiles import ChronoTile
-from opencontext_py.libs.globalmaptiles import GlobalMercator
+
 from opencontext_py.apps.entities.entity.models import Entity
 
 
@@ -24,7 +28,7 @@ class ProjectRels():
         self.sub_projects = False
         self.parent_projects = []
         self.child_entities = LastUpdatedOrderedDict()
-
+    
     def get_sub_projects(self, uuid):
         """
         Gets (child) sub-projects from the current project uuid
@@ -37,8 +41,26 @@ class ProjectRels():
         return self.sub_projects
 
     def get_jsonldish_parents(self, uuid, add_original=True):
+        """Gets parent projects for a project.
+        Returns a list of dictionary objects similar to JSON-LD expectations
+        This is useful for faceted search
         """
-        Gets parent projects for a project.
+        m_cache = MemoryCache()
+        cache_key = m_cache.make_cache_key(
+            'proj-par-jsonldish_{}'.format(add_original),
+            uuid
+        )
+        output = m_cache.get_cache_object(cache_key)
+        if output is None:
+            output = self._db_get_jsonldish_parents(
+                uuid, add_original=add_original
+            )
+            m_cache.save_cache_object(cache_key, output)
+        return output
+        
+    def _db_get_jsonldish_parents(self, uuid, add_original=True):
+        """
+        Uses the DB to gets parent projects for a project.
         Returns a list of dictionary objects similar to JSON-LD expectations
         This is useful for faceted search
 
