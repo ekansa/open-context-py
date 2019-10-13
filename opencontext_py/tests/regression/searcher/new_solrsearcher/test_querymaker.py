@@ -65,6 +65,13 @@ TESTS_SPATIAL_CONTEXTS = [
         },
     ),
     (
+        'United States/California||Foo',
+        {
+           'fq':['(united_states___context_id_fq:california)'],
+           'facet.field':['california___context_id'],
+        },
+    ),
+    (
         'United States/California||Florida',
         {
            'fq':['((united_states___context_id_fq:california) OR (united_states___context_id_fq:florida))'],
