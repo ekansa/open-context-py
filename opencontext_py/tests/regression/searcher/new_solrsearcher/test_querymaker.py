@@ -64,8 +64,21 @@ TESTS_SPATIAL_CONTEXTS = [
            'facet.field':['california___context_id'],
         },
     ),
+    
+    # Test case where Foo Bar are parts of context paths that do
+    # not exist
     (
-        'United States/California||Foo',
+        'United States/California||Foo Bar',
+        {
+           'fq':['(united_states___context_id_fq:california)'],
+           'facet.field':['california___context_id'],
+        },
+    ),
+    
+    # Test case where Foo and Bar are parts of context paths that do
+    # not exist
+    (
+        'United States||Foo-Bar/California||Foo Bar',
         {
            'fq':['(united_states___context_id_fq:california)'],
            'facet.field':['california___context_id'],
