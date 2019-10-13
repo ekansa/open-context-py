@@ -33,7 +33,7 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         self.parent_entities = None
         self.child_entities = None
         # cache prefix for the json-ldish-parents
-        self.jsonldish_p_prefix = 'json-ldish-parents-{}'
+        self.jsonldish_p_prefix = 'lr-json-ldish-parents-{}'
         # cache prefix for list of parents
         self.p_prefix = 'lr-parents'
         # cache prefix for children of an item
@@ -60,7 +60,7 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         # We don't have it cached, so get from the database.
         obj = self._get_jsonldish_entity_parents_db(
             identifier,
-            add_original
+            add_original=add_original
         )
         if obj:
             self.m_cache.save_cache_object(cache_key, obj)
