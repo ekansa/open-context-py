@@ -68,11 +68,11 @@ def general_get_jsonldish_entity_parents(identifier, add_original=True):
     )
     if raw_hiearchy_items:
         return raw_hiearchy_items
-    raw_hiearchy_items = ProjectRels().get_jsonldish_parents(
+    proj_hiearchy_items = ProjectRels().get_jsonldish_parents(
         uuid=identifier,
         add_original=add_original
     )
-    return raw_hiearchy_items
+    return proj_hiearchy_items
 
 
 def get_id(dict_obj, id_keys=['id', '@id']):
@@ -149,10 +149,11 @@ sd_obj_g.fields
 sd_obj_g.fields['human_remains']
 
 # Example Document
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 uuid_h = 'e4676e00-0b9f-40c7-9cb1-606965445056'
 sd_obj_h = SolrDocumentNew(uuid_h)
 sd_obj_h.make_solr_doc()
-sd_obj_h.fields
+sd_obj_h.fields.keys()
 
 # Example Project
 uuid_i = '3F6DCD13-A476-488E-ED10-47D25513FCB2'
@@ -227,15 +228,23 @@ sd_obj_k.fields
     # house in better order.
     DEFAULT_PUBLISHED_DATETIME = datetime.date(2007, 1, 1)
 
-    ALL_CONTEXT_SOLR = 'obj_all___context_id'
-    ROOT_CONTEXT_SOLR = 'root___context_id'
-    ROOT_PREDICATE_SOLR = 'root___pred_id'
-    ROOT_LINK_DATA_SOLR = 'ld___pred_id'
-    ROOT_PROJECT_SOLR = 'root___project_id'
-    ALL_PROJECT_SOLR = 'obj_all___project_id'
-    EQUIV_LD_SOLR = 'skos_closematch___pred_id'
-    FILE_SIZE_SOLR = 'filesize___pred_numeric'
-    FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
+    # The delimiter for parts of an object value added to a
+    # solr field.
+    SOLR_VALUE_DELIM = '___'
+
+    FIELD_SUFFIX_CONTEXT = 'context_id'
+    FIELD_SUFFIX_PREDICATE = 'pred_id'
+    FIELD_SUFFIX_PROJECT = 'project_id'
+
+    ALL_CONTEXT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+    ROOT_CONTEXT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+    ROOT_PREDICATE_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    ROOT_LINK_DATA_SOLR = 'ld' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
+    ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
+    EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    FILE_SIZE_SOLR = 'filesize' + SOLR_VALUE_DELIM + 'pred_numeric'
+    FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
     RELATED_SOLR_DOC_PREFIX = 'rel--'
 
 
@@ -267,9 +276,6 @@ sd_obj_k.fields
         ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85018080'),
     ]
     
-    # The delimiter for parts of an object value added to a
-    # solr field.
-    SOLR_VALUE_DELIM = '___'
     
     def __init__(self, uuid):
         '''
@@ -425,6 +431,7 @@ sd_obj_k.fields
             return None
         # Add the main solr id field if not present,
         # then append the concat_val
+        solr_id_field = self._convert_slug_to_solr(solr_id_field)
         if do_fq_only is False and solr_id_field not in self.fields:
             self.fields[solr_id_field] = []
         if (do_fq_only is False and
@@ -486,8 +493,9 @@ sd_obj_k.fields
             )
             # Make the new solr_field_name for the next iteration of the loop.
             solr_field_name = (
-                self._convert_slug_to_solr(proj['slug']) +
-                '___project_id'
+                self._convert_slug_to_solr(proj['slug'])
+                + self.SOLR_VALUE_DELIM
+                + self.FIELD_SUFFIX_PROJECT
             )
 
     def _get_oc_item_uuid(self, uri, match_type='subjects'):
@@ -634,6 +642,7 @@ sd_obj_k.fields
                 get_id(item),
                 item['label']
             )
+            
             # Add to the solr document the object value to the
             # solr field for this level of the hiearchy.
             self._add_id_field_fq_field_values(
