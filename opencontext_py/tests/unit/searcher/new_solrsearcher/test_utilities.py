@@ -52,6 +52,24 @@ TESTS_MUTIPLE_OR_PATHS = [
         '---',
         '||',
     ),
+    (
+        '---foo---bar||bad---super',
+        ['foo---bar---super', 'foo---bad---super'],
+        '---',
+        '||',
+    ),
+    (
+        '---foo---bar||bad---super---',
+        ['foo---bar---super', 'foo---bad---super'],
+        '---',
+        '||',
+    ),
+    (
+        '---foo---bar||bad---super||',
+        ['foo---bar---super', 'foo---bad---super'],
+        '---',
+        '||',
+    ),
 ]
 
 

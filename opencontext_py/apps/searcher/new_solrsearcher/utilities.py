@@ -38,6 +38,10 @@ def infer_multiple_or_hierarchy_paths(
     :param str hierarchy_delim: The hierarchy delimiter.
     :param str or_delim: The OR operator / delimiter.
     '''
+    # First, cleanup dangling delimeters at the start or end.
+    for delim in [hierarchy_delim, or_delim]:
+        raw_path = raw_path.lstrip(delim)
+        raw_path = raw_path.rstrip(delim)
     # Split the raw_path by hiearchy delim (default to '/') and then by
     # the or_delim (default to '||').
     path_lists = [
@@ -72,19 +76,24 @@ def get_path_depth(self, path, delimiter='/'):
 
 def join_solr_query_terms(terms_list, operator='AND'):
     """Joins together a list of query terms into a string."""
+    if not terms_list:
+        return ''
     if not isinstance(terms_list, list):
         terms_list = [terms_list]
     terms = ['({})'.format(term) for term in terms_list]
     terms_str = (' {} '.format(operator)).join(terms)
-    return '({})'.format(terms_str)
+    if len(terms) > 1:
+        # Multiple terms, so add
+        return '({})'.format(terms_str)
+    return terms_str
 
 
 def make_solr_term_via_slugs(
     field_slug,
-    field_parent_slug=None,
     solr_dyn_field,
-    solr_field_suffix='_fq'
     value_slug,
+    field_parent_slug=None,
+    solr_field_suffix='_fq',
 ):
     """Makes a solr query term from slugs
     
@@ -117,7 +126,7 @@ def make_solr_term_via_slugs(
         + SolrDocument.SOLR_VALUE_DELIM
         + solr_dyn_field
         + solr_field_suffix + ':'
-        + value_slug.replace('-', '_')
+        + value_slug
     )
 
 
