@@ -79,10 +79,6 @@ def get_valid_context_slugs(paths_list):
     paths_list += url_fixes
     valid_context_slugs = []
     for context in list(paths_list):
-        # Do some cleanup, since there maybe characters from URL
-        # encoding.
-        context = context.replace('+', ' ')
-        context = context.replace('%20', ' ')
         # Verify that the contexts are valid
         # find and save the enity to memory
         entity = m_cache.get_entity_by_context(context)
