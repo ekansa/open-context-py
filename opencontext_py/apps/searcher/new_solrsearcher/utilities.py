@@ -5,7 +5,8 @@ import re
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
-    get_solr_predicate_type_string
+    get_solr_predicate_type_string,
+    SolrDocumentNew as SolrDocument,
 )
 
 # ---------------------------------------------------------------------
@@ -18,7 +19,11 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
 # ---------------------------------------------------------------------
 
 
-def infer_multiple_or_hierarchy_paths(raw_path, hierarchy_delim='/', or_delim='||'):
+def infer_multiple_or_hierarchy_paths(
+    raw_path,
+    hierarchy_delim='/',
+    or_delim='||'
+):
     '''Takes a raw path and returns a list of all combinations of paths
     infered from an OR operator.
 
@@ -51,6 +56,7 @@ def infer_multiple_or_hierarchy_paths(raw_path, hierarchy_delim='/', or_delim='|
     return paths
 
 
+
 def get_path_depth(self, path, delimiter='/'):
     """Gets the depth of a (number of items) if split by a delimiter
     
@@ -73,15 +79,45 @@ def join_solr_query_terms(terms_list, operator='AND'):
     return '({})'.format(terms_str)
 
 
-def get_solr_field_type(predicate_type, prefix=''):
-    '''Gets dynamic solr fields names for predicates of different
-    datatypes, ending with ___pred_id, ___pred_numeric, etc.
-    '''
-    # Currently, this is just a wrapper for a function from
-    # the solr document indexer.
-    return get_solr_predicate_type_string(
-        predicate_type=data_type,
-        prefix=prefix,
+def make_solr_term_via_slugs(
+    field_slug,
+    field_parent_slug=None,
+    solr_dyn_field,
+    solr_field_suffix='_fq'
+    value_slug,
+):
+    """Makes a solr query term from slugs
+    
+    :param str field_slug: Slug for the field name, which is sometimes
+        the slug for the value_slug parent.
+    :param str field_parent_slug: Slug for a parent entity that is the
+        parent of the value_slug. This is used for hierarchic
+        properties where the field_slug could be a slug for a predicate
+        getting queried, while field_parent_slug could be a slug for a
+        more general type that is a parent of the value_slug.
+    :param str solr_dyn_field: A string for the kind of solr dymanic
+        field that we want to query. 'project_id' is for projects,
+        'pred_id' is for predicates.
+    :param str solr_field_suffix: A string for the the sub-type of solr
+        field that we want to query. "_fq" is for facet-query.
+    :param str value_slug: A string for the slug value that we want
+        to query.
+    """
+    solr_parent_prefix = field_slug.replace('-', '_')
+    if field_parent_slug:
+        # Add the immediate parent part of the solr
+        # field, since it is set.
+        solr_parent_prefix += (
+            SolrDocument.SOLR_VALUE_DELIM
+            + field_parent_slug.replace('-', '_')
+        )
+    
+    return (
+        solr_parent_prefix
+        + SolrDocument.SOLR_VALUE_DELIM
+        + solr_dyn_field
+        + solr_field_suffix + ':'
+        + value_slug.replace('-', '_')
     )
 
 
