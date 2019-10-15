@@ -46,6 +46,9 @@
         file: extra.yml
       ignore_errors: yes
 
+    - name: log secret_key_4
+      debug: msg="{{secret_key_4}}"
+
     - name: log oc_install_dir
       debug: msg="oc_install_dir {{oc_install_dir}}"
 
@@ -432,6 +435,21 @@
 
     - name: run uwsgi
       shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8000 --ini {{oc_web_dir}}/uwsgi_oc.ini"
+      become: yes
+      become_user: "{{user_owner}}"
+
+    # create crontab from text
+    - name: create crontab_www_data.txt from template
+      template: 
+        src: templates/crontab_www_data.txt.j2
+        dest: "{{oc_web_dir}}/crontab_www_data.txt"
+        mode: 0770
+      become: yes
+      become_user: "{{user_owner}}"
+
+    # set up crontab
+    - name: create crontab for www-data
+      command: crontab "{{oc_web_dir}}/crontab_www_data.txt"
       become: yes
       become_user: "{{user_owner}}"
 
