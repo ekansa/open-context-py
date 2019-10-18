@@ -1,0 +1,14 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin 
+
+response=$(curl -s -I -L 'https://opencontext.org/subjects-search/' | grep HTTP);
+status=${response#* }; # Strip off characters up to the first space
+status=${status:0:3}; # Just use the 3 digit status code
+if [ "$status" != "200" ]
+   then
+   echo "Open Context looks down, trying to restart...";
+   cd {{oc_install_dir}}
+   bash start-no-db.sh
+   else
+   echo "Open Context seems to be running fine.";
+fi

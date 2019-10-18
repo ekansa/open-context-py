@@ -25,23 +25,30 @@ class GeoReference():
         for uuid, geonames_uri in geo_related.items():
             if self.overwrite:
                 Geospace.objects.filter(uuid=uuid).delete()
-            geo_features = Geospace.objects.filter(uuid=uuid)
+            geo_feature = Geospace.objects.filter(uuid=uuid).first()
+            if geo_feature is not None and geo_feature.latitude == 0 and geo_feature.longitude == 0:
+                Geospace.objects.filter(
+                    uuid=uuid,
+                    latitude=0,
+                    longitude=0,
+                ).delete()
+                geo_feature = None
             # print(str(len(geo_features)) + ' features in: ' + uuid + ' with: ' + geonames_uri)
-            if len(geo_features) < 1:
-                manifest = False
-                try:
-                    manifest = Manifest.objects.get(uuid=uuid)
-                except Manifest.DoesNotExist:
-                    manifest = False
-                if manifest is not False:
-                    # No geospatial data exists for this item yet, so go fetch from GeoNames
-                    geoapi = GeonamesAPI()
-                    json_data = geoapi.get_json_for_geonames_uri(geonames_uri)
-                    if not isinstance(json_data, dict):
-                        self.request_error = True
-                        print('Problem with: ' + geoapi.request_url + ' from: ' + geonames_uri)
-                    else:
-                        ok = self.create_geospatial_data_from_geonames_json(manifest, json_data)
+            if geo_feature:
+                # Skip, since we already have geofeatres for this item.
+                continue
+            manifest = Manifest.objects.filter(uuid=uuid).first()
+            if not manifest:
+                print('Cannot find manifest record for: {} {}'.format(uuid, geonames_uri))
+                continue
+            # No geospatial data exists for this item yet, so go fetch from GeoNames
+            geoapi = GeonamesAPI()
+            json_data = geoapi.get_json_for_geonames_uri(geonames_uri)
+            if not isinstance(json_data, dict):
+                self.request_error = True
+                print('Problem with: ' + geoapi.request_url + ' from: ' + geonames_uri)
+                continue
+            ok = self.create_geospatial_data_from_geonames_json(manifest, json_data)
 
     def create_geospatial_data_from_geonames_json(self, manifest, json_data):
         """ creates and saves geospatial data derived from geonames """

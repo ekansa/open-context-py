@@ -46,12 +46,11 @@ class StringManagement():
         ch_string.project_uuid = self.project_uuid
         ch_string.content = content
         hash_id = OCstring.make_hash_id(ch_string)
-        try:
-            self.oc_string = OCstring.objects.get(hash_id=hash_id)
-        except OCstring.DoesNotExist:
+        self.oc_string = OCstring.objects.filter(hash_id=hash_id).first()
+        if not self.oc_string:
             self.oc_string = False
-        if(self.oc_string is not False):
-            found = True
-            if show_uuid:
-                found = self.oc_string.uuid
+            return False
+        found = True
+        if show_uuid:
+            found = self.oc_string.uuid
         return found

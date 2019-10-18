@@ -1,6 +1,9 @@
+import logging
 from django.conf import settings
+from django.core.cache import caches
 from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
@@ -21,6 +24,9 @@ rpg = ReadProjectContextVocabGraph(oc_item.proj_context_json_ld)
 ia = rpg.infer_assertions_for_item_json_ld(oc_item.json_ld)
 
 """
+
+logger = logging.getLogger("tests-regression-logger")
+
 
 class ReadProjectContextVocabGraph():
     """ Methods to read the project context vocabulary graph """
@@ -73,14 +79,19 @@ class ReadProjectContextVocabGraph():
     ]
     
     def __init__(self, proj_context_json_ld=None):
+        self.m_cache = MemoryCache()
         self.context = None
-        self.graph = self.GLOBAL_VOCAB_GRAPH
+        self.graph = None
+        self.fail_on_missing_entities = False
         if not isinstance(proj_context_json_ld, dict):
             return None
         if '@context' in proj_context_json_ld:
             self.context = proj_context_json_ld['@context']
         if '@graph' in proj_context_json_ld:
-            self.graph += proj_context_json_ld['@graph']
+            self.graph = self.GLOBAL_VOCAB_GRAPH + proj_context_json_ld['@graph']
+        else:
+            self.graph = self.GLOBAL_VOCAB_GRAPH
+        logger.info('Read project graph size: {}'.format(len(self.graph)))
     
     def lookup_predicate(self, id):
         """looks up an Open Context predicate by an identifier
@@ -102,33 +113,38 @@ class ReadProjectContextVocabGraph():
            by looking up the a type from how it is used as
            the object of a descriptive predicate in an observation
         """
-        output = type_obj
         type_ids = self.get_id_list_for_g_obj(type_obj)
-        found = False
         for type_id in type_ids:
-            if found:
-                break
             found_type_obj = self.lookup_type(type_id)
             if isinstance(found_type_obj, dict):
-                found = True
-                output = found_type_obj
-                break
-        return output
+                return found_type_obj
+        return type_obj
     
     def lookup_oc_descriptor(self, id, item_type):
         """looks up a predicate, or a type by an identifier
            (slud id, uri, slug, or uuid)
         """
-        output = None
-        if (isinstance(self.graph, list) and
-            isinstance(id, str)):
+        cache_key = self.m_cache.make_cache_key(
+            'lookup_oc_descriptor_{}'.format(item_type),
+            id
+        )
+        output = self.m_cache.get_cache_object(cache_key)
+        if (output is None
+            and isinstance(self.graph, list)
+            and isinstance(id, str)
+        ):
             for g_obj in self.graph:
                 id_list = self.get_id_list_for_g_obj(g_obj)
-                if id in id_list:
-                    output = g_obj
-                    if item_type == 'predicates' and '@type' not in g_obj:
-                        output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
+                if not id in id_list:
+                    continue
+                output = g_obj
+                if item_type == 'predicates' and '@type' not in g_obj:
+                    output['@type'] = self.get_predicate_datatype_for_graph_obj(g_obj)
                     break
+            if output:
+                self.m_cache.save_cache_object(cache_key, output)
+        if self.fail_on_missing_entities and not output:
+            raise RuntimeError('Cannot find {}, item_type: {}'.format(id, item_type))
         return output
     
     def get_predicate_datatype_for_graph_obj(self, g_obj):
@@ -223,6 +239,8 @@ class ReadProjectContextVocabGraph():
                     continue
                 obs_pred_info = self.lookup_predicate(obs_pred_key)
                 pred_data_type = self.get_predicate_datatype_for_graph_obj(obs_pred_info)
+                if not obs_pred_info:
+                    continue
                 equiv_pred_objs = self.get_equivalent_objects(obs_pred_info)
                 if not equiv_pred_objs:
                     # No linked data equivalence for the obs_pred_key

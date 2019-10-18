@@ -1,0 +1,8 @@
+oc_github_repo: ssh://git@github.com/rdhyee/open-context-py.git
+oc_install_dir: /var/oc-venv
+oc_web_dir: /opt/ocweb
+geoip_path: /var/oc-venv/open-context-py/assets
+allowed_host: octest.raymondyee.net
+deployed_host: http://octest.raymondyee.net
+deployed_site_name: "Open Context (Google-Cloud)"
+to_deployed_uris: 1

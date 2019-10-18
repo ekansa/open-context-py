@@ -32,7 +32,7 @@ class FinalizeImport():
     DEFAULT_STAGE_ROW_PREFIX = 'imp-stage-row'
     DEFAULT_DONE_STATUS = 'import-done'
 
-    def __init__(self, source_id):
+    def __init__(self, source_id, batch_size=settings.IMPORT_BATCH_SIZE):
         self.source_id = source_id
         pg = ProcessGeneral(source_id)
         pg.get_source()
@@ -41,7 +41,7 @@ class FinalizeImport():
         self.row_count = False
         self.imp_status = False
         self.start_row = False
-        self.batch_size = settings.IMPORT_BATCH_SIZE
+        self.batch_size = batch_size
         self.end_row = self.batch_size
         self.act_process_num = False
         self.next_process_num = False

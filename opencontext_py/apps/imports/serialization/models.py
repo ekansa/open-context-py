@@ -72,7 +72,7 @@ imp_sj.load_data_in_directory('24-murlo')
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()
 imp_sj.act_import_dir = '/home/ekansa'
-imp_sj.load_data_in_directory('97-kp-media')
+imp_sj.load_data_in_directory('24-murlo-2019')
 
 from opencontext_py.apps.imports.serialization.models import ImportSerizializedJSON
 imp_sj = ImportSerizializedJSON()

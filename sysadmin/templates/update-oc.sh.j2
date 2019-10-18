@@ -1,0 +1,28 @@
+#!/bin/bash
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+response=$(curl -s -I -L 'https://github.com/ekansa/open-context-py' | grep HTTP);
+
+status=${response#* }; # Strip off characters up to the first space
+status=${status:0:3}; # Just use the 3 digit status code
+if [ "$status" == "200" ]
+    then
+    cd {{oc_install_dir}}/open-context-py
+    git fetch origin
+    git reset --hard origin
+    git pull
+    chown -R www-data:www-data {{oc_install_dir}}//open-context-py
+    chmod -R 774 {{oc_install_dir}}//open-context-py
+    echo "Open Context source code updated!";
+    cd {{oc_install_dir}}
+    echo "Preparing the Python virtual environment...";
+    source .venv/bin/activate
+    cd {{oc_install_dir}}/open-context-py
+    echo "Migrating data structures...";
+    python manage.py migrate
+    else
+    echo "Github cannot be reached. Check Internet connection to update.";
+fi
+echo "[Press any key to close this window]";
+read -n 1 -s;

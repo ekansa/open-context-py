@@ -47,27 +47,30 @@ class ProjectRels():
         """
         output = False
         raw_parents = self.get_parents(uuid)
-        if(add_original):
+        if add_original:
             # add the original identifer to the list of parents, at lowest rank
             raw_parents.insert(0, uuid)
-        if len(raw_parents) > 0:
-            # reverse the order of the list, to make top most concept
-            # first
-            output = []
-            parents = raw_parents[::-1]
-            for par_id in parents:
-                ent = Entity()
-                found = ent.dereference(par_id)
-                if(found):
-                    p_item = LastUpdatedOrderedDict()
-                    p_item['id'] = ent.uri
-                    p_item['slug'] = ent.slug
-                    p_item['label'] = ent.label
-                    if(ent.data_type is not False):
-                        p_item['type'] = ent.data_type
-                    else:
-                        p_item['type'] = '@id'
-                    output.append(p_item)
+        if len(raw_parents) < 1:
+            # Skip the rest.
+            return output
+        # Reverse the order of the list, to make top most concept
+        # first
+        output = []
+        parents = raw_parents[::-1]
+        for par_id in parents:
+            ent = Entity()
+            found = ent.dereference(par_id)
+            if not found:
+                continue
+            p_item = LastUpdatedOrderedDict()
+            p_item['id'] = ent.uri
+            p_item['slug'] = ent.slug
+            p_item['label'] = ent.label
+            if isinstance(ent.data_type, str):
+                p_item['type'] = ent.data_type
+            else:
+                p_item['type'] = '@id'
+            output.append(p_item)
         return output
 
     def get_parents(self, uuid):

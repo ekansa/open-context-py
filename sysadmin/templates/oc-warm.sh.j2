@@ -1,0 +1,8 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin 
+
+cd {{oc_install_dir}}
+echo "Starting virtual environment";
+source {{oc_install_dir}}/.venv/bin/activate;
+python manage.py warmer --sleep 1;
+

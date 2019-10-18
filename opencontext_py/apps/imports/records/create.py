@@ -1,5 +1,7 @@
 import uuid as GenUUID
 import datetime
+import numpy as np
+import pandas as pd
 from django.db import models
 from django.db.models import Q
 from opencontext_py.apps.imports.fields.models import ImportField
@@ -53,4 +55,71 @@ class ImportRecords():
             ImportCell.objects.bulk_create(bulk_list)
             bulk_list = None
             print('Done with: ' + str(row_num))
+        return row_num
+    
+    def save_dataframe_records(
+        self,
+        source_id,
+        df,
+        do_valiate=True
+    ):
+        """ Loads a schema from refine, saves it in the database """
+        self.source_id = source_id
+        if df.empty:
+            return None
+        print('Importing {} records from: {}'.format(
+                len(df.index),
+                self.source_id
+            )
+        )
+
+        cols = df.columns.tolist()
+        for i, row in df.iterrows():
+            row_num = i + 1
+            bulk_list = []
+            for field_num, col in enumerate(cols, 1):
+                cell_value = row[col]
+                if cell_value in [np.nan, None, 'nan']:
+                    cell_value = ''
+                cell_value = str(cell_value).strip()
+                if cell_value == 'nan':
+                     cell_value = ''
+                imp_cell = ImportCell()
+                imp_cell.source_id = self.source_id
+                imp_cell.project_uuid = self.project_uuid
+                imp_cell.row_num = row_num
+                imp_cell.field_num = field_num
+                imp_cell.rec_hash = ImportCell().make_rec_hash(
+                    self.project_uuid,
+                    cell_value
+                )
+                imp_cell.fl_uuid = False
+                imp_cell.l_uuid = False
+                imp_cell.cell_ok = True  # default to Import OK
+                imp_cell.record = cell_value
+                bulk_list.append(imp_cell)
+            # Now bulk create the list of records in this row
+            ImportCell.objects.bulk_create(bulk_list)
+            bulk_list = None
+        df_len = len(df.index)
+        print('FINISHED import of {} records from: {}'.format(
+                len(df.index),
+                self.source_id
+            )
+        )
+        if not do_valiate:
+            return row_num
+        for field_num, col in enumerate(cols, 1):
+            rec_count = ImportCell.objects.filter(
+                source_id=self.source_id,
+                field_num=field_num
+            ).count()
+            print('Imported {} [{}]: {}, expected {}'.format(
+                    col,
+                    field_num,
+                    rec_count,
+                    df_len
+                )
+            )
+            assert rec_count == df_len
         return row_num

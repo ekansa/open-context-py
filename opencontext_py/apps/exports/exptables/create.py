@@ -13,22 +13,39 @@ from opencontext_py.apps.ocitems.subjects.models import Subject
 class ExpTabCreate():
     """
 
+
+
+
 from opencontext_py.apps.exports.exptables.create import ExpTabCreate
-extab_c = ExpTabCreate()
-# extab_c.table_id = 'b5f81371-35db-4644-b353-3f5648eeb222'
-extab_c.label = 'Data Table of Biometry for Dog "Burials" from Tell Gezer and Other Sites'
-extab_c.include_equiv_ld_literals = False
-extab_c.include_ld_source_values = False
-extab_c.project_uuids = ['646b7034-07b7-4971-8d89-ebe37dda4cd2']
-extab_c.class_uris = ['oc-gen:cat-animal-bone']
-# extab_c.source_ids = ['ref:1910791260696']
-extab_c.create_table()
+
+tabs = [
+    (
+        [
+            'ref:1830065845915',
+        ],
+        ['oc-gen:cat-sample'],
+        'ae266373-dca1-4546-ad57-0db5384a8aad',
+        'Data Table of Akvat Survey Observation Points'
+    ),
+]
+ex_tabs = []
+for source_ids, class_uris, table_id, label in tabs:
+    extab_c = ExpTabCreate()
+    extab_c.table_id = table_id
+    extab_c.label = label
+    extab_c.class_uris = class_uris
+    extab_c.include_equiv_ld_literals = False
+    extab_c.include_ld_source_values = False
+    extab_c.project_uuids = ['02b55e8c-e9b1-49e5-8edf-0afeea10e2be']
+    extab_c.source_ids = source_ids
+    extab_c.create_table()
+    ex_tabs.append(extab_c)
 
 
 from opencontext_py.apps.exports.exptables.models import ExpTable
 from opencontext_py.apps.exports.exprecords.models import ExpCell
 from opencontext_py.apps.exports.expfields.models import ExpField
-rem_tabs = ['ea16a444-9876-4fe7-8ffb-389b54a7e3a0', 'b5f81371-35db-4644-b353-3f5648eeb222']
+rem_tabs = ['9e88ebc8-fea3-41c7-b520-1500f378dbae', '119df385-2779-4bf0-9cc2-c3ba6ce2964a']
 ExpTable.objects.filter(table_id__in=rem_tabs).delete()
 ExpField.objects.filter(table_id__in=rem_tabs).delete()
 ExpCell.objects.filter(table_id__in=rem_tabs).delete()
