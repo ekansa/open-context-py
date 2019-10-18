@@ -159,29 +159,84 @@ def get_spatial_context_query_dict(spatial_context=None):
 # ---------------------------------------------------------------------
 
 def process_hiearchic_query_path(
-    path,
-    hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM
+    path_list,
+    root_field,
+    field_suffix,
 ):
-    path_term = None
+    m_cache = MemoryCache()
+    query_dict = {'fq': [], 'facet.field': []}
+    
+    # Get the last item in the path list. This needs to be a valid ID
+    # (a slug, uri, uuid) for an item in the database. If not, there is
+    # no point in querying solr.
+    last_path_id = path_list[-1]
+    last_item = m_cache.get_entity(last_path_id)
+    if not last_item:
+        # The last item is not an entity in the DB, so return None.
+        return None
+
+    # Make the facet field so solr will return any possible
+    # facet values for chilren of the LAST item in this path_list.    
+    facet_field = (
+        last_item.slug.replace('-', '_')
+        + SolrDocument.SOLR_VALUE_DELIM
+        + field_suffix
+    )
+    query_dict['facet.field'].append(facet_field)
+    
+    # Make the obj_all_field_fq
+    obj_all_field_fq = (
+        'obj_all'
+        + SolrDocument.SOLR_VALUE_DELIM
+        + root_field
+        + '_fq'
+    )
+    query_dict['facet.field'].append(facet_field)
+    
+    field_fq = root_field
+    parent_item = None
+    if len(path_list) > 1:
+        # Get the penultimate item in the path list, which
+        # is the immediate parent of the last item.
+        parent_path_id = path_list[-2]
+        parent_item = m_cache.get_entity(parent_path_id)
+    if parent_item:
+        field_fq = (
+            parent_item.slug.replace('-', '_')
+            + SolrDocument.SOLR_VALUE_DELIM
+            + field_suffix  
+        )
+    # Add the _fq suffix.
+    field_fq += '_fq'
+    # The query path term is
+    path_term = '{field_fq}:{last_item_slug}'.format(
+        field_fq=field_fq,
+        last_item_slug=last_item.slug
+    )
+    
     return path_term 
 
 
 def process_hiearchic_query(
     raw_path,
+    root_field,
+    field_suffix,
     hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
     or_delim=configs.REQUEST_OR_OPERATOR,
 ):
     """Process a raw_path request to formulate a solr query"""
-    paths_list = utilities.infer_multiple_or_hierarchy_paths(
+    paths_as_lists = utilities.infer_multiple_or_hierarchy_paths(
         raw_path,
         hierarchy_delim=hierarchy_delim,
         or_delim=or_delim,
+        get_paths_as_lists=True,
     )
     path_terms = []
-    for path in paths_list:
+    for path_list in paths_as_lists:
         path_term = process_hiearchic_query_path(
-            path,
-            hierarchy_delim=hierarchy_delim
+            path_list,
+            root_field=root_field,
+            field_suffix=field_suffix,
         )
         path_terms.append(path_term)
     return utilities.join_solr_query_terms(path_terms, operator='OR')
