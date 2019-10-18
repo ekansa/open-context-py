@@ -22,7 +22,8 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
 def infer_multiple_or_hierarchy_paths(
     raw_path,
     hierarchy_delim='/',
-    or_delim='||'
+    or_delim='||',
+    get_paths_as_lists=False,
 ):
     '''Takes a raw path and returns a list of all combinations of paths
     infered from an OR operator.
@@ -50,14 +51,25 @@ def infer_multiple_or_hierarchy_paths(
     ]
     # Create a list of the various permutations
     path_tuple_list = list(itertools.product(*path_lists))
-    # Turn the paths a list of unique strings
-    paths = []
+    
+    # Make sure that we return unique paths. Make string
+    # paths and paths-as-lists.
+    paths_as_strs = []
+    paths_as_lists = []
     for path_parts in path_tuple_list:
-        new_path = hierarchy_delim.join(path_parts)
-        if new_path in paths:
+        if not len(path_parts):
             continue
-        paths.append(new_path)
-    return paths
+        new_path = hierarchy_delim.join(path_parts)
+        if not new_path or new_path in paths_as_strs:
+            continue
+        paths_as_strs.append(new_path)
+        paths_as_lists.append(path_parts)
+    
+    # Return paths as either strings or as lists
+    if get_paths_as_lists:
+        return paths_as_lists
+    # Default to returning the paths as strings.
+    return paths_as_strs
 
 
 
