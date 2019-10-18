@@ -9,8 +9,11 @@ from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
+
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
+from opencontext_py.apps.searcher.new_solrsearcher import querymaker
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
@@ -21,11 +24,12 @@ class SearchSolr():
         self.solr_connect()
         self.solr_response = None
         self.json_ld = None
-        self.facet_fields = config.DEFAULT_FACET_FIELDS
-        self.stats_fields = config.GENERAL_STATS_FIELDS
-        self.rows = config.SOLR_DEFAULT_ROW_COUNT
+        # Use the copy() method to make sure we don't mutate the configs!
+        self.init_facet_fields = configs.DEFAULT_FACET_FIELDS.copy()
+        self.init_stats_fields = configs.GENERAL_STATS_FIELDS.copy()
+        self.rows = configs.SOLR_DEFAULT_ROW_COUNT
         self.start = 0
-        self.max_rows = config.SOLR_MAX_RESULT_ROW_COUNT
+        self.max_rows = configs.SOLR_MAX_RESULT_ROW_COUNT
         self.prequery_stats = []
         self.item_type_limit = None  # limit searches to a specific item type
         self.do_context_paths = True  # make sure context paths are in the query
@@ -38,6 +42,7 @@ class SearchSolr():
     def solr_connect(self):
         """ Connects to solr """
         self.solr = SolrConnection(False).connection
+    
     
 
     def compose_query(self, request_dict):
@@ -53,10 +58,13 @@ class SearchSolr():
         query['start'] = self.start
         query['debugQuery'] = self.solr_debug_query
         query['fq'] = []
-        query['facet.field'] = []
+        # Starts with an initial facet field list
+        query['facet.field'] = self.init_facet_fields 
         query['facet.range'] = []
+        
         query['stats'] = self.solr_stats_query
-        query['stats.field'] = self.stats_fields
+        # Starts with an initial stats field list
+        query['stats.field'] = self.init_stats_fields
         
         # -------------------------------------------------------------
         # SORTING
@@ -132,6 +140,20 @@ class SearchSolr():
             elif rows < 0:
                 rows = 0
             query['rows'] = rows
-        
-        
+            
+        # -------------------------------------------------------------
+        # Spatial Context
+        # -------------------------------------------------------------
+        if 'path' in request_dict and self.do_context_paths:
+            # Remove the default Root Solr facet field if it is there.
+            query['facet.field'] = utilities.safe_remove_item_from_list(
+                SolrDocument.ROOT_CONTEXT_SOLR,
+                query['facet.field']
+            )
+            query_dict = querymaker.get_spatial_context_query_dict(
+                request_dict['path']
+            )
+            query['fq'] += query_dict['fq']
+            query['facet.field'] += query_dict['facet.field']
+    
         return query
