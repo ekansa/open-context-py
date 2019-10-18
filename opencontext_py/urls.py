@@ -29,6 +29,9 @@ from opencontext_py.apps.oai import views as OAIviews
 from opencontext_py.apps.utilities import views as UtilitiesViews
 from opencontext_py.apps.ldata.pelagios import views as PelagiosViews
 
+# For testing new search
+from opencontext_py.apps.searcher.new_solrsearcher import views as NewSearchViews
+
 
 urlpatterns = [
     # Examples:
@@ -87,6 +90,12 @@ urlpatterns = [
     url(r'^projects-search.json?', SearchViews.projects_json_view, name='projects_search_json_d'),
     url(r'^projects-search/(?P<spatial_context>\S+)?.json', SearchViews.projects_json_view, name='projects_search_json'),
     url(r'^projects-search/(?P<spatial_context>\S+)?', SearchViews.projects_html_view, name='projects_search_html'),
+    
+    # New Search (testing) views
+    url(r'^query.json?', NewSearchViews.query_json, name='new_search_json_d'),
+    url(r'^query/(?P<spatial_context>\S+)?.json', NewSearchViews.query_json, name='new_search_json'),
+    url(r'^query/(?P<spatial_context>\S+)?', NewSearchViews.query_json, name='new_search_html'),
+    
     url(r'^search.json?', SearchViews.json_view, name='search_json_d'),
     url(r'^search/(?P<spatial_context>\S+)?.json', SearchViews.json_view, name='search_json'),
     url(r'^search/(?P<spatial_context>\S+)?', SearchViews.html_view, name='search_html'),
