@@ -166,6 +166,7 @@ def escape_solr_arg(arg):
     arg = arg.replace('\\', r'\\')   # escape \ first
     return "".join([next_str for next_str in escaped_seq(arg)])
 
+
 def string_to_float(str_val, invalid_output=None):
     """Convert a string value to a float, if valid
     
@@ -281,10 +282,19 @@ def make_request_obj_dict(request, spatial_context=None):
     """Extracts GET parameters and values from a Django
     request object into a dictionary obj
     """
-    new_request = LastUpdatedOrderedDict()
-    new_request['path'] = spatial_context
+    request_dict = LastUpdatedOrderedDict()
+    request_dict['path'] = spatial_context
     if request:
         # "for key in request.GET" works too.
         for key, key_val in request.GET.items():
-            new_request[key] = request.GET.getlist(key)
-    return new_request
+            request_dict[key] = request.GET.getlist(key).copy()
+    return request_dict
+
+
+def safe_remove_item_from_list(item, item_list):
+    """ Safely removes an item from a list, if it is actuall a list """
+    if not isinstance(item_list, list):
+        return item_list
+    if not item in item_list:
+        return item_list
+    return item_list.remove(item)
