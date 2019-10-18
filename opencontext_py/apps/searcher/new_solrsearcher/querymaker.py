@@ -32,7 +32,7 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 # ---------------------------------------------------------------------
-# SPATIAL CONTEXT RELATED FUNCIONS
+# SPATIAL CONTEXT RELATED FUNCTIONS
 # ---------------------------------------------------------------------
 def get_containment_parent_slug(slug):
     '''Takes a slug and returns the slug of its parent. Returns 'root'
@@ -147,7 +147,16 @@ def get_spatial_context_query_dict(spatial_context=None):
         )
     )
     return query_dict
-    
+
+
+# ---------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------
+# NOTES, NOT USED
+# ---------------------------------------------------------------------
 
 def process_hiearchic_query_path(
     path,
