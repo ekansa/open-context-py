@@ -91,6 +91,19 @@ TESTS_SPATIAL_CONTEXTS = [
            'facet.field':['california___context_id', 'florida___context_id',],
         },
     ),
+    
+    # The following test case highlights how the solr query uses slugs
+    # like "24-poggio-civitate" and "24-civitate-a" as identifiers.
+    # Translanding a context path string into a solr query requires
+    # use of the database to look up the corresponding slugs assigned
+    # to the spatial context (subjects) entities being queried. 
+    (
+        'Italy/Poggio+Civitate/Civitate+A',
+        {
+           'fq':['(24_poggio_civitate___context_id_fq:24-civitate-a)'],
+           'facet.field':['24_civitate_a___context_id',],
+        },
+    ),
 ]
 
 
