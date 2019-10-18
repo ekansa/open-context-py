@@ -1,0 +1,12 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin 
+
+status=$(/etc/redis/bin/redis-cli ping 'ok');
+if [ "$status" != "ok" ]
+   then
+   echo "Redis Cache looks down, trying to restart...";
+   /etc/redis/bin/redis-cli shutdown
+   /etc/redis/bin/redis-server --daemonize yes
+   else
+   echo "Redis Cache seems to be running fine.";
+fi

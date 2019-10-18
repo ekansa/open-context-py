@@ -6,6 +6,7 @@ from django.db import models
 from django.db import transaction
 from django.conf import settings
 from django.test import TestCase
+from django.test.client import Client
 from rdflib.plugin import register, Parser
 from rdflib import Graph, URIRef, Literal
 from rdflib.graph import ConjunctiveGraph
@@ -28,10 +29,15 @@ t_json_ld.setUp()
                  'rdflib_jsonld.parser',
                  'JsonLDParser')
         # self.graph = Graph()
-        self.proj_context_uri = 'http://127.0.0.1:8000/contexts/projects/3.json'
+        # self.proj_context_uri = 'http://127.0.0.1:8000/contexts/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10.json'
+        self.proj_context_uri = '/contexts/projects/3FAAA477-5572-4B05-8DC1-CA264FE1FC10.json'
         self.context_file = settings.STATIC_IMPORTS_ROOT + '3-context.json'
         self.data_file = settings.STATIC_IMPORTS_ROOT + 'dt-bone.json'
-        self.context_str = self.request_json_str(self.proj_context_uri)
+        #self.context_str = self.request_json_str(self.proj_context_uri)
+        client = Client()
+        response = client.get(self.proj_context_uri, follow=True)
+        assert response.status_code in [200,301]
+        self.context_str = response.content
         self.data_str = self.load_json_file_str(self.data_file)
         g_context = ConjunctiveGraph(identifier=self.proj_context_uri)
         g_context.parse(data=self.context_str, format='json-ld')

@@ -1,0 +1,35 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+echo "--------------------------------------";
+echo "- (RE)START PROCESS FOR OPEN CONTEXT -";
+echo "--------------------------------------";
+echo "Restarting Postgres...";
+sudo /etc/init.d/postgresql restart
+echo "--------------------------------------";
+echo " ";
+echo "Restarting Redis memory-cache server...";
+/etc/redis/bin/redis-cli shutdown
+/etc/redis/bin/redis-server --daemonize yes
+/etc/redis/bin/redis-cli ping 'Redis ping response OK!'
+echo " ";
+cd {{oc_install_dir}}
+echo "Preparing the Python virtual environment...";
+source .venv/bin/activate
+for (( iport=8081; iport<=8090; iport++ ))
+do
+    pkill -INT {{oc_install_dir}}/.venv/bin/uwsgi
+    sudo rm -f {{oc_web_dir}}/uwsgi_oc.pid
+    sudo rm -f {{oc_web_dir}}/uwsgi_oc.sock
+    sudo rm -f {{oc_web_dir}}/uwsgi_oc.log
+    if lsof -Pi :$iport -sTCP:LISTEN -t >/dev/null ;
+       then
+           echo "$iport seems busy, trying another...";
+       else
+           echo "Trying to start Open Context UWSGI on $iport";
+           {{oc_install_dir}}/.venv/bin/uwsgi  --http-socket :$iport --ini {{oc_web_dir}}/uwsgi_oc.ini
+           sudo /etc/init.d/nginx restart
+           break
+    fi
+done
+echo "[Press any key to close this window]";
+read -n 1 -s;

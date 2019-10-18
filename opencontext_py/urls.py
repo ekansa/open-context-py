@@ -377,7 +377,7 @@ urlpatterns = [
     # Index, home-page route
     url(r'^$', HomeViews.index, name='home_index'),
     # Admin route
-    url(r'^admin/', include(admin.site.urls))]
+    url(r'^admin/', admin.site.urls)]
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 if settings.DEBUG:
     import debug_toolbar
