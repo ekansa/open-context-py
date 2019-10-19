@@ -180,6 +180,12 @@ uuid_k = '0cea2f4a-84cb-4083-8c66-5191628abe67'
 sd_obj_k = SolrDocumentNew(uuid_k)
 sd_obj_k.make_solr_doc()
 sd_obj_k.fields
+
+# Example item from a Subproject
+uuid_l = 'b8cec4d8-0926-4c38-836b-91a94920d5c1'
+sd_obj_l = SolrDocumentNew(uuid_l)
+sd_obj_l.make_solr_doc()
+sd_obj_l.fields
     '''
 
     # the list below defines predicates used for
