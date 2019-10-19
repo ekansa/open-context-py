@@ -61,19 +61,26 @@ def get_solr_predicate_type_string(
         )
 
 
-def general_get_jsonldish_entity_parents(identifier, add_original=True):
+def general_get_jsonldish_entity_parents(identifier, add_original=True, is_project=False):
     """Wrapper for getting parent entities for oc items and parent projects"""
-    raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
-        identifier,
-        add_original=add_original
-    )
-    if raw_hiearchy_items:
-        return raw_hiearchy_items
+    hierarchy_items = []
+    if not is_project:
+        # Do this if we haven't explicitly stated we have a project item.
+        hierarchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            identifier,
+            add_original=add_original
+        )
+    # We found a hiearchy, so no need to check for a project hierachy.
+    if len(hierarchy_items) > 1:
+        return hierarchy_items
+    
     proj_hiearchy_items = ProjectRels().get_jsonldish_parents(
         uuid=identifier,
         add_original=add_original
     )
-    return proj_hiearchy_items
+    if len(proj_hiearchy_items) > len(hierarchy_items):
+        return proj_hiearchy_items
+    return hierarchy_items
 
 
 def get_id(dict_obj, id_keys=['id', '@id']):
@@ -461,11 +468,11 @@ sd_obj_k.fields
         solr_field_name = self.ROOT_PROJECT_SOLR
         if self.oc_item.manifest.item_type == 'projects':
             proj_hierarchy = general_get_jsonldish_entity_parents(
-                self.oc_item.manifest.uuid
+                self.oc_item.manifest.uuid, is_project=True
             )
         else:    
             proj_hierarchy = general_get_jsonldish_entity_parents(
-                self.oc_item.manifest.project_uuid
+                self.oc_item.manifest.project_uuid, is_project=True
             )
         for proj in proj_hierarchy:
             # Compose the solr_value for this item in the context
