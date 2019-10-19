@@ -179,6 +179,7 @@ def get_general_hierarchic_path_query_dict(
     path_list,
     root_field,
     field_suffix,
+    obj_all_slug='',
 ):
     """Gets a solr query dict for a general hierarchic list of
     path item identifiers (usually slugs).
@@ -190,6 +191,8 @@ def get_general_hierarchic_path_query_dict(
         It can be a root___project_id, a root___pred_id, etc.
     :param str field_suffix: They type of solr dynamic field being
         queried. (project_id, pred_id) etc.
+    :param str obj_all_slug: An optional slug to identify a more
+        specific solr "obj_all" field.
     """
     # NOTE: The goal for this function is to be as general and
     # reusable as possible for generating the solr query fq and
@@ -200,10 +203,19 @@ def get_general_hierarchic_path_query_dict(
     m_cache = MemoryCache()
     query_dict = {'fq': [], 'facet.field': []}
 
+    if obj_all_slug:
+        # This makes a more specific "obj_all" field that we use to
+        # query all levels of the hierarchy in solr.
+        obj_all_slug = (
+            obj_all_slug.replace('-', '_')
+            + SolrDocument.SOLR_VALUE_DELIM
+        )
+
     # Make the obj_all_field_fq
     obj_all_field_fq = (
         'obj_all'
         + SolrDocument.SOLR_VALUE_DELIM
+        + obj_all_slug
         + field_suffix
         + '_fq'
     )
@@ -322,6 +334,7 @@ def get_general_hierarchic_paths_query_dict(
     field_suffix,
     hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
     or_delim=configs.REQUEST_OR_OPERATOR,
+    obj_all_slug='',
 ):
     """Make a solr query for a hierarchic raw path string that may have OR operations."""
     if not raw_path:
@@ -339,6 +352,7 @@ def get_general_hierarchic_paths_query_dict(
             path_list,
             root_field=root_field,
             field_suffix=field_suffix,
+            obj_all_slug=obj_all_slug,
         )
         if not path_query_dict:
             # This path had entities that could not be found in the
