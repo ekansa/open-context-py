@@ -1,4 +1,5 @@
 import copy
+import datetime
 import itertools
 import re
 
@@ -311,3 +312,32 @@ def safe_remove_item_from_list(item, item_list):
     if isinstance(item_list, list) and item in item_list:
         item_list.remove(item)
     return item_list
+
+
+# ---------------------------------------------------------------------
+# Date-Time Related Functions
+# ---------------------------------------------------------------------
+def date_convert(date_str):
+    """Converts to a python datetime if not already so """
+    if isinstance(date_str, str):
+        date_str = date_str.replace('Z', '')
+        dt = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
+    else:
+        dt = date_str
+    return dt
+
+
+def convert_date_to_solr_date(date_str):
+    """Converts a string for a date into a Solr formated datetime string """
+    dt = date_convert(date_str)
+    return dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+
+
+def make_human_readable_date(date_str):
+    """Converts a date value into something easier to read """
+    dt = date_convert(date_str)
+    check_date = dt.strftime('%Y-%m-%d')
+    check_dt = date_convert(date_val)
+    if check_dt == dt:
+        return check_date
+    return dt.strftime('%Y-%m-%d:%H:%M:%S')
