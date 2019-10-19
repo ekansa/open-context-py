@@ -71,15 +71,20 @@ def general_get_jsonldish_entity_parents(identifier, add_original=True, is_proje
             add_original=add_original
         )
     # We found a hiearchy, so no need to check for a project hierachy.
-    if len(hierarchy_items) > 1:
+    if isinstance(hierarchy_items, list) and len(hierarchy_items) > 1:
         return hierarchy_items
     
-    proj_hiearchy_items = ProjectRels().get_jsonldish_parents(
+    proj_hierarchy_items = ProjectRels().get_jsonldish_parents(
         uuid=identifier,
         add_original=add_original
     )
-    if len(proj_hiearchy_items) > len(hierarchy_items):
-        return proj_hiearchy_items
+    if isinstance(proj_hierarchy_items, list) and is_project:
+        return proj_hierarchy_items
+    elif (isinstance(proj_hierarchy_items, list)
+          and isinstance(hierarchy_items, list)
+          and len(proj_hierarchy_items) > len(hierarchy_items)):
+        # The project hierarchy was more complete, so return that.
+        return proj_hierarchy_items 
     return hierarchy_items
 
 
