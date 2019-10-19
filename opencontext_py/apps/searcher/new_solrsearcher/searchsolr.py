@@ -144,16 +144,40 @@ class SearchSolr():
         # -------------------------------------------------------------
         # Spatial Context
         # -------------------------------------------------------------
-        if 'path' in request_dict and self.do_context_paths:
-            # Remove the default Root Solr facet field if it is there.
-            query['facet.field'] = utilities.safe_remove_item_from_list(
-                SolrDocument.ROOT_CONTEXT_SOLR,
-                query['facet.field']
-            )
+        if request_dict.get('path') and self.do_context_paths:
             query_dict = querymaker.get_spatial_context_query_dict(
                 request_dict['path']
             )
-            query['fq'] += query_dict['fq']
-            query['facet.field'] += query_dict['facet.field']
+            if query_dict:
+                # Remove the default Root Solr facet field if it is there.
+                query['facet.field'] = utilities.safe_remove_item_from_list(
+                    SolrDocument.ROOT_CONTEXT_SOLR,
+                    query['facet.field'].copy()
+                )
+                query['fq'] += query_dict['fq']
+                query['facet.field'] += query_dict['facet.field']
+        
+        # -------------------------------------------------------------
+        # Project
+        # -------------------------------------------------------------
+        raw_projects_path = utilities.get_request_param_value(
+            request_dict, 
+            param='proj',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_projects_path:
+            query_dict = querymaker.get_projects_query_dict(
+                raw_projects_path
+            )
+            if query_dict:
+                # Remove the default Root Solr facet field if it is there.
+                query['facet.field'] = utilities.safe_remove_item_from_list(
+                    SolrDocument.ROOT_PROJECT_SOLR,
+                    query['facet.field'].copy()
+                )
+                query['fq'] += query_dict['fq']
+                query['facet.field'] += query_dict['facet.field']
     
         return query
