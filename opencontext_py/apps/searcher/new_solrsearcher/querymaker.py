@@ -149,8 +149,6 @@ def get_spatial_context_query_dict(spatial_context=None):
     return query_dict
 
 
-
-
 # ---------------------------------------------------------------------
 # GENERAL HIERARCHY FUNCTIONS
 # ---------------------------------------------------------------------
@@ -184,6 +182,14 @@ def get_general_hierarchic_path_query_dict(
 ):
     """Gets a solr query dict for a general hierarchic list of
     path item identifiers (usually slugs).
+    
+    :param list path_list: List of string identifiers (usually slugs)
+        for entities, and possibly literals that the client provides to
+        search solr.
+    :param str root_field: The root dynamic field for this solr query.
+        It can be a root___project_id, a root___pred_id, etc.
+    :param str field_suffix: They type of solr dynamic field being
+        queried. (project_id, pred_id) etc.
     """
     # NOTE: The goal for this function is to be as general and
     # reusable as possible for generating the solr query fq and
@@ -193,7 +199,7 @@ def get_general_hierarchic_path_query_dict(
     # first.
     m_cache = MemoryCache()
     query_dict = {'fq': [], 'facet.field': []}
-    
+
     # Make the obj_all_field_fq
     obj_all_field_fq = (
         'obj_all'
@@ -353,10 +359,10 @@ def get_general_hierarchic_paths_query_dict(
     return query_dict
 
 
+
 # ---------------------------------------------------------------------
 # Projects
 # ---------------------------------------------------------------------
-
 def get_projects_query_dict(raw_projects_path):
     """Gets a solr query_dict for a raw projects path value"""
     query_dict = get_general_hierarchic_paths_query_dict(
@@ -364,5 +370,4 @@ def get_projects_query_dict(raw_projects_path):
         root_field=SolrDocument.ROOT_PROJECT_SOLR,
         field_suffix=SolrDocument.FIELD_SUFFIX_PROJECT,
     )
-    return query_dict
-    
+    return query_dict    
