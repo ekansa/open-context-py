@@ -219,6 +219,7 @@ def get_general_hierarchic_path_query_dict(
     # attributes, not the more specific, rarely used attributes that
     # are stored in the database.
     attribute_field_prefix = ''
+    attribute_item = None
     
     for item_id in path_list:
         item = m_cache.get_entity(item_id)
@@ -289,6 +290,13 @@ def get_general_hierarchic_path_query_dict(
             # an attribute). The slugs for such attribute entities are
             # used in solr fields. These will be used in all of the
             # queries as we iterate through this path_list.
+            
+            # The current item is an attribute item, so copy it for
+            # use as we continue to iterate through this path_list.
+            attribute_item = item
+            
+            # Compose the attribute field prefix, which is used to make
+            # solr-field names for this particular attribute field.
             attribute_field_prefix = (
                 item.slug.replace('-', '_')
                 + SolrDocument.SOLR_VALUE_DELIM
