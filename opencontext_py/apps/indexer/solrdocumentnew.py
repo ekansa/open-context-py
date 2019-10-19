@@ -1,3 +1,4 @@
+import copy
 import datetime
 import json
 from django.conf import settings
@@ -43,7 +44,7 @@ def get_solr_predicate_type_string(
     '''
     if not string_default_pred_types:
         # If not set, use the default
-        string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING
+        string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
     if predicate_type in ['@id', 'id', 'types', False]:
         return prefix + 'id'
     elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
@@ -458,10 +459,14 @@ sd_obj_k.fields
         Creates a hierarchy of projects in the same way as a hierarchy of predicates
         """
         solr_field_name = self.ROOT_PROJECT_SOLR
-        proj_rel = ProjectRels()
-        proj_hierarchy = proj_rel.get_jsonldish_parents(
-            self.oc_item.manifest.project_uuid
-        )
+        if self.oc_item.manifest.item_type == 'projects':
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.uuid
+            )
+        else:    
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.project_uuid
+            )
         for proj in proj_hierarchy:
             # Compose the solr_value for this item in the context
             # hiearchy.
