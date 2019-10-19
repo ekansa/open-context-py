@@ -92,6 +92,9 @@ def join_solr_query_terms(terms_list, operator='AND'):
         return ''
     if not isinstance(terms_list, list):
         terms_list = [terms_list]
+    if len(terms_list) == 1:
+        # Nothing to process or wrap in parantheses.
+        return terms_list[0]
     terms = ['({})'.format(term) for term in terms_list]
     terms_str = (' {} '.format(operator)).join(terms)
     if len(terms) > 1:
@@ -305,8 +308,6 @@ def make_request_obj_dict(request, spatial_context=None):
 
 def safe_remove_item_from_list(item, item_list):
     """ Safely removes an item from a list, if it is actuall a list """
-    if not isinstance(item_list, list):
-        return item_list
-    if not item in item_list:
-        return item_list
-    return item_list.remove(item)
+    if isinstance(item_list, list) and item in item_list:
+        item_list.remove(item)
+    return item_list
