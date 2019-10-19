@@ -1,3 +1,4 @@
+from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
@@ -72,6 +73,89 @@ CHRONO_STATS_FIELDS =  [
 ]
 
 MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
+
+
+
+HIERARCHY_PARAM_TO_SOLR = [
+    (
+        'proj', SolrDocument.ROOT_PROJECT_SOLR,
+        {
+            'root_field': SolrDocument.ROOT_PROJECT_SOLR,
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PROJECT,
+        },
+    ),
+    (
+        'prop', None,
+        {
+            'root_field': SolrDocument.ROOT_PREDICATE_SOLR,
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-subject', None,
+        {
+            'root_field': 'dc_terms_subject___pred_id',
+            'obj_all_slug': "dc-terms-subject",
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-spatial', None,
+        {
+            'root_field': 'dc_terms_spatial___pred_id',
+            'obj_all_slug': 'dc-terms-spatial',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-coverage', None,
+        {
+            'root_field': 'dc_terms_coverage___pred_id',
+            'obj_all_slug': 'dc-terms-coverage',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-temporal', None,
+        {
+            'root_field': 'dc_terms_temporal___pred_id',
+            'obj_all_slug': 'dc-terms-temporal',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-isReferencedBy', None,
+        {
+            'root_field': 'dc_terms_isreferencedby___pred_id',
+            'obj_all_slug': 'dc-terms-isreferencedby',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-creator', None, {
+            'root_field': 'dc_terms_creator___pred_id',
+            'obj_all_slug': 'dc-terms-creator',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'dc-contributor', None,
+        {
+            'root_field': 'dc_terms_contributor___pred_id',
+            'obj_all_slug': 'dc-terms-contributor',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+    (
+        'bibo-status', None,
+        {
+            'root_field': 'bibo_status___pred_id',
+            'obj_all_slug': 'bibo-status',
+            'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+        },
+    ),
+]
+
 
 
 

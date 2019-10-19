@@ -158,25 +158,37 @@ class SearchSolr():
                 query['facet.field'] += query_dict['facet.field']
         
         # -------------------------------------------------------------
-        # Project
+        # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
+        # etc.)
         # -------------------------------------------------------------
-        raw_projects_path = utilities.get_request_param_value(
-            request_dict, 
-            param='proj',
-            default=None,
-            as_list=False,
-            solr_escape=False,
-        )
-        if raw_projects_path:
-            query_dict = querymaker.get_projects_query_dict(
-                raw_projects_path
+        for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
+            raw_paths = utilities.get_request_param_value(
+                request_dict, 
+                param=param,
+                default=None,
+                as_list=True,
+                solr_escape=False,
             )
-            if query_dict:
-                # Remove the default Root Solr facet field if it is there.
-                query['facet.field'] = utilities.safe_remove_item_from_list(
-                    SolrDocument.ROOT_PROJECT_SOLR,
-                    query['facet.field'].copy()
+            if not raw_paths:
+                # We don't have a request using this param, so skip
+                continue
+            if not isinstance(raw_paths, list):
+                raw_paths = [raw_paths]
+            for raw_path in raw_paths:
+                query_dict = querymaker.get_general_hierarchic_paths_query_dict(
+                    raw_path=raw_path, **param_args
                 )
+                if not query_dict:
+                    # We don't have a response for this query, so continue
+                    # for now until we come up with error handling.
+                    continue
+                if remove_field:
+                    # Remove a default facet field if it is there.
+                    query['facet.field'] = utilities.safe_remove_item_from_list(
+                        remove_field,
+                        query['facet.field'].copy()
+                    )
+                # Now add results of this raw_path to the over-all query.
                 query['fq'] += query_dict['fq']
                 query['facet.field'] += query_dict['facet.field']
     
