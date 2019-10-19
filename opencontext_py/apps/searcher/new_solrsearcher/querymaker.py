@@ -149,82 +149,170 @@ def get_spatial_context_query_dict(spatial_context=None):
     return query_dict
 
 
-# ---------------------------------------------------------------------
-# Projects
-# ---------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------
-# NOTES, NOT USED
+# GENERAL HIERARCHY FUNCTIONS
 # ---------------------------------------------------------------------
+def get_entity_item_parent_entity(item, add_original=False):
+    """Gets the parent entity item dict for an item entity object
+    
+    :param entity item: See the apps/entity/models entity object for a
+        definition. 
+    """
+    use_id = item.slug
+    is_project = False
+    if getattr(item, 'item_type', None) == 'projects':
+        is_project = True
+    if getattr(item, 'uuid', None):
+        # Use the UUID for an item if we have it to look up parents.
+        use_id = item.uuid
+    item_parents = general_get_jsonldish_entity_parents(
+        use_id,
+        add_original=add_original,
+        is_project=is_project,
+    ) 
+    if not item_parents or not len(item_parents):
+        return None
+    return item_parents[-1]
 
-def process_hiearchic_query_path(
+
+def get_general_hierarchic_path_query_dict(
     path_list,
     root_field,
     field_suffix,
 ):
+    """Gets a solr query dict for a general hierarchic list of
+    path item identifiers (usually slugs).
+    """
+    # NOTE: The goal for this function is to be as general and
+    # reusable as possible for generating the solr query fq and
+    # facet.fields arguments. It's intended for use with most of the
+    # non-spatial-context hierarchies that we index. Because of that
+    # it will be somewhat abstract and difficult to understand at
+    # first.
     m_cache = MemoryCache()
     query_dict = {'fq': [], 'facet.field': []}
-    
-    # Get the last item in the path list. This needs to be a valid ID
-    # (a slug, uri, uuid) for an item in the database. If not, there is
-    # no point in querying solr.
-    last_path_id = path_list[-1]
-    last_item = m_cache.get_entity(last_path_id)
-    if not last_item:
-        # The last item is not an entity in the DB, so return None.
-        return None
-
-    # Make the facet field so solr will return any possible
-    # facet values for chilren of the LAST item in this path_list.    
-    facet_field = (
-        last_item.slug.replace('-', '_')
-        + SolrDocument.SOLR_VALUE_DELIM
-        + field_suffix
-    )
-    query_dict['facet.field'].append(facet_field)
     
     # Make the obj_all_field_fq
     obj_all_field_fq = (
         'obj_all'
         + SolrDocument.SOLR_VALUE_DELIM
-        + root_field
+        + field_suffix
         + '_fq'
     )
-    query_dict['facet.field'].append(facet_field)
+
+    # Now start composing fq's for the parent item field with the
+    # child as a value of the parent item field.
+    facet_field = root_field
     
-    field_fq = root_field
-    parent_item = None
-    if len(path_list) > 1:
-        # Get the penultimate item in the path list, which
-        # is the immediate parent of the last item.
-        parent_path_id = path_list[-2]
-        parent_item = m_cache.get_entity(parent_path_id)
-    if parent_item:
-        field_fq = (
-            parent_item.slug.replace('-', '_')
+    # NOTE: The attribute_field_prefix is a prefix for a solr-field
+    # for cases where the attribute is an entity in the database.
+    # It starts with the default value of '' because we start
+    # formulating solr queries on general/universal metadata
+    # attributes, not the more specific, rarely used attributes that
+    # are stored in the database.
+    attribute_field_prefix = ''
+    
+    for item_id in path_list:
+        item = m_cache.get_entity(item_id)
+        if not attribute_field_prefix and not item:
+            # We don't recognize the first item, and it is not
+            # a literal of an attribute field. So return None.
+            return None
+        elif not item:
+            # We don't recognize the item, so skip the rest.
+            continue
+        item_parent = get_entity_item_parent_entity(item)
+        if item_parent and item_parent.get('slug'):
+            # The item has a parent item, and that parent item will
+            # make a solr_field for the current item.
+            facet_field = (
+                attribute_field_prefix
+                # Use the most immediate parent item of the item entity
+                # to identify the solr field we need to query. That
+                # most immediate item is index -1 (because the item
+                # item entity itself is not included in this list, as
+                # specified by the add_original=False arg).
+                + item_parent['slug'].replace('-', '_')
+                + SolrDocument.SOLR_VALUE_DELIM
+                + field_suffix  
+            )
+            
+        # Add the _fq suffix to make the field_fq which is what we use
+        # to as the solr field to query for the current item. Note! The
+        # field_fq is different from the facet_field because when we
+        # query solr for slugs, we query solr-fields that end with "_fq".
+        # The solr fields that don't have "_fq" are used exclusively for
+        # making facets (counts of metadata values in different documents).
+        field_fq = facet_field
+        if not field_fq.endswith('_fq'):
+            field_fq += '_fq'
+        
+        # Make the query for the item and the solr field associated
+        # with the item's immediate parent (or root, if it has no
+        # parents). 
+        query_dict['fq'].append('{field_fq}:{item_slug}'.format(
+                field_fq=field_fq,
+                item_slug=item.slug
+            )
+        )
+        # Now make the query for the item and the solr field
+        # associated with all items in the whole hierarchy for this
+        # type of solr dynamic field.
+        query_dict['fq'].append('{field_fq}:{item_slug}'.format(
+                field_fq=obj_all_field_fq,
+                item_slug=item.slug
+            )
+        )
+        # Use the current item as the basis for the next solr_field
+        # that will be used to query child items in the next iteration
+        # of this loop.
+        facet_field = (
+            attribute_field_prefix
+            + item.slug.replace('-', '_')
             + SolrDocument.SOLR_VALUE_DELIM
             + field_suffix  
         )
-    # Add the _fq suffix.
-    field_fq += '_fq'
-    # The query path term is
-    path_term = '{field_fq}:{last_item_slug}'.format(
-        field_fq=field_fq,
-        last_item_slug=last_item.slug
-    )
-    
-    return path_term 
+        
+        if ((getattr(item, 'item_type', None) == 'predicates')
+            or (getattr(item, 'entity_type', None) == 'property')):
+            # The current item entity is a "predicates" or a "property"
+            # type of item. That means the item is a kind of attribute
+            # or a "predicate" in linked-data speak, (NOT the value of
+            # an attribute). The slugs for such attribute entities are
+            # used in solr fields. These will be used in all of the
+            # queries as we iterate through this path_list.
+            attribute_field_prefix = (
+                item.slug.replace('-', '_')
+                + SolrDocument.SOLR_VALUE_DELIM
+            )
+            # Now also update the obj_all_field_fq
+            obj_all_field_fq = (
+               'obj_all'
+                + SolrDocument.SOLR_VALUE_DELIM
+                + attribute_field_prefix
+                + field_suffix
+                + '_fq' 
+            )
+
+    # Make the facet field so solr will return any possible
+    # facet values for chilren of the LAST item in this path_list.
+    query_dict['facet.field'].append(facet_field)
+    return query_dict 
 
 
-def process_hiearchic_query(
+def get_general_hierarchic_paths_query_dict(
     raw_path,
     root_field,
     field_suffix,
     hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
     or_delim=configs.REQUEST_OR_OPERATOR,
 ):
-    """Process a raw_path request to formulate a solr query"""
+    """Make a solr query for a hierarchic raw path string that may have OR operations."""
+    if not raw_path:
+        return None
+    query_dict = {'fq': [], 'facet.field': []}
     paths_as_lists = utilities.infer_multiple_or_hierarchy_paths(
         raw_path,
         hierarchy_delim=hierarchy_delim,
@@ -233,12 +321,48 @@ def process_hiearchic_query(
     )
     path_terms = []
     for path_list in paths_as_lists:
-        path_term = process_hiearchic_query_path(
+        path_query_dict = get_general_hierarchic_path_query_dict(
             path_list,
             root_field=root_field,
             field_suffix=field_suffix,
         )
+        if not path_query_dict:
+            # This path had entities that could not be found in the
+            # database. For now, just skip.
+            continue
+        # All the solr_query terms for a given hiearchic path need to
+        # be satified to in a query. So join all the terms created from
+        # a given hierarchic path with the "AND" operator into a single
+        # string.
+        path_term = utilities.join_solr_query_terms(
+            path_query_dict['fq'], operator='AND'
+        )
+        # Add this path term to all the path terms.
         path_terms.append(path_term)
-    return utilities.join_solr_query_terms(path_terms, operator='OR')
+        query_dict['facet.field'] += path_query_dict['facet.field']
     
+    if not path_terms:
+        return None
+    # The different paths iterated above are all "OR" options (union)
+    # for the different paths. Join those together using the OR
+    # operator.
+    all_paths_term = utilities.join_solr_query_terms(
+        path_terms, operator='OR'
+    )
+    query_dict['fq'] = [all_paths_term]
+    return query_dict
+
+
+# ---------------------------------------------------------------------
+# Projects
+# ---------------------------------------------------------------------
+
+def get_projects_query_dict(raw_projects_path):
+    """Gets a solr query_dict for a raw projects path value"""
+    query_dict = get_general_hierarchic_paths_query_dict(
+        raw_path=raw_projects_path,
+        root_field=SolrDocument.ROOT_PROJECT_SOLR,
+        field_suffix=SolrDocument.FIELD_SUFFIX_PROJECT,
+    )
+    return query_dict
     
