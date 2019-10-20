@@ -224,18 +224,18 @@ def get_general_hierarchic_path_query_dict(
     # child as a value of the parent item field.
     facet_field = root_field
     
-    # NOTE: The attribute_field_prefix is a prefix for a solr-field
+    # NOTE: The attribute_field_part is a part of a solr-field
     # for cases where the attribute is an entity in the database.
     # It starts with the default value of '' because we start
     # formulating solr queries on general/universal metadata
     # attributes, not the more specific, rarely used attributes that
     # are stored in the database.
-    attribute_field_prefix = ''
+    attribute_field_part = ''
     attribute_item = None
     
     for item_id in path_list:
         item = m_cache.get_entity(item_id)
-        if not attribute_field_prefix and not item:
+        if not attribute_field_part and not item:
             # We don't recognize the first item, and it is not
             # a literal of an attribute field. So return None.
             return None
@@ -247,14 +247,14 @@ def get_general_hierarchic_path_query_dict(
             # The item has a parent item, and that parent item will
             # make a solr_field for the current item.
             facet_field = (
-                attribute_field_prefix
                 # Use the most immediate parent item of the item entity
                 # to identify the solr field we need to query. That
                 # most immediate item is index -1 (because the item
                 # item entity itself is not included in this list, as
                 # specified by the add_original=False arg).
-                + item_parent['slug'].replace('-', '_')
+                item_parent['slug'].replace('-', '_')
                 + SolrDocument.SOLR_VALUE_DELIM
+                + attribute_field_part
                 + field_suffix  
             )
             
@@ -288,9 +288,9 @@ def get_general_hierarchic_path_query_dict(
         # that will be used to query child items in the next iteration
         # of this loop.
         facet_field = (
-            attribute_field_prefix
-            + item.slug.replace('-', '_')
+            item.slug.replace('-', '_')
             + SolrDocument.SOLR_VALUE_DELIM
+            + attribute_field_part
             + field_suffix  
         )
         
@@ -309,7 +309,7 @@ def get_general_hierarchic_path_query_dict(
             
             # Compose the attribute field prefix, which is used to make
             # solr-field names for this particular attribute field.
-            attribute_field_prefix = (
+            attribute_field_part = (
                 item.slug.replace('-', '_')
                 + SolrDocument.SOLR_VALUE_DELIM
             )
@@ -317,7 +317,7 @@ def get_general_hierarchic_path_query_dict(
             obj_all_field_fq = (
                'obj_all'
                 + SolrDocument.SOLR_VALUE_DELIM
-                + attribute_field_prefix
+                + attribute_field_part
                 + field_suffix
                 + '_fq' 
             )
