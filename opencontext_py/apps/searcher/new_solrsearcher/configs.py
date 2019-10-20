@@ -75,7 +75,22 @@ CHRONO_STATS_FIELDS =  [
 MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
 
 
-
+# ---------------------------------------------------------------------
+# Hierarchic parameters configs:
+#
+# NOTE: There are several parameters that clients can use to make GET
+# requests over the Web that need to be processed with hierarchically
+# fields and values in solr. The following list of tuples configures
+# how different URL parameters from Web GET requsests get translated
+# to solr via the querymaker.get_general_hierarchic_paths_query_dict
+# function. The tuple is organized as so:
+#
+# 1st element: request GET parameter
+# 2nd element: field to remove from the Solr filter query ('fq') list
+#              (usually None).
+# 3rd element: dictionary of key-word arguments to supply to
+#              querymaker.get_general_hierarchic_paths_query_dict 
+# ---------------------------------------------------------------------
 HIERARCHY_PARAM_TO_SOLR = [
     (
         'proj', SolrDocument.ROOT_PROJECT_SOLR,

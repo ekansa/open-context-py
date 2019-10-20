@@ -186,9 +186,17 @@ def test_get_spatial_context_query_dict():
 @pytest.mark.django_db
 def test_get_projects_query_dict():
     """Tests get_spatial_context_query_dict on a variety of inputs."""
+    # NOTE: This uses the function:
+    # querymaker.get_general_hierarchic_paths_query_dict
+    # to test queries relating to Open Context projects.
+    #
+    # TODO: Make more tests for a wider variety of metadata queries.
+    #
     for raw_projects_path, exp_dict in TESTS_PROJECTS:
-        query_dict = querymaker.get_projects_query_dict(
-            raw_projects_path
+        query_dict = querymaker.get_general_hierarchic_paths_query_dict(
+            raw_projects_path,
+            root_field=SolrDocument.ROOT_PROJECT_SOLR,
+            field_suffix=SolrDocument.FIELD_SUFFIX_PROJECT,
         )
         if query_dict is None:
             # Case where we don't have a dict response.

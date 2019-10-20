@@ -175,6 +175,12 @@ def get_entity_item_parent_entity(item, add_original=False):
     return item_parents[-1]
 
 
+def compose_query_on_literal(raw_literal, attribute_item, facet_field):
+    """Composes a solr query on literal values."""
+    # TODO: Add this functionality.
+    return None
+
+
 def get_general_hierarchic_path_query_dict(
     path_list,
     root_field,
@@ -240,7 +246,17 @@ def get_general_hierarchic_path_query_dict(
             # a literal of an attribute field. So return None.
             return None
         elif not item:
-            # We don't recognize the item, so skip the rest.
+            # We don't recognize the item, so skip the rest for now.
+            # TODO: We need to also process literals in requests,
+            # because some requests will filter according to
+            # numeric, date, or string criteria. These literal
+            # requests
+            literal_output = compose_query_on_literal(
+                raw_literal=item,
+                attribute_item=attribute_item,
+                facet_field=facet_field,
+            )
+            # Skip, because this doesn't do anything yet.
             continue
         item_parent = get_entity_item_parent_entity(item)
         if item_parent and item_parent.get('slug'):
@@ -301,7 +317,8 @@ def get_general_hierarchic_path_query_dict(
             # or a "predicate" in linked-data speak, (NOT the value of
             # an attribute). The slugs for such attribute entities are
             # used in solr fields. These will be used in all of the
-            # queries as we iterate through this path_list.
+            # queries of child items as we iterate through this
+            # path_list.
             
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
@@ -379,17 +396,4 @@ def get_general_hierarchic_paths_query_dict(
     )
     query_dict['fq'] = [all_paths_term]
     return query_dict
-
-
-
-# ---------------------------------------------------------------------
-# Projects
-# ---------------------------------------------------------------------
-def get_projects_query_dict(raw_projects_path):
-    """Gets a solr query_dict for a raw projects path value"""
-    query_dict = get_general_hierarchic_paths_query_dict(
-        raw_path=raw_projects_path,
-        root_field=SolrDocument.ROOT_PROJECT_SOLR,
-        field_suffix=SolrDocument.FIELD_SUFFIX_PROJECT,
-    )
-    return query_dict    
+   

@@ -159,7 +159,14 @@ class SearchSolr():
         
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
-        # etc.)
+        # etc.). The following iterates through a loop of tuples that
+        # configure how differet GET parameters get processed by the
+        # function:
+        #
+        # querymaker.get_general_hierarchic_paths_query_dict
+        #
+        # Note how the last element in each tuple "param_args" is used
+        # as for key-word arguments in the function.
         # -------------------------------------------------------------
         for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
             raw_paths = utilities.get_request_param_value(
