@@ -36,7 +36,7 @@ the client can use to change state (sort, page, filter in different ways).
 dynamic solr fields that have an "_fq" at the end are meant for filter queries (the "fq"
 arguments in a Solr query). The dynamic solr fields that do not have an "_fq" are typically 
 used to get facet counts. The dynamic solr fields that end with "_fq" take slugs as values. 
-That means they are used for filter queres of entities in the database. The dynaic solr 
+That means they are used for filter queres of entities in the database. The dynamic solr 
 fields that don't have "_fq" are often used for getting facet counts. 
 
 
