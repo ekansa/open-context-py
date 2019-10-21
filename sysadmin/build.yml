@@ -8,6 +8,7 @@
     migrate: "{{do_migrate | default('true')}}"
     install_db: "{{install_db | default('true')}}"
     install_solr_data: "{{install_solr_data | default('true')}}"
+    install_root_cron: "{{install_root_cron | default('true')}}"
 
     # calculate static_root
     oc_static_root: "{{oc_install_dir}}/staticroot"
@@ -452,6 +453,21 @@
       command: crontab "{{oc_web_dir}}/crontab_www_data.txt"
       become: yes
       become_user: "{{user_owner}}"
+
+    - name: create crontab_root.txt from template
+      template:
+        src: templates/crontab_root.txt.j2
+        dest: "{{oc_web_dir}}/crontab_root.txt"
+        mode: 0770
+      become: yes
+      when: install_root_cron
+
+    # set up crontab
+    - name: create crontab for root
+      command: crontab "{{oc_web_dir}}/crontab_root.txt"
+      become: yes
+      when: install_root_cron
+
 
     # solr configuration
 

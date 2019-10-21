@@ -58,6 +58,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "-e install_db=true",
           "-e do_migrate=true",
           "-e install_solr_data=false", 
+          "-e install_root_cron=false",
           #"--start-at-task=restart_here"
       ]
     end
@@ -135,6 +136,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
           "-e install_db=false",
           "-e do_migrate=false", 
           "-e install_solr_data=false",
+          "-e install_root_cron=true",
           #"--start-at-task=restart_here"
       ]
     end
