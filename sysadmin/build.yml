@@ -214,10 +214,7 @@
     - name: clone the oc git repo into {{oc_install_dir}}
       become: yes
       become_user: "{{user}}"
-      git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{branch | default('master')}}"
-
-    # - name: restart_here
-    #   debug: msg="provision restart here"      
+      git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{repo_branch | default('master')}}"
 
 
     # use pipenv to install dependencies
@@ -453,6 +450,10 @@
       command: crontab "{{oc_web_dir}}/crontab_www_data.txt"
       become: yes
       become_user: "{{user_owner}}"
+
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
 
     - name: create crontab_root.txt from template
       template:
