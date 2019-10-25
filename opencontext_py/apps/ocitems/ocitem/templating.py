@@ -4,6 +4,8 @@ import datetime
 from random import randint
 from geojson import Feature, Point, Polygon, MultiPolygon, GeometryCollection, FeatureCollection
 from geojson import MultiPoint, MultiLineString, LineString
+from shapely.geometry import shape, mapping
+
 from django.conf import settings
 from opencontext_py.libs.filemath import FileMath
 from opencontext_py.libs.languages import Languages
@@ -1365,9 +1367,20 @@ class GeoMap():
                                 geo_props['location-precision'] = abs(self.proj_geo_specificity)
                                 geo_props['location-precision-note'] = sec_note
                                 gmt = GlobalMercator()
-                                geotile = gmt.lat_lon_to_quadtree(feature['geometry']['coordinates'][1],
-                                                                  feature['geometry']['coordinates'][0],
-                                                                  abs(self.proj_geo_specificity))
+                                if feature['geometry']['type'] == 'Point':
+                                    geotile = gmt.lat_lon_to_quadtree(
+                                        feature['geometry']['coordinates'][1],
+                                        feature['geometry']['coordinates'][0],
+                                        abs(self.proj_geo_specificity)
+                                    )
+                                else:
+                                    geom = shape(feature['geometry'])
+                                    g_centroid = list(geom.centroid.coords)
+                                    geotile = gmt.lat_lon_to_quadtree(
+                                        g_centroid[0][1],
+                                        g_centroid[0][0],
+                                        abs(self.proj_geo_specificity)
+                                    ) 
                                 tile_bounds = gmt.quadtree_to_lat_lon(geotile)
                                 item_polygon = Polygon([[(tile_bounds[1], tile_bounds[0]),
                                                          (tile_bounds[1], tile_bounds[2]),
