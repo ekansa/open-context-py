@@ -23,7 +23,7 @@ mysolr==0.8.3
 numpy==1.16.4
 pandas==0.22.0
 pathlib2==2.3.2
-pillow==5.2.0
+pillow>=6.2.0
 pluggy==0.8.0
 psycopg2==2.7.5
 py==1.7.0
