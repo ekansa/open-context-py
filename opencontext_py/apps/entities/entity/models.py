@@ -51,150 +51,175 @@ class Entity():
         self.ids_meta = False
         self.slug_uri = False
 
+    def dereference_linked_data(self, identifier, link_entity_slug=None):
+        """Dereferences a linked data entity (not part of an OC project)"""
+        uris = []
+        if ((len(identifier) > 8)
+            and (identifier[:7] == 'http://' or identifier[:8] == 'https://')):
+            ent_equivs = EntityEquivalents()
+            uris = ent_equivs.make_uri_variants(identifier)
+        if not uris and not link_entity_slug:
+            return None
+        ld_entity = LinkEntity.objects.filter(Q(uri__in=uris) | Q(slug=identifier)).first()
+        if not ld_entity:
+            return None
+        self.uri = ld_entity.uri
+        self.slug = ld_entity.slug
+        self.label = ld_entity.label
+        self.item_type = 'uri'
+        self.alt_label = ld_entity.alt_label
+        self.entity_type = ld_entity.ent_type
+        self.vocab_uri = ld_entity.vocab_uri
+        self.ld_object_ok = True
+        
+        # Now get the vocabulary item.
+        vocab_uris = [ld_entity.vocab_uri]
+        vocab_uris.append(ld_entity.vocab_uri.replace('https://', 'http://'))
+        vocab_uris.append(ld_entity.vocab_uri.replace('http://', 'https://'))
+        vocab_entity = LinkEntity.objects.filter(uri__in=vocab_uris).first()
+        if vocab_entity:
+            self.vocabulary = vocab_entity.label
+        
+        if not self.get_icon:
+            # Do not bother adding an icon.
+            return True
+        
+        # Add an icon link if true
+        prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
+        icon_ids = uris + [ld_entity.uri, identifier, prefix_uri]
+        icon_anno = LinkAnnotation.objects.filter(
+            subject__in=icon_ids,
+            predicate_uri='oc-gen:hasIcon'
+        ).first()
+        if icon_anno:
+            self.icon = icon_anno.object_uri
+        return True
+        
+
+    def dereference_manifest_item(self, identifier):
+        """Dereferences a manifest item (something part of an OC project)"""
+        manifest_item = Manifest.objects.filter(
+            Q(uuid=identifier) | Q(slug=identifier)
+        ).first()
+        if not manifest_item:
+            return None
+        
+        # We found the item, now get the data out.
+        self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
+        self.uuid = manifest_item.uuid
+        self.slug = manifest_item.slug
+        self.label = manifest_item.label
+        self.item_type = manifest_item.item_type
+        self.class_uri = manifest_item.class_uri
+        self.project_uuid = manifest_item.project_uuid
+        if manifest_item.item_type == 'media' and self.get_thumbnail:
+            # a media item. get information about its thumbnail.
+            thumb_obj = Mediafile.objects.filter(
+                uuid=manifest_item.uuid,
+                file_type='oc-gen:thumbnail'
+            ).first()
+            if thumb_obj:
+                self.thumbnail_media = thumb_obj
+                self.thumbnail_uri = thumb_obj.file_uri
+        elif manifest_item.item_type in ['persons', 'projects', 'tables'] \
+             or self.get_stable_ids:
+            # get stable identifiers for persons or projects by default
+            stable_ids = StableIdentifer.objects.filter(uuid=manifest_item.uuid)
+            if len(stable_ids) > 0:
+                self.stable_id_uris = []
+                doi_uris = []
+                orcid_uris = []
+                other_uris = []
+                for stable_id in stable_ids:
+                    if stable_id.stable_type in StableIdentifer.ID_TYPE_PREFIXES:
+                        prefix = StableIdentifer.ID_TYPE_PREFIXES[stable_id.stable_type]
+                    else:
+                        prefix = ''
+                    stable_uri = prefix + stable_id.stable_id
+                    if stable_id.stable_type == 'orcid':
+                        orcid_uris.append(stable_uri)
+                    elif stable_id.stable_type == 'doi':
+                        doi_uris.append(stable_uri)
+                    else:
+                        other_uris.append(stable_uri)
+                # now list URIs in order of importance, with ORCIDs and DOIs
+                # first, followed by other stable URI types (Arks or something else)
+                self.stable_id_uris = orcid_uris + doi_uris + other_uris
+        elif manifest_item.item_type == 'types':
+            tl = TypeLookup()
+            tl.get_octype_without_manifest(identifier)
+            self.content = tl.content
+        elif manifest_item.item_type == 'predicates':
+            oc_pred = Predicate.objects.filter(uuid=manifest_item.uuid).first()
+            if oc_pred:
+                self.data_type = oc_pred.data_type
+                self.sort = oc_pred.sort
+                self.slug_uri = 'oc-pred:' + str(self.slug)
+        elif manifest_item.item_type == 'projects':
+            # get a manifest object for the parent of a project, if it exists
+            ch_tab = '"oc_projects" AS "child"'
+            filters = 'child.project_uuid=oc_manifest.uuid '\
+                      ' AND child.uuid=\'' + self.uuid + '\' ' \
+                      ' AND child.project_uuid != \'' + self.uuid + '\' '
+            par_rows = Manifest.objects\
+                               .filter(item_type='projects')\
+                               .exclude(uuid=self.uuid)\
+                               .extra(tables=[ch_tab], where=[filters])[:1]
+            if len(par_rows) > 0:
+                self.par_proj_man_obj = par_rows[0]
+        elif (manifest_item.item_type == 'subjects'
+              and self.get_context
+              and not self.context):
+            subj = Subject.objects.filter(uuid=manifest_item.uuid).first()
+            if subj:
+                self.context = subj.context
+        return True
+
+
     def dereference(self, identifier, link_entity_slug=False):
         """ Dereferences an entity identified by an identifier, checks if a URI,
             if, not a URI, then looks in the OC manifest for the item
         """
         output = False
-        if isinstance(identifier, str):
-            # only try to dereference if the identifier is a string.
-            try_manifest = True
-            identifier = URImanagement.convert_prefix_to_full_uri(identifier)
-            if (settings.CANONICAL_HOST + '/tables/') in identifier:
-                identifier = identifier.replace((settings.CANONICAL_HOST + '/tables/'), '')
-            if link_entity_slug or (len(identifier) > 8):
-                if link_entity_slug or (identifier[:7] == 'http://' or identifier[:8] == 'https://'):
-                    ent_equivs = EntityEquivalents()
-                    uris = ent_equivs.make_uri_variants(identifier)
-                    ld_entities = LinkEntity.objects.filter(Q(uri__in=uris) | Q(slug=identifier))[:1]
-                    if len(ld_entities) > 0:
-                        ld_entity = ld_entities[0]
-                    else:
-                        ld_entity = False
-                    if ld_entity is not False:
-                        output = True
-                        self.uri = ld_entity.uri
-                        self.slug = ld_entity.slug
-                        self.label = ld_entity.label
-                        self.item_type = 'uri'
-                        self.alt_label = ld_entity.alt_label
-                        self.entity_type = ld_entity.ent_type
-                        self.vocab_uri = ld_entity.vocab_uri
-                        self.ld_object_ok = True
-                        try:
-                            if 'https://' in self.vocab_uri:
-                                alt_vocab_uri = self.vocab_uri.replace('https://', 'http://')
-                            else:
-                                alt_vocab_uri = self.vocab_uri.replace('http://', 'https://')
-                            vocab_entity = LinkEntity.objects.get(Q(uri=self.vocab_uri) | Q(uri=alt_vocab_uri))
-                        except LinkEntity.DoesNotExist:
-                            vocab_entity = False
-                        if vocab_entity is not False:
-                            self.vocabulary = vocab_entity.label
-                        if self.get_icon:
-                            prefix_uri = URImanagement.prefix_common_uri(ld_entity.uri)
-                            icon_anno = LinkAnnotation.objects\
-                                                      .filter(Q(subject=ld_entity.uri)
-                                                              | Q(subject=identifier)
-                                                              | Q(subject=prefix_uri),
-                                                              predicate_uri='oc-gen:hasIcon')[:1]
-                            if len(icon_anno) > 0:
-                                self.icon = icon_anno[0].object_uri
-                    else:
-                        try_manifest = True
-                        # couldn't find the item in the linked entities table
-                        identifier = URImanagement.get_uuid_from_oc_uri(identifier)
-            if try_manifest:
-                try:
-                    manifest_item = Manifest.objects.get(Q(uuid=identifier) | Q(slug=identifier))
-                except Manifest.DoesNotExist:
-                    manifest_item = False
-                if manifest_item is not False:
-                    output = True
-                    self.uri = URImanagement.make_oc_uri(manifest_item.uuid, manifest_item.item_type)
-                    self.uuid = manifest_item.uuid
-                    self.slug = manifest_item.slug
-                    self.label = manifest_item.label
-                    self.item_type = manifest_item.item_type
-                    self.class_uri = manifest_item.class_uri
-                    self.project_uuid = manifest_item.project_uuid
-                    if manifest_item.item_type == 'media' and self.get_thumbnail:
-                        # a media item. get information about its thumbnail.
-                        try:
-                            thumb_obj = Mediafile.objects.get(uuid=manifest_item.uuid, file_type='oc-gen:thumbnail')
-                        except Mediafile.DoesNotExist:
-                            thumb_obj = False
-                        if thumb_obj is not False:
-                            self.thumbnail_media = thumb_obj
-                            self.thumbnail_uri = thumb_obj.file_uri
-                    elif manifest_item.item_type in ['persons', 'projects', 'tables'] \
-                         or self.get_stable_ids:
-                        # get stable identifiers for persons or projects by default
-                        stable_ids = StableIdentifer.objects.filter(uuid=manifest_item.uuid)
-                        if len(stable_ids) > 0:
-                            self.stable_id_uris = []
-                            doi_uris = []
-                            orcid_uris = []
-                            other_uris = []
-                            for stable_id in stable_ids:
-                                if stable_id.stable_type in StableIdentifer.ID_TYPE_PREFIXES:
-                                    prefix = StableIdentifer.ID_TYPE_PREFIXES[stable_id.stable_type]
-                                else:
-                                    prefix = ''
-                                stable_uri = prefix + stable_id.stable_id
-                                if stable_id.stable_type == 'orcid':
-                                    orcid_uris.append(stable_uri)
-                                elif stable_id.stable_type == 'doi':
-                                    doi_uris.append(stable_uri)
-                                else:
-                                    other_uris.append(stable_uri)
-                            # now list URIs in order of importance, with ORCIDs and DOIs
-                            # first, followed by other stable URI types (Arks or something else)
-                            self.stable_id_uris = orcid_uris + doi_uris + other_uris
-                    elif manifest_item.item_type == 'types':
-                        tl = TypeLookup()
-                        tl.get_octype_without_manifest(identifier)
-                        self.content = tl.content
-                    elif manifest_item.item_type == 'predicates':
-                        try:
-                            oc_pred = Predicate.objects.get(uuid=manifest_item.uuid)
-                        except Predicate.DoesNotExist:
-                            oc_pred = False
-                        if oc_pred is not False:
-                            self.data_type = oc_pred.data_type
-                            self.sort = oc_pred.sort
-                            self.slug_uri = 'oc-pred:' + str(self.slug)
-                    elif manifest_item.item_type == 'projects':
-                        # get a manifest object for the parent of a project, if it exists
-                        ch_tab = '"oc_projects" AS "child"'
-                        filters = 'child.project_uuid=oc_manifest.uuid '\
-                                  ' AND child.uuid=\'' + self.uuid + '\' ' \
-                                  ' AND child.project_uuid != \'' + self.uuid + '\' '
-                        par_rows = Manifest.objects\
-                                           .filter(item_type='projects')\
-                                           .exclude(uuid=self.uuid)\
-                                           .extra(tables=[ch_tab], where=[filters])[:1]
-                        if len(par_rows) > 0:
-                            self.par_proj_man_obj = par_rows[0]
-                    elif manifest_item.item_type == 'subjects' and self.get_context:
-                        try:
-                            subj = Subject.objects.get(uuid=manifest_item.uuid)
-                        except Subject.DoesNotExist:
-                            subj = False
-                        if subj is not False:
-                            self.context = subj.context
+        # Only try to dereference if the identifier is a string.
+        if not isinstance(identifier, str):
+            return output
+        identifier = URImanagement.convert_prefix_to_full_uri(identifier)
+        oc_uuid = URImanagement.get_uuid_from_oc_uri(identifier)
+        if not oc_uuid and (settings.CANONICAL_HOST + '/tables/') in identifier:
+            # Special case for probable open context table item.
+            oc_uuid = identifier.replace(
+                (settings.CANONICAL_HOST + '/tables/'), ''
+            )
+        
+        if not oc_uuid:
+            # We don't have an Open Context UUID, so look up a linked
+            # data entity.
+            link_entity_found = self.dereference_linked_data(
+                identifier,
+                link_entity_slug=link_entity_slug
+            )
+            if link_entity_found:
+                # Found what we want, so skip the rest and return True.
+                return True
+        # If we haven't found a link_entity, check for manifest items.
+        if oc_uuid:
+            # We found an Open Context uuid by parsing a URI. So that
+            # should be the identifier to lookup.
+            identifier = oc_uuid
+        manifest_item_found = self.dereference_manifest_item(identifier)
+        if manifest_item_found:
+            return True
         return output
  
     def context_dereference(self, context):
         """ looks up a context, described as a '/' seperated list of labels """
         output = False
-        try:
-            subject = Subject.objects.filter(context=context)[:1]
-        except Subject.DoesNotExist:
-            subject = False
-        if subject is not False:
-            if len(subject) == 1:
-                output = self.dereference(subject[0].uuid)
+        subject = Subject.objects.filter(context=context).first()
+        if not subject:
+            return output
+        self.context = subject.context
+        output = self.dereference(subject.uuid)
         return output
 
     def search(self,

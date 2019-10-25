@@ -14,6 +14,7 @@ class MemoryCache():
 
     def __init__(self, request_dict_json=False):
         self.cache_names = [
+            'local_memory',
             'memory',
             'redis',
         ]
@@ -24,8 +25,10 @@ class MemoryCache():
         """ gets an entity either from the cache or from
             database lookups.
         """
-        cache_key = self.make_cache_key(self.entity_prefix,
-                                        identifier)
+        cache_key = self.make_cache_key(
+            self.entity_prefix,
+            identifier
+        )
         item = self.get_cache_object(cache_key)
         if item is not None:
             return item
@@ -73,9 +76,8 @@ class MemoryCache():
         if not found:
             # give up, we can't find it.
             return False
-        else:
-            # cache the entity now
-            return self.cache_entity(entity)
+        # cache the entity now
+        return self.cache_entity(entity)
     
     def cache_entity(self, entity):
         """Caches an entity so it can be accessed by multiple keys """

@@ -1,3 +1,4 @@
+import copy
 import datetime
 import json
 from django.conf import settings
@@ -17,22 +18,75 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 
 
+BAD_PREDICATE_TYPES_TO_STRING = [
+    False,
+    None,
+    '',
+    'None',
+    'False'
+]
 
 
+def get_solr_predicate_type_string(
+    predicate_type,
+    prefix='',
+    string_default_pred_types=None,
+):
+    '''
+    Defines whether our dynamic solr fields names for
+    predicates end with ___pred_id, ___pred_numeric, etc.
+    
+    :param str predicate_type: String data-type used by Open
+        Context
+    :param str prefix: String prefix to append before the solr type
+    :param list string_default_pred_types: list of values that
+        default to string without triggering an exception.
+    '''
+    if not string_default_pred_types:
+        # If not set, use the default
+        string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
+    if predicate_type in ['@id', 'id', 'types', False]:
+        return prefix + 'id'
+    elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+        return prefix + 'numeric'
+    elif predicate_type == 'xsd:string':
+        return prefix + 'string'
+    elif predicate_type == 'xsd:date':
+        return prefix + 'date'
+    elif predicate_type in string_default_pred_types:
+        return prefix + 'string'
+    else:
+        raise Exception(
+            "Unknown predicate type: {}".format(predicate_type)
+        )
 
-def general_get_jsonldish_entity_parents(identifier, add_original=True):
+
+def general_get_jsonldish_entity_parents(identifier, add_original=True, is_project=False):
     """Wrapper for getting parent entities for oc items and parent projects"""
-    raw_hiearchy_items = LinkRecursion().get_jsonldish_entity_parents(
-        identifier,
-        add_original=add_original
-    )
-    if raw_hiearchy_items:
-        return raw_hiearchy_items
-    raw_hiearchy_items = ProjectRels().get_jsonldish_parents(
+    hierarchy_items = []
+    if not is_project:
+        # Do this if we haven't explicitly stated we have a project item.
+        hierarchy_items = LinkRecursion().get_jsonldish_entity_parents(
+            identifier,
+            add_original=add_original
+        )
+    # We found a hiearchy, so no need to check for a project hierachy.
+    if isinstance(hierarchy_items, list) and len(hierarchy_items) > 1:
+        return hierarchy_items
+    
+    proj_hierarchy_items = ProjectRels().get_jsonldish_parents(
         uuid=identifier,
         add_original=add_original
     )
-    return raw_hiearchy_items
+    if isinstance(proj_hierarchy_items, list) and is_project:
+        return proj_hierarchy_items
+    elif (isinstance(proj_hierarchy_items, list)
+          and isinstance(hierarchy_items, list)
+          and len(proj_hierarchy_items) > len(hierarchy_items)):
+        # The project hierarchy was more complete, so return that.
+        return proj_hierarchy_items 
+    return hierarchy_items
+
 
 def get_id(dict_obj, id_keys=['id', '@id']):
     """Gets an ID from a dictionary object."""
@@ -108,10 +162,11 @@ sd_obj_g.fields
 sd_obj_g.fields['human_remains']
 
 # Example Document
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 uuid_h = 'e4676e00-0b9f-40c7-9cb1-606965445056'
 sd_obj_h = SolrDocumentNew(uuid_h)
 sd_obj_h.make_solr_doc()
-sd_obj_h.fields
+sd_obj_h.fields.keys()
 
 # Example Project
 uuid_i = '3F6DCD13-A476-488E-ED10-47D25513FCB2'
@@ -130,6 +185,12 @@ uuid_k = '0cea2f4a-84cb-4083-8c66-5191628abe67'
 sd_obj_k = SolrDocumentNew(uuid_k)
 sd_obj_k.make_solr_doc()
 sd_obj_k.fields
+
+# Example item from a Subproject
+uuid_l = 'b8cec4d8-0926-4c38-836b-91a94920d5c1'
+sd_obj_l = SolrDocumentNew(uuid_l)
+sd_obj_l.make_solr_doc()
+sd_obj_l.fields
     '''
 
     # the list below defines predicates used for
@@ -186,24 +247,24 @@ sd_obj_k.fields
     # house in better order.
     DEFAULT_PUBLISHED_DATETIME = datetime.date(2007, 1, 1)
 
-    ALL_CONTEXT_SOLR = 'obj_all___context_id'
-    ROOT_CONTEXT_SOLR = 'root___context_id'
-    ROOT_PREDICATE_SOLR = 'root___pred_id'
-    ROOT_LINK_DATA_SOLR = 'ld___pred_id'
-    ROOT_PROJECT_SOLR = 'root___project_id'
-    ALL_PROJECT_SOLR = 'obj_all___project_id'
-    EQUIV_LD_SOLR = 'skos_closematch___pred_id'
-    FILE_SIZE_SOLR = 'filesize___pred_numeric'
-    FILE_MIMETYPE_SOLR = 'mimetype___pred_id'
+    # The delimiter for parts of an object value added to a
+    # solr field.
+    SOLR_VALUE_DELIM = '___'
+
+    FIELD_SUFFIX_CONTEXT = 'context_id'
+    FIELD_SUFFIX_PREDICATE = 'pred_id'
+    FIELD_SUFFIX_PROJECT = 'project_id'
+
+    ALL_CONTEXT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+    ROOT_CONTEXT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_CONTEXT
+    ROOT_PREDICATE_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    ROOT_LINK_DATA_SOLR = 'ld' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
+    ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
+    EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
+    FILE_SIZE_SOLR = 'filesize' + SOLR_VALUE_DELIM + 'pred_numeric'
+    FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
     RELATED_SOLR_DOC_PREFIX = 'rel--'
-    
-    MISSING_PREDICATE_TYPES = [
-        False,
-        None,
-        '',
-        'None',
-        'False'
-    ]
 
 
     # Maximum depth of geotile zoom
@@ -234,9 +295,6 @@ sd_obj_k.fields
         ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85018080'),
     ]
     
-    # The delimiter for parts of an object value added to a
-    # solr field.
-    SOLR_VALUE_DELIM = '___'
     
     def __init__(self, uuid):
         '''
@@ -336,7 +394,7 @@ sd_obj_k.fields
             if self.oc_item.json_ld['oc-gen:data-type']:
                 # Looks up the predicte type mapped to Solr types
                 parts.append(
-                    self._get_solr_predicate_type_string(
+                    get_solr_predicate_type_string(
                         self.oc_item.json_ld['oc-gen:data-type']
                     )
                 )
@@ -392,6 +450,7 @@ sd_obj_k.fields
             return None
         # Add the main solr id field if not present,
         # then append the concat_val
+        solr_id_field = self._convert_slug_to_solr(solr_id_field)
         if do_fq_only is False and solr_id_field not in self.fields:
             self.fields[solr_id_field] = []
         if (do_fq_only is False and
@@ -418,10 +477,14 @@ sd_obj_k.fields
         Creates a hierarchy of projects in the same way as a hierarchy of predicates
         """
         solr_field_name = self.ROOT_PROJECT_SOLR
-        proj_rel = ProjectRels()
-        proj_hierarchy = proj_rel.get_jsonldish_parents(
-            self.oc_item.manifest.project_uuid
-        )
+        if self.oc_item.manifest.item_type == 'projects':
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.uuid, is_project=True
+            )
+        else:    
+            proj_hierarchy = general_get_jsonldish_entity_parents(
+                self.oc_item.manifest.project_uuid, is_project=True
+            )
         for proj in proj_hierarchy:
             # Compose the solr_value for this item in the context
             # hiearchy.
@@ -453,8 +516,9 @@ sd_obj_k.fields
             )
             # Make the new solr_field_name for the next iteration of the loop.
             solr_field_name = (
-                self._convert_slug_to_solr(proj['slug']) +
-                '___project_id'
+                self._convert_slug_to_solr(proj['slug'])
+                + self.SOLR_VALUE_DELIM
+                + self.FIELD_SUFFIX_PROJECT
             )
 
     def _get_oc_item_uuid(self, uri, match_type='subjects'):
@@ -548,26 +612,6 @@ sd_obj_k.fields
                 context['slug']
             )
 
-    def _get_solr_predicate_type_string(self, predicate_type, prefix=''):
-        '''
-        Defines whether our dynamic solr fields names for
-        predicates end with ___pred_id, ___pred_numeric, etc.
-        '''
-        if predicate_type in ['@id', 'id', 'types', False]:
-            return prefix + 'id'
-        elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-            return prefix + 'numeric'
-        elif predicate_type == 'xsd:string':
-            return prefix + 'string'
-        elif predicate_type == 'xsd:date':
-            return prefix + 'date'
-        elif predicate_type in self.MISSING_PREDICATE_TYPES:
-            return prefix + 'string'
-        else:
-            raise Exception(
-                "Unknown predicate type: {}".format(predicate_type)
-            )
-
     def _get_predicate_type_from_dict(self, predicate_dict):
         """Gets data type from a predicate dictionary object. """
         for key in ['type', '@type']:
@@ -579,7 +623,7 @@ sd_obj_k.fields
 
     def _get_solr_predicate_type_from_dict(self, predicate_dict, prefix=''):
         """Gets the solr predicate type from a dictionary object. """
-        return self._get_solr_predicate_type_string(
+        return get_solr_predicate_type_string(
             self._get_predicate_type_from_dict(predicate_dict),
             prefix=prefix
         ) 
@@ -621,6 +665,7 @@ sd_obj_k.fields
                 get_id(item),
                 item['label']
             )
+            
             # Add to the solr document the object value to the
             # solr field for this level of the hiearchy.
             self._add_id_field_fq_field_values(
