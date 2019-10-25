@@ -31,7 +31,7 @@ class RequestNegotiation():
         """ anonymizes a response by deleting cookies for users
             that are not logged in
         """
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             if settings.SESSION_COOKIE_NAME in request.COOKIES:
                 response.delete_cookie(
                     settings.SESSION_COOKIE_NAME,
