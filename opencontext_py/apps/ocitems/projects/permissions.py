@@ -40,7 +40,7 @@ pp.publish_project('d1c85af4-c870-488a-865b-b3cf784cfc60', '2016-03-01')
                     output = True
                 else:
                     print('Project view permission in group: ' + str(proj.view_group_id))
-                    if request.user.is_authenticated():
+                    if request.user.is_authenticated:
                         if request.user.is_superuser:
                             # super users are super!
                             output = True

@@ -860,7 +860,7 @@ def add_update_ld_entity(request):
             uri_sensitive = lem.is_uri_sensitive(uri)
             if uri_sensitive and request.user.is_superuser:
                 authorized = True
-            elif uri_sensitive is False and request.user.is_authenticated():
+            elif uri_sensitive is False and request.user.is_authenticated:
                 authorized = True
                 # one needs to be an authenticated user to add or edit linked
                 # data entities (for non-sensitive vocabs), since this just
