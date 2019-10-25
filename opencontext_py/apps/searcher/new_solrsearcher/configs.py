@@ -86,7 +86,7 @@ MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
 # function. The tuple is organized as so:
 #
 # 1st element: request GET parameter
-# 2nd element: field to remove from the Solr filter query ('fq') list
+# 2nd element: field to remove from the Solr facet.field list
 #              (usually None).
 # 3rd element: dictionary of key-word arguments to supply to
 #              querymaker.get_general_hierarchic_paths_query_dict 
