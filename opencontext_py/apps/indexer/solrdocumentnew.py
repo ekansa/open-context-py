@@ -97,6 +97,27 @@ def get_id(dict_obj, id_keys=['id', '@id']):
     return None
 
 
+def make_entity_string_for_solr(
+    slug,
+    type,
+    id,
+    label,
+    solr_doc_prefix='',
+    solr_value_delim='___'
+):
+    """Make a string value for solr that describes an entity"""
+    id_part = id
+    uri_parsed = URImanagement.get_uuid_from_oc_uri(
+        id,
+        return_type=True
+    )
+    if isinstance(uri_parsed, dict):
+        id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
+    slug = solr_doc_prefix + slug
+    return solr_value_delim.join(
+        [slug, type, id_part, label]
+    )
+
 class SolrDocumentNew:
     '''
     Defines the Solr Document objects that the crawler will crawl. Solr
@@ -349,18 +370,15 @@ sd_obj_l.fields
         # slug = self.solr_doc_prefix + slug
         return slug.replace('-', '_')
 
-    def _concat_solr_string_value(self, slug, type, id, label):
+    def _make_entity_string_for_solr_value(self, slug, type, id, label):
         """Make a solr value for an object item."""
-        id_part = id
-        uri_parsed = URImanagement.get_uuid_from_oc_uri(
+        return make_entity_string_for_solr(
+            slug,
+            type,
             id,
-            return_type=True
-        )
-        if isinstance(uri_parsed, dict):
-            id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
-        slug = self.solr_doc_prefix + slug
-        return self.SOLR_VALUE_DELIM.join(
-            [slug, type, id_part, label]
+            label,
+            solr_doc_prefix=self.solr_doc_prefix,
+            solr_value_delim=self.SOLR_VALUE_DELIM,
         )
 
     def _add_labels_titles_to_text_field(self):
@@ -489,7 +507,7 @@ sd_obj_l.fields
             # Compose the solr_value for this item in the context
             # hiearchy.
             self.fields['text'] += ' ' + str(proj['label']) + '\n'
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 proj['slug'],
                 'id',
                 get_id(proj),
@@ -576,7 +594,7 @@ sd_obj_l.fields
                 continue
             # Compose the solr_value for this item in the context
             # hiearchy.
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 context['slug'],
                 'id',
                 ('/subjects/' + context_uuid),
@@ -659,7 +677,7 @@ sd_obj_l.fields
             # be inclusive of all parent items in a hiearchy.
             self.fields['text'] += ' ' + str(item['label']) + ' '
             # Compose the solr value for the current parent item.
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
                 get_id(item),
@@ -861,7 +879,7 @@ sd_obj_l.fields
                 self.fields['text'] += ' ' + str(item['label']) + ' '
             
             # Compose the solr value for the current parent item.
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
                 get_id(item),
@@ -1298,7 +1316,7 @@ sd_obj_l.fields
                     # We're missing data needed for a disc_geosource
                     # value, so skip.
                     continue
-                self.fields['disc_geosource'] = self._concat_solr_string_value(
+                self.fields['disc_geosource'] = self._make_entity_string_for_solr_value(
                     ref_slug,
                     'id',
                     ref_uri,
