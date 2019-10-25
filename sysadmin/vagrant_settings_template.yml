@@ -3,31 +3,37 @@ google_compute:
 
 opencontext_vm:
     vm_box: "debian/stretch64"
-    repo_branch: "ry-dev"
+    oc_github_repo: "https://github.com/ekansa/open-context-py.git"
+    repo_branch: "master"
 
     google_provider:
       project_id: "opencontext-py"
       client_email: "raymond.yee@gmail.com"
       zone: "us-central1-f"
-      name: "ry-20190729-ry-dev"
-      image: "debian-9-stretch-v20190618"
+      name: "ry-20191010b-test6509-o  c"
+      image: "debian-9-stretch-v20190916"
       machine_type: "n1-standard-2"
+      network: "oc-2019-06-27-vpc"
+      subnetwork: "oc-subnet"
       disk_size: 100
       vm_box: gce
       ssh_username: 'raymond.yee'
       ssh_private_key_path: "~/.ssh/id_rsa"
-      tags: []
+      tags: ['staging-instance']
 
 opencontext_predb_vm:
-    repo_branch: "ry-dev"
+    oc_github_repo: "https://github.com/ekansa/open-context-py.git"
+    repo_branch: "master"
 
     google_provider:
       project_id: "opencontext-py"
       client_email: "raymond.yee@gmail.com"
       zone: "us-central1-f"
-      name: "ry-20190731-ry-dev-oc-predeb"
-      image: "debian-9-stretch-v20190618"
+      name: "ry-20191015a-production"
+      image: "debian-9-stretch-v20190916"
       machine_type: "n1-standard-2"
+      network: "oc-2019-06-27-vpc"
+      subnetwork: "oc-subnet"
       disk_size: 100
       vm_box: gce
       ssh_username: 'raymond.yee'
