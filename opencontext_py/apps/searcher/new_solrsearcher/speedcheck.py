@@ -15,7 +15,7 @@ from opencontext_py.apps.searcher.new_solrsearcher.searchsolr import SearchSolr
 # Currently, this tests the speed of various filter queries in Solr.
 # it seems to indicate that there is no real speed difference
 # between a complete / perfect string pattern match and a string
-# pattern match that does includes a wild card.
+# pattern match that ends with a wild card.
 
 """
 Invoke with:
