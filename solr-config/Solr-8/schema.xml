@@ -180,7 +180,7 @@
 
     <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
-    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
+    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false" large="true"/>
 
     <!-- SPACE AND TIME FIELDS -->
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
