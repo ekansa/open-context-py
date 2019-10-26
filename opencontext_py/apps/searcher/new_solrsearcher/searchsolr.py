@@ -17,6 +17,9 @@ from opencontext_py.apps.searcher.new_solrsearcher import querymaker
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
+logger = logging.getLogger(__name__)
+
+
 class SearchSolr():
 
     def __init__(self):
@@ -41,9 +44,36 @@ class SearchSolr():
     
     def solr_connect(self):
         """ Connects to solr """
-        self.solr = SolrConnection(False).connection
+        if self.solr is None:
+            self.solr = SolrConnection(False).connection
     
+    def finish_request(self, query):
+        """ Check solr query and put convenient format """
+        assert 'q' in query
+        compat_args(query)
+        query['wt'] = 'json'
+        return query
     
+    def query_solr(self, query):
+        """ Connects to solr and runs a query"""
+        query = self.finish_request(query)
+        self.solr_connect()
+        url = urljoin(self.solr.base_url, 'select')
+        try:
+            http_response = self.solr.make_request.post(
+                url,
+                data=query,
+                timeout=240
+            )
+            self.solr_response = parse_response(http_response.content)
+        except Exception as error:
+            logger.error(
+                '[' + datetime.now().strftime('%x %X ')
+                + settings.TIME_ZONE + '] Error: '
+                + str(error)
+                + ' => Query: ' + str(query)
+            )
+        return self.solr_response
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
