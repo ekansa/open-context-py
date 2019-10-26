@@ -57,6 +57,8 @@ def make_context_query_list():
     ).order_by('label')
     query_list = []
     for m in mans:
+        # NOTE: qs is a list of different ways to query
+        # for the spatial context entity "m" (a manifest object).
         qs = [
             'root___context_id:{}*'.format(m.slug),
             'root___context_id:{}___*'.format(m.slug),
@@ -75,8 +77,12 @@ def check_solr_queries(query_list):
     """Checks on the speed of solr queries"""
     s_solr = SearchSolr()
     for note, query_part in query_list:
+        # Below is a fancy new Python method to combine dicts.
+        # This combines the standard, BASE_SOLR_QUERY dict with the
+        # query_part that we want to evaluate for speediness.
         query = {**BASE_SOLR_QUERY, **query_part}
         start = time.time()
+        # Now actually do the request to solr...
         resp = s_solr.query_solr(query)
         end = time.time()
         elapsed = end - start
