@@ -1024,7 +1024,7 @@ sd_obj_l.fields
         if object_uri not in self.fields['object_uri']:
             self.fields['object_uri'].append(object_uri)
 
-    def _add_infered_descriptions(self):
+    def _add_inferred_descriptions(self):
         """Adds inferred linked data descriptions to the Solr doc."""
         inferred_assertions = self.proj_graph_obj\
                                   .infer_assertions_for_item_json_ld(
@@ -1643,7 +1643,7 @@ sd_obj_l.fields
         self._add_observations_descriptions()
         # Add infered assertions via linked data equivalences to
         # descriptions in the item observations.
-        self._add_infered_descriptions()
+        self._add_inferred_descriptions()
         # Add equivalences to other linked data
         self._add_equivalent_linked_data()
         # Add linked data made directly on an item
@@ -1685,7 +1685,7 @@ sd_obj_l.fields
         self._add_observations_descriptions()
         # Add infered assertions via linked data equivalences to
         # descriptions in the related item observations.
-        self._add_infered_descriptions()
+        self._add_inferred_descriptions()
         # Add linked data made directly on the related item
         self._add_direct_linked_data()
         # Add Dublin Core metadata to the related item
