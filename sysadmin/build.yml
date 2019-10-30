@@ -432,7 +432,7 @@
         - restart nginx
 
     - name: run uwsgi
-      shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8000 --ini {{oc_web_dir}}/uwsgi_oc.ini"
+      shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8081 --ini {{oc_web_dir}}/uwsgi_oc.ini"
       become: yes
       become_user: "{{user_owner}}"
 
@@ -586,7 +586,9 @@
       template:
         src: "templates/{{item}}.j2"
         dest: "{{oc_install_dir}}/{{item}}"
-        mode: 0770
+        owner: root
+        group: "{{group_owner}}"
+        mode: 0754
       with_items:
         - start-no-db.sh
         - oc-check.sh
@@ -597,7 +599,7 @@
         - rm-logs.sh
         - update-oc.sh
       become: yes
-      become_user: "{{user_owner}}"
+      become_user: root
 
     - name: Change file ownership for git repo
       command: "chown -R {{user_owner}}:{{group_owner}} {{oc_install_dir}}"

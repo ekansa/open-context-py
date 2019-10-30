@@ -5,7 +5,7 @@ source {{oc_install_dir}}/.venv/bin/activate
 for (( iport=8081; iport<=8090; iport++ ))
 do
     # killall -s INT {{oc_install_dir}}/.venv/bin/uwsgi
-    pkill -INT {{oc_install_dir}}/.venv/bin/uwsgi
+    pkill -9 uwsgi
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.pid
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.sock
     sudo rm -f {{oc_web_dir}}/uwsgi_oc.log
@@ -15,7 +15,7 @@ do
        else
            echo "Trying to start Open Context UWSGI on $iport";
            # uwsgi --http-socket :$iport --ini /var/oc-venv/oc.ini
-           {{oc_install_dir}}/.venv/bin/uwsgi --http-socket :$iport --ini {{oc_web_dir}}/uwsgi_oc.ini
+           sudo -u www-data {{oc_install_dir}}/.venv/bin/uwsgi --http-socket :$iport --ini {{oc_web_dir}}/uwsgi_oc.ini
            sudo /etc/init.d/nginx restart
            break
     fi
