@@ -28,6 +28,13 @@ def test_main_page():
     response = client.get('/', follow=True)
     assert response.status_code == 200
 
+def test_solr_output():
+
+    client = Client()
+
+    response = client.get('/search/.json?q=gold&response=solr', follow=True)
+    assert response.status_code == 200
+
 def test_ssearch():
 
     client = Client()
