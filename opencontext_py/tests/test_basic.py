@@ -83,17 +83,17 @@ def test_compose_query():
 
 def test_compose_query_2():
 
-    request_path = '/search/.json?q=gold&response=solr'
+    request_path = '/search/.json?q=gold'
     spatial_context = None
 
-    r = solr_call(request_path, spatial_context)
+    rs = solr_call(request_path, spatial_context)
 
 def test_bio_taxa_solr():
 
     request_path = '/subjects-search.json/?prop=http%3A%2F%2Fpurl.org%2FNET%2Fbiol%2Fns%23term_hasTaxonomy'
     spatial_context = None
 
-    r = solr_call(request_path, spatial_context)
+    rs = solr_call(request_path, spatial_context)
 
 
 def test_ssearch():
