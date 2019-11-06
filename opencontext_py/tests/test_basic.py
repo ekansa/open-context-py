@@ -38,7 +38,7 @@ def test_solr_output():
 def test_q_solr():
 
     request_dict_json = json.dumps({
-      "path": false,
+      "path": False,
         "q": [
           "gold"
          ],
