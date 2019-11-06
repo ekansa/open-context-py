@@ -35,6 +35,34 @@ def test_solr_output():
     response = client.get('/search/.json?q=gold&response=solr', follow=True)
     assert response.status_code == 200
 
+def test_q_solr():
+
+    request_dict_json = json.dumps({
+      "path": false,
+        "q": [
+          "gold"
+         ],
+       "response": [
+         "solr"
+       ]
+     })
+
+    solr_s = SolrSearch()
+    solr_s.is_bot = False  # True if bot detected
+    solr_s.do_bot_limit = False  # Toggle limits on facets for bots
+    solr_s.do_context_paths = True
+    solr_s.item_type_limit = False
+
+    if solr_s.solr is not False:
+        response = solr_s.search_solr(request_dict_json)
+        m_json_ld = MakeJsonLd(request_dict_json)
+        m_json_ld.base_search_link = '/search/'
+        m_json_ld.request_full_path = '/search/.json?q=gold&response=solr'
+        m_json_ld.spatial_context = None
+        json_ld = m_json_ld.convert_solr_json(response.raw_content)
+        assert json_ld['totalResults'] > 0
+
+
 def test_ssearch():
 
     client = Client()
@@ -108,6 +136,8 @@ def test_json_feed():
         m_json_ld.spatial_context = spatial_context
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
         print (json.dumps(json_ld, indent=4))
+
+
 
 def test_projects_feed():
     spatial_context = None
