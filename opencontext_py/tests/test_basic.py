@@ -3,12 +3,16 @@ import json
 
 from django.db import connection
 from django.test.utils import setup_test_environment
-from django.test.client import Client
+from django.test.client import (Client, RequestFactory)
 from django.conf import settings
 
 from opencontext_py.apps.ocitems.octypes import models
-from opencontext_py.apps.searcher.solrsearcher.models import SolrSearch
+from opencontext_py.apps.searcher.solrsearcher.models import (SolrSearch,  KludgeSolrResponse)
 from opencontext_py.apps.searcher.solrsearcher.makejsonld import MakeJsonLd
+from opencontext_py.apps.searcher.solrsearcher.requestdict import RequestDict
+
+from mysolr.compat import (urljoin, parse_response)
+
 
 settings.ALLOWED_HOSTS += ['testserver']
 
@@ -60,7 +64,30 @@ def test_q_solr():
         m_json_ld.request_full_path = '/search/.json?q=gold&response=solr'
         m_json_ld.spatial_context = None
         json_ld = m_json_ld.convert_solr_json(response.raw_content)
-        assert json_ld['totalResults'] > 0
+        assert json_ld['responseHeader']['QTime'] > 0
+
+
+def test_compose_query():
+    request_dict = {
+      "path": False,
+        "q": [
+          "gold"
+         ],
+       "response": [
+         "solr"
+       ]
+     }
+
+    solr_s = SolrSearch()
+    query = solr_s.compose_query(request_dict)
+
+def test_compose_query_2():
+
+    request_path = '/search/.json?q=gold&response=solr'
+    spatial_context = None
+
+    print(solr_call(request_path, spatial_context))
+    assert False
 
 
 def test_ssearch():
@@ -185,4 +212,47 @@ def test_custom_sql():
     row = my_custom_sql()
     assert row[0] == 251
 
+# model: https://github.com/ekansa/open-context-py/blob/45317e3f236c8657657d5ade4764364becba4411/opencontext_py/apps/searcher/solrsearcher/models.py#
+
+def solr_call(request_path, spatial_context=None):
+
+
+    rf = RequestFactory()
+    request = rf.get(request_path)
+
+    rd = RequestDict()
+    request_dict = json.loads(rd.make_request_dict_json(request,
+                                                  spatial_context))
+
+    solr_s = SolrSearch()
+    query = solr_s.compose_query(request_dict)
+
+    if 'fq' in query:
+        if isinstance(query['fq'], list):
+            new_fq = []
+            for old_fq in query['fq']:
+                if isinstance(old_fq, str):
+                    new_fq.append(old_fq.replace('(())', ' '))
+            query['fq'] = new_fq
+    if solr_s.do_bot_limit:
+        query['facet.field'] = []
+        query['stats.field'] = []
+
+    response = KludgeSolrResponse()
+    squery = response.build_request(query)
+    url = urljoin(solr_s.solr.base_url, 'select')
+    try:
+        http_response = solr_s.solr.make_request.post(url,
+                                                    data=squery,
+                                                    timeout=240)
+        response.raw_content = parse_response(http_response.content)
+    except Exception as error:
+        raise error
+    else:
+        return {
+          'response': response,
+          'squery': squery,
+          'query': query,
+          'url': url
+        }
 
