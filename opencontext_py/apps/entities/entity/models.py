@@ -9,6 +9,7 @@ from opencontext_py.apps.ocitems.manifest.models import Manifest
 from opencontext_py.apps.ocitems.projects.models import Project
 from opencontext_py.apps.ocitems.identifiers.models import StableIdentifer
 from opencontext_py.apps.ocitems.predicates.models import Predicate
+from opencontext_py.apps.ocitems.octypes.models import OCtype
 from opencontext_py.apps.ocitems.octypes.lookup import TypeLookup
 from opencontext_py.apps.ocitems.mediafiles.models import Mediafile
 from opencontext_py.apps.ocitems.subjects.models import Subject
@@ -222,170 +223,301 @@ class Entity():
         output = self.dereference(subject.uuid)
         return output
 
-    def search(self,
-               qstring,
-               item_type=False,
-               class_uri=False,
-               project_uuid=False,
-               vocab_uri=False,
-               ent_type=False,
-               context_uuid=False,
-               data_type=False,
-               context=False):
+    def get_link_entities_qs(
+        self,
+        qstring,
+        vocab_uri=None,
+        ent_type=None,
+        label=None,
+        qs_limit=10,
+    ):
+        """Gets a link_entities query set filtered on different args
+        
+        :param str qstring: A string for partial mating on URIs,
+            slugs, labels or alternative labels.
+        :param str vocab_uri: A string, with possible delimiter for
+            listing multiple vocabulary URIs (namespaces) to search
+            within.
+        :param str ent_type: A string, with possible delimiter for
+            listing multiple entity types to search within.
+        :param str label: A string to require an exact match on a
+            link_entity label.
+        :param int qs_limit: Limit on the length of the query set
+            returned. No limit if None.
+        """
+        # Make URI alternates if the qstring is a uri
+        ent_equivs = EntityEquivalents()
+        uri_alts = ent_equivs.get_identifier_list_variants(qstring)
+        ent_types = []
+        if ent_type:
+            ent_types.append(ent_type)
+        if ent_type == 'class':
+            ent_types.append('type')
+        
+        link_ents_qs = LinkEntity.objects.all()
+        if qstring:
+            link_ents_qs = link_ents_qs.filter(
+                Q(uri__icontains=qstring)
+                | Q(uri__in=uri_alts)
+                | Q(slug__icontains=qstring)
+                | Q(label__icontains=qstring)
+                | Q(alt_label__icontains=qstring)
+            )
+        
+        if len(ent_types):
+           link_ents_qs = link_ents_qs.filter(ent_type__in=ent_types)
+
+        if vocab_uri:
+            vocab_uris = self.make_id_list(vocab_uri)
+            link_ents_qs = link_ents_qs.filter(
+                vocab_uri__in=vocab_uris
+            )
+        
+        if label:
+            # Exact label match required
+            link_ents_qs = link_ents_qs.filter(
+                label=label
+            )
+        if qs_limit is not None:
+            link_ents_qs = link_ents_qs[:qs_limit]
+        return link_ents_qs
+
+
+    def get_manifest_qs(
+        self,
+        qstring,
+        item_types=[],
+        class_uri=None,
+        project_uuid=None,
+        context_uuid=None,
+        data_type=None,
+        context=None,
+        label=None,
+        qs_limit=10,
+    ):
+        """ Makes a manifest object queryset based on filtered args.
+
+        :param str qstring: A string for partial mating on uuids,
+            slugs, or labels.
+        :param str item_types: A list of item_types to search 
+            (the item_type field in oc_manifest).
+        :param str class_uri: A string, with possible delimiter for
+            listing multiple class_uris to search within. 
+        :param str project_uuid: A string, with possible delimiter for
+            listing multiple project_uuids to search within.
+        :param str context_uuid: A string to limit searches within a
+            parent context entity (either a predicate for a search
+            of item_type=='types' or a subjects item for searches
+            within a specific spatial context).
+        :param str data_type: A string, with possible delimiter for
+            listing predicate data-types to search within.
+        :param str context: A context path for a spatial (subjects)
+            context to search within.
+        :param str label: A string to require an exact match on a
+            link_entity or manifest label.
+        :param int qs_limit: Limit on the length of the query set
+            returned. No limit if None.
+        """
+
+        manifest_qs = Manifest.objects.all()
+
+        if qstring:
+            manifest_qs = manifest_qs.filter(
+                Q(uuid__icontains=qstring)
+                | Q(slug__icontains=qstring)
+                | Q(label__icontains=qstring)
+            )
+
+        project_uuids = None
+        if project_uuid:
+            project_uuids = self.make_id_list(project_uuid)
+            manifest_qs = manifest_qs.filter(
+                project_uuid__in=project_uuids
+            )
+
+        class_uris = []
+        if class_uri:
+            class_uris = self.make_id_list(class_uri)
+            manifest_qs = manifest_qs.filter(
+                class_uri__in=class_uris
+            )
+        
+        if label:
+            # Exact label match required
+            manifest_qs = manifest_qs.filter(
+                label=label
+            )
+
+        if len(item_types): 
+            manifest_qs = manifest_qs.filter(item_type__in=item_types)
+        
+        # Now get limiting uuid for queries to related tables
+        # based on arguments.
+        limit_uuids = []
+        context_startswith = False
+        if not context and context_uuid and 'subjects' in item_types:
+            sub = Subject.objects.filter(uuid=context_uuid).first()
+            if sub:
+                context_startswith = True
+                context = sub.context
+
+        if context:
+            # Get limit uuids from subject contexts (spatial).
+            if context_startswith:
+                # Treat the context as the start of a context path
+                # so we're searching subcontexts within that path.
+                subs_qs = Subject.objects.filter(
+                    context__startswith=context
+                )
+            else:
+                subs_qs = Subject.objects.filter(
+                    context__icontains=context
+                )
+            if project_uuids:
+                subs_qs = subs_qs.filter(
+                    project_uuid__in=project_uuids
+                )
+            limit_uuids += [s.uuid for s in subs_qs]
+
+        if context_uuid and 'types' in item_types:
+            # Get limit uuids from types related to a context_uuid. 
+            oc_types_qs = OCtype.objects.filter(
+                predicate_uuid=context_uuid
+            )
+            if project_uuids:
+                oc_types_qs = oc_types_qs.filter(
+                    project_uuid__in=project_uuids
+                )
+            limit_uuids += [t.uuid for t in oc_types_qs]
+
+        if data_type and 'predicates' in item_types:
+            # Get limit uuids from predicates with a given data_type.
+            pred_qs = Predicate.objects.filter(data_type=data_type)
+            if project_uuids:
+                pred_qs = pred_qs.filter(
+                    project_uuid__in=project_uuids
+                )
+            limit_uuids += [p.uuid for p in pred_qs]
+        
+        media_uuids = []
+        if 'media' in item_types:
+            files_qs = Mediafile.objects.filter(
+                file_uri__icontains=qstring
+            )
+            if project_uuids:
+                files_qs = files_qs.filter(
+                    project_uuid__in=project_uuids
+                )
+            media_uuids = [f.uuid for f in files_qs]
+            limit_uuids += [f.uuid for f in files_qs]
+
+        # Now apply the uuid limit it there are some limit_uuids.
+        if len(limit_uuids):
+            manifest_qs = manifest_qs.filter(uuid__in=limit_uuids)
+        
+        # Execute the manifest query now, to see if
+        # we need to do a second query for searches of media items.
+        if qs_limit is not None:
+            manifest_qs = manifest_qs[:qs_limit]
+        len_man = len(manifest_qs)
+        if len_man == 0 and len(media_uuids):
+            # We didn't find any manifest items, but we did find
+            # media uuids by matching file uris. So use those
+            # to make a new Manifest queryset.
+            manifest_qs = Manifest.objects.filter(
+                uuid__in=media_uuids,
+                item_type='media',
+            )
+            if class_uris:
+                manifest_qs = manifest_qs.filter(
+                    class_uri__in=class_uris
+                )
+            if qs_limit is not None:
+                manifest_qs = manifest_qs[:qs_limit]
+        return manifest_qs
+
+
+    def search(
+        self,
+        qstring,
+        item_type=None,
+        class_uri=None,
+        project_uuid=None,
+        vocab_uri=None,
+        ent_type=None,
+        context_uuid=None,
+        data_type=None,
+        context=None,
+        label=None):
         """ Searches for entities limited by query strings
             and optionally other criteria
+        
+        :param str qstring: A string for partial mating on URIs,
+            slugs, labels or alternative labels.
+        :param str item_type: A string, with possible delimiter for
+            listing multiple item_types to search (the item_type 
+            field in oc_manifest). 'uri' indicates to include link
+            entities.
+        :param str class_uri: A string, with possible delimiter for
+            listing multiple class_uris to search within. 
+        :param str project_uuid: A string, with possible delimiter for
+            listing multiple project_uuids to search within.
+        :param str vocab_uri: A string, with possible delimiter for
+            listing multiple vocabulary URIs (namespaces) to search
+            within.
+        :param str ent_type: A string, with possible delimiter for
+            listing multiple entity types to search within.
+        :param str context_uuid: A string to limit searches within a
+            parent context entity (either a predicate for a search
+            of item_type=='types' or a subjects item for searches
+            within a specific spatial context).
+        :param str data_type: A string, with possible delimiter for
+            listing predicate data-types to search within.
+        :param str context: A context path for a spatial (subjects)
+            context to search within.
+        :param str label: A string to require an exact match on a
+            link_entity or manifest label.
         """
-        ent_equivs = EntityEquivalents()
-        uri_alts = ent_equivs.get_identifier_list_variants(qstring);
-        entity_list = []
-        manifest_list = [] 
-        subjects_obj = None
-        if ent_type is not False:
-            # make ent_type search a list
-            ents = [ent_type]
-            if ent_type == 'class':
-                ents.append('type')
+        
+        item_types = []
+        if item_type:
+            item_types = self.make_id_list(item_type)
+        
+        if 'uri' in item_types:
+            # We have "uri" in our list of requested item_types, 
+            # so make a queryset of link_entities.
+            link_ents_qs = self.get_link_entities_qs(
+                qstring=qstring,
+                vocab_uri=vocab_uri,
+                ent_type=ent_type,
+                label=label,
+            )
         else:
-            ents = False
-        if item_type is False and class_uri is False\
-           and project_uuid is False and vocab_uri is False:
-            """ Search all types of entities, only limit by string matching """
-            entity_list = LinkEntity.objects\
-                                    .filter(Q(uri__icontains=qstring)\
-                                            | Q(uri__in=uri_alts)\
-                                            | Q(slug__icontains=qstring)\
-                                            | Q(label__icontains=qstring)\
-                                            | Q(alt_label__icontains=qstring))[:10]
-            manifest_list = Manifest.objects\
-                                    .filter(Q(uuid__icontains=qstring)\
-                                            | Q(slug__icontains=qstring)\
-                                            | Q(label__icontains=qstring))[:10]
-        elif item_type == 'uri' and class_uri is False\
-                and project_uuid is False and vocab_uri is False:
-            """ Search for link entities only limit by string matching """
-            if ents is False:
-                # don't limit by entity type
-                entity_list = LinkEntity.objects\
-                                        .filter(Q(uri__icontains=qstring)\
-                                                | Q(uri__in=uri_alts)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring)\
-                                                | Q(alt_label__icontains=qstring))[:15]
-            else:
-                # also limit by entity type
-                entity_list = LinkEntity.objects\
-                                        .filter(ent_type__in=ents)\
-                                        .filter(Q(uri__icontains=qstring)\
-                                                | Q(uri__in=uri_alts)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring)\
-                                                | Q(alt_label__icontains=qstring))[:15]
-        elif item_type == 'uri' and class_uri is False\
-                and project_uuid is False and vocab_uri is not False:
-            """ Search for link entities, limit by vocab_uri """
-            vocab_uri = self.make_id_list(vocab_uri)
-            if ents is False:
-                # don't limit by entity type
-                entity_list = LinkEntity.objects\
-                                        .filter(vocab_uri__in=vocab_uri)\
-                                        .filter(Q(uri__icontains=qstring)\
-                                                | Q(uri__in=uri_alts)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring)\
-                                                | Q(alt_label__icontains=qstring))[:15]
-            else:
-                # also limit by entity type
-                entity_list = LinkEntity.objects\
-                                        .filter(ent_type__in=ents)\
-                                        .filter(vocab_uri__in=vocab_uri)\
-                                        .filter(Q(uri__icontains=qstring)\
-                                                | Q(uri__in=uri_alts)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring)\
-                                                | Q(alt_label__icontains=qstring))[:15]
+            # Make an empty list for link_entities, since uri
+            # is not in the list of allowed item_types.
+            link_ents_qs = []
         
+        if item_types == ['uri']:
+            # We're only searching link_entities item_type == 'uri'
+            # This means we don't need to bother looking at the 
+            # manifest at all, so make an empty list for it.
+            manifest_qs = []
+        else:
+            manifest_qs = self.get_manifest_qs(
+                qstring=qstring,
+                item_types=item_types,
+                class_uri=class_uri,
+                project_uuid=project_uuid,
+                context_uuid=context_uuid,
+                data_type=data_type,
+                context=context,
+                label=label
+            )
         
-        elif item_type is not False and item_type != 'uri':
-            """ Look only for manifest items """ 
-            args = {}
-            last_args = {}
-            search_sub_uuids = []
-            if context:
-                # limit by context path
-                c_args = {'context__icontains': context}
-                if project_uuid:
-                    project_uuid = self.make_id_list(project_uuid)
-                    c_args['project_uuid__in'] = project_uuid
-                subs = Subject.objects.filter(**c_args)
-                for sub in subs:
-                    search_sub_uuids.append(sub.uuid)
-                args['uuid__in'] = search_sub_uuids
-                last_args['uuid__in'] = search_sub_uuids
-                # print('Limit to contexts: ' + str(search_sub_uuids))
-            item_type = self.make_id_list(item_type)
-            args['item_type__in'] = item_type
-            last_args['item_type__in'] = item_type
-            if class_uri is not False:
-                class_uri = self.make_id_list(class_uri)
-                args['class_uri__in'] = class_uri
-            if project_uuid is not False:
-                project_uuid = self.make_id_list(project_uuid)
-                args['project_uuid__in'] = project_uuid
-                last_args['project_uuid__in'] = project_uuid
-            # print('args are here: ' + str(args))
-            if context_uuid is not False and 'types' in item_type:
-                l_tables = 'oc_types'
-                filter_types = 'oc_manifest.uuid = oc_types.uuid \
-                                AND oc_types.predicate_uuid = \'' + context_uuid + '\' '
-                manifest_list = Manifest.objects\
-                                        .extra(tables=[l_tables], where=[filter_types])\
-                                        .filter(**args)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            elif data_type is not False and 'predicates' in item_type:
-                l_tables = 'oc_predicates'
-                filter_types = 'oc_manifest.uuid = oc_predicates.uuid \
-                                AND oc_predicates.data_type = \'' + data_type + '\' '
-                manifest_list = Manifest.objects\
-                                        .extra(tables=[l_tables], where=[filter_types])\
-                                        .filter(**args)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            else:
-                manifest_list = Manifest.objects\
-                                        .filter(**args)\
-                                        .filter(Q(uuid__icontains=qstring)\
-                                                | Q(slug__icontains=qstring)\
-                                                | Q(label__icontains=qstring))[:15]
-            if len(manifest_list) < 1:
-                # now just search for a uuid, since we may have a search just for UUIDs
-                manifest_list = Manifest.objects\
-                                        .filter(**last_args)\
-                                        .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
-        elif item_type is False and project_uuid is not False:
-            project_uuid = self.make_id_list(project_uuid)
-            manifest_list = Manifest.objects\
-                                    .filter(project_uuid__in=project_uuid)\
-                                    .filter(Q(uuid__icontains=qstring)\
-                                            | Q(slug__icontains=qstring)\
-                                            | Q(label__icontains=qstring))[:10]
-            if len(manifest_list) < 1:
-                # now just search for a uuid, since we may have a search just for UUIDs
-                manifest_list = Manifest.objects\
-                                        .filter(Q(uuid=qstring) | Q(slug=qstring))[:1]
-        if len(manifest_list) < 1 and 'media' in item_type:
-            # we're searching for a media item. check to see if we have a file name
-            # print('check for file: ' + qstring)
-            med_files = Mediafile.objects\
-                                 .filter(file_uri__icontains=qstring)[:1]
-            if len(med_files) > 0:
-                manifest_list = Manifest.objects\
-                                        .filter(uuid=med_files[0].uuid)[:1]
+        # Now make an output list from the query sets.
         self.ids_meta = {}
         output = []
-        for link_entity in entity_list:
+        for link_entity in link_ents_qs:
             item = LastUpdatedOrderedDict()
             item['id'] = link_entity.uri
             item['label'] = link_entity.label
@@ -396,24 +528,22 @@ class Entity():
             item['partOf_id'] = link_entity.vocab_uri
             item['partOf_label'] = self.get_link_entity_label(link_entity.vocab_uri)
             output.append(item)
-        for man_entity in manifest_list:
+        for man_entity in manifest_qs:
             item = LastUpdatedOrderedDict()
             item['id'] = man_entity.uuid
             item['label'] = man_entity.label
             item['slug'] = man_entity.slug
             item['type'] = man_entity.item_type
             if man_entity.item_type == 'predicates':
-                try:
-                    pred = Predicate.objects.get(uuid=man_entity.uuid)
+                item['data_type'] = False
+                pred = Predicate.objects.filter(uuid=man_entity.uuid).first()
+                if pred:
                     item['data_type'] = pred.data_type
-                except Predicate.DoesNotExist:
-                    item['data_type'] = False
             if context and man_entity.item_type == 'subjects':
-                try:
-                    sub = Subject.objects.get(uuid=man_entity.uuid)
+                item['context'] = False
+                sub = Subject.objects.filter(uuid=man_entity.uuid).first()
+                if sub:
                     item['context'] = sub.context
-                except Subject.DoesNotExist:
-                    item['context'] = False
             item['class_uri'] = man_entity.class_uri
             item['ent_type'] = False
             item['partOf_id'] = man_entity.project_uuid
@@ -437,11 +567,8 @@ class Entity():
             output = self.ids_meta[uri]
         else:
             output = False
-            try:
-                link_entity = LinkEntity.objects.get(uri=uri)
-            except LinkEntity.DoesNotExist:
-                link_entity = False
-            if link_entity is not False:
+            link_entity = LinkEntity.objects.filter(uri=uri).first()
+            if link_entity:
                 output = link_entity.label
             self.ids_meta[uri] = output
         return output
@@ -452,11 +579,8 @@ class Entity():
             output = self.ids_meta[uuid]
         else:
             output = False
-            try:
-                manifest_item = Manifest.objects.get(uuid=uuid)
-            except Manifest.DoesNotExist:
-                manifest_item = False
-            if manifest_item is not False:
+            manifest_item = Manifest.objects.filter(uuid=uuid).first()
+            if manifest_item:
                 output = manifest_item.label
             self.ids_meta[uuid] = output
         return output
