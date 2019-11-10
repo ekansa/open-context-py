@@ -104,12 +104,23 @@ def join_solr_query_terms(terms_list, operator='AND'):
     return terms_str
 
 
+def fq_slug_value_format(slug, value_slug_length_limit=120):
+    """Formats a slug for a Solr query value"""
+    if SolrDocument.DO_LEGACY_FQ:
+        return slug
+    slug += SolrDocument.SOLR_VALUE_DELIM
+    slug = (
+        slug[:value_slug_length_limit] + '*'
+    )
+    return slug
+
+
 def make_solr_term_via_slugs(
     field_slug,
     solr_dyn_field,
     value_slug,
     field_parent_slug=None,
-    solr_field_suffix='_fq',
+    solr_field_suffix='',
 ):
     """Makes a solr query term from slugs
     
@@ -128,6 +139,14 @@ def make_solr_term_via_slugs(
     :param str value_slug: A string for the slug value that we want
         to query.
     """
+    if SolrDocument.DO_LEGACY_FQ:
+        # Doing the legacy filter query method, so add a
+        # suffix of _fq to the solr field.
+        solr_field_suffix = '_fq'
+    
+    # Format the value slug for the filter query.
+    value_slug = fq_slug_value_format(value_slug)
+
     solr_parent_prefix = field_slug.replace('-', '_')
     if field_parent_slug:
         # Add the immediate parent part of the solr
