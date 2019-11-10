@@ -70,7 +70,7 @@ def general_get_jsonldish_entity_parents(identifier, add_original=True, is_proje
             identifier,
             add_original=add_original
         )
-    # We found a hiearchy, so no need to check for a project hierachy.
+    # We found a hierarchy, so no need to check for a project hierachy.
     if isinstance(hierarchy_items, list) and len(hierarchy_items) > 1:
         return hierarchy_items
     
@@ -96,6 +96,27 @@ def get_id(dict_obj, id_keys=['id', '@id']):
             return dict_obj[id_key]
     return None
 
+
+def make_entity_string_for_solr(
+    slug,
+    type,
+    id,
+    label,
+    solr_doc_prefix='',
+    solr_value_delim='___'
+):
+    """Make a string value for solr that describes an entity"""
+    id_part = id
+    uri_parsed = URImanagement.get_uuid_from_oc_uri(
+        id,
+        return_type=True
+    )
+    if isinstance(uri_parsed, dict):
+        id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
+    slug = solr_doc_prefix + slug
+    return solr_value_delim.join(
+        [slug, type, id_part, label]
+    )
 
 class SolrDocumentNew:
     '''
@@ -301,6 +322,13 @@ sd_obj_l.fields
         Using our Python JSON-LD and other info provided in OCitem,
         build up dictionary of solr fields to index.
         '''
+        # NOTE do_legacy_id_fq is set to False. This is to toggle
+        # if we to index legacy fields for filter queries on 
+        # slug values only. These fields seem to only bloat the
+        # solr index and do not seem to improve performace, so we
+        # are in the process of deprecating them.
+        self.do_legacy_id_fq = False
+
         # Are we doing a related document? Related documents are
         # made to add extra metadata to a solr document. Typically
         # documents for "media" and "document" item_types lack much
@@ -349,18 +377,15 @@ sd_obj_l.fields
         # slug = self.solr_doc_prefix + slug
         return slug.replace('-', '_')
 
-    def _concat_solr_string_value(self, slug, type, id, label):
+    def _make_entity_string_for_solr_value(self, slug, type, id, label):
         """Make a solr value for an object item."""
-        id_part = id
-        uri_parsed = URImanagement.get_uuid_from_oc_uri(
+        return make_entity_string_for_solr(
+            slug,
+            type,
             id,
-            return_type=True
-        )
-        if isinstance(uri_parsed, dict):
-            id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
-        slug = self.solr_doc_prefix + slug
-        return self.SOLR_VALUE_DELIM.join(
-            [slug, type, id_part, label]
+            label,
+            solr_doc_prefix=self.solr_doc_prefix,
+            solr_value_delim=self.SOLR_VALUE_DELIM,
         )
 
     def _add_labels_titles_to_text_field(self):
@@ -448,6 +473,13 @@ sd_obj_l.fields
         if (not isinstance(solr_id_field, str) or
             not isinstance(concat_val, str)):
             return None
+        
+        # NOTE: do_fq_only is a legacy argument for this function
+        # We will force it to be false if we're not making a solr
+        # document that has fields that end in _fq.
+        if not self.do_legacy_id_fq:
+            do_fq_only = False
+
         # Add the main solr id field if not present,
         # then append the concat_val
         solr_id_field = self._convert_slug_to_solr(solr_id_field)
@@ -458,6 +490,20 @@ sd_obj_l.fields
             concat_val not in self.fields[solr_id_field]):
             # Only add it if we don't already have it
             self.fields[solr_id_field].append(concat_val)
+        
+        if not self.do_legacy_id_fq:
+            # Do not add the fq field values, because we're deprecating
+            # this part of the solr index in order to reduce redundant
+            # bloat.
+            return None
+
+        # NOTE: Below is for indexing a legacy solr field type that
+        # has a _fq suffix. This was meant to be used for filter
+        # queries on slugs only. It turns out that it does not really
+        # provide any performance benefit, and it just makes things
+        # more complicated and bloated. So we're in the process of
+        # deprecating these types of fields.
+        #  
         # Add the solr id field's _fq field if not present.
         solr_id_field_fq = solr_id_field + '_fq'
         if solr_id_field_fq not in self.fields:
@@ -487,19 +533,19 @@ sd_obj_l.fields
             )
         for proj in proj_hierarchy:
             # Compose the solr_value for this item in the context
-            # hiearchy.
+            # hierarchy.
             self.fields['text'] += ' ' + str(proj['label']) + '\n'
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 proj['slug'],
                 'id',
                 get_id(proj),
                 proj['label']
             )
             # The self.ALL_PROJECT_SOLR takes values for
-            # each project item in project hiearchy, thereby
+            # each project item in project hierarchy, thereby
             # facilitating queries at all levels of the project
             # hierarchy. Without the self.ALL_PROJECT_SOLR, we would need
-            # to know the full hiearchy path of project items in order
+            # to know the full hierarchy path of project items in order
             # to query for a given project.
             self._add_id_field_fq_field_values(
                 self.ALL_PROJECT_SOLR,
@@ -508,7 +554,7 @@ sd_obj_l.fields
                 do_fq_only=True
             )
             # Now add the current proj. to the solr field for the current
-            # level of the project hiearchy.
+            # level of the project hierarchy.
             self._add_id_field_fq_field_values(
                 solr_field_name,
                 act_solr_value,
@@ -575,18 +621,18 @@ sd_obj_l.fields
                 # so skip.
                 continue
             # Compose the solr_value for this item in the context
-            # hiearchy.
-            act_solr_value = self._concat_solr_string_value(
+            # hierarchy.
+            act_solr_value = self._make_entity_string_for_solr_value(
                 context['slug'],
                 'id',
                 ('/subjects/' + context_uuid),
                 context['label']
             )
             # The self.ALL_CONTEXT_SOLR takes values for
-            # each context item in spatial context hiearchy, thereby
+            # each context item in spatial context hierarchy, thereby
             # facilitating queries at all levels of the context
             # hierarchy. Without the self.ALL_CONTEXT_SOLR, we would need
-            # to know the full hiearchy path of parent items in order
+            # to know the full hierarchy path of parent items in order
             # to query for a given spatial context.
             self._add_id_field_fq_field_values(
                 self.ALL_CONTEXT_SOLR,
@@ -595,11 +641,11 @@ sd_obj_l.fields
                 do_fq_only=True
             )
             if index == 0:
-                # We are at the top of the spatial hiearchy
+                # We are at the top of the spatial hierarchy
                 # so the solr context field is self.ROOT_CONTEXT_SOLR.
                 solr_context_field = self.ROOT_CONTEXT_SOLR
             else:
-                # We are at sub-levels in the spatial hiearchy
+                # We are at sub-levels in the spatial hierarchy
                 # so the solr context field comes from the parent item
                 # in the spatial context hierarchy
                 solr_context_field = (
@@ -628,8 +674,8 @@ sd_obj_l.fields
             prefix=prefix
         ) 
 
-    def _add_object_value_hiearchy(self, root_solr_field, hiearchy_items):
-        """Adds a hiearchy of predicates to the solr doc."""
+    def _add_object_value_hierarchy(self, root_solr_field, hierarchy_items):
+        """Adds a hierarchy of predicates to the solr doc."""
         # The act_solr_field starts at the solr field that is
         # for the root of the hierarchy, passed as an argument to
         # this function.
@@ -638,11 +684,11 @@ sd_obj_l.fields
         )
         act_solr_field = solr_field_prefix + root_solr_field
         # The all_obj_solr_field is defined for the solr field
-        # at the root of this hiearchy. It will take values for
-        # each item in the object value hiearchy, thereby
+        # at the root of this hierarchy. It will take values for
+        # each item in the object value hierarchy, thereby
         # facilitating queries at all levels of the object value
         # hierarchy. Without the all_obj_solr_field, we would need
-        # to know the full hiearchy path of parent items in order
+        # to know the full hierarchy path of parent items in order
         # to query for a given object value.
         all_obj_solr_field = (
             solr_field_prefix +
@@ -651,15 +697,15 @@ sd_obj_l.fields
             root_solr_field
         )
         
-        # Now iterate through the list of hiearchy items of
+        # Now iterate through the list of hierarchy items of
         # object values.
-        for index, item in enumerate(hiearchy_items):
-            # Add the label of this item in the hiearchy
+        for index, item in enumerate(hierarchy_items):
+            # Add the label of this item in the hierarchy
             # to the text field. This means key-word searches will
-            # be inclusive of all parent items in a hiearchy.
+            # be inclusive of all parent items in a hierarchy.
             self.fields['text'] += ' ' + str(item['label']) + ' '
             # Compose the solr value for the current parent item.
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
                 get_id(item),
@@ -667,7 +713,7 @@ sd_obj_l.fields
             )
             
             # Add to the solr document the object value to the
-            # solr field for this level of the hiearchy.
+            # solr field for this level of the hierarchy.
             self._add_id_field_fq_field_values(
                 act_solr_field,
                 act_solr_value,
@@ -675,7 +721,7 @@ sd_obj_l.fields
             )
             # Add to the solr document the object value to the
             # all_obj_solr_field , to facilitate queries at ALL
-            # levels of the object value hiearchy.
+            # levels of the object value hierarchy.
             self._add_id_field_fq_field_values(
                 all_obj_solr_field,
                 act_solr_value,
@@ -697,16 +743,16 @@ sd_obj_l.fields
             return None
         for category in self.oc_item.json_ld['category']:
             # get the parent entities of the current category
-            raw_hiearchy_items = general_get_jsonldish_entity_parents(
+            raw_hierarchy_items = general_get_jsonldish_entity_parents(
                 category
             )
             solr_field_name = None
-            hiearchy_items = []
-            for item in raw_hiearchy_items:
+            hierarchy_items = []
+            for item in raw_hierarchy_items:
                 # We only add the category hierarchy to the solr
                 # document once we the poss_item_type has been
                 # matched with the the current item's item type.
-                # This means that we're NOT indexing the hiearchy
+                # This means that we're NOT indexing the hierarchy
                 # above the oc_item.manifest.item_type
                 if ((settings.CANONICAL_HOST + '/vocabularies/oc-general/') in
                     item['id']):
@@ -720,13 +766,13 @@ sd_obj_l.fields
                     continue
                 if not solr_field_name:
                     continue
-                hiearchy_items.append(item)
-            # Now add the hiearchy of categories (class_uri) that is under the
+                hierarchy_items.append(item)
+            # Now add the hierarchy of categories (class_uri) that is under the
             # oc_item.manifest.item_type.
             if solr_field_name:
-                self._add_object_value_hiearchy(
+                self._add_object_value_hierarchy(
                     solr_field_name,
-                    hiearchy_items
+                    hierarchy_items
                 )
     
     def _add_joined_subject_uuid(self, val_obj_id):
@@ -771,7 +817,7 @@ sd_obj_l.fields
 
     def _add_solr_id_field_values(self, solr_field_name, pred_value_objects):
         """Adds non-literal predicate value objects,
-           and their hiearchy parents, to the Solr doc
+           and their hierarchy parents, to the Solr doc
         """
         for val_obj in pred_value_objects:
             # Add subject uuid joins, if applicable.
@@ -781,10 +827,10 @@ sd_obj_l.fields
             self._add_solr_fields_for_linked_media_documents(val_obj)
             # Now add the val_obj item (and parents) to the
             # solr document.
-            hiearchy_items = general_get_jsonldish_entity_parents(
+            hierarchy_items = general_get_jsonldish_entity_parents(
                 get_id(val_obj)
             )
-            self._add_object_value_hiearchy(solr_field_name, hiearchy_items)
+            self._add_object_value_hierarchy(solr_field_name, hierarchy_items)
             # A little stying for different value objects in the text field.
             self.fields['text'] += '\n'
 
@@ -794,7 +840,7 @@ sd_obj_l.fields
             solr_pred_type,
             pred_value_objects
         ):
-        """Adds predicate value objects, and their hiearchy parents, to the Solr doc."""
+        """Adds predicate value objects, and their hierarchy parents, to the Solr doc."""
         if not isinstance(pred_value_objects, list):
             return None
         if solr_pred_type == 'string':
@@ -839,7 +885,7 @@ sd_obj_l.fields
             # This is the most complicated case where the value
             # objects will be non-literals (entities with outside URIs or URI
             # identified Open Context entities). So we need to add them, and
-            # any of their hiearchy parents, to the solr document.
+            # any of their hierarchy parents, to the solr document.
             self._add_solr_id_field_values(
                 solr_field_name,
                 pred_value_objects
@@ -847,21 +893,21 @@ sd_obj_l.fields
         else:
             return None
 
-    def _add_predicate_hiearchy(self, hiearchy_items, root_solr_field):
-        """Adds a hiearchy of predicates to the solr doc."""
-        last_item_index = len(hiearchy_items) - 1
-        for index, item in enumerate(hiearchy_items):
+    def _add_predicate_hierarchy(self, hierarchy_items, root_solr_field):
+        """Adds a hierarchy of predicates to the solr doc."""
+        last_item_index = len(hierarchy_items) - 1
+        for index, item in enumerate(hierarchy_items):
             if item['slug'] == 'link':
                 # Skip the standard link, we don't do
                 # special processing for standard links.
                 continue
             if index < last_item_index:
-                # Add the label of the hiearchy item
+                # Add the label of the hierarchy item
                 # to the text field, to faciliate key-word searches.
                 self.fields['text'] += ' ' + str(item['label']) + ' '
             
             # Compose the solr value for the current parent item.
-            act_solr_value = self._concat_solr_string_value(
+            act_solr_value = self._make_entity_string_for_solr_value(
                 item['slug'],
                 self._get_solr_predicate_type_from_dict(item),
                 get_id(item),
@@ -870,18 +916,18 @@ sd_obj_l.fields
             
             # Treat the first parent in a special way
             if index == 0:
-                # We're at the highest level of the hiearchy,
+                # We're at the highest level of the hierarchy,
                 # so solr field name is the root solr field name.
                 solr_field_name = root_solr_field
             else:
-                # We're at a higher level of the hiearchy, so the
+                # We're at a higher level of the hierarchy, so the
                 # solr field name comes from the previous (parent)
-                # item in the hiearchy.
+                # item in the hierarchy.
                 solr_field_name = self._convert_slug_to_solr(
-                     hiearchy_items[index - 1]['slug'] +
+                     hierarchy_items[index - 1]['slug'] +
                      self.SOLR_VALUE_DELIM + 'pred_id'
                 )
-            # Now add the predicate hiearchy item to the
+            # Now add the predicate hierarchy item to the
             # appropriate solr doc fields.
             self._add_id_field_fq_field_values(
                 solr_field_name,
@@ -903,17 +949,17 @@ sd_obj_l.fields
             return None
         if not 'uuid' in predicate or not predicate.get('slug'):
             print('Wierd predicate: {}'.format(str(predicate)))
-            hiearchy_items = []
+            hierarchy_items = []
         else:
-            # Get any hiearchy that may exist for the predicate. The
-            # current predicate will be the LAST item in this hiearchy.
-            hiearchy_items = general_get_jsonldish_entity_parents(
+            # Get any hierarchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hierarchy.
+            hierarchy_items = general_get_jsonldish_entity_parents(
                 predicate['uuid']
             )
         # This adds the parents of the predicate to the solr document,
         # starting at the self.ROOT_PREDICATE_SOLR
-        self._add_predicate_hiearchy(
-            hiearchy_items,
+        self._add_predicate_hierarchy(
+            hierarchy_items,
             self.ROOT_PREDICATE_SOLR
         )
         # Set up the solr field name for the predicate.
@@ -930,7 +976,7 @@ sd_obj_l.fields
         # Add the predicate label to the text string to help
         # make full-text search snippets more meaningful.
         self.fields['text'] += predicate['label'] + ': '
-        # Add the predicate's value objects, including hiearchy parents
+        # Add the predicate's value objects, including hierarchy parents
         # of those value objects, to the solr document.
         self._add_solr_field_values(
             solr_field_name,
@@ -1006,7 +1052,7 @@ sd_obj_l.fields
         if object_uri not in self.fields['object_uri']:
             self.fields['object_uri'].append(object_uri)
 
-    def _add_infered_descriptions(self):
+    def _add_inferred_descriptions(self):
         """Adds inferred linked data descriptions to the Solr doc."""
         inferred_assertions = self.proj_graph_obj\
                                   .infer_assertions_for_item_json_ld(
@@ -1016,15 +1062,15 @@ sd_obj_l.fields
             # No inferred assertions from liked data, so skip out.
             return None
         for assertion in inferred_assertions:
-            # Get any hiearchy that may exist for the predicate. The
-            # current predicate will be the LAST item in this hiearchy.
-            pred_hiearchy_items = general_get_jsonldish_entity_parents(
+            # Get any hierarchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hierarchy.
+            pred_hierarchy_items = general_get_jsonldish_entity_parents(
                 get_id(assertion)
             )
             # This adds the parents of the link data predicate to the solr document,
             # starting at the self.ROOT_LINK_DATA_SOLR
-            self._add_predicate_hiearchy(
-                pred_hiearchy_items,
+            self._add_predicate_hierarchy(
+                pred_hierarchy_items,
                 self.ROOT_LINK_DATA_SOLR
             )
             
@@ -1054,7 +1100,7 @@ sd_obj_l.fields
             # Add the predicate label to the text string to help
             # make full-text search snippets more meaningful.
             self.fields['text'] += assertion['label'] + ': '
-            # Add the predicate's value objects, including hiearchy parents
+            # Add the predicate's value objects, including hierarchy parents
             # of those value objects, to the solr document.
             self._add_solr_field_values(
                 solr_field_name,
@@ -1076,12 +1122,12 @@ sd_obj_l.fields
             for obj in self.oc_item.json_ld[equiv_uri]:
                 # Add linked data object.
                 self._add_object_uri(obj.get('id'))
-                hiearchy_items = general_get_jsonldish_entity_parents(
+                hierarchy_items = general_get_jsonldish_entity_parents(
                     get_id(obj)
                 )
-                self._add_object_value_hiearchy(
+                self._add_object_value_hierarchy(
                     self.EQUIV_LD_SOLR,
-                    hiearchy_items
+                    hierarchy_items
                 )
                 # A little stying for different value objects in the text field.
                 self.fields['text'] += '\n'
@@ -1099,21 +1145,21 @@ sd_obj_l.fields
         for pred_uri in direct_preds:
             if pred_uri not in self.oc_item.json_ld:
                 continue
-            # Get any hiearchy that may exist for the predicate. The
-            # current predicate will be the LAST item in this hiearchy.
-            pred_hiearchy_items = general_get_jsonldish_entity_parents(
+            # Get any hierarchy that may exist for the predicate. The
+            # current predicate will be the LAST item in this hierarchy.
+            pred_hierarchy_items = general_get_jsonldish_entity_parents(
                 pred_uri
             )
             # This adds the parents of the link data predicate to the solr document,
             # starting at the self.ROOT_LINK_DATA_SOLR
-            self._add_predicate_hiearchy(
-                pred_hiearchy_items,
+            self._add_predicate_hierarchy(
+                pred_hierarchy_items,
                 self.ROOT_LINK_DATA_SOLR
             )
             
             # Set up the solr field name for the link data predicate.
             solr_field_name = self._convert_slug_to_solr(
-                pred_hiearchy_items[-1]['slug'] +
+                pred_hierarchy_items[-1]['slug'] +
                 self.SOLR_VALUE_DELIM +
                 'pred_id'
             )
@@ -1124,12 +1170,12 @@ sd_obj_l.fields
                 
                 # Get the hierarchy for the objects of this equivalence
                 # relationship.
-                hiearchy_items = general_get_jsonldish_entity_parents(
+                hierarchy_items = general_get_jsonldish_entity_parents(
                     get_id(obj)
                 )
-                self._add_object_value_hiearchy(
+                self._add_object_value_hierarchy(
                     solr_field_name,
-                    hiearchy_items
+                    hierarchy_items
                 )
                 # A little stying for different value objects in the text field.
                 self.fields['text'] += '\n'
@@ -1298,7 +1344,7 @@ sd_obj_l.fields
                     # We're missing data needed for a disc_geosource
                     # value, so skip.
                     continue
-                self.fields['disc_geosource'] = self._concat_solr_string_value(
+                self.fields['disc_geosource'] = self._make_entity_string_for_solr_value(
                     ref_slug,
                     'id',
                     ref_uri,
@@ -1468,7 +1514,7 @@ sd_obj_l.fields
             if size > self.fields[self.FILE_SIZE_SOLR]:
                 self.fields[self.FILE_SIZE_SOLR] = size
     
-    def _flag_human_remains(self):
+    def _flag_human_remains_legacy_id_fq(self):
         """Flags the solr document for human remains."""
         solr_doc_prefixes = [
             '',
@@ -1484,6 +1530,53 @@ sd_obj_l.fields
                     human_val not in self.fields[solr_field]):
                     # We don't have this human remains criteria
                     # in our document's solr fields.
+                    continue
+                # We have matched some criteria indicating a record
+                # about human remains.
+                self.fields['human_remains'] += 1
+    
+    def _flag_human_remains(self):
+        """Flags the solr document for human remains."""
+        if self.do_legacy_id_fq:
+            # Do the human remains flagging with the
+            # legacy fq fields.
+            return self._flag_human_remains_legacy_id_fq()
+        solr_doc_prefixes = [
+            '',
+            self.RELATED_SOLR_DOC_PREFIX
+        ]
+        for solr_doc_prefix in solr_doc_prefixes:
+            field_prefix = self._convert_slug_to_solr(solr_doc_prefix)
+            for solr_field_tmp, flag_slug in self.HUMAN_REMAINS_FIELD_VALUES:
+                solr_field = (
+                    solr_field_tmp.format(field_prefix)
+                )
+                if solr_field.endswith('_fq'):
+                    # Strip the _fq suffix away. This is a legacy
+                    # configuration field.
+                    solr_field = solr_field[0:-3]
+
+                if not solr_field in self.fields:
+                    # This solr field is not in the doc, so
+                    # no human remains to be flagged, continue.
+                    continue
+                flag_slug = (
+                    solr_doc_prefix 
+                    + flag_slug 
+                    + self.SOLR_VALUE_DELIM
+                )
+                flag_found = False
+                for solr_field_val in self.fields[solr_field]:
+                    if solr_field_val.startswith(flag_slug):
+                        # The solr_field_val starts with a
+                        # slug, so we found human remains metadata
+                        # that needs to be flagged.
+                        flag_found = True
+                        break
+                
+                if not flag_found:
+                    # We didn't find metadata to flag, so
+                    # continue.
                     continue
                 # We have matched some criteria indicating a record
                 # about human remains.
@@ -1615,9 +1708,9 @@ sd_obj_l.fields
         self._set_required_solr_fields()
         # Add (multilingual) labels and titles to the text field
         self._add_labels_titles_to_text_field()
-        # Add the project hiearchy to the solr document
+        # Add the project hierarchy to the solr document
         self._set_solr_project_fields()
-        # Add the spatial context hiearchy to the solr document
+        # Add the spatial context hierarchy to the solr document
         self._add_solr_spatial_context()
         # Add the item's category (class_uri) to the solr document
         self._add_category()
@@ -1625,7 +1718,7 @@ sd_obj_l.fields
         self._add_observations_descriptions()
         # Add infered assertions via linked data equivalences to
         # descriptions in the item observations.
-        self._add_infered_descriptions()
+        self._add_inferred_descriptions()
         # Add equivalences to other linked data
         self._add_equivalent_linked_data()
         # Add linked data made directly on an item
@@ -1667,7 +1760,7 @@ sd_obj_l.fields
         self._add_observations_descriptions()
         # Add infered assertions via linked data equivalences to
         # descriptions in the related item observations.
-        self._add_infered_descriptions()
+        self._add_inferred_descriptions()
         # Add linked data made directly on the related item
         self._add_direct_linked_data()
         # Add Dublin Core metadata to the related item
