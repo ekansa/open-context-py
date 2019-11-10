@@ -95,6 +95,8 @@ def test_bio_taxa_solr():
 
     rs = solr_call(request_path, spatial_context)
 
+def test_solr_document():
+    pass
 
 def test_ssearch():
 
