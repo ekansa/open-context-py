@@ -214,6 +214,14 @@ sd_obj_l.make_solr_doc()
 sd_obj_l.fields
     '''
 
+
+    # DO_LEGACY_FQ adds solr fields specifically for filter queries
+    # that only contain slug values. These solr fields end with "_fq".
+    # We're in the process of deprecating these, since they do not
+    # offer any evidence of better filtering performance and probably
+    # bloat our solr index. 
+    DO_LEGACY_FQ = False
+
     # the list below defines predicates used for
     # semantic equivalence in indexing
     # linked data
@@ -327,7 +335,7 @@ sd_obj_l.fields
         # slug values only. These fields seem to only bloat the
         # solr index and do not seem to improve performace, so we
         # are in the process of deprecating them.
-        self.do_legacy_id_fq = False
+        self.do_legacy_id_fq = DO_LEGACY_FQ
 
         # Are we doing a related document? Related documents are
         # made to add extra metadata to a solr document. Typically

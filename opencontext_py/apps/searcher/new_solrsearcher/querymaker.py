@@ -186,6 +186,8 @@ def get_general_hierarchic_path_query_dict(
     root_field,
     field_suffix,
     obj_all_slug='',
+    fq_solr_field_suffix='',
+    value_slug_length_limit=120,
 ):
     """Gets a solr query dict for a general hierarchic list of
     path item identifiers (usually slugs).
@@ -217,13 +219,18 @@ def get_general_hierarchic_path_query_dict(
             + SolrDocument.SOLR_VALUE_DELIM
         )
 
+    if SolrDocument.DO_LEGACY_FQ:
+        # Doing the legacy filter query method, so add a
+        # suffix of _fq to the solr field.
+        fq_solr_field_suffix = '_fq'
+
     # Make the obj_all_field_fq
     obj_all_field_fq = (
         'obj_all'
         + SolrDocument.SOLR_VALUE_DELIM
         + obj_all_slug
         + field_suffix
-        + '_fq'
+        + fq_solr_field_suffix
     )
 
     # Now start composing fq's for the parent item field with the
@@ -252,7 +259,7 @@ def get_general_hierarchic_path_query_dict(
             # numeric, date, or string criteria. These literal
             # requests
             literal_output = compose_query_on_literal(
-                raw_literal=item,
+                raw_literal=item_id,
                 attribute_item=attribute_item,
                 facet_field=facet_field,
             )
@@ -273,7 +280,12 @@ def get_general_hierarchic_path_query_dict(
                 + attribute_field_part
                 + field_suffix  
             )
-            
+
+        # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
+        # approach of legacy "_fq" filter query fields. If this is
+        # False, the field_fq does NOT have a "_fq" suffix.
+        # 
+        # NOTE ON DO_LEGACY_FQ:  
         # Add the _fq suffix to make the field_fq which is what we use
         # to as the solr field to query for the current item. Note! The
         # field_fq is different from the facet_field because when we
@@ -281,15 +293,15 @@ def get_general_hierarchic_path_query_dict(
         # The solr fields that don't have "_fq" are used exclusively for
         # making facets (counts of metadata values in different documents).
         field_fq = facet_field
-        if not field_fq.endswith('_fq'):
-            field_fq += '_fq'
+        if not field_fq.endswith(fq_solr_field_suffix):
+            field_fq += fq_solr_field_suffix
         
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
         # parents). 
         query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                 field_fq=field_fq,
-                item_slug=item.slug
+                item_slug=utilities.fq_slug_value_format(item.slug)
             )
         )
         # Now make the query for the item and the solr field
@@ -297,7 +309,7 @@ def get_general_hierarchic_path_query_dict(
         # type of solr dynamic field.
         query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                 field_fq=obj_all_field_fq,
-                item_slug=item.slug
+                item_slug=utilities.fq_slug_value_format(item.slug)
             )
         )
         # Use the current item as the basis for the next solr_field
@@ -336,7 +348,7 @@ def get_general_hierarchic_path_query_dict(
                 + SolrDocument.SOLR_VALUE_DELIM
                 + attribute_field_part
                 + field_suffix
-                + '_fq' 
+                + fq_solr_field_suffix 
             )
 
     # Make the facet field so solr will return any possible
