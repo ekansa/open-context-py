@@ -1,6 +1,7 @@
 import copy
 import datetime
 import itertools
+import math
 import re
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
@@ -620,3 +621,35 @@ def return_validated_bbox_coords(bbox_str):
         return False
     valid_bbox_coors = [float(c) for c in bbox_coors]
     return valid_bbox_coors
+
+def estimate_good_coordinate_rounding(
+    lon_a, 
+    lat_a, 
+    lon_b, 
+    lat_b, 
+    min_round=2, 
+    max_round=20,
+):
+    """Estimates a good rounding precision for display"""
+    dist = math.sqrt(
+        math.pow((lon_b - lon_a), 2)
+        + math.pow((lat_b - lat_a), 2)
+    )
+    round_level = min_round
+    round_more = True
+    while round_more:
+        round_dist = round(dist, round_level)
+        trunc_dist = math.trunc(dist * pow(10, round_level))
+        print('{} has round: {}, trunc {} at round_level {}'.format(
+                dist,
+                round_dist,
+                trunc_dist,
+                round_level,
+            )
+        ) 
+        if ((round_dist > 0.0 and trunc_dist >= 5) 
+            or round_level >= max_round):
+            round_more = False
+        else:
+            round_level += 1
+    return round_level

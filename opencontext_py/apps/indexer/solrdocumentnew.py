@@ -1839,5 +1839,3 @@ sd_obj_l.fields
         self._add_dublin_core()
         # Make sure the text field is valid for Solr
         self.ensure_text_ok()
-        
-    

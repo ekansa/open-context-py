@@ -901,6 +901,3 @@ def get_general_hierarchic_paths_query_dict(
     )
     query_dict['fq'] = [all_paths_term]
     return query_dict
-
-
-
