@@ -333,6 +333,28 @@ def safe_remove_item_from_list(item, item_list):
     return item_list
 
 
+def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=[]):
+    """Combines lists from the part_query_dict into the 
+    
+    :param dict part_query_dict: The smaller query dict that will get
+        merged into the main_query_dict.
+    :param dict main_query_dict: The main query dict that we're adding
+        to.
+    :param list skip_keys: List of keys to skip and not include in
+        adding to the main_query_dict.
+    """
+    if not part_query_dict:
+        return main_query_dict
+    for key, values in part_query_dict.items():
+        if key in skip_keys or not values:
+            continue
+        if key not in main_query_dict:
+            main_query_dict[key] = values
+        elif (isinstance(main_query_dict[key], list)
+            and isinstance(values, list)):
+            main_query_dict[key] += values
+    return main_query_dict
+
 # ---------------------------------------------------------------------
 # Date-Time Related Functions
 # ---------------------------------------------------------------------
