@@ -295,25 +295,27 @@ class Containment():
         output = False
         ent = Entity()
         found = ent.dereference(child_slug)
-        if found:
-            self.get_parents_by_child_uuid(ent.uuid, False)
-            if len(self.contexts_list) > 0:
-                parent_uuid = self.contexts_list[0]
-                # clear class so we can use this again
-                self.contexts_list = []
-                self.contexts = {}
-                self.recurse_count = 0
-                ent_p = Entity()
-                found_p = ent_p.dereference(parent_uuid)
-                if found_p:
-                    output = ent_p.slug
-                else:
-                    print('Cannot dereference parent_uuid: ' + parent_uuid)
-            else:
-                # print('No parent item found. (Root Context)')
-                pass
-        else:
-            print('Cannot find the item for slug: ' + child_slug)
+        if not found:
+            return output
+        # Get the parents of the child by looking up the child
+        # uuid.
+        self.get_parents_by_child_uuid(ent.uuid, False)
+        if not self.contexts_list:
+            print('Find a parent for: ' + ent.uuid)
+            return output
+        parent_uuid = self.contexts_list[0]
+        # Clear class so we can use this again.
+        # NOTE: I haven't looked at this in years. Does this have
+        # list and dict mutation issues that lead to weird behaviors?
+        self.contexts_list = []
+        self.contexts = {}
+        self.recurse_count = 0
+        ent_p = Entity()
+        found_p = ent_p.dereference(parent_uuid)
+        if not found_p:
+            print('Cannot dereference parent_uuid: ' + parent_uuid)
+            return output
+        output = ent_p.slug
         return output
 
     def get_list_context_depth(self,

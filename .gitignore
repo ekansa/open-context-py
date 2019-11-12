@@ -37,4 +37,4 @@ node_modules
 bower_components
 static/d3/d3.v3.min.js
 .oc-django-1-venv/
-
+.vs-code/

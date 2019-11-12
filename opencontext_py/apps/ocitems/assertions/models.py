@@ -55,16 +55,17 @@ class Assertion(models.Model):
         """
         creates a hash-id to insure unique combinations of uuids, obs_nums, predicates, and objects
         """
+        uuid = str(self.uuid)
         hash_obj = hashlib.sha1()
-        concat_string = str(self.uuid) + " " + str(self.obs_num) + " " + str(self.predicate_uuid) + " "
+        concat_string = uuid + " " + str(self.obs_num) + " " + str(self.predicate_uuid) + " "
         concat_string = concat_string + str(self.object_uuid) + " " + str(self.data_num) + " " + str(self.data_date)
         hash_obj.update(concat_string.encode('utf-8'))
         raw_hash = hash_obj.hexdigest()
-        if len(self.uuid) > 8:
+        if len(uuid) > 8:
             # this helps keep uuids together on the table, reduces DB lookup time
-            hash_id = self.uuid[0:8] + '-' + raw_hash[0:34]
+            hash_id = uuid[0:8] + '-' + raw_hash[0:34]
         else:
-            hash_id = self.uuid + '-' + raw_hash
+            hash_id = uuid + '-' + raw_hash
         return hash_id
 
     def save(self, *args, **kwargs):
