@@ -622,22 +622,19 @@ class RecordProperties():
     def get_solr_record_uuid_type(self, solr_rec):
         """ get item uuid, label, and type from a solr_rec """
         output = False
-        if not isinstance(solr_rec, dict):
-            return output
-        output = {'uuid': False,
-                  'label': False,
-                  'item_type': False}
-        if 'uuid' in solr_rec:
-            output['uuid'] = solr_rec['uuid']
-        if 'slug_type_uri_label' in solr_rec:
-            id_parts = self.parse_solr_value_parts(solr_rec['slug_type_uri_label'])
-            if id_parts is not False:
-                uri = self.make_url_from_val_string(id_parts['uri'], True)
-                item_type_output = URImanagement.get_uuid_from_oc_uri(uri, True)
-                if not item_type_output:
-                    return output
-                output['item_type'] = item_type_output['item_type']
-                output['label'] = id_parts['label']
+        if isinstance(solr_rec, dict):
+            output = {'uuid': False,
+                      'label': False,
+                      'item_type': False}
+            if 'uuid' in solr_rec:
+                output['uuid'] = solr_rec['uuid']
+            if 'slug_type_uri_label' in solr_rec:
+                id_parts = self.parse_solr_value_parts(solr_rec['slug_type_uri_label'])
+                if id_parts is not False:
+                    uri = self.make_url_from_val_string(id_parts['uri'], True)
+                    item_type_output = URImanagement.get_uuid_from_oc_uri(uri, True)
+                    output['item_type'] = item_type_output['item_type']
+                    output['label'] = id_parts['label']
         return output
 
     def get_key_val(self, key, dict_obj):
@@ -645,7 +642,9 @@ class RecordProperties():
             with a key, if the key exists
             else, none
         """
-        if not isinstance(dict_obj, dict):
-            return None
-        return dict_obj.get(key)
+        output = None
+        if isinstance(dict_obj, dict):
+            if key in dict_obj:
+                output = dict_obj[key]
+        return output
 
