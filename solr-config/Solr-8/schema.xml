@@ -180,7 +180,7 @@
 
     <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
-    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
+    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false" large="true"/>
 
     <!-- SPACE AND TIME FIELDS -->
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
@@ -248,6 +248,13 @@
     the root context field is 'root___context_id'
     -->
     <dynamicField name="*___context_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
+
+    <!-- DEPRECATED DO NOT USE. These fields are here for backward
+    compatibility but should not be used going forward (2019-10-26)-->
+    <dynamicField name="*___project_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
+    <dynamicField name="*___context_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
+    <dynamicField name="*___pred_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
+
 
 
 

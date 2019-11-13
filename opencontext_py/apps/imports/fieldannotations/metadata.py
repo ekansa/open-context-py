@@ -107,25 +107,20 @@ class ManifestMetadata():
         return output
     
     def get_uuid_from_metadata_dict(self, metadata_dict):
-        """ Gets a uuid value (if it exists and is valid)
+        """ gets a uuid value (if it exists and is valid)
             from a metadata dict
         """
         uuid = None
-        if not isinstance(metadata_dict, dict):
-            return None
-        meta_dict = metadata_dict.get('metadata')
-        if meta_dict is None:
-            return None
-        for uuid_field in self.uuid_fields:
-            if not uuid_field in meta_dict:
-                continue
-            if not isinstance(meta_dict[uuid_field], str):
-                continue
-            if not len(meta_dict[uuid_field]) > 30:
-                continue
-            if not '-' in meta_dict[uuid_field]:
-                continue
-            uuid = meta_dict[uuid_field]
-            return uuid
+        if isinstance(metadata_dict, dict):
+            if 'metadata' in metadata_dict:
+                meta_dict = metadata_dict['metadata']
+                for uuid_field in self.uuid_fields:
+                    if uuid_field in meta_dict:
+                        if isinstance(meta_dict[uuid_field], str):
+                            if len(meta_dict[uuid_field]) > 30:
+                                if '-' in meta_dict[uuid_field]:
+                                    uuid = meta_dict[uuid_field]
+                                    print('found uuid to use: ' + uuid)
+                                    break
         return uuid
             

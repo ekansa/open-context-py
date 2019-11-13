@@ -1778,4 +1778,3 @@ class LinkedData():
         else:
             query = 'prop=' + predicate + '---' + obj
         return query
-
