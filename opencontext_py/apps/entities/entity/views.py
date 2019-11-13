@@ -46,47 +46,49 @@ def look_up(request, item_type):
     """ Returns JSON data for entities
         limited by certain criteria
     """
+    # -----------------------------------------------------------------
+    # NOTE: This is mainly for "in-house" use as an API to to look up
+    # entities already in Open Context's database. It is mainly
+    # used in preparation of datasets for ingest, where we want to 
+    # reconcile entities in an outside dataset with data already in
+    # Open Context. 
+    #
+    # NOTE: This does not use the Solr index at all. It only uses data
+    # in the postgres datastore because the Solr index may not have
+    # all data relevant in projects that are in preparation.
+    # -----------------------------------------------------------------
     ent = Entity()
-    qstring = ''
-    class_uri = False
-    project_uuid = False
-    vocab_uri = False
-    ent_type = False
-    context_uuid = False
-    data_type = False
-    context = False
-    if len(item_type) < 2:
-        item_type = False
-    if 'q' in request.GET:
-        qstring = request.GET['q']
-    if 'class_uri' in request.GET:
-        class_uri = request.GET['class_uri']
-    if 'project_uuid' in request.GET:
-        project_uuid = request.GET['project_uuid']
-    if 'vocab_uri' in request.GET:
-        vocab_uri = request.GET['vocab_uri']
-    if 'ent_type' in request.GET:
-        ent_type = request.GET['ent_type']
-    if 'context_uuid' in request.GET:
-        context_uuid = request.GET['context_uuid']
-    if 'data_type' in request.GET:
-        data_type = request.GET['data_type']
-    if 'context' in request.GET:
-        context = request.GET['context']
-    entity_list = ent.search(qstring,
-                             item_type,
-                             class_uri,
-                             project_uuid,
-                             vocab_uri,
-                             ent_type,
-                             context_uuid,
-                             data_type,
-                             context)
-    json_output = json.dumps(entity_list,
-                             indent=4,
-                             ensure_ascii=False)
-    return HttpResponse(json_output,
-                        content_type='application/json; charset=utf8')
+    arg_list = [
+        'qstring',
+        'item_type',
+        'class_uri',
+        'project_uuid',
+        'vocab_uri',
+        'ent_type',
+        'context_uuid',
+        'data_type',
+        'context',
+        'label', 
+    ]
+    # Get all the request parameters to make an argument dict.
+    args = {arg:request.GET.get(arg) for arg in arg_list}
+    args['qstring'] = request.GET.get('q', '')
+    
+    # Item type is set in the URL path
+    if item_type and len(item_type) < 2:
+        item_type = None
+    args['item_type'] = item_type
+
+    entity_list = ent.search(**args)
+    json_output = json.dumps(
+        entity_list,
+        indent=4,
+        ensure_ascii=False
+    )
+    return HttpResponse(
+        json_output,
+        content_type='application/json; charset=utf8'
+    )
 
 
 @cache_control(no_cache=True)
