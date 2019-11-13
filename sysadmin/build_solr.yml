@@ -1,0 +1,634 @@
+- name: solr setup
+  hosts: '{{vname}}'
+  vars:
+    user: "{{ ansible_user }}"
+    user_owner: www-data
+    group_owner: www-data
+    target: '{{vname}}'
+    migrate: "{{do_migrate | default('true')}}"
+    install_db: "{{install_db | default('true')}}"
+    install_solr_data: "{{install_solr_data | default('true')}}"
+    install_root_cron: "{{install_root_cron | default('true')}}"
+
+    # calculate static_root
+    oc_static_root: "{{oc_install_dir}}/staticroot"
+
+    # postgres vars -- for LOCAL postgres installation
+    postgresql_python_library: python-psycopg2
+    postgresql_user: postgres
+    postgresql_group: postgres
+    postgresql_databases:
+      - name: "{{SECRET_KEYS.DATABASES_NAME}}"
+    postgresql_users:
+      - name: "{{SECRET_KEYS.DATABASES_USER}}"
+        password: "{{SECRET_KEYS.DATABASES_PASSWORD}}"
+
+    # # using https://github.com/rdhyee/ansible-python
+    # # forked from https://github.com/whiskerlabs/ansible-python
+    # python_version: 3.7.4
+    # python_bin: /usr/bin
+    # python_pip_version: 19.1.1
+    # python_upgrade_packaging_tools: false
+    # # python_setuptools_version: 40.4.2
+    # # python_virtualenv_version: 16.0.0
+
+    # git parameters
+    # expected to be overridden in extra.yml
+    git_user_name: ""
+    git_user_email: ""
+
+  become: yes
+
+  gather_facts: True
+  pre_tasks:
+
+    - name: Include vars of extra.yml
+      include_vars:
+        file: extra.yml
+      ignore_errors: yes
+
+    - name: log secret_key_4
+      debug: msg="{{secret_key_4}}"
+
+    # - name: log oc_install_dir
+    #   debug: msg="oc_install_dir {{oc_install_dir}}"
+
+    - name: Display all variables/facts known for a host
+      debug:
+        var: hostvars[inventory_hostname]
+      tags: debug_info
+
+    - name: Ensure group "www-data" exists
+      group:
+        name: www-data
+        state: present
+
+    - name: Ensure user "www-data" exists
+      user:
+        name: www-data
+        state: present
+
+    - name: add {{user}} to www-data group
+      user: name={{user}} groups=www-data append=yes
+
+      # https://stackoverflow.com/a/44753457/7782 -- to get the addition to take hold in script
+    - name: reset ssh connection to allow user changes to affect 'current login user'
+      meta: reset_connection
+
+    # - name: Install python for Ansible
+    #   raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+    #   register: output
+    #   changed_when: output.stdout != ""
+    #   tags: always
+
+    - setup: # aka gather_facts
+
+    - name: check apt last update
+      stat: path=/var/cache/apt
+      register: apt_cache_stat
+
+    - name: update apt if needed
+      apt: update_cache=yes
+      when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
+
+    - name: do apt-get update --fix-missing
+      command: apt-get update --fix-missing
+
+    - name: apt-get update
+      apt:
+        update_cache: yes
+
+    - name: Accept Java 8 License
+      debconf: name='oracle-java8-installer' question='shared/accepted-oracle-license-v1-1' value='true' vtype='select'
+
+    - name: installing dependencies
+      apt:
+        name: "{{ packages }}"
+        update_cache: yes
+      vars:
+        packages:
+        - git-core
+        # - python
+        # - python3 # [Debian -- Details of package python3 in jessie](https://packages.debian.org/jessie/python3) 3.4.2
+        # - python-pip
+        # - python3-pip
+        # - python-dev
+        # - python3-dev
+        - default-jdk
+        # - ca-certificates
+        # - libpq-dev
+        # - liblapack-dev
+        # - libblas-dev
+        # - liblzma-dev
+        - make
+        - gcc
+        # - libpcre3
+        # - libpcre3-dev
+        - nginx
+        # - libgeos-c1v5
+        # - libxml2-dev
+        # - libxslt1-dev
+        - ufw
+        - unzip
+      tags: install
+
+    # - name: install certbot dependencies
+    #   command: apt-get install -y certbot python-certbot-nginx -t stretch-backports
+
+  # roles:
+  #     # https://github.com/geerlingguy/ansible-role-postgresql (alt: https://github.com/ANXS/postgresql)
+  #   - role: geerlingguy.postgresql
+
+    # # ansible-galaxy install git+https://github.com/rdhyee/ansible-python.git,dev
+    # - role: ansible-python
+    #   # https://github.com/whiskerlabs/ansible-python/blob/8a2f027c2539e7da70ada44412376beee217cbbf/vars/main.yml#L25
+    #   python_readline_6_2_tgz_url: https://mirrors.sjtug.sjtu.edu.cn/gnu/readline/readline-6.2.tar.gz
+    #   python_pip_tgz_url: https://files.pythonhosted.org/packages/93/ab/f86b61bef7ab14909bd7ec3cd2178feb0a1c86d451bc9bccd5a1aedcde5f/pip-19.1.1.tar.gz
+    #   python_apt_package_deps:
+    #     - build-essential
+    #     - libbz2-dev
+    #     - libncurses5-dev
+    #     - libssl-dev
+    #     - openssl
+    #     - zlib1g-dev
+    #     - libgdbm-dev
+    #     - libnss3-dev
+    #     - libreadline-dev
+    #     - libffi-dev
+    #     - wget
+
+    # # - role: williamyeh.oracle-java # https://github.com/William-Yeh/ansible-oracle-java instead of role: geerlingguy.java
+    - role: geerlingguy.solr
+
+    # - role: DavidWittman.redis
+    #   redis_version: 3.0.7
+    #   redis_verify_checksum: true
+    #   redis_install_dir:  /etc/redis
+    #   redis_checksum: "sha256:b2a791c4ea3bb7268795c45c6321ea5abcc24457178373e6a6e3be6372737f23"
+
+  tasks:
+
+    # - name: install virtualenv
+    #   pip: 
+    #     name: virtualenv
+    #     executable: /usr/local/bin/pip3
+
+    # - name: upgrade pip3
+    #   pip: >
+    #        name={{item}}
+    #        executable=/usr/local/bin/pip3
+    #        extra_args="--upgrade"
+    #   with_items:
+    #     - pip
+
+    # - name: install pipenv
+    #   pip: >
+    #        name={{item}}
+    #        executable=/usr/local/bin/pip3
+    #   with_items:
+    #     - pipenv
+
+    - name: create {{oc_install_dir}}
+      file: path={{oc_install_dir}} state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+    
+    - name: git config
+      command: "{{item}}"
+      with_items:
+        - git config --global user.name "{{git_user_name}}"
+        - git config --global user.email "{{git_user_email}}"
+ 
+    - name: ssh-keygen
+      command: ssh-keygen -b 2048 -t rsa -f /home/{{user}}/.ssh/id_rsa -P ""
+      become: no
+      args:
+        creates: /home/{{user}}/.ssh/id_rsa
+
+    # - name: list groups for "{{user}}"
+    #   become: no
+    #   shell: groups
+    #   register: groups_output
+
+    # - name: show groups for "{{user}}"
+    #   debug: msg="{{groups_output}}"
+
+    # - name: clone the oc git repo into {{oc_install_dir}}
+    #   become: yes
+    #   become_user: "{{user}}"
+    #   git: repo={{oc_github_repo}} dest={{oc_install_dir}} accept_hostkey=True force=yes version="{{repo_branch | default('master')}}"
+
+
+    # # use pipenv to install dependencies
+    # # PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.5 --site-packages
+    # - name: initialize the virtualenv using pipenv
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   shell: "PIPENV_VENV_IN_PROJECT=1 PIPENV_NO_INHERIT=1 /usr/local/bin/pipenv --python 3.7 --site-packages"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+
+    # - name: pip requirements
+    #   pip: >
+    #        requirements="{{oc_install_dir}}/requirements.txt"
+    #        virtualenv="{{oc_install_dir}}/ENV"
+    #        virtualenv_command=/usr/local/bin/virtualenv
+    #        virtualenv_site_packages=no
+    #   become: no
+
+    # # install pipenv requirements
+    # - name: pipenv install
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   command: "/usr/local/bin/pipenv install"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+
+    # uwsgi
+
+    # - name: install uwsgi in ENV
+    #   pip:
+    #     name: uwsgi
+    #     virtualenv: "{{oc_install_dir}}/ENV"
+    #     virtualenv_command: /usr/local/bin/virtualenv
+
+    # - name: install uwsgi using pipenv
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   command: "/usr/local/bin/pipenv install uwsgi"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+
+
+    # TO DO:  be more restrictive once we get this into production
+    - name: turn on ports
+      ufw: rule=allow port={{ item }} proto=tcp
+      with_items:
+      - 22
+      - 80
+      - 443
+      - 8000
+      - 8983
+
+    - name: enable ufw
+      ufw: state=enabled
+
+    - name: create "{{oc_install_dir}}/logs"
+      file: path="{{oc_install_dir}}/logs" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+
+    # - name: create "{{oc_install_dir}}/cache"
+    #   file: path="{{oc_install_dir}}/cache" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+
+    # - name: create "{{oc_install_dir}}/cache/file-cache"
+    #   file: path="{{oc_install_dir}}/cache/file-cache" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+
+    # - name: create "{{oc_static_root}}"
+      # file: path="{{oc_static_root}}" state=directory owner={{user_owner}} group={{group_owner}} mode=02770
+
+    - name: create secrets.json from template
+      template: src=templates/secrets.json.j2 dest="{{oc_install_dir}}/secrets.json" owner={{user_owner}} group={{group_owner}} mode=0660
+
+    # - name: run migrations 
+    #   command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   when: migrate
+
+    # - name: run migrations (syncdb)
+    #   command: "{{oc_install_dir}}/.venv/bin/python manage.py migrate --run-syncdb"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   when: migrate
+
+    # - name: create cachetable
+    #   command: "{{oc_install_dir}}/.venv/bin/python manage.py createcachetable"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
+    #   when: migrate
+
+    # - name: copy over static files
+    #   unarchive:
+    #     src: static.tar.gz
+    #     dest: "{{oc_install_dir}}"
+    #     owner: "{{user_owner}}"
+    #     group: "{{group_owner}}"
+    #     mode: 0770
+    #     keep_newer: no
+
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
+
+    # - name: create temporary directory to unpack static file
+    #   tempfile:
+    #     state: directory
+    #     suffix: build
+    #   register: tempdir_1
+
+# tar -xvzf static.tar.gz  -C /tmp/ryt/ --strip-components=1 static
+
+
+    # # download STATIC_FILES_URL
+    # - name: unarchive static files tar file
+    #   unarchive:
+    #     src: "{{GROUP_SECRETS.STATIC_FILES_URL}}"
+    #     dest: "{{tempdir_1.path}}"
+    #     mode: 0640
+    #     owner: "{{user_owner}}"
+    #     group: "{{group_owner}}"
+    #     remote_src: yes
+
+    # - name: copy all files under the static folder to {{oc_static_root}}
+    #   shell: "cp -rp * {{oc_static_root}}/"
+    #   args:
+    #     chdir: "{{tempdir_1.path}}/static"
+
+    # - name: Change file ownership for static files
+    #   command: "chown -R {{user_owner}}:{{group_owner}} {{oc_static_root}}"
+    #   changed_when: false
+
+    # - name: set permissions for {{oc_static_root}}
+    #   command: "chmod -R 02770 {{oc_static_root}}"
+    #   changed_when: false
+
+    # - name: Change group permission to equal user permission
+    #   command: "chmod -R g=u {{oc_static_root}}"
+    #   changed_when: false
+
+    # - name: remove temp directory
+    #   file: 
+    #     path: "{{tempdir_1.path}}"
+    #     state: absent
+
+    # - name: create {{oc_web_dir}}
+    #   file: path="{{oc_web_dir}}" state=directory owner={{user_owner}} group={{group_owner}} mode=0770
+
+    # # cp templates/uwsgi.ini.j2 to /opt/ocweb/uwsgi.ini
+    # - name: create uwsgi.ini from template
+    #   template: src=templates/uwsgi.ini.j2  dest="{{oc_web_dir}}/uwsgi_oc.ini" owner={{user_owner}} group={{group_owner}} mode=0660
+
+
+    # - name: end play
+    #   meta: end_play
+
+    # cp templates/nginx_conf.j2 to /etc/nginx/sites-available/oc_nginx.conf
+    # - name: create oc_nginx.conf from template
+    #   template: src=templates/nginx_conf.j2  dest="/etc/nginx/sites-available/oc_nginx.conf"
+    #   become: yes
+
+    # sudo rm /etc/nginx/sites-enabled/default
+    - name: remove the default nginx sites 
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      become: yes
+
+    # # copy over referral-spam.conf
+    # - name: copy referral-spam.conf
+    #   copy: >
+    #     src=files/referral-spam.conf
+    #     dest="{{oc_web_dir}}/referral-spam.conf"
+    #     owner={{user_owner}}
+    #     group={{group_owner}}
+    #     mode=0660
+    #   notify:
+    #     - restart nginx
+
+   # ssl certs
+
+    # - name: create "{{oc_web_dir}}/certs"
+    #   file: path="{{oc_web_dir}}/certs" state=directory owner={{user_owner}} group={{group_owner}} mode=0770
+
+    # - name: copy server.crt
+    #   copy: >
+    #     src="files/ssl-certs/{{inventory_hostname}}/server.crt"
+    #     dest="{{oc_web_dir}}/certs/server.crt"
+    #     owner={{user_owner}}
+    #     group={{group_owner}}
+    #     mode=0660
+    #   notify:
+    #     - restart nginx
+
+    # - name: copy server.key
+    #   copy: >
+    #     src="files/ssl-certs/{{inventory_hostname}}/server.key"
+    #     dest="{{oc_web_dir}}/certs/server.key"
+    #     owner={{user_owner}}
+    #     group={{group_owner}}
+    #     mode=0660
+    #   notify:
+    #     - restart nginx
+
+    # # sudo ln -s /etc/nginx/sites-available/oc_nginx.conf to /etc/nginx/sites-enabled/oc_nginx.conf
+    # - name: enable nginx oc_nginx site
+    #   file: 
+    #     src: /etc/nginx/sites-available/oc_nginx.conf
+    #     dest: /etc/nginx/sites-enabled/oc_nginx.conf
+    #     state: link 
+    #   become: yes
+    #   notify:
+    #     - restart nginx
+
+    # - name: run uwsgi
+    #   shell: "{{oc_install_dir}}/.venv/bin/uwsgi --http :8000 --ini {{oc_web_dir}}/uwsgi_oc.ini"
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+
+    # # create crontab from text
+    # - name: create crontab_www_data.txt from template
+    #   template: 
+    #     src: templates/crontab_www_data.txt.j2
+    #     dest: "{{oc_web_dir}}/crontab_www_data.txt"
+    #     mode: 0770
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+
+    # # set up crontab
+    # - name: create crontab for www-data
+    #   command: crontab "{{oc_web_dir}}/crontab_www_data.txt"
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+
+    # - name: restart_here
+    #   debug: msg="provision restart here"
+
+
+    # - name: create crontab_root.txt from template
+    #   template:
+    #     src: templates/crontab_root.txt.j2
+    #     dest: "{{oc_web_dir}}/crontab_root.txt"
+    #     mode: 0770
+    #   become: yes
+    #   when: install_root_cron
+
+    # # set up crontab
+    # - name: create crontab for root
+    #   command: crontab "{{oc_web_dir}}/crontab_root.txt"
+    #   become: yes
+    #   when: install_root_cron
+
+
+    # solr configuration
+
+    # create core using /opt/solr/bin/solr with ? parameters
+    # TO DO: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+    - name: create open-context core 
+      command: sudo -u solr bash -c "/opt/solr/bin/solr create_core -c open-context"
+
+    # if install_solr_data is true: we get the solr index dump
+    # otherwise: configure with 
+    # ../solr-config/Solr-7/solrconfig.xml --> /var/solr/data/open-context/conf/solrconfig.xml
+
+    - name: copy over solrconfig.xml
+      copy:
+        src: "../solr-config/Solr-7/solrconfig.xml"
+        dest: /var/solr/data/open-context/conf/solrconfig.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
+    - name: copy over schema.xml
+      copy:
+        src: "../solr-config/Solr-7/schema.xml"
+        dest: /var/solr/data/open-context/conf/schema.xml
+        owner: solr
+        group: solr
+        mode: 0770
+      when: not install_solr_data
+
+    # download the solr backup 
+    - name: download solr backup 
+      get_url:
+        url: "{{GROUP_SECRETS.SOLR_BACKUP_URL}}"
+        dest: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        mode: 0640
+        owner: solr
+        group: solr
+      when: install_solr_data
+
+    - name: create /tmp/solr_backup
+      file: path="/tmp/solr_backup" state=directory owner=solr group=solr mode=0770
+      become: yes
+      when: install_solr_data
+
+    # unarchive the solr zip file
+    - name: unzip solr zip file
+      unarchive:
+        src: "/tmp/{{GROUP_SECRETS.SOLR_BACKUP}}"
+        dest: /tmp/solr_backup
+        remote_src: true
+        owner: solr
+        group: solr
+      when: install_solr_data
+
+    # # this didn't work -- time out on some privilege escalation
+    # - name: create open-context core 
+    #   command: "/opt/solr/bin/solr create_core -c open-context"
+    #   become: true
+    #   become_method: su
+    #   become_user: solr
+    #   become_flags: '-s /bin/bash'    
+
+    # mv /tmp/solr_backup/oc-solr-6/server/solr/open-context/* /var/solr/data/open-context/
+
+    - name: stat solr backup data 
+      stat: path=/tmp/solr_backup/oc-solr-6/server/solr/open-context
+      register: oc_stat
+      become: yes
+      when: install_solr_data
+
+    # TO DO -- parameterize oc-solr-6
+    - name: Move solr backup to solr data directory
+      command: sudo -u solr bash -c "rm -rf /var/solr/data/open-context/; mv -f /tmp/solr_backup/oc-solr-6/server/solr/open-context /var/solr/data/"
+      # when: oc_stat.exists and install_solr_data
+      when: install_solr_data
+
+    # issue command to reload core
+    - name: issue command to reload core
+      command: curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+      when: install_solr_data
+
+    # then need a reload https://serverfault.com/questions/703031/how-do-i-add-a-solr-core-without-restarting-the-solr-server
+    # curl "http://localhost:8983/solr/admin/cores?action=RELOAD&core=open-context&&wt=json"
+    # curl "http://octest.raymondyee.net:8983/solr/admin/cores?action=RELOAD&core=collection1&wt=json"
+
+    # - name: end play
+    #   meta: end_play
+ 
+    # - name: grab ssh config ip
+    #   debug:
+    #      var: "hostvars[inventory_hostname]['ansible_env'].SSH_CONNECTION.split(' ')[2]"
+
+    # - name: Display all variables/facts known for a host
+    #   debug:
+    #     var: hostvars[inventory_hostname]
+    #   tags: debug_info
+
+    # - name: Getting PYTHONPATH
+    #   local_action: shell python -c 'import sys; print(":".join(sys.path))'
+    #   register: pythonpath
+
+    # - debug:
+    #     msg: "PYTHONPATH: {{ pythonpath.stdout }}"
+
+        #- name: Getting HAS_GOOGLE_AUTH
+        # local_action: shell python -c 'from ansible.module_utils import gcp; print(gcp.HAS_GOOGLE_AUTH)'
+        # register: has_google_auth
+
+        #- debug:
+        # msg: "HAS_GOOGLE_AUTH:  {{ has_google_auth.stdout }}"
+
+    # # copy over some commands
+    # - name: copy over some utilities commands from templates
+    #   template:
+    #     src: "templates/{{item}}.j2"
+    #     dest: "{{oc_install_dir}}/{{item}}"
+    #     mode: 0770
+    #   with_items:
+    #     - start-no-db.sh
+    #     - oc-check.sh
+    #     - oc-warm.sh
+    #     - redis-check.sh
+    #     - startup.sh
+    #     - oc-poke.sh
+    #     - rm-logs.sh
+    #     - update-oc.sh
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+
+    - name: Change file ownership for git repo
+      command: "chown -R {{user_owner}}:{{group_owner}} {{oc_install_dir}}"
+      changed_when: false
+
+    - name: set default group to www-data
+      command: "chmod -R g+sX {{oc_install_dir}}"
+      changed_when: false
+
+    - name: Change group permission to equal user permission
+      command: "chmod -R g=u {{oc_install_dir}}"
+      changed_when: false
+
+    # TO DEBUG  
+
+    # - name: set dns record for the hostname!
+    #   gcp_dns_resource_record_set:
+    #     name: test123.opencontext.org 
+    #     managed_zone: 
+    #       name: "opencontext-zone"
+    #     type: A
+    #     ttl: 120
+    #     target:
+    #       - "{{ansible_host}}"
+    #     project: opencontext-py
+    #     auth_kind: serviceaccount
+    #     # service_account_file: "/home/raymond.yee/sysadmin/opencontext-py.json"
+    #     service_account_file: "/Volumes/ryvault1/opencontext/keys/opencontext-py-gce.json"
+    #     state: present
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
+      become: yes

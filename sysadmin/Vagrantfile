@@ -187,5 +187,87 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   
   end  
 
+
+  config.vm.define "solr" do |node|
+    
+    # predefined db
+    # Every Vagrant virtual environment requires a box to build off of.
+    node.vm.box = "debian/stretch64"
+    # node.disksize.size = "20GB"
+
+    # node.vm.network "forwarded_port", guest: 80, host: 8080
+    node.vm.network "private_network", ip: "192.168.33.10"
+    node.ssh.forward_agent = true
+    #node.vm.network "private_network", type: "dhcp"
+  
+    #node.vm.synced_folder "data", "vagrant_data"
+    #node.vm.synced_folder ".", "/vagrant", disabled: false 
+    #node.vm.synced_folder "./oc", "/opt/oc", disabled: false 
+
+  
+    node.vm.provision 'ansible' do |ansible|
+      ansible.playbook = 'build_solr.yml'
+
+      ansible.verbose = "vv"
+      # ansible.inventory_path = '.vagrant/provisioners/ansible/inventory/'
+      ansible.raw_arguments  = [
+          "--inventory-file=.vagrant/provisioners/ansible/inventory/vagrant_ansible_inventory",
+          "--limit=solr, 127.0.0.1",
+          "-e vname=solr",
+          "-e hostname=devv", 
+          "-e oc_github_repo="+settings['solr_vm']['oc_github_repo'],
+          "-e repo_branch="+settings['solr_vm']['repo_branch'],
+          "-e install_db=false",
+          "-e do_migrate=false", 
+          "-e install_solr_data=false",
+          "-e install_root_cron=true",
+          #"--start-at-task=restart_here"
+      ]
+    end
+
+  
+   # 512MB not enough for compiling lxml: https://stackoverflow.com/a/25916353/7782
+   # https://stackoverflow.com/a/26468913/7782 --> for how to get to this setting
+   #  node.vm.provider "virtualbox" do |v|
+   #        v.memory = 2048
+   #        v.cpus = 2
+   #     v.name = "opencontext"
+   #  end
+
+
+    # GCE
+
+    node.vm.provider :google do |google, override|
+      google.google_project_id = settings['solr_vm']['google_provider']['project_id']
+      #google.google_client_email = "raymond.yee@gmail.com"
+      google.google_json_key_location = settings['google_compute']['json_key_location']
+      # Make sure to set this to trigger the zone_config
+      google.zone = settings['solr_vm']['google_provider']['zone']
+
+      google.zone_config "us-central1-f" do |zone1f|
+          zone1f.name = settings['solr_vm']['google_provider']['name']
+          zone1f.image = settings['solr_vm']['google_provider']['image']
+          #zone1f.machine_type = "f1-micro"
+          zone1f.machine_type = settings['solr_vm']['google_provider']['machine_type']
+          zone1f.disk_size = settings['solr_vm']['google_provider']['disk_size']
+          zone1f.zone = settings['solr_vm']['google_provider']['zone']
+          zone1f.tags = settings['solr_vm']['google_provider']['tags']
+
+          zone1f.network = settings['solr_vm']['google_provider']['network']
+          zone1f.subnetwork = settings['solr_vm']['google_provider']['subnetwork']
+          # zone1f.metadata = {'custom' => 'metadata', 'testing' => 'foobarbaz'}
+          # zone1f.scopes = []
+          # zone1f.tags = ['web', 'app1']
+      end
+      
+      override.vm.box = settings['solr_vm']['google_provider']['vm_box']
+      # override.ssh.username = "raymond_yee_gmail_com"
+      override.ssh.username = settings['solr_vm']['google_provider']['ssh_username']
+      override.ssh.private_key_path = settings['solr_vm']['google_provider']['ssh_private_key_path']
+    end
+      
+  
+  end    
+
  end
 
