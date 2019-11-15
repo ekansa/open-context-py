@@ -182,7 +182,7 @@ sri.reindex_uuids(uuids)
                                 uuids.append(ass.uuid)
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
-                crawler = Crawler(use_solrdocumentnew-self.use_solrdocumentnew)
+                crawler = Crawler(use_solrdocumentnew=self.use_solrdocumentnew)
                 if isinstance(self.max_geo_zoom, int):
                     if self.max_geo_zoom > 5:
                         # only positive integers
@@ -201,7 +201,7 @@ sri.reindex_uuids(uuids)
         """
         self.clear_caches()
         if isinstance(uuids, list):
-            crawler = Crawler(use_solrdocumentnew-self.use_solrdocumentnew)
+            crawler = Crawler(use_solrdocumentnew=self.use_solrdocumentnew)
             if isinstance(self.max_geo_zoom, int):
                     if self.max_geo_zoom > 5:
                         # only positive integers
