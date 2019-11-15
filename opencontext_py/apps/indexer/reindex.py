@@ -71,7 +71,7 @@ sri.reindex_uuids(uuids)
 
     """
 
-    def __init__(self):
+    def __init__(self, use_solrdocumentnew=False):
         self.uuids = []
         self.list_size = 20
         self.iteration = 0
@@ -105,6 +105,9 @@ sri.reindex_uuids(uuids)
         # if not false, use a Postgres SQL query to get a list of
         # UUIDs
         self.sql = False
+        # if True, use opencontext_py.apps.indexer.solrdocumentnew.SolrDocumentNew
+        # for crawling
+        self.use_solrdocumentnew = use_solrdocumentnew
 
     def reindex(self):
         """ Reindexes items in Solr,
@@ -179,7 +182,7 @@ sri.reindex_uuids(uuids)
                                 uuids.append(ass.uuid)
             if isinstance(uuids, list):
                 print('Ready to index ' + str(len(uuids)) + ' items')
-                crawler = Crawler()
+                crawler = Crawler(use_solrdocumentnew-self.use_solrdocumentnew)
                 if isinstance(self.max_geo_zoom, int):
                     if self.max_geo_zoom > 5:
                         # only positive integers
@@ -198,7 +201,7 @@ sri.reindex_uuids(uuids)
         """
         self.clear_caches()
         if isinstance(uuids, list):
-            crawler = Crawler()
+            crawler = Crawler(use_solrdocumentnew-self.use_solrdocumentnew)
             if isinstance(self.max_geo_zoom, int):
                     if self.max_geo_zoom > 5:
                         # only positive integers

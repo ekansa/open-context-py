@@ -7,6 +7,8 @@ from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.crawlerutilites import CrawlerUtilities as crawlutil
 from opencontext_py.apps.indexer.uuidlist import UUIDList
 from opencontext_py.apps.indexer.solrdocument import SolrDocument
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
@@ -15,7 +17,7 @@ class Crawler():
     The Open Context Crawler indexes Open Context items and makes them
     searchable in Apache Solr.
     '''
-    def __init__(self):
+    def __init__(self, use_solrdocumentnew=False):
         '''
         To use, import this library and instantiate a crawler object:
 
@@ -33,6 +35,9 @@ crawler.crawl(100)
 
         crawler.index_single_document('FA6BFBFD-39EB-4474-A2D9-860B2D1B81A6')
         '''
+        # if True, use opencontext_py.apps.indexer.solrdocumentnew.SolrDocumentNew
+        # for crawling
+        self.use_solrdocumentnew = use_solrdocumentnew
         # The list of Open Context items to crawl
         self.uuidlist = UUIDList().uuids
         # Connect to Solr
@@ -65,7 +70,10 @@ crawler.crawl(100)
             ok_manifests = []
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
-                    sd_obj = SolrDocument(uuid)
+                    if self.use_solrdocumentnew:
+                        sd_obj = SolrDocumentNew(uuid)
+                    else:
+                        sd_obj = SolrDocument(uuid)
                     if isinstance(self.max_geo_zoom, int):
                         if self.max_geo_zoom > 5:
                             # only positive integers
@@ -135,7 +143,10 @@ crawler.crawl(100)
                     manifest = False
                 if manifest is not False:
                     try:
-                        sd_obj = SolrDocument(uuid)
+                        if self.use_solrdocumentnew:
+                            sd_obj = SolrDocumentNew(uuid)
+                        else:
+                            sd_obj = SolrDocument(uuid)
                         if isinstance(self.max_geo_zoom, int):
                             if self.max_geo_zoom > 5:
                                 # only positive integers
@@ -208,7 +219,10 @@ crawler.crawl(100)
         print('\nAttempting to index document ' + uuid + '...\n')
         start_time = time.time()
         try:
-            sd_obj = SolrDocument(uuid)
+            if self.use_solrdocumentnew:
+                sd_obj = SolrDocumentNew(uuid)
+            else:
+                sd_obj = SolrDocument(uuid)
             sd_obj.process_item()
             solrdocument = sd_obj.fields
             if crawlutil().is_valid_document(solrdocument):
