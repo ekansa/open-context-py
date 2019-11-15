@@ -45,7 +45,7 @@
     that avoids logging every request
 -->
 
-<schema name="opencontext" version="1.6">
+<schema name="opencontext" version="2.0">
     <!-- attribute "name" is the name of this schema and is only used for display purposes.
        version="x.y" is Solr's version number for the schema syntax and 
        semantics.  It should not normally be changed by applications.
@@ -120,13 +120,13 @@
     
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
       or Solr won't start. _version_ and update log are required for SolrCloud
-   -->
-   <field name="_version_" type="long" indexed="true" stored="true"/>
+    -->
+    <field name="_version_" type="long" indexed="true" stored="true"/>
 
-   <!-- points to the root document of a block of nested documents. Required for nested
+    <!-- points to the root document of a block of nested documents. Required for nested
       document support, may be removed otherwise
-   -->
-   <field name="_root_" type="string" indexed="true" stored="false"/>
+    -->
+    <field name="_root_" type="string" indexed="true" stored="false"/>
     
     
     
@@ -135,8 +135,8 @@
     <!-- uuid is a primary key, basis of opencontext URIs -->
     <field name="uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
-    <!-- slug_label is string for storing JSON encoded key value pairs of item slugs and labels {slug-key:label-value},
-    useful for Join replaces with other fields.  -->
+    <!-- slug_type_uri_label is string for storing strings that help identify this item in ways that
+    can be joined with dynamic fields that end with _id.  -->
     <field name="slug_type_uri_label" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
     <!-- project_uuid is required, identifies the project owning the solr doc -->
@@ -170,7 +170,7 @@
     
     <!-- catchall field  for uris of linked objects, useful for general searches
          where predicates don't matter -->
-   <field name="object_uri" type="string" indexed="true" stored="false" multiValued="true"/>
+    <field name="object_uri" type="string" indexed="true" stored="false" multiValued="true"/>
 
     <!-- repo: identifier for the item's version control repository, don't store only want facets of these  -->
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
@@ -178,9 +178,9 @@
     <!-- human remains sensitive, 0 means not sensitive. Higher values more sensitive  -->
     <field name="human_remains" type="int" indexed="true" stored="true" multiValued="false" required="false" />
 
-   <!-- catchall field, containing all other searchable text fields (implemented
+    <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
-   <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
+    <field name="text" type="text_general" indexed="true" stored="true" multiValued="false"/>
 
     <!-- SPACE AND TIME FIELDS -->
     <!-- the slug_type_uri_label of the (subjects) document that was the source of the geometry for this record -->
@@ -219,9 +219,9 @@
 
 
     <!-- 3 integer media types -->
-	<field name="image_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
-	<field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
-	<field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="image_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
     
     <!-- link to a thumbnail, if present -->
     <field name="thumbnail_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
@@ -229,61 +229,42 @@
     <field name="iiif_json_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
 
     <!-- these fields allow solr to summarize the next values down in a hierarchy. the field _pred will have
-	a prefix defined by the slug of its parent levels. For example, consider the type Taxon::Mammal.
-	It will be useful to have facet values for the next level down available. To do this, use the database
-    to look up the slug of "Taxon::Mammal" to get something like "taxon-mammal" which will be used to make
-    the dynamic field name ("octype___taxon_mammal__pred") that store values for "Taxon::Mammal". Values for
-    dynamic fields are stored in uuid-key: label-value pairs.
-
-    {"uuid as key": "label as value"}
-
-	-->
+	  a prefix defined by the slug of its parent levels. 
+    
+    For example, consider the the attribute "Taxon" and the value "Mammal". It will be useful
+    to have facet values for the next level down available (for categories more specific than Mammal).
+    To do this, we would request from Solr facets for the dynamic field 
+    "mammal___taxon___pred_id". The facet values for this field would be more specific
+    sub-categories of mammals.
+    -->
     
     <!-- to index parent projects which are a special kind of predicate of @type = "@id" values
     the root context field is 'root___project_id', sound good?
     -->
     <dynamicField name="*___project_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___project_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
-    
     
     <!-- to index parent contexts which are a special kind of predicate of @type = "@id" values
     the root context field is 'root___context_id'
     -->
     <dynamicField name="*___context_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___context_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
 
-    <!-- Used for filter queries. Just captures the slug.
-    Deprecated for Solr 6, which does not allow copying of dynamic fields
-    
-    <copyField source="*___context_id" dest="*___context_id_fq"/>
-    -->    
-    
 
     <!-- to index nominal predicates @type = "@id" values
     the root dynamic field is 'root___pred_id'
     -->
-
     <dynamicField name="*___pred_id" type="string" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <dynamicField name="*___pred_id_fq" type="string" indexed="true" stored="false" required="false" multiValued="true" />
-
-    <!-- Used for filter queries. Just captures the slug
-    Deprecated for Solr 6, which does not allow copying of dynamic fields
-    
-    <copyField source="*___pred_id" dest="*___pred_id_fq"/>
-    -->
-
-
+    <!-- The following define dynamic fields for LITERAL values. -->
     <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
-	<dynamicField name="*___pred_numeric" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
+	  <dynamicField name="*___pred_numeric" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- date data predicates with @type = "xsd:date" values -->
-	<dynamicField name="*___pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
+	  <dynamicField name="*___pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- string data predicates with @type = "xsd:string" values -->
-	<dynamicField name="*___pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
+	  <dynamicField name="*___pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
 
 
     <!-- Field to use to determine and enforce document uniqueness.
