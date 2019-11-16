@@ -16,7 +16,7 @@ class SolrDocumentProxy():
     def __init__(self, *args, use_solrdocumentnew=False, **kwargs):
         self.use_solrdocumentnew = use_solrdocumentnew
 
-        if self use_solrdocumentnew:
+        if self.use_solrdocumentnew:
             self._obj = SolrDocumentNew(*args, **kwargs)
         else:
             self._obj = SolrDocument(*args, **kwargs)
