@@ -12,6 +12,24 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 from opencontext_py.apps.ocitems.manifest.models import Manifest
 
 
+class SolrDocumentProxy():
+    def __init__(self, *args, use_solrdocumentnew=False, **kwargs):
+        self.use_solrdocumentnew = use_solrdocumentnew
+
+        if self use_solrdocumentnew:
+            self._obj = SolrDocumentNew(*args, **kwargs)
+        else:
+            self._obj = SolrDocument(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self._obj, name)
+
+    def process_item(self):
+        if self.use_solrdocumentnew:
+            return self._obj.make_solr_doc
+        else:
+            return self._obj.process_item
+
 class Crawler():
     '''
     The Open Context Crawler indexes Open Context items and makes them
@@ -70,10 +88,7 @@ crawler.crawl(100)
             ok_manifests = []
             for uuid in islice(self.uuidlist, 0, chunksize):
                 try:
-                    if self.use_solrdocumentnew:
-                        sd_obj = SolrDocumentNew(uuid)
-                    else:
-                        sd_obj = SolrDocument(uuid)
+                    sd_obj = SolrDocumentProxy(uuid, use_solrdocumentnew=self.use_solrdocumentnew)
                     if isinstance(self.max_geo_zoom, int):
                         if self.max_geo_zoom > 5:
                             # only positive integers
@@ -143,10 +158,7 @@ crawler.crawl(100)
                     manifest = False
                 if manifest is not False:
                     try:
-                        if self.use_solrdocumentnew:
-                            sd_obj = SolrDocumentNew(uuid)
-                        else:
-                            sd_obj = SolrDocument(uuid)
+                        sd_obj = SolrDocumentProxy(uuid, use_solrdocumentnew=self.use_solrdocumentnew)
                         if isinstance(self.max_geo_zoom, int):
                             if self.max_geo_zoom > 5:
                                 # only positive integers
@@ -219,10 +231,7 @@ crawler.crawl(100)
         print('\nAttempting to index document ' + uuid + '...\n')
         start_time = time.time()
         try:
-            if self.use_solrdocumentnew:
-                sd_obj = SolrDocumentNew(uuid)
-            else:
-                sd_obj = SolrDocument(uuid)
+            sd_obj = SolrDocumentProxy(uuid, use_solrdocumentnew=self.use_solrdocumentnew)
             sd_obj.process_item()
             solrdocument = sd_obj.fields
             if crawlutil().is_valid_document(solrdocument):
