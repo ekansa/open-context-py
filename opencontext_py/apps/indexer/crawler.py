@@ -26,9 +26,9 @@ class SolrDocumentProxy():
 
     def process_item(self):
         if self.use_solrdocumentnew:
-            return self._obj.make_solr_doc
+            return self._obj.make_solr_doc()
         else:
-            return self._obj.process_item
+            return self._obj.process_item()
 
 class Crawler():
     '''
