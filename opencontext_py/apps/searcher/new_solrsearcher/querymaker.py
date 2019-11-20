@@ -189,33 +189,31 @@ def get_range_stats_fields(attribute_item, field_fq):
     ]:
         # Not an attribute that has value ranges to facet.
         return None
-    query_dict = {'prequery-stats-fields': []}
-    if field_fq.endswith('_id'):
-        field_fq = field_fq[:-3]
-    if attribute_item.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-        if not field_fq.endswith('_numeric'):
-            field_fq += '_numeric'
-    elif attribute_item.data_type == 'xsd:date':
-        if not field_fq.endswith('_date'):
-            field_fq += '_date'
-    query_dict['prequery-stats-fields'].append(field_fq)  
+    field_fq = utilities.rename_solr_field_for_data_type(
+        attribute_item.data_type, 
+        field_fq
+    )
+    query_dict = {'prequery-stats': []}
+    query_dict['prequery-stats'].append(
+        {'field': field_fq, 'slug': attribute_item.slug}
+    )  
     return query_dict      
 
 
 def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
     """Composes a solr filter query on literal values."""
     
-    # Strip the '_id' end of the field_fq (for the filter query).
     # The field_fq needs to be updated to have the suffix of the 
     # right type of literal that we're going t query.  
-    if field_fq.endswith('_id'):
-        field_fq = field_fq[:-3]
+    field_fq = utilities.rename_solr_field_for_data_type(
+        attribute_item.data_type, 
+        field_fq
+    )
+
     query_dict = {'fq': []}
     if attribute_item.data_type == 'xsd:string':
         # Case for querying string literals. This is the most 
         # complicated type of literal to query.
-        if not field_fq.endswith('_string'):
-            field_fq += '_string'
         query_dict['hl-queries'] = []
         string_terms = utilities.prep_string_search_term_list(
             raw_literal
@@ -236,8 +234,6 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
         # Case for querying numeric literals. This is a simple
         # type of literal to query. We pass the literal on without
         # modification as the filter field query value.
-        if not field_fq.endswith('_numeric'):
-            field_fq += '_numeric'
         query_dict['fq'].append('{field_fq}:{field_val}'.format(
                 field_fq=field_fq,
                 field_val=raw_literal
@@ -247,8 +243,6 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
         # Case for querying date literals. This is a simple
         # type of literal to query. We pass the literal on without
         # modification as the filter field query value.
-        if not field_fq.endswith('_date'):
-            field_fq += '_date'
         query_dict['fq'].append('{field_fq}:{field_val}'.format(
                 field_fq=field_fq,
                 field_val=raw_literal
@@ -331,7 +325,7 @@ def get_general_hierarchic_path_query_dict(
     for item_id in path_list:
         if (attribute_item is not None 
             and getattr(attribute_item, 'data_type', None) 
-            in ['xsd:integer', 'xsd:double', 'xsd:date', 'xsd:boolean', 'xsd:string']):
+            in configs.LITERAL_DATA_TYPES):
             # Process literals in requests, because some requests will filter according to
             # numeric, date, or string criteria. 
             literal_query_dict = compose_filter_query_on_literal(
@@ -352,7 +346,7 @@ def get_general_hierarchic_path_query_dict(
             return query_dict
 
         item = m_cache.get_entity(item_id)
-        if not attribute_item and not item:
+        if not item:
             # We don't recognize the first item, and it is not
             # a literal of an attribute field. So return None.
             return None
@@ -373,6 +367,13 @@ def get_general_hierarchic_path_query_dict(
                 + field_suffix  
             )
 
+        
+        # If the item is a linked data entity, and we have a 
+        # facet field that is the root, then change the root
+        # to be the linked data root.
+        if item.item_type == 'uri' and facet_field == root_field:
+            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
+        
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
         # approach of legacy "_fq" filter query fields. If this is
         # False, the field_fq does NOT have a "_fq" suffix.
@@ -398,7 +399,7 @@ def get_general_hierarchic_path_query_dict(
         )
         # Now make the query for the item and the solr field
         # associated with all items in the whole hierarchy for this
-        # type of solr dynamic field.
+        # type of solr dynamic field. 
         if obj_all_field_fq:
             query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                     field_fq=obj_all_field_fq,
@@ -432,37 +433,59 @@ def get_general_hierarchic_path_query_dict(
             # use as we continue to iterate through this path_list.
             attribute_item = item
 
-            # Gather numeric and date fields that need a 
-            range_query_dict = get_range_stats_fields(
-                attribute_item,
-                field_fq
-            )
+            if (getattr(attribute_item, 'data_type', None) 
+               in configs.LITERAL_DATA_TYPES):
+                # This attribute_item has a data type for literal
+                # values. 
 
-            # Now combine the query dict for the range fields with
-            # the main query dict for this function
-            query_dict = utilities.combine_query_dict_lists(
-                part_query_dict=range_query_dict,
-                main_query_dict=query_dict,
-            )
+                # We don't make facets on literal attributes.
+                facet_field = None
 
-            # Compose the attribute field prefix, which is used to make
-            # solr-field names for this particular attribute field.
-            attribute_field_part = (
-                item.slug.replace('-', '_')
-                + SolrDocument.SOLR_VALUE_DELIM
-            )
-            # Now also update the obj_all_field_fq
-            obj_all_field_fq = (
-               'obj_all'
-                + SolrDocument.SOLR_VALUE_DELIM
-                + attribute_field_part
-                + field_suffix
-                + fq_solr_field_suffix 
-            )
+                # Format the field_fq appropriately for this specific
+                # data type.
+                field_fq = utilities.rename_solr_field_for_data_type(
+                    attribute_item.data_type,
+                    (
+                        item.slug.replace('-', '_')
+                        + SolrDocument.SOLR_VALUE_DELIM
+                        + field_suffix
+                    )  
+                )
+
+                # The attribute item is for a literal type field.
+                # Gather numeric and date fields that need a 
+                range_query_dict = get_range_stats_fields(
+                    attribute_item,
+                    field_fq
+                )
+                # Now combine the query dict for the range fields with
+                # the main query dict for this function
+                query_dict = utilities.combine_query_dict_lists(
+                    part_query_dict=range_query_dict,
+                    main_query_dict=query_dict,
+                )
+            else:
+                # This attribute is for making desciptions with
+                # non-literal values (meaning entities in the DB).
+                attribute_field_part = (
+                    item.slug.replace('-', '_')
+                    + SolrDocument.SOLR_VALUE_DELIM
+                )
+                # Now also update the obj_all_field_fq
+                obj_all_field_fq = (
+                'obj_all'
+                    + SolrDocument.SOLR_VALUE_DELIM
+                    + attribute_field_part
+                    + field_suffix
+                    + fq_solr_field_suffix 
+                )
+            
+
 
     # Make the facet field so solr will return any possible
-    # facet values for chilren of the LAST item in this path_list.
-    query_dict['facet.field'].append(facet_field)
+    # facet values for children of the LAST item in this path_list.
+    if facet_field:
+        query_dict['facet.field'].append(facet_field)
     return query_dict 
 
 
