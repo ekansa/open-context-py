@@ -335,7 +335,7 @@ sd_obj_l.fields
         # slug values only. These fields seem to only bloat the
         # solr index and do not seem to improve performace, so we
         # are in the process of deprecating them.
-        self.do_legacy_id_fq = DO_LEGACY_FQ
+        self.do_legacy_id_fq = self.DO_LEGACY_FQ
 
         # Are we doing a related document? Related documents are
         # made to add extra metadata to a solr document. Typically
