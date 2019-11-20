@@ -87,6 +87,30 @@ def get_path_depth(self, path, delimiter='/'):
     return len(path.rstrip(delimiter).split(delimiter))
 
 
+def rename_solr_field_for_data_type(data_type, solr_field):
+    """Renames a solr field to match its data type.
+
+    :param str data_type: The JSON-LD document data type
+        for the solr field.
+    :param str solr_field: The solr field that will changed
+        appropriate to its datatype.
+    """
+    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+        # No change, this is not solr field formatted in a
+        # way we'd expect data_type specific variants. 
+        return solr_field
+    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    general_part = parts[-1]
+    first_part = SolrDocument.SOLR_VALUE_DELIM.join(parts[0:-1])
+    if '_' in general_part:
+        general_part = general_part.split('_')[0]
+    new_ending = get_solr_predicate_type_string(
+        data_type, 
+        prefix=(general_part + '_')
+    )
+    return first_part + SolrDocument.SOLR_VALUE_DELIM + new_ending
+
+
 def join_solr_query_terms(terms_list, operator='AND'):
     """Joins together a list of query terms into a string."""
     if not terms_list:
