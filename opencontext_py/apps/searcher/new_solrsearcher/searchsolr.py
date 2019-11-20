@@ -190,13 +190,13 @@ class SearchSolr():
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,
         # etc.). The following iterates through a loop of tuples that
-        # configure how differet GET parameters get processed by the
+        # configure how different GET parameters get processed by the
         # function:
         #
         # querymaker.get_general_hierarchic_paths_query_dict
         #
         # Note how the last element in each tuple "param_args" is used
-        # as for key-word arguments in the function.
+        # for key-word arguments in the function.
         # -------------------------------------------------------------
         for param, remove_field, param_args in configs.HIERARCHY_PARAM_TO_SOLR:
             raw_paths = utilities.get_request_param_value(
@@ -225,8 +225,11 @@ class SearchSolr():
                         remove_field,
                         query['facet.field'].copy()
                     )
+                
                 # Now add results of this raw_path to the over-all query.
-                query['fq'] += query_dict['fq']
-                query['facet.field'] += query_dict['facet.field']
-    
+                query = utilities.combine_query_dict_lists(
+                    part_query_dict=query_dict,
+                    main_query_dict=query,
+                )
+                
         return query

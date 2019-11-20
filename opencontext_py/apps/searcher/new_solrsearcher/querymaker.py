@@ -80,7 +80,7 @@ def get_valid_context_slugs(paths_list):
     valid_context_slugs = []
     for context in list(paths_list):
         # Verify that the contexts are valid
-        # find and save the enity to memory
+        # find and save the entity to memory
         entity = m_cache.get_entity_by_context(context)
         if not entity:
             # Skip, we couldn't find an entity for
@@ -175,10 +175,83 @@ def get_entity_item_parent_entity(item, add_original=False):
     return item_parents[-1]
 
 
-def compose_query_on_literal(raw_literal, attribute_item, facet_field):
-    """Composes a solr query on literal values."""
-    # TODO: Add this functionality.
-    return None
+def get_range_stats_fields(attribute_item, field_fq):
+    """Prepares facet request for value range (numeric, date) fields"""
+    # Strip the '_id' end of the field_fq (for the filter query).
+    # The field_fq needs to be updated to have the suffix of the 
+    # right type of literal that we're going t query.
+    print('field: {} is a {}'.format(field_fq, attribute_item.data_type))
+    if not attribute_item.data_type in [
+        'xsd:integer', 
+        'xsd:double', 
+        'xsd:boolean', 
+        'xsd:date'
+    ]:
+        # Not an attribute that has value ranges to facet.
+        return None
+    field_fq = utilities.rename_solr_field_for_data_type(
+        attribute_item.data_type, 
+        field_fq
+    )
+    query_dict = {'prequery-stats': []}
+    query_dict['prequery-stats'].append(
+        {'field': field_fq, 'slug': attribute_item.slug}
+    )  
+    return query_dict      
+
+
+def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
+    """Composes a solr filter query on literal values."""
+    
+    # The field_fq needs to be updated to have the suffix of the 
+    # right type of literal that we're going t query.  
+    field_fq = utilities.rename_solr_field_for_data_type(
+        attribute_item.data_type, 
+        field_fq
+    )
+
+    query_dict = {'fq': []}
+    if attribute_item.data_type == 'xsd:string':
+        # Case for querying string literals. This is the most 
+        # complicated type of literal to query.
+        query_dict['hl-queries'] = []
+        string_terms = utilities.prep_string_search_term_list(
+            raw_literal
+        )
+        for qterm in string_terms:
+            query_dict['fq'].append('{field_fq}:{field_val}'.format(
+                    field_fq=field_fq,
+                    field_val=qterm
+                )
+            )
+            query_dict['hl-queries'].append(
+                '{field_label}: {field_val}'.format(
+                    field_label=attribute_item.label,
+                    field_val=qterm,
+                )
+            )
+    elif attribute_item.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
+        # Case for querying numeric literals. This is a simple
+        # type of literal to query. We pass the literal on without
+        # modification as the filter field query value.
+        query_dict['fq'].append('{field_fq}:{field_val}'.format(
+                field_fq=field_fq,
+                field_val=raw_literal
+            )
+        )
+    elif attribute_item.data_type == 'xsd:date':
+        # Case for querying date literals. This is a simple
+        # type of literal to query. We pass the literal on without
+        # modification as the filter field query value.
+        query_dict['fq'].append('{field_fq}:{field_val}'.format(
+                field_fq=field_fq,
+                field_val=raw_literal
+            )
+        )
+    else:
+        # we shouldn't be here. Return nothing.
+        return None
+    return query_dict
 
 
 def get_general_hierarchic_path_query_dict(
@@ -186,6 +259,8 @@ def get_general_hierarchic_path_query_dict(
     root_field,
     field_suffix,
     obj_all_slug='',
+    fq_solr_field_suffix='',
+    value_slug_length_limit=120,
 ):
     """Gets a solr query dict for a general hierarchic list of
     path item identifiers (usually slugs).
@@ -217,14 +292,22 @@ def get_general_hierarchic_path_query_dict(
             + SolrDocument.SOLR_VALUE_DELIM
         )
 
-    # Make the obj_all_field_fq
-    obj_all_field_fq = (
-        'obj_all'
-        + SolrDocument.SOLR_VALUE_DELIM
-        + obj_all_slug
-        + field_suffix
-        + '_fq'
-    )
+    if SolrDocument.DO_LEGACY_FQ:
+        # Doing the legacy filter query method, so add a
+        # suffix of _fq to the solr field.
+        fq_solr_field_suffix = '_fq'
+
+    if field_suffix != 'pred_id':
+        obj_all_field_fq = (
+            'obj_all'
+            + SolrDocument.SOLR_VALUE_DELIM
+            + obj_all_slug
+            + field_suffix
+            + fq_solr_field_suffix
+        )
+    else:
+        # Don't make an obj_all_field_fq for root predicates.
+        obj_all_field_fq = None
 
     # Now start composing fq's for the parent item field with the
     # child as a value of the parent item field.
@@ -240,24 +323,34 @@ def get_general_hierarchic_path_query_dict(
     attribute_item = None
     
     for item_id in path_list:
+        if (attribute_item is not None 
+            and getattr(attribute_item, 'data_type', None) 
+            in configs.LITERAL_DATA_TYPES):
+            # Process literals in requests, because some requests will filter according to
+            # numeric, date, or string criteria. 
+            literal_query_dict = compose_filter_query_on_literal(
+                raw_literal=item_id,
+                attribute_item=attribute_item,
+                field_fq=field_fq,
+            )
+
+            # Now combine the query dict for the literals with
+            # the main query dict for this function
+            query_dict = utilities.combine_query_dict_lists(
+                part_query_dict=literal_query_dict,
+                main_query_dict=query_dict,
+            )
+            # Skip out, because a literal query will never involve
+            # children in a hierarchy path (because these are literals,
+            # not entities in the database)
+            return query_dict
+
         item = m_cache.get_entity(item_id)
-        if not attribute_field_part and not item:
+        if not item:
             # We don't recognize the first item, and it is not
             # a literal of an attribute field. So return None.
             return None
-        elif not item:
-            # We don't recognize the item, so skip the rest for now.
-            # TODO: We need to also process literals in requests,
-            # because some requests will filter according to
-            # numeric, date, or string criteria. These literal
-            # requests
-            literal_output = compose_query_on_literal(
-                raw_literal=item,
-                attribute_item=attribute_item,
-                facet_field=facet_field,
-            )
-            # Skip, because this doesn't do anything yet.
-            continue
+        
         item_parent = get_entity_item_parent_entity(item)
         if item_parent and item_parent.get('slug'):
             # The item has a parent item, and that parent item will
@@ -273,7 +366,19 @@ def get_general_hierarchic_path_query_dict(
                 + attribute_field_part
                 + field_suffix  
             )
-            
+
+        
+        # If the item is a linked data entity, and we have a 
+        # facet field that is the root, then change the root
+        # to be the linked data root.
+        if item.item_type == 'uri' and facet_field == root_field:
+            facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
+        
+        # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
+        # approach of legacy "_fq" filter query fields. If this is
+        # False, the field_fq does NOT have a "_fq" suffix.
+        # 
+        # NOTE ON DO_LEGACY_FQ:  
         # Add the _fq suffix to make the field_fq which is what we use
         # to as the solr field to query for the current item. Note! The
         # field_fq is different from the facet_field because when we
@@ -281,25 +386,26 @@ def get_general_hierarchic_path_query_dict(
         # The solr fields that don't have "_fq" are used exclusively for
         # making facets (counts of metadata values in different documents).
         field_fq = facet_field
-        if not field_fq.endswith('_fq'):
-            field_fq += '_fq'
+        if not field_fq.endswith(fq_solr_field_suffix):
+            field_fq += fq_solr_field_suffix
         
         # Make the query for the item and the solr field associated
         # with the item's immediate parent (or root, if it has no
         # parents). 
         query_dict['fq'].append('{field_fq}:{item_slug}'.format(
                 field_fq=field_fq,
-                item_slug=item.slug
+                item_slug=utilities.fq_slug_value_format(item.slug)
             )
         )
         # Now make the query for the item and the solr field
         # associated with all items in the whole hierarchy for this
-        # type of solr dynamic field.
-        query_dict['fq'].append('{field_fq}:{item_slug}'.format(
-                field_fq=obj_all_field_fq,
-                item_slug=item.slug
+        # type of solr dynamic field. 
+        if obj_all_field_fq:
+            query_dict['fq'].append('{field_fq}:{item_slug}'.format(
+                    field_fq=obj_all_field_fq,
+                    item_slug=utilities.fq_slug_value_format(item.slug)
+                )
             )
-        )
         # Use the current item as the basis for the next solr_field
         # that will be used to query child items in the next iteration
         # of this loop.
@@ -309,6 +415,9 @@ def get_general_hierarchic_path_query_dict(
             + attribute_field_part
             + field_suffix  
         )
+        field_fq = facet_field
+        if not field_fq.endswith(fq_solr_field_suffix):
+            field_fq += fq_solr_field_suffix
         
         if ((getattr(item, 'item_type', None) == 'predicates')
             or (getattr(item, 'entity_type', None) == 'property')):
@@ -323,25 +432,60 @@ def get_general_hierarchic_path_query_dict(
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
             attribute_item = item
+
+            if (getattr(attribute_item, 'data_type', None) 
+               in configs.LITERAL_DATA_TYPES):
+                # This attribute_item has a data type for literal
+                # values. 
+
+                # We don't make facets on literal attributes.
+                facet_field = None
+
+                # Format the field_fq appropriately for this specific
+                # data type.
+                field_fq = utilities.rename_solr_field_for_data_type(
+                    attribute_item.data_type,
+                    (
+                        item.slug.replace('-', '_')
+                        + SolrDocument.SOLR_VALUE_DELIM
+                        + field_suffix
+                    )  
+                )
+
+                # The attribute item is for a literal type field.
+                # Gather numeric and date fields that need a 
+                range_query_dict = get_range_stats_fields(
+                    attribute_item,
+                    field_fq
+                )
+                # Now combine the query dict for the range fields with
+                # the main query dict for this function
+                query_dict = utilities.combine_query_dict_lists(
+                    part_query_dict=range_query_dict,
+                    main_query_dict=query_dict,
+                )
+            else:
+                # This attribute is for making desciptions with
+                # non-literal values (meaning entities in the DB).
+                attribute_field_part = (
+                    item.slug.replace('-', '_')
+                    + SolrDocument.SOLR_VALUE_DELIM
+                )
+                # Now also update the obj_all_field_fq
+                obj_all_field_fq = (
+                'obj_all'
+                    + SolrDocument.SOLR_VALUE_DELIM
+                    + attribute_field_part
+                    + field_suffix
+                    + fq_solr_field_suffix 
+                )
             
-            # Compose the attribute field prefix, which is used to make
-            # solr-field names for this particular attribute field.
-            attribute_field_part = (
-                item.slug.replace('-', '_')
-                + SolrDocument.SOLR_VALUE_DELIM
-            )
-            # Now also update the obj_all_field_fq
-            obj_all_field_fq = (
-               'obj_all'
-                + SolrDocument.SOLR_VALUE_DELIM
-                + attribute_field_part
-                + field_suffix
-                + '_fq' 
-            )
+
 
     # Make the facet field so solr will return any possible
-    # facet values for chilren of the LAST item in this path_list.
-    query_dict['facet.field'].append(facet_field)
+    # facet values for children of the LAST item in this path_list.
+    if facet_field:
+        query_dict['facet.field'].append(facet_field)
     return query_dict 
 
 
@@ -384,7 +528,14 @@ def get_general_hierarchic_paths_query_dict(
         )
         # Add this path term to all the path terms.
         path_terms.append(path_term)
-        query_dict['facet.field'] += path_query_dict['facet.field']
+        # Add all of the path_query_dict keys, values to the main
+        # query dict, except for values from the fq key, which we
+        # further processed into a path_term.
+        query_dict = utilities.combine_query_dict_lists(
+            part_query_dict=path_query_dict,
+            main_query_dict=query_dict,
+            skip_keys=['fq'],
+        )
     
     if not path_terms:
         return None

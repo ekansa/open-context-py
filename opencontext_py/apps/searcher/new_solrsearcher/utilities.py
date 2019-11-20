@@ -87,6 +87,30 @@ def get_path_depth(self, path, delimiter='/'):
     return len(path.rstrip(delimiter).split(delimiter))
 
 
+def rename_solr_field_for_data_type(data_type, solr_field):
+    """Renames a solr field to match its data type.
+
+    :param str data_type: The JSON-LD document data type
+        for the solr field.
+    :param str solr_field: The solr field that will changed
+        appropriate to its datatype.
+    """
+    if not SolrDocument.SOLR_VALUE_DELIM in solr_field:
+        # No change, this is not solr field formatted in a
+        # way we'd expect data_type specific variants. 
+        return solr_field
+    parts = solr_field.split(SolrDocument.SOLR_VALUE_DELIM)
+    general_part = parts[-1]
+    first_part = SolrDocument.SOLR_VALUE_DELIM.join(parts[0:-1])
+    if '_' in general_part:
+        general_part = general_part.split('_')[0]
+    new_ending = get_solr_predicate_type_string(
+        data_type, 
+        prefix=(general_part + '_')
+    )
+    return first_part + SolrDocument.SOLR_VALUE_DELIM + new_ending
+
+
 def join_solr_query_terms(terms_list, operator='AND'):
     """Joins together a list of query terms into a string."""
     if not terms_list:
@@ -104,12 +128,23 @@ def join_solr_query_terms(terms_list, operator='AND'):
     return terms_str
 
 
+def fq_slug_value_format(slug, value_slug_length_limit=120):
+    """Formats a slug for a Solr query value"""
+    if SolrDocument.DO_LEGACY_FQ:
+        return slug
+    slug += SolrDocument.SOLR_VALUE_DELIM
+    slug = (
+        slug[:value_slug_length_limit] + '*'
+    )
+    return slug
+
+
 def make_solr_term_via_slugs(
     field_slug,
     solr_dyn_field,
     value_slug,
     field_parent_slug=None,
-    solr_field_suffix='_fq',
+    solr_field_suffix='',
 ):
     """Makes a solr query term from slugs
     
@@ -128,6 +163,14 @@ def make_solr_term_via_slugs(
     :param str value_slug: A string for the slug value that we want
         to query.
     """
+    if SolrDocument.DO_LEGACY_FQ:
+        # Doing the legacy filter query method, so add a
+        # suffix of _fq to the solr field.
+        solr_field_suffix = '_fq'
+    
+    # Format the value slug for the filter query.
+    value_slug = fq_slug_value_format(value_slug)
+
     solr_parent_prefix = field_slug.replace('-', '_')
     if field_parent_slug:
         # Add the immediate parent part of the solr
@@ -313,6 +356,28 @@ def safe_remove_item_from_list(item, item_list):
         item_list.remove(item)
     return item_list
 
+
+def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=[]):
+    """Combines lists from the part_query_dict into the 
+    
+    :param dict part_query_dict: The smaller query dict that will get
+        merged into the main_query_dict.
+    :param dict main_query_dict: The main query dict that we're adding
+        to.
+    :param list skip_keys: List of keys to skip and not include in
+        adding to the main_query_dict.
+    """
+    if not part_query_dict:
+        return main_query_dict
+    for key, values in part_query_dict.items():
+        if key in skip_keys or not values:
+            continue
+        if key not in main_query_dict:
+            main_query_dict[key] = values
+        elif (isinstance(main_query_dict[key], list)
+            and isinstance(values, list)):
+            main_query_dict[key] += values
+    return main_query_dict
 
 # ---------------------------------------------------------------------
 # Date-Time Related Functions

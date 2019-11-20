@@ -74,6 +74,13 @@ CHRONO_STATS_FIELDS =  [
 
 MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
 
+LITERAL_DATA_TYPES = [
+    'xsd:integer', 
+    'xsd:double', 
+    'xsd:date', 
+    'xsd:boolean', 
+    'xsd:string',
+]
 
 # ---------------------------------------------------------------------
 # Hierarchic parameters configs:

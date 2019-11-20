@@ -25,42 +25,42 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United+States',
         {
-           'fq':['root___context_id_fq:united-states'],
+           'fq':['root___context_id{a}:united-states{b}'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States',
         {
-           'fq':['root___context_id_fq:united-states'],
+           'fq':['root___context_id{a}:united-states{b}'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States/',
         {
-           'fq':['root___context_id_fq:united-states'],
+           'fq':['root___context_id{a}:united-states{b}'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         '/United States',
         {
-           'fq':['root___context_id_fq:united-states'],
+           'fq':['root___context_id{a}:united-states{b}'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         '/United States||',
         {
-           'fq':['root___context_id_fq:united-states'],
+           'fq':['root___context_id{a}:united-states{b}'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States/California',
         {
-           'fq':['united_states___context_id_fq:california'],
+           'fq':['united_states___context_id{a}:california{b}'],
            'facet.field':['california___context_id'],
         },
     ),
@@ -70,7 +70,7 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United States/California||Foo Bar',
         {
-           'fq':['united_states___context_id_fq:california'],
+           'fq':['united_states___context_id{a}:california{b}'],
            'facet.field':['california___context_id'],
         },
     ),
@@ -80,14 +80,14 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United States||Foo-Bar/California||Foo Bar',
         {
-           'fq':['united_states___context_id_fq:california'],
+           'fq':['united_states___context_id{a}:california{b}'],
            'facet.field':['california___context_id'],
         },
     ),
     (
         'United States/California||Florida',
         {
-           'fq':['((united_states___context_id_fq:california) OR (united_states___context_id_fq:florida))'],
+           'fq':['((united_states___context_id{a}:california{b}) OR (united_states___context_id{a}:florida{b}))'],
            'facet.field':['california___context_id', 'florida___context_id',],
         },
     ),
@@ -100,7 +100,7 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'Italy/Poggio+Civitate/Civitate+A',
         {
-           'fq':['24_poggio_civitate___context_id_fq:24-civitate-a'],
+           'fq':['24_poggio_civitate___context_id{a}:24-civitate-a{b}'],
            'facet.field':['24_civitate_a___context_id',],
         },
     ),
@@ -128,14 +128,14 @@ TESTS_PROJECTS = [
     (
         '24-murlo',
         {
-            'fq': ['((root___project_id_fq:24-murlo) AND (obj_all___project_id_fq:24-murlo))',],
+            'fq': ['((root___project_id{a}:24-murlo{b}) AND (obj_all___project_id{a}:24-murlo{b}))',],
             'facet.field':['24_murlo___project_id',],
         }
     ),
     (
         '24-murlo||foo',
         {
-            'fq': ['((root___project_id_fq:24-murlo) AND (obj_all___project_id_fq:24-murlo))',],
+            'fq': ['((root___project_id{a}:24-murlo{b}) AND (obj_all___project_id{a}:24-murlo{b}))',],
             'facet.field':['24_murlo___project_id',],
         }
     ),
@@ -150,7 +150,7 @@ TESTS_PROJECTS = [
     (
         '52-digital-index-of-north-american-archaeology-dinaa',
         {
-            'fq': ['((root___project_id_fq:52-digital-index-of-north-american-archaeology-dinaa) AND (obj_all___project_id_fq:52-digital-index-of-north-american-archaeology-dinaa))',],
+            'fq': ['((root___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}))',],
             'facet.field':['52_digital_index_of_north_american_archaeology_dinaa___project_id',],
         }
     ),
@@ -158,28 +158,38 @@ TESTS_PROJECTS = [
     (
         '52-digital-index-of-north-american-archaeology-linking-si',
         {
-            'fq': ['((52_digital_index_of_north_american_archaeology_dinaa___project_id_fq:52-digital-index-of-north-american-archaeology-linking-si) AND (obj_all___project_id_fq:52-digital-index-of-north-american-archaeology-linking-si))',],
+            'fq': ['((52_digital_index_of_north_american_archaeology_dinaa___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}))',],
             'facet.field':['52_digital_index_of_north_american_archaeology_linking_si___project_id',],
         }
     ),
     (
         '52-digital-index-of-north-american-archaeology-dinaa---52-digital-index-of-north-american-archaeology-linking-si',
         {
-            'fq': ['((root___project_id_fq:52-digital-index-of-north-american-archaeology-dinaa) AND (obj_all___project_id_fq:52-digital-index-of-north-american-archaeology-dinaa) AND (52_digital_index_of_north_american_archaeology_dinaa___project_id_fq:52-digital-index-of-north-american-archaeology-linking-si) AND (obj_all___project_id_fq:52-digital-index-of-north-american-archaeology-linking-si))'],
+            'fq': ['((root___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (52_digital_index_of_north_american_archaeology_dinaa___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}))'],
             'facet.field':['52_digital_index_of_north_american_archaeology_linking_si___project_id',],
         }
     ),
 ]
 
+def set_fq_field_formating():
+    if SolrDocument.DO_LEGACY_FQ:
+        a = '_fq'
+        b = ''
+    else:
+        a = ''
+        b = SolrDocument.SOLR_VALUE_DELIM + '*'
+    return a, b
 
 @pytest.mark.django_db
 def test_get_spatial_context_query_dict():
     """Tests get_spatial_context_query_dict on a variety of inputs."""
+    a, b = set_fq_field_formating()
+    
     for spatial_context, exp_dict in TESTS_SPATIAL_CONTEXTS:
         query_dict = querymaker.get_spatial_context_query_dict(
             spatial_context
         )
-        assert query_dict['fq'] == exp_dict['fq']
+        assert query_dict['fq'] == [fq.format(a=a, b=b) for fq in exp_dict['fq']]
         assert query_dict['facet.field'] == exp_dict['facet.field']
 
 
@@ -192,6 +202,7 @@ def test_get_projects_query_dict():
     #
     # TODO: Make more tests for a wider variety of metadata queries.
     #
+    a, b = set_fq_field_formating()
     for raw_projects_path, exp_dict in TESTS_PROJECTS:
         query_dict = querymaker.get_general_hierarchic_paths_query_dict(
             raw_projects_path,
@@ -202,5 +213,5 @@ def test_get_projects_query_dict():
             # Case where we don't have a dict response.
             assert query_dict == exp_dict
             continue
-        assert query_dict['fq'] == exp_dict['fq']
+        assert query_dict['fq'] == [fq.format(a=a, b=b) for fq in exp_dict['fq']]
         assert query_dict['facet.field'] == exp_dict['facet.field']
