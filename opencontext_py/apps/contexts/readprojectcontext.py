@@ -41,7 +41,7 @@ class ReadProjectContextVocabGraph():
         {'@id': Assertion.PREDICATES_NOTE,
          'label': 'Note',
          'owl:sameAs': False,
-         'slug': False,
+         'slug': 'oc-gen-has-note',
          '@type': 'xsd:string'},
     ]
     
