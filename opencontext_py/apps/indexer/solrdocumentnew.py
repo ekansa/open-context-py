@@ -291,7 +291,7 @@ sd_obj_l.fields
     ROOT_PROJECT_SOLR = 'root' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
     ALL_PROJECT_SOLR = 'obj_all' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PROJECT
     EQUIV_LD_SOLR = 'skos_closematch' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
-    FILE_SIZE_SOLR = 'filesize' + SOLR_VALUE_DELIM + 'pred_numeric'
+    FILE_SIZE_SOLR = 'filesize'
     FILE_MIMETYPE_SOLR = 'mimetype' + SOLR_VALUE_DELIM + FIELD_SUFFIX_PREDICATE
     RELATED_SOLR_DOC_PREFIX = 'rel--'
 
@@ -1520,6 +1520,7 @@ sd_obj_l.fields
                 continue
             size = float(file_item['dcat:size'])
             if size > self.fields[self.FILE_SIZE_SOLR]:
+                # The biggest filesize gets indexed.
                 self.fields[self.FILE_SIZE_SOLR] = size
     
     def _flag_human_remains_legacy_id_fq(self):
