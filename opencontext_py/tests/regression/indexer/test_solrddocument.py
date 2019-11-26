@@ -114,7 +114,7 @@ def test_media_human_flag():
     assert sd_obj.fields['item_type'] == 'media'
     assert sd_obj.fields['human_remains'] > 0
     assert sd_obj.fields.get('mimetype___pred_id') == 'http://purl.org/NET/mediatypes/image/jpeg'
-    assert sd_obj.fields.get('filesize___pred_numeric') > 3000000.0
+    assert sd_obj.fields.get('filesize') > 3000000.0
     checks = [
         ('1-domuztepe-excavations', 'obj_all___project_id', ),
         ('1-domuztepe', 'obj_all___context_id', ),
