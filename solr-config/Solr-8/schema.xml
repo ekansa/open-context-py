@@ -183,6 +183,11 @@
 
 
 
+    <!-- filesize for media files -->
+    <field name="filesize" type="tdouble" indexed="true" stored="true" required="false" multiValued="false"/>
+
+
+
     <!-- catchall field, containing all other searchable text fields (implemented
         in logic in Python for creating a solr document  -->
     <field name="text" type="text_general" indexed="true" stored="true" multiValued="false" large="true"/>
