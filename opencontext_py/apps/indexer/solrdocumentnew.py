@@ -34,7 +34,7 @@ def get_solr_predicate_type_string(
 ):
     '''
     Defines whether our dynamic solr fields names for
-    predicates end with ___pred_id, ___pred_numeric, etc.
+    predicates end with ___pred_id, ___pred_double, etc.
     
     :param str predicate_type: String data-type used by Open
         Context
@@ -47,8 +47,10 @@ def get_solr_predicate_type_string(
         string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
     if predicate_type in ['@id', 'id', 'types', False]:
         return prefix + 'id'
-    elif predicate_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-        return prefix + 'numeric'
+    elif predicate_type in ['xsd:integer', 'xsd:boolean']:
+        return prefix + 'int'
+    elif predicate_type == 'xsd:double':
+        return prefix + 'double'
     elif predicate_type == 'xsd:string':
         return prefix + 'string'
     elif predicate_type == 'xsd:date':
@@ -877,11 +879,25 @@ sd_obj_l.fields
                         errors='surrogateescape'
                     )
                     self.fields[solr_field_name].append(str(act_str))
-        elif solr_pred_type == 'numeric':
+        elif solr_pred_type in ['int', 'double', 'numeric']:
             # Add numeric literal values ot the solr_field_name in the
             # solr document.
             for val_obj in pred_value_objects:
                 self.fields['text'] += str(val_obj) + ' \n'
+                # Now make sure this validates as a number.
+                try:
+                    val_obj = float(val_obj)
+                except:
+                    val_obj = None
+                if val_obj is not None and solr_pred_type == 'int':
+                    try:
+                        val_obj = int(val_obj)
+                    except:
+                        val_obj = None
+                if val_obj is None:
+                    # Skip, this does not validate so do not add to the
+                    # solr field.
+                    continue
                 self.fields[solr_field_name].append(val_obj)
         elif solr_pred_type == 'date':
             # Add date literal values ot the solr_field_name in the
