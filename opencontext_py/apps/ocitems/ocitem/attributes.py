@@ -425,7 +425,7 @@ class ItemAttributes():
                 parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
                 for la in self.link_annotations:
                     tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
-                    if tcheck is False:
+                    if not tcheck:
                         # this item is NOT from open context
                         item_type = False
                     else:
