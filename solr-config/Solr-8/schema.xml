@@ -121,7 +121,7 @@
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
       or Solr won't start. _version_ and update log are required for SolrCloud
     -->
-    <field name="_version_" type="long" indexed="true" stored="true"/>
+    <field name="_version_" type="plong" indexed="true" stored="true"/>
 
     <!-- points to the root document of a block of nested documents. Required for nested
       document support, may be removed otherwise
@@ -354,7 +354,7 @@
     <fieldType name="pfloats" class="solr.FloatPointField" docValues="true" multiValued="true"/>
     <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
     <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
-    
+
     <!--
      Numeric field types that index each value at various levels of precision
      to accelerate range queries when the number of values between the range
