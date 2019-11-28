@@ -160,10 +160,10 @@
     <field name="sort_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
 
     <!-- time of initial publication  -->
-    <field name="published" type="date" indexed="true" required="true" stored="true" multiValued="false"/>
+    <field name="published" type="pdate" indexed="true" required="true" stored="true" multiValued="false"/>
 
     <!-- time the record was updated / modified -->
-    <field name="updated" type="date" indexed="true" required="true" stored="true" multiValued="false"/>
+    <field name="updated" type="pdate" indexed="true" required="true" stored="true" multiValued="false"/>
 
     <!-- persistent URI: a Web URI for a persistent identifier added to an item, can have more than 1 -->
     <field name="persistent_uri" type="string" indexed="true" stored="true" multiValued="true"/>
