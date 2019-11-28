@@ -71,7 +71,7 @@ def test_subjects_coin():
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'subjects'
     assert sd_obj.fields['image_media_count'] > 1
-    assert 2.0 in sd_obj.fields['1_thickness___pred_numeric']
+    assert 2.0 in sd_obj.fields['1_thickness___pred_double']
     assert sd_obj.fields['image_media_count'] > 1
     checks = [
         ('1-domuztepe-excavations', 'obj_all___project_id', ),
@@ -93,7 +93,7 @@ def test_predicates():
     sd_obj.make_solr_doc()
     assert sd_obj.fields['uuid'] == uuid
     assert sd_obj.fields['item_type'] == 'predicates'
-    assert sd_obj.fields['slug_type_uri_label'] == '28-icp-ti___numeric___/predicates/04909421-C28E-46AF-98FA-10F888B64A4D___ICP - Ti'
+    assert sd_obj.fields['slug_type_uri_label'] == '28-icp-ti___double___/predicates/04909421-C28E-46AF-98FA-10F888B64A4D___ICP - Ti'
     assert sd_obj.fields['image_media_count'] == 0
     checks = [
         ('28-asian-stoneware-jars', 'obj_all___project_id', ),
