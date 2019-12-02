@@ -516,11 +516,11 @@ def get_general_hierarchic_paths_query_dict(
             obj_all_slug=obj_all_slug,
         )
         if not path_query_dict:
-            # This path had entities that could not be found in the
+            # This path had no entities that could not be found in the
             # database. For now, just skip.
             continue
         # All the solr_query terms for a given hiearchic path need to
-        # be satified to in a query. So join all the terms created from
+        # be satisfied to in a query. So join all the terms created from
         # a given hierarchic path with the "AND" operator into a single
         # string.
         path_term = utilities.join_solr_query_terms(
@@ -547,4 +547,3 @@ def get_general_hierarchic_paths_query_dict(
     )
     query_dict['fq'] = [all_paths_term]
     return query_dict
-   
