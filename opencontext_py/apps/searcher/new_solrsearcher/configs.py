@@ -72,7 +72,7 @@ CHRONO_STATS_FIELDS =  [
     'form_use_life_chrono_latest'
 ]
 
-MEDIA_STATS_FIELDS = ['filesize___pred_numeric']
+MEDIA_STATS_FIELDS = [SolrDocument.FILE_SIZE_SOLR]
 
 LITERAL_DATA_TYPES = [
     'xsd:integer', 

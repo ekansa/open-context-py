@@ -204,7 +204,7 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
     """Composes a solr filter query on literal values."""
     
     # The field_fq needs to be updated to have the suffix of the 
-    # right type of literal that we're going t query.  
+    # right type of literal that we're going to query.  
     field_fq = utilities.rename_solr_field_for_data_type(
         attribute_item.data_type, 
         field_fq
@@ -371,7 +371,7 @@ def get_general_hierarchic_path_query_dict(
         # If the item is a linked data entity, and we have a 
         # facet field that is the root, then change the root
         # to be the linked data root.
-        if item.item_type == 'uri' and facet_field == root_field:
+        if item.item_type == 'uri' and facet_field == SolrDocument.ROOT_PREDICATE_SOLR:
             facet_field = SolrDocument.ROOT_LINK_DATA_SOLR 
         
         # NOTE: If SolrDocument.DO_LEGACY_FQ, we're doing the older
@@ -464,8 +464,8 @@ def get_general_hierarchic_path_query_dict(
                     part_query_dict=range_query_dict,
                     main_query_dict=query_dict,
                 )
-            else:
-                # This attribute is for making desciptions with
+            elif item.item_type == 'predicates':
+                # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
                 attribute_field_part = (
                     item.slug.replace('-', '_')
@@ -473,7 +473,7 @@ def get_general_hierarchic_path_query_dict(
                 )
                 # Now also update the obj_all_field_fq
                 obj_all_field_fq = (
-                'obj_all'
+                    'obj_all'
                     + SolrDocument.SOLR_VALUE_DELIM
                     + attribute_field_part
                     + field_suffix
