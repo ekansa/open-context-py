@@ -14,6 +14,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 from opencontext_py.apps.searcher.new_solrsearcher import querymaker
+from opencontext_py.apps.searcher.new_solrsearcher import ranges
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 
 
@@ -47,33 +48,6 @@ class SearchSolr():
         if self.solr is None:
             self.solr = SolrConnection(False).connection
     
-    def finish_request(self, query):
-        """ Check solr query and put convenient format """
-        assert 'q' in query
-        compat_args(query)
-        query['wt'] = 'json'
-        return query
-    
-    def query_solr(self, query):
-        """ Connects to solr and runs a query"""
-        query = self.finish_request(query)
-        self.solr_connect()
-        url = urljoin(self.solr.base_url, 'select')
-        try:
-            http_response = self.solr.make_request.post(
-                url,
-                data=query,
-                timeout=240
-            )
-            self.solr_response = parse_response(http_response.content)
-        except Exception as error:
-            logger.error(
-                '[' + datetime.now().strftime('%x %X ')
-                + settings.TIME_ZONE + '] Error: '
-                + str(error)
-                + ' => Query: ' + str(query)
-            )
-        return self.solr_response
 
     def compose_query(self, request_dict):
         """Composes a solr query by translating a client request_dict
@@ -233,3 +207,64 @@ class SearchSolr():
                 )
                 
         return query
+    
+
+    def update_query_with_stats_prequery(self, query):
+        """Updates the main query dict if stats fields
+           need facet ranges defined. If so, sends off an
+           initial pre-query to solr.
+        """
+        # NOTE: This needs to happen at the end, after
+        # we have already defined a bunch of solr 
+        if not 'prequery-stats' in query:
+            return query
+        prestats_fields = query.get('prequery-stats', [])
+        query.pop('prequery-stats')
+        if not len(prestats_fields):
+            return query
+        self.solr_connect()
+        stats_query = ranges.compose_stats_query(
+            fq_list=query['fq'], 
+            stats_fields_list=prestats_fields, 
+            q=query['q']
+        )
+        stats_q_dict = ranges.stats_ranges_query_dict_via_solr(
+            stats_query=stats_query, 
+            solr=self.solr
+        )
+        query = utilities.combine_query_dict_lists(
+            part_query_dict=stats_q_dict,
+            main_query_dict=query,
+        )
+        return query
+    
+
+    def finish_query(self, query):
+        """ Check solr query and put convenient format """
+        assert 'q' in query
+        query = update_query_with_stats_prequery(query)
+        compat_args(query)
+        query['wt'] = 'json'
+        return query
+    
+
+    def query_solr(self, query):
+        """ Connects to solr and runs a query"""
+        query = self.finish_query(query)
+        self.solr_connect()
+        url = urljoin(self.solr.base_url, 'select')
+        try:
+            http_response = self.solr.make_request.post(
+                url,
+                data=query,
+                timeout=240
+            )
+            self.solr_response = parse_response(http_response.content)
+        except Exception as error:
+            logger.error(
+                '[' + datetime.now().strftime('%x %X ')
+                + settings.TIME_ZONE + '] Error: '
+                + str(error)
+                + ' => Query: ' + str(query)
+            )
+        return self.solr_response

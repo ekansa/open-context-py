@@ -406,3 +406,53 @@ def make_human_readable_date(date_str):
     if check_dt == dt:
         return check_date
     return dt.strftime('%Y-%m-%d:%H:%M:%S')
+
+
+def get_date_difference_for_solr(min_date, max_date, groups):
+    """ Gets a solr date difference from two values """
+    min_dt = date_convert(min_date)
+    max_dt = date_convert(max_date)
+    dif_dt = (max_dt - min_dt) / groups
+    if dif_dt.days >= 366:
+        solr_val = int(round((dif_dt.days / 365.25), 0))
+        solr_dif = '+' + str(solr_val) + 'YEAR'
+    elif dif_dt.days >= 31:
+        solr_val = int(round((dif_dt.days / 30), 0))
+        solr_dif = '+' + str(solr_val) + 'MONTH'
+    elif dif_dt.days >= 1:
+        solr_val = int(round(dif_dt.days, 0))
+        solr_dif = '+' + str(solr_val) + 'DAY'
+    elif (dif_dt.seconds // 3600) >= 1:
+        solr_val = int(round((dif_dt.seconds // 3600), 0))
+        solr_dif = '+' + str(solr_val) + 'HOUR'
+    elif ((dif_dt.seconds % 3600) // 60) >= 1:
+        solr_val = int(round(((dif_dt.seconds % 3600) // 60), 0))
+        solr_dif = '+' + str(solr_val) + 'MINUTE'
+    elif dif_dt.seconds >= 1:
+        solr_val = int(round(dif_dt.seconds, 0))
+        solr_dif = '+' + str(solr_val) + 'SECOND'
+    else:
+        solr_dif = '+1YEAR'
+    return solr_dif
+
+
+def add_solr_gap_to_date(date_val, solr_gap):
+    """ Adds a solr gap to a date_val """
+    solr_val = re.sub(r'[^\d.]', r'', solr_gap)
+    solr_val = int(float(solr_val))
+    dt = date_convert(date_val)
+    if 'YEAR' in solr_gap:
+        dt = dt + datetime.timedelta(days=int(round((solr_val * 365.25), 0)))
+    elif 'MONTH' in solr_gap:
+        dt = dt + datetime.timedelta(days=(solr_val * 30))
+    elif 'DAY' in solr_gap:
+        dt = dt + datetime.timedelta(days=solr_val)
+    elif 'HOUR' in solr_gap:
+        dt = dt + datetime.timedelta(hours=solr_val)
+    elif 'MINUTE' in solr_gap:
+        dt = dt + datetime.timedelta(minutes=solr_val)
+    elif 'SECOND' in solr_gap:
+        dt = dt + datetime.timedelta(seconds=solr_val)
+    else:
+        dt = dt
+    return dt

@@ -195,7 +195,7 @@ def get_range_stats_fields(attribute_item, field_fq):
     )
     query_dict = {'prequery-stats': []}
     query_dict['prequery-stats'].append(
-        {'field': field_fq, 'slug': attribute_item.slug}
+        field_fq
     )  
     return query_dict      
 
