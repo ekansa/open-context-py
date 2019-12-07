@@ -29,7 +29,11 @@ def compose_stats_query(fq_list=[], stats_fields_list=[], q='*:*'):
     return query_dict
 
 
-def stats_ranges_query_dict_via_solr(stats_query, default_group_size=20, solr=None):
+def stats_ranges_query_dict_via_solr(
+    stats_query, 
+    default_group_size=20, 
+    solr=None,
+    return_pre_query_response=False):
     """ Makes stats range facet query dict by processing a solr query
     """
     if not solr:
@@ -47,9 +51,14 @@ def stats_ranges_query_dict_via_solr(stats_query, default_group_size=20, solr=No
         return None
 
     query_dict = {}
+    if return_pre_query_response:
+        # This is for testing purposes.
+        query_dict['pre-query-response'] = solr_json
+    query_dict['facet.range'] = []
+    query_dict['stats.field'] = []
     for solr_field_key, stats in solr_json['stats']['stats_fields'].items():
         group_size = default_group_size
-        if not stats:
+        if not stats or not stats.get('count'):
             continue
         if solr_field_key not in query_dict['facet.range']:
             query_dict['facet.range'].append(solr_field_key)
@@ -64,9 +73,8 @@ def stats_ranges_query_dict_via_solr(stats_query, default_group_size=20, solr=No
         query_dict[fother] = 'all'
         query_dict[finclude] = 'all'
         query_dict[findex] = 'index'  # sort by index, not by count
-        if 'count' in stats:
-            if (stats['count'] / group_size) < 3:
-                group_size = 4
+        if (stats['count'] / group_size) < 3:
+            group_size = 4
         if solr_field_key.endswith('___pred_date'):
             query_dict[fstart] = utilities.convert_date_to_solr_date(
                 stats['min']
