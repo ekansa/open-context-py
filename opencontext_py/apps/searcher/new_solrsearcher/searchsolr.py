@@ -242,7 +242,7 @@ class SearchSolr():
     def finish_query(self, query):
         """ Check solr query and put convenient format """
         assert 'q' in query
-        query = update_query_with_stats_prequery(query)
+        query = self.update_query_with_stats_prequery(query)
         compat_args(query)
         query['wt'] = 'json'
         return query
