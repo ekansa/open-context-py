@@ -69,7 +69,7 @@ def make_context_query_list():
             ),
             'root___context_id_fq:{}'.format(m.slug),
         ]
-        query_list += [(q, {'fq':[q]},) for q in qs]
+        query_list += [(q, {'fq':[q], 'facet.field':['root___context_id']},) for q in qs]
     return query_list
 
 
