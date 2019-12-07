@@ -29,7 +29,12 @@ def process_solr_query(request_dict):
     # NOTE: For inital testing purposes, this only composes a
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
-    return search_solr.compose_query(request_dict)
+    query = search_solr.compose_query(request_dict)
+    if request_dict.get("pre-stats"):
+        query = search_solr.update_query_with_stats_prequery(
+            query
+        )
+    return query
     
 
 @cache_control(no_cache=True)
