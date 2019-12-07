@@ -38,7 +38,8 @@ def process_solr_query(request_dict):
     solr_result = SolrResult(
         request_dict=request_dict,
     )
-    solr_result.add_paging_json(
+    solr_result.act_responses = ['metadata']
+    solr_result.create_result(
         solr_json=solr_response
     )
     query['response'] = solr_result.json_ld
