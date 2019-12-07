@@ -121,7 +121,7 @@
     <!-- If you remove this field, you must _also_ disable the update log in solrconfig.xml
       or Solr won't start. _version_ and update log are required for SolrCloud
     -->
-    <field name="_version_" type="long" indexed="true" stored="true"/>
+    <field name="_version_" type="plong" indexed="true" stored="true"/>
 
     <!-- points to the root document of a block of nested documents. Required for nested
       document support, may be removed otherwise
@@ -154,16 +154,16 @@
     <field name="item_type" type="string" indexed="true" stored="true" multiValued="true"/>
 
     <!-- interest score for items -->
-    <field name="interest_score" type="tdouble" indexed="true" stored="false" required="true" multiValued="false"/>
+    <field name="interest_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
 
     <!-- sort value for items, based on calculations done in Python, default to 0 -->
-    <field name="sort_score" type="tdouble" indexed="true" stored="false" required="true" multiValued="false"/>
+    <field name="sort_score" type="pdouble" indexed="true" stored="false" required="true" multiValued="false"/>
 
     <!-- time of initial publication  -->
-    <field name="published" type="date" indexed="true" required="true" stored="true" multiValued="false"/>
+    <field name="published" type="pdate" indexed="true" required="true" stored="true" multiValued="false"/>
 
     <!-- time the record was updated / modified -->
-    <field name="updated" type="date" indexed="true" required="true" stored="true" multiValued="false"/>
+    <field name="updated" type="pdate" indexed="true" required="true" stored="true" multiValued="false"/>
 
     <!-- persistent URI: a Web URI for a persistent identifier added to an item, can have more than 1 -->
     <field name="persistent_uri" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -176,10 +176,10 @@
     <field name="repo_id" type="string" indexed="true" stored="false" multiValued="false" required="false" />
     
     <!-- human remains sensitive, 0 means not sensitive. Higher values more sensitive  -->
-    <field name="human_remains" type="int" indexed="true" stored="true" multiValued="false" required="false" />
+    <field name="human_remains" type="pint" indexed="true" stored="true" multiValued="false" required="false" />
 
     <!-- filesize for media files -->
-    <field name="filesize" type="tdouble" indexed="true" stored="true" required="false" multiValued="false"/>
+    <field name="filesize" type="pdouble" indexed="true" stored="true" required="false" multiValued="false"/>
 
 
 
@@ -197,7 +197,7 @@
 
     <!-- discovery location geospatial point. can have multiple types of points, but only one point per type. -->
     <field name="discovery_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
-    <dynamicField name="*_coordinate"  type="tdouble" indexed="true"  stored="false"/>
+    <dynamicField name="*_coordinate"  type="pdouble" indexed="true"  stored="false"/>
 
     <!-- origin location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
@@ -217,16 +217,16 @@
     <field name="form_use_life_chrono_tile" type="string" indexed="true" stored="false" multiValued="true"/>
 
     <!-- chronological earliest date in Julian dates BCE  -->
-    <field name="form_use_life_chrono_earliest" type="double" indexed="true" stored="true" multiValued="true"/>
+    <field name="form_use_life_chrono_earliest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
     <!-- chronological latest date in Julian dates BCE  -->
-    <field name="form_use_life_chrono_latest" type="double" indexed="true" stored="true" multiValued="true"/>
+    <field name="form_use_life_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
 
     <!-- 3 integer media types -->
-	  <field name="image_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
-	  <field name="other_binary_media_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
-	  <field name="document_count" type="int" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="other_binary_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
+	  <field name="document_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
     
     <!-- link to a thumbnail, if present -->
     <field name="thumbnail_uri" type="string" indexed="false" stored="true" required="false" multiValued="false"/>
@@ -270,10 +270,13 @@
 
     <!-- The following define dynamic fields for LITERAL values. -->
     <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
-	  <dynamicField name="*___pred_numeric" type="tdouble" indexed="true" stored="true" required="false" multiValued="true" />
+	  <dynamicField name="*___pred_int" type="pint" indexed="true" stored="true" required="false" multiValued="true" />
+
+    <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
+	  <dynamicField name="*___pred_double" type="pdouble" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- date data predicates with @type = "xsd:date" values -->
-	  <dynamicField name="*___pred_date" type="tdate" indexed="true" stored="true" required="false" multiValued="true" />
+	  <dynamicField name="*___pred_date" type="pdate" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- string data predicates with @type = "xsd:string" values -->
 	  <dynamicField name="*___pred_string" type="text_general" indexed="true" stored="false" required="false" multiValued="true" />
@@ -339,20 +342,18 @@
     -->    
 
     <!--
-      Default numeric field types. For faster range queries, consider the tint/tfloat/tlong/tdouble types.
-
-      These fields support doc values, but they require the field to be
-      single-valued and either be required or have a default value.
+      Numeric field types that index values using KD-trees.
+      Point fields don't support FieldCache, so they must have docValues="true" if needed for sorting, faceting, functions, etc.
     -->
-    <fieldType name="int" class="solr.TrieIntField" docValues="true" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="float" class="solr.TrieFloatField" docValues="true" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="long" class="solr.TrieLongField" docValues="true" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="double" class="solr.TrieDoubleField" docValues="true" precisionStep="0" positionIncrementGap="0"/>
-
-    <fieldType name="ints" class="solr.TrieIntField" docValues="true" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
-    <fieldType name="floats" class="solr.TrieFloatField" docValues="true" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
-    <fieldType name="longs" class="solr.TrieLongField" docValues="true" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
-    <fieldType name="doubles" class="solr.TrieDoubleField" docValues="true" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="pint" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="pfloat" class="solr.FloatPointField" docValues="true"/>
+    <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+    <fieldType name="pdouble" class="solr.DoublePointField" docValues="true"/>
+    
+    <fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
+    <fieldType name="pfloats" class="solr.FloatPointField" docValues="true" multiValued="true"/>
+    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
+    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
 
     <!--
      Numeric field types that index each value at various levels of precision
@@ -396,8 +397,9 @@
 
          Note: For faster range queries, consider the tdate type
       -->
-    <fieldType name="date" class="solr.TrieDateField" docValues="true" precisionStep="0" positionIncrementGap="0"/>
-    <fieldType name="dates" class="solr.TrieDateField" docValues="true" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <!-- KD-tree versions of date fields -->
+    <fieldType name="pdate" class="solr.DatePointField" docValues="true"/>
+    <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
 
     <!-- A Trie based date field for faster date range queries and date faceting. -->
     <fieldType name="tdate" class="solr.TrieDateField" docValues="true" precisionStep="6" positionIncrementGap="0"/>
