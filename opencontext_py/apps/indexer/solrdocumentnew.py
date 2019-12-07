@@ -115,7 +115,9 @@ def make_entity_string_for_solr(
     )
     if isinstance(uri_parsed, dict):
         id_part = '/' + uri_parsed['item_type'] + '/' + uri_parsed['uuid']
-    slug = solr_doc_prefix + slug
+    # NOTE: The '-' character is reserved in Solr, so we need to replace
+    # it with a '_' character in order to do prefix queries on the slugs.
+    slug = solr_doc_prefix + slug.replace('-', '_')
     return solr_value_delim.join(
         [slug, type, id_part, label]
     )

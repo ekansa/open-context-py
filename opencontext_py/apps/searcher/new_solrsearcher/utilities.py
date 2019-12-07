@@ -132,6 +132,9 @@ def fq_slug_value_format(slug, value_slug_length_limit=120):
     """Formats a slug for a Solr query value"""
     if SolrDocument.DO_LEGACY_FQ:
         return slug
+    # NOTE: The '-' character is reserved in Solr, so we need to replace
+    # it with a '_' character in order to do prefix queries on the slugs.
+    slug = slug.replace('-', '_')
     slug += SolrDocument.SOLR_VALUE_DELIM
     slug = (
         slug[:value_slug_length_limit] + '*'
