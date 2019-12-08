@@ -196,7 +196,6 @@ def get_range_stats_fields(attribute_item, field_fq):
     # Strip the '_id' end of the field_fq (for the filter query).
     # The field_fq needs to be updated to have the suffix of the 
     # right type of literal that we're going t query.
-    print('field: {} is a {}'.format(field_fq, attribute_item.data_type))
     if not attribute_item.data_type in [
         'xsd:integer', 
         'xsd:double', 
@@ -455,6 +454,12 @@ def get_general_hierarchic_path_query_dict(
                 # This attribute_item has a data type for literal
                 # values. 
 
+                children = get_entity_item_children_list(item)
+                if len(children):
+                    # The (supposedly) literal attribute item 
+                    # has children so force it to have a data_type of 
+                    # 'id'.
+                    attribute_item.data_type = 'id'
                 
                 # NOTE: Generally, we don't make facets on literal 
                 # attributes. However, some literal attributes are
@@ -465,14 +470,12 @@ def get_general_hierarchic_path_query_dict(
                     # in the path_list, so we do not need to check
                     # for child items.
                     facet_field = None
-                else:
-                    # Check for 
-                    children = get_entity_item_children_list(item)
-                    if not len(children):
-                        # There are no children items to this literal
-                        # attribute item, so there is no need to make
-                        # a facet field for it.
-                        facet_field = None
+                elif attribute_item.data_type != 'id':
+                    # The attribute item data type has not been reset
+                    # to be 'id', b/c there are no children items to 
+                    # this literal attribute item. Thus, there is no 
+                    # need to make a facet field for it.
+                    facet_field = None
 
                 # Format the field_fq appropriately for this specific
                 # data type.
