@@ -106,9 +106,7 @@ TESTS_SPATIAL_CONTEXTS = [
     ),
 ]
 
-
-TESTS_PROJECTS = [
-    
+TESTS_NULLS = [
     (
         None,
         None,
@@ -122,9 +120,12 @@ TESTS_PROJECTS = [
         None,
     ),
     (
-        'Murlo||Foo',
+        'Foo||Bar',
         None,
     ),
+]
+
+TESTS_PROJECTS = TESTS_NULLS + [
     (
         '24-murlo',
         {
@@ -173,24 +174,7 @@ TESTS_PROJECTS = [
 
 
 # Tests for descriptive predicates
-TESTS_PREDICATES = [
-    
-    (
-        None,
-        None,
-    ),
-    (
-        '',
-        None,
-    ),
-    (
-        'Foo',
-        None,
-    ),
-    (
-        'Foo||Bar',
-        None,
-    ),
+TESTS_PREDICATES = TESTS_NULLS + [
     (
         '93-element',
         {
@@ -355,6 +339,17 @@ TESTS_PREDICATES = [
 ]
 
 
+TESTS_DC_SUBJECTS = TESTS_NULLS + [
+    (
+        'loc-sh-sh92003545',
+        {
+            # NOTE: This is a linked-data predicate, so the root
+            # solr field is ld___pred_id.
+            'fq': ['dc_terms_subject___pred_id:loc_sh_sh92003545___*',],
+            'facet.field':['loc_sh_sh92003545___dc_terms_subject___pred_id'],
+        }
+    ),
+]
 
 @pytest.mark.django_db
 def test_get_spatial_context_query_dict():
@@ -403,6 +398,30 @@ def test_get_predicates_query_dict():
             raw_prop_path,
             root_field=SolrDocument.ROOT_PREDICATE_SOLR,
             field_suffix=SolrDocument.FIELD_SUFFIX_PREDICATE
+        )
+        if query_dict is None:
+            # Case where we don't have a dict response.
+            assert query_dict == exp_dict
+            continue
+        assert query_dict['fq'] == [fq for fq in exp_dict['fq']]
+        assert query_dict['facet.field'] == exp_dict['facet.field']
+
+
+@pytest.mark.django_db
+def test_get_dc_subjects_query_dict():
+    """Tests get_general_hierarchic_paths_query_dict on dc-subjects
+    (metadata entities) inputs."""
+    # NOTE: This uses the function:
+    # querymaker.get_general_hierarchic_paths_query_dict
+    # to test queries relating to Open Context projects.
+    #
+    for raw_dc_path, exp_dict in TESTS_DC_SUBJECTS:
+        query_dict = querymaker.get_general_hierarchic_paths_query_dict(
+            raw_dc_path,
+            root_field='dc_terms_subject___pred_id',
+            obj_all_slug='dc-terms-subject',
+            field_suffix=SolrDocument.FIELD_SUFFIX_PREDICATE,
+            attribute_field_part='dc_terms_subject___',
         )
         if query_dict is None:
             # Case where we don't have a dict response.
