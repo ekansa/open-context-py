@@ -87,4 +87,3 @@ http://127.0.0.1:8000/query/Turkey%7C%7CItaly?proj=24-murlo||1-domuztepe&q=dog
 
 ```
 
-
