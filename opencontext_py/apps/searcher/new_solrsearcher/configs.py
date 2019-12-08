@@ -119,6 +119,7 @@ HIERARCHY_PARAM_TO_SOLR = [
             'root_field': 'dc_terms_subject___pred_id',
             'obj_all_slug': "dc-terms-subject",
             'field_suffix': SolrDocument.FIELD_SUFFIX_PREDICATE,
+            'attribute_field_part': 'dc_terms_subject___',
         },
     ),
     (

@@ -275,6 +275,7 @@ def get_general_hierarchic_path_query_dict(
     field_suffix,
     obj_all_slug='',
     fq_solr_field_suffix='',
+    attribute_field_part='',
     value_slug_length_limit=120,
 ):
     """Gets a solr query dict for a general hierarchic list of
@@ -334,7 +335,6 @@ def get_general_hierarchic_path_query_dict(
     # formulating solr queries on general/universal metadata
     # attributes, not the more specific, rarely used attributes that
     # are stored in the database.
-    attribute_field_part = ''
     attribute_item = None
     
     last_path_index = len(path_list) -1 
@@ -541,6 +541,7 @@ def get_general_hierarchic_paths_query_dict(
     hierarchy_delim=configs.REQUEST_PROP_HIERARCHY_DELIM,
     or_delim=configs.REQUEST_OR_OPERATOR,
     obj_all_slug='',
+    attribute_field_part='',
 ):
     """Make a solr query for a hierarchic raw path string that may have OR operations."""
     if not raw_path:
@@ -559,6 +560,7 @@ def get_general_hierarchic_paths_query_dict(
             root_field=root_field,
             field_suffix=field_suffix,
             obj_all_slug=obj_all_slug,
+            attribute_field_part=attribute_field_part,
         )
         if not path_query_dict:
             # This path had no entities that could not be found in the
