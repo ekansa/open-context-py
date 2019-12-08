@@ -33,14 +33,39 @@ the client can use to change state (sort, page, filter in different ways).
 - Open Context uses "slugs" to identify entities in the database ("LinkedEntities", and
 "Manifest" items) for both solr fields and the values in these solr fields.
 - The dynamic Solr fields come in varieties for different data-types, differentiated by
-their suffixes. The "id" data-type is used for entities stored in the database. 
+their suffixes. The "id" data-type is used for entities stored in the database. The solr data types
+that we use are: `id` for non-literal database entities; `int` for integer or boolean literals;
+`double` for double precision floats; `date` for date-time values; `string` for text literal
+values.
 
 
 ## Dynamic "id" fields and filter queries:
 Dynamic fields for the "id" data-type are used to search / query / filter non-literal entities
 stored in the database. These entities are identified by their "slugs". However, the values in
 solr "id" dynamic fields are not simple slugs. Instead they are strings specially formatted to
-make querying and faceting easier and less reliant on database lookups.  
+make querying and faceting easier and less reliant on database lookups. 
+
+The general pattern for values stored in dynamic "id" fields is as follows:
+```{slug with dashes replaced with underscores}___{solr data type}___{partial or full URI}___{entitiy label}```
+This pattern for storing values captures essential information needed for the search query user interface
+to present facet-values to users. If we did not store the label, URI, etc. in this way, then display
+of each facet value would require a database look-up which would slow down the overall user interface.
+
+
+### Examples values in dynamic "id" fields:
+- `34_catalhoyuk___id___/subjects/E44A115A-DFCB-4971-6750-40955DF2C062___Çatalhöyük`
+- `35_proximal_fuseddistal_fused___id___/types/DE9FFE49-B43C-44E6-4BD8-C304012B78FC___Proximal fused/distal fused`
+- `periodo_p03wskdm4tb___id___http://n2t.net/ark:/99152/p03wskdm4tb___Early Iron Age Anatolia (1200-700 BC)`
+- `123_differentiating_local_from_nonlocal_ceramic_production___id___/projects/81d1157d-28f4-46ff-98dd-94899c1688f8___Differentiating local from nonlocal ceramic production at Late Bronze Age/Iron Age Kinet Höyük using NAA`
+
+
+### Querying dynamic "id" fields:
+Note that entity slug values have their `-` characters replaced by `_` characters. That's because the `-`
+character is a special character in solr. Slugs uniquely identify database entities, so we use the slug
+values (with `_` to replace `-` characters) in solr filter queries. To do a filter for database entities
+in solr, we simply filter for a slug as a prefix, followed by a wild-card character. So a filter for the
+"subjects" entity of Çatalhöyük will be: `turkey___context_id:34_catalhoyuk___*`
+
 
 
 
