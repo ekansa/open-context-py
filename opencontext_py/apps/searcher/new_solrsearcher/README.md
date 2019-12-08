@@ -7,7 +7,7 @@ existing convoluted, complicated, obscure and highly redundant code into somethi
 understand and maintain.
 
 ## General architecture
-Open Context defines a very abstract and not particularly user-friendly schema for indexing documuents
+Open Context defines a very abstract and not particularly user-friendly schema for indexing documents
 (all the Manifest items) in Solr. We have lots of abstraction in the solr schema because we have to
 ingest data from different projects, all of which have their own descriptive attributes and controlled
 vocabularies. So Open Context uses a very abstract Solr schema, with many, many dynamic fields to
@@ -32,12 +32,15 @@ the client can use to change state (sort, page, filter in different ways).
 (descriptive properties); projects; spatial contexts; and other metadata.
 - Open Context uses "slugs" to identify entities in the database ("LinkedEntities", and
 "Manifest" items) for both solr fields and the values in these solr fields.
-- The dynamic Solr fields come in two main varieties, with two different purposes. The 
-dynamic solr fields that have an "_fq" at the end are meant for filter queries (the "fq"
-arguments in a Solr query). The dynamic solr fields that do not have an "_fq" are typically 
-used to get facet counts. The dynamic solr fields that end with "_fq" take slugs as values. 
-That means they are used for filter queres of entities in the database. The dynamic solr 
-fields that don't have "_fq" are often used for getting facet counts. 
+- The dynamic Solr fields come in varieties for different data-types, differentiated by
+their suffixes. The "id" data-type is used for entities stored in the database. 
+
+
+## Dynamic "id" fields and filter queries:
+Dynamic fields for the "id" data-type are used to search / query / filter non-literal entities
+stored in the database. These entities are identified by their "slugs". However, the values in
+solr "id" dynamic fields are not simple slugs. Instead they are strings specially formatted to
+make querying and faceting easier and less reliant on database lookups.  
 
 
 
