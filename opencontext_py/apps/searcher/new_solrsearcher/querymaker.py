@@ -174,6 +174,22 @@ def get_entity_item_parent_entity(item, add_original=False):
         return None
     return item_parents[-1]
 
+def get_entity_item_children_list(item, recursive=False):
+    """Gets a list of children item dicts for an item entity object
+    
+    :param entity item: See the apps/entity/models entity object for a
+        definition. 
+    """
+    use_id = item.slug
+    if getattr(item, 'uuid', None):
+        # Use the UUID for an item if we have it to look up parents.
+        use_id = item.uuid
+    item_children = LinkRecursion().get_entity_children(
+        use_id,
+        recursive=recursive
+    )
+    return item_children
+
 
 def get_range_stats_fields(attribute_item, field_fq):
     """Prepares facet request for value range (numeric, date) fields"""
@@ -322,7 +338,8 @@ def get_general_hierarchic_path_query_dict(
     attribute_field_part = ''
     attribute_item = None
     
-    for item_id in path_list:
+    last_path_index = len(path_list) -1 
+    for path_index, item_id in enumerate(path_list):
         if (attribute_item is not None 
             and getattr(attribute_item, 'data_type', None) 
             in configs.LITERAL_DATA_TYPES):
@@ -438,8 +455,24 @@ def get_general_hierarchic_path_query_dict(
                 # This attribute_item has a data type for literal
                 # values. 
 
-                # We don't make facets on literal attributes.
-                facet_field = None
+                
+                # NOTE: Generally, we don't make facets on literal 
+                # attributes. However, some literal attributes are
+                # actually parents of other literal atttributes, so
+                # we should make facets for them.
+                if path_index != last_path_index:
+                    # The current item_id is not the last item in the
+                    # in the path_list, so we do not need to check
+                    # for child items.
+                    facet_field = None
+                else:
+                    # Check for 
+                    children = get_entity_item_children_list(item)
+                    if not len(children):
+                        # There are no children items to this literal
+                        # attribute item, so there is no need to make
+                        # a facet field for it.
+                        facet_field = None
 
                 # Format the field_fq appropriately for this specific
                 # data type.

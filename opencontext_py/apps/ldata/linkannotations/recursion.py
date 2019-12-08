@@ -194,10 +194,14 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
         return parent_id
 
     def get_entity_children(self, identifier, recursive=True):
-        cache_key = self.m_cache.make_cache_key(self.children_prefix.format(str(recursive)),
-                                                identifier)
-        tree_cache_key = self.m_cache.make_cache_key(self.child_tree_prefix.format(str(recursive)),
-                                                     identifier)
+        cache_key = self.m_cache.make_cache_key(
+            self.children_prefix.format(str(recursive)),
+            identifier
+        )
+        tree_cache_key = self.m_cache.make_cache_key(
+            self.child_tree_prefix.format(str(recursive)),
+            identifier
+        )
         obj = self.m_cache.get_cache_object(cache_key)
         tree_obj = self.m_cache.get_cache_object(tree_cache_key)
         if obj is not None and tree_obj is not None:
@@ -209,7 +213,10 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
             if obj:
                 # print('Hit child DB on {}'.format(identifier))
                 self.m_cache.save_cache_object(cache_key, obj)
-                self.m_cache.save_cache_object(tree_cache_key, self.child_entities)
+                self.m_cache.save_cache_object(
+                    tree_cache_key, 
+                    self.child_entities
+                )
             return obj
     
     def _get_entity_children_db(self, identifier, recursive=True):
@@ -220,58 +227,58 @@ lr.get_entity_children('http://eol.org/pages/4077', True)
             self.child_entities = LastUpdatedOrderedDict()
         if identifier in self.child_entities and recursive:
             output = self.child_entities[identifier]
-        else:
-            act_children = []
-            p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
-            p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
-            lequiv = LinkEquivalence()
-            identifiers = lequiv.get_identifier_list_variants(identifier)
-            try:
-                # look for child items in the objects of the assertion
-                subobjs_anno = LinkAnnotation.objects.filter(subject__in=identifiers,
-                                                             predicate_uri__in=p_for_subobjs)
-                if(len(subobjs_anno) < 1):
-                    subobjs_anno = False
-            except LinkAnnotation.DoesNotExist:
-                subobjs_anno = False
-            if subobjs_anno is not False:
-                for sub_obj in subobjs_anno:
-                    child_id = sub_obj.object_uri
-                    act_children.append(child_id)
-            try:
-                """
-                Now look for subordinate entities in the subject, not the object
-                """
-                subsubj_anno = LinkAnnotation.objects.filter(object_uri__in=identifiers,
-                                                             predicate_uri__in=p_for_superobjs)
-                if len(subsubj_anno) < 1:
-                    subsubj_anno = False
-            except LinkAnnotation.DoesNotExist:
-                subsubj_anno = False
-            if subsubj_anno is not False:
-                for sub_sub in subsubj_anno:
-                    child_id = sub_sub.subject
-                    act_children.append(child_id)
-            if len(act_children) > 0:
-                identifier_children = []
-                for child_id in act_children:
-                    if child_id.count('/') > 1:
-                        oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
-                        if oc_uuid is not False:
-                            child_id = oc_uuid
-                    identifier_children.append(child_id)
-                    # recursively get the children of the child
-                    if recursive:
-                        self.get_entity_children(child_id, recursive)
-                # same the list of children of the current identified item
-                if identifier not in self.child_entities:
-                    self.child_entities[identifier] = identifier_children
-            else:
-                # save a False for the current identified item. it has no children
-                if identifier not in self.child_entities:
-                    self.child_entities[identifier] = []
-            output = self.child_entities[identifier]
-        return output
+            return output
+
+        act_children = []
+        p_for_superobjs = LinkAnnotation.PREDS_SBJ_IS_SUB_OF_OBJ
+        p_for_subobjs = LinkAnnotation.PREDS_SBJ_IS_SUPER_OF_OBJ
+        lequiv = LinkEquivalence()
+        identifiers = lequiv.get_identifier_list_variants(identifier)
+
+        # Look for child items in the objects of the assertions
+        subobjs_anno = LinkAnnotation.objects.filter(
+            subject__in=identifiers,
+            predicate_uri__in=p_for_subobjs
+        )
+        for sub_obj in subobjs_anno:
+            child_id = sub_obj.object_uri
+            if child_id in act_children:
+                continue
+            act_children.append(child_id)
+
+        #Now look for subordinate entities in the subject, not the object
+        subsubj_anno = LinkAnnotation.objects.filter(
+            object_uri__in=identifiers,
+            predicate_uri__in=p_for_superobjs
+        )
+        for sub_sub in subsubj_anno:
+            child_id = sub_sub.subject
+            if child_id in act_children:
+                continue
+            act_children.append(child_id)
+        
+        if len(act_children) == 0:
+            if identifier not in self.child_entities:
+                self.child_entities[identifier] = []
+            return []
+
+        
+        identifier_children = []
+        for child_id in act_children:
+            if '/' in child_id:
+                oc_uuid = URImanagement.get_uuid_from_oc_uri(child_id)
+                if oc_uuid:
+                    child_id = oc_uuid
+            identifier_children.append(child_id)
+            # recursively get the children of the child
+            if recursive:
+                self.get_entity_children(child_id, recursive)
+        
+        # same the list of children of the current identified item
+        if identifier not in self.child_entities:
+            self.child_entities[identifier] = identifier_children
+        # Return the children of this item.
+        return self.child_entities[identifier]
 
     def get_pred_top_rank_types(self, predicate_uuid):
         """ gets the top ranked (not a subordinate) of any other
