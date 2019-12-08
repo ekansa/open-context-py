@@ -448,6 +448,12 @@ def get_general_hierarchic_path_query_dict(
             # The current item is an attribute item, so copy it for
             # use as we continue to iterate through this path_list.
             attribute_item = item
+            print('attribute item {} is a {}, {}'.format(
+                    attribute_item.label,
+                    attribute_item.item_type, 
+                    attribute_item.data_type
+                )
+            )
 
             if (getattr(attribute_item, 'data_type', None) 
                in configs.LITERAL_DATA_TYPES):
@@ -500,11 +506,14 @@ def get_general_hierarchic_path_query_dict(
                     part_query_dict=range_query_dict,
                     main_query_dict=query_dict,
                 )
-            elif item.item_type == 'predicates':
+            elif (attribute_item.item_type == 'predicates' 
+                or (attribute_item.item_type == 'uri'
+                and getattr(item, 'entity_type', None) == 'property' 
+                and not attribute_field_part) ):
                 # This attribute is for making descriptions with
                 # non-literal values (meaning entities in the DB).
                 attribute_field_part = (
-                    item.slug.replace('-', '_')
+                    attribute_item.slug.replace('-', '_')
                     + SolrDocument.SOLR_VALUE_DELIM
                 )
                 # Now also update the obj_all_field_fq

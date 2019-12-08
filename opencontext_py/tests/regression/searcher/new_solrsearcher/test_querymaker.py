@@ -25,42 +25,42 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United+States',
         {
-           'fq':['root___context_id{a}:united-states{b}'],
+           'fq':['root___context_id:united_states___*'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States',
         {
-           'fq':['root___context_id{a}:united-states{b}'],
+           'fq':['root___context_id:united_states___*'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States/',
         {
-           'fq':['root___context_id{a}:united-states{b}'],
+           'fq':['root___context_id:united_states___*'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         '/United States',
         {
-           'fq':['root___context_id{a}:united-states{b}'],
+           'fq':['root___context_id:united_states___*'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         '/United States||',
         {
-           'fq':['root___context_id{a}:united-states{b}'],
+           'fq':['root___context_id:united_states___*'],
            'facet.field':['united_states___context_id'],
         },
     ),
     (
         'United States/California',
         {
-           'fq':['united_states___context_id{a}:california{b}'],
+           'fq':['united_states___context_id:california___*'],
            'facet.field':['california___context_id'],
         },
     ),
@@ -70,7 +70,7 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United States/California||Foo Bar',
         {
-           'fq':['united_states___context_id{a}:california{b}'],
+           'fq':['united_states___context_id:california___*'],
            'facet.field':['california___context_id'],
         },
     ),
@@ -80,14 +80,14 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'United States||Foo-Bar/California||Foo Bar',
         {
-           'fq':['united_states___context_id{a}:california{b}'],
+           'fq':['united_states___context_id:california___*'],
            'facet.field':['california___context_id'],
         },
     ),
     (
         'United States/California||Florida',
         {
-           'fq':['((united_states___context_id{a}:california{b}) OR (united_states___context_id{a}:florida{b}))'],
+           'fq':['((united_states___context_id:california___*) OR (united_states___context_id:florida___*))'],
            'facet.field':['california___context_id', 'florida___context_id',],
         },
     ),
@@ -100,7 +100,7 @@ TESTS_SPATIAL_CONTEXTS = [
     (
         'Italy/Poggio+Civitate/Civitate+A',
         {
-           'fq':['24_poggio_civitate___context_id{a}:24-civitate-a{b}'],
+           'fq':['24_poggio_civitate___context_id:24_civitate_a___*'],
            'facet.field':['24_civitate_a___context_id',],
         },
     ),
@@ -128,14 +128,14 @@ TESTS_PROJECTS = [
     (
         '24-murlo',
         {
-            'fq': ['((root___project_id{a}:24-murlo{b}) AND (obj_all___project_id{a}:24-murlo{b}))',],
+            'fq': ['((root___project_id:24_murlo___*) AND (obj_all___project_id:24_murlo___*))',],
             'facet.field':['24_murlo___project_id',],
         }
     ),
     (
         '24-murlo||foo',
         {
-            'fq': ['((root___project_id{a}:24-murlo{b}) AND (obj_all___project_id{a}:24-murlo{b}))',],
+            'fq': ['((root___project_id:24_murlo___*) AND (obj_all___project_id:24_murlo___*))',],
             'facet.field':['24_murlo___project_id',],
         }
     ),
@@ -150,7 +150,7 @@ TESTS_PROJECTS = [
     (
         '52-digital-index-of-north-american-archaeology-dinaa',
         {
-            'fq': ['((root___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}))',],
+            'fq': ['((root___project_id:52_digital_index_of_north_american_archaeology_dinaa___*) AND (obj_all___project_id:52_digital_index_of_north_american_archaeology_dinaa___*))',],
             'facet.field':['52_digital_index_of_north_american_archaeology_dinaa___project_id',],
         }
     ),
@@ -158,51 +158,224 @@ TESTS_PROJECTS = [
     (
         '52-digital-index-of-north-american-archaeology-linking-si',
         {
-            'fq': ['((52_digital_index_of_north_american_archaeology_dinaa___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}))',],
+            'fq': ['((52_digital_index_of_north_american_archaeology_dinaa___project_id:52_digital_index_of_north_american_archaeology_linking_si___*) AND (obj_all___project_id:52_digital_index_of_north_american_archaeology_linking_si___*))',],
             'facet.field':['52_digital_index_of_north_american_archaeology_linking_si___project_id',],
         }
     ),
     (
         '52-digital-index-of-north-american-archaeology-dinaa---52-digital-index-of-north-american-archaeology-linking-si',
         {
-            'fq': ['((root___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-dinaa{b}) AND (52_digital_index_of_north_american_archaeology_dinaa___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}) AND (obj_all___project_id{a}:52-digital-index-of-north-american-archaeology-linking-si{b}))'],
+            'fq': ['((root___project_id:52_digital_index_of_north_american_archaeology_dinaa___*) AND (obj_all___project_id:52_digital_index_of_north_american_archaeology_dinaa___*) AND (52_digital_index_of_north_american_archaeology_dinaa___project_id:52_digital_index_of_north_american_archaeology_linking_si___*) AND (obj_all___project_id:52_digital_index_of_north_american_archaeology_linking_si___*))'],
             'facet.field':['52_digital_index_of_north_american_archaeology_linking_si___project_id',],
         }
     ),
 ]
 
-def set_fq_field_formating():
-    if SolrDocument.DO_LEGACY_FQ:
-        a = '_fq'
-        b = ''
-    else:
-        a = ''
-        b = SolrDocument.SOLR_VALUE_DELIM + '*'
-    return a, b
+
+# Tests for descriptive predicates
+TESTS_PREDICATES = [
+    
+    (
+        None,
+        None,
+    ),
+    (
+        '',
+        None,
+    ),
+    (
+        'Foo',
+        None,
+    ),
+    (
+        'Foo||Bar',
+        None,
+    ),
+    (
+        '93-element',
+        {
+            'fq': ['root___pred_id:93_element___*',],
+            'facet.field':['93_element___pred_id',],
+        }
+    ),
+    (
+        '24-object-type',
+        {
+            'fq': ['root___pred_id:24_object_type___*',],
+            'facet.field':['24_object_type___pred_id',],
+        }
+    ),
+    (
+        # NOTE: '24-textile-related' is a hierarchic type (parent level)
+        '24-object-type---24-textile-related',
+        {
+            'fq': ['((root___pred_id:24_object_type___*) AND (24_object_type___pred_id:24_textile_related___*) AND (obj_all___24_object_type___pred_id:24_textile_related___*))',],
+            'facet.field':['24_textile_related___24_object_type___pred_id',],
+        }
+    ),
+    (
+        # NOTE: '24-textile-relatedrocchetto' is a hierarchic type 
+        # (child level)
+        '24-object-type---24-textile-related---24-textile-relatedrocchetto',
+        {
+            'fq': ['((root___pred_id:24_object_type___*) AND (24_object_type___pred_id:24_textile_related___*) AND (obj_all___24_object_type___pred_id:24_textile_related___*) AND (24_textile_related___24_object_type___pred_id:24_textile_relatedrocchetto___*) AND (obj_all___24_object_type___pred_id:24_textile_relatedrocchetto___*))',],
+            'facet.field':['24_textile_relatedrocchetto___24_object_type___pred_id',],
+        }
+    ),
+    (
+        # NOTE: '24-textile-relatedspindle-whorl' is a hierarchic type 
+        # (child level), but the parent is not in the path.
+        '24-object-type---24-textile-relatedspindle-whorl',
+        {
+            'fq': ['((root___pred_id:24_object_type___*) AND (24_textile_related___24_object_type___pred_id:24_textile_relatedspindle_whorl___*) AND (obj_all___24_object_type___pred_id:24_textile_relatedspindle_whorl___*))',],
+            'facet.field':['24_textile_relatedspindle_whorl___24_object_type___pred_id',],
+        }
+    ),
+    (
+        '93-m1-length',
+        {
+            'fq': ['root___pred_id:93_m1_length___*',],
+            # NOTE: We don't expect a facet field for 93-m1-length,
+            # as it is for literal (double, float) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        '93-m1-length---[0 TO 100]',
+        {
+            'fq': ['((root___pred_id:93_m1_length___*) AND (93_m1_length___pred_double:[0 TO 100]))',],
+            'facet.field':[],
+        }
+    ),
+    (
+        '93-element||93-m1-length',
+        {
+            'fq': ['((root___pred_id:93_element___*) OR (root___pred_id:93_m1_length___*))',],
+            # NOTE: We don't expect a facet field for 93-m1-length,
+            # as it is for literal (double, float) values.
+            'facet.field':['93_element___pred_id',],
+        }
+    ),
+    (
+        '35-sd---35-glcstandard-measurement',
+        {
+            'fq': ['((root___pred_id:35_sd___*) '
+                   + 'AND (35_glc___pred_id:35_glcstandard_measurement___*))',
+            ],
+            # NOTE: We don't expect a facet field for 35-glcstandard-measurement,
+            # as it is for literal (double, float) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        '35-sd---35-glcstandard-measurement',
+        {
+            'fq': ['((root___pred_id:35_sd___*) ' 
+                   + 'AND (35_glc___pred_id:35_glcstandard_measurement___*))',
+            ],
+            # NOTE: We don't expect a facet field for 35-glcstandard-measurement,
+            # as it is for literal (double, float) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        '35-sd---35-glcstandard-measurement---[0 TO 100]',
+        {
+            'fq': ['((root___pred_id:35_sd___*) '
+                   + 'AND (35_glc___pred_id:35_glcstandard_measurement___*) '
+                   + 'AND (35_glcstandard_measurement___pred_double:[0 TO 100]))',
+            ],
+            # NOTE: We don't expect a facet field for 35-glcstandard-measurement,
+            # as it is for literal (double, float) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        '93-reference',
+        {
+            'fq': ['root___pred_id:93_reference___*',],
+            # NOTE: We don't expect a facet field for 93-reference,
+            # as it is for literal (string) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        '93-reference---dog',
+        {
+            'fq': ['((root___pred_id:93_reference___*) '
+                   + 'AND (93_reference___pred_string:\"dog\"))',
+            ],
+            # NOTE: We don't expect a facet field for 93-reference,
+            # as it is for literal (string) values.
+            'facet.field':[],
+        }
+    ),
+    (
+        'biol-term-hastaxonomy',
+        {
+            # NOTE: This is a linked-data predicate, so the root
+            # solr field is ld___pred_id.
+            'fq': ['ld___pred_id:biol_term_hastaxonomy___*',],
+            'facet.field':['biol_term_hastaxonomy___pred_id'],
+        }
+    ),
+    (
+        'biol-term-hastaxonomy---eol-p-7687',
+        {
+            # NOTE: This is a linked-data predicate, with the entity 
+            # eol-p-7687 as a child of entity eol-p-7678
+            'fq': ['((ld___pred_id:biol_term_hastaxonomy___*) ' 
+                   + 'AND (eol_p_7678___biol_term_hastaxonomy___pred_id:eol_p_7687___*) '
+                   + 'AND (obj_all___biol_term_hastaxonomy___pred_id:eol_p_7687___*))',
+            ],
+            'facet.field':['eol_p_7687___biol_term_hastaxonomy___pred_id'],
+        }
+    ),
+    (
+        'oc-zoo-has-anat-id',
+        {
+            # NOTE: This is a linked-data predicate, so the root
+            # solr field is ld___pred_id.
+            'fq': ['ld___pred_id:oc_zoo_has_anat_id___*',],
+            'facet.field':['oc_zoo_has_anat_id___pred_id'],
+        }
+    ),
+    (
+        'oc-zoo-has-anat-id---obo-uberon-0001684',
+        {
+            # NOTE: This is a linked-data predicate, so the root
+            # solr field is ld___pred_id.
+            'fq': ['((ld___pred_id:oc_zoo_has_anat_id___*) '
+                    + 'AND (oc_zoo_has_anat_id___pred_id:obo_uberon_0001684___*) '
+                    + 'AND (obj_all___oc_zoo_has_anat_id___pred_id:obo_uberon_0001684___*))',
+            ],
+            'facet.field':['obo_uberon_0001684___oc_zoo_has_anat_id___pred_id'],
+        }
+    ),
+]
+
+
 
 @pytest.mark.django_db
 def test_get_spatial_context_query_dict():
     """Tests get_spatial_context_query_dict on a variety of inputs."""
-    a, b = set_fq_field_formating()
-    
     for spatial_context, exp_dict in TESTS_SPATIAL_CONTEXTS:
         query_dict = querymaker.get_spatial_context_query_dict(
             spatial_context
         )
-        assert query_dict['fq'] == [fq.format(a=a, b=b) for fq in exp_dict['fq']]
+        assert query_dict['fq'] == [fq for fq in exp_dict['fq']]
         assert query_dict['facet.field'] == exp_dict['facet.field']
 
 
 @pytest.mark.django_db
 def test_get_projects_query_dict():
-    """Tests get_spatial_context_query_dict on a variety of inputs."""
+    """Tests get_general_hierarchic_paths_query_dict on project inputs."""
     # NOTE: This uses the function:
     # querymaker.get_general_hierarchic_paths_query_dict
     # to test queries relating to Open Context projects.
     #
     # TODO: Make more tests for a wider variety of metadata queries.
     #
-    a, b = set_fq_field_formating()
     for raw_projects_path, exp_dict in TESTS_PROJECTS:
         query_dict = querymaker.get_general_hierarchic_paths_query_dict(
             raw_projects_path,
@@ -213,5 +386,27 @@ def test_get_projects_query_dict():
             # Case where we don't have a dict response.
             assert query_dict == exp_dict
             continue
-        assert query_dict['fq'] == [fq.format(a=a, b=b) for fq in exp_dict['fq']]
+        assert query_dict['fq'] == [fq for fq in exp_dict['fq']]
+        assert query_dict['facet.field'] == exp_dict['facet.field']
+
+
+@pytest.mark.django_db
+def test_get_predicates_query_dict():
+    """Tests get_general_hierarchic_paths_query_dict on predicate
+    (attributes, property) inputs."""
+    # NOTE: This uses the function:
+    # querymaker.get_general_hierarchic_paths_query_dict
+    # to test queries relating to Open Context projects.
+    #
+    for raw_prop_path, exp_dict in TESTS_PREDICATES:
+        query_dict = querymaker.get_general_hierarchic_paths_query_dict(
+            raw_prop_path,
+            root_field=SolrDocument.ROOT_PREDICATE_SOLR,
+            field_suffix=SolrDocument.FIELD_SUFFIX_PREDICATE
+        )
+        if query_dict is None:
+            # Case where we don't have a dict response.
+            assert query_dict == exp_dict
+            continue
+        assert query_dict['fq'] == [fq for fq in exp_dict['fq']]
         assert query_dict['facet.field'] == exp_dict['facet.field']
