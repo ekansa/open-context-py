@@ -343,8 +343,10 @@ TESTS_DC_SUBJECTS = TESTS_NULLS + [
     (
         'loc-sh-sh92003545',
         {
-            # NOTE: This is a linked-data predicate, so the root
-            # solr field is ld___pred_id.
+            # NOTE: This is a dublin core subjects metadata query for
+            # the metadata entity loc-sh-sh92003545. Currently, we do not
+            # do much hierarchy modeling of LOC subjects headings, so
+            # this test is a bit less interesting.
             'fq': ['dc_terms_subject___pred_id:loc_sh_sh92003545___*',],
             'facet.field':['loc_sh_sh92003545___dc_terms_subject___pred_id'],
         }
