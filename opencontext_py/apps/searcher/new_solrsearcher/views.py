@@ -30,10 +30,11 @@ def process_solr_query(request_dict):
     # solr query dict, it does not actually do a solr search.
     search_solr = SearchSolr()
     query = search_solr.compose_query(request_dict)
-    if request_dict.get("pre-stats"):
-        query = search_solr.update_query_with_stats_prequery(
-            query
-        )
+    query = search_solr.update_query_with_stats_prequery(
+        query
+    )
+    solr_response = search_solr.query_solr(query)
+    query['raw-solr-response'] = solr_response
     return query
     
 
