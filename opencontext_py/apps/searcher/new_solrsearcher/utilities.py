@@ -4,6 +4,7 @@ import itertools
 import re
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
     get_solr_predicate_type_string,
@@ -18,6 +19,77 @@ from opencontext_py.apps.indexer.solrdocumentnew import (
 # functions will be independent of all DB interactions, so they can be
 # tested with unit testing.
 # ---------------------------------------------------------------------
+def make_suffix_no_suffix_list(raw_term, suffix="/"):
+    """Makes list where a string does and does not end with a suffix"""
+    if not isinstance(raw_term, str):
+        return None
+    terms = [raw_term]
+    if not suffix:
+        return terms
+    if raw_term.endswith(suffix):
+        terms.append(raw_term[:-len(suffix)])
+    else:
+        terms.append((raw_term + suffix))
+    return terms
+
+def make_alternative_prefix_list(raw_term, alt_prefixes=('http://', 'https://',)):
+    """Makes list where a string does and does not end with a suffix"""
+    if not isinstance(raw_term, str):
+        return None
+    alt_term = None
+    if raw_term.startswith(alt_prefixes[0]):
+        alt_term = alt_prefixes[1] + raw_term[len(alt_prefixes[0]):]
+    elif raw_term.startswith(alt_prefixes[1]):
+        alt_term = alt_prefixes[0] + raw_term[len(alt_prefixes[1]):]
+    if not alt_term:
+        return None
+    return [raw_term, alt_term]
+
+
+def make_uri_equivalence_list(raw_term, alt_suffix="/"):
+    """ Makes Prefixed, HTTP, HTTPS and '/' ending options list for URLs
+    """
+    # NOTE: Open Context often references Web URL/URIs to "linked data"
+    # entities. Open Context considers http:// and https:// URLs to be
+    # equivalent. This function takes a raw term and makes http://
+    # https:// variants. It also makes a prefixed URL if a namespace
+    # is recognized in URImanagement. Finally, it will by default, 
+    # make variants that have and do not have a trailing "/".
+
+    output_list = []
+    if not isinstance(raw_term, str):
+        return None
+    output_list.append(raw_term)
+    url_terms = []
+    if raw_term.startswith('http://') or raw_term.startswith('https://'):
+        # NOTE: The raw_term looks like a Web URL. We need to make
+        # variants that start with http, https, and end in a slash, and
+        # do not end in a slash.
+        url_terms = make_suffix_no_suffix_list(raw_term, suffix=alt_suffix)
+    elif raw_term.count(':') == 1:
+        full_uri = URImanagement.convert_prefix_to_full_uri(raw_term)
+        if full_uri:
+            url_terms = make_suffix_no_suffix_list(full_uri, suffix=alt_suffix)
+        url_terms.append(raw_term)
+
+    for term in url_terms:
+        http_alts = make_alternative_prefix_list(
+            term, 
+            alt_prefixes=('http://', 'https://',)
+        )
+        if not http_alts:
+            continue
+        for http_alt in http_alts:
+            if http_alt not in output_list:
+                output_list.append(http_alt)
+            prefix_id = URImanagement.prefix_common_uri(http_alt)
+            if alt_suffix and prefix_id.endswith(alt_suffix):
+                # Remove any trailing slash with prefixed IDs.
+                prefix_id = prefix_id[:-len(alt_suffix)]
+            if prefix_id and prefix_id not in output_list:
+                output_list.append(prefix_id)
+    return output_list
+
 
 
 def infer_multiple_or_hierarchy_paths(
