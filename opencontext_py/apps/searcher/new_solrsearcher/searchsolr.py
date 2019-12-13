@@ -144,6 +144,25 @@ class SearchSolr():
             elif rows < 0:
                 rows = 0
             query['rows'] = rows
+        
+
+        # -------------------------------------------------------------
+        # Item Type
+        # -------------------------------------------------------------
+        raw_item_type = utilities.get_request_param_value(
+            request_dict, 
+            param='type',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_item_type:
+            query_dict = querymaker.get_item_type_query_dict(raw_item_type)
+            # Now add results of this raw_item_type to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
             
         # -------------------------------------------------------------
         # Spatial Context
@@ -158,8 +177,10 @@ class SearchSolr():
                     SolrDocument.ROOT_CONTEXT_SOLR,
                     query['facet.field'].copy()
                 )
-                query['fq'] += query_dict['fq']
-                query['facet.field'] += query_dict['facet.field']
+                query = utilities.combine_query_dict_lists(
+                    part_query_dict=query_dict,
+                    main_query_dict=query,
+                )
         
         # -------------------------------------------------------------
         # All Hierarchic Parameters (Projects, Properties, Dublin-Core,

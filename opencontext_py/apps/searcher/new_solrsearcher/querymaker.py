@@ -30,6 +30,39 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 # ---------------------------------------------------------------------
 
 
+# -------------------------------------------------------------
+# ITEM_TYPE FUNCTIONS
+# -------------------------------------------------------------
+def get_item_type_query_dict(raw_item_type):
+    """Gets a query dict for item_types"""
+    query_dict = {'fq': [], 'facet.field': []}
+    paths_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_item_type,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    path_terms = []
+    for item_type in paths_list:
+        item_type_slug =configs.ITEM_TYPE_SLUG_MAPPINGS.get(item_type)
+        if not item_type_slug:
+            # We can't map the item type to a slug so skip.
+            continue
+        path_term = 'item_type:{}'.format(item_type)
+        path_terms.append(path_term)
+        # Now add a field to the facet.field list so solr calculates
+        # facets for class_uris for the current item type.
+        query_dict['facet.field'].append(
+            item_type_slug.replace('-', '_')
+            + SolrDocument.SOLR_VALUE_DELIM
+            + SolrDocument.FIELD_SUFFIX_PREDICATE
+        )
+    # NOTE: Multiple item_type terms are the result of an "OR" (||) operator
+    # in the client's request. 
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            path_terms, operator='OR'
+        )
+    )
+    return query_dict
 
 # ---------------------------------------------------------------------
 # SPATIAL CONTEXT RELATED FUNCTIONS
@@ -594,3 +627,6 @@ def get_general_hierarchic_paths_query_dict(
     )
     query_dict['fq'] = [all_paths_term]
     return query_dict
+
+
+
