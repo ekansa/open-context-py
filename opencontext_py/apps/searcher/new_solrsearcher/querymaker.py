@@ -229,10 +229,12 @@ def get_range_stats_fields(attribute_item, field_fq):
     # Strip the '_id' end of the field_fq (for the filter query).
     # The field_fq needs to be updated to have the suffix of the 
     # right type of literal that we're going t query.
+
+    # NOTE: 'xsd:boolean' is excluded from range facets
+    
     if not attribute_item.data_type in [
         'xsd:integer', 
-        'xsd:double', 
-        'xsd:boolean', 
+        'xsd:double',  
         'xsd:date'
     ]:
         # Not an attribute that has value ranges to facet.

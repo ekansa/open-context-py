@@ -269,10 +269,13 @@
     <dynamicField name="*___pred_id" type="strings" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- The following define dynamic fields for LITERAL values. -->
-    <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
+    <!-- boolean data predicates with @type = "xsd:boolean" values -->
+	  <dynamicField name="*___pred_bool" type="booleans" indexed="true" stored="true" required="false" multiValued="true" />
+    
+    <!-- integer data predicates with @type = "xsd:integer"  values -->
 	  <dynamicField name="*___pred_int" type="pint" indexed="true" stored="true" required="false" multiValued="true" />
 
-    <!-- integer data predicates with @type = "xsd:integer" or @type = "xsd:double" values -->
+    <!-- double precision float data predicates with @type = "xsd:double" values -->
 	  <dynamicField name="*___pred_double" type="pdouble" indexed="true" stored="true" required="false" multiValued="true" />
 
     <!-- date data predicates with @type = "xsd:date" values -->

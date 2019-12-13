@@ -47,7 +47,9 @@ def get_solr_predicate_type_string(
         string_default_pred_types = BAD_PREDICATE_TYPES_TO_STRING.copy()
     if predicate_type in ['@id', 'id', 'types', False]:
         return prefix + 'id'
-    elif predicate_type in ['xsd:integer', 'xsd:boolean']:
+    elif predicate_type == 'xsd:boolean':
+        return prefix + 'bool'
+    elif predicate_type == 'xsd:integer':
         return prefix + 'int'
     elif predicate_type == 'xsd:double':
         return prefix + 'double'
@@ -134,6 +136,13 @@ sd_obj = SolrDocumentNew(uuid)
 sd_obj.make_solr_doc()
 sd_obj.fields
 
+# Example item with a boolean field
+from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
+uuid_m = '000DF962-E653-4125-CD0D-7C948C41EC4E'
+sd_obj_m = SolrDocumentNew(uuid_m)
+sd_obj_m.make_solr_doc()
+sd_obj_m.fields
+
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew
 # Example with missing predicate
 uuid = '775b5d81-81ae-45ee-b622-6f9257c4bedd'
@@ -216,6 +225,7 @@ uuid_l = 'b8cec4d8-0926-4c38-836b-91a94920d5c1'
 sd_obj_l = SolrDocumentNew(uuid_l)
 sd_obj_l.make_solr_doc()
 sd_obj_l.fields
+
     '''
 
 
@@ -901,6 +911,18 @@ sd_obj_l.fields
                     # solr field.
                     continue
                 self.fields[solr_field_name].append(val_obj)
+        elif solr_pred_type == 'bool':
+            # Add date literal values ot the solr_field_name in the
+            # solr document.
+            for val_obj in pred_value_objects:
+                bool_val = None
+                if not val_obj or val_obj == 0:
+                    bool_val = False
+                elif val_obj or val_obj == 1:
+                    bool_val = True
+                if bool_val is not None:
+                    self.fields[solr_field_name].append(bool_val) 
+                self.fields['text'] += str(bool_val) + ' \n'
         elif solr_pred_type == 'date':
             # Add date literal values ot the solr_field_name in the
             # solr document.
@@ -971,6 +993,7 @@ sd_obj_l.fields
         # the pred_key and making a dictionary object of this metadata.
         predicate = self.proj_graph_obj.lookup_predicate(pred_key)
         if not predicate:
+            print('Cannot find predicate: {}'.format(pred_key))
             # The predicate does not seem to exist. Skip out.
             return None
         if not 'uuid' in predicate or not predicate.get('slug'):
