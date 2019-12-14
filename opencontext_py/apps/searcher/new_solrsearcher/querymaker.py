@@ -319,8 +319,8 @@ def compose_filter_query_on_literal(raw_literal, attribute_item, field_fq):
                 )
             )
     elif attribute_item.data_type in ['xsd:integer', 'xsd:double', 'xsd:boolean']:
-        # Case for querying numeric literals. This is a simple
-        # type of literal to query. We pass the literal on without
+        # Case for querying numeric or boolean literals. This is a 
+        # simple type of literal to query. We pass the literal on without
         # modification as the filter field query value.
         query_dict['fq'].append('{field_fq}:{field_val}'.format(
                 field_fq=field_fq,

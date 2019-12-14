@@ -222,6 +222,9 @@
     <!-- chronological latest date in Julian dates BCE  -->
     <field name="form_use_life_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
+    <!-- chronological latest date in Julian dates BCE  -->
+    <field name="form_use_life_chrono_range" type="point" indexed="true" stored="true" multiValued="false"/>
+
 
     <!-- 3 integer media types -->
 	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
@@ -660,10 +663,10 @@
       users normally should not need to know about them.
      -->
     <dynamicField name="*_point" type="point"  indexed="true"  stored="true"/>
-    <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
+    <fieldType name="point" class="solr.solrPointType" />
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
-    <fieldType name="location" class="solr.LatLonType" subFieldSuffix="_coordinate"/>
+    <fieldType name="location" class="solr.LatLonPointSpatialField" />
 
     <!-- An alternative geospatial field type new to Solr 4.  It supports multiValued and polygon shapes.
       For more information about this and other Spatial fields new to Solr 4, see:
