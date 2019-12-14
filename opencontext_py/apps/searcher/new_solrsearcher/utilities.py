@@ -576,7 +576,7 @@ def validate_bbox_coordinates(bbox_coors):
         return False
 
     if (float(bbox_coors[0]) < float(bbox_coors[2]) 
-        and float(bbox_coors[1]) < float(bbox_coors[3]):
+        and float(bbox_coors[1]) < float(bbox_coors[3])):
         return True
     else:
         return False
@@ -590,6 +590,6 @@ def return_validated_bbox_coords(bbox_str):
     bbox_coors = [c.strip() for c in bbox_str.split(',')]
     valid = validate_bbox_coordinates(bbox_coors)
     if not valid:
-        return False:
+        return False
     valid_bbox_coors = [float(c) for c in bbox_coors]
     return valid_bbox_coors
