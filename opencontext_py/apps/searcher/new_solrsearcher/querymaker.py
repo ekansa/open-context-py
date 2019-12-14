@@ -64,6 +64,44 @@ def get_item_type_query_dict(raw_item_type):
     )
     return query_dict
 
+
+# ---------------------------------------------------------------------
+# GEOSPACE AND TIME FUNCTIONS
+# ---------------------------------------------------------------------
+def get_discovery_bbox_query_dict(raw_disc_bbox):
+    """Makes a filter query for a discovery location bounding box"""
+    query_dict = {'fq': []}
+    terms = []
+    bbox_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_disc_bbox,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    for bbox_str in bbox_list:
+        bbox_coors = utilities.return_validated_bbox_coords(bbox_str)
+        if not bbox_coors:
+            # Not valid so skip out of the function
+            return None
+        # Valid bounding box, now make a solr-query
+        # not how solr expacts latitude / longitude order, which
+        # is the revserse of geojson!
+        q_bbox = '[{lat_0},{lon_0} TO {lat_1},{lon_1}]'.format(
+            lat_0=bbox_coors[1],
+            lon_0=bbox_coors[0],
+            lat_1=bbox_coors[3],
+            lon_1=bbox_coors[2],
+        )
+        fq_term = 'discovery_geolocation: ' + q_bbox
+        terms.append(fq_term)
+    # Join the various bounding box query OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            terms, operator='OR'
+        )
+    )
+    return query_dict
+
+
+
 # ---------------------------------------------------------------------
 # SPATIAL CONTEXT RELATED FUNCTIONS
 # ---------------------------------------------------------------------

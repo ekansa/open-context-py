@@ -45,7 +45,6 @@ def make_alternative_prefix_list(raw_term, alt_prefixes=('http://', 'https://',)
         return None
     return [raw_term, alt_term]
 
-
 def make_uri_equivalence_list(raw_term, alt_suffix="/"):
     """ Makes Prefixed, HTTP, HTTPS and '/' ending options list for URLs
     """
@@ -89,7 +88,6 @@ def make_uri_equivalence_list(raw_term, alt_suffix="/"):
             if prefix_id and prefix_id not in output_list:
                 output_list.append(prefix_id)
     return output_list
-
 
 
 def infer_multiple_or_hierarchy_paths(
@@ -531,3 +529,67 @@ def add_solr_gap_to_date(date_val, solr_gap):
     else:
         dt = dt
     return dt
+
+
+# ---------------------------------------------------------------------
+# GEOSPATIAL AND TIME FUNCTIONS
+# ---------------------------------------------------------------------
+def validate_geo_coordinate(coordinate, coord_type):
+    """Validates a geo-spatial coordinate """
+    try:
+        fl_coord = float(coordinate)
+    except ValueError:
+        return False
+    if 'lat' in coord_type:
+        if (fl_coord <= 90 
+            and fl_coord >= -90):
+            return True
+    elif 'lon' in coord_type:
+        if (fl_coord <= 180 
+            and fl_coord >= -180):
+            return True
+    return False
+
+def validate_geo_lon_lat(lon, lat):
+    """ checks to see if a lon, lat pair
+        are valid. Note the GeoJSON ordering
+        of the coordinates
+    """
+    lon_valid = validate_geo_coordinate(lon, 'lon')
+    lat_valid = validate_geo_coordinate(lat, 'lat')
+    if lon_valid and lat_valid:
+        return True
+    return False
+
+def validate_bbox_coordinates(bbox_coors):
+    """Validates a set of bounding box coordinates """
+    if len(bbox_coors) != 4:
+        # Need four coordinates (2 points) for a box
+        return False
+
+    lower_left_valid = validate_geo_lon_lat(
+        bbox_coors[0], bbox_coors[1]
+    )
+    top_right_valid = validate_geo_lon_lat(
+        bbox_coors[2], bbox_coors[3])
+    if not lower_left_valid or not top_right_valid:
+        return False
+
+    if (float(bbox_coors[0]) < float(bbox_coors[2]) 
+        and float(bbox_coors[1]) < float(bbox_coors[3]):
+        return True
+    else:
+        return False
+
+def return_validated_bbox_coords(bbox_str):
+    """Returns a valid bounding box coordinate list of floats"""
+    if not isinstance(bbox_str, str):
+        return False
+    if not ',' in bbox_str:
+        return False
+    bbox_coors = [c.strip() for c in bbox_str.split(',')]
+    valid = validate_bbox_coordinates(bbox_coors)
+    if not valid:
+        return False:
+    valid_bbox_coors = [float(c) for c in bbox_coors]
+    return valid_bbox_coors
