@@ -163,6 +163,29 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
+        
+
+        # -------------------------------------------------------------
+        # GEO-SPACE AND TIME
+        # -------------------------------------------------------------
+        raw_disc_bbox = utilities.get_request_param_value(
+            request_dict, 
+            param='bbox',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_disc_bbox:
+            query_dict = querymaker.get_discovery_bbox_query_dict(
+                raw_disc_bbox
+            )
+            # Now add results of this raw_item_type to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+
             
         # -------------------------------------------------------------
         # Spatial Context
