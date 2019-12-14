@@ -549,6 +549,17 @@ def get_general_hierarchic_path_query_dict(
                     # in the path_list, so we do not need to check
                     # for child items.
                     facet_field = None
+                elif attribute_item.data_type == 'xsd:boolean':
+                    # Make sure we get the facet field, identified
+                    # with the correct data type, for boolean values.
+                    facet_field = utilities.rename_solr_field_for_data_type(
+                        attribute_item.data_type,
+                        (
+                            item.slug.replace('-', '_')
+                            + SolrDocument.SOLR_VALUE_DELIM
+                            + field_suffix
+                        )  
+                    )
                 elif attribute_item.data_type != 'id':
                     # The attribute item data type has not been reset
                     # to be 'id', b/c there are no children items to 
