@@ -6,6 +6,7 @@ from opencontext_py.apps.ocitems.projects.layers import ProjectLayers
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.entities.entity.imageproxy import proxy_image_url_if_needed
 from opencontext_py.apps.searcher.solrsearcher.querymaker import QueryMaker
 from opencontext_py.apps.searcher.solrsearcher.filterlinks import FilterLinks
 from opencontext_py.apps.searcher.solrsearcher.templatingfacets import FacetSearchTemplate, FacetField, FacetOption
@@ -323,6 +324,11 @@ class ResultRecord():
                 if isinstance(self.thumbnail, str):
                     if '/icons/' in self.thumbnail or '-noun-' in self.thumbnail:
                         self.icon_thumbnail = True
+                    else:
+                        self.thumbnail = proxy_image_url_if_needed(
+                            self.thumbnail,
+                            primary_url=props.get('primary-file')
+                        )
             if 'published' in props:
                 self.published = QueryMaker().make_human_readable_date(props['published'])
             if 'updated' in props:

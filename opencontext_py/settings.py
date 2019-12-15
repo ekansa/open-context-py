@@ -131,6 +131,11 @@ if 'SECURE_SSL_REDIRECT' in secrets:
         DEFAULT_HTTPS = True
 
 
+# Merritt (CDL repository) seems to do strange HTTP redirects which
+# break browser display of images. This setting toggles proxying of
+# these image files. A crude but required solution.
+MERRITT_IMAGE_PROXY = True
+
 # EZID Authentication and configuration
 # This is used to interact with the EZID service
 # to make and manage persistent identifiers
