@@ -61,6 +61,7 @@
         (function() {
            // do this when the DOM will be available...
            proxyLoadMerrittImages(image_attempt);
+           image_attempt += 1;
         })();
 
         // Keep trying to load images not yet loaded
@@ -68,8 +69,9 @@
         var lastScrollPosition = 0;
         window.onscroll = function() {
             var newScrollPosition = window.scrollY;
-            image_attempt += 1;
+            // console.log('Y is now: ' + newScrollPosition);
             proxyLoadMerrittImages(image_attempt);
+            image_attempt += 1;
             lastScrollPosition = newScrollPosition;
         }
     </script>

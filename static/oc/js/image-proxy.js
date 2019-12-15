@@ -33,11 +33,11 @@ function proxyLoadMerrittImages(attempt) {
 				src = "/entities/proxy/" + encodeURI(src);
 			}
 			else{
-				if(src.indexOf("#") === -1){
-					src += "#";
+				if(src.indexOf("?merritt-proxy=") === -1){
+					src += "?merritt-proxy=";
 				}
-				src.split("#")[0];
-				src += "#" + attempt;
+				src.split("?merritt-proxy=")[0];
+				src += "?merritt-proxy=" + attempt;
 			}
 			image.src = src;
 			console.log('Attempt: ' + attempt + ', Trying to get: '+ src);
