@@ -16,6 +16,7 @@ function wait(ms){
 
 function proxyLoadMerrittImages(attempt) {
 	// Checks to see if images load, if not
+	var proxy_param = "?merritt-proxy=";
 	if (attempt == 1 ){
 		var check_start = "https://merritt.cdlib.org";
 	}
@@ -33,11 +34,11 @@ function proxyLoadMerrittImages(attempt) {
 				src = "/entities/proxy/" + encodeURI(src);
 			}
 			else{
-				if(src.indexOf("?merritt-proxy=") === -1){
-					src += "?merritt-proxy=";
+				if(src.indexOf(proxy_param) === -1){
+					src += proxy_param;
 				}
-				src.split("?merritt-proxy=")[0];
-				src += "?merritt-proxy=" + attempt;
+				src.split(proxy_param)[0];
+				src += proxy_param + attempt;
 			}
 			image.src = src;
 			console.log('Attempt: ' + attempt + ', Trying to get: '+ src);
