@@ -14,18 +14,33 @@ function wait(ms){
    }
 }
 
-function proxyLoadMerrittImages() {
-	// Checks to see if images load, if not 
+function proxyLoadMerrittImages(attempt) {
+	// Checks to see if images load, if not
+	if (attempt == 1 ){
+		var check_start = "https://merritt.cdlib.org";
+	}
+	else{
+		var check_start = "/entities/proxy/";
+	} 
 	var images = document.images;
 	for (var i=0; i < images.length; i++) {
 		var image = images[i];
 		var src = image.src;
-		if (!imgLoaded(image) && src.startsWith("https://merritt.cdlib.org")){
+		if (!imgLoaded(image) && src.startsWith(check_start)){
 			// Wait 350 milliseconds so OC doesn't reject the request.
 			wait(350);
-			src = "/entities/proxy/" + encodeURI(src);
+			if(check_start != "/entities/proxy/"){
+				src = "/entities/proxy/" + encodeURI(src);
+			}
+			else{
+				if(src.indexOf("#") === -1){
+					src += "#";
+				}
+				src.split("#")[0];
+				src += "#" + attempt;
+			}
 			image.src = src;
-			console.log('Trying to get: '+ src);
+			console.log('Attempt: ' + attempt + ', Trying to get: '+ src);
 		}
 	}
 }

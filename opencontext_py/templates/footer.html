@@ -59,7 +59,11 @@
         // self executing function here
         (function() {
            // do this when the DOM will be available...
-           proxyLoadMerrittImages();
+           proxyLoadMerrittImages(1);
+           wait(1000);
+           proxyLoadMerrittImages(2);
+           wait(1000);
+           proxyLoadMerrittImages(3);
         })();
     </script>
 
