@@ -52,4 +52,15 @@
         </div>
     </div>
     {%endif%}
+
+
+    <script src="{{ base_url }}/static/oc/js/image-proxy.js"></script>
+    <script>
+        // self executing function here
+        (function() {
+           // do this when the DOM will be available...
+           proxyLoadMerrittImages();
+        })();
+    </script>
+
 {% endblock %}
