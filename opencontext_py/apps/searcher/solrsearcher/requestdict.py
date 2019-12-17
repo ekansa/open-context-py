@@ -130,6 +130,8 @@ class BotHerder():
         'ltx71',
         'MJ12bot',
         'spbot',
+        'http://2re.site/',
+        'https://7ooo.ru/',
     ]
 
     def __init__(self):
