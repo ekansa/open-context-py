@@ -17,20 +17,25 @@ function wait(ms){
 function proxyLoadMerrittImages(attempt) {
 	// Checks to see if images load, if not
 	var proxy_param = "?merritt-proxy=";
-	if (attempt == 1 ){
-		var check_start = "https://merritt.cdlib.org";
-	}
-	else{
-		var check_start = "/entities/proxy/";
-	} 
+	var proxy_start = "/entities/proxy/";
+	var check_start = "https://merritt.cdlib.org";
+
 	var images = document.images;
 	for (var i=0; i < images.length; i++) {
 		var image = images[i];
 		var src = image.src;
-		if (!imgLoaded(image) && src.startsWith(check_start)){
+		if (!imgLoaded(image) && (
+				src.startsWith(check_start) 
+				|| src.startsWith(proxy_start)
+			)
+		){
+			if(attempt > 1){
+				console.log("Still bad: " + src);
+			}
+			
 			// Wait 350 milliseconds so OC doesn't reject the request.
 			wait(350);
-			if(check_start != "/entities/proxy/"){
+			if(src.startsWith(check_start)){
 				src = "/entities/proxy/" + encodeURI(src);
 			}
 			else{
