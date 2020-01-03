@@ -101,6 +101,28 @@ def get_discovery_bbox_query_dict(raw_disc_bbox):
     return query_dict
 
 
+def get_discovery_geotile_query_dict(raw_disc_geo):
+    """Makes a filter query for a discovery location geotile"""
+    query_dict = {'fq': [], 'facet.field': []}
+    query_dict['facet.field'].append('discovery_geotile')
+    geopath_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_disc_geo,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    terms = []
+    for disc_path in geopath_list:
+        if len(disc_path) < SolrDocument.MAX_GEOTILE_ZOOM:
+            disc_path += '*'
+        fq_term = 'discovery_geotile:{}'.format(disc_path)
+        terms.append(fq_term)
+    # Join the various geotile path queries as OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            terms, operator='OR'
+        )
+    )
+    return query_dict
+
 
 # ---------------------------------------------------------------------
 # SPATIAL CONTEXT RELATED FUNCTIONS
