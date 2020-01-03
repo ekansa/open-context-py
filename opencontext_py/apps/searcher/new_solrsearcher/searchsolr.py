@@ -271,6 +271,25 @@ class SearchSolr():
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
+        
+        raw_disc_geo = utilities.get_request_param_value(
+            request_dict, 
+            param='disc-geotile',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_disc_geo:
+            query_dict = querymaker.get_discovery_geotile_query_dict(
+                raw_disc_geo
+            )
+            # Now add results of this raw_item_type to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+
 
         raw_chrono_tile = utilities.get_request_param_value(
             request_dict, 
