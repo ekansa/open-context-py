@@ -1427,23 +1427,44 @@ sd_obj_l.fields
                 )
             )
         chrono_tile = ChronoTile()
-        if 'form_use_life_chrono_tile' not in self.fields:
-            self.fields['form_use_life_chrono_tile'] = []
-        if 'form_use_life_chrono_earliest' not in self.fields:
-                self.fields['form_use_life_chrono_earliest'] = []
-        if 'form_use_life_chrono_latest' not in self.fields:
-            self.fields['form_use_life_chrono_latest'] = []
+        chrono_fields = [
+            'form_use_life_chrono_tile',
+            'form_use_life_chrono_earliest',
+            'form_use_life_chrono_latest',
+            'form_use_life_chrono_point',
+        ]
+        # Start lists for each of the chronological fields.
+        for field in chrono_fields:
+            if field in self.fields:
+                continue
+            self.fields[field] = []
+        
+        # Add the chrono-tile field. This is a string of numbers that
+        # encode a hierarchy of start and end dates, allowing for 
+        # clustering and searching of similar time spans.
         self.fields['form_use_life_chrono_tile'].append(
             chrono_tile.encode_path_from_bce_ce(
                 date_start, date_stop, '10M-'
             )
         )
+
+        # Below we store numeric time spans, with start and stop
+        # dates.
         self.fields['form_use_life_chrono_earliest'].append(
             date_start
         )
         self.fields['form_use_life_chrono_latest'].append(
             date_stop
         )
+        # Strictly speaking, the point field here is redundant, 
+        # but I want to experiment with it because it encapsulates
+        # start and stop values together (like the chrono_tile).
+        # It's useful to see if Solr can aggregate these for useful
+        # faceting.
+        self.fields['form_use_life_chrono_point'].append(
+            '{},{}'.format(date_start, date_stop)
+        )
+
 
     def _add_predicates_types_chrono(self):
         """Adds chronological information for predicates or types items"""

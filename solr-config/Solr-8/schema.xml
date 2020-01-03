@@ -222,10 +222,6 @@
     <!-- chronological latest date in Julian dates BCE  -->
     <field name="form_use_life_chrono_latest" type="pdouble" indexed="true" stored="true" multiValued="true"/>
 
-    <!-- chronological latest date in Julian dates BCE  -->
-    <field name="form_use_life_chrono_range" type="point" indexed="true" stored="true" multiValued="false"/>
-
-
     <!-- 3 integer media types -->
 	  <field name="image_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
 	  <field name="other_binary_media_count" type="pint" indexed="true" stored="true" required="true" multiValued="false" />
@@ -658,12 +654,12 @@
       Example: if subFieldType="double", then the coordinates would be
         indexed in fields myloc_0___double,myloc_1___double.
       Example: if subFieldSuffix="_d" then the coordinates would be indexed
-        in fields myloc_0_d,myloc_1_d
+        in fields myloc_0_d,myloc_1_d 
       The subFields are an implementation detail of the fieldType, and end
       users normally should not need to know about them.
-     -->
-    <dynamicField name="*_point" type="point"  indexed="true"  stored="true"/>
-    <fieldType name="point" class="solr.solrPointType" />
+     --> 
+    <dynamicField name="*_point" multiValued="true" type="point"  indexed="true"  stored="true"/>
+    <fieldType name="point" class="solr.PointType" subFieldType="pdouble" />
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->
     <fieldType name="location" class="solr.LatLonPointSpatialField" />
