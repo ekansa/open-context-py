@@ -179,7 +179,7 @@ class SearchSolr():
             query_dict = querymaker.get_discovery_bbox_query_dict(
                 raw_disc_bbox
             )
-            # Now add results of this raw_item_type to the over-all query.
+            # Now add results of bounding box to the over-all query.
             query = utilities.combine_query_dict_lists(
                 part_query_dict=query_dict,
                 main_query_dict=query,
@@ -196,7 +196,7 @@ class SearchSolr():
             query_dict = querymaker.get_discovery_geotile_query_dict(
                 raw_disc_geo
             )
-            # Now add results of this raw_item_type to the over-all query.
+            # Now add results of disc-geotile to the over-all query.
             query = utilities.combine_query_dict_lists(
                 part_query_dict=query_dict,
                 main_query_dict=query,
@@ -213,11 +213,35 @@ class SearchSolr():
             query_dict = querymaker.get_form_use_life_chronotile_query_dict(
                 raw_chrono_tile
             )
-            # Now add results of this raw_item_type to the over-all query.
+            # Now add results of this form_use_life_chronotile 
+            # to the over-all query.
             query = utilities.combine_query_dict_lists(
                 part_query_dict=query_dict,
                 main_query_dict=query,
             )
+
+        # One or both of the form use life date limits can be None. 
+        query_dict = querymaker.get_form_use_life_span_query_dict(
+            form_start=utilities.get_request_param_value(
+                request_dict, 
+                param='form-start',
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            ), 
+            form_stop=utilities.get_request_param_value(
+                request_dict, 
+                param='form-stop',
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            ),
+        )
+        # Now add results of this raw_item_type to the over-all query.
+        query = utilities.combine_query_dict_lists(
+            part_query_dict=query_dict,
+            main_query_dict=query,
+        )
 
 
 

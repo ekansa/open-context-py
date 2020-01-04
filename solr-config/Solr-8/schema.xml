@@ -658,7 +658,7 @@
       The subFields are an implementation detail of the fieldType, and end
       users normally should not need to know about them.
      --> 
-    <dynamicField name="*_point" multiValued="true" type="point"  indexed="true"  stored="true"/>
+    <dynamicField name="*_point" multiValued="true" type="point" indexed="true" stored="true" />
     <fieldType name="point" class="solr.PointType" subFieldType="pdouble" />
 
     <!-- A specialized field for geospatial search. If indexed, this fieldType must not be multivalued. -->

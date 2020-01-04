@@ -105,8 +105,7 @@ def get_discovery_bbox_query_dict(raw_disc_bbox):
 
 def make_tile_query_dict(raw_tile_path, solr_field, max_path_length):
     """Makes a filter query general tile path (geo or chrono)"""
-    query_dict = {'fq': [], 'facet.field': []}
-    query_dict['facet.field'].append(solr_field)
+    query_dict = {'fq': [], 'facet.field': [solr_field]}
     paths_list = utilities.infer_multiple_or_hierarchy_paths(
         raw_tile_path,
         or_delim=configs.REQUEST_OR_OPERATOR
@@ -142,6 +141,27 @@ def get_form_use_life_chronotile_query_dict(raw_chrono_tile):
         solr_field='form_use_life_chrono_tile', 
         max_path_length=ChronoTile().MAX_TILE_DEPTH,
     )
+
+
+def get_form_use_life_span_query_dict(form_start=None, form_stop=None):
+    """Makes a filter query for formation-use-life chrono based on 
+    start and/or stop times
+    """
+    if form_start is None and form_stop is None:
+        return None
+    if form_start is None:
+        # Set the start to be older than the entire Cosmos.
+        form_start = -10*1000*1000*1000
+    if form_stop is None:
+        # Set the stop long after the Sun would have died.
+        form_stop = 10*1000*1000*1000
+    term = 'form_use_life_chrono_point:[{},{} TO {},{}]'.format(
+        form_start,
+        form_start, 
+        form_stop,
+        form_stop,
+    )
+    return {'fq': [term]}
 
 
 # ---------------------------------------------------------------------
