@@ -196,7 +196,7 @@
     <field name="discovery_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- discovery location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="discovery_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
+    <field name="discovery_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
     <dynamicField name="*_coordinate"  type="pdouble" indexed="true"  stored="false"/>
 
     <!-- origin location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
@@ -204,14 +204,14 @@
     <field name="origin_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- origin location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="origin_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
+    <field name="origin_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
 
     <!-- current location geospatial tile, in a quad-tree 0,1,2,3 string. can have multiple types of paths,
     but only one path per type. Only want facets, not specific tiles -->
     <field name="current_geotile"  type="strings"  indexed="true"  stored="false"  multiValued="true" />
 
     <!-- current location geospatial point. can have multiple types of points, but only one point per type. -->
-    <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" />
+    <field name="current_geolocation"  type="location" indexed="true" stored="true" multiValued="false" docValues="true" />
 
     <!-- chronological tile in dates BP for an item, can have multiple values, no need for storing the value  -->
     <field name="form_use_life_chrono_tile" type="strings" indexed="true" stored="false" multiValued="true"/>
