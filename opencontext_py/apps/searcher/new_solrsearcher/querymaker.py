@@ -1,7 +1,9 @@
 from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
+from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.memorycache import MemoryCache
+
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
     get_solr_predicate_type_string,
@@ -101,27 +103,45 @@ def get_discovery_bbox_query_dict(raw_disc_bbox):
     return query_dict
 
 
-def get_discovery_geotile_query_dict(raw_disc_geo):
-    """Makes a filter query for a discovery location geotile"""
+def make_tile_query_dict(raw_tile_path, solr_field, max_path_length):
+    """Makes a filter query general tile path (geo or chrono)"""
     query_dict = {'fq': [], 'facet.field': []}
-    query_dict['facet.field'].append('discovery_geotile')
-    geopath_list = utilities.infer_multiple_or_hierarchy_paths(
-        raw_disc_geo,
+    query_dict['facet.field'].append(solr_field)
+    paths_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_tile_path,
         or_delim=configs.REQUEST_OR_OPERATOR
     )
     terms = []
-    for disc_path in geopath_list:
-        if len(disc_path) < SolrDocument.MAX_GEOTILE_ZOOM:
-            disc_path += '*'
-        fq_term = 'discovery_geotile:{}'.format(disc_path)
+    for path in paths_list:
+        if len(path) < max_path_length:
+            path += '*'
+        fq_term = '{}:{}'.format(solr_field, path)
         terms.append(fq_term)
-    # Join the various geotile path queries as OR terms.
+    # Join the various path queries as OR terms.
     query_dict['fq'].append(
         utilities.join_solr_query_terms(
             terms, operator='OR'
         )
     )
     return query_dict
+
+
+def get_discovery_geotile_query_dict(raw_disc_geo):
+    """Makes a filter query for a discovery location geotile"""
+    return make_tile_query_dict(
+        raw_tile_path=raw_disc_geo, 
+        solr_field='discovery_geotile', 
+        max_path_length=SolrDocument.MAX_GEOTILE_ZOOM,
+    )
+
+
+def get_form_use_life_chronotile_query_dict(raw_chrono_tile):
+    """Makes a filter query for formation-use-life chrono-tile string"""
+    return make_tile_query_dict(
+        raw_tile_path=raw_chrono_tile, 
+        solr_field='form_use_life_chrono_tile', 
+        max_path_length=ChronoTile().MAX_TILE_DEPTH,
+    )
 
 
 # ---------------------------------------------------------------------
