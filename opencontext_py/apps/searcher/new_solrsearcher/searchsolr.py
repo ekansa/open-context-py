@@ -289,6 +289,22 @@ class SearchSolr():
                 main_query_dict=query,
             )
 
+        raw_chrono_tile = utilities.get_request_param_value(
+            request_dict, 
+            param='form-chronotile',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_chrono_tile:
+            query_dict = querymaker.get_form_use_life_chronotile_query_dict(
+                raw_chrono_tile
+            )
+            # Now add results of this raw_item_type to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
 
 
         raw_chrono_tile = utilities.get_request_param_value(
