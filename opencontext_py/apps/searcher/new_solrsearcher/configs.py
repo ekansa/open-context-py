@@ -234,6 +234,10 @@ SORT_NEW_URL_IGNORE_PARAMS = [
     'start'
 ]
 
+SORT_DEFAULT_TYPE = 'oc-api:sort-interest'
+SORT_DEFAULT_LABEL = 'Interest score'
+SORT_DEFAULT_ORDER = 'descending'
+
 SORT_OPTIONS = [
     {'type': 'oc-api:sort-item',
      'value': 'item',
@@ -247,9 +251,9 @@ SORT_OPTIONS = [
      'value': 'published',
      'label': 'Published',
      'opt': False},  # don't make a sorting option available in the interface (hide this)
-    {'type': 'oc-api:sort-interest',
+    {'type': SORT_DEFAULT_TYPE,
      'value': None,
-     'label': 'Interest score',
+     'label': SORT_DEFAULT_LABEL,
      'opt': True}
 ]
 
@@ -286,4 +290,126 @@ ITEM_TYPE_URI_MAPPINGS = {
     'types': 'oc-gen:types',
     'predicates': 'oc-gen:predicates',
     'tables': 'oc-gen:tables',
+}
+
+
+# ---------------------------------------------------------------------
+# Configs for current search/query filters
+# ---------------------------------------------------------------------
+
+
+
+
+# Label for full-text search.
+FILTER_TEXT_SEARCH_TITLE = 'Current Text Search Filter'
+
+# Request parameters that do not describe filters,
+# so ignore them.
+FILTER_IGNORE_PARAMS = [
+    'geodeep',
+    'chronodeep',
+    'sort',
+    'rows',
+    'start'
+]
+
+# Request parameters that describe different search or
+# query filters.
+FILTER_PARAM_CONFIGS = {
+    'path': {
+        'oc-api:filter': 'Context',
+        'hierarchy_delim': REQUEST_CONTEXT_HIERARCHY_DELIM,
+        'is_spatial_context': True,
+        'split_hierarchy': None,
+    },
+    'proj': {
+        'oc-api:filter': 'Project',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'prop': {
+        'oc-api:filter': 'Description',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'dc-subject': {
+        'oc-api:filter': 'Has subject metadata',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'dc-spatial': {
+        'oc-api:filter': 'Has spatial metadata',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'dc-coverage': {
+        'oc-api:filter': 'Has coverage / period metadata',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'dc-temporal': {
+        'oc-api:filter': 'Has temporal coverage metadata',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'dc-isReferencedBy': {
+        'oc-api:filter': 'Is referenced by',
+        'hierarchy_delim': REQUEST_PROP_HIERARCHY_DELIM,
+        'is_spatial_context': False,
+    },
+    'obj': {
+        'oc-api:filter': 'Links (in some manner) to object',
+        # False to not split on hierarchy but do check
+        # for entities
+        'hierarchy_delim': False,
+        'is_spatial_context': False,
+    },
+    'linked': {
+        'oc-api:filter': 'Has cross references',
+        # False to not split on hierarchy but do check
+        # for entities
+        'hierarchy_delim': False,
+        'is_spatial_context': False,
+    },
+    'type': {
+        'oc-api:filter': 'Open Context Type',
+        'hierarchy_delim': False,
+        'is_spatial_context': False,
+        'look_up_mapping_dict': ITEM_TYPE_SLUG_MAPPINGS,
+    },
+    'q': {
+        'oc-api:filter': FILTER_TEXT_SEARCH_TITLE,
+        'label-template': 'Search Term(s): \'{act_val}\'',  
+    },
+    'id': {
+        'oc-api:filter': 'Identifier Lookup',
+        'label-template': 'Identifier: \'{act_val}\'',
+    },
+    'form-chronotile': {
+        'oc-api:filter': 'Time of formation, use, or life',
+    },
+    'form-start': {
+        'oc-api:filter': 'Earliest formation, use, or life date',
+    },
+    'form-stop': {
+        'oc-api:filter': 'Latest formation, use, or life date',
+    },
+    'disc-geotile': {
+        'oc-api:filter': 'Location of discovery or observation',
+    },
+    'disc-bbox': {
+        'oc-api:filter': 'Location of discovery or observation',
+    },
+    'images': {
+        'oc-api:filter': 'Has related media',
+        'label': 'Linked to images', 
+    },
+    'other-media': {
+        'oc-api:filter': 'Has related media',
+        'label': 'Linked to media (other than images)', 
+    },
+    'documents': {
+        'oc-api:filter': 'Has related media',
+        'label': 'Linked to documents', 
+    },
 }
