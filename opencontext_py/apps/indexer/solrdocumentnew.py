@@ -402,7 +402,7 @@ sd_obj_l.fields
     def _make_entity_string_for_solr_value(self, slug, type, id, label):
         """Make a solr value for an object item."""
         return make_entity_string_for_solr(
-            slug,
+            self._convert_slug_to_solr(slug),
             type,
             id,
             label,
@@ -435,7 +435,8 @@ sd_obj_l.fields
     def _make_slug_type_uri_label(self):
         """Makes a slug_type_uri_label field for solr """
         parts = [
-            self.oc_item.json_ld['slug']
+            # Make sure '-' characters are OK for solr.
+            self._convert_slug_to_solr(self.oc_item.json_ld['slug'])
         ]
         if self.oc_item.manifest.item_type == 'predicates':
             if self.oc_item.json_ld['oc-gen:data-type']:
