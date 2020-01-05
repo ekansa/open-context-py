@@ -33,6 +33,39 @@ from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
 # -------------------------------------------------------------
+# SIMPLE, GENERAL METADATA RELATED FUNCTIONS
+# -------------------------------------------------------------
+def get_simple_metadata_query_dict(raw_value, solr_field):
+    """Gets a query dict for simple, standard metadata solr fields"""
+    if not raw_value:
+        return None
+    query_dict = {'fq': []}
+    values_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_value,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    terms = []
+    for value in values_list:
+        if not value:
+            continue
+        fq_term = '{}:{}'.format(solr_field, value)
+        terms.append(fq_term)
+    # Join the various path queries as OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            terms, operator='OR'
+        )
+    )
+    return query_dict 
+
+
+# -------------------------------------------------------------
+# IDENTIFIER QUERY FUNCTIONS
+# -------------------------------------------------------------
+
+
+
+# -------------------------------------------------------------
 # ITEM_TYPE FUNCTIONS
 # -------------------------------------------------------------
 def get_item_type_query_dict(raw_item_type):

@@ -39,7 +39,7 @@ PROJECT_FACET_FIELDS = [
 # The number of rows to display by default for different item types
 ITEM_TYPE_ROWS = {'projects': 100}
 
-# The miniumum number of facets to display for different item types
+# The minimum number of facets to display for different item types
 ITEM_TYPE_FACET_MIN = {'projects': 2}
 
 # Facet fields for different item_types
@@ -54,6 +54,25 @@ ITEM_TYPE_FACETFIELDS = {
         'oc_gen_subjects___pred_id'
     ],
 }
+
+
+# Lists of tuples to configure filter queries that limit
+# for 1 or more linked media resources of different types.
+REL_MEDIA_EXISTS = [
+    # Tuple means: (url-parameter, solr filter query)
+    ('images', 'image_media_count:[1 TO *]',),
+    ('other-media', 'other_binary_media_count:[1 TO *]',),
+    ('documents', 'document_count:[1 TO *]',),
+]
+
+# Lists of tuples to configure simple filter queries
+# standard, required metadata fields.
+SIMPLE_METADATA = [
+    # Tuple means: (url-parameter, solr field)
+    ('uuid', 'uuid'),
+    ('updated', 'updated'),
+    ('published', 'published'),
+]
 
 ITEM_CAT_FIELDS = [
     'oc_gen_subjects___pred_id',

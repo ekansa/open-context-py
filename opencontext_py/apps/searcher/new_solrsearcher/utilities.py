@@ -459,10 +459,11 @@ def date_convert(date_str):
     """Converts to a python datetime if not already so """
     if isinstance(date_str, str):
         date_str = date_str.replace('Z', '')
+        if not 'T' in date_str:
+            date_str += 'T00:00:00'
         dt = datetime.datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S')
-    else:
-        dt = date_str
-    return dt
+        return dt
+    return date_str
 
 
 def convert_date_to_solr_date(date_str):

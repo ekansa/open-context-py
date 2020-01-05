@@ -147,6 +147,44 @@ class SearchSolr():
         
 
         # -------------------------------------------------------------
+        # SIMPLE, GENERAL METADATA RELATED FUNCTIONS
+        # -------------------------------------------------------------
+        for url_param, filter_query in configs.REL_MEDIA_EXISTS:
+            if not url_param in request_dict:
+                # This url_param is not part of the client request
+                # so don't add a solr filter query
+                continue
+            # Add this related media filter to the main query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict={'fq': [filter_query]},
+                main_query_dict=query,
+            )
+        
+        # Params: uuid, updated published processed here.
+        for url_param, solr_field in configs.SIMPLE_METADATA:
+            raw_value = utilities.get_request_param_value(
+                request_dict, 
+                param=url_param,
+                default=None,
+                as_list=False,
+                solr_escape=False,
+            )
+            if not raw_value:
+                # Skip, there's nothing to query for this
+                # url_param.
+                continue
+            query_dict = querymaker.get_simple_metadata_query_dict(
+                raw_value, 
+                solr_field
+            )
+            # Now add this simple metadata to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+
+
+        # -------------------------------------------------------------
         # Item Type
         # -------------------------------------------------------------
         raw_item_type = utilities.get_request_param_value(
@@ -242,10 +280,8 @@ class SearchSolr():
             part_query_dict=query_dict,
             main_query_dict=query,
         )
-
-
-
             
+
         # -------------------------------------------------------------
         # Spatial Context
         # -------------------------------------------------------------
