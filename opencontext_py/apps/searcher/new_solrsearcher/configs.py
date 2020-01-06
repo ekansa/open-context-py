@@ -74,6 +74,20 @@ SIMPLE_METADATA = [
     ('published', 'published'),
 ]
 
+N2T_URI_TEMPLATES = [
+    'http://n2t.net/{id}', # ARK (CDL / Merritt)
+    'https://n2t.net/{id}', # ARK (CDL / Merritt)
+]
+
+PERSISTENT_URI_TEMPLATES = N2T_URI_TEMPLATES + [
+    'http://dx.doi.org/{id}', # DOI (old)
+    'http://doi.org/{id}', # DOI (new)
+    'https://dx.doi.org/{id}', # DOI (old)
+    'https://doi.org/{id}', # DOI (new)
+    'http://orcid.org/{id}', # Orcid (people)
+    'https://orcid.org/{id}', # Orcid (people)
+]
+
 ITEM_CAT_FIELDS = [
     'oc_gen_subjects___pred_id',
     'oc_gen_media___pred_id',

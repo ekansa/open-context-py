@@ -1,9 +1,12 @@
+import re
+
 from django.conf import settings
 
 from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.libs.chronotiles import ChronoTile
 from opencontext_py.libs.memorycache import MemoryCache
 
+from opencontext_py.apps.entities.uri.models import URImanagement
 
 from opencontext_py.apps.indexer.solrdocumentnew import (
     get_solr_predicate_type_string,
@@ -62,6 +65,130 @@ def get_simple_metadata_query_dict(raw_value, solr_field):
 # -------------------------------------------------------------
 # IDENTIFIER QUERY FUNCTIONS
 # -------------------------------------------------------------
+def get_identifier_query_dict(raw_identifier):
+    """Make a query dict for identifiers"""
+    if not raw_identifier:
+        return None
+    query_dict = {'fq': []}
+    fq_terms = []
+
+    values_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_identifier,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    id_list = []
+    for value in values_list:
+        if not value:
+            continue
+        id_list += utilities.make_uri_equivalence_list(value)
+    
+    for act_id in id_list:
+        # The act_id maybe a persistent URI, escape it and
+        # query the persistent_uri string.
+        escape_id = utilities.escape_solr_arg(act_id)
+        fq_terms.append('persistent_uri:{}'.format(escape_id))
+        if ':' in act_id:
+            # Skip below, because the act_id has a 
+            # character that's not in uuids or slugs.
+            continue
+        # The act_id maybe a UUID.
+        fq_terms.append('uuid:{}'.format(act_id))
+        # The act_id maybe a slug, so do a prefix query
+        # for document slug_type_uri_label.
+        fq_terms.append('slug_type_uri_label:{}'.format(
+                utilities.fq_slug_value_format(act_id)
+            )
+        )
+    
+    # Now make URIs in case we have a naked identifier
+    prefix_removes = [
+        'doi:',
+        'orcid:',
+        'http://dx.doi.org/',
+        'https://dx.doi.org/',
+        'http://doi.org/',
+        'https://doi.org/'
+    ]
+    for value in values_list:
+        if not value:
+            continue
+        for prefix in prefix_removes:
+            # strip ID prefixes, case insensitive
+            re_gone = re.compile(re.escape(prefix), re.IGNORECASE)
+            identifier = re_gone.sub('', value)
+            if (identifier.startswith('http://') 
+                or identifier.startswith('https://')):
+                continue
+
+            # Only loop through URI templaces for N2T if
+            # we have an ARK identifier.
+            if identifier.startswith('ark:'):
+                uri_templates = configs.N2T_URI_TEMPLATES
+            else:
+                uri_templates = configs.PERSISTENT_URI_TEMPLATES
+            for uri_template in uri_templates:
+                escaped_uri = utilities.escape_solr_arg(
+                    uri_template.format(id=identifier)
+                )
+                fq_term = 'persistent_uri:{}'.format(escaped_uri)
+                if fq_term in fq_terms:
+                    # We already have this, so skip.
+                    continue
+                fq_terms.append(fq_term)
+        # Now see if there's a UUID in the identifier.
+        oc_check = URImanagement.get_uuid_from_oc_uri(value, True)
+        if oc_check:
+            # We have an identifier we can interperate as an
+            # Open Context URI. So extract the uuid part.
+            fq_term = 'uuid:{}'.format(tcheck['uuid'])
+            if fq_term in fq_terms:
+                # We already have this, so skip.
+                continue
+            fq_terms.append('uuid:{}'.format(tcheck['uuid']))
+
+    # Join the various identifier queries as OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            fq_terms, operator='OR'
+        )
+    )
+    return query_dict
+
+
+def get_object_uri_query_dict(raw_object_uri):
+    """Make a query dict for object uris"""
+    if not raw_object_uri:
+        return None
+    query_dict = {'fq': []}
+    fq_terms = []
+
+    values_list = utilities.infer_multiple_or_hierarchy_paths(
+        raw_object_uri,
+        or_delim=configs.REQUEST_OR_OPERATOR
+    )
+    id_list = []
+    for value in values_list:
+        if not value:
+            continue
+        id_list += utilities.make_uri_equivalence_list(value)
+    
+    for act_id in id_list:
+        # The act_id maybe a persistent URI, escape it and
+        # query the persistent_uri string.
+        escape_id = utilities.escape_solr_arg(act_id)
+        fq_term = 'object_uri:{}'.format(escape_id)
+        if fq_term in fq_terms:
+            # We already have this, so skip
+            continue
+        fq_terms.append(fq_term)
+    
+    # Join the various object_uri queries as OR terms.
+    query_dict['fq'].append(
+        utilities.join_solr_query_terms(
+            fq_terms, operator='OR'
+        )
+    )
+    return query_dict
 
 
 

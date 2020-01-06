@@ -1,14 +1,12 @@
 import copy
 import json
 import logging
-import re
 import time
 from datetime import datetime
 from django.conf import settings
 from mysolr.compat import urljoin, compat_args, parse_response
 from opencontext_py.libs.solrconnection import SolrConnection
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
-
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
@@ -178,6 +176,40 @@ class SearchSolr():
                 solr_field
             )
             # Now add this simple metadata to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+
+        # -------------------------------------------------------------
+        # ID RELATED Solr Search Params
+        # -------------------------------------------------------------
+        raw_identifier = utilities.get_request_param_value(
+            request_dict, 
+            param='id',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_identifier:
+            query_dict = querymaker.get_identifier_query_dict(raw_identifier)
+            # Now add results of this identifier to the over-all query.
+            query = utilities.combine_query_dict_lists(
+                part_query_dict=query_dict,
+                main_query_dict=query,
+            )
+        
+        raw_object_uri = utilities.get_request_param_value(
+            request_dict, 
+            param='obj',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        if raw_object_uri:
+            query_dict = querymaker.get_object_uri_query_dict(raw_object_uri)
+            # Now add results of this object_uri to the over-all query.
             query = utilities.combine_query_dict_lists(
                 part_query_dict=query_dict,
                 main_query_dict=query,
