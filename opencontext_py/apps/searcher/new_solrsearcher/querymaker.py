@@ -74,7 +74,8 @@ def get_identifier_query_dict(raw_identifier):
 
     values_list = utilities.infer_multiple_or_hierarchy_paths(
         raw_identifier,
-        or_delim=configs.REQUEST_OR_OPERATOR
+        or_delim=configs.REQUEST_OR_OPERATOR,
+        hierarchy_delim=None
     )
     id_list = []
     for value in values_list:
@@ -140,11 +141,11 @@ def get_identifier_query_dict(raw_identifier):
         if oc_check:
             # We have an identifier we can interperate as an
             # Open Context URI. So extract the uuid part.
-            fq_term = 'uuid:{}'.format(tcheck['uuid'])
+            fq_term = 'uuid:{}'.format(oc_check['uuid'])
             if fq_term in fq_terms:
                 # We already have this, so skip.
                 continue
-            fq_terms.append('uuid:{}'.format(tcheck['uuid']))
+            fq_terms.append('uuid:{}'.format(oc_check['uuid']))
 
     # Join the various identifier queries as OR terms.
     query_dict['fq'].append(

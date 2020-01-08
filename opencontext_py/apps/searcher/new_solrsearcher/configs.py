@@ -79,7 +79,7 @@ N2T_URI_TEMPLATES = [
     'https://n2t.net/{id}', # ARK (CDL / Merritt)
 ]
 
-PERSISTENT_URI_TEMPLATES = N2T_URI_TEMPLATES + [
+PERSISTENT_URI_TEMPLATES = [
     'http://dx.doi.org/{id}', # DOI (old)
     'http://doi.org/{id}', # DOI (new)
     'https://dx.doi.org/{id}', # DOI (old)

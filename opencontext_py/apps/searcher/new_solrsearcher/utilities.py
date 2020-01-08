@@ -111,15 +111,21 @@ def infer_multiple_or_hierarchy_paths(
     :param str or_delim: The OR operator / delimiter.
     '''
     # First, cleanup dangling delimeters at the start or end.
-    for delim in [hierarchy_delim, or_delim]:
+    check_delims = [or_delim]
+    if hierarchy_delim:
+        check_delims.append(hierarchy_delim)
+    for delim in check_delims:
         raw_path = raw_path.lstrip(delim)
         raw_path = raw_path.rstrip(delim)
     # Split the raw_path by hiearchy delim (default to '/') and then by
     # the or_delim (default to '||').
-    path_lists = [
-        path_parts.split(or_delim)
-        for path_parts in raw_path.split(hierarchy_delim)
-    ]
+    if hierarchy_delim:
+        path_lists = [
+            path_parts.split(or_delim)
+            for path_parts in raw_path.split(hierarchy_delim)
+        ]
+    else:
+        path_lists = [raw_path.split(or_delim)]
     # Create a list of the various permutations
     path_tuple_list = list(itertools.product(*path_lists))
     
@@ -127,6 +133,8 @@ def infer_multiple_or_hierarchy_paths(
     # paths and paths-as-lists.
     paths_as_strs = []
     paths_as_lists = []
+    if not hierarchy_delim:
+        hierarchy_delim = ''
     for path_parts in path_tuple_list:
         if not len(path_parts):
             continue
