@@ -14,6 +14,7 @@ from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.entities.entity.imageproxy import proxy_image_url_if_needed
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
@@ -406,7 +407,17 @@ class TemplateItem():
                     target_url = rp.convert_to_https(file_item['id'])
                     self.nexus_3d = self.make_cors_ok_url(target_url)
                     self.content['nexus_3d'] = file_item['id']
-                    
+            # Proxy broken images in Merritt if needed
+            self.content['preview'] = proxy_image_url_if_needed(
+                self.content['preview'], 
+                primary_url=self.content['fullfile'], 
+                width=650
+            )
+            self.content['thumbnail'] = proxy_image_url_if_needed(
+                self.content['thumbnail'], 
+                primary_url=self.content['fullfile'], 
+                width=150
+            )   
         elif 'rdf:HTML' in json_ld:
             # content for documents
             if self.content is False:
@@ -1129,6 +1140,9 @@ class PropValue():
                 # convert to HTTPS if needed
                 rp = RootPath()
                 self.thumbnail = rp.convert_to_https(self.thumbnail)
+                self.thumbnail = proxy_image_url_if_needed(
+                    self.thumbnail, 
+                )
                 if self.item_type == 'external-resource':
                     self.item_type = 'media'
                 if 'icons/pdf' in self.thumbnail:
