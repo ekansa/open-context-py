@@ -418,6 +418,11 @@ def prep_string_search_term_list(raw_fulltext_search):
     return terms
 
 
+
+# ---------------------------------------------------------------------
+# DICTIONARY RELATED FUNCTIONS
+# ---------------------------------------------------------------------
+
 def make_request_obj_dict(request, spatial_context=None):
     """Extracts GET parameters and values from a Django
     request object into a dictionary obj
@@ -459,6 +464,19 @@ def combine_query_dict_lists(part_query_dict, main_query_dict, skip_keys=[]):
             and isinstance(values, list)):
             main_query_dict[key] += values
     return main_query_dict
+
+
+def get_dict_path_value(path_keys_list, dict_obj, default=None):
+    """Get a value from a dictionary object by a list of keys """
+    if not isinstance(dict_obj, dict):
+        return None
+    act_obj = copy.deepcopy(dict_obj)
+    for key in path_keys_list:
+        act_obj = act_obj.get(key, default)
+        if not isinstance(act_obj, dict):
+            return act_obj
+    return act_obj
+
 
 # ---------------------------------------------------------------------
 # Date-Time Related Functions
