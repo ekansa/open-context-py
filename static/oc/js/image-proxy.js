@@ -2,6 +2,8 @@
  * Javascript for commonly needed utilities
  * for loading images via a proxy.
  */
+var DISABLE_IMAGE_PROXY = true;
+
 function imgLoaded(imgElement) {
 	return imgElement.complete && imgElement.naturalHeight !== 0;
 }
@@ -23,7 +25,13 @@ function proxyLoadMerrittImages(attempt) {
 	else{
 		var check_start = "/entities/proxy/";
 	} 
-	var images = document.images;
+	if (DISABLE_IMAGE_PROXY){
+		// Skip. Do not look for images.
+		var images = [];
+	}
+	else{
+		var images = document.images;
+	}
 	for (var i=0; i < images.length; i++) {
 		var image = images[i];
 		var src = image.src;
