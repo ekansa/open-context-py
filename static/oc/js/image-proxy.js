@@ -25,9 +25,10 @@ function proxyLoadMerrittImages(attempt) {
 	else{
 		var check_start = "/entities/proxy/";
 	} 
-	if (DISABLE_IMAGE_PROXY){
+	if (DISABLE_IMAGE_PROXY == true){
 		// Skip. Do not look for images.
 		var images = [];
+		return true;
 	}
 	else{
 		var images = document.images;
