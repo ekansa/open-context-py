@@ -145,7 +145,11 @@ class LinkEntityGeneration():
                         'http://www.jstor.org/stable': 'jstor',
                         'http://scholarworks.sfasu.edu/ita': 'i-texas-a',
                         'http://doi.org': 'doi',
-                        'https://doi.org': 'doi'
+                        'https://doi.org': 'doi',
+                        'http://gbif.org/species': 'gbif',
+                        'https://gbif.org/species': 'gbif',
+                        'http://www.gbif.org/species': 'gbif',
+                        'https://www.gbif.org/species': 'gbif',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
