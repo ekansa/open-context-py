@@ -63,9 +63,15 @@ class LinkEntity(models.Model):
 class LinkEntityGeneration():
 
     # URIs that end in a numeric value
-    NUMERIC_URI_PREFIXES = ['http://pleiades.stoa.org/places/',
-                            'http://eol.org/pages/',
-                            'http://www.geonames.org/']
+    NUMERIC_URI_PREFIXES = [
+        'http://pleiades.stoa.org/places/',
+        'http://eol.org/pages/',
+        'http://www.geonames.org/',
+        'http://gbif.org/species/',
+        'https://gbif.org/species/',
+        'http://www.gbif.org/species/',
+        'https://www.gbif.org/species/',
+    ]
 
     USE_HTTPS_PARTS = []
 
@@ -150,6 +156,10 @@ class LinkEntityGeneration():
                         'https://gbif.org/species': 'gbif',
                         'http://www.gbif.org/species': 'gbif',
                         'https://www.gbif.org/species': 'gbif',
+                        'http://foodon.org/': 'foodon',
+                        'https://foodon.org/': 'foodon',
+                        'http://purl.obolibrary.org/obo/FOODON_': 'obo-foodon',
+                        'https://purl.obolibrary.org/obo/FOODON_': 'obo-foodon',
                         }
         for uri_root, uri_prefix in uri_prefixes.items():
             #  replaces the start of a uri with a prefix
