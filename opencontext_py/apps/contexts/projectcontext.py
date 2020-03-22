@@ -158,9 +158,11 @@ class ProjectContext():
         pred_sql_dict_list = self.get_working_project_predicates()
         la_preds = self.get_link_annotations_for_preds(pred_sql_dict_list)
         if not isinstance(pred_sql_dict_list, list):
-            # No predicates in the project. Wierd, but possible
+            # No predicates in the project. Weird, but possible
             return graph
-        annotated_pred_uuids = {la.subject:la for la in la_preds}
+        annotated_pred_uuids = {la.subject:[] for la in la_preds}
+        for la in la_preds:
+            annotated_pred_uuids[la.subject].append(la)
         for sql_dict in pred_sql_dict_list:
             act_pred = LastUpdatedOrderedDict()
             act_pred['@id'] = 'oc-pred:' + str(sql_dict['slug'])
@@ -173,10 +175,12 @@ class ProjectContext():
             act_pred['slug'] = sql_dict['slug']
             if isinstance(sql_dict['class_uri'], str) and len(sql_dict['class_uri']) > 0:
                 act_pred['oc-gen:predType'] = sql_dict['class_uri']
-            if sql_dict['predicate_uuid'] in annotated_pred_uuids:
-                # prefix common URIs for the predicate of the link annotation
-                la_pred = annotated_pred_uuids[sql_dict['predicate_uuid']]
-                la_pred_uri = URImanagement.prefix_common_uri(la_pred.predicate_uri)
+            
+            uuid_la_preds = annotated_pred_uuids.get(sql_dict['predicate_uuid'], [])
+            for la_pred in uuid_la_preds:
+                la_pred_uri = URImanagement.prefix_common_uri(
+                    la_pred.predicate_uri
+                )
                 act_pred = self.add_unique_object_dict_to_pred(
                     act_pred,
                     la_pred_uri,
@@ -299,29 +303,35 @@ class ProjectContext():
     
     def add_unique_object_dict_to_pred(self, subject_dict, predicate_uri, object_uri):
         """ adds a unique object dict for a given predicate_uri to a subject dict """
-        if isinstance(predicate_uri, str) and isinstance(object_uri, str):
-            if predicate_uri not in subject_dict:
-                subject_dict[predicate_uri] = []
+        if not isinstance(predicate_uri, str):
+            return subject_dict
+
+        if not isinstance(object_uri, str):
+            return subject_dict
+        
+        if predicate_uri not in subject_dict:
+            subject_dict[predicate_uri] = []
+
+        if isinstance(subject_dict[predicate_uri], str):
+            # we need this as a list!
+            subject_dict[predicate_uri] = [subject_dict[predicate_uri]]
+        
+        add_object_uri = True
+        for old_object in subject_dict[predicate_uri]:
+            if 'id' in old_object:
+                old_obj_uri = old_object['id']
+            elif '@id' in old_object:
+                old_obj_uri = old_object['@id']
             else:
-                if isinstance(subject_dict[predicate_uri], str):
-                    # we need this as a list!
-                    subject_dict[predicate_uri] = [subject_dict[predicate_uri]]
-            add_object_uri = True
-            for old_object in subject_dict[predicate_uri]:
-                if 'id' in old_object:
-                    old_obj_uri = old_object['id']
-                elif '@id' in old_object:
-                    old_obj_uri = old_object['@id']
-                else:
-                    old_obj_uri = None
-                if old_obj_uri == object_uri:
-                    # we already have the same object_uri for this predicate_uri
-                    # so do not add the object_uri again
-                    add_object_uri = False
-                    break
-            if add_object_uri:
-                object_item = self.make_object_dict_item(object_uri)
-                subject_dict[predicate_uri].append(object_item)
+                old_obj_uri = None
+            if old_obj_uri == object_uri:
+                # we already have the same object_uri for this predicate_uri
+                # so do not add the object_uri again
+                add_object_uri = False
+                break
+        if add_object_uri:
+            object_item = self.make_object_dict_item(object_uri)
+            subject_dict[predicate_uri].append(object_item)
         return subject_dict
 
     def get_working_project_types(self):

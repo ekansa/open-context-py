@@ -28,7 +28,6 @@ def biological_taxonomy_validation(
     # NOTE: This is needed because we're deprecating EOL
     # URIs in favor of GBIF, but want to maintain 
     # backward compatibility
-    print('checking: {}'.format(act_pred))
     if not act_pred in predicates_bio_taxonomies:
         # Not a predicate for biological taxa, default
         # to valid

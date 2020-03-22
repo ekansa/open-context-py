@@ -251,56 +251,58 @@ class ReadProjectContextVocabGraph():
                 assertion = None
                 # We're ony going to use the first equivalent of a predicate
                 # otherwise this gets too complicated.
-                equiv_pred_obj = equiv_pred_objs[0]
-                equiv_pred_uri = self.get_id_from_g_obj(equiv_pred_obj)
-                # Inferred assertions will have unique LOD predicates, with
-                # one or more values. The unique_pred_assertions dict makes
-                # sure the LOD predicates are used only once.
-                if not equiv_pred_uri in unique_pred_assertions:
-                    assertion = equiv_pred_obj
-                    assertion['type'] = pred_data_type
-                    assertion['ld_objects'] = LastUpdatedOrderedDict()
-                    assertion['oc_objects'] = LastUpdatedOrderedDict()
-                    assertion['literals'] = []
-                    unique_pred_assertions[equiv_pred_uri] = assertion
-                    assertion = unique_pred_assertions[equiv_pred_uri]
-                if assertion and equiv_pred_uri:
-                    # we have a LOD equvalient property
-                    if not isinstance(obj_values, list):
-                        obj_values = [obj_values]
-                    for obj_val in obj_values:
-                        literal_val = None
-                        if not isinstance(obj_val, dict):
-                            # the object of the assertion is not a dict, so it must be
-                            # a literal
-                            literal_val = obj_val
-                            if obj_val not in assertion['literals']:
-                                assertion['literals'].append(obj_val)
-                        elif 'xsd:string' in obj_val:
-                            literal_val = lang_obj.get_all_value_str(obj_val['xsd:string'])
-                        if literal_val and literal_val not in assertion['literals']:
-                            assertion['literals'].append(literal_val)
-                        if literal_val is None:
-                            # Add any linked data equivalences by looking for this
-                            # type in the graph list
-                            obj_val = self.lookup_type_by_type_obj(obj_val)
-                            obj_uri = self.get_id_from_g_obj(obj_val)
-                            equiv_obj_objs = self.get_equivalent_objects(obj_val)           
-                            if len(equiv_obj_objs):
-                                # We have LD equivalents for the object value
-                                for equiv_obj_obj in equiv_obj_objs:
-                                    equiv_obj_uri = self.get_id_from_g_obj(equiv_obj_obj)
-                                    if not biological_taxonomy_validation(
-                                        equiv_pred_uri, equiv_obj_uri):
-                                        # This object_uri does not belong to this
-                                        # predicated uri.
-                                        continue
-                                    assertion['ld_objects'][equiv_obj_uri] = equiv_obj_obj
-                            elif obj_uri:
-                                # We don't have LD equivalents for the object value
-                                # add to the oc_objects
-                                assertion['oc_objects'][obj_uri] = obj_val
-                            unique_pred_assertions[equiv_pred_uri] = assertion
+                for equiv_pred_obj in equiv_pred_objs:
+                    # equiv_pred_obj = equiv_pred_objs[0]
+                    equiv_pred_uri = self.get_id_from_g_obj(equiv_pred_obj)
+                    print('checking: {}'.format(equiv_pred_uri))
+                    # Inferred assertions will have unique LOD predicates, with
+                    # one or more values. The unique_pred_assertions dict makes
+                    # sure the LOD predicates are used only once.
+                    if not equiv_pred_uri in unique_pred_assertions:
+                        assertion = equiv_pred_obj
+                        assertion['type'] = pred_data_type
+                        assertion['ld_objects'] = LastUpdatedOrderedDict()
+                        assertion['oc_objects'] = LastUpdatedOrderedDict()
+                        assertion['literals'] = []
+                        unique_pred_assertions[equiv_pred_uri] = assertion
+                        assertion = unique_pred_assertions[equiv_pred_uri]
+                    if assertion and equiv_pred_uri:
+                        # we have a LOD equvalient property
+                        if not isinstance(obj_values, list):
+                            obj_values = [obj_values]
+                        for obj_val in obj_values:
+                            literal_val = None
+                            if not isinstance(obj_val, dict):
+                                # the object of the assertion is not a dict, so it must be
+                                # a literal
+                                literal_val = obj_val
+                                if obj_val not in assertion['literals']:
+                                    assertion['literals'].append(obj_val)
+                            elif 'xsd:string' in obj_val:
+                                literal_val = lang_obj.get_all_value_str(obj_val['xsd:string'])
+                            if literal_val and literal_val not in assertion['literals']:
+                                assertion['literals'].append(literal_val)
+                            if literal_val is None:
+                                # Add any linked data equivalences by looking for this
+                                # type in the graph list
+                                obj_val = self.lookup_type_by_type_obj(obj_val)
+                                obj_uri = self.get_id_from_g_obj(obj_val)
+                                equiv_obj_objs = self.get_equivalent_objects(obj_val)           
+                                if len(equiv_obj_objs):
+                                    # We have LD equivalents for the object value
+                                    for equiv_obj_obj in equiv_obj_objs:
+                                        equiv_obj_uri = self.get_id_from_g_obj(equiv_obj_obj)
+                                        if not biological_taxonomy_validation(
+                                            equiv_pred_uri, equiv_obj_uri):
+                                            # This object_uri does not belong to this
+                                            # predicated uri.
+                                            continue
+                                        assertion['ld_objects'][equiv_obj_uri] = equiv_obj_obj
+                                elif obj_uri:
+                                    # We don't have LD equivalents for the object value
+                                    # add to the oc_objects
+                                    assertion['oc_objects'][obj_uri] = obj_val
+                                unique_pred_assertions[equiv_pred_uri] = assertion
         for pred_key, assertion in unique_pred_assertions.items():                            
             inferred_assertions.append(assertion)
         return inferred_assertions
