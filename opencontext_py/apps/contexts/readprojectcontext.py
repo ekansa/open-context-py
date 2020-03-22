@@ -7,6 +7,7 @@ from opencontext_py.libs.memorycache import MemoryCache
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ocitems.assertions.models import Assertion
+from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 
@@ -289,6 +290,11 @@ class ReadProjectContextVocabGraph():
                                 # We have LD equivalents for the object value
                                 for equiv_obj_obj in equiv_obj_objs:
                                     equiv_obj_uri = self.get_id_from_g_obj(equiv_obj_obj)
+                                    if not biological_taxonomy_validation(
+                                        equiv_pred_uri, equiv_obj_uri):
+                                        # This object_uri does not belong to this
+                                        # predicated uri.
+                                        continue
                                     assertion['ld_objects'][equiv_obj_uri] = equiv_obj_obj
                             elif obj_uri:
                                 # We don't have LD equivalents for the object value

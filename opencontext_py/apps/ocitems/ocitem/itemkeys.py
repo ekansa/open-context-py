@@ -38,7 +38,7 @@ class ItemKeys():
     PREDICATES_OWL_SAMEAS = 'owl:sameAs'
     PREDICATES_SKOS_RELATED = 'skos:related'
     PREDICATES_RDF_HTML = 'rdf:HTML'
-    
+
     def __init__(self):
         pass
 
