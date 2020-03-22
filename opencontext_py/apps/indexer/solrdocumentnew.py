@@ -323,19 +323,19 @@ sd_obj_l.fields
     # work.
     HUMAN_REMAINS_FIELD_VALUES = [
         # Classified with Open Context's class-uri of oc-gen:cat-human-bone.
-        ('{}obj_all___oc_gen_subjects___pred_id_fq', 'oc-gen-cat-human-bone'),
+        ('{}obj_all___oc_gen_subjects___pred_id_fq', 'oc_gen_cat_human_bone'),
         
         # Has biological taxonomy of homo sapiens in EOl or GBIF.
-        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'eol-p-327955'),
-        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'gbif-sp-2436436'),
+        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'eol_p_327955'),
+        ('{}obj_all___biol_term_hastaxonomy___pred_id_fq', 'gbif_sp_2436436'),
         
         # Has specific metadata about human remains assigned to the record.
         # Human-remains (archaeology)
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh92003545'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh92003545'),
         # Human skeleton
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85062895'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85062895'),
         # Burial
-        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc-sh-sh85018080'),
+        ('{}obj_all___dc_terms_subject___pred_id_fq', 'loc_sh_sh85018080'),
     ]
     
     
