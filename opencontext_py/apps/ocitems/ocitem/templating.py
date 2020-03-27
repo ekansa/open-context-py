@@ -16,6 +16,7 @@ from opencontext_py.libs.globalmaptiles import GlobalMercator
 from opencontext_py.apps.entities.uri.models import URImanagement
 from opencontext_py.apps.entities.entity.imageproxy import proxy_image_url_if_needed
 from opencontext_py.apps.entities.entity.models import Entity
+from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.ocitems.namespaces.models import ItemNamespaces
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
 from opencontext_py.apps.ocitems.projects.models import Project as ModProject
@@ -51,6 +52,25 @@ class TemplateItem():
     }
     
     HAS_UNIT_OF_MEASUREMENT = 'http://www.wikidata.org/wiki/Property:P3328'
+
+    # Biological Taxonomy Requirements. This dict
+    # configures how two different 
+    PREDICATES_BIO_TAXONOMIES = {
+        # NOTE: eol URIs and this predicate URI 
+        # are to be deprecated.
+        'http://purl.org/NET/biol/ns#term_hasTaxonomy': {
+            'includes': ['eol.org'],
+            'excludes': ['#gbif-sub'],
+        },
+        # NOTE: this predicate URI and GBIF uris
+        # are preferred. However, 'sheep/goat' will remain
+        # a EOL uri, but with a #gbif-sub suffix to it.
+        'http://purl.obolibrary.org/obo/FOODON_00001303': {
+            'includes': ['gbif.org', '#gbif-sub'],
+            'excludes': [],
+        },
+    }
+
 
     def __init__(self, request=False):
         self.label = False
@@ -1489,25 +1509,29 @@ class LinkedData():
                                             # makes sure we've got unique string literals
                                             act_annotation['literals'].append(act_val['xsd:string'])
                                     else:
-                                        if 'id' in act_val:
-                                            act_type_oc_id = act_val['id']
-                                            if act_type_oc_id in self.linked_types:
-                                                act_types = self.linked_types[act_type_oc_id]
-                                                for act_type in act_types:
-                                                    if act_type['id'] not in act_annotation['objects']:
-                                                        # makes sure we've got unique objects
-                                                        act_annotation['objects'][act_type['id']] = act_type
-                                            else:
-                                                act_type = act_val
-                                                if self.project.label is False:
-                                                    act_type['vocab_uri'] = settings.CANONICAL_HOST
-                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME
-                                                else:
-                                                    act_type['vocab_uri'] = self.project.uri
-                                                    act_type['vocabulary'] = settings.CANONICAL_SITENAME + ' :: ' + self.project.label
-                                                if act_type['id'] not in act_annotation['oc_objects']:
+                                        if not 'id' in act_val:
+                                            continue
+                                        act_type_oc_id = act_val['id']
+                                        if act_type_oc_id in self.linked_types:
+                                            act_types = self.linked_types[act_type_oc_id]
+                                            for act_type in act_types:
+                                                if not biological_taxonomy_validation(
+                                                    link_pred['id'], act_type['id']):
+                                                    continue
+                                                if act_type['id'] not in act_annotation['objects']:
                                                     # makes sure we've got unique objects
-                                                    act_annotation['oc_objects'][act_type['id']] = act_type
+                                                    act_annotation['objects'][act_type['id']] = act_type
+                                        else:
+                                            act_type = act_val
+                                            if self.project.label is False:
+                                                act_type['vocab_uri'] = settings.CANONICAL_HOST
+                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME
+                                            else:
+                                                act_type['vocab_uri'] = self.project.uri
+                                                act_type['vocabulary'] = settings.CANONICAL_SITENAME + ' :: ' + self.project.label
+                                            if act_type['id'] not in act_annotation['oc_objects']:
+                                                # makes sure we've got unique objects
+                                                act_annotation['oc_objects'][act_type['id']] = act_type
                                 else:
                                     if act_val not in act_annotation['literals']:
                                         # makes sure we've got unique value literals

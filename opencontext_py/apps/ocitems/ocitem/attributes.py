@@ -9,6 +9,7 @@ from opencontext_py.libs.languages import Languages
 from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.apps.entities.uri.models import URImanagement
+from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.ocitems.ocitem.itemkeys import ItemKeys
 from opencontext_py.apps.ocitems.ocitem.caching import ItemGenerationCache
 from opencontext_py.apps.ocitems.ocitem.partsjsonld import PartsJsonLD
@@ -418,42 +419,57 @@ class ItemAttributes():
         adds linked data annotations (typically referencing URIs from
         outside Open Context)
         """
-        if self.link_annotations is not False:
-            if len(self.link_annotations) > 0:
-                parts_json_ld = PartsJsonLD()
-                parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
-                parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
-                for la in self.link_annotations:
-                    tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
-                    if tcheck is False:
-                        # this item is NOT from open context
-                        item_type = False
-                    else:
-                        # an Open Context item
-                        item_type = tcheck['item_type']
-                    if item_type == 'persons':
-                        # add a stable ID to person items, but only if they are ORCID IDs
-                        parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
-                        parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
-                    # this shortens URIs in item-context declared namespaces
-                    # to make a compact URI (prefixed), as the act_pred
-                    act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
-                    if act_pred not in self.dc_author_preds \
-                       and act_pred not in self.dc_inherit_preds \
-                       and act_pred not in self.dc_metadata_preds:
-                        # the act_prec is not a dublin core predicate, so we're OK to add it
-                        # now, not later.
-                        json_ld = parts_json_ld.addto_predicate_list(json_ld,
-                                                                     act_pred,
-                                                                     la.object_uri,
-                                                                     item_type)
-                    else:
-                        # we've got dublin core assertions, cache these in the dict_object
-                        # dc_assertions so they get added LAST, after other asserttions
-                        self.dc_assertions = parts_json_ld.addto_predicate_list(self.dc_assertions,
-                                                                                act_pred,
-                                                                                la.object_uri,
-                                                                                item_type)
+        if not self.link_annotations:
+            return json_ld
+        
+        if not len(self.link_annotations):
+            return json_ld
+            
+        parts_json_ld = PartsJsonLD()
+        parts_json_ld.proj_context_json_ld = self.proj_context_json_ld
+        parts_json_ld.manifest_obj_dict = self.manifest_obj_dict
+        for la in self.link_annotations:
+            tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
+            if not tcheck:
+                # this item is NOT from open context
+                item_type = False
+            else:
+                # an Open Context item
+                item_type = tcheck['item_type']
+            if item_type == 'persons':
+                # add a stable ID to person items, but only if they are ORCID IDs
+                parts_json_ld.stable_id_predicate = ItemKeys.PREDICATES_FOAF_PRIMARYTOPICOF
+                parts_json_ld.stable_id_prefix_limit = StableIdentifer.ID_TYPE_PREFIXES['orcid']
+            # this shortens URIs in item-context declared namespaces
+            # to make a compact URI (prefixed), as the act_pred
+            act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
+            if act_pred not in self.dc_author_preds \
+                and act_pred not in self.dc_inherit_preds \
+                and act_pred not in self.dc_metadata_preds:
+                # the act_pred is not a dublin core predicate, so we're OK to add it
+                # now, not later.
+
+                if not biological_taxonomy_validation(
+                    act_pred, la.object_uri):
+                    # We have a act_pred and object_uri combination
+                    # that is not valid. So skip.
+                    continue
+
+                json_ld = parts_json_ld.addto_predicate_list(
+                    json_ld,
+                    act_pred,
+                    la.object_uri,
+                    item_type
+                )
+            else:
+                # we've got dublin core assertions, cache these in the dict_object
+                # dc_assertions so they get added LAST, after other asserttions
+                self.dc_assertions = parts_json_ld.addto_predicate_list(
+                    self.dc_assertions,
+                    act_pred,
+                    la.object_uri,
+                    item_type
+                )
         return json_ld
     
     def add_json_ld_dc_metadata(self, json_ld):

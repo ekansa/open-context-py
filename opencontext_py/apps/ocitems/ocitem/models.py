@@ -471,6 +471,24 @@ class ItemConstruction():
         'skos:note'
     ]
 
+    # Biological Taxonomy Requirements. This dict
+    # configures how two different 
+    PREDICATES_BIO_TAXONOMIES = {
+        # NOTE: eol URIs and this predicate URI 
+        # are to be deprecated.
+        'http://purl.org/NET/biol/ns#term_hasTaxonomy': {
+            'includes': ['eol.org'],
+            'excludes': ['#gbif-sub'],
+        },
+        # NOTE: this predicate URI and GBIF uris
+        # are preferred. However, 'sheep/goat' will remain
+        # a EOL uri, but with a #gbif-sub suffix to it.
+        'http://purl.obolibrary.org/obo/FOODON_00001303': {
+            'includes': ['gbif.org', '#gbif-sub'],
+            'excludes': [],
+        },
+    }
+
     def __init__(self):
         self.uuid = False
         self.project_uuid = False
@@ -796,22 +814,50 @@ class ItemConstruction():
             act_dict[OCitem.PREDICATES_DCTERMS_TITLE] = title
         return act_dict
 
+    def biological_taxonomy_validation(self, act_pred, object_uri):
+        """For biological taxa linked data, checks if an object_uri
+        is OK for a predicate
+        """
+        # NOTE: This is needed because we're deprecating EOL
+        # URIs in favor of GBIF, but want to maintain 
+        # backward compatibility
+        # print('checking: {}'.format(act_pred))
+        if not act_pred in self.PREDICATES_BIO_TAXONOMIES:
+            # Not a predicate for biological taxa, default
+            # to valid
+            return True
+        check_dict = self.PREDICATES_BIO_TAXONOMIES[act_pred]
+        for exclude in check_dict['excludes']:
+            if exclude in object_uri:
+                return False
+        for include in check_dict['includes']:
+            if include in object_uri:
+                return True
+        return False
+
     def add_link_annotations(self, act_dict, link_annotations):
         """
         adds stable identifier information to an item's JSON-LD dictionary object
         """
-        if(len(link_annotations) > 0):
-            for la in link_annotations:
-                tcheck = URImanagement.get_uuid_from_oc_uri(la.object_uri, True)
-                if not tcheck:
-                    item_type = False
-                else:
-                    item_type = tcheck['item_type']
-                act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
-                act_dict = self.add_json_predicate_list_ocitem(act_dict,
-                                                               act_pred,
-                                                               la.object_uri,
-                                                               item_type)
+        if len(link_annotations) < 1:
+            return act_dict
+        
+        for la in link_annotations:
+            tcheck = URImanagement.get_uuid_from_oc_uri(
+                la.object_uri, 
+                True
+            )
+            if not tcheck:
+                item_type = False
+            else:
+                item_type = tcheck['item_type']
+            act_pred = URImanagement.prefix_common_uri(la.predicate_uri)
+            act_dict = self.add_json_predicate_list_ocitem(
+                act_dict,
+                act_pred,
+                la.object_uri,
+                item_type
+            )
         return act_dict
 
     def add_editorial_status(self, act_dict, edit_status):
@@ -844,36 +890,49 @@ class ItemConstruction():
                     object_ids.append(obj['@id'])
         else:
             act_dict[act_pred_key] = []
-        new_object_item = LastUpdatedOrderedDict()
+        
         if do_slug_uri:
+            new_object_item = LastUpdatedOrderedDict()
             new_object_item['id'] = URImanagement.make_oc_uri(object_id, item_type)
             act_dict[act_pred_key].append(new_object_item)
+            return act_dict
+        if act_pred_key == 'oc-gen:hasIcon':
+            act_dict[act_pred_key].append({'id': object_id})
+            return act_dict
+        
+        ent = self.get_entity_metadata(object_id)
+        if not ent:
+            return act_dict
+
+        new_object_item = LastUpdatedOrderedDict()
+        if add_hash_id is not False:
+            new_object_item['hash_id'] = add_hash_id
+        
+        if not self.biological_taxonomy_validation(
+            act_pred_key, ent.uri):
+            # We have a act_pred and object_uri combination
+            # that is not valid. So skip.
+            return act_dict
+
+        new_object_item['id'] = ent.uri
+        new_object_item['slug'] = ent.slug
+        if(ent.label is not False):
+            new_object_item['label'] = ent.label
         else:
-            ent = self.get_entity_metadata(object_id)
-            if(ent is not False):
-                if add_hash_id is not False:
-                    new_object_item['hash_id'] = add_hash_id
-                new_object_item['id'] = ent.uri
-                new_object_item['slug'] = ent.slug
-                if(ent.label is not False):
-                    new_object_item['label'] = ent.label
-                else:
-                    new_object_item['label'] = 'No record of label'
-                if(ent.thumbnail_uri is not False):
-                    new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
-                if(ent.content is not False and ent.content != ent.label):
-                    new_object_item['rdfs:comment'] = ent.content
-                if((ent.class_uri is not False) and
-                    (item_type == 'subjects'
-                     or item_type == 'media'
-                     or item_type == 'persons')):
-                    new_object_item['type'] = ent.class_uri
-                    if(ent.class_uri not in self.class_type_list):
-                        self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
-                if new_object_item['id'] not in object_ids:
-                    act_dict[act_pred_key].append(new_object_item)
-            elif(act_pred_key == 'oc-gen:hasIcon'):
-                act_dict[act_pred_key].append({'id': object_id})
+            new_object_item['label'] = 'No record of label'
+        if(ent.thumbnail_uri is not False):
+            new_object_item['oc-gen:thumbnail-uri'] = ent.thumbnail_uri
+        if(ent.content is not False and ent.content != ent.label):
+            new_object_item['rdfs:comment'] = ent.content
+        if((ent.class_uri is not False) and
+            (item_type == 'subjects'
+                or item_type == 'media'
+                or item_type == 'persons')):
+            new_object_item['type'] = ent.class_uri
+            if(ent.class_uri not in self.class_type_list):
+                self.class_type_list.append(ent.class_uri)  # list of unique open context item classes
+        if new_object_item['id'] not in object_ids:
+            act_dict[act_pred_key].append(new_object_item)
         return act_dict
 
     def add_inferred_authorship_linked_data_graph(self, act_dict):

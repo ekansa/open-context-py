@@ -7,6 +7,7 @@ from opencontext_py.libs.isoyears import ISOyears
 from opencontext_py.libs.general import LastUpdatedOrderedDict, DCterms
 from opencontext_py.libs.rootpath import RootPath
 from opencontext_py.apps.ocitems.ocitem.models import OCitem
+from opencontext_py.apps.ocitems.ocitem.biotaxa import biological_taxonomy_validation
 from opencontext_py.apps.entities.entity.models import Entity
 from opencontext_py.apps.ldata.linkannotations.recursion import LinkRecursion
 from opencontext_py.apps.ldata.linkannotations.equivalence import LinkEquivalence
@@ -998,6 +999,11 @@ sd_b = sd_obj.fields
                         object_id = self.get_entity_id(use_obj)
                         parents = LinkRecursion().get_jsonldish_entity_parents(object_id)
                         for index, parent in enumerate(parents):
+                            if not biological_taxonomy_validation(
+                                predicate_uri, parent['id']):
+                                # Skip, because this is not a object allowed for this
+                                # predicate_uri.
+                                continue
                             act_slug = parent['slug']
                             act_solr_value = self._concat_solr_string_value(parent['slug'],
                                                                             'id',

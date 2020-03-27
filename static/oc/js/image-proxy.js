@@ -2,6 +2,8 @@
  * Javascript for commonly needed utilities
  * for loading images via a proxy.
  */
+var DISABLE_IMAGE_PROXY = true;
+
 function imgLoaded(imgElement) {
 	return imgElement.complete && imgElement.naturalHeight !== 0;
 }
@@ -17,25 +19,27 @@ function wait(ms){
 function proxyLoadMerrittImages(attempt) {
 	// Checks to see if images load, if not
 	var proxy_param = "?merritt-proxy=";
-	var proxy_start = "/entities/proxy/";
-	var check_start = "https://merritt.cdlib.org";
-
-	var images = document.images;
+	if (attempt == 1 ){
+		var check_start = "https://merritt.cdlib.org";
+	}
+	else{
+		var check_start = "/entities/proxy/";
+	} 
+	if (DISABLE_IMAGE_PROXY == true){
+		// Skip. Do not look for images.
+		var images = [];
+		return true;
+	}
+	else{
+		var images = document.images;
+	}
 	for (var i=0; i < images.length; i++) {
 		var image = images[i];
 		var src = image.src;
-		if (!imgLoaded(image) && (
-				src.startsWith(check_start) 
-				|| src.startsWith(proxy_start)
-			)
-		){
-			if(attempt > 1){
-				console.log("Still bad: " + src);
-			}
-			
+		if (!imgLoaded(image) && src.startsWith(check_start)){
 			// Wait 350 milliseconds so OC doesn't reject the request.
 			wait(350);
-			if(src.startsWith(check_start)){
+			if(check_start != "/entities/proxy/"){
 				src = "/entities/proxy/" + encodeURI(src);
 			}
 			else{
