@@ -28,10 +28,12 @@ class FacetSearchTemplate():
         'Pleiades (Ancient Places Gazetteer)',
         'Levantine Ceramics Wares',
         'Wikipedia Topics',
+        '(Deprecated) Biological',
         SUB_HEADING_DEFAULT,
     ]
     SUB_HEADING_URI_MAPS = {
-        'http://purl.org/NET/biol/ns#term_hasTaxonomy': 'Standard Biological',
+        'http://purl.obolibrary.org/obo/FOODON_00001303': 'Standard Biological',
+        'http://purl.org/NET/biol/ns#term_hasTaxonomy': '(Deprecated) Biological',
         'http://purl.org/dc/terms/references': 'Cross-References',
         'http://purl.org/dc/terms/isReferencedBy': 'Cross-References',
     }
@@ -48,6 +50,7 @@ class FacetSearchTemplate():
         'levantineceramics.org/wares/': 'Levantine Ceramics Wares' 
     }
     HIDE_URI_MAPS = [
+        'http://purl.org/NET/biol/ns#term_hasTaxonomy',
         'http://www.w3.org/2004/02/skos/core#closeMatch',
         'http://purl.org/dc/terms/subject',
         'http://www.wikidata.org/wiki/Q247204',
