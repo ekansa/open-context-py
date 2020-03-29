@@ -57,21 +57,18 @@
     <script src="{{ base_url }}/static/oc/js/image-proxy.js"></script>
     <script>
         // self executing function here
-        var image_attempt = 1;
         (function() {
            // do this when the DOM will be available...
-           proxyLoadMerrittImages(image_attempt);
-           image_attempt += 1;
+           proxyLoadMerrittImages(1);
         })();
 
         // Keep trying to load images not yet loaded
         // every time the scroll position changes.
         var lastScrollPosition = 0;
         window.onscroll = function() {
+            var scroll_img_atte
             var newScrollPosition = window.scrollY;
-            // console.log('Y is now: ' + newScrollPosition);
-            proxyLoadMerrittImages(image_attempt);
-            image_attempt += 1;
+            proxyLoadMerrittImages(1);
             lastScrollPosition = newScrollPosition;
         }
     </script>
