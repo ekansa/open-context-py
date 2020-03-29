@@ -54,7 +54,14 @@ function proxyLoadMerrittImages(attempt) {
 			// Via a proxy fetch. This will get the Merritt
 			// image if we don't already have it.
 			proxy_count += 1;
-			src = proxy_start + encodeURI(orig_src);
+			if(image.src.startsWith(proxy_start)){
+				// If it still doesn't load, try the original.
+				src = orig_src;
+			}
+			else{
+				// Try a proxy version.
+				src = proxy_start + encodeURI(orig_src);
+			}
 			image.setAttribute("src", src);
 			console.log('Image now: ' + image.src);
 		}
