@@ -65,10 +65,11 @@
         // Keep trying to load images not yet loaded
         // every time the scroll position changes.
         var lastScrollPosition = 0;
+        var scroll_img_attempt = 0;
         window.onscroll = function() {
-            var scroll_img_atte
             var newScrollPosition = window.scrollY;
-            proxyLoadMerrittImages(1);
+            scroll_img_attempt += 1;
+            proxyLoadMerrittImages(scroll_img_attempt);
             lastScrollPosition = newScrollPosition;
         }
     </script>

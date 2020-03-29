@@ -19,12 +19,14 @@ function wait(ms){
 var images = document.images;
 function proxyLoadMerrittImages(attempt) {
 	// Checks to see if images load, if not
+	var attempt_limit = 30;
 	var proxy_param = "?merritt-proxy=";
 	var proxy_start = base_url + "/entities/proxy/";
 	var waiting_gif = base_url + "/static/oc/images/ui/waiting.gif";
+	var no_image = base_url + "/static/oc/images/noun-icons-small/images-noun-14313.png";
 	var merritt_start = "https://merritt.cdlib.org";
 
-	if (DISABLE_IMAGE_PROXY == true || attempt >= 2){
+	if (DISABLE_IMAGE_PROXY == true || attempt > (attempt_limit * 5)){
 		// Skip. Do not look for images.
 		return true;
 	}
@@ -41,7 +43,8 @@ function proxyLoadMerrittImages(attempt) {
 		}
 		if (!imgLoaded(image) && (
 			image.orig_src.startsWith(merritt_start))){
-			image.setAttribute("src", src);		
+			image.setAttribute("src", waiting_gif);
+			image.setAttribute("decoding", "async");		
 		}
 	}
 	var proxy_count = 0;
@@ -54,9 +57,20 @@ function proxyLoadMerrittImages(attempt) {
 			// Via a proxy fetch. This will get the Merritt
 			// image if we don't already have it.
 			proxy_count += 1;
-			src = proxy_start + encodeURI(orig_src);
+			if(image.src.startsWith(proxy_start)){
+				// If it still doesn't load, try the original.
+				src = orig_src;
+			}
+			else{
+				// Try a proxy version.
+				src = proxy_start + encodeURI(orig_src);
+			}
 			image.setAttribute("src", src);
 			console.log('Image now: ' + image.src);
+			wait(20);
+			if(!imgLoaded(image) && (attempt >= attempt_limit)){
+				image.setAttribute("src", no_image);
+			}
 		}
 	}
 }
