@@ -250,12 +250,12 @@
     #     virtualenv: "{{oc_install_dir}}/ENV"
     #     virtualenv_command: /usr/local/bin/virtualenv
 
-    - name: install uwsgi using pipenv
-      become: yes
-      become_user: "{{user_owner}}"
-      command: "/usr/local/bin/pipenv install uwsgi"
-      args:
-        chdir: "{{oc_install_dir}}"
+    # - name: install uwsgi using pipenv
+    #   become: yes
+    #   become_user: "{{user_owner}}"
+    #   command: "/usr/local/bin/pipenv install uwsgi"
+    #   args:
+    #     chdir: "{{oc_install_dir}}"
 
 
     # TO DO:  be more restrictive once we get this into production
