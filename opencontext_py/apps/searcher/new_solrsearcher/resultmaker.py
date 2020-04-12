@@ -10,6 +10,7 @@ from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrD
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
+from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
 
 
@@ -20,13 +21,18 @@ class SolrResult():
 
     def __init__(self, request_dict=None, base_search_url='/search/'):
         self.json_ld = LastUpdatedOrderedDict()
-        self.request_dict = request_dict
+        self.request_dict = copy.deepcopy(request_dict)
         self.base_search_url = base_search_url
     
-    def make_paging_links(self, start, rows, act_request_dict):
+    def _make_paging_links(self, start, rows, act_request_dict):
         """Makes links for paging for start rows from a request dict"""
         start = str(int(start))
         rows = str(rows)
+
+        for param in ['start', 'rows']:
+            if param in act_request_dict:
+                act_request_dict.pop(param, None)
+
         sl = SearchLinks(
             request_dict=act_request_dict,
             base_search_url=self.base_search_url
@@ -38,10 +44,14 @@ class SolrResult():
 
     def add_paging_json(self, solr_json):
         """ adds JSON for paging through results """
+        
+        # The total found (numFound) is in the solr response.
         total_found = utilities.get_dict_path_value(
             ['response', 'numFound'],
             solr_json
         )
+
+        # Start and rows comes from the responseHeader
         start = utilities.get_dict_path_value(
             ['responseHeader', 'params', 'start'],
             solr_json
@@ -74,7 +84,7 @@ class SolrResult():
 
         # add a first page link
         if start > 0:
-            links = self.make_paging_links(
+            links = self._make_paging_links(
                 start=0,
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
@@ -83,7 +93,7 @@ class SolrResult():
             self.json_ld['first-json'] = links['json']
         if start >= rows:
             # add a previous page link
-            links = self.make_paging_links(
+            links = self._make_paging_links(
                 start=(start - rows),
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
@@ -92,7 +102,8 @@ class SolrResult():
             self.json_ld['previous-json'] = links['json']
         if start + rows < total_found:
             # add a next page link
-            links = self.make_paging_links(
+            print('Here: {}'.format(str(act_request_dict)))
+            links = self._make_paging_links(
                 start=(start + rows),
                 rows=rows,
                 act_request_dict=copy.deepcopy(act_request_dict)
@@ -103,13 +114,25 @@ class SolrResult():
         if num_pages * rows >= total_found:
             num_pages -= 1
         # add a last page link
-        links = self.make_paging_links(
+        links = self._make_paging_links(
             start=(num_pages * rows),
             rows=rows,
             act_request_dict=copy.deepcopy(act_request_dict)
         )
         self.json_ld['last'] = links['html']
         self.json_ld['last-json'] = links['json']
+    
+
+    def add_sorting_json(self):
+        """Adds JSON to describe result sorting """
+        act_request_dict = copy.deepcopy(self.request_dict)
+        sort_opts = SortingOptions(base_search_url=self.base_search_url)
+        sort_opts.make_current_sorting_list(act_request_dict)
+        self.json_ld['oc-api:active-sorting'] = sort_opts.current_sorting
+        act_request_dict = copy.deepcopy(self.request_dict)
+        sort_links = sort_opts.make_sort_links_list(act_request_dict)
+        self.json_ld['oc-api:has-sorting'] = sort_links
+
 
     def create_result(self):
         """Creates a solr result"""

@@ -1,3 +1,4 @@
+import copy
 import json
 from urllib.parse import urlparse, parse_qs
 from django.utils.http import urlquote, quote_plus, urlquote_plus
@@ -22,10 +23,11 @@ class SearchLinks():
         rp = RootPath()
         self.base_url = rp.get_baseurl()
         self.base_search_url = base_search_url
-        self.request_dict = request_dict
+        self.request_dict = copy.deepcopy(request_dict)
         self.doc_formats = configs.REQUEST_URL_FORMAT_EXTENTIONS
     
     def make_url_from_request_dict(
+        self,
         base_request_url=None,
         request_dict=None,
         doc_extention=None,
@@ -51,6 +53,8 @@ class SearchLinks():
         for param, param_vals in request_dict.items():
             if param == 'path':
                 continue
+            if not isinstance(param_vals, list):
+                param_vals = [str(param_vals)]
             for val in param_vals:
                 quote_val = quote_plus(val)
                 quote_val = quote_val.replace('%7BSearchTerm%7D', '{SearchTerm}')
@@ -64,6 +68,7 @@ class SearchLinks():
 
 
     def make_urls_from_request_dict(
+        self,
         base_request_url=None,
         request_dict=None,
         doc_formats=None,
