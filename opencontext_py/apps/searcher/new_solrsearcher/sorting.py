@@ -141,7 +141,6 @@ class SortingOptions():
         if not current_sort:
             # No sort indicated in the request, so use the default
             return self.set_default_current_sorting()
-        
         # Iterate through a list of sorting arguments.
         for cur_field_raw in self.make_sort_args_list(current_sort):
             order = 'ascending'  # the default sort order
@@ -153,7 +152,7 @@ class SortingOptions():
                     and 'desc' in cur_field_ex[1]):
                     order = 'descending'
             for check_sort in configs.SORT_OPTIONS:
-                if not check_sort['value'] != cur_field:
+                if check_sort['value'] != cur_field:
                     continue
                 self.using_default_sorting = False
                 current_index = len(self.current_sorting) + 1
