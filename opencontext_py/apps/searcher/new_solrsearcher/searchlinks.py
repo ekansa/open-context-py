@@ -54,6 +54,8 @@ class SearchLinks():
             if param == 'path':
                 continue
             if not isinstance(param_vals, list):
+                # params_vals maybe a single value, but we default
+                # to treating it as a list.
                 param_vals = [str(param_vals)]
             for val in param_vals:
                 quote_val = quote_plus(val)
@@ -113,5 +115,74 @@ class SearchLinks():
                 new_param_values.append(new_value)
                 continue
             new_param_values.append(exist_param_value) 
+        self.request_dict[param] = new_param_values
+        return self.request_dict
+    
+
+    def replace_param_value(
+        self,
+        param,
+        match_old_value=None,
+        new_value=None,
+    ):
+        """Replaces a request parameter value in a request object"""
+        if param is None:
+            return None     
+        if not self.request_dict:
+            self.request_dict = {}
+        if not param in self.request_dict:
+            # This parameter is not in the current request dict.
+            if new_value is None:
+                # The new value so don't change the request_dict
+                return self.request_dict
+            return self.add_param_value(
+                param,
+                new_value
+            )
+        if match_old_value is None and new_value is None:
+            self.request_dict.pop(param, None)
+            return self.request_dict
+        if match_old_value is None and new_value is not None:
+            self.request_dict[param] = new_value
+            return self.request_dict
+        exist_param_values = utilities.get_request_param_value(
+            request_dict=self.request_dict, 
+            param=param,
+            default=None,
+            as_list=True,
+            solr_escape=False,
+        )
+        new_param_values = []
+        for exist_param_value in exist_param_values:
+            hierarchy_old_suffix = (
+                configs.REQUEST_PROP_HIERARCHY_DELIM 
+                + str(match_old_value)
+            )
+            if exist_param_value == match_old_value:
+                if new_value is not None:
+                    # Only add if the new_value is not None.
+                    # A new_value of None means to remove
+                    # the old value.
+                    new_param_values.append(new_value)
+                continue
+            elif exist_param_value.endswith(hierarchy_old_suffix): 
+                # Case of replacing a ---old_value
+                # with ---new_value
+
+                # Remove the old trailing hierarchy ending
+                len_old_ending = len(hierarchy_old_suffix)
+                replace_val = exist_param_value[0:-len_old_ending]
+                if new_value is not None:
+                    # Add the new_value to replace the old
+                    # hierarchy ending
+                    replace_val += (
+                        configs.REQUEST_PROP_HIERARCHY_DELIM 
+                        + str(new_value)
+                    )
+                new_param_values.append(replace_val)
+            else:
+                # No change, this value was not getting
+                # modified.
+                new_param_values.append(exist_param_value) 
         self.request_dict[param] = new_param_values
         return self.request_dict

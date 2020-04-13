@@ -9,6 +9,7 @@ from opencontext_py.libs.general import LastUpdatedOrderedDict
 from opencontext_py.apps.indexer.solrdocumentnew import SolrDocumentNew as SolrDocument
 
 from opencontext_py.apps.searcher.new_solrsearcher import configs
+from opencontext_py.apps.searcher.new_solrsearcher.searchfilters import SearchFilters
 from opencontext_py.apps.searcher.new_solrsearcher.searchlinks import SearchLinks
 from opencontext_py.apps.searcher.new_solrsearcher.sorting import SortingOptions
 from opencontext_py.apps.searcher.new_solrsearcher import utilities
@@ -29,6 +30,7 @@ class SolrResult():
         start = str(int(start))
         rows = str(rows)
 
+        # Remove previously set parameters relating to paging.
         for param in ['start', 'rows']:
             if param in act_request_dict:
                 act_request_dict.pop(param, None)
@@ -125,13 +127,27 @@ class SolrResult():
 
     def add_sorting_json(self):
         """Adds JSON to describe result sorting """
+        # Deep copy the request dict to not mutate it.
         act_request_dict = copy.deepcopy(self.request_dict)
         sort_opts = SortingOptions(base_search_url=self.base_search_url)
         sort_opts.make_current_sorting_list(act_request_dict)
+        # Add objects describing the currently active sorting.
         self.json_ld['oc-api:active-sorting'] = sort_opts.current_sorting
         act_request_dict = copy.deepcopy(self.request_dict)
         sort_links = sort_opts.make_sort_links_list(act_request_dict)
+        # Add objects describing other sort options available.
         self.json_ld['oc-api:has-sorting'] = sort_links
+
+    
+    def add_filters_json(self):
+        """Adds JSON describing currently used query filters"""
+        search_filters = SearchFilters(
+            base_search_url=self.base_search_url
+        )
+        filters = search_filters.add_filters_json(self.request_dict)
+        if len(filters) > 0:
+            self.json_ld['oc-api:active-filters'] = filters
+
 
 
     def create_result(self):
