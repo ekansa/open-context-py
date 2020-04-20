@@ -42,7 +42,6 @@ def process_solr_query(request_dict):
     solr_result.create_result(
         solr_json=solr_response
     )
-    solr_result.add_sorting_json()
     query['response'] = solr_result.json_ld
     query['raw-solr-response'] = solr_response
     return query

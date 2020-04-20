@@ -24,7 +24,8 @@ class SolrResult():
         self.json_ld = LastUpdatedOrderedDict()
         self.request_dict = copy.deepcopy(request_dict)
         self.base_search_url = base_search_url
-    
+        self.act_responses = []
+
     def _make_paging_links(self, start, rows, act_request_dict):
         """Makes links for paging for start rows from a request dict"""
         start = str(int(start))
@@ -44,8 +45,9 @@ class SolrResult():
         urls = sl.make_urls_from_request_dict()
         return urls
 
+
     def add_paging_json(self, solr_json):
-        """ adds JSON for paging through results """
+        """ Adds JSON for paging through results """
         
         # The total found (numFound) is in the solr response.
         total_found = utilities.get_dict_path_value(
@@ -149,10 +151,65 @@ class SolrResult():
             self.json_ld['oc-api:active-filters'] = filters
 
 
+    def add_text_fields(self):
+        """ adds text fields with query options """
+        text_fields = []
+        # first add a general key-word search option
+        act_request_dict = copy.deepcopy(self.request_dict)
+        sl = SearchLinks(
+            request_dict=act_request_dict,
+            base_search_url=self.base_search_url
+        )
+        raw_fulltext_search = utilities.get_request_param_value(
+            request_dict, 
+            param='q',
+            default=None,
+            as_list=False,
+            solr_escape=False,
+        )
+        field = LastUpdatedOrderedDict()
+        field['id'] = '#textfield-keyword-search'
+        field['label'] = configs.FILTER_TEXT_SEARCH_TITLE
+        field['oc-api:search-term'] = raw_fulltext_search
+        if not raw_fulltext_search:
+            # No keyword search found in request, so
+            # make a template for keyword searches.
+            sl.add_param_value(
+                'q', 
+                '{SearchTerm}'
+            )
+            urls = sl.make_urls_from_request_dict()
+            field['oc-api:template'] = urls['html']
+            field['oc-api:template-json'] = urls['json']
+        else:
+            # A keyword search was found, so make a
+            # template for replacing it with another
+            # keyword search.
+            sl.replace_param_value(
+                'q',
+                match_old_value=raw_fulltext_search,
+                new_value='{SearchTerm}'
+            )
+            urls = sl.make_urls_from_request_dict()
+            field['oc-api:template'] = urls['html']
+            field['oc-api:template-json'] = urls['json']
+        text_fields.append(field)
 
-    def create_result(self):
+        # NOTE TODO: Add text-string search options!
+
+        # Add the text fields if they exist.
+        if len(text_fields):
+            self.json_ld['oc-api:has-text-search'] = text_fields
+        return text_fields
+
+
+    def create_result(self, solr_json):
         """Creates a solr result"""
-        pass
+        if 'metadata' in self.act_responses:
+            self.add_paging_json(solr_json)
+            self.add_sorting_json()
+            self.add_filters_json()
+            self.add_text_fields()
 
 
 

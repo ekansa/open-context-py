@@ -33,10 +33,17 @@ class SearchFilters():
         i = 0
         m_cache = MemoryCache()
         for param_key, param_vals in request_dict.items():
+            if param_vals is None:
+                continue
             if param_key in configs.FILTER_IGNORE_PARAMS:
                 continue
-            if param_key == 'path' and param_vals:
-                i += 1
+            act_request_dict = copy.deepcopy(request_dict)
+            sl = SearchLinks(
+                request_dict=act_request_dict,
+                base_search_url=self.base_search_url
+            )
+            if param_key == 'path':
+                i = len(filters) + 1
                 entity = m_cache.get_entity_by_context(param_vals)
                 label = http.urlunquote_plus(param_vals)
                 act_filter = LastUpdatedOrderedDict()
@@ -44,23 +51,24 @@ class SearchFilters():
                 act_filter['oc-api:filter'] = 'Context'
                 act_filter['label'] = label.replace('||', ' OR ')
                 if entity:
-                    act_filter['rdfs:isDefinedBy'] = f_entity.uri
-                # generate a request dict without the context filter
-                rem_request = fl.make_request_sub(request_dict,
-                                                    param_key,
-                                                    param_vals)
-                act_filter['oc-api:remove'] = fl.make_request_url(rem_request)
-                act_filter['oc-api:remove-json'] = fl.make_request_url(rem_request, '.json')
+                    act_filter['rdfs:isDefinedBy'] = entity.uri
+                # Generate a request dict without the context filter
+                sl.replace_param_value('path', new_value=None)
+                urls = sl.make_urls_from_request_dict()
+                act_filter['oc-api:remove'] = urls['html']
+                act_filter['oc-api:remove-json'] = urls['json']
                 filters.append(act_filter)
                 continue
-            
+
+            if not isinstance(param_vals, list):
+                param_vals = [param_vals]
             for param_val in param_vals:
-                i += 1
+                i = len(filters) + 1
                 remove_geodeep = False
                 act_filter = LastUpdatedOrderedDict()
-                act_filter['id'] = '#filter-' + str(i)
-                if self.hierarchy_delim in param_val:
-                    all_vals = param_val.split(self.hierarchy_delim)
+                act_filter['id'] = '#filter-{}'.format(i)
+                if configs.REQUEST_PROP_HIERARCHY_DELIM in param_val:
+                    all_vals = param_val.split(configs.REQUEST_PROP_HIERARCHY_DELIM)
                 else:
                     all_vals = [param_val]
                 if param_key == 'proj':
