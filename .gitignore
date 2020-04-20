@@ -39,3 +39,4 @@ static/d3/d3.v3.min.js
 .oc-django-1-venv/
 .oc-dev-venv/
 .vs-code/
+.venv/
