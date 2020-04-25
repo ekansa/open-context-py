@@ -44,6 +44,9 @@ class SearchLinks():
 
         path = request_dict.get('path')
         if path:
+            if isinstance(path, list):
+                # Normalize a path to be a single string value.
+                path = path[0]
             url += path.replace(' ', '+')
         if doc_extention:
             url += doc_extention

@@ -161,7 +161,7 @@ class SolrResult():
             base_search_url=self.base_search_url
         )
         raw_fulltext_search = utilities.get_request_param_value(
-            request_dict, 
+            act_request_dict, 
             param='q',
             default=None,
             as_list=False,
