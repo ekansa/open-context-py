@@ -78,6 +78,8 @@ class SearchFilters():
         ) 
         urls = sl.make_urls_from_request_dict()
         if new_value is None:
+            # If the new_value is None, then we're completely
+            # removing the search filter.
             act_filter['oc-api:remove'] = urls['html']
             act_filter['oc-api:remove-json'] = urls['json']
         else:
@@ -86,10 +88,28 @@ class SearchFilters():
             act_filter['oc-api:broaden'] = urls['html']
             act_filter['oc-api:broaden-json'] = urls['json']
         return act_filter
-        
+
+
+    def add_non_hiearchy_filter_json(
+        self,
+        param_key,
+        param_vals,
+        param_config,
+        filters, 
+        request_dict,
+    ):
+        """Adds JSON for non-hierarchy filters."""
+        return filters
+
 
     def add_filters_json(self, request_dict):
-        """ adds JSON describing search filters """
+        """Adds JSON describing active search filters.
+        
+        :param dict request_dict: Dictionary object of the GET
+            request from the client.
+        """
+        # NOTE: 
+
         filters = []
         string_fields = []  # so we have an interface for string searches
 
@@ -99,15 +119,19 @@ class SearchFilters():
             if param_key in configs.FILTER_IGNORE_PARAMS:
                 continue
             
-            param_config = configs.FILTER_PARAM_CONFIGS.get(param_key)
-            if not param_config:
-                # No configuration for this request parameter
-                continue
-
             # Normalize the values of this parameter into a
             # list to make processing easier
             if not isinstance(param_vals, list):
                 param_vals = [param_vals]
+
+            # Get the configuration for this specific request
+            # parameter.
+            param_config = configs.FILTER_PARAM_CONFIGS.get(
+                param_key
+            )
+            if not param_config:
+                # No configuration for this request parameter
+                continue
 
             # Get the hierarchy delimiter configured 
             # for values used by this param_key.
@@ -174,7 +198,7 @@ class SearchFilters():
 
                     if len(parent_path_vals) < len(hierarchy_vals):
                         # We can add links to broaden this current
-                        # filter.
+                        # filter to a higher level in the hierarchy.
                         act_filter = self.add_links_to_act_filter(
                             param_key, 
                             match_old_value=param_val,
